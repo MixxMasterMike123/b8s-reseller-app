@@ -10,6 +10,26 @@ B8shield Reseller Portal is a web application for resellers to manage orders, tr
 - User role management (admin, reseller)
 - Email notifications for order status changes
 
+## Security Notice - API Keys
+
+**IMPORTANT**: This project uses Firebase API keys which must be handled securely:
+
+1. Never commit the actual API keys to Git or any public repository
+2. Always use environment variables for storing sensitive credentials
+3. The `.env` file is excluded from Git via `.gitignore`
+4. Create your `.env` file based on `.env.example` with your own API keys
+5. When deploying, set environment variables in your hosting platform
+
+### Regenerating Compromised API Keys
+
+If an API key has been compromised:
+
+1. Go to the [Firebase Console](https://console.firebase.google.com/)
+2. Navigate to Project Settings > API keys
+3. Regenerate the compromised key
+4. Update your local `.env` file and any deployment environments
+5. Verify your application still works with the new key
+
 ## Demo Mode
 
 This application includes a demo mode for testing and exploration without requiring Firebase configuration:

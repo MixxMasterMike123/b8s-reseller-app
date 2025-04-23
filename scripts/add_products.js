@@ -1,16 +1,26 @@
 // Script to add B8 Shield products to Firestore
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import dotenv from 'dotenv';
 
-// Firebase configuration - using values directly from .env
+// Load environment variables
+dotenv.config();
+
+// Firebase configuration from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyCsYgMVRlipm-PxsHPZOxew5tqcZ_3Kccw",
-  authDomain: "b8shield-reseller-app.firebaseapp.com",
-  projectId: "b8shield-reseller-app",
-  storageBucket: "b8shield-reseller-app.firebasestorage.app",
-  messagingSenderId: "996315128348",
-  appId: "1:996315128348:web:75388494e2bcdfa1f3f5d9",
+  apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID,
 };
+
+// Verify environment variables are loaded
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.error('Firebase configuration variables are missing. Make sure .env file is properly configured.');
+  process.exit(1);
+}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
