@@ -530,11 +530,29 @@ export const OrderProvider = ({ children }) => {
       if (!isAdmin) throw new Error('Unauthorized');
       
       if (isDemoMode) {
-        // Demo mode: mock status update
+        // Get current order to check previous status
+        const currentOrder = demoOrders.find(order => order.id === orderId);
+        const previousStatus = currentOrder?.status || 'unknown';
+        
+        // Create status history entry
+        const statusChange = {
+          from: previousStatus,
+          to: newStatus,
+          changedBy: currentUser.uid,
+          changedAt: new Date().toISOString(),
+          displayName: currentUser.displayName || 'Admin User'
+        };
+        
+        // Update order with new status and add to status history
         setDemoOrders(orders => 
           orders.map(order => 
             order.id === orderId 
-              ? { ...order, status: newStatus, updatedAt: new Date().toISOString() } 
+              ? { 
+                  ...order, 
+                  status: newStatus, 
+                  updatedAt: new Date().toISOString(),
+                  statusHistory: [...(order.statusHistory || []), statusChange]
+                } 
               : order
           )
         );
@@ -542,12 +560,51 @@ export const OrderProvider = ({ children }) => {
         toast.success(`Order status updated to ${newStatus} (Demo Mode)`);
         return true;
       } else {
-        // Real Firebase status update
+        // Get current order data to check previous status
         const orderRef = doc(db, "orders", orderId);
+        const orderDoc = await getDoc(orderRef);
+        
+        if (!orderDoc.exists()) {
+          throw new Error('Order not found');
+        }
+        
+        const orderData = orderDoc.data();
+        const previousStatus = orderData.status || 'unknown';
+        
+        // Create status history entry
+        const statusChange = {
+          from: previousStatus,
+          to: newStatus,
+          changedBy: currentUser.uid,
+          changedAt: serverTimestamp(),
+          displayName: currentUser.displayName || currentUser.email || 'Admin User'
+        };
+        
+        // Update order with new status and add to status history
         await updateDoc(orderRef, {
           status: newStatus,
-          updatedAt: serverTimestamp()
+          updatedAt: serverTimestamp(),
+          statusHistory: [...(orderData.statusHistory || []), statusChange]
         });
+        
+        // Try to update in default database as well if admin
+        try {
+          if (isAdmin) {
+            const defaultOrderRef = doc(defaultDb, "orders", orderId);
+            const defaultOrderDoc = await getDoc(defaultOrderRef);
+            
+            if (defaultOrderDoc.exists()) {
+              await updateDoc(defaultOrderRef, {
+                status: newStatus,
+                updatedAt: serverTimestamp(),
+                statusHistory: [...(defaultOrderDoc.data().statusHistory || []), statusChange]
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error updating order in default database:', error);
+          // Continue even if this fails
+        }
         
         toast.success(`Order status updated to ${newStatus}`);
         return true;

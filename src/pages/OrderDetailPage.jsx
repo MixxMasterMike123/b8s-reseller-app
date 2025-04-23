@@ -4,16 +4,19 @@ import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { useOrder } from '../contexts/OrderContext';
+import { useAuth } from '../contexts/AuthContext';
 import AppLayout from '../components/layout/AppLayout';
 
 const OrderDetailPage = () => {
   const params = useParams();
   const orderId = params.orderId || params.id; // Support both route parameter names
   const navigate = useNavigate();
-  const { getOrderById, cancelOrder } = useOrder();
+  const { getOrderById, cancelOrder, updateOrderStatus } = useOrder();
+  const { isAdmin } = useAuth();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [updateStatusLoading, setUpdateStatusLoading] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -81,6 +84,21 @@ const OrderDetailPage = () => {
     }
   };
 
+  const handleStatusUpdate = async (newStatus) => {
+    setUpdateStatusLoading(true);
+    try {
+      await updateOrderStatus(orderId, newStatus);
+      const updatedOrder = await getOrderById(orderId);
+      setOrder(updatedOrder);
+      toast.success(`Orderstatus uppdaterad till ${getStatusInfo(newStatus).text}`);
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      toast.error('Kunde inte uppdatera orderstatus');
+    } finally {
+      setUpdateStatusLoading(false);
+    }
+  };
+
   const canCancel = order?.status === 'pending' || order?.status === 'confirmed';
 
   if (loading) {
@@ -131,11 +149,33 @@ const OrderDetailPage = () => {
             </div>
             <p className="text-gray-600">Ordernummer: <span className="font-semibold">{order.orderNumber}</span></p>
           </div>
-          <div className="mt-4 md:mt-0 flex items-center">
-            <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${statusColor} mr-4`}>
+          <div className="mt-4 md:mt-0 flex items-center flex-wrap gap-2">
+            <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${statusColor} mr-2`}>
               {statusText}
             </span>
-            {canCancel && (
+            
+            {isAdmin && order.status !== 'cancelled' && (
+              <div className="flex items-center">
+                <select
+                  value={order.status}
+                  onChange={(e) => handleStatusUpdate(e.target.value)}
+                  disabled={updateStatusLoading}
+                  className="block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm mr-2"
+                >
+                  <option value="pending">Väntar på bekräftelse</option>
+                  <option value="confirmed">Bekräftad</option>
+                  <option value="processing">Under behandling</option>
+                  <option value="shipped">Skickad</option>
+                  <option value="delivered">Levererad</option>
+                  <option value="cancelled">Avbruten</option>
+                </select>
+                {updateStatusLoading && (
+                  <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-blue-600 border-r-transparent"></div>
+                )}
+              </div>
+            )}
+            
+            {canCancel && !isAdmin && (
               <button
                 onClick={handleCancelOrder}
                 disabled={cancelLoading}
@@ -254,6 +294,45 @@ const OrderDetailPage = () => {
             <h2 className="text-lg font-semibold mb-2 text-gray-800">Anteckningar</h2>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-gray-700">{order.note}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Status History Section */}
+        {isAdmin && order.statusHistory && order.statusHistory.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold mb-2 text-gray-800">Statushistorik</h2>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <ul className="space-y-3">
+                {order.statusHistory.map((history, index) => (
+                  <li key={index} className="border-b border-gray-200 pb-2 last:border-0 last:pb-0">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="font-medium">Status ändrad från </span>
+                        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusInfo(history.from).color}`}>
+                          {getStatusInfo(history.from).text}
+                        </span>
+                        <span className="font-medium"> till </span>
+                        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusInfo(history.to).color}`}>
+                          {getStatusInfo(history.to).text}
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {history.changedAt && history.changedAt.toDate 
+                          ? formatDate(history.changedAt) 
+                          : history.changedAt 
+                            ? new Date(history.changedAt).toLocaleDateString('sv-SE')
+                            : 'N/A'}
+                      </div>
+                    </div>
+                    {history.displayName && (
+                      <div className="text-sm text-gray-500 mt-1">
+                        Av: {history.displayName}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         )}
