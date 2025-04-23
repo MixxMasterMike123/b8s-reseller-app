@@ -5,6 +5,7 @@ import { getAuth, updatePassword as firebaseUpdatePassword } from 'firebase/auth
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { db, defaultDb } from '../firebase/config';
 import toast from 'react-hot-toast';
+import AppLayout from '../components/layout/AppLayout';
 
 const ProfilePage = () => {
   const { currentUser } = useSimpleAuth();
@@ -227,14 +228,16 @@ const ProfilePage = () => {
 
   if (dataLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <AppLayout>
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-6">
+    <AppLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white shadow rounded-lg">
           {/* Header */}
@@ -420,7 +423,7 @@ const ProfilePage = () => {
           </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

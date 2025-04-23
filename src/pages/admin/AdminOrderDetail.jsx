@@ -7,6 +7,8 @@ import { sv } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
 import OrderStatusMenu from '../../components/OrderStatusMenu';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../firebase/config';
 
 // Add a helper function to parse and display order distribution data
 const getOrderDistribution = (order) => {
@@ -41,11 +43,39 @@ const AdminOrderDetail = () => {
   const { getOrderById, updateOrderStatus, deleteOrder } = useOrder();
   const { isAdmin } = useAuth();
   const [order, setOrder] = useState(null);
+  const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [userLoading, setUserLoading] = useState(false);
   const [error, setError] = useState(null);
   const [updateStatusLoading, setUpdateStatusLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [fetchAttempted, setFetchAttempted] = useState(false);
+
+  // Fetch user data based on userId
+  const fetchUserData = useCallback(async (userId) => {
+    if (!userId) return null;
+    
+    try {
+      setUserLoading(true);
+      console.log('Fetching user data for ID:', userId);
+      
+      const userDocRef = doc(db, 'users', userId);
+      const userDocSnap = await getDoc(userDocRef);
+      
+      if (userDocSnap.exists()) {
+        console.log('User found in database');
+        return userDocSnap.data();
+      } else {
+        console.log('User not found in database');
+        return null;
+      }
+    } catch (err) {
+      console.error('Error fetching user data:', err);
+      return null;
+    } finally {
+      setUserLoading(false);
+    }
+  }, []);
 
   // Fetch order data
   const fetchOrder = useCallback(async () => {
@@ -63,6 +93,15 @@ const AdminOrderDetail = () => {
       }
       
       setOrder(orderData);
+      
+      // Fetch user data if order has userId
+      if (orderData.userId) {
+        const userData = await fetchUserData(orderData.userId);
+        if (userData) {
+          setUserData(userData);
+        }
+      }
+      
       setError(null);
     } catch (err) {
       console.error('Error fetching order:', err);
@@ -72,7 +111,7 @@ const AdminOrderDetail = () => {
       setLoading(false);
       setFetchAttempted(true);
     }
-  }, [orderId, getOrderById, fetchAttempted]);
+  }, [orderId, getOrderById, fetchAttempted, fetchUserData]);
 
   useEffect(() => {
     fetchOrder();
@@ -288,7 +327,7 @@ const AdminOrderDetail = () => {
           </div>
         </div>
 
-        {/* User Information */}
+        {/* User Information - Enhanced with user profile data */}
         <div className="bg-gray-50 p-4 rounded-lg mb-6">
           <h2 className="text-lg font-semibold mb-3 text-gray-800">User Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -297,18 +336,33 @@ const AdminOrderDetail = () => {
                 <span className="font-medium">User ID:</span> {order.userId || 'Not available'}
               </p>
               <p className="text-gray-700">
-                <span className="font-medium">Company:</span> {order.companyName || 'Not specified'}
+                <span className="font-medium">Company:</span> {userData?.companyName || order.companyName || 'Not specified'}
               </p>
               <p className="text-gray-700">
-                <span className="font-medium">Contact Person:</span> {order.contactName || 'Not specified'}
+                <span className="font-medium">Contact Person:</span> {userData?.contactPerson || order.contactName || 'Not specified'}
+              </p>
+              <p className="text-gray-700">
+                <span className="font-medium">Role:</span> {userData?.role || 'User'}
+              </p>
+              <p className="text-gray-700">
+                <span className="font-medium">Account Status:</span>{' '}
+                <span className={`px-2 py-0.5 text-xs rounded-full ${userData?.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  {userData?.active ? 'Active' : 'Inactive'}
+                </span>
               </p>
             </div>
             <div>
               <p className="text-gray-700">
-                <span className="font-medium">Email:</span> {order.email || 'Not specified'}
+                <span className="font-medium">Email:</span> {userData?.email || order.email || 'Not specified'}
               </p>
               <p className="text-gray-700">
-                <span className="font-medium">Phone:</span> {order.phone || 'Not specified'}
+                <span className="font-medium">Phone:</span> {userData?.phoneNumber || order.phone || 'Not specified'}
+              </p>
+              <p className="text-gray-700">
+                <span className="font-medium">Account Created:</span> {userData?.createdAt ? formatDate(userData.createdAt) : 'Unknown'}
+              </p>
+              <p className="text-gray-700">
+                <span className="font-medium">Last Updated:</span> {userData?.updatedAt ? formatDate(userData.updatedAt) : 'Unknown'}
               </p>
             </div>
           </div>
@@ -339,17 +393,22 @@ const AdminOrderDetail = () => {
             <h2 className="text-lg font-semibold mb-3 text-gray-800">Delivery Address</h2>
             <div className="space-y-2">
               <p className="text-gray-700">
-                <span className="font-medium">Company:</span> {order.companyName || 'Not specified'}
+                <span className="font-medium">Company:</span> {userData?.companyName || order.companyName || 'Not specified'}
               </p>
               <p className="text-gray-700">
-                <span className="font-medium">Contact Person:</span> {order.contactName || 'Not specified'}
+                <span className="font-medium">Contact Person:</span> {userData?.contactPerson || order.contactName || 'Not specified'}
               </p>
               <p className="text-gray-700">
-                <span className="font-medium">Address:</span> {order.address || 'Not specified'}
+                <span className="font-medium">Address:</span> {userData?.address || order.address || 'Not specified'}
               </p>
-              {order.postalCode && order.city && (
+              {(userData?.postalCode || order.postalCode) && (userData?.city || order.city) && (
                 <p className="text-gray-700">
-                  <span className="font-medium">Postal Code & City:</span> {order.postalCode}, {order.city}
+                  <span className="font-medium">Postal Code & City:</span> {userData?.postalCode || order.postalCode}, {userData?.city || order.city}
+                </p>
+              )}
+              {(userData?.country || order.country) && (
+                <p className="text-gray-700">
+                  <span className="font-medium">Country:</span> {userData?.country || order.country}
                 </p>
               )}
             </div>

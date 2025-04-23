@@ -6,6 +6,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import toast from 'react-hot-toast';
 import ProductMenu from '../components/ProductMenu';
+import AppLayout from '../components/layout/AppLayout';
 
 const OrderPage = () => {
   const navigate = useNavigate();
@@ -410,531 +411,533 @@ const OrderPage = () => {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Återförsäljarportal</h1>
-      
-      <div className="mb-8 p-4 border border-gray-200 rounded">
-        <h2 className="text-xl font-semibold mb-4">Välj antal färger:</h2>
+    <AppLayout>
+      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6">Återförsäljarportal</h1>
         
-        {/* Display product images for colors */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {(() => {
-            // First, group products by color
-            const colorMatches = {
-              'Transparent': 'transparent',
-              'Röd': 'rod',
-              'Red': 'rod',
-              'Fluorescent': 'florerande',
-              'Glitter': 'glitter'
-            };
-            
-            // Log all products for debugging
-            console.log("All products:", products.map(p => ({ id: p.id, name: p.name })));
-            
-            // Create color buckets - we need to manually create one for each color
-            const colorProducts = {
-              'transparent': null,
-              'rod': null,
-              'florerande': null,
-              'glitter': null
-            };
-            
-            // Find one product for each color
-            products.filter(p => p.imageData).forEach(product => {
-              // Skip if no name
-              if (!product.name) return;
+        <div className="mb-8 p-4 border border-gray-200 rounded">
+          <h2 className="text-xl font-semibold mb-4">Välj antal färger:</h2>
+          
+          {/* Display product images for colors */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            {(() => {
+              // First, group products by color
+              const colorMatches = {
+                'Transparent': 'transparent',
+                'Röd': 'rod',
+                'Red': 'rod',
+                'Fluorescent': 'florerande',
+                'Glitter': 'glitter'
+              };
               
-              console.log("Checking product:", product.name);
+              // Log all products for debugging
+              console.log("All products:", products.map(p => ({ id: p.id, name: p.name })));
               
-              // Check for Transparent
-              if (product.name.includes("Transparent")) {
-                if (!colorProducts['transparent']) {
-                  colorProducts['transparent'] = product;
-                  console.log(`  Added to map: transparent = ${product.name}`);
+              // Create color buckets - we need to manually create one for each color
+              const colorProducts = {
+                'transparent': null,
+                'rod': null,
+                'florerande': null,
+                'glitter': null
+              };
+              
+              // Find one product for each color
+              products.filter(p => p.imageData).forEach(product => {
+                // Skip if no name
+                if (!product.name) return;
+                
+                console.log("Checking product:", product.name);
+                
+                // Check for Transparent
+                if (product.name.includes("Transparent")) {
+                  if (!colorProducts['transparent']) {
+                    colorProducts['transparent'] = product;
+                    console.log(`  Added to map: transparent = ${product.name}`);
+                  }
                 }
-              }
-              // Check for Red variants
-              else if (product.name.includes("Röd") || product.name.includes("Red") || 
-                      product.name.toLowerCase().includes("rod") || product.name.includes("RED")) {
-                if (!colorProducts['rod']) {
-                  colorProducts['rod'] = product;
-                  console.log(`  Added to map: rod = ${product.name}`);
+                // Check for Red variants
+                else if (product.name.includes("Röd") || product.name.includes("Red") || 
+                        product.name.toLowerCase().includes("rod") || product.name.includes("RED")) {
+                  if (!colorProducts['rod']) {
+                    colorProducts['rod'] = product;
+                    console.log(`  Added to map: rod = ${product.name}`);
+                  }
                 }
-              }
-              // Check for Fluorescent variants
-              else if (product.name.includes("Fluorescent") || product.name.includes("Fluor")) {
-                if (!colorProducts['florerande']) {
-                  colorProducts['florerande'] = product;
-                  console.log(`  Added to map: florerande = ${product.name}`);
+                // Check for Fluorescent variants
+                else if (product.name.includes("Fluorescent") || product.name.includes("Fluor")) {
+                  if (!colorProducts['florerande']) {
+                    colorProducts['florerande'] = product;
+                    console.log(`  Added to map: florerande = ${product.name}`);
+                  }
                 }
-              }
-              // Check for Glitter
-              else if (product.name.includes("Glitter")) {
-                if (!colorProducts['glitter']) {
-                  colorProducts['glitter'] = product;
-                  console.log(`  Added to map: glitter = ${product.name}`);
+                // Check for Glitter
+                else if (product.name.includes("Glitter")) {
+                  if (!colorProducts['glitter']) {
+                    colorProducts['glitter'] = product;
+                    console.log(`  Added to map: glitter = ${product.name}`);
+                  }
                 }
-              }
-            });
+              });
+              
+              // Check if we have all expected colors and log the collected info
+              console.log("Collected color products:", Object.entries(colorProducts)
+                .map(([id, p]) => `${id}: ${p ? p.name : 'missing'}`));
+              
+              // Render one product per color (only if we have a product for that color)
+              return Object.entries(colorProducts)
+                .filter(([_, product]) => product !== null)
+                .map(([colorId, product]) => (
+                  <div key={product.id} className="text-center">
+                    <img 
+                      src={product.imageData} 
+                      alt={product.name} 
+                      className={`w-full h-40 object-cover rounded mb-2 border-2 ${farger[colorId] ? 'border-blue-500' : 'border-transparent'}`} 
+                    />
+                    <p className="text-sm font-medium">{product.name}</p>
+                  </div>
+                ));
+            })()}
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {/* Manually define the order to ensure correct display */}
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                name="transparent"
+                checked={farger["transparent"] || false}
+                onChange={handleFargerChange}
+                className="h-5 w-5"
+              />
+              <span>Transparent</span>
+            </label>
             
-            // Check if we have all expected colors and log the collected info
-            console.log("Collected color products:", Object.entries(colorProducts)
-              .map(([id, p]) => `${id}: ${p ? p.name : 'missing'}`));
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                name="rod"
+                checked={farger["rod"] || false}
+                onChange={handleFargerChange}
+                className="h-5 w-5"
+              />
+              <span>Röd</span>
+            </label>
             
-            // Render one product per color (only if we have a product for that color)
-            return Object.entries(colorProducts)
-              .filter(([_, product]) => product !== null)
-              .map(([colorId, product]) => (
-                <div key={product.id} className="text-center">
-                  <img 
-                    src={product.imageData} 
-                    alt={product.name} 
-                    className={`w-full h-40 object-cover rounded mb-2 border-2 ${farger[colorId] ? 'border-blue-500' : 'border-transparent'}`} 
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                name="florerande"
+                checked={farger["florerande"] || false}
+                onChange={handleFargerChange}
+                className="h-5 w-5"
+              />
+              <span>Fluorescent</span>
+            </label>
+            
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                name="glitter"
+                checked={farger["glitter"] || false}
+                onChange={handleFargerChange}
+                className="h-5 w-5"
+              />
+              <span>Glitter</span>
+            </label>
+            
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                name="alla"
+                checked={farger.alla || false}
+                onChange={handleFargerChange}
+                className="h-5 w-5"
+              />
+              <span>Alla</span>
+            </label>
+          </div>
+        </div>
+        
+        <div className="mb-8 p-4 border border-gray-200 rounded">
+          <h2 className="text-xl font-semibold mb-4">Välj storlekar:</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Manually define the order to ensure correct display */}
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                name="storlek2"
+                checked={storlekar["storlek2"] || false}
+                onChange={handleStorlekarChange}
+                className="h-5 w-5"
+              />
+              <span>Storlek 2</span>
+            </label>
+            
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                name="storlek4"
+                checked={storlekar["storlek4"] || false}
+                onChange={handleStorlekarChange}
+                className="h-5 w-5"
+              />
+              <span>Storlek 4</span>
+            </label>
+            
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                name="storlek6"
+                checked={storlekar["storlek6"] || false}
+                onChange={handleStorlekarChange}
+                className="h-5 w-5"
+              />
+              <span>Storlek 6</span>
+            </label>
+            
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                name="alla"
+                checked={storlekar.alla || false}
+                onChange={handleStorlekarChange}
+                className="h-5 w-5"
+              />
+              <span>Alla</span>
+            </label>
+          </div>
+          
+          <div className="mt-4 bg-blue-50 p-3 rounded text-sm">
+            <p>Vi rekommenderar att man beställer alla 3 storlekar (2, 4 och 6) för att tillmötesgå kundernas olika behov.</p>
+          </div>
+        </div>
+        
+        <div className="mb-8 p-4 border border-gray-200 rounded">
+          <h2 className="text-xl font-semibold mb-4">Välj specifik produkt (valfritt):</h2>
+          <div className="mb-4">
+            <ProductMenu 
+              products={products} 
+              selectedProduct={selectedProduct} 
+              onProductSelect={(product) => {
+                setSelectedProduct(product);
+                // Auto-select color and size based on the product
+                if (product) {
+                  const newFarger = { ...farger };
+                  const newStorlekar = { ...storlekar };
+                  
+                  // Reset all selections
+                  Object.keys(newFarger).forEach(key => {
+                    newFarger[key] = false;
+                  });
+                  Object.keys(newStorlekar).forEach(key => {
+                    newStorlekar[key] = false;
+                  });
+                  
+                  // Set color based on product name
+                  if (product.name) {
+                    const name = product.name.toLowerCase();
+                    if (name.includes('transparent')) {
+                      newFarger.transparent = true;
+                    } else if (name.includes('röd') || name.includes('red') || name.includes('rod')) {
+                      newFarger.rod = true;
+                    } else if (name.includes('fluor')) {
+                      newFarger.florerande = true;
+                    } else if (name.includes('glitter')) {
+                      newFarger.glitter = true;
+                    }
+                  }
+                  
+                  // Set size based on product size
+                  if (product.size) {
+                    const sizeKey = `storlek${product.size}`;
+                    if (Object.keys(newStorlekar).includes(sizeKey)) {
+                      newStorlekar[sizeKey] = true;
+                    }
+                  }
+                  
+                  setFarger(newFarger);
+                  setStorlekar(newStorlekar);
+                }
+              }} 
+            />
+          </div>
+          {selectedProduct && (
+            <div className="mt-4 p-3 bg-blue-50 rounded text-sm">
+              <p className="font-medium">Vald produkt: {selectedProduct.name}</p>
+              {selectedProduct.size && <p>Storlek: {selectedProduct.size}</p>}
+              {selectedProduct.basePrice && <p>Pris (exkl. moms): {selectedProduct.basePrice.toFixed(2)} SEK</p>}
+              <button 
+                onClick={() => setSelectedProduct(null)}
+                className="mt-2 text-blue-600 hover:text-blue-800 text-sm"
+              >
+                Återställ val
+              </button>
+            </div>
+          )}
+        </div>
+        
+        <div className="mb-8 p-4 border border-gray-200 rounded">
+          <h2 className="text-xl font-semibold mb-4">Välj antal förpackningar:</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            {[100, 300, 600, 1000].map((antal) => (
+              <button
+                key={antal}
+                onClick={() => handleAntalChange(antal)}
+                className={`p-3 border rounded-lg text-center ${
+                  antalForpackningar === antal 
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {antal.toLocaleString('sv-SE')}
+              </button>
+            ))}
+          </div>
+          
+          <div className="mt-4">
+            <label className="block mb-2 font-medium">Eller ange eget antal:</label>
+            <div className="flex">
+              <input
+                type="number"
+                min="1"
+                placeholder="Ange antal"
+                value={antalForpackningar || ''}
+                onChange={handleCustomAntalChange}
+                className="p-3 border rounded-lg w-full md:w-1/3"
+              />
+            </div>
+          </div>
+        </div>
+        
+        <div className="mb-8 p-4 border border-gray-200 rounded bg-blue-50">
+          <h2 className="text-xl font-semibold mb-2">Information om prissättning</h2>
+          <p>Alla priser är exklusive moms och beräknas med en fast marginal på 35%.</p>
+        </div>
+        
+        {isFormComplete && (
+          <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+            <h2 className="text-xl font-semibold mb-4">Resultat</h2>
+            
+            <div className="mb-6">
+              <h3 className="font-medium text-lg">Din order:</h3>
+              <ul className="mt-2 space-y-1">
+                <li>Färger: {antalFarger} st (
+                  {Object.entries(farger)
+                    .filter(([key, val]) => val && key !== 'alla')
+                    .map(([key]) => {
+                      const foundColor = productColors.find(color => color.id === key);
+                      return foundColor ? foundColor.name : key;
+                    })
+                    .join(', ')
+                  }
+                )</li>
+                <li>Storlekar: {antalStorlekar} st (
+                  {Object.entries(storlekar)
+                    .filter(([key, val]) => val && key !== 'alla')
+                    .map(([key]) => {
+                      const foundSize = productSizes.find(size => size.id === key);
+                      return foundSize ? foundSize.name : key;
+                    })
+                    .join(', ')
+                  }
+                )</li>
+                <li>Antal förpackningar: {antalForpackningar}</li>
+              </ul>
+            </div>
+            
+            <div className="mb-6 p-4 bg-white rounded border border-gray-200">
+              <h3 className="font-medium text-lg mb-3">Välj fördelningstyp:</h3>
+              <div className="flex flex-col md:flex-row items-start space-y-4 md:space-y-0 md:space-x-6">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    name="fordelningsTyp"
+                    value="jamn"
+                    checked={fordelningsTyp === 'jamn'}
+                    onChange={(e) => setFordelningsTyp(e.target.value)}
+                    className="h-5 w-5"
                   />
-                  <p className="text-sm font-medium">{product.name}</p>
+                  <span>Jämn fördelning av alla kombinationer</span>
+                </label>
+                
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    name="fordelningsTyp"
+                    value="perFarg"
+                    checked={fordelningsTyp === 'perFarg'}
+                    onChange={(e) => setFordelningsTyp(e.target.value)}
+                    className="h-5 w-5"
+                  />
+                  <span>Lika många av varje färg</span>
+                </label>
+              </div>
+            </div>
+            
+            <div className="mb-6 p-4 bg-white rounded border border-gray-200">
+              <h3 className="font-medium text-lg mb-3">Din förpackningsfördelning:</h3>
+              {fordelningsTyp === 'jamn' ? (
+                <div>
+                  <p className="mb-3 text-sm text-gray-600">
+                    Fördelningen nedan visar hur många förpackningar du får av varje färg och storlek.
+                  </p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="p-2 text-left">Färg</th>
+                          <th className="p-2 text-left">Storlek</th>
+                          <th className="p-2 text-right">Antal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(farger)
+                          .filter(([key, val]) => val && key !== 'alla')
+                          .map(([colorKey, _]) => {
+                            const foundColor = productColors.find(color => color.id === colorKey);
+                            const colorName = foundColor ? foundColor.name : colorKey;
+                            
+                            return Object.entries(storlekar)
+                              .filter(([key, val]) => val && key !== 'alla')
+                              .map(([sizeKey, _], sizeIndex) => {
+                                const foundSize = productSizes.find(size => size.id === sizeKey);
+                                const sizeName = foundSize ? foundSize.name : sizeKey;
+                                
+                                const totalCombinations = antalFarger * antalStorlekar;
+                                const perCombination = Math.floor(antalForpackningar / totalCombinations);
+                                const remainder = antalForpackningar % totalCombinations;
+                                
+                                // Beräkna index för denna kombination
+                                const colorIndex = Object.keys(farger)
+                                  .filter(k => k !== 'alla' && farger[k])
+                                  .findIndex(k => k === colorKey);
+                                
+                                const combinationIndex = colorIndex * antalStorlekar + sizeIndex;
+                                let quantity = perCombination;
+                                
+                                // Fördela resten jämnt på de första kombinationerna
+                                if (combinationIndex < remainder) {
+                                  quantity += 1;
+                                }
+                                
+                                return (
+                                  <tr key={`${colorKey}-${sizeKey}`} className="border-b">
+                                    <td className="p-2">{colorName}</td>
+                                    <td className="p-2">{sizeName}</td>
+                                    <td className="p-2 text-right">{quantity} st</td>
+                                  </tr>
+                                );
+                              });
+                          }).flat()}
+                      </tbody>
+                      <tfoot className="bg-gray-100">
+                        <tr>
+                          <td colSpan={2} className="p-2 font-semibold">Totalt</td>
+                          <td className="p-2 text-right font-semibold">{antalForpackningar} st</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
                 </div>
-              ));
-          })()}
-        </div>
-        
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {/* Manually define the order to ensure correct display */}
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              name="transparent"
-              checked={farger["transparent"] || false}
-              onChange={handleFargerChange}
-              className="h-5 w-5"
-            />
-            <span>Transparent</span>
-          </label>
-          
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              name="rod"
-              checked={farger["rod"] || false}
-              onChange={handleFargerChange}
-              className="h-5 w-5"
-            />
-            <span>Röd</span>
-          </label>
-          
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              name="florerande"
-              checked={farger["florerande"] || false}
-              onChange={handleFargerChange}
-              className="h-5 w-5"
-            />
-            <span>Fluorescent</span>
-          </label>
-          
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              name="glitter"
-              checked={farger["glitter"] || false}
-              onChange={handleFargerChange}
-              className="h-5 w-5"
-            />
-            <span>Glitter</span>
-          </label>
-          
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              name="alla"
-              checked={farger.alla || false}
-              onChange={handleFargerChange}
-              className="h-5 w-5"
-            />
-            <span>Alla</span>
-          </label>
-        </div>
-      </div>
-      
-      <div className="mb-8 p-4 border border-gray-200 rounded">
-        <h2 className="text-xl font-semibold mb-4">Välj storlekar:</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {/* Manually define the order to ensure correct display */}
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              name="storlek2"
-              checked={storlekar["storlek2"] || false}
-              onChange={handleStorlekarChange}
-              className="h-5 w-5"
-            />
-            <span>Storlek 2</span>
-          </label>
-          
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              name="storlek4"
-              checked={storlekar["storlek4"] || false}
-              onChange={handleStorlekarChange}
-              className="h-5 w-5"
-            />
-            <span>Storlek 4</span>
-          </label>
-          
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              name="storlek6"
-              checked={storlekar["storlek6"] || false}
-              onChange={handleStorlekarChange}
-              className="h-5 w-5"
-            />
-            <span>Storlek 6</span>
-          </label>
-          
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              name="alla"
-              checked={storlekar.alla || false}
-              onChange={handleStorlekarChange}
-              className="h-5 w-5"
-            />
-            <span>Alla</span>
-          </label>
-        </div>
-        
-        <div className="mt-4 bg-blue-50 p-3 rounded text-sm">
-          <p>Vi rekommenderar att man beställer alla 3 storlekar (2, 4 och 6) för att tillmötesgå kundernas olika behov.</p>
-        </div>
-      </div>
-      
-      <div className="mb-8 p-4 border border-gray-200 rounded">
-        <h2 className="text-xl font-semibold mb-4">Välj specifik produkt (valfritt):</h2>
-        <div className="mb-4">
-          <ProductMenu 
-            products={products} 
-            selectedProduct={selectedProduct} 
-            onProductSelect={(product) => {
-              setSelectedProduct(product);
-              // Auto-select color and size based on the product
-              if (product) {
-                const newFarger = { ...farger };
-                const newStorlekar = { ...storlekar };
-                
-                // Reset all selections
-                Object.keys(newFarger).forEach(key => {
-                  newFarger[key] = false;
-                });
-                Object.keys(newStorlekar).forEach(key => {
-                  newStorlekar[key] = false;
-                });
-                
-                // Set color based on product name
-                if (product.name) {
-                  const name = product.name.toLowerCase();
-                  if (name.includes('transparent')) {
-                    newFarger.transparent = true;
-                  } else if (name.includes('röd') || name.includes('red') || name.includes('rod')) {
-                    newFarger.rod = true;
-                  } else if (name.includes('fluor')) {
-                    newFarger.florerande = true;
-                  } else if (name.includes('glitter')) {
-                    newFarger.glitter = true;
-                  }
-                }
-                
-                // Set size based on product size
-                if (product.size) {
-                  const sizeKey = `storlek${product.size}`;
-                  if (Object.keys(newStorlekar).includes(sizeKey)) {
-                    newStorlekar[sizeKey] = true;
-                  }
-                }
-                
-                setFarger(newFarger);
-                setStorlekar(newStorlekar);
-              }
-            }} 
-          />
-        </div>
-        {selectedProduct && (
-          <div className="mt-4 p-3 bg-blue-50 rounded text-sm">
-            <p className="font-medium">Vald produkt: {selectedProduct.name}</p>
-            {selectedProduct.size && <p>Storlek: {selectedProduct.size}</p>}
-            {selectedProduct.basePrice && <p>Pris (exkl. moms): {selectedProduct.basePrice.toFixed(2)} SEK</p>}
-            <button 
-              onClick={() => setSelectedProduct(null)}
-              className="mt-2 text-blue-600 hover:text-blue-800 text-sm"
-            >
-              Återställ val
-            </button>
+              ) : (
+                <div>
+                  <p className="mb-3 text-sm text-gray-600">
+                    Fördelningen nedan visar hur många förpackningar du får av varje färg, jämnt fördelat över de valda storlekarna.
+                  </p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="p-2 text-left">Färg</th>
+                          <th className="p-2 text-right">Antal per färg</th>
+                          <th className="p-2">Storlekar</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(farger)
+                          .filter(([key, val]) => val && key !== 'alla')
+                          .map(([colorKey, _], index) => {
+                            const foundColor = productColors.find(color => color.id === colorKey);
+                            const colorName = foundColor ? foundColor.name : colorKey;
+                            
+                            const packagesPerColor = Math.floor(antalForpackningar / antalFarger);
+                            const colorRemainder = antalForpackningar % antalFarger;
+                            
+                            let quantityPerColor = packagesPerColor;
+                            if (index < colorRemainder) {
+                              quantityPerColor += 1;
+                            }
+                            
+                            // Beräkna fördelning per storlek
+                            const packagesPerSize = Math.floor(quantityPerColor / antalStorlekar);
+                            const sizeRemainder = quantityPerColor % antalStorlekar;
+                            
+                            const storleksInfo = Object.entries(storlekar)
+                              .filter(([key, val]) => val && key !== 'alla')
+                              .map(([sizeKey, _], sizeIndex) => {
+                                const foundSize = productSizes.find(size => size.id === sizeKey);
+                                const sizeName = foundSize ? 
+                                  foundSize.name.replace('Storlek ', '') : 
+                                  sizeKey.replace('storlek', '');
+                                
+                                let quantityPerSize = packagesPerSize;
+                                if (sizeIndex < sizeRemainder) {
+                                  quantityPerSize += 1;
+                                }
+                                
+                                return `${quantityPerSize} st i ${sizeName}`;
+                              })
+                              .join(', ');
+                            
+                            return (
+                              <tr key={colorKey} className="border-b">
+                                <td className="p-2">{colorName}</td>
+                                <td className="p-2 text-right">{quantityPerColor} st</td>
+                                <td className="p-2 text-sm">{storleksInfo}</td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                      <tfoot className="bg-gray-100">
+                        <tr>
+                          <td colSpan={1} className="p-2 font-semibold">Totalt</td>
+                          <td colSpan={2} className="p-2 text-right font-semibold">{antalForpackningar} st</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-4 bg-white rounded border border-gray-200">
+                <h3 className="font-bold text-lg mb-3">Inköpspris med 35% marginal:</h3>
+                <p className="mb-2">
+                  Försäljningspris per förpackning (exkl. moms): {FORSALJNINGSPRIS.toFixed(2)} kr
+                </p>
+                <p className="mb-2">
+                  Inköpspris per förpackning (exkl. moms): {inkopspris.toFixed(2)} kr
+                </p>
+                <p className="mb-2 font-semibold">
+                  Totalt inköpspris (exkl. moms): {totalPris.toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr
+                </p>
+              </div>
+            </div>
+            
+            <div className="mt-6 text-center">
+              <button 
+                onClick={handleSubmitOrder}
+                disabled={loading}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Bearbetar...' : 'Bekräfta beställning'}
+              </button>
+            </div>
           </div>
         )}
       </div>
-      
-      <div className="mb-8 p-4 border border-gray-200 rounded">
-        <h2 className="text-xl font-semibold mb-4">Välj antal förpackningar:</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          {[100, 300, 600, 1000].map((antal) => (
-            <button
-              key={antal}
-              onClick={() => handleAntalChange(antal)}
-              className={`p-3 border rounded-lg text-center ${
-                antalForpackningar === antal 
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              {antal.toLocaleString('sv-SE')}
-            </button>
-          ))}
-        </div>
-        
-        <div className="mt-4">
-          <label className="block mb-2 font-medium">Eller ange eget antal:</label>
-          <div className="flex">
-            <input
-              type="number"
-              min="1"
-              placeholder="Ange antal"
-              value={antalForpackningar || ''}
-              onChange={handleCustomAntalChange}
-              className="p-3 border rounded-lg w-full md:w-1/3"
-            />
-          </div>
-        </div>
-      </div>
-      
-      <div className="mb-8 p-4 border border-gray-200 rounded bg-blue-50">
-        <h2 className="text-xl font-semibold mb-2">Information om prissättning</h2>
-        <p>Alla priser är exklusive moms och beräknas med en fast marginal på 35%.</p>
-      </div>
-      
-      {isFormComplete && (
-        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4">Resultat</h2>
-          
-          <div className="mb-6">
-            <h3 className="font-medium text-lg">Din order:</h3>
-            <ul className="mt-2 space-y-1">
-              <li>Färger: {antalFarger} st (
-                {Object.entries(farger)
-                  .filter(([key, val]) => val && key !== 'alla')
-                  .map(([key]) => {
-                    const foundColor = productColors.find(color => color.id === key);
-                    return foundColor ? foundColor.name : key;
-                  })
-                  .join(', ')
-                }
-              )</li>
-              <li>Storlekar: {antalStorlekar} st (
-                {Object.entries(storlekar)
-                  .filter(([key, val]) => val && key !== 'alla')
-                  .map(([key]) => {
-                    const foundSize = productSizes.find(size => size.id === key);
-                    return foundSize ? foundSize.name : key;
-                  })
-                  .join(', ')
-                }
-              )</li>
-              <li>Antal förpackningar: {antalForpackningar}</li>
-            </ul>
-          </div>
-          
-          <div className="mb-6 p-4 bg-white rounded border border-gray-200">
-            <h3 className="font-medium text-lg mb-3">Välj fördelningstyp:</h3>
-            <div className="flex flex-col md:flex-row items-start space-y-4 md:space-y-0 md:space-x-6">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  name="fordelningsTyp"
-                  value="jamn"
-                  checked={fordelningsTyp === 'jamn'}
-                  onChange={(e) => setFordelningsTyp(e.target.value)}
-                  className="h-5 w-5"
-                />
-                <span>Jämn fördelning av alla kombinationer</span>
-              </label>
-              
-              <label className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  name="fordelningsTyp"
-                  value="perFarg"
-                  checked={fordelningsTyp === 'perFarg'}
-                  onChange={(e) => setFordelningsTyp(e.target.value)}
-                  className="h-5 w-5"
-                />
-                <span>Lika många av varje färg</span>
-              </label>
-            </div>
-          </div>
-          
-          <div className="mb-6 p-4 bg-white rounded border border-gray-200">
-            <h3 className="font-medium text-lg mb-3">Din förpackningsfördelning:</h3>
-            {fordelningsTyp === 'jamn' ? (
-              <div>
-                <p className="mb-3 text-sm text-gray-600">
-                  Fördelningen nedan visar hur många förpackningar du får av varje färg och storlek.
-                </p>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="p-2 text-left">Färg</th>
-                        <th className="p-2 text-left">Storlek</th>
-                        <th className="p-2 text-right">Antal</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Object.entries(farger)
-                        .filter(([key, val]) => val && key !== 'alla')
-                        .map(([colorKey, _]) => {
-                          const foundColor = productColors.find(color => color.id === colorKey);
-                          const colorName = foundColor ? foundColor.name : colorKey;
-                          
-                          return Object.entries(storlekar)
-                            .filter(([key, val]) => val && key !== 'alla')
-                            .map(([sizeKey, _], sizeIndex) => {
-                              const foundSize = productSizes.find(size => size.id === sizeKey);
-                              const sizeName = foundSize ? foundSize.name : sizeKey;
-                              
-                              const totalCombinations = antalFarger * antalStorlekar;
-                              const perCombination = Math.floor(antalForpackningar / totalCombinations);
-                              const remainder = antalForpackningar % totalCombinations;
-                              
-                              // Beräkna index för denna kombination
-                              const colorIndex = Object.keys(farger)
-                                .filter(k => k !== 'alla' && farger[k])
-                                .findIndex(k => k === colorKey);
-                              
-                              const combinationIndex = colorIndex * antalStorlekar + sizeIndex;
-                              let quantity = perCombination;
-                              
-                              // Fördela resten jämnt på de första kombinationerna
-                              if (combinationIndex < remainder) {
-                                quantity += 1;
-                              }
-                              
-                              return (
-                                <tr key={`${colorKey}-${sizeKey}`} className="border-b">
-                                  <td className="p-2">{colorName}</td>
-                                  <td className="p-2">{sizeName}</td>
-                                  <td className="p-2 text-right">{quantity} st</td>
-                                </tr>
-                              );
-                            });
-                        }).flat()}
-                    </tbody>
-                    <tfoot className="bg-gray-100">
-                      <tr>
-                        <td colSpan={2} className="p-2 font-semibold">Totalt</td>
-                        <td className="p-2 text-right font-semibold">{antalForpackningar} st</td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <p className="mb-3 text-sm text-gray-600">
-                  Fördelningen nedan visar hur många förpackningar du får av varje färg, jämnt fördelat över de valda storlekarna.
-                </p>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="p-2 text-left">Färg</th>
-                        <th className="p-2 text-right">Antal per färg</th>
-                        <th className="p-2">Storlekar</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Object.entries(farger)
-                        .filter(([key, val]) => val && key !== 'alla')
-                        .map(([colorKey, _], index) => {
-                          const foundColor = productColors.find(color => color.id === colorKey);
-                          const colorName = foundColor ? foundColor.name : colorKey;
-                          
-                          const packagesPerColor = Math.floor(antalForpackningar / antalFarger);
-                          const colorRemainder = antalForpackningar % antalFarger;
-                          
-                          let quantityPerColor = packagesPerColor;
-                          if (index < colorRemainder) {
-                            quantityPerColor += 1;
-                          }
-                          
-                          // Beräkna fördelning per storlek
-                          const packagesPerSize = Math.floor(quantityPerColor / antalStorlekar);
-                          const sizeRemainder = quantityPerColor % antalStorlekar;
-                          
-                          const storleksInfo = Object.entries(storlekar)
-                            .filter(([key, val]) => val && key !== 'alla')
-                            .map(([sizeKey, _], sizeIndex) => {
-                              const foundSize = productSizes.find(size => size.id === sizeKey);
-                              const sizeName = foundSize ? 
-                                foundSize.name.replace('Storlek ', '') : 
-                                sizeKey.replace('storlek', '');
-                              
-                              let quantityPerSize = packagesPerSize;
-                              if (sizeIndex < sizeRemainder) {
-                                quantityPerSize += 1;
-                              }
-                              
-                              return `${quantityPerSize} st i ${sizeName}`;
-                            })
-                            .join(', ');
-                          
-                          return (
-                            <tr key={colorKey} className="border-b">
-                              <td className="p-2">{colorName}</td>
-                              <td className="p-2 text-right">{quantityPerColor} st</td>
-                              <td className="p-2 text-sm">{storleksInfo}</td>
-                            </tr>
-                          );
-                        })}
-                    </tbody>
-                    <tfoot className="bg-gray-100">
-                      <tr>
-                        <td colSpan={1} className="p-2 font-semibold">Totalt</td>
-                        <td colSpan={2} className="p-2 text-right font-semibold">{antalForpackningar} st</td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-4 bg-white rounded border border-gray-200">
-              <h3 className="font-bold text-lg mb-3">Inköpspris med 35% marginal:</h3>
-              <p className="mb-2">
-                Försäljningspris per förpackning (exkl. moms): {FORSALJNINGSPRIS.toFixed(2)} kr
-              </p>
-              <p className="mb-2">
-                Inköpspris per förpackning (exkl. moms): {inkopspris.toFixed(2)} kr
-              </p>
-              <p className="mb-2 font-semibold">
-                Totalt inköpspris (exkl. moms): {totalPris.toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr
-              </p>
-            </div>
-          </div>
-          
-          <div className="mt-6 text-center">
-            <button 
-              onClick={handleSubmitOrder}
-              disabled={loading}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Bearbetar...' : 'Bekräfta beställning'}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+    </AppLayout>
   );
 };
 
