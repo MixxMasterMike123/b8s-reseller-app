@@ -340,35 +340,41 @@ export const OrderProvider = ({ children }) => {
           console.error('Error fetching orders from named database:', error);
         }
         
-        // Then try default database
-        try {
-          const defaultOrdersQuery = query(
-            collection(defaultDb, "orders"),
-            where("userId", "==", currentUser.uid),
-            orderBy("createdAt", "desc")
-          );
-          
-          const querySnapshot = await getDocs(defaultOrdersQuery);
-          
-          querySnapshot.forEach((doc) => {
-            // Check if we already have this order (in case it exists in both DBs)
-            const existingIndex = orders.findIndex(o => o.orderNumber === doc.data().orderNumber);
-            if (existingIndex === -1) {
-              orders.push({
-                id: doc.id,
-                ...doc.data()
-              });
-            }
-          });
-        } catch (error) {
-          console.error('Error fetching orders from default database:', error);
+        // Only try default database if user is admin
+        // This prevents permission errors for regular users
+        if (isAdmin) {
+          try {
+            const defaultOrdersQuery = query(
+              collection(defaultDb, "orders"),
+              where("userId", "==", currentUser.uid),
+              orderBy("createdAt", "desc")
+            );
+            
+            const querySnapshot = await getDocs(defaultOrdersQuery);
+            
+            querySnapshot.forEach((doc) => {
+              // Check if we already have this order (in case it exists in both DBs)
+              const existingIndex = orders.findIndex(o => o.orderNumber === doc.data().orderNumber);
+              if (existingIndex === -1) {
+                orders.push({
+                  id: doc.id,
+                  ...doc.data()
+                });
+              }
+            });
+          } catch (error) {
+            console.error('Error fetching orders from default database:', error);
+            // Don't throw error here, just log it
+          }
         }
         
         return orders;
       }
     } catch (error) {
       setError(error.message);
-      throw error;
+      console.error('Error in getUserOrders:', error);
+      // Return empty array instead of throwing to prevent loops
+      return [];
     } finally {
       setLoading(false);
     }

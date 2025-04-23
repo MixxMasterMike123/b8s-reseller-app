@@ -12,6 +12,7 @@ const OrderHistoryPage = () => {
   const { getUserOrders, loading } = useOrder();
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -20,14 +21,28 @@ const OrderHistoryPage = () => {
       try {
         const userOrders = await getUserOrders();
         
-        // Sort orders by date (newest first)
-        const sortedOrders = userOrders.sort((a, b) => {
-          return b.createdAt.toDate() - a.createdAt.toDate();
+        if (!userOrders || userOrders.length === 0) {
+          setOrders([]);
+          return;
+        }
+        
+        // Sort orders by date (newest first), handle different date formats
+        const sortedOrders = [...userOrders].sort((a, b) => {
+          // Handle different date formats safely
+          const dateA = getOrderDate(a.createdAt);
+          const dateB = getOrderDate(b.createdAt);
+          
+          if (!dateA && !dateB) return 0;
+          if (!dateA) return 1;
+          if (!dateB) return -1;
+          
+          return dateB.getTime() - dateA.getTime();
         });
         
         setOrders(sortedOrders);
       } catch (error) {
         console.error('Error fetching orders:', error);
+        setError('Kunde inte hämta dina beställningar. Försök igen senare.');
         toast.error('Kunde inte hämta dina beställningar. Försök igen senare.');
       } finally {
         setLoadingOrders(false);
@@ -37,10 +52,46 @@ const OrderHistoryPage = () => {
     fetchOrders();
   }, [currentUser, getUserOrders]);
 
+  // Helper function to get a JavaScript Date from different date formats
+  const getOrderDate = (dateValue) => {
+    if (!dateValue) return null;
+    
+    // Handle Firestore Timestamp
+    if (dateValue && typeof dateValue.toDate === 'function') {
+      return dateValue.toDate();
+    }
+    
+    // Handle ISO date string
+    if (typeof dateValue === 'string') {
+      return new Date(dateValue);
+    }
+    
+    // Handle JavaScript Date object
+    if (dateValue instanceof Date) {
+      return dateValue;
+    }
+    
+    // Handle seconds-based timestamp (for Firestore seconds)
+    if (dateValue.seconds) {
+      return new Date(dateValue.seconds * 1000);
+    }
+    
+    return null;
+  };
+
   // Format date to Swedish format
   const formatDate = (date) => {
-    if (!date) return '';
-    return format(date.toDate(), 'PPP', { locale: sv });
+    try {
+      if (!date) return 'Okänt datum';
+      
+      const jsDate = getOrderDate(date);
+      if (!jsDate) return 'Okänt datum';
+      
+      return format(jsDate, 'PPP', { locale: sv });
+    } catch (error) {
+      console.error('Error formatting date:', error, date);
+      return 'Felaktigt datum';
+    }
   };
 
   // Get status text and color
@@ -80,6 +131,22 @@ const OrderHistoryPage = () => {
           <div className="py-12 text-center">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
             <p className="mt-2 text-gray-600">Hämtar dina beställningar...</p>
+          </div>
+        ) : error ? (
+          <div className="py-12 text-center">
+            <div className="text-red-500 mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-medium text-gray-700 mb-2">Ett fel uppstod</h2>
+            <p className="text-gray-500 mb-6">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Försök igen
+            </button>
           </div>
         ) : orders.length > 0 ? (
           <div className="overflow-x-auto">
