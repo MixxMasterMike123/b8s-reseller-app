@@ -288,7 +288,7 @@ const AdminOrders = () => {
                           </select>
                           
                           <Link
-                            to={`/order/${order.id}`}
+                            to={`/admin/orders/${order.id}`}
                             className="inline-flex items-center px-3 py-1 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                           >
                             Visa

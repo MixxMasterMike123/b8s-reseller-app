@@ -615,14 +615,28 @@ export const OrderProvider = ({ children }) => {
         return true;
       } else {
         // Real Firebase order deletion
-        await deleteDoc(doc(db, "orders", orderId));
-        
-        toast.success('Order deleted successfully');
-        return true;
+        try {
+          // Get the order to verify it exists
+          const orderDoc = await getDoc(doc(db, "orders", orderId));
+          
+          if (!orderDoc.exists()) {
+            throw new Error('Order not found');
+          }
+          
+          // Delete the order
+          await deleteDoc(doc(db, "orders", orderId));
+          
+          toast.success('Order deleted successfully');
+          return true;
+        } catch (error) {
+          console.error('Error deleting order:', error);
+          toast.error('Failed to delete order: ' + error.message);
+          throw error;
+        }
       }
     } catch (error) {
       setError(error.message);
-      toast.error('Failed to delete order');
+      toast.error('Failed to delete order: ' + error.message);
       throw error;
     } finally {
       setLoading(false);

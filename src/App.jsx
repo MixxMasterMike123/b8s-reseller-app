@@ -18,6 +18,7 @@ import AdminPage from './pages/AdminPage';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminProducts from './pages/admin/AdminProducts';
+import AdminOrderDetail from './pages/admin/AdminOrderDetail';
 
 // Components
 import PrivateRoute from './components/PrivateRoute';
@@ -51,6 +52,7 @@ function App() {
       <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
       <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
       <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
+      <Route path="/admin/orders/:orderId" element={<AdminRoute><AdminOrderDetail /></AdminRoute>} />
       <Route path="/admin/products" element={<AdminRoute><AdminProducts /></AdminRoute>} />
 
       {/* Redirect any unknown routes to dashboard */}
