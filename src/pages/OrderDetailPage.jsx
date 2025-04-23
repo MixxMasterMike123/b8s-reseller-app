@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -11,57 +11,84 @@ const OrderDetailPage = () => {
   const params = useParams();
   const orderId = params.orderId || params.id; // Support both route parameter names
   const navigate = useNavigate();
-  const { getOrderById, cancelOrder, updateOrderStatus } = useOrder();
+  const { getOrderById, cancelOrder, updateOrderStatus, error: orderError } = useOrder();
   const { isAdmin } = useAuth();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [updateStatusLoading, setUpdateStatusLoading] = useState(false);
+  const [fetchAttempted, setFetchAttempted] = useState(false);
+
+  // Memoize the fetch function to avoid dependency changes
+  const fetchOrder = useCallback(async () => {
+    if (!orderId || fetchAttempted) return;
+    
+    try {
+      setLoading(true);
+      console.log('Fetching order with ID:', orderId);
+      const orderData = await getOrderById(orderId);
+      
+      if (!orderData) {
+        setError(orderError || 'Beställningen hittades inte');
+        toast.error('Beställningen hittades inte');
+        return;
+      }
+      
+      setOrder(orderData);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching order:', err);
+      setError('Kunde inte hämta beställningsdetaljer');
+      toast.error('Kunde inte hämta beställningsdetaljer');
+    } finally {
+      setLoading(false);
+      setFetchAttempted(true);
+    }
+  }, [orderId, getOrderById, orderError]);
 
   useEffect(() => {
-    const fetchOrder = async () => {
-      try {
-        console.log('Fetching order with ID:', orderId);
-        const orderData = await getOrderById(orderId);
-        if (!orderData) {
-          toast.error('Beställningen hittades inte');
-          navigate('/orders');
-          return;
-        }
-        setOrder(orderData);
-      } catch (error) {
-        console.error('Error fetching order:', error);
-        toast.error('Kunde inte hämta beställningsdetaljer');
-        navigate('/orders');
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchOrder();
+  }, [fetchOrder]);
 
-    if (orderId) {
-      fetchOrder();
-    }
-  }, [orderId, getOrderById, navigate]);
-
-  const formatDate = (date) => {
-    if (!date) return '';
+  const getOrderDate = (dateValue) => {
+    if (!dateValue) return null;
     
     // Handle Firestore Timestamp
-    if (date && typeof date.toDate === 'function') {
-      return format(date.toDate(), 'PPP', { locale: sv });
+    if (dateValue && typeof dateValue.toDate === 'function') {
+      return dateValue.toDate();
     }
     
-    // Handle string ISO date
-    if (typeof date === 'string') {
-      return format(new Date(date), 'PPP', { locale: sv });
+    // Handle ISO date string
+    if (typeof dateValue === 'string') {
+      return new Date(dateValue);
     }
     
     // Handle JavaScript Date object
-    if (date instanceof Date) {
-      return format(date, 'PPP', { locale: sv });
+    if (dateValue instanceof Date) {
+      return dateValue;
     }
     
-    return 'Okänt datum';
+    // Handle seconds-based timestamp (for Firestore seconds)
+    if (dateValue.seconds) {
+      return new Date(dateValue.seconds * 1000);
+    }
+    
+    return null;
+  };
+
+  const formatDate = (date) => {
+    try {
+      if (!date) return 'Okänt datum';
+      
+      const jsDate = getOrderDate(date);
+      if (!jsDate) return 'Okänt datum';
+      
+      return format(jsDate, 'PPP', { locale: sv });
+    } catch (err) {
+      console.error('Error formatting date:', err, date);
+      return 'Felaktigt datum';
+    }
   };
 
   const getStatusInfo = (status) => {
@@ -88,11 +115,15 @@ const OrderDetailPage = () => {
       setCancelLoading(true);
       try {
         await cancelOrder(orderId);
+        
+        // Fetch the updated order directly
         const updatedOrder = await getOrderById(orderId);
-        setOrder(updatedOrder);
-        toast.success('Beställningen har avbrutits');
-      } catch (error) {
-        console.error('Error cancelling order:', error);
+        if (updatedOrder) {
+          setOrder(updatedOrder);
+          toast.success('Beställningen har avbrutits');
+        }
+      } catch (err) {
+        console.error('Error cancelling order:', err);
         toast.error('Kunde inte avbryta beställningen');
       } finally {
         setCancelLoading(false);
@@ -108,15 +139,25 @@ const OrderDetailPage = () => {
     setUpdateStatusLoading(true);
     try {
       await updateOrderStatus(orderId, newStatus);
+      
+      // Fetch the updated order directly
       const updatedOrder = await getOrderById(orderId);
-      setOrder(updatedOrder);
-      toast.success(`Orderstatus uppdaterad till ${getStatusInfo(newStatus).text}`);
-    } catch (error) {
-      console.error('Error updating order status:', error);
-      toast.error('Kunde inte uppdatera orderstatus: ' + error.message);
+      if (updatedOrder) {
+        setOrder(updatedOrder);
+        toast.success(`Orderstatus uppdaterad till ${getStatusInfo(newStatus).text}`);
+      }
+    } catch (err) {
+      console.error('Error updating order status:', err);
+      toast.error('Kunde inte uppdatera orderstatus: ' + (err.message || ''));
     } finally {
       setUpdateStatusLoading(false);
     }
+  };
+
+  const handleRetry = () => {
+    setFetchAttempted(false);
+    setError(null);
+    fetchOrder();
   };
 
   const canCancel = order?.status === 'pending' || order?.status === 'confirmed';
@@ -128,6 +169,38 @@ const OrderDetailPage = () => {
           <div className="py-12 text-center">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
             <p className="mt-2 text-gray-600">Hämtar beställningsdetaljer...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AppLayout>
+        <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-6">
+          <div className="py-12 text-center">
+            <div className="text-red-500 mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-medium text-gray-700 mb-2">Ett fel uppstod</h2>
+            <p className="text-gray-500 mb-6">{error}</p>
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={handleRetry}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Försök igen
+              </button>
+              <Link
+                to="/orders"
+                className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Tillbaka till orderlistan
+              </Link>
+            </div>
           </div>
         </div>
       </AppLayout>

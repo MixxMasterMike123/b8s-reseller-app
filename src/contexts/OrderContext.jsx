@@ -242,12 +242,14 @@ export const OrderProvider = ({ children }) => {
         const order = demoOrders.find(o => o.id === orderId);
         
         if (!order) {
-          throw new Error('Order not found');
+          setError('Order not found');
+          return null;
         }
         
         // Check if user is authorized to view this order
         if (order.userId !== currentUser.uid && !isAdmin) {
-          throw new Error('Unauthorized');
+          setError('Unauthorized');
+          return null;
         }
         
         return order;
@@ -261,48 +263,86 @@ export const OrderProvider = ({ children }) => {
             
             // Check if user is authorized to view this order
             if (orderData.userId !== currentUser.uid && !isAdmin) {
-              throw new Error('Unauthorized');
+              setError('Unauthorized');
+              return null;
             }
+            
+            // Process any timestamps to avoid re-render loops
+            const processedData = processTimestamps(orderData);
             
             return {
               id: orderDoc.id,
-              ...orderData
+              ...processedData
             };
           }
         } catch (error) {
           console.error('Error fetching from named database:', error);
+          // Continue to try the default database
         }
         
-        // If not found in named DB, try default database
-        try {
-          const defaultOrderDoc = await getDoc(doc(defaultDb, "orders", orderId));
-          
-          if (defaultOrderDoc.exists()) {
-            const orderData = defaultOrderDoc.data();
+        // If not found in named DB and user is admin, try default database
+        if (isAdmin) {
+          try {
+            const defaultOrderDoc = await getDoc(doc(defaultDb, "orders", orderId));
             
-            // Check if user is authorized to view this order
-            if (orderData.userId !== currentUser.uid && !isAdmin) {
-              throw new Error('Unauthorized');
+            if (defaultOrderDoc.exists()) {
+              const orderData = defaultOrderDoc.data();
+              
+              // Process any timestamps to avoid re-render loops
+              const processedData = processTimestamps(orderData);
+              
+              return {
+                id: defaultOrderDoc.id,
+                ...processedData
+              };
             }
-            
-            return {
-              id: defaultOrderDoc.id,
-              ...orderData
-            };
+          } catch (error) {
+            console.error('Error fetching from default database:', error);
           }
-        } catch (error) {
-          console.error('Error fetching from default database:', error);
         }
         
         // If we reach here, the order was not found in either database
-        throw new Error('Order not found');
+        setError('Order not found');
+        return null;
       }
     } catch (error) {
-      setError(error.message);
-      throw error;
+      console.error('Error in getOrderById:', error);
+      setError(error.message || 'Error fetching order');
+      return null;
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to process Firestore timestamps to stable format
+  // This prevents re-render loops caused by timestamp objects changing identity
+  const processTimestamps = (data) => {
+    if (!data) return data;
+    
+    const processed = { ...data };
+    
+    // Process common timestamp fields
+    const timestampFields = ['createdAt', 'updatedAt', 'cancelledAt'];
+    
+    timestampFields.forEach(field => {
+      if (processed[field] && typeof processed[field].toDate === 'function') {
+        // Convert to ISO string for stability
+        processed[field] = processed[field].toDate().toISOString();
+      }
+    });
+    
+    // Process status history array if it exists
+    if (Array.isArray(processed.statusHistory)) {
+      processed.statusHistory = processed.statusHistory.map(entry => {
+        const processedEntry = { ...entry };
+        if (processedEntry.changedAt && typeof processedEntry.changedAt.toDate === 'function') {
+          processedEntry.changedAt = processedEntry.changedAt.toDate().toISOString();
+        }
+        return processedEntry;
+      });
+    }
+    
+    return processed;
   };
 
   // Get user's orders
