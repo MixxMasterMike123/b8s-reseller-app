@@ -152,6 +152,7 @@ export function AuthProvider({ children }) {
           ...userData,
           role: 'user',
           active: false,
+          isActive: false,
           createdAt: new Date().toISOString(),
         };
         
@@ -169,6 +170,7 @@ export function AuthProvider({ children }) {
           email,
           role: 'user',
           active: false, // Require admin activation
+          isActive: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
@@ -411,7 +413,12 @@ export function AuthProvider({ children }) {
         setDemoUsers(users => 
           users.map(user => 
             user.id === userId 
-              ? { ...user, active: activeStatus, updatedAt: new Date().toISOString() } 
+              ? { 
+                  ...user, 
+                  active: activeStatus, 
+                  isActive: activeStatus, // Update both properties
+                  updatedAt: new Date().toISOString() 
+                } 
               : user
           )
         );
@@ -425,8 +432,22 @@ export function AuthProvider({ children }) {
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, {
           active: activeStatus,
+          isActive: activeStatus, // Update both properties
           updatedAt: new Date().toISOString()
         });
+        
+        // Also update status in the default database if it exists
+        try {
+          const defaultUserRef = doc(defaultDb, 'users', userId);
+          await updateDoc(defaultUserRef, {
+            active: activeStatus,
+            isActive: activeStatus, // Update both properties
+            updatedAt: new Date().toISOString()
+          });
+        } catch (error) {
+          console.error('Error updating status in default database:', error);
+          // Continue even if default DB update fails
+        }
         
         toast.success(`User ${activeStatus ? 'activated' : 'deactivated'} successfully`);
         return true;
