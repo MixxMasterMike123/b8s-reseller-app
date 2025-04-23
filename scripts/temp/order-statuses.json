@@ -1,0 +1,26 @@
+[
+  {
+    "name": "New",
+    "description": "New order, not yet processed",
+    "order": 1,
+    "color": "blue"
+  },
+  {
+    "name": "Processing",
+    "description": "Order is being processed",
+    "order": 2,
+    "color": "orange"
+  },
+  {
+    "name": "Completed",
+    "description": "Order has been completed",
+    "order": 3,
+    "color": "green"
+  },
+  {
+    "name": "Cancelled",
+    "description": "Order has been cancelled",
+    "order": 4,
+    "color": "red"
+  }
+]

@@ -1,0 +1,79 @@
+{
+  "__collections__": {
+    "users": {
+      "admin": {
+        "email": "admin@b8shield.com",
+        "companyName": "B8shield Admin",
+        "role": "admin",
+        "isActive": true,
+        "contactPerson": "Admin User",
+        "phone": "+46123456789",
+        "__collections__": {}
+      }
+    },
+    "products": {
+      "prod-001": {
+        "name": "B8shield Basic",
+        "description": "Basic security solution for small businesses",
+        "price": 499,
+        "isActive": true,
+        "__collections__": {}
+      },
+      "prod-002": {
+        "name": "B8shield Pro",
+        "description": "Advanced security solution with extended features",
+        "price": 999,
+        "isActive": true,
+        "__collections__": {}
+      },
+      "prod-003": {
+        "name": "B8shield Enterprise",
+        "description": "Complete security solution for large organizations",
+        "price": 1999,
+        "isActive": true,
+        "__collections__": {}
+      }
+    },
+    "settings": {
+      "app": {
+        "orderNumberPrefix": "B8-",
+        "orderStartNumber": 1000,
+        "companyName": "B8shield AB",
+        "companyEmail": "info@b8shield.com",
+        "companyPhone": "+46123456789",
+        "companyAddress": "Stockholm, Sweden",
+        "__collections__": {}
+      }
+    },
+    "orderStatuses": {
+      "new": {
+        "name": "New",
+        "description": "New order, not yet processed",
+        "order": 1,
+        "color": "blue",
+        "__collections__": {}
+      },
+      "processing": {
+        "name": "Processing",
+        "description": "Order is being processed",
+        "order": 2,
+        "color": "orange",
+        "__collections__": {}
+      },
+      "completed": {
+        "name": "Completed",
+        "description": "Order has been completed",
+        "order": 3,
+        "color": "green",
+        "__collections__": {}
+      },
+      "cancelled": {
+        "name": "Cancelled",
+        "description": "Order has been cancelled",
+        "order": 4,
+        "color": "red",
+        "__collections__": {}
+      }
+    }
+  }
+}

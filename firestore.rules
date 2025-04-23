@@ -1,0 +1,92 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions for common checks
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isReseller() {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'reseller';
+    }
+    
+    function isActiveUser() {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isActive == true;
+    }
+    
+    function isUserOrAdmin(userId) {
+      return request.auth.uid == userId || isAdmin();
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Users can read their own document, admins can read all user documents
+      allow read: if isUserOrAdmin(userId);
+      // Only admins can create users
+      allow create: if isAdmin();
+      // Users can update their own profile data except role and isActive fields, admins can update everything
+      allow update: if isUserOrAdmin(userId) && 
+        (!isAdmin() ? (
+          !("role" in request.resource.data) && 
+          !("isActive" in request.resource.data)
+        ) : true);
+      // Only admins can delete users
+      allow delete: if isAdmin();
+    }
+    
+    // Products collection
+    match /products/{productId} {
+      // Any active user can read products
+      allow read: if isActiveUser();
+      // Only admins can create/update/delete products
+      allow write: if isAdmin();
+    }
+    
+    // Orders collection
+    match /orders/{orderId} {
+      // Users can read their own orders, admins can read all orders
+      allow read: if isActiveUser() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+      // Active users can create orders, but only for themselves
+      allow create: if isActiveUser() && 
+        request.resource.data.userId == request.auth.uid;
+      // Users can update their own orders to cancel them, admins can update any order
+      allow update: if isActiveUser() && (
+        (resource.data.userId == request.auth.uid && 
+         request.resource.data.status == 'cancelled' && 
+         resource.data.status in ['pending', 'confirmed']) || 
+        isAdmin()
+      );
+      // Only admins can delete orders
+      allow delete: if isAdmin();
+    }
+    
+    // Order statuses collection
+    match /orderStatuses/{statusId} {
+      // Any active user can read order statuses
+      allow read: if isActiveUser();
+      // Only admins can create/update/delete order statuses
+      allow write: if isAdmin();
+    }
+    
+    // Settings collection
+    match /settings/{settingId} {
+      // Any active user can read settings
+      allow read: if isActiveUser();
+      // Only admins can create/update/delete settings
+      allow write: if isAdmin();
+    }
+  }
+}
