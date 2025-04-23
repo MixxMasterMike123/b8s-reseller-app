@@ -571,12 +571,13 @@ export const OrderProvider = ({ children }) => {
         const orderData = orderDoc.data();
         const previousStatus = orderData.status || 'unknown';
         
-        // Create status history entry
+        // Create status history entry with regular timestamp instead of serverTimestamp
+        const now = new Date();
         const statusChange = {
           from: previousStatus,
           to: newStatus,
           changedBy: currentUser.uid,
-          changedAt: serverTimestamp(),
+          changedAt: now,
           displayName: currentUser.displayName || currentUser.email || 'Admin User'
         };
         
@@ -611,7 +612,7 @@ export const OrderProvider = ({ children }) => {
       }
     } catch (error) {
       setError(error.message);
-      toast.error('Failed to update order status');
+      toast.error('Failed to update order status: ' + error.message);
       throw error;
     } finally {
       setLoading(false);

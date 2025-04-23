@@ -45,7 +45,23 @@ const OrderDetailPage = () => {
 
   const formatDate = (date) => {
     if (!date) return '';
-    return format(date.toDate(), 'PPP', { locale: sv });
+    
+    // Handle Firestore Timestamp
+    if (date && typeof date.toDate === 'function') {
+      return format(date.toDate(), 'PPP', { locale: sv });
+    }
+    
+    // Handle string ISO date
+    if (typeof date === 'string') {
+      return format(new Date(date), 'PPP', { locale: sv });
+    }
+    
+    // Handle JavaScript Date object
+    if (date instanceof Date) {
+      return format(date, 'PPP', { locale: sv });
+    }
+    
+    return 'Okänt datum';
   };
 
   const getStatusInfo = (status) => {
@@ -85,6 +101,10 @@ const OrderDetailPage = () => {
   };
 
   const handleStatusUpdate = async (newStatus) => {
+    if (newStatus === order.status) {
+      return;
+    }
+    
     setUpdateStatusLoading(true);
     try {
       await updateOrderStatus(orderId, newStatus);
@@ -93,7 +113,7 @@ const OrderDetailPage = () => {
       toast.success(`Orderstatus uppdaterad till ${getStatusInfo(newStatus).text}`);
     } catch (error) {
       console.error('Error updating order status:', error);
-      toast.error('Kunde inte uppdatera orderstatus');
+      toast.error('Kunde inte uppdatera orderstatus: ' + error.message);
     } finally {
       setUpdateStatusLoading(false);
     }
@@ -318,11 +338,7 @@ const OrderDetailPage = () => {
                         </span>
                       </div>
                       <div className="text-sm text-gray-500">
-                        {history.changedAt && history.changedAt.toDate 
-                          ? formatDate(history.changedAt) 
-                          : history.changedAt 
-                            ? new Date(history.changedAt).toLocaleDateString('sv-SE')
-                            : 'N/A'}
+                        {history.changedAt ? formatDate(history.changedAt) : 'N/A'}
                       </div>
                     </div>
                     {history.displayName && (
