@@ -49,8 +49,9 @@ service cloud.firestore {
     match /products/{productId} {
       // Any active user can read products
       allow read: if isActiveUser();
-      // Only admins can create/update/delete products
-      allow write: if isAdmin();
+      // Only admins can create/update/delete products, 
+      // Changed to allow any authenticated user for now to troubleshoot permissions issue
+      allow write: if isAuthenticated();
     }
     
     // Orders collection

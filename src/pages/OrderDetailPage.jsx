@@ -6,6 +6,35 @@ import { sv } from 'date-fns/locale';
 import { useOrder } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
 import AppLayout from '../components/layout/AppLayout';
+import OrderStatusMenu from '../components/OrderStatusMenu';
+import ProductMenu from '../components/ProductMenu';
+
+// Add a helper function to parse and display order distribution data
+const getOrderDistribution = (order) => {
+  // If fordelning property exists (direct mapping of color_size to quantity)
+  if (order.fordelning && Object.keys(order.fordelning).length > 0) {
+    return Object.entries(order.fordelning).map(([key, antal]) => {
+      const [farg, storlek] = key.split('_');
+      return {
+        color: farg,
+        size: storlek.replace('storlek', ''),
+        quantity: antal
+      };
+    });
+  }
+  
+  // If orderDetails.distribution exists (array of color/size/quantity objects)
+  if (order.orderDetails?.distribution && order.orderDetails.distribution.length > 0) {
+    return order.orderDetails.distribution;
+  }
+  
+  // Fallback to creating a single entry with the total quantity
+  return [{
+    color: order.farger?.join(', ') || order.color || 'Blandade färger',
+    size: order.storlekar?.join(', ') || order.size || 'Blandade storlekar',
+    quantity: order.antalForpackningar || 0
+  }];
+};
 
 const OrderDetailPage = () => {
   const params = useParams();
@@ -162,6 +191,17 @@ const OrderDetailPage = () => {
 
   const canCancel = order?.status === 'pending' || order?.status === 'confirmed';
 
+  // Define orderProducts based on the order data
+  const orderProducts = order ? [
+    {
+      id: 'b8shield-base',
+      name: 'B8 Shield',
+      description: 'B8 Shield protection for smartphones',
+      basePrice: order.prisInfo?.produktPris || 71.2,
+      isActive: true
+    }
+  ] : [];
+
   if (loading) {
     return (
       <AppLayout>
@@ -249,21 +289,13 @@ const OrderDetailPage = () => {
             
             {isAdmin && order.status !== 'cancelled' && (
               <div className="flex items-center">
-                <select
-                  value={order.status}
-                  onChange={(e) => handleStatusUpdate(e.target.value)}
-                  disabled={updateStatusLoading}
-                  className="block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm mr-2"
-                >
-                  <option value="pending">Väntar på bekräftelse</option>
-                  <option value="confirmed">Bekräftad</option>
-                  <option value="processing">Under behandling</option>
-                  <option value="shipped">Skickad</option>
-                  <option value="delivered">Levererad</option>
-                  <option value="cancelled">Avbruten</option>
-                </select>
-                {updateStatusLoading && (
-                  <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-blue-600 border-r-transparent"></div>
+                {updateStatusLoading ? (
+                  <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-blue-600 border-r-transparent mr-2"></div>
+                ) : (
+                  <OrderStatusMenu 
+                    currentStatus={order.status} 
+                    onStatusChange={handleStatusUpdate} 
+                  />
                 )}
               </div>
             )}
@@ -336,18 +368,21 @@ const OrderDetailPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                <tr>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">B8 Shield</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{order.color}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{order.size}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{order.antalForpackningar}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
-                    {order.prisInfo?.totalPris?.toLocaleString('sv-SE', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    })} kr
-                  </td>
-                </tr>
+                {getOrderDistribution(order).map((item, index) => (
+                  <tr key={index}>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">B8 Shield</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.color}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.size}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.quantity} st</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
+                      {index === 0 && order.prisInfo?.produktPris ? 
+                        `${order.prisInfo.produktPris.toLocaleString('sv-SE', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        })} kr` : ''}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
               <tfoot>
                 <tr>
@@ -425,6 +460,38 @@ const OrderDetailPage = () => {
             </div>
           </div>
         )}
+
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-2 text-gray-800">Produkter</h2>
+          <div className="mb-4">
+            <ProductMenu 
+              products={orderProducts} 
+              selectedProduct={null} 
+              onProductSelect={(product) => {
+                // Just view product details in read-only mode
+                toast.success(`Visning av ${product.name}`);
+              }} 
+            />
+          </div>
+          
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h2 className="text-lg font-semibold mb-3 text-gray-800">Produktinformation</h2>
+            <div className="space-y-2">
+              <p className="text-gray-700">
+                <span className="font-medium">Produkt:</span> {order.productName || 'Ej angett'}
+              </p>
+              <p className="text-gray-700">
+                <span className="font-medium">Färg:</span> {order.color || 'Ej angett'}
+              </p>
+              <p className="text-gray-700">
+                <span className="font-medium">Storlek:</span> {order.size || 'Ej angett'}
+              </p>
+              <p className="text-gray-700">
+                <span className="font-medium">Antal:</span> {order.quantity || 'Ej angett'}
+              </p>
+            </div>
+          </div>
+        </div>
 
         <div className="flex justify-between mt-8">
           <Link

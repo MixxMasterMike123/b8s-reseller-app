@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useOrder } from '../contexts/OrderContext';
@@ -41,25 +41,30 @@ function AdminPage() {
     }
   }, [currentUser, isAdmin, navigate]);
 
-  // Load order stats
-  useEffect(() => {
+  // Memoized function to load order stats - don't include getOrderStats in deps
+  const fetchOrderStats = useCallback(async () => {
     console.log('Loading order stats, isAdmin:', isAdmin);
     if (isAdmin) {
       setStatsLoading(true);
-      getOrderStats()
-        .then((stats) => {
-          console.log('Order stats loaded:', stats);
-          setOrderStats(stats);
-        })
-        .catch((error) => {
-          console.error('Error fetching order stats:', error);
-          setError('Failed to load order statistics');
-        })
-        .finally(() => {
-          setStatsLoading(false);
-        });
+      try {
+        const stats = await getOrderStats();
+        console.log('Order stats loaded:', stats);
+        setOrderStats(stats);
+      } catch (error) {
+        console.error('Error fetching order stats:', error);
+        setError('Failed to load order statistics');
+      } finally {
+        setStatsLoading(false);
+      }
     }
-  }, [getOrderStats, isAdmin]);
+  }, [isAdmin]); // Only depend on isAdmin, not getOrderStats
+
+  // Load order stats once when component mounts and isAdmin is true
+  useEffect(() => {
+    if (isAdmin === true) { // Only run when isAdmin is explicitly true
+      fetchOrderStats();
+    }
+  }, []); // Empty dependency array - run only once on mount
 
   // Handler for creating default products
   const handleCreateDefaultProducts = async () => {

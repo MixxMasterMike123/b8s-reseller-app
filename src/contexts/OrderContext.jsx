@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { 
   collection, 
   addDoc, 
@@ -178,43 +178,13 @@ export const OrderProvider = ({ children }) => {
           }];
         }
 
-        // Save to both databases with same orderNumber to avoid duplication
-        let savedOrderId = null;
-        let savedOrder = null;
-        
-        try {
-          // Save to named database
-          const orderRef = await addDoc(collection(db, "orders"), orderToCreate);
-          savedOrderId = orderRef.id;
-          savedOrder = {
-            id: savedOrderId,
-            ...orderToCreate
-          };
-        } catch (error) {
-          console.error('Error saving to named database:', error);
-        }
-
-        try {
-          // Also save to default database
-          if (savedOrderId) {
-            // Use same ID if possible to maintain consistency
-            await setDoc(doc(defaultDb, "orders", savedOrderId), orderToCreate);
-          } else {
-            // If first save failed, create new doc
-            const orderRef = await addDoc(collection(defaultDb, "orders"), orderToCreate);
-            savedOrderId = orderRef.id;
-            savedOrder = {
-              id: savedOrderId,
-              ...orderToCreate
-            };
-          }
-        } catch (error) {
-          console.error('Error saving to default database:', error);
-        }
-
-        if (!savedOrder) {
-          throw new Error('Failed to create order in both databases');
-        }
+        // Save to the named database only
+        const orderRef = await addDoc(collection(db, "orders"), orderToCreate);
+        const savedOrderId = orderRef.id;
+        const savedOrder = {
+          id: savedOrderId,
+          ...orderToCreate
+        };
         
         toast.success('Order created successfully');
         
@@ -254,56 +224,30 @@ export const OrderProvider = ({ children }) => {
         
         return order;
       } else {
-        // Try to get the order from named database first
-        try {
-          const orderDoc = await getDoc(doc(db, "orders", orderId));
+        // Only try to get the order from named database 
+        const orderDoc = await getDoc(doc(db, "orders", orderId));
+        
+        if (orderDoc.exists()) {
+          const orderData = orderDoc.data();
           
-          if (orderDoc.exists()) {
-            const orderData = orderDoc.data();
-            
-            // Check if user is authorized to view this order
-            if (orderData.userId !== currentUser.uid && !isAdmin) {
-              setError('Unauthorized');
-              return null;
-            }
-            
-            // Process any timestamps to avoid re-render loops
-            const processedData = processTimestamps(orderData);
-            
-            return {
-              id: orderDoc.id,
-              ...processedData
-            };
+          // Check if user is authorized to view this order
+          if (orderData.userId !== currentUser.uid && !isAdmin) {
+            setError('Unauthorized');
+            return null;
           }
-        } catch (error) {
-          console.error('Error fetching from named database:', error);
-          // Continue to try the default database
+          
+          // Process any timestamps to avoid re-render loops
+          const processedData = processTimestamps(orderData);
+          
+          return {
+            id: orderDoc.id,
+            ...processedData
+          };
+        } else {
+          // If we reach here, the order was not found
+          setError('Order not found');
+          return null;
         }
-        
-        // If not found in named DB and user is admin, try default database
-        if (isAdmin) {
-          try {
-            const defaultOrderDoc = await getDoc(doc(defaultDb, "orders", orderId));
-            
-            if (defaultOrderDoc.exists()) {
-              const orderData = defaultOrderDoc.data();
-              
-              // Process any timestamps to avoid re-render loops
-              const processedData = processTimestamps(orderData);
-              
-              return {
-                id: defaultOrderDoc.id,
-                ...processedData
-              };
-            }
-          } catch (error) {
-            console.error('Error fetching from default database:', error);
-          }
-        }
-        
-        // If we reach here, the order was not found in either database
-        setError('Order not found');
-        return null;
       }
     } catch (error) {
       console.error('Error in getOrderById:', error);
@@ -360,7 +304,7 @@ export const OrderProvider = ({ children }) => {
       } else {
         const orders = [];
         
-        // Try named database first
+        // Only use named database
         try {
           const ordersQuery = query(
             collection(db, "orders"),
@@ -378,34 +322,6 @@ export const OrderProvider = ({ children }) => {
           });
         } catch (error) {
           console.error('Error fetching orders from named database:', error);
-        }
-        
-        // Only try default database if user is admin
-        // This prevents permission errors for regular users
-        if (isAdmin) {
-          try {
-            const defaultOrdersQuery = query(
-              collection(defaultDb, "orders"),
-              where("userId", "==", currentUser.uid),
-              orderBy("createdAt", "desc")
-            );
-            
-            const querySnapshot = await getDocs(defaultOrdersQuery);
-            
-            querySnapshot.forEach((doc) => {
-              // Check if we already have this order (in case it exists in both DBs)
-              const existingIndex = orders.findIndex(o => o.orderNumber === doc.data().orderNumber);
-              if (existingIndex === -1) {
-                orders.push({
-                  id: doc.id,
-                  ...doc.data()
-                });
-              }
-            });
-          } catch (error) {
-            console.error('Error fetching orders from default database:', error);
-            // Don't throw error here, just log it
-          }
         }
         
         return orders;
@@ -504,12 +420,12 @@ export const OrderProvider = ({ children }) => {
         console.log('getAllOrders: Returning demo orders', demoOrders.length);
         return demoOrders;
       } else {
-        // Real Firebase all orders
+        // Real Firebase all orders - only from named database
         console.log('getAllOrders: Fetching from Firestore');
         
         try {
-          // First try the named database
-          console.log('getAllOrders: Trying to fetch from named database (b8s-reseller-db)');
+          // Only use the named database
+          console.log('getAllOrders: Fetching from named database (b8s-reseller-db)');
           const namedDbOrdersQuery = query(
             collection(db, "orders"),
             orderBy("createdAt", "desc")
@@ -526,31 +442,7 @@ export const OrderProvider = ({ children }) => {
           });
           
           console.log('getAllOrders: Retrieved', namedDbOrders.length, 'orders from named database');
-          
-          // If named database has orders, return them
-          if (namedDbOrders.length > 0) {
-            return namedDbOrders;
-          }
-          
-          // Otherwise, try the default database
-          console.log('getAllOrders: Named database empty, trying default database');
-          const defaultDbOrdersQuery = query(
-            collection(defaultDb, "orders"),
-            orderBy("createdAt", "desc")
-          );
-          
-          const defaultDbSnapshot = await getDocs(defaultDbOrdersQuery);
-          const defaultDbOrders = [];
-          
-          defaultDbSnapshot.forEach((doc) => {
-            defaultDbOrders.push({
-              id: doc.id,
-              ...doc.data()
-            });
-          });
-          
-          console.log('getAllOrders: Retrieved', defaultDbOrders.length, 'orders from default database');
-          return defaultDbOrders;
+          return namedDbOrders;
         } catch (firestoreError) {
           console.error('getAllOrders: Firestore error:', firestoreError);
           throw firestoreError;
@@ -634,25 +526,6 @@ export const OrderProvider = ({ children }) => {
           statusHistory: [...(orderData.statusHistory || []), statusChange]
         });
         
-        // Try to update in default database as well if admin
-        try {
-          if (isAdmin) {
-            const defaultOrderRef = doc(defaultDb, "orders", orderId);
-            const defaultOrderDoc = await getDoc(defaultOrderRef);
-            
-            if (defaultOrderDoc.exists()) {
-              await updateDoc(defaultOrderRef, {
-                status: newStatus,
-                updatedAt: serverTimestamp(),
-                statusHistory: [...(defaultOrderDoc.data().statusHistory || []), statusChange]
-              });
-            }
-          }
-        } catch (error) {
-          console.error('Error updating order in default database:', error);
-          // Continue even if this fails
-        }
-        
         toast.success(`Order status updated to ${newStatus}`);
         return true;
       }
@@ -665,8 +538,8 @@ export const OrderProvider = ({ children }) => {
     }
   };
 
-  // Get order statistics (admin only)
-  const getOrderStats = async () => {
+  // Get order statistics (admin only) - memoized with useCallback
+  const getOrderStats = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -724,7 +597,7 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser, isAdmin, demoOrders, isDemoMode]);
 
   // Delete order (admin only)
   const deleteOrder = async (orderId) => {
@@ -766,10 +639,34 @@ export const OrderProvider = ({ children }) => {
       
       if (isDemoMode) {
         // Demo mode: mock order cancellation
+        // Get current order to validate
+        const currentOrder = demoOrders.find(order => order.id === orderId);
+        
+        if (!currentOrder) {
+          throw new Error('Order not found');
+        }
+        
+        // Verify user owns this order or is admin
+        if (currentOrder.userId !== currentUser.uid && !isAdmin) {
+          throw new Error('Unauthorized');
+        }
+        
+        // Verify order is in a cancellable state
+        if (currentOrder.status !== 'pending' && currentOrder.status !== 'confirmed' && !isAdmin) {
+          throw new Error('This order cannot be cancelled');
+        }
+        
+        // Update order
         setDemoOrders(orders => 
           orders.map(order => 
             order.id === orderId 
-              ? { ...order, status: 'cancelled', updatedAt: new Date().toISOString() } 
+              ? { 
+                  ...order, 
+                  status: 'cancelled',
+                  updatedAt: new Date().toISOString(),
+                  cancelledBy: currentUser.uid,
+                  cancelledAt: new Date().toISOString()
+                } 
               : order
           )
         );
@@ -804,29 +701,8 @@ export const OrderProvider = ({ children }) => {
           cancelledAt: serverTimestamp()
         };
         
-        // First try to update in named database
-        let namedDbSuccess = false;
-        try {
-          await updateDoc(doc(db, "orders", orderId), updates);
-          namedDbSuccess = true;
-        } catch (error) {
-          console.error('Error updating in named database:', error);
-          // Continue even if this fails
-        }
-        
-        // Only try to update in default database if we're admin
-        // Regular users won't have permissions for the default database
-        if (isAdmin) {
-          try {
-            await updateDoc(doc(defaultDb, "orders", orderId), updates);
-          } catch (error) {
-            console.error('Error updating in default database:', error);
-            // If named DB succeeded, we can still consider this a success
-            if (!namedDbSuccess) {
-              throw error; // Only throw if both updates failed
-            }
-          }
-        }
+        // Update in named database only
+        await updateDoc(doc(db, "orders", orderId), updates);
         
         toast.success('Order cancelled successfully');
         return true;
@@ -927,32 +803,20 @@ export const OrderProvider = ({ children }) => {
         updatedAt: serverTimestamp()
       };
       
-      // Add products to both databases
+      // Add products to named database only
       for (const product of products) {
         try {
           await addDoc(collection(db, "products"), product);
         } catch (error) {
           console.error("Error adding product to named DB:", error);
         }
-        
-        try {
-          await addDoc(collection(defaultDb, "products"), product);
-        } catch (error) {
-          console.error("Error adding product to default DB:", error);
-        }
       }
       
-      // Add settings to both databases
+      // Add settings to named database only
       try {
         await addDoc(collection(db, "settings"), settingsData);
       } catch (error) {
         console.error("Error adding settings to named DB:", error);
-      }
-      
-      try {
-        await addDoc(collection(defaultDb, "settings"), settingsData);
-      } catch (error) {
-        console.error("Error adding settings to default DB:", error);
       }
       
       toast.success('Default products created');

@@ -4,6 +4,7 @@ import { collection, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc,
 import { db, defaultDb } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import ProductMenu from '../../components/ProductMenu';
 
 // Maximum size for Base64 images (1MB)
 const MAX_IMAGE_SIZE = 1 * 1024 * 1024; 
@@ -30,6 +31,7 @@ function AdminProducts() {
     size: '',
     imageData: '', // We'll store the base64 image data here
   });
+  const [filteredProduct, setFilteredProduct] = useState(null);
 
   // Load products from Firestore
   useEffect(() => {
@@ -502,6 +504,19 @@ function AdminProducts() {
         </div>
       ) : (
         <div className="bg-white shadow-md rounded overflow-hidden">
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <h2 className="text-lg font-medium">Product Listing</h2>
+              <div className="w-full sm:w-64">
+                <ProductMenu 
+                  products={products} 
+                  selectedProduct={filteredProduct} 
+                  onProductSelect={(product) => setFilteredProduct(product)} 
+                />
+              </div>
+            </div>
+          </div>
+          
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -521,7 +536,7 @@ function AdminProducts() {
                   </td>
                 </tr>
               ) : (
-                products.map((product) => (
+                (filteredProduct ? [filteredProduct] : products).map((product) => (
                   <tr key={product.id}>
                     <td className="px-6 py-4">
                       <div className="flex items-center">

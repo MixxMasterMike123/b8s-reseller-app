@@ -5,6 +5,7 @@ import { useOrder } from '../contexts/OrderContext';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import toast from 'react-hot-toast';
+import ProductMenu from '../components/ProductMenu';
 
 const OrderPage = () => {
   const navigate = useNavigate();
@@ -25,6 +26,9 @@ const OrderPage = () => {
   const [marginal, setMarginal] = useState(35); // Default 35% marginal
   const [fordelningsTyp, setFordelningsTyp] = useState('jamn'); // 'jamn' eller 'perFarg'
   const [loading, setLoading] = useState(false);
+
+  // Add state for selected product  
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   // Sort functions to ensure correct display order
   const sortColorOptions = (colors) => {
@@ -604,6 +608,70 @@ const OrderPage = () => {
         <div className="mt-4 bg-blue-50 p-3 rounded text-sm">
           <p>Vi rekommenderar att man beställer alla 3 storlekar (2, 4 och 6) för att tillmötesgå kundernas olika behov.</p>
         </div>
+      </div>
+      
+      <div className="mb-8 p-4 border border-gray-200 rounded">
+        <h2 className="text-xl font-semibold mb-4">Välj specifik produkt (valfritt):</h2>
+        <div className="mb-4">
+          <ProductMenu 
+            products={products} 
+            selectedProduct={selectedProduct} 
+            onProductSelect={(product) => {
+              setSelectedProduct(product);
+              // Auto-select color and size based on the product
+              if (product) {
+                const newFarger = { ...farger };
+                const newStorlekar = { ...storlekar };
+                
+                // Reset all selections
+                Object.keys(newFarger).forEach(key => {
+                  newFarger[key] = false;
+                });
+                Object.keys(newStorlekar).forEach(key => {
+                  newStorlekar[key] = false;
+                });
+                
+                // Set color based on product name
+                if (product.name) {
+                  const name = product.name.toLowerCase();
+                  if (name.includes('transparent')) {
+                    newFarger.transparent = true;
+                  } else if (name.includes('röd') || name.includes('red') || name.includes('rod')) {
+                    newFarger.rod = true;
+                  } else if (name.includes('fluor')) {
+                    newFarger.florerande = true;
+                  } else if (name.includes('glitter')) {
+                    newFarger.glitter = true;
+                  }
+                }
+                
+                // Set size based on product size
+                if (product.size) {
+                  const sizeKey = `storlek${product.size}`;
+                  if (Object.keys(newStorlekar).includes(sizeKey)) {
+                    newStorlekar[sizeKey] = true;
+                  }
+                }
+                
+                setFarger(newFarger);
+                setStorlekar(newStorlekar);
+              }
+            }} 
+          />
+        </div>
+        {selectedProduct && (
+          <div className="mt-4 p-3 bg-blue-50 rounded text-sm">
+            <p className="font-medium">Vald produkt: {selectedProduct.name}</p>
+            {selectedProduct.size && <p>Storlek: {selectedProduct.size}</p>}
+            {selectedProduct.basePrice && <p>Pris (exkl. moms): {selectedProduct.basePrice.toFixed(2)} SEK</p>}
+            <button 
+              onClick={() => setSelectedProduct(null)}
+              className="mt-2 text-blue-600 hover:text-blue-800 text-sm"
+            >
+              Återställ val
+            </button>
+          </div>
+        )}
       </div>
       
       <div className="mb-8 p-4 border border-gray-200 rounded">

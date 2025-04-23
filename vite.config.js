@@ -13,5 +13,17 @@ export default defineConfig({
         '.js': 'jsx',
       },
     },
+  },
+  build: {
+    // Create hashed filenames for better cache busting
+    rollupOptions: {
+      output: {
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
+      }
+    },
+    // Ensure we never use cached HTML
+    emptyOutDir: true
   }
 }) 
