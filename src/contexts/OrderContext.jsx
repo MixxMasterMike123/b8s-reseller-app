@@ -225,27 +225,33 @@ export const OrderProvider = ({ children }) => {
         return order;
       } else {
         // Only try to get the order from named database 
-        const orderDoc = await getDoc(doc(db, "orders", orderId));
-        
-        if (orderDoc.exists()) {
-          const orderData = orderDoc.data();
+        try {
+          const orderDoc = await getDoc(doc(db, "orders", orderId));
           
-          // Check if user is authorized to view this order
-          if (orderData.userId !== currentUser.uid && !isAdmin) {
-            setError('Unauthorized');
+          if (orderDoc.exists()) {
+            const orderData = orderDoc.data();
+            
+            // Check if user is authorized to view this order
+            if (orderData.userId !== currentUser.uid && !isAdmin) {
+              setError('Unauthorized');
+              return null;
+            }
+            
+            // Process any timestamps to avoid re-render loops
+            const processedData = processTimestamps(orderData);
+            
+            return {
+              id: orderDoc.id,
+              ...processedData
+            };
+          } else {
+            // If we reach here, the order was not found
+            setError('Order not found');
             return null;
           }
-          
-          // Process any timestamps to avoid re-render loops
-          const processedData = processTimestamps(orderData);
-          
-          return {
-            id: orderDoc.id,
-            ...processedData
-          };
-        } else {
-          // If we reach here, the order was not found
-          setError('Order not found');
+        } catch (firestoreError) {
+          console.error('Error fetching from Firestore:', firestoreError);
+          setError(`Error fetching order: ${firestoreError.message}`);
           return null;
         }
       }

@@ -45,10 +45,11 @@ const AdminOrderDetail = () => {
   const [error, setError] = useState(null);
   const [updateStatusLoading, setUpdateStatusLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [fetchAttempted, setFetchAttempted] = useState(false);
 
   // Fetch order data
   const fetchOrder = useCallback(async () => {
-    if (!orderId) return;
+    if (!orderId || fetchAttempted) return;
     
     try {
       setLoading(true);
@@ -69,12 +70,18 @@ const AdminOrderDetail = () => {
       toast.error('Could not load order details');
     } finally {
       setLoading(false);
+      setFetchAttempted(true);
     }
-  }, [orderId, getOrderById]);
+  }, [orderId, getOrderById, fetchAttempted]);
 
   useEffect(() => {
     fetchOrder();
   }, [fetchOrder]);
+
+  const handleRetry = () => {
+    setFetchAttempted(false); // Reset the fetch attempted flag to try again
+    fetchOrder();
+  };
 
   const getOrderDate = (dateValue) => {
     if (!dateValue) return null;
@@ -144,9 +151,13 @@ const AdminOrderDetail = () => {
     try {
       await updateOrderStatus(orderId, newStatus);
       
-      // Fetch the updated order
-      await fetchOrder();
-      toast.success(`Order status updated to ${getStatusInfo(newStatus).text}`);
+      // Fetch the updated order manually without triggering useEffect loop
+      console.log('Re-fetching order after status update');
+      const updatedOrderData = await getOrderById(orderId);
+      if (updatedOrderData) {
+        setOrder(updatedOrderData);
+        toast.success(`Order status updated to ${getStatusInfo(newStatus).text}`);
+      }
     } catch (err) {
       console.error('Error updating order status:', err);
       toast.error('Could not update order status: ' + (err.message || ''));
@@ -198,7 +209,7 @@ const AdminOrderDetail = () => {
             <p className="text-gray-500 mb-6">{error}</p>
             <div className="flex justify-center space-x-4">
               <button
-                onClick={fetchOrder}
+                onClick={handleRetry}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Try Again
