@@ -5,6 +5,12 @@ import { db, defaultDb } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
+// Maximum size for Base64 images (1MB)
+const MAX_IMAGE_SIZE = 1 * 1024 * 1024; 
+
+// Flag to disable default database operations
+const USE_DEFAULT_DB = false;
+
 function AdminProducts() {
   const { isAdmin } = useAuth();
   const [products, setProducts] = useState([]);
@@ -12,6 +18,8 @@ function AdminProducts() {
   const [error, setError] = useState('');
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -20,6 +28,7 @@ function AdminProducts() {
     defaultMargin: 35,
     isActive: true,
     size: '',
+    imageData: '', // We'll store the base64 image data here
   });
 
   // Load products from Firestore
@@ -59,7 +68,10 @@ function AdminProducts() {
       defaultMargin: 35,
       isActive: true,
       size: '',
+      imageData: '',
     });
+    setImageFile(null);
+    setImagePreview(null);
     setIsAddingProduct(true);
   };
 
@@ -74,7 +86,10 @@ function AdminProducts() {
       isActive: product.isActive !== false,
       variants: product.variants || [],
       size: product.size || '',
+      imageData: product.imageData || '',
     });
+    setImageFile(null);
+    setImagePreview(product.imageData || null);
     setIsAddingProduct(true);
   };
 
@@ -90,6 +105,32 @@ function AdminProducts() {
     }
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Check file size
+    if (file.size > MAX_IMAGE_SIZE) {
+      toast.error(`Image too large. Maximum size is ${MAX_IMAGE_SIZE / (1024 * 1024)}MB`);
+      return;
+    }
+
+    // Create a preview URL for the selected image
+    const previewURL = URL.createObjectURL(file);
+    setImagePreview(previewURL);
+    setImageFile(file);
+    
+    // Read the file as base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData({ ...formData, imageData: reader.result });
+    };
+    reader.onerror = () => {
+      toast.error('Failed to read image file');
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -100,91 +141,90 @@ function AdminProducts() {
     
     try {
       setLoading(true);
-      const productData = {
+      const finalProductData = {
         ...formData,
         updatedAt: serverTimestamp()
       };
       
       if (!selectedProduct) {
         // Adding new product
-        productData.createdAt = serverTimestamp();
+        finalProductData.createdAt = serverTimestamp();
         
         // Create product in named database
         let namedDbRef;
         try {
           // Use addDoc instead of setDoc with auto-generated ID
-          namedDbRef = await addDoc(collection(db, 'products'), productData);
+          namedDbRef = await addDoc(collection(db, 'products'), finalProductData);
           console.log("Product added to named DB with ID:", namedDbRef.id);
+          
+          // Show success message for primary DB
+          toast.success('Product added successfully');
+          
+          // Only attempt to add to default DB if flag is enabled
+          if (USE_DEFAULT_DB && namedDbRef) {
+            try {
+              // Use the same ID for consistency
+              await setDoc(doc(defaultDb, 'products', namedDbRef.id), finalProductData);
+              console.log("Product added to default DB");
+            } catch (error) {
+              console.log("Skipping default DB update due to permissions");
+            }
+          }
         } catch (error) {
           console.error("Error adding product to named DB:", error);
-          toast.error('Failed to add product to primary database');
+          toast.error('Failed to add product to database');
           setLoading(false);
           return;
         }
-        
-        // Create product in default database
-        try {
-          if (namedDbRef) {
-            // Use the same ID for consistency
-            await setDoc(doc(defaultDb, 'products', namedDbRef.id), productData);
-          } else {
-            await addDoc(collection(defaultDb, 'products'), productData);
-          }
-        } catch (error) {
-          console.error("Error adding product to default DB:", error);
-          // Continue with the app flow - show warning instead of error
-          toast.warning('Product added to primary database only. Some features may be limited.');
-        }
-        
-        toast.success('Product added successfully');
       } else {
         // Updating existing product
-        // First check if the product exists in named database
         try {
+          // First check if the product exists in named database
           const docRef = doc(db, 'products', selectedProduct.id);
           const docSnap = await getDoc(docRef);
           
           if (docSnap.exists()) {
             // Update the existing document
-            await updateDoc(docRef, productData);
+            await updateDoc(docRef, finalProductData);
             console.log("Updated product in named DB");
           } else {
             // Create document with the specific ID if it doesn't exist
             await setDoc(docRef, {
-              ...productData,
+              ...finalProductData,
               createdAt: serverTimestamp()
             });
             console.log("Created product in named DB with specific ID");
           }
+          
+          // Show success message for primary DB
+          toast.success('Product updated successfully');
+          
+          // Only attempt to update default DB if flag is enabled
+          if (USE_DEFAULT_DB) {
+            try {
+              const defaultDocRef = doc(defaultDb, 'products', selectedProduct.id);
+              const defaultDocSnap = await getDoc(defaultDocRef);
+              
+              if (defaultDocSnap.exists()) {
+                await updateDoc(defaultDocRef, finalProductData);
+                console.log("Updated product in default DB");
+              } else {
+                await setDoc(defaultDocRef, {
+                  ...finalProductData,
+                  createdAt: serverTimestamp()
+                });
+                console.log("Created product in default DB with specific ID");
+              }
+            } catch (error) {
+              console.log("Skipping default DB update due to permissions");
+            }
+          }
         } catch (error) {
           console.error("Error updating product in named DB:", error);
-          toast.error('Failed to update product in primary database');
+          toast.error('Failed to update product');
           setLoading(false);
           return;
         }
-        
-        // Also handle default database
-        try {
-          const defaultDocRef = doc(defaultDb, 'products', selectedProduct.id);
-          const defaultDocSnap = await getDoc(defaultDocRef);
-          
-          if (defaultDocSnap.exists()) {
-            await updateDoc(defaultDocRef, productData);
-            console.log("Updated product in default DB");
-          } else {
-            await setDoc(defaultDocRef, {
-              ...productData,
-              createdAt: serverTimestamp()
-            });
-            console.log("Created product in default DB with specific ID");
-          }
-        } catch (error) {
-          console.error("Error updating product in default DB:", error);
-          // Continue with app flow - show warning instead of error
-          toast.warning('Product updated in primary database only. Some features may be limited.');
-        }
-        
-        toast.success('Product updated successfully');
       }
       
       // Refresh products list
@@ -223,24 +263,28 @@ function AdminProducts() {
         if (docSnap.exists()) {
           await deleteDoc(docRef);
           console.log("Deleted product from named DB");
+          toast.success('Product deleted successfully');
         }
       } catch (error) {
         console.error("Error deleting product from named DB:", error);
+        toast.error('Failed to delete product');
+        setLoading(false);
+        return;
       }
       
-      // Delete from default database
-      try {
-        const defaultDocRef = doc(defaultDb, 'products', productId);
-        const defaultDocSnap = await getDoc(defaultDocRef);
-        if (defaultDocSnap.exists()) {
-          await deleteDoc(defaultDocRef);
-          console.log("Deleted product from default DB");
+      // Only attempt to delete from default DB if flag is enabled
+      if (USE_DEFAULT_DB) {
+        try {
+          const defaultDocRef = doc(defaultDb, 'products', productId);
+          const defaultDocSnap = await getDoc(defaultDocRef);
+          if (defaultDocSnap.exists()) {
+            await deleteDoc(defaultDocRef);
+            console.log("Deleted product from default DB");
+          }
+        } catch (error) {
+          console.log("Skipping default DB delete due to permissions");
         }
-      } catch (error) {
-        console.error("Error deleting product from default DB:", error);
       }
-      
-      toast.success('Product deleted successfully');
       
       // Update local state
       setProducts(products.filter(product => product.id !== productId));
@@ -269,6 +313,28 @@ function AdminProducts() {
           <Link to="/admin" className="px-4 py-2 bg-gray-600 text-white rounded">
             Back to Admin
           </Link>
+          <button 
+            onClick={() => {
+              // Pre-fill form with Red product data
+              setSelectedProduct(null);
+              setFormData({
+                name: 'B8Shield Röd',
+                description: 'B8Shield Red protection for smartphones',
+                basePrice: 71.2,
+                manufacturingCost: 10,
+                defaultMargin: 35,
+                isActive: true,
+                size: '',
+                imageData: '',
+              });
+              setImageFile(null);
+              setImagePreview(null);
+              setIsAddingProduct(true);
+            }}
+            className="px-4 py-2 bg-red-600 text-white rounded mr-2"
+          >
+            Add Red Product
+          </button>
           <button 
             onClick={handleAddNewClick}
             className="px-4 py-2 bg-green-600 text-white rounded"
@@ -373,6 +439,31 @@ function AdminProducts() {
               </div>
               
               <div className="md:col-span-2">
+                <label className="block mb-2">Product Image (Max 1MB)</label>
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="border p-2 rounded"
+                  />
+                  {imagePreview && (
+                    <div className="mt-2 md:mt-0">
+                      <img 
+                        src={imagePreview} 
+                        alt="Product preview" 
+                        className="w-40 h-40 object-cover border rounded"
+                      />
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Note: Images are stored as Base64 data directly in the database.
+                  Keep images small (under 1MB) for better performance.
+                </p>
+              </div>
+              
+              <div className="md:col-span-2">
                 <label className="block mb-2">Description</label>
                 <textarea
                   name="description"
@@ -414,7 +505,7 @@ function AdminProducts() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Margin</th>
@@ -432,9 +523,24 @@ function AdminProducts() {
               ) : (
                 products.map((product) => (
                   <tr key={product.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                      <div className="text-sm text-gray-500">{product.description}</div>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        {product.imageData ? (
+                          <img 
+                            src={product.imageData} 
+                            alt={product.name} 
+                            className="w-10 h-10 mr-3 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 mr-3 bg-gray-200 rounded flex items-center justify-center text-gray-500">
+                            No img
+                          </div>
+                        )}
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                          <div className="text-sm text-gray-500">{product.description}</div>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{product.size || 'N/A'}</div>

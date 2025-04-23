@@ -11,9 +11,13 @@ const DashboardPage = () => {
         <div className="bg-white shadow rounded-lg">
           {/* Header */}
           <div className="px-4 py-5 border-b border-gray-200 sm:px-6 flex justify-between items-center">
-            <h1 className="text-lg leading-6 font-medium text-gray-900">
-              B8shield Reseller Portal
-            </h1>
+            <div className="flex items-center">
+              <img
+                src="/images/B8Shield-Logotype 1.svg"
+                alt="B8shield Logo"
+                className="h-8 w-auto"
+              />
+            </div>
             <div className="flex space-x-4">
               <Link
                 to="/profile"

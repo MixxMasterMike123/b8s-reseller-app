@@ -26,6 +26,44 @@ const OrderPage = () => {
   const [fordelningsTyp, setFordelningsTyp] = useState('jamn'); // 'jamn' eller 'perFarg'
   const [loading, setLoading] = useState(false);
 
+  // Sort functions to ensure correct display order
+  const sortColorOptions = (colors) => {
+    // Define the preferred order - Transparent, Röd, Florerande, Glitter
+    const colorOrder = ['transparent', 'rod', 'florerande', 'glitter'];
+    
+    // Sort the colors based on the preferred order
+    return [...colors].sort((a, b) => {
+      const indexA = colorOrder.indexOf(a.id.toLowerCase());
+      const indexB = colorOrder.indexOf(b.id.toLowerCase());
+      
+      // If both colors are in the order array, sort by their position
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB;
+      }
+      
+      // If only one color is in the order array, it comes first
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      
+      // If neither color is in the array, sort alphabetically
+      return a.name.localeCompare(b.name);
+    });
+  };
+
+  const sortSizeOptions = (sizes) => {
+    // Define the preferred order - we'll extract the size number for comparison
+    const getSizeNumber = (sizeId) => {
+      // Extract the number from "storlek2", "storlek4", etc.
+      const match = sizeId.match(/storlek(\d+)/i);
+      return match ? parseInt(match[1]) : 999; // Default to a high number if no match
+    };
+    
+    // Sort sizes in ascending numerical order (2, 4, 6)
+    return [...sizes].sort((a, b) => {
+      return getSizeNumber(a.id) - getSizeNumber(b.id);
+    });
+  };
+
   // Fetch products from Firestore
   useEffect(() => {
     const fetchProducts = async () => {
@@ -92,9 +130,9 @@ const OrderPage = () => {
           }
         });
         
-        // Convert maps to arrays
-        const uniqueColors = Array.from(colorMap.values());
-        const uniqueSizes = Array.from(sizeMap.values());
+        // Convert maps to arrays and sort them in the desired order
+        const uniqueColors = sortColorOptions(Array.from(colorMap.values()));
+        const uniqueSizes = sortSizeOptions(Array.from(sizeMap.values()));
         
         console.log('Found colors:', uniqueColors);
         console.log('Found sizes:', uniqueSizes);
@@ -373,19 +411,133 @@ const OrderPage = () => {
       
       <div className="mb-8 p-4 border border-gray-200 rounded">
         <h2 className="text-xl font-semibold mb-4">Välj antal färger:</h2>
+        
+        {/* Display product images for colors */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          {(() => {
+            // First, group products by color
+            const colorMatches = {
+              'Transparent': 'transparent',
+              'Röd': 'rod',
+              'Red': 'rod',
+              'Fluorescent': 'florerande',
+              'Glitter': 'glitter'
+            };
+            
+            // Log all products for debugging
+            console.log("All products:", products.map(p => ({ id: p.id, name: p.name })));
+            
+            // Create color buckets - we need to manually create one for each color
+            const colorProducts = {
+              'transparent': null,
+              'rod': null,
+              'florerande': null,
+              'glitter': null
+            };
+            
+            // Find one product for each color
+            products.filter(p => p.imageData).forEach(product => {
+              // Skip if no name
+              if (!product.name) return;
+              
+              console.log("Checking product:", product.name);
+              
+              // Check for Transparent
+              if (product.name.includes("Transparent")) {
+                if (!colorProducts['transparent']) {
+                  colorProducts['transparent'] = product;
+                  console.log(`  Added to map: transparent = ${product.name}`);
+                }
+              }
+              // Check for Red variants
+              else if (product.name.includes("Röd") || product.name.includes("Red") || 
+                      product.name.toLowerCase().includes("rod") || product.name.includes("RED")) {
+                if (!colorProducts['rod']) {
+                  colorProducts['rod'] = product;
+                  console.log(`  Added to map: rod = ${product.name}`);
+                }
+              }
+              // Check for Fluorescent variants
+              else if (product.name.includes("Fluorescent") || product.name.includes("Fluor")) {
+                if (!colorProducts['florerande']) {
+                  colorProducts['florerande'] = product;
+                  console.log(`  Added to map: florerande = ${product.name}`);
+                }
+              }
+              // Check for Glitter
+              else if (product.name.includes("Glitter")) {
+                if (!colorProducts['glitter']) {
+                  colorProducts['glitter'] = product;
+                  console.log(`  Added to map: glitter = ${product.name}`);
+                }
+              }
+            });
+            
+            // Check if we have all expected colors and log the collected info
+            console.log("Collected color products:", Object.entries(colorProducts)
+              .map(([id, p]) => `${id}: ${p ? p.name : 'missing'}`));
+            
+            // Render one product per color (only if we have a product for that color)
+            return Object.entries(colorProducts)
+              .filter(([_, product]) => product !== null)
+              .map(([colorId, product]) => (
+                <div key={product.id} className="text-center">
+                  <img 
+                    src={product.imageData} 
+                    alt={product.name} 
+                    className={`w-full h-40 object-cover rounded mb-2 border-2 ${farger[colorId] ? 'border-blue-500' : 'border-transparent'}`} 
+                  />
+                  <p className="text-sm font-medium">{product.name}</p>
+                </div>
+              ));
+          })()}
+        </div>
+        
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {productColors.map(color => (
-            <label key={color.id} className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                name={color.id}
-                checked={farger[color.id] || false}
-                onChange={handleFargerChange}
-                className="h-5 w-5"
-              />
-              <span>{color.name}</span>
-            </label>
-          ))}
+          {/* Manually define the order to ensure correct display */}
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              name="transparent"
+              checked={farger["transparent"] || false}
+              onChange={handleFargerChange}
+              className="h-5 w-5"
+            />
+            <span>Transparent</span>
+          </label>
+          
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              name="rod"
+              checked={farger["rod"] || false}
+              onChange={handleFargerChange}
+              className="h-5 w-5"
+            />
+            <span>Röd</span>
+          </label>
+          
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              name="florerande"
+              checked={farger["florerande"] || false}
+              onChange={handleFargerChange}
+              className="h-5 w-5"
+            />
+            <span>Fluorescent</span>
+          </label>
+          
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              name="glitter"
+              checked={farger["glitter"] || false}
+              onChange={handleFargerChange}
+              className="h-5 w-5"
+            />
+            <span>Glitter</span>
+          </label>
           
           <label className="flex items-center space-x-2">
             <input
@@ -403,18 +555,39 @@ const OrderPage = () => {
       <div className="mb-8 p-4 border border-gray-200 rounded">
         <h2 className="text-xl font-semibold mb-4">Välj storlekar:</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {productSizes.map(size => (
-            <label key={size.id} className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                name={size.id}
-                checked={storlekar[size.id] || false}
-                onChange={handleStorlekarChange}
-                className="h-5 w-5"
-              />
-              <span>{size.name}</span>
-            </label>
-          ))}
+          {/* Manually define the order to ensure correct display */}
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              name="storlek2"
+              checked={storlekar["storlek2"] || false}
+              onChange={handleStorlekarChange}
+              className="h-5 w-5"
+            />
+            <span>Storlek 2</span>
+          </label>
+          
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              name="storlek4"
+              checked={storlekar["storlek4"] || false}
+              onChange={handleStorlekarChange}
+              className="h-5 w-5"
+            />
+            <span>Storlek 4</span>
+          </label>
+          
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              name="storlek6"
+              checked={storlekar["storlek6"] || false}
+              onChange={handleStorlekarChange}
+              className="h-5 w-5"
+            />
+            <span>Storlek 6</span>
+          </label>
           
           <label className="flex items-center space-x-2">
             <input

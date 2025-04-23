@@ -90,7 +90,13 @@ const AppLayout = ({ children }) => {
       <div className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
         <div className="flex flex-grow flex-col overflow-y-auto border-r border-gray-200 bg-white shadow-sm">
           <div className="flex flex-shrink-0 items-center px-4 py-6">
-            <h1 className="text-2xl font-bold text-blue-600">B8shield</h1>
+            <Link to="/dashboard" className="flex items-center">
+              <img
+                src="/images/B8Shield-Logotype 1.svg" 
+                alt="B8shield Logo"
+                className="h-10 w-auto"
+              />
+            </Link>
           </div>
           <div className="mt-5 flex flex-grow flex-col">
             <nav className="flex-1 space-y-1 px-2 pb-4">
@@ -190,7 +196,13 @@ const AppLayout = ({ children }) => {
           <div className="flex flex-1 justify-between px-4">
             <div className="flex flex-1 items-center pl-3">
               <div className="flex w-full items-center">
-                <h1 className="text-xl font-bold text-blue-600">B8shield</h1>
+                <Link to="/dashboard">
+                  <img
+                    src="/images/B8Shield-Logotype 1.svg" 
+                    alt="B8shield Logo"
+                    className="h-8 w-auto"
+                  />
+                </Link>
               </div>
             </div>
             <div className="flex items-center">
@@ -229,7 +241,13 @@ const AppLayout = ({ children }) => {
               </div>
               
               <div className="flex flex-shrink-0 items-center px-4">
-                <h1 className="text-2xl font-bold text-blue-600">B8shield</h1>
+                <Link to="/dashboard">
+                  <img
+                    src="/images/B8Shield-Logotype 1.svg" 
+                    alt="B8shield Logo"
+                    className="h-8 w-auto"
+                  />
+                </Link>
               </div>
               <div className="mt-5 h-0 flex-1 overflow-y-auto">
                 <nav className="space-y-1 px-2">
