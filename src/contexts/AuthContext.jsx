@@ -437,6 +437,52 @@ export function AuthProvider({ children }) {
     }
   }
 
+  // Update user role - Admin only
+  async function updateUserRole(userId, newRole) {
+    try {
+      if (isDemoMode) {
+        // Demo mode: mock user role update
+        setDemoUsers(users => 
+          users.map(user => 
+            user.id === userId 
+              ? { ...user, role: newRole, updatedAt: new Date().toISOString() } 
+              : user
+          )
+        );
+        
+        toast.success(`User role updated to ${newRole} successfully (Demo Mode)`);
+        return true;
+      } else {
+        // Real Firebase user role update
+        if (!isAdmin) throw new Error('Unauthorized');
+        
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, {
+          role: newRole,
+          updatedAt: new Date().toISOString()
+        });
+        
+        // Also update the role in the default database if it exists
+        try {
+          const defaultUserRef = doc(defaultDb, 'users', userId);
+          await updateDoc(defaultUserRef, {
+            role: newRole,
+            updatedAt: new Date().toISOString()
+          });
+        } catch (error) {
+          console.error('Error updating role in default database:', error);
+          // Continue even if default DB update fails
+        }
+        
+        toast.success(`User role updated to ${newRole} successfully`);
+        return true;
+      }
+    } catch (error) {
+      toast.error('Failed to update user role');
+      throw error;
+    }
+  }
+
   // Context value
   const value = {
     currentUser,
@@ -453,7 +499,8 @@ export function AuthProvider({ children }) {
     updateUserPassword,
     updateUserProfile,
     getAllUsers,
-    toggleUserActive
+    toggleUserActive,
+    updateUserRole
   };
 
   return (
