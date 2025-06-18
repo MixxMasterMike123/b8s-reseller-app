@@ -465,7 +465,7 @@ export const OrderProvider = ({ children }) => {
   };
 
   // Update order status (admin only)
-  const updateOrderStatus = async (orderId, newStatus) => {
+  const updateOrderStatus = async (orderId, newStatus, additionalData = {}) => {
     try {
       setLoading(true);
       setError(null);
@@ -495,7 +495,8 @@ export const OrderProvider = ({ children }) => {
                   ...order, 
                   status: newStatus, 
                   updatedAt: new Date().toISOString(),
-                  statusHistory: [...(order.statusHistory || []), statusChange]
+                  statusHistory: [...(order.statusHistory || []), statusChange],
+                  ...additionalData // Include tracking number, carrier, admin notes, etc.
                 } 
               : order
           )
@@ -529,7 +530,8 @@ export const OrderProvider = ({ children }) => {
         await updateDoc(orderRef, {
           status: newStatus,
           updatedAt: serverTimestamp(),
-          statusHistory: [...(orderData.statusHistory || []), statusChange]
+          statusHistory: [...(orderData.statusHistory || []), statusChange],
+          ...additionalData // Include tracking number, carrier, admin notes, etc.
         });
         
         toast.success(`Order status updated to ${newStatus}`);
