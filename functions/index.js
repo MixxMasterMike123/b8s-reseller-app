@@ -846,7 +846,11 @@ exports.migrateToDefaultDatabase = functions.https.onRequest(async (req, res) =>
     const appSettingsSnapshot = await namedDb.collection('app-settings').get();
     for (const settingDoc of appSettingsSnapshot.docs) {
       const settingData = settingDoc.data();
-      await defaultDb.collection('app-settings').doc(settingDoc.id).set(settingData);
+      await defaultDb.collection('settings').doc('app').set({
+        ...settingData,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
       console.log(`Migrated app setting: ${settingDoc.id}`);
       migratedAppSettings++;
     }
@@ -1210,6 +1214,249 @@ exports.emergencyRestore = functions.https.onRequest(async (req, res) => {
     
   } catch (error) {
     console.error('Error in emergency restore:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+// HTTP-triggered email function for order confirmations (called from frontend)
+exports.sendOrderConfirmationHttp = functions.https.onRequest(async (req, res) => {
+  try {
+    // Enable CORS
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+    
+    if (req.method === 'OPTIONS') {
+      res.status(200).send();
+      return;
+    }
+    
+    if (req.method !== 'POST') {
+      res.status(405).json({ success: false, error: 'Method not allowed' });
+      return;
+    }
+    
+    const { orderId, orderData, userData } = req.body;
+    
+    if (!orderId || !orderData || !userData) {
+      res.status(400).json({ 
+        success: false, 
+        error: 'Missing required data: orderId, orderData, userData' 
+      });
+      return;
+    }
+    
+    console.log(`Sending order confirmation emails for order ${orderId}`);
+    
+    // Handle different order formats
+    let orderSummary = '';
+    let totalAmount = 0;
+    
+    if (orderData.items && Array.isArray(orderData.items)) {
+      // Standard format with items array
+      orderSummary = orderData.items.map((item) => 
+        `${item.name} x ${item.quantity} - ${item.price * item.quantity} SEK`
+      ).join("\n");
+      
+      totalAmount = orderData.items.reduce(
+        (total, item) => total + item.price * item.quantity, 0
+      );
+    } else if (orderData.prisInfo) {
+      // New format from order page
+      orderSummary = `B8 Shield (${orderData.color || ''}) - Size: ${orderData.size || ''} x ${orderData.antalForpackningar || 0}`;
+      totalAmount = orderData.prisInfo.totalPris || 0;
+    }
+    
+    // Customer confirmation email
+    const customerEmail = {
+      from: `"B8Shield" <b8shield.reseller@gmail.com>`,
+      to: userData.email,
+      subject: `Orderbekräftelse: ${orderData.orderNumber}`,
+      text: `
+        Hej ${userData.contactPerson || userData.companyName},
+        
+        Tack för din beställning! Vi har mottagit din order och kommer att behandla den snarast.
+        
+        Ordernummer: ${orderData.orderNumber}
+        Företag: ${userData.companyName}
+        
+        Orderdetaljer:
+        ${orderSummary}
+        
+        Totalt: ${totalAmount} SEK
+        
+        Du kommer att få ytterligare uppdateringar när din order behandlas.
+        
+        Med vänliga hälsningar,
+        B8Shield Team
+      `,
+      html: `
+        <h2>Orderbekräftelse</h2>
+        <p>Hej ${userData.contactPerson || userData.companyName},</p>
+        <p>Tack för din beställning! Vi har mottagit din order och kommer att behandla den snarast.</p>
+        
+        <h3>Orderdetaljer:</h3>
+        <p><strong>Ordernummer:</strong> ${orderData.orderNumber}</p>
+        <p><strong>Företag:</strong> ${userData.companyName}</p>
+        
+        <h3>Beställning:</h3>
+        <p>${orderSummary.replace(/\n/g, '<br>')}</p>
+        
+        <p><strong>Totalt: ${totalAmount} SEK</strong></p>
+        
+        <p>Du kommer att få ytterligare uppdateringar när din order behandlas.</p>
+        
+        <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+      `,
+    };
+    
+    // Admin notification email
+    const adminEmail = {
+      from: `"B8Shield System" <b8shield.reseller@gmail.com>`,
+      to: "micke.ohlen@gmail.com",
+      subject: `Ny order: ${orderData.orderNumber}`,
+      text: `
+        En ny order har skapats:
+        
+        Ordernummer: ${orderData.orderNumber}
+        Kund: ${userData.companyName} (${userData.email})
+        Kontaktperson: ${userData.contactPerson}
+        
+        Orderdetaljer:
+        ${orderSummary}
+        
+        Totalt: ${totalAmount} SEK
+      `,
+      html: `
+        <h2>Ny order mottagen</h2>
+        <p><strong>Ordernummer:</strong> ${orderData.orderNumber}</p>
+        
+        <h3>Kundinformation:</h3>
+        <p><strong>Företag:</strong> ${userData.companyName}</p>
+        <p><strong>E-post:</strong> ${userData.email}</p>
+        <p><strong>Kontaktperson:</strong> ${userData.contactPerson}</p>
+        
+        <h3>Orderdetaljer:</h3>
+        <p>${orderSummary.replace(/\n/g, '<br>')}</p>
+        
+        <p><strong>Totalt: ${totalAmount} SEK</strong></p>
+      `,
+    };
+    
+    // Send both emails
+    await transporter.sendMail(customerEmail);
+    await transporter.sendMail(adminEmail);
+    
+    console.log(`Order confirmation emails sent for order ${orderId}`);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Order confirmation emails sent successfully',
+      orderId: orderId,
+      orderNumber: orderData.orderNumber
+    });
+    
+  } catch (error) {
+    console.error('Error sending order confirmation emails:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+// HTTP-triggered email function for status updates (called from frontend)
+exports.sendStatusUpdateHttp = functions.https.onRequest(async (req, res) => {
+  try {
+    // Enable CORS
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+    
+    if (req.method === 'OPTIONS') {
+      res.status(200).send();
+      return;
+    }
+    
+    if (req.method !== 'POST') {
+      res.status(405).json({ success: false, error: 'Method not allowed' });
+      return;
+    }
+    
+    const { orderId, orderData, userData, oldStatus, newStatus } = req.body;
+    
+    if (!orderId || !orderData || !userData || !newStatus) {
+      res.status(400).json({ 
+        success: false, 
+        error: 'Missing required data: orderId, orderData, userData, newStatus' 
+      });
+      return;
+    }
+    
+    console.log(`Sending status update emails for order ${orderId}: ${oldStatus} -> ${newStatus}`);
+    
+    // Get email template for the new status
+    const template = getEmailTemplate(newStatus, orderData, userData);
+    
+    // Customer status update email
+    const customerEmail = {
+      from: `"B8Shield" <b8shield.reseller@gmail.com>`,
+      to: userData.email,
+      subject: template.subject,
+      text: template.text,
+      html: template.html,
+    };
+    
+    // Send customer email
+    await transporter.sendMail(customerEmail);
+    
+    // Also notify admin for important status changes
+    if (['shipped', 'delivered', 'cancelled'].includes(newStatus)) {
+      const adminEmail = {
+        from: `"B8Shield System" <b8shield.reseller@gmail.com>`,
+        to: "micke.ohlen@gmail.com",
+        subject: `Order Status Update: ${orderData.orderNumber}`,
+        text: `
+          Order ${orderData.orderNumber} status has been updated to: ${newStatus}
+          
+          Customer: ${userData.companyName} (${userData.email})
+          Contact: ${userData.contactPerson}
+          
+          ${orderData.trackingNumber ? `Tracking: ${orderData.trackingNumber}` : ''}
+          ${orderData.carrier ? `Carrier: ${orderData.carrier}` : ''}
+        `,
+        html: `
+          <h2>Order Status Update</h2>
+          <p><strong>Order:</strong> ${orderData.orderNumber}</p>
+          <p><strong>New Status:</strong> ${newStatus}</p>
+          
+          <h3>Customer:</h3>
+          <p>${userData.companyName} (${userData.email})<br>
+          Contact: ${userData.contactPerson}</p>
+          
+          ${orderData.trackingNumber ? `<p><strong>Tracking:</strong> ${orderData.trackingNumber}</p>` : ''}
+          ${orderData.carrier ? `<p><strong>Carrier:</strong> ${orderData.carrier}</p>` : ''}
+        `,
+      };
+      
+      await transporter.sendMail(adminEmail);
+    }
+    
+    console.log(`Status update emails sent for order ${orderId}: ${oldStatus} -> ${newStatus}`);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Status update emails sent successfully',
+      orderId: orderId,
+      orderNumber: orderData.orderNumber,
+      status: newStatus
+    });
+    
+  } catch (error) {
+    console.error('Error sending status update emails:', error);
     res.status(500).json({ 
       success: false, 
       error: error.message 

@@ -186,6 +186,34 @@ export const OrderProvider = ({ children }) => {
           ...orderToCreate
         };
         
+        // Trigger email notification via HTTP function
+        try {
+          const response = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/sendOrderConfirmationHttp', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              orderId: savedOrderId,
+              orderData: savedOrder,
+              userData: userProfile || {
+                email: currentUser.email,
+                companyName: orderData.companyName || 'Unknown Company',
+                contactPerson: orderData.contactPerson || currentUser.displayName || 'Unknown'
+              }
+            })
+          });
+          
+          if (response.ok) {
+            console.log('Order confirmation emails sent successfully');
+          } else {
+            console.error('Failed to send order confirmation emails:', await response.text());
+          }
+        } catch (emailError) {
+          console.error('Error sending order confirmation emails:', emailError);
+          // Don't fail the order creation if email fails
+        }
+        
         toast.success('Order created successfully');
         
         return savedOrder;
@@ -533,6 +561,40 @@ export const OrderProvider = ({ children }) => {
           statusHistory: [...(orderData.statusHistory || []), statusChange],
           ...additionalData // Include tracking number, carrier, admin notes, etc.
         });
+        
+        // Trigger email notification via HTTP function
+        try {
+          // Get user data for email
+          const userDoc = await getDoc(doc(db, "users", orderData.userId));
+          const userData = userDoc.exists() ? userDoc.data() : {
+            email: 'unknown@example.com',
+            companyName: 'Unknown Company',
+            contactPerson: 'Unknown'
+          };
+          
+          const response = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/sendStatusUpdateHttp', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              orderId: orderId,
+              orderData: { ...orderData, ...additionalData, status: newStatus },
+              userData: userData,
+              oldStatus: previousStatus,
+              newStatus: newStatus
+            })
+          });
+          
+          if (response.ok) {
+            console.log('Status update emails sent successfully');
+          } else {
+            console.error('Failed to send status update emails:', await response.text());
+          }
+        } catch (emailError) {
+          console.error('Error sending status update emails:', emailError);
+          // Don't fail the status update if email fails
+        }
         
         toast.success(`Order status updated to ${newStatus}`);
         return true;
