@@ -21,12 +21,15 @@ function AdminProducts() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [eanPngFile, setEanPngFile] = useState(null);
+  const [eanPngPreview, setEanPngPreview] = useState(null);
+  const [eanSvgFile, setEanSvgFile] = useState(null);
+  const [eanSvgPreview, setEanSvgPreview] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     basePrice: 0,
     manufacturingCost: 0,
-    defaultMargin: 35,
     isActive: true,
     size: '',
     imageData: '', // We'll store the base64 image data here
@@ -51,6 +54,13 @@ function AdminProducts() {
           });
         });
 
+        // Sort products by name (default sorting)
+        productsData.sort((a, b) => {
+          const nameA = (a.name || '').toLowerCase();
+          const nameB = (b.name || '').toLowerCase();
+          return nameA.localeCompare(nameB);
+        });
+
         console.log('📊 Total products fetched:', productsData.length);
         setProducts(productsData);
       } catch (err) {
@@ -71,13 +81,19 @@ function AdminProducts() {
       description: '',
       basePrice: 0,
       manufacturingCost: 0,
-      defaultMargin: 35,
       isActive: true,
       size: '',
       imageData: '',
+      eanCode: '',
+      eanImagePng: '',
+      eanImageSvg: '',
     });
     setImageFile(null);
     setImagePreview(null);
+    setEanPngFile(null);
+    setEanPngPreview(null);
+    setEanSvgFile(null);
+    setEanSvgPreview(null);
     setIsAddingProduct(true);
   };
 
@@ -88,14 +104,19 @@ function AdminProducts() {
       description: product.description || '',
       basePrice: product.basePrice || 0,
       manufacturingCost: product.manufacturingCost || 0,
-      defaultMargin: product.defaultMargin || 35,
       isActive: product.isActive !== false,
-      variants: product.variants || [],
       size: product.size || '',
       imageData: product.imageData || '',
+      eanCode: product.eanCode || '',
+      eanImagePng: product.eanImagePng || '',
+      eanImageSvg: product.eanImageSvg || '',
     });
     setImageFile(null);
     setImagePreview(product.imageData || null);
+    setEanPngFile(null);
+    setEanPngPreview(product.eanImagePng || null);
+    setEanSvgFile(null);
+    setEanSvgPreview(product.eanImageSvg || null);
     setIsAddingProduct(true);
   };
 
@@ -117,7 +138,7 @@ function AdminProducts() {
     
     // Check file size
     if (file.size > MAX_IMAGE_SIZE) {
-      toast.error(`Image too large. Maximum size is ${MAX_IMAGE_SIZE / (1024 * 1024)}MB`);
+      toast.error(`Bilden är för stor. Maximal storlek är ${MAX_IMAGE_SIZE / (1024 * 1024)}MB`);
       return;
     }
 
@@ -132,7 +153,71 @@ function AdminProducts() {
       setFormData({ ...formData, imageData: reader.result });
     };
     reader.onerror = () => {
-      toast.error('Failed to read image file');
+      toast.error('Kunde inte läsa bildfilen');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleEanPngChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Check file type
+    if (!file.type.match(/image\/(png|jpeg|jpg)/)) {
+      toast.error('Endast PNG och JPG-filer tillåtna för EAN-kod');
+      return;
+    }
+    
+    // Check file size
+    if (file.size > MAX_IMAGE_SIZE) {
+      toast.error(`Bilden är för stor. Maximal storlek är ${MAX_IMAGE_SIZE / (1024 * 1024)}MB`);
+      return;
+    }
+
+    // Create a preview URL for the selected image
+    const previewURL = URL.createObjectURL(file);
+    setEanPngPreview(previewURL);
+    setEanPngFile(file);
+    
+    // Read the file as base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData({ ...formData, eanImagePng: reader.result });
+    };
+    reader.onerror = () => {
+      toast.error('Kunde inte läsa EAN-bildfilen');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleEanSvgChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Check file type
+    if (!file.type.match(/image\/svg\+xml/)) {
+      toast.error('Endast SVG-filer tillåtna för EAN-kod');
+      return;
+    }
+    
+    // Check file size
+    if (file.size > MAX_IMAGE_SIZE) {
+      toast.error(`Filen är för stor. Maximal storlek är ${MAX_IMAGE_SIZE / (1024 * 1024)}MB`);
+      return;
+    }
+
+    // Create a preview URL for the selected image
+    const previewURL = URL.createObjectURL(file);
+    setEanSvgPreview(previewURL);
+    setEanSvgFile(file);
+    
+    // Read the file as base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData({ ...formData, eanImageSvg: reader.result });
+    };
+    reader.onerror = () => {
+      toast.error('Kunde inte läsa EAN SVG-filen');
     };
     reader.readAsDataURL(file);
   };
@@ -216,6 +301,13 @@ function AdminProducts() {
         });
       });
       
+      // Sort products by name (default sorting)
+      productsData.sort((a, b) => {
+        const nameA = (a.name || '').toLowerCase();
+        const nameB = (b.name || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+      
       setProducts(productsData);
       setIsAddingProduct(false);
     } catch (err) {
@@ -290,212 +382,309 @@ function AdminProducts() {
   if (!isAdmin) {
     return (
       <div className="p-6">
-        <p>You don't have permission to access this page.</p>
-        <Link to="/" className="text-blue-600 hover:underline">Back to Dashboard</Link>
+        <p>Du har inte behörighet att komma åt denna sida.</p>
+        <Link to="/" className="text-blue-600 hover:underline">Tillbaka till Dashboard</Link>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Product Management</h1>
-        <div className="flex gap-4">
-          <Link to="/admin" className="px-4 py-2 bg-gray-600 text-white rounded">
-            Back to Admin
-          </Link>
-          <button 
-            onClick={() => {
-              // Pre-fill form with Red product data
-              setSelectedProduct(null);
-              setFormData({
-                name: 'B8Shield Röd',
-                description: 'B8Shield Red protection for smartphones',
-                basePrice: 71.2,
-                manufacturingCost: 10,
-                defaultMargin: 35,
-                isActive: true,
-                size: '',
-                imageData: '',
-              });
-              setImageFile(null);
-              setImagePreview(null);
-              setIsAddingProduct(true);
-            }}
-            className="px-4 py-2 bg-red-600 text-white rounded mr-2"
-          >
-            Add Red Product
-          </button>
-          <button 
-            onClick={handleAddNewClick}
-            className="px-4 py-2 bg-green-600 text-white rounded"
-          >
-            Add New Product
-          </button>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Produkthantering</h1>
+            <p className="mt-1 text-sm text-gray-600">Hantera produkter i systemet</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Link 
+              to="/admin" 
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Tillbaka till Admin
+            </Link>
+            <button 
+              onClick={() => {
+                setSelectedProduct(null);
+                setFormData({
+                  name: 'B8Shield Röd',
+                  description: 'B8Shield Röd skydd för smartphones',
+                  basePrice: 71.2,
+                  manufacturingCost: 10,
+                  isActive: true,
+                  size: '',
+                  imageData: '',
+                });
+                setImageFile(null);
+                setImagePreview(null);
+                setIsAddingProduct(true);
+              }}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              Lägg till Röd Produkt
+            </button>
+            <button 
+              onClick={handleAddNewClick}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Lägg till Ny Produkt
+            </button>
+          </div>
         </div>
       </div>
 
+      {/* Error Message */}
       {error && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
-          <p>{error}</p>
+        <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
         </div>
       )}
 
+      {/* Loading State */}
       {loading && !isAddingProduct ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       ) : isAddingProduct ? (
-        <div className="bg-white shadow-md rounded p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">
-            {selectedProduct ? 'Edit Product' : 'Add New Product'}
-          </h2>
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block mb-2">Product Name*</label>
+        /* Product Form */
+        <div className="bg-white shadow rounded-lg mb-8">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900">
+              {selectedProduct ? 'Redigera Produkt' : 'Lägg till Ny Produkt'}
+            </h2>
+          </div>
+          
+          <form onSubmit={handleSubmit} className="p-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              {/* Product Name */}
+              <div className="sm:col-span-2">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Produktnamn *
+                </label>
                 <input
                   type="text"
+                  id="name"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
               
+              {/* Size */}
               <div>
-                <label className="block mb-2">Size</label>
+                <label htmlFor="size" className="block text-sm font-medium text-gray-700 mb-2">
+                  Storlek
+                </label>
                 <input
                   type="text"
+                  id="size"
                   name="size"
                   value={formData.size}
                   onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
-                  placeholder="e.g. Small, Medium, Large or specific dimensions"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="t.ex. Liten, Medium, Stor eller specifika mått"
                 />
               </div>
               
+              {/* Base Price */}
               <div>
-                <label className="block mb-2">Base Price (SEK, excluding VAT)*</label>
+                <label htmlFor="basePrice" className="block text-sm font-medium text-gray-700 mb-2">
+                  Grundpris (SEK, exkl. moms) *
+                </label>
                 <input
                   type="number"
+                  id="basePrice"
                   name="basePrice"
                   value={formData.basePrice}
                   onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   min="0"
                   step="0.01"
                   required
                 />
               </div>
               
+              {/* Manufacturing Cost */}
               <div>
-                <label className="block mb-2">Manufacturing Cost (SEK)</label>
+                <label htmlFor="manufacturingCost" className="block text-sm font-medium text-gray-700 mb-2">
+                  Tillverkningskostnad (SEK)
+                </label>
                 <input
                   type="number"
+                  id="manufacturingCost"
                   name="manufacturingCost"
                   value={formData.manufacturingCost}
                   onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   min="0"
                   step="0.01"
                 />
               </div>
               
+              {/* Active Status */}
               <div>
-                <label className="block mb-2">Default Margin (%)</label>
-                <input
-                  type="number"
-                  name="defaultMargin"
-                  value={formData.defaultMargin}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
-                  min="0"
-                  max="100"
-                />
-              </div>
-              
-              <div>
-                <label className="flex items-center">
+                <div className="flex items-center">
                   <input
                     type="checkbox"
+                    id="isActive"
                     name="isActive"
                     checked={formData.isActive}
                     onChange={handleInputChange}
-                    className="mr-2"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
-                  Active
-                </label>
+                  <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
+                    Aktiv
+                  </label>
+                </div>
               </div>
               
-              <div className="md:col-span-2">
-                <label className="block mb-2">Product Image (Max 1MB)</label>
-                <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+              {/* Product Image */}
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Produktbild (Max 1MB)
+                </label>
+                <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
                   <input
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
-                    className="border p-2 rounded"
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                   />
                   {imagePreview && (
-                    <div className="mt-2 md:mt-0">
+                    <div className="flex-shrink-0">
                       <img 
                         src={imagePreview} 
-                        alt="Product preview" 
-                        className="w-40 h-40 object-cover border rounded"
+                        alt="Produktförhandsvisning" 
+                        className="w-32 h-32 object-cover border border-gray-300 rounded-md"
                       />
                     </div>
                   )}
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Note: Images are stored as Base64 data directly in the database.
-                  Keep images small (under 1MB) for better performance.
+                <p className="mt-2 text-xs text-gray-500">
+                  Observera: Bilder lagras som Base64-data direkt i databasen. 
+                  Håll bilderna små (under 1MB) för bättre prestanda.
                 </p>
               </div>
               
-              <div className="md:col-span-2">
-                <label className="block mb-2">Description</label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
-                  rows="3"
-                ></textarea>
-              </div>
-            </div>
+                             {/* Description */}
+               <div className="sm:col-span-2">
+                 <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                   Beskrivning
+                 </label>
+                 <textarea
+                   id="description"
+                   name="description"
+                   value={formData.description}
+                   onChange={handleInputChange}
+                   rows="3"
+                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                 ></textarea>
+               </div>
 
-            <div className="flex justify-end mt-6 gap-4">
+               {/* EAN Code */}
+               <div className="sm:col-span-2">
+                 <label htmlFor="eanCode" className="block text-sm font-medium text-gray-700 mb-2">
+                   EAN-kod
+                 </label>
+                 <input
+                   type="text"
+                   id="eanCode"
+                   name="eanCode"
+                   value={formData.eanCode}
+                   onChange={handleInputChange}
+                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                   placeholder="t.ex. 1234567890123"
+                 />
+               </div>
+
+               {/* EAN Code Image PNG/JPG */}
+               <div className="sm:col-span-1">
+                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                   EAN-kod bild (PNG/JPG)
+                 </label>
+                 <div className="space-y-3">
+                   <input
+                     type="file"
+                     accept="image/png,image/jpeg,image/jpg"
+                     onChange={handleEanPngChange}
+                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                   />
+                   {eanPngPreview && (
+                     <div className="flex-shrink-0">
+                       <img 
+                         src={eanPngPreview} 
+                         alt="EAN-kod förhandsvisning" 
+                         className="w-32 h-20 object-contain border border-gray-300 rounded-md bg-white"
+                       />
+                     </div>
+                   )}
+                 </div>
+               </div>
+
+               {/* EAN Code Image SVG */}
+               <div className="sm:col-span-1">
+                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                   EAN-kod bild (SVG)
+                 </label>
+                 <div className="space-y-3">
+                   <input
+                     type="file"
+                     accept="image/svg+xml"
+                     onChange={handleEanSvgChange}
+                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                   />
+                   {eanSvgPreview && (
+                     <div className="flex-shrink-0">
+                       <img 
+                         src={eanSvgPreview} 
+                         alt="EAN-kod SVG förhandsvisning" 
+                         className="w-32 h-20 object-contain border border-gray-300 rounded-md bg-white"
+                       />
+                     </div>
+                   )}
+                 </div>
+               </div>
+             </div>
+
+            {/* Form Actions */}
+            <div className="mt-8 flex justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setIsAddingProduct(false)}
-                className="px-4 py-2 bg-gray-400 text-white rounded"
+                className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                Cancel
+                Avbryt
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded"
                 disabled={loading}
+                className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <span className="flex items-center">
                     <span className="animate-spin h-4 w-4 mr-2 border-b-2 border-white rounded-full"></span>
-                    Saving...
+                    Sparar...
                   </span>
                 ) : (
-                  'Save Product'
+                  'Spara Produkt'
                 )}
               </button>
             </div>
           </form>
         </div>
       ) : (
-        <div className="bg-white shadow-md rounded overflow-hidden">
-          <div className="p-4 border-b border-gray-200">
+        /* Product List */
+        <div className="bg-white shadow rounded-lg overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <h2 className="text-lg font-medium">Product Listing</h2>
+              <h2 className="text-lg font-medium text-gray-900">Produktlista</h2>
               <div className="w-full sm:w-64">
                 <ProductMenu 
                   products={products} 
@@ -506,82 +695,106 @@ function AdminProducts() {
             </div>
           </div>
           
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Margin</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {products.length === 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                    No products found
-                  </td>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Produkt
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Storlek
+                  </th>
+                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                     Pris
+                   </th>
+                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                     EAN-kod
+                   </th>
+                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                     Status
+                   </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Åtgärder
+                  </th>
                 </tr>
-              ) : (
-                (filteredProduct ? [filteredProduct] : products).map((product) => (
-                  <tr key={product.id}>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        {product.imageData ? (
-                          <img 
-                            src={product.imageData} 
-                            alt={product.name} 
-                            className="w-10 h-10 mr-3 object-cover rounded"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 mr-3 bg-gray-200 rounded flex items-center justify-center text-gray-500">
-                            No img
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                                 {products.length === 0 ? (
+                   <tr>
+                     <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                       Inga produkter hittades
+                     </td>
+                   </tr>
+                ) : (
+                  (filteredProduct ? [filteredProduct] : products).map((product) => (
+                    <tr key={product.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          {product.imageData ? (
+                            <img 
+                              src={product.imageData} 
+                              alt={product.name} 
+                              className="w-12 h-12 mr-4 object-cover rounded-md border border-gray-200"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 mr-4 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
+                              <span className="text-xs text-gray-500">Ingen bild</span>
+                            </div>
+                          )}
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                            <div className="text-sm text-gray-500 max-w-xs truncate">{product.description}</div>
                           </div>
-                        )}
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                          <div className="text-sm text-gray-500">{product.description}</div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{product.size || 'N/A'}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{product.basePrice?.toFixed(2)} SEK</div>
-                      <div className="text-sm text-gray-500">Cost: {product.manufacturingCost?.toFixed(2)} SEK</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{product.defaultMargin}%</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${product.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {product.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button 
-                        onClick={() => handleEditClick(product)} 
-                        className="text-blue-600 hover:text-blue-900 mr-3"
-                        disabled={loading}
-                      >
-                        Redigera
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteProduct(product.id)} 
-                        className="text-red-600 hover:text-red-900"
-                        disabled={loading}
-                      >
-                        {loading ? 'Tar bort...' : 'Ta bort'}
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{product.size || 'Ej angivet'}</div>
+                      </td>
+                                             <td className="px-6 py-4 whitespace-nowrap">
+                         <div className="text-sm text-gray-900">{product.basePrice?.toFixed(2)} SEK</div>
+                         <div className="text-sm text-gray-500">Kostnad: {product.manufacturingCost?.toFixed(2)} SEK</div>
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap">
+                         <div className="text-sm text-gray-900">{product.eanCode || 'Ej angivet'}</div>
+                         {(product.eanImagePng || product.eanImageSvg) && (
+                           <div className="text-xs text-gray-500 mt-1">
+                             {product.eanImagePng && 'PNG '}
+                             {product.eanImageSvg && 'SVG'}
+                           </div>
+                         )}
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          product.isActive 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {product.isActive ? 'Aktiv' : 'Inaktiv'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button 
+                          onClick={() => handleEditClick(product)} 
+                          disabled={loading}
+                          className="text-blue-600 hover:text-blue-900 mr-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Redigera
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteProduct(product.id)} 
+                          disabled={loading}
+                          className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {loading ? 'Tar bort...' : 'Ta bort'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

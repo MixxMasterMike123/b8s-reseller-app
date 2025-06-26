@@ -15,7 +15,8 @@ import {
   Bars3Icon,
   XMarkIcon,
   ChartBarIcon,
-  PhoneIcon
+  PhoneIcon,
+  CubeIcon
 } from '@heroicons/react/24/outline';
 
 const AppLayout = ({ children }) => {
@@ -44,6 +45,11 @@ const AppLayout = ({ children }) => {
       name: 'Dashboard',
       path: '/dashboard',
       icon: HomeIcon,
+    },
+    {
+      name: 'Produktkatalog',
+      path: '/products',
+      icon: CubeIcon,
     },
     {
       name: 'Lägg en beställning',
@@ -82,6 +88,11 @@ const AppLayout = ({ children }) => {
       name: 'Ordrar',
       path: '/admin/orders',
       icon: ClipboardDocumentListIcon,
+    },
+    {
+      name: 'Produkter',
+      path: '/admin/products',
+      icon: CubeIcon,
     },
     {
       name: 'Inställningar',
