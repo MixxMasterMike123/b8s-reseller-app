@@ -6,9 +6,21 @@ import AppLayout from '../components/layout/AppLayout';
 const DashboardPage = () => {
   const { userData, currentUser } = useAuth();
 
+  // Debug info
+  const hostname = window.location.hostname;
+  const subdomain = hostname.split('.')[0];
+
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto">
+        {/* Debug Info */}
+        <div className="bg-green-100 border-l-4 border-green-500 p-4 mb-4">
+          <h3 className="text-sm font-medium text-green-800">Debug Info (B2B Reseller Mode)</h3>
+          <p className="text-xs text-green-700">
+            Hostname: {hostname} | Subdomain: {subdomain} | Full URL: {window.location.href}
+          </p>
+        </div>
+
         {/* Banner Image */}
         <div className="w-full mb-8">
           <img 
