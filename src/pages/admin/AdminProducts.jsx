@@ -251,48 +251,53 @@ function AdminProducts() {
   };
 
   const handleDeleteProduct = async (productId) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) {
+    if (!window.confirm('Är du säker på att du vill ta bort denna produkt? Denna åtgärd kan inte ångras.')) {
       return;
     }
     
     try {
       setLoading(true);
+      let deletionSuccessful = false;
       
       // Delete from named database
       try {
         const docRef = doc(db, 'products', productId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          await deleteDoc(docRef);
-          console.log("Deleted product from named DB");
-          toast.success('Product deleted successfully');
-        }
+        await deleteDoc(docRef);
+        console.log("Product deleted from named DB");
+        deletionSuccessful = true;
       } catch (error) {
         console.error("Error deleting product from named DB:", error);
-        toast.error('Failed to delete product');
-        setLoading(false);
-        return;
+        // Only show error if it's not a "document not found" error
+        if (error.code !== 'not-found') {
+          toast.error('Kunde inte ta bort produkten från databasen');
+          setLoading(false);
+          return;
+        } else {
+          console.log("Product was already deleted from named DB");
+          deletionSuccessful = true;
+        }
       }
       
       // Only attempt to delete from default DB if flag is enabled
       if (USE_DEFAULT_DB) {
         try {
           const defaultDocRef = doc(defaultDb, 'products', productId);
-          const defaultDocSnap = await getDoc(defaultDocRef);
-          if (defaultDocSnap.exists()) {
-            await deleteDoc(defaultDocRef);
-            console.log("Deleted product from default DB");
-          }
+          await deleteDoc(defaultDocRef);
+          console.log("Product deleted from default DB");
         } catch (error) {
-          console.log("Skipping default DB delete due to permissions");
+          console.log("Skipping default DB delete due to permissions or document not found:", error.code);
         }
       }
       
-      // Update local state
-      setProducts(products.filter(product => product.id !== productId));
+      if (deletionSuccessful) {
+        // Update local state - remove the product from the list
+        setProducts(prevProducts => prevProducts.filter(product => product.id !== productId));
+        toast.success('Produkten har tagits bort');
+      }
+      
     } catch (err) {
       console.error('Error deleting product:', err);
-      toast.error('Failed to delete product');
+      toast.error('Kunde inte ta bort produkten: ' + (err.message || 'Okänt fel'));
     } finally {
       setLoading(false);
     }
@@ -576,14 +581,16 @@ function AdminProducts() {
                       <button 
                         onClick={() => handleEditClick(product)} 
                         className="text-blue-600 hover:text-blue-900 mr-3"
+                        disabled={loading}
                       >
-                        Edit
+                        Redigera
                       </button>
                       <button 
                         onClick={() => handleDeleteProduct(product.id)} 
                         className="text-red-600 hover:text-red-900"
+                        disabled={loading}
                       >
-                        Delete
+                        {loading ? 'Tar bort...' : 'Ta bort'}
                       </button>
                     </td>
                   </tr>
