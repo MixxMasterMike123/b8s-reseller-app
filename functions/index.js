@@ -41,12 +41,17 @@ const getEmailTemplate = (status, orderData, userData) => {
         B8Shield Team
       `,
       html: `
-        <h2>Hej ${contactPerson},</h2>
-        <p>Tack för din beställning! Vi har mottagit din order och kommer att behandla den snarast.</p>
-        <p><strong>Ordernummer:</strong> ${orderNumber}</p>
-        <p><strong>Status:</strong> Mottagen</p>
-        <p>Du kommer att få ytterligare uppdateringar när din order behandlas.</p>
-        <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+          </div>
+          <h2>Hej ${contactPerson},</h2>
+          <p>Tack för din beställning! Vi har mottagit din order och kommer att behandla den snarast.</p>
+          <p><strong>Ordernummer:</strong> ${orderNumber}</p>
+          <p><strong>Status:</strong> Mottagen</p>
+          <p>Du kommer att få ytterligare uppdateringar när din order behandlas.</p>
+          <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+        </div>
       `
     },
     processing: {
@@ -65,12 +70,17 @@ const getEmailTemplate = (status, orderData, userData) => {
         B8Shield Team
       `,
       html: `
-        <h2>Hej ${contactPerson},</h2>
-        <p>Din order är nu under behandling och förbereds för leverans.</p>
-        <p><strong>Ordernummer:</strong> ${orderNumber}</p>
-        <p><strong>Status:</strong> Behandlas</p>
-        <p>Vi kommer att meddela dig när ordern har skickats.</p>
-        <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+          </div>
+          <h2>Hej ${contactPerson},</h2>
+          <p>Din order är nu under behandling och förbereds för leverans.</p>
+          <p><strong>Ordernummer:</strong> ${orderNumber}</p>
+          <p><strong>Status:</strong> Behandlas</p>
+          <p>Vi kommer att meddela dig när ordern har skickats.</p>
+          <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+        </div>
       `
     },
     shipped: {
@@ -91,14 +101,19 @@ const getEmailTemplate = (status, orderData, userData) => {
         B8Shield Team
       `,
       html: `
-        <h2>Hej ${contactPerson},</h2>
-        <p>Goda nyheter! Din order har skickats och är nu på väg till dig.</p>
-        <p><strong>Ordernummer:</strong> ${orderNumber}</p>
-        <p><strong>Status:</strong> Skickad</p>
-        ${orderData.trackingNumber ? `<p><strong>Spårningsnummer:</strong> ${orderData.trackingNumber}</p>` : ''}
-        ${orderData.carrier ? `<p><strong>Transportör:</strong> ${orderData.carrier}</p>` : ''}
-        <p>Din order kommer att levereras inom 1-3 arbetsdagar.</p>
-        <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+          </div>
+          <h2>Hej ${contactPerson},</h2>
+          <p>Goda nyheter! Din order har skickats och är nu på väg till dig.</p>
+          <p><strong>Ordernummer:</strong> ${orderNumber}</p>
+          <p><strong>Status:</strong> Skickad</p>
+          ${orderData.trackingNumber ? `<p><strong>Spårningsnummer:</strong> ${orderData.trackingNumber}</p>` : ''}
+          ${orderData.carrier ? `<p><strong>Transportör:</strong> ${orderData.carrier}</p>` : ''}
+          <p>Din order kommer att levereras inom 1-3 arbetsdagar.</p>
+          <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+        </div>
       `
     },
     delivered: {
@@ -119,13 +134,18 @@ const getEmailTemplate = (status, orderData, userData) => {
         B8Shield Team
       `,
       html: `
-        <h2>Hej ${contactPerson},</h2>
-        <p>Din order har levererats framgångsrikt!</p>
-        <p><strong>Ordernummer:</strong> ${orderNumber}</p>
-        <p><strong>Status:</strong> Levererad</p>
-        <p>Tack för att du handlar med B8Shield. Om du har några frågor eller problem med din order, tveka inte att kontakta oss.</p>
-        <p>Vi uppskattar ditt förtroende och ser fram emot att hjälpa dig igen.</p>
-        <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+          </div>
+          <h2>Hej ${contactPerson},</h2>
+          <p>Din order har levererats framgångsrikt!</p>
+          <p><strong>Ordernummer:</strong> ${orderNumber}</p>
+          <p><strong>Status:</strong> Levererad</p>
+          <p>Tack för att du handlar med B8Shield. Om du har några frågor eller problem med din order, tveka inte att kontakta oss.</p>
+          <p>Vi uppskattar ditt förtroende och ser fram emot att hjälpa dig igen.</p>
+          <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+        </div>
       `
     },
     cancelled: {
@@ -145,13 +165,18 @@ const getEmailTemplate = (status, orderData, userData) => {
         B8Shield Team
       `,
       html: `
-        <h2>Hej ${contactPerson},</h2>
-        <p>Din order har tyvärr avbrutits.</p>
-        <p><strong>Ordernummer:</strong> ${orderNumber}</p>
-        <p><strong>Status:</strong> Avbruten</p>
-        ${orderData.cancellationReason ? `<p><strong>Anledning:</strong> ${orderData.cancellationReason}</p>` : ''}
-        <p>Om du har några frågor om denna avbokning, vänligen kontakta vår kundtjänst.</p>
-        <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+          </div>
+          <h2>Hej ${contactPerson},</h2>
+          <p>Din order har tyvärr avbrutits.</p>
+          <p><strong>Ordernummer:</strong> ${orderNumber}</p>
+          <p><strong>Status:</strong> Avbruten</p>
+          ${orderData.cancellationReason ? `<p><strong>Anledning:</strong> ${orderData.cancellationReason}</p>` : ''}
+          <p>Om du har några frågor om denna avbokning, vänligen kontakta vår kundtjänst.</p>
+          <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+        </div>
       `
     }
   };
@@ -206,7 +231,7 @@ exports.sendOrderConfirmationEmails = functions.firestore
 
       // Email to customer
       const customerEmail = {
-        from: `"B8Shield" <b8shield.reseller@gmail.com>`,
+        from: `"B8Shield" <info@b8shield.com>`,
         to: userData.email,
         subject: `Orderbekräftelse: ${orderData.orderNumber}`,
         text: `
@@ -226,24 +251,29 @@ exports.sendOrderConfirmationEmails = functions.firestore
           B8Shield Team
         `,
         html: `
-          <h2>Tack för din beställning!</h2>
-          <p><strong>Ordernummer:</strong> ${orderData.orderNumber}</p>
-          <p><strong>Orderdatum:</strong> ${new Date(orderData.createdAt.toDate()).toLocaleString('sv-SE')}</p>
-          
-          <h3>Artiklar:</h3>
-          <p>${orderSummary.split('\n').join('<br>')}</p>
-          
-          <p><strong>Totalt:</strong> ${totalAmount} SEK</p>
-          
-          <p>Kontakta oss om du har några frågor.</p>
-          
-          <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+            </div>
+            <h2>Tack för din beställning!</h2>
+            <p><strong>Ordernummer:</strong> ${orderData.orderNumber}</p>
+            <p><strong>Orderdatum:</strong> ${new Date(orderData.createdAt.toDate()).toLocaleString('sv-SE')}</p>
+            
+            <h3>Artiklar:</h3>
+            <p>${orderSummary.split('\n').join('<br>')}</p>
+            
+            <p><strong>Totalt:</strong> ${totalAmount} SEK</p>
+            
+            <p>Kontakta oss om du har några frågor.</p>
+            
+            <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+          </div>
         `,
       };
 
       // Email to admin
       const adminEmail = {
-        from: `"B8Shield System" <b8shield.reseller@gmail.com>`,
+        from: `"B8Shield System" <info@b8shield.com>`,
         to: "micke.ohlen@gmail.com",
         subject: `Ny beställning: ${orderData.orderNumber}`,
         text: `
@@ -261,18 +291,23 @@ exports.sendOrderConfirmationEmails = functions.firestore
           Totalt: ${totalAmount} SEK
         `,
         html: `
-          <h2>En ny beställning har lagts</h2>
-          <p><strong>Ordernummer:</strong> ${orderData.orderNumber}</p>
-          <p><strong>Orderdatum:</strong> ${new Date(orderData.createdAt.toDate()).toLocaleString('sv-SE')}</p>
-          
-          <h3>Kund:</h3>
-          <p>${userData.companyName} (${userData.email})<br>
-          Kontakt: ${userData.contactPerson}, ${userData.phoneNumber}</p>
-          
-          <h3>Artiklar:</h3>
-          <p>${orderSummary.split('\n').join('<br>')}</p>
-          
-          <p><strong>Totalt:</strong> ${totalAmount} SEK</p>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+            </div>
+            <h2>En ny beställning har lagts</h2>
+            <p><strong>Ordernummer:</strong> ${orderData.orderNumber}</p>
+            <p><strong>Orderdatum:</strong> ${new Date(orderData.createdAt.toDate()).toLocaleString('sv-SE')}</p>
+            
+            <h3>Kund:</h3>
+            <p>${userData.companyName} (${userData.email})<br>
+            Kontakt: ${userData.contactPerson}, ${userData.phoneNumber}</p>
+            
+            <h3>Artiklar:</h3>
+            <p>${orderSummary.split('\n').join('<br>')}</p>
+            
+            <p><strong>Totalt:</strong> ${totalAmount} SEK</p>
+          </div>
         `,
       };
 
@@ -302,7 +337,7 @@ exports.sendUserActivationEmail = functions.firestore
       // Check if user was activated
       if (!beforeData.isActive && afterData.isActive) {
         const email = {
-          from: `"B8Shield" <b8shield.reseller@gmail.com>`,
+          from: `"B8Shield" <info@b8shield.com>`,
           to: afterData.email,
           subject: "Ditt B8Shield-konto är nu aktivt",
           text: `
@@ -319,16 +354,21 @@ exports.sendUserActivationEmail = functions.firestore
             B8Shield Team
           `,
           html: `
-            <h2>Hej ${afterData.contactPerson},</h2>
-            
-            <p>Ditt B8Shield-konto för <strong>${afterData.companyName}</strong> har aktiverats!</p>
-            
-            <p>Du kan nu logga in med ditt användarnamn och lösenord på:<br>
-            <a href="https://b8shield-reseller-app.web.app">B8Shield Portal</a></p>
-            
-            <p>Om du har några frågor, kontakta vår support.</p>
-            
-            <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+              </div>
+              <h2>Hej ${afterData.contactPerson},</h2>
+              
+              <p>Ditt B8Shield-konto för <strong>${afterData.companyName}</strong> har aktiverats!</p>
+              
+              <p>Du kan nu logga in med ditt användarnamn och lösenord på:<br>
+              <a href="https://b8shield-reseller-app.web.app">B8Shield Portal</a></p>
+              
+              <p>Om du har några frågor, kontakta vår support.</p>
+              
+              <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+            </div>
           `,
         };
         
@@ -372,7 +412,7 @@ exports.sendOrderStatusUpdateEmail = functions.firestore
 
         // Email to user
         const email = {
-          from: `"B8Shield" <b8shield.reseller@gmail.com>`,
+          from: `"B8Shield" <info@b8shield.com>`,
           to: userData.email,
           subject: template.subject,
           text: template.text,
@@ -385,7 +425,7 @@ exports.sendOrderStatusUpdateEmail = functions.firestore
         // Also notify admin for important status changes
         if (['shipped', 'delivered', 'cancelled'].includes(afterData.status)) {
           const adminEmail = {
-            from: `"B8Shield System" <b8shield.reseller@gmail.com>`,
+            from: `"B8Shield System" <info@b8shield.com>`,
             to: "micke.ohlen@gmail.com",
             subject: `Order Status Update: ${afterData.orderNumber}`,
             text: `
@@ -398,16 +438,21 @@ exports.sendOrderStatusUpdateEmail = functions.firestore
               ${afterData.carrier ? `Carrier: ${afterData.carrier}` : ''}
             `,
             html: `
-              <h2>Order Status Update</h2>
-              <p><strong>Order:</strong> ${afterData.orderNumber}</p>
-              <p><strong>New Status:</strong> ${afterData.status}</p>
-              
-              <h3>Customer:</h3>
-              <p>${userData.companyName} (${userData.email})<br>
-              Contact: ${userData.contactPerson}</p>
-              
-              ${afterData.trackingNumber ? `<p><strong>Tracking:</strong> ${afterData.trackingNumber}</p>` : ''}
-              ${afterData.carrier ? `<p><strong>Carrier:</strong> ${afterData.carrier}</p>` : ''}
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                  <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+                </div>
+                <h2>Order Status Update</h2>
+                <p><strong>Order:</strong> ${afterData.orderNumber}</p>
+                <p><strong>New Status:</strong> ${afterData.status}</p>
+                
+                <h3>Customer:</h3>
+                <p>${userData.companyName} (${userData.email})<br>
+                Contact: ${userData.contactPerson}</p>
+                
+                ${afterData.trackingNumber ? `<p><strong>Tracking:</strong> ${afterData.trackingNumber}</p>` : ''}
+                ${afterData.carrier ? `<p><strong>Carrier:</strong> ${afterData.carrier}</p>` : ''}
+              </div>
             `,
           };
           
@@ -430,7 +475,7 @@ exports.testEmail = functions.https.onRequest(async (req, res) => {
     console.log('Testing email functionality...');
     
     const testEmail = {
-      from: `"B8Shield Test" <b8shield.reseller@gmail.com>`,
+      from: `"B8Shield Test" <info@b8shield.com>`,
       to: "micke.ohlen@gmail.com",
       subject: "Test Email from B8Shield Portal",
       text: "This is a test email to verify Gmail SMTP integration is working.",
@@ -745,7 +790,7 @@ exports.testOrderUpdate = functions.https.onRequest(async (req, res) => {
     const template = getEmailTemplate('shipped', orderData, userData);
     
     const testEmail = {
-      from: `"B8Shield" <b8shield.reseller@gmail.com>`,
+      from: `"B8Shield" <info@b8shield.com>`,
       to: userData.email,
       subject: template.subject,
       text: template.text,
@@ -754,7 +799,7 @@ exports.testOrderUpdate = functions.https.onRequest(async (req, res) => {
     
     // Also send to admin
     const adminEmail = {
-      from: `"B8Shield System" <b8shield.reseller@gmail.com>`,
+      from: `"B8Shield System" <info@b8shield.com>`,
       to: "micke.ohlen@gmail.com",
       subject: `Manual Test: Order Status Update - ${orderData.orderNumber}`,
       text: `This is a manual test of the order status update email system.\n\nOrder: ${orderData.orderNumber}\nCustomer: ${userData.email}\nTest Status: shipped`,
@@ -1272,7 +1317,7 @@ exports.sendOrderConfirmationHttp = functions.https.onRequest(async (req, res) =
     
     // Customer confirmation email
     const customerEmail = {
-      from: `"B8Shield" <b8shield.reseller@gmail.com>`,
+      from: `"B8Shield" <info@b8shield.com>`,
       to: userData.email,
       subject: `Orderbekräftelse: ${orderData.orderNumber}`,
       text: `
@@ -1294,28 +1339,33 @@ exports.sendOrderConfirmationHttp = functions.https.onRequest(async (req, res) =
         B8Shield Team
       `,
       html: `
-        <h2>Orderbekräftelse</h2>
-        <p>Hej ${userData.contactPerson || userData.companyName},</p>
-        <p>Tack för din beställning! Vi har mottagit din order och kommer att behandla den snarast.</p>
-        
-        <h3>Orderdetaljer:</h3>
-        <p><strong>Ordernummer:</strong> ${orderData.orderNumber}</p>
-        <p><strong>Företag:</strong> ${userData.companyName}</p>
-        
-        <h3>Beställning:</h3>
-        <p>${orderSummary.replace(/\n/g, '<br>')}</p>
-        
-        <p><strong>Totalt: ${totalAmount} SEK</strong></p>
-        
-        <p>Du kommer att få ytterligare uppdateringar när din order behandlas.</p>
-        
-        <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+          </div>
+          <h2>Orderbekräftelse</h2>
+          <p>Hej ${userData.contactPerson || userData.companyName},</p>
+          <p>Tack för din beställning! Vi har mottagit din order och kommer att behandla den snarast.</p>
+          
+          <h3>Orderdetaljer:</h3>
+          <p><strong>Ordernummer:</strong> ${orderData.orderNumber}</p>
+          <p><strong>Företag:</strong> ${userData.companyName}</p>
+          
+          <h3>Beställning:</h3>
+          <p>${orderSummary.replace(/\n/g, '<br>')}</p>
+          
+          <p><strong>Totalt: ${totalAmount} SEK</strong></p>
+          
+          <p>Du kommer att få ytterligare uppdateringar när din order behandlas.</p>
+          
+          <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+        </div>
       `,
     };
     
     // Admin notification email
     const adminEmail = {
-      from: `"B8Shield System" <b8shield.reseller@gmail.com>`,
+      from: `"B8Shield System" <info@b8shield.com>`,
       to: "micke.ohlen@gmail.com",
       subject: `Ny order: ${orderData.orderNumber}`,
       text: `
@@ -1331,18 +1381,23 @@ exports.sendOrderConfirmationHttp = functions.https.onRequest(async (req, res) =
         Totalt: ${totalAmount} SEK
       `,
       html: `
-        <h2>Ny order mottagen</h2>
-        <p><strong>Ordernummer:</strong> ${orderData.orderNumber}</p>
-        
-        <h3>Kundinformation:</h3>
-        <p><strong>Företag:</strong> ${userData.companyName}</p>
-        <p><strong>E-post:</strong> ${userData.email}</p>
-        <p><strong>Kontaktperson:</strong> ${userData.contactPerson}</p>
-        
-        <h3>Orderdetaljer:</h3>
-        <p>${orderSummary.replace(/\n/g, '<br>')}</p>
-        
-        <p><strong>Totalt: ${totalAmount} SEK</strong></p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+          </div>
+          <h2>Ny order mottagen</h2>
+          <p><strong>Ordernummer:</strong> ${orderData.orderNumber}</p>
+          
+          <h3>Kundinformation:</h3>
+          <p><strong>Företag:</strong> ${userData.companyName}</p>
+          <p><strong>E-post:</strong> ${userData.email}</p>
+          <p><strong>Kontaktperson:</strong> ${userData.contactPerson}</p>
+          
+          <h3>Orderdetaljer:</h3>
+          <p>${orderSummary.replace(/\n/g, '<br>')}</p>
+          
+          <p><strong>Totalt: ${totalAmount} SEK</strong></p>
+        </div>
       `,
     };
     
@@ -1403,7 +1458,7 @@ exports.sendStatusUpdateHttp = functions.https.onRequest(async (req, res) => {
     
     // Customer status update email
     const customerEmail = {
-      from: `"B8Shield" <b8shield.reseller@gmail.com>`,
+      from: `"B8Shield" <info@b8shield.com>`,
       to: userData.email,
       subject: template.subject,
       text: template.text,
@@ -1416,7 +1471,7 @@ exports.sendStatusUpdateHttp = functions.https.onRequest(async (req, res) => {
     // Also notify admin for important status changes
     if (['shipped', 'delivered', 'cancelled'].includes(newStatus)) {
       const adminEmail = {
-        from: `"B8Shield System" <b8shield.reseller@gmail.com>`,
+        from: `"B8Shield System" <info@b8shield.com>`,
         to: "micke.ohlen@gmail.com",
         subject: `Order Status Update: ${orderData.orderNumber}`,
         text: `
@@ -1429,16 +1484,21 @@ exports.sendStatusUpdateHttp = functions.https.onRequest(async (req, res) => {
           ${orderData.carrier ? `Carrier: ${orderData.carrier}` : ''}
         `,
         html: `
-          <h2>Order Status Update</h2>
-          <p><strong>Order:</strong> ${orderData.orderNumber}</p>
-          <p><strong>New Status:</strong> ${newStatus}</p>
-          
-          <h3>Customer:</h3>
-          <p>${userData.companyName} (${userData.email})<br>
-          Contact: ${userData.contactPerson}</p>
-          
-          ${orderData.trackingNumber ? `<p><strong>Tracking:</strong> ${orderData.trackingNumber}</p>` : ''}
-          ${orderData.carrier ? `<p><strong>Carrier:</strong> ${orderData.carrier}</p>` : ''}
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+            </div>
+            <h2>Order Status Update</h2>
+            <p><strong>Order:</strong> ${orderData.orderNumber}</p>
+            <p><strong>New Status:</strong> ${newStatus}</p>
+            
+            <h3>Customer:</h3>
+            <p>${userData.companyName} (${userData.email})<br>
+            Contact: ${userData.contactPerson}</p>
+            
+            ${orderData.trackingNumber ? `<p><strong>Tracking:</strong> ${orderData.trackingNumber}</p>` : ''}
+            ${orderData.carrier ? `<p><strong>Carrier:</strong> ${orderData.carrier}</p>` : ''}
+          </div>
         `,
       };
       

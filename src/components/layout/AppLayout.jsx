@@ -14,7 +14,8 @@ import {
   ArrowRightOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  PhoneIcon
 } from '@heroicons/react/24/outline';
 
 const AppLayout = ({ children }) => {
@@ -45,14 +46,19 @@ const AppLayout = ({ children }) => {
       icon: HomeIcon,
     },
     {
-      name: 'Återförsäljarportal',
+      name: 'Lägg en beställning',
       path: '/order',
-      icon: ShoppingBagIcon,
+      icon: ShoppingCartIcon,
     },
     {
       name: 'Orderhistorik',
       path: '/orders',
       icon: ClipboardDocumentListIcon,
+    },
+    {
+      name: 'Kontakt & Support',
+      path: '/contact',
+      icon: PhoneIcon,
     },
     {
       name: 'Profil',

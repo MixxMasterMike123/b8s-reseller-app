@@ -10,6 +10,7 @@ import OrderPage from './pages/OrderPage';
 import OrderHistoryPage from './pages/OrderHistoryPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 import ProfilePage from './pages/ProfilePage';
+import ContactPage from './pages/ContactPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import TestAuthPage from './pages/TestAuthPage';
 
@@ -42,6 +43,7 @@ function App() {
       {/* Protected routes */}
       <Route path="/" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
       <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+      <Route path="/contact" element={<PrivateRoute><ContactPage /></PrivateRoute>} />
       <Route path="/order" element={<PrivateRoute><OrderPage /></PrivateRoute>} />
       <Route path="/order-history" element={<PrivateRoute><OrderHistoryPage /></PrivateRoute>} />
       <Route path="/orders" element={<PrivateRoute><OrderHistoryPage /></PrivateRoute>} />

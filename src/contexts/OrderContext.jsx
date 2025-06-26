@@ -8,7 +8,7 @@ import {
   doc, 
   query, 
   where, 
-  orderBy, 
+  orderBy,
   limit,
   deleteDoc,
   Timestamp,
