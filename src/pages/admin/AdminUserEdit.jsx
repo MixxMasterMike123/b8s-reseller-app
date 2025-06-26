@@ -161,6 +161,7 @@ const AdminUserEdit = () => {
 
   const handleMaterialSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent bubbling to parent form
     
     if (!materialFormData.file) {
       toast.error('Välj en fil att ladda upp');
@@ -691,8 +692,36 @@ const AdminUserEdit = () => {
             />
           </div>
 
-          {/* Customer Marketing Materials */}
-          {isAdmin && (
+
+
+          {/* Form Actions */}
+          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+            <Link
+              to="/admin/users"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Avbryt
+            </Link>
+            <button
+              type="submit"
+              disabled={saving}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Sparar...
+                </>
+              ) : (
+                'Spara Ändringar'
+              )}
+            </button>
+          </div>
+        </form>
+
+        {/* Customer Marketing Materials - Outside form to prevent interference */}
+        {isAdmin && (
+          <div className="max-w-4xl mx-auto mt-6 bg-white rounded-lg shadow-md">
             <div className="bg-purple-50 rounded-lg p-6 border border-purple-200">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-gray-900 flex items-center">
@@ -855,32 +884,8 @@ const AdminUserEdit = () => {
                 </div>
               )}
             </div>
-          )}
-
-          {/* Form Actions */}
-          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-            <Link
-              to="/admin/users"
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-            >
-              Avbryt
-            </Link>
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saving ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Sparar...
-                </>
-              ) : (
-                'Spara Ändringar'
-              )}
-            </button>
           </div>
-        </form>
+        )}
       </div>
     </AppLayout>
   );

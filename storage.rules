@@ -49,13 +49,21 @@ service firebase.storage {
     // Customer-specific marketing materials (admin only upload)
     match /marketing-materials/customers/{customerId}/{fileName} {
       allow read: if request.auth != null && (
-        // Admin can read all
-        get(/databases/b8s-reseller-db/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        // Admin can read all (hardcoded admin IDs due to named database access issues)
+        isAdmin() ||
         // Customer can read their own materials
         request.auth.uid == customerId
       );
-      allow write: if request.auth != null && 
-        get(/databases/b8s-reseller-db/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow write: if request.auth != null && isAdmin();
+    }
+    
+    // Helper function for admin check (hardcoded due to named database access issues)
+    function isAdmin() {
+      return request.auth.uid in [
+        '9AudFilG8VeYHcFnKgUtQkByAmn1',  // Primary admin
+        '9yKlFQEhb4dbSwa206BxXVZWdgs2',  // Admin 2  
+        'hCu3TDpe5XZ0adTp5eGLpGxDvL13'   // Admin 3
+      ];
     }
   }
 }
