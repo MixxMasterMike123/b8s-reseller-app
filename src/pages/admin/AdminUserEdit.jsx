@@ -3,6 +3,13 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
+import {
+  getCustomerMaterials,
+  uploadCustomerMaterial,
+  deleteCustomerMaterial,
+  getFileIcon,
+  downloadFile
+} from '../../utils/marketingMaterials';
 
 const AdminUserEdit = () => {
   const { userId } = useParams();
@@ -12,6 +19,19 @@ const AdminUserEdit = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  
+  // Marketing materials state
+  const [customerMaterials, setCustomerMaterials] = useState([]);
+  const [materialsLoading, setMaterialsLoading] = useState(false);
+  const [showUploadForm, setShowUploadForm] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [materialFormData, setMaterialFormData] = useState({
+    name: '',
+    description: '',
+    category: 'kundspecifikt',
+    file: null
+  });
+  
   const [formData, setFormData] = useState({
     companyName: '',
     contactPerson: '',
@@ -34,6 +54,30 @@ const AdminUserEdit = () => {
     notes: ''
   });
   const [errors, setErrors] = useState({});
+
+  const categories = [
+    { value: 'kundspecifikt', label: 'Kundspecifikt' },
+    { value: 'broschyrer', label: 'Broschyrer' },
+    { value: 'videos', label: 'Videos' },
+    { value: 'prislista', label: 'Prislista' },
+    { value: 'instruktioner', label: 'Instruktioner' },
+    { value: 'allmänt', label: 'Allmänt' }
+  ];
+
+  const loadCustomerMaterials = async () => {
+    if (!userId) return;
+    
+    try {
+      setMaterialsLoading(true);
+      const materials = await getCustomerMaterials(userId);
+      setCustomerMaterials(materials);
+    } catch (error) {
+      console.log('No customer materials found or error loading:', error);
+      setCustomerMaterials([]);
+    } finally {
+      setMaterialsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -70,6 +114,9 @@ const AdminUserEdit = () => {
           active: foundUser.active !== undefined ? foundUser.active : true,
           notes: foundUser.notes || ''
         });
+        
+        // Load customer materials
+        await loadCustomerMaterials();
       } catch (error) {
         console.error('Error fetching user:', error);
         toast.error('Kunde inte hämta kunddata');
@@ -98,6 +145,84 @@ const AdminUserEdit = () => {
         [name]: ''
       }));
     }
+  };
+
+  // Marketing materials functions
+  const handleMaterialFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setMaterialFormData(prev => ({
+        ...prev,
+        file: file,
+        name: prev.name || file.name.split('.')[0]
+      }));
+    }
+  };
+
+  const handleMaterialSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!materialFormData.file) {
+      toast.error('Välj en fil att ladda upp');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      await uploadCustomerMaterial(userId, materialFormData.file, {
+        name: materialFormData.name,
+        description: materialFormData.description,
+        category: materialFormData.category
+      });
+      
+      toast.success('Material uppladdat');
+      setMaterialFormData({ name: '', description: '', category: 'kundspecifikt', file: null });
+      setShowUploadForm(false);
+      await loadCustomerMaterials();
+    } catch (error) {
+      console.error('Error uploading material:', error);
+      toast.error('Kunde inte ladda upp material');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleMaterialDelete = async (materialId) => {
+    if (!confirm('Är du säker på att du vill ta bort detta material?')) {
+      return;
+    }
+
+    try {
+      await deleteCustomerMaterial(userId, materialId);
+      toast.success('Material borttaget');
+      await loadCustomerMaterials();
+    } catch (error) {
+      console.error('Error deleting material:', error);
+      toast.error('Kunde inte ta bort material');
+    }
+  };
+
+  const handleMaterialDownload = async (material) => {
+    try {
+      await downloadFile(material.downloadURL, material.fileName);
+      toast.success('Nedladdning startad');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Kunde inte ladda ner filen');
+    }
+  };
+
+  const formatFileSize = (bytes) => {
+    if (!bytes) return '';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getCategoryLabel = (category) => {
+    const cat = categories.find(c => c.value === category);
+    return cat ? cat.label : category;
   };
 
   const validateForm = () => {
@@ -565,6 +690,172 @@ const AdminUserEdit = () => {
               placeholder="Interna anteckningar om kunden..."
             />
           </div>
+
+          {/* Customer Marketing Materials */}
+          {isAdmin && (
+            <div className="bg-purple-50 rounded-lg p-6 border border-purple-200">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900 flex items-center">
+                  <span className="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded mr-2">
+                    MARKNADSFÖRING
+                  </span>
+                  Kundspecifikt Material ({customerMaterials.length})
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowUploadForm(true);
+                    setMaterialFormData({ name: '', description: '', category: 'kundspecifikt', file: null });
+                  }}
+                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
+                >
+                  Ladda upp Material
+                </button>
+              </div>
+
+              {/* Upload Form */}
+              {showUploadForm && (
+                <div className="mb-6 bg-white rounded-lg p-4 border border-purple-200">
+                  <h4 className="text-md font-medium text-gray-900 mb-3">Ladda upp Nytt Material</h4>
+                  <form onSubmit={handleMaterialSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Namn *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={materialFormData.name}
+                          onChange={(e) => setMaterialFormData(prev => ({ ...prev, name: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          placeholder="Materialnamn"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Kategori
+                        </label>
+                        <select
+                          value={materialFormData.category}
+                          onChange={(e) => setMaterialFormData(prev => ({ ...prev, category: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        >
+                          {categories.map(cat => (
+                            <option key={cat.value} value={cat.value}>{cat.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Beskrivning
+                      </label>
+                      <textarea
+                        value={materialFormData.description}
+                        onChange={(e) => setMaterialFormData(prev => ({ ...prev, description: e.target.value }))}
+                        rows={2}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        placeholder="Beskrivning av materialet"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Fil * (Bilder, Videos, PDF, Word-dokument)
+                      </label>
+                      <input
+                        type="file"
+                        required
+                        onChange={handleMaterialFileChange}
+                        accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.mp4,.mov,.avi,.webm,.mkv,.pdf,.doc,.docx,.txt,.rtf,.zip,.rar"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                      {materialFormData.file && (
+                        <p className="mt-1 text-sm text-gray-600">
+                          Vald fil: {materialFormData.file.name} ({formatFileSize(materialFormData.file.size)})
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button
+                        type="submit"
+                        disabled={uploading}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
+                      >
+                        {uploading ? 'Laddar upp...' : 'Ladda upp'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowUploadForm(false)}
+                        className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                      >
+                        Avbryt
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Materials List */}
+              {materialsLoading ? (
+                <div className="flex justify-center items-center h-32">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                </div>
+              ) : customerMaterials.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <span className="text-4xl block mb-2">📂</span>
+                  <p>Inget kundspecifikt material uppladdat ännu</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {customerMaterials.map((material) => (
+                    <div key={material.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center">
+                          <span className="text-xl mr-2">{getFileIcon(material.fileType)}</span>
+                          <span className="text-xs px-2 py-1 bg-purple-100 text-purple-600 rounded-full">
+                            {getCategoryLabel(material.category)}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => handleMaterialDelete(material.id)}
+                          className="p-1 text-gray-400 hover:text-red-600"
+                          title="Ta bort"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+
+                      <h4 className="font-medium text-gray-900 mb-2 text-sm line-clamp-2">{material.name}</h4>
+                      
+                      {material.description && (
+                        <p className="text-xs text-gray-600 mb-3 line-clamp-2">{material.description}</p>
+                      )}
+
+                      <div className="text-xs text-gray-500 mb-3">
+                        <p className="truncate">{material.fileName}</p>
+                        {material.fileSize && <p>{formatFileSize(material.fileSize)}</p>}
+                      </div>
+
+                      <button
+                        onClick={() => handleMaterialDownload(material)}
+                        className="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent text-xs font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
+                      >
+                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Ladda ner
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Form Actions */}
           <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">

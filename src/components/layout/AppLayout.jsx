@@ -16,7 +16,8 @@ import {
   XMarkIcon,
   ChartBarIcon,
   PhoneIcon,
-  CubeIcon
+  CubeIcon,
+  MegaphoneIcon
 } from '@heroicons/react/24/outline';
 
 const AppLayout = ({ children }) => {
@@ -50,6 +51,11 @@ const AppLayout = ({ children }) => {
       name: 'Produktkatalog',
       path: '/products',
       icon: CubeIcon,
+    },
+    {
+      name: 'Marknadsföringsmaterial',
+      path: '/marketing',
+      icon: MegaphoneIcon,
     },
     {
       name: 'Lägg en beställning',
@@ -93,6 +99,11 @@ const AppLayout = ({ children }) => {
       name: 'Produkter',
       path: '/admin/products',
       icon: CubeIcon,
+    },
+    {
+      name: 'Marknadsföring',
+      path: '/admin/marketing',
+      icon: MegaphoneIcon,
     },
     {
       name: 'Inställningar',

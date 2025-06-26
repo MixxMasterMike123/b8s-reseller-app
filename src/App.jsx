@@ -12,6 +12,7 @@ import OrderDetailPage from './pages/OrderDetailPage';
 import ProfilePage from './pages/ProfilePage';
 import ContactPage from './pages/ContactPage';
 import ProductViewPage from './pages/ProductViewPage';
+import MarketingMaterialsPage from './pages/MarketingMaterialsPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import TestAuthPage from './pages/TestAuthPage';
 
@@ -21,6 +22,7 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminUserEdit from './pages/admin/AdminUserEdit';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminProducts from './pages/admin/AdminProducts';
+import AdminMarketingMaterials from './pages/admin/AdminMarketingMaterials';
 import AdminOrderDetail from './pages/admin/AdminOrderDetail';
 
 // Components
@@ -47,6 +49,7 @@ function App() {
       <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
       <Route path="/contact" element={<PrivateRoute><ContactPage /></PrivateRoute>} />
       <Route path="/products" element={<PrivateRoute><ProductViewPage /></PrivateRoute>} />
+      <Route path="/marketing" element={<PrivateRoute><MarketingMaterialsPage /></PrivateRoute>} />
       <Route path="/order" element={<PrivateRoute><OrderPage /></PrivateRoute>} />
       <Route path="/order-history" element={<PrivateRoute><OrderHistoryPage /></PrivateRoute>} />
       <Route path="/orders" element={<PrivateRoute><OrderHistoryPage /></PrivateRoute>} />
@@ -60,6 +63,7 @@ function App() {
       <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
       <Route path="/admin/orders/:orderId" element={<AdminRoute><AdminOrderDetail /></AdminRoute>} />
       <Route path="/admin/products" element={<AdminRoute><AdminProducts /></AdminRoute>} />
+      <Route path="/admin/marketing" element={<AdminRoute><AdminMarketingMaterials /></AdminRoute>} />
 
       {/* Redirect any unknown routes to dashboard */}
       <Route path="*" element={<Navigate to="/" replace />} />
