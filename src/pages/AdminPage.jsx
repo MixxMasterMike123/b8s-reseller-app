@@ -153,6 +153,9 @@ function AdminPage() {
             <Link to="/admin/products" className="block w-full py-2 px-4 bg-blue-600 text-white text-center rounded hover:bg-blue-700">
               Manage Products
             </Link>
+            <Link to="/admin/marketing" className="block w-full py-2 px-4 bg-purple-600 text-white text-center rounded hover:bg-purple-700">
+              Marknadsföring
+            </Link>
             <Link to="/" className="block w-full py-2 px-4 bg-gray-600 text-white text-center rounded hover:bg-gray-700">
               Back to Dashboard
             </Link>

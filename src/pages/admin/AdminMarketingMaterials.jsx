@@ -349,13 +349,32 @@ function AdminMarketingMaterials() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
               {materials.map((material) => (
                 <div key={material.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  {/* File Preview/Icon */}
+                  <div className="flex items-center justify-center w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl overflow-hidden">
+                    {material.fileType === 'image' && material.downloadURL ? (
+                      <img 
+                        src={material.downloadURL}
+                        alt={material.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Fallback to icon if image fails to load
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'block';
+                        }}
+                      />
+                    ) : null}
+                    <span 
+                      className="text-3xl"
+                                              style={{ display: material.fileType === 'image' && material.downloadURL ? 'none' : 'block' }}
+                    >
+                      {getFileIcon(material.fileType)}
+                    </span>
+                  </div>
+
                   <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center">
-                      <span className="text-2xl mr-2">{getFileIcon(material.fileType)}</span>
-                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
-                        {getCategoryLabel(material.category)}
-                      </span>
-                    </div>
+                    <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
+                      {getCategoryLabel(material.category)}
+                    </span>
                     <div className="flex gap-1">
                       <button
                         onClick={() => handleEdit(material)}

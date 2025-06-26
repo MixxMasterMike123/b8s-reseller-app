@@ -17,7 +17,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import TestAuthPage from './pages/TestAuthPage';
 
 // Admin Pages
-import AdminPage from './pages/AdminPage';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminUserEdit from './pages/admin/AdminUserEdit';
 import AdminOrders from './pages/admin/AdminOrders';
@@ -57,7 +57,7 @@ function App() {
       <Route path="/orders/:orderId" element={<PrivateRoute><OrderDetailPage /></PrivateRoute>} />
 
       {/* Admin routes */}
-      <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+      <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
       <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
       <Route path="/admin/users/:userId/edit" element={<AdminRoute><AdminUserEdit /></AdminRoute>} />
       <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />

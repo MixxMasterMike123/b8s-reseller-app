@@ -1,8 +1,54 @@
 [
   {
-    "origin": ["*"],
-    "method": ["GET", "POST", "PUT", "DELETE", "HEAD"],
-    "maxAgeSeconds": 3600,
-    "responseHeader": ["Content-Type", "Content-Disposition", "Content-Length"]
+    "origin": [
+      "https://b8shield-reseller-app.web.app",
+      "https://b8shield-reseller-app.firebaseapp.com",
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "http://127.0.0.1:5173"
+    ],
+    "method": [
+      "GET",
+      "POST",
+      "PUT",
+      "DELETE",
+      "HEAD",
+      "OPTIONS"
+    ],
+    "header": [
+      "Authorization",
+      "Content-Type",
+      "Content-Length",
+      "Accept",
+      "Accept-Encoding",
+      "Accept-Language",
+      "Access-Control-Request-Headers",
+      "Access-Control-Request-Method",
+      "Cache-Control",
+      "Connection",
+      "Host",
+      "Origin",
+      "Pragma",
+      "Referer",
+      "Sec-Fetch-Dest",
+      "Sec-Fetch-Mode",
+      "Sec-Fetch-Site",
+      "User-Agent",
+      "X-Client-Version",
+      "X-Firebase-Storage-Version",
+      "X-Goog-Upload-Command",
+      "X-Goog-Upload-Content-Length",
+      "X-Goog-Upload-Content-Type",
+      "X-Goog-Upload-File-Name",
+      "X-Goog-Upload-Header-Content-Length",
+      "X-Goog-Upload-Header-Content-Type",
+      "X-Goog-Upload-Header-X-Goog-Upload-File-Name",
+      "X-Goog-Upload-Offset",
+      "X-Goog-Upload-Protocol",
+      "X-Goog-Upload-Raw-Size",
+      "X-Goog-Upload-Status",
+      "X-Requested-With"
+    ],
+    "maxAgeSeconds": 3600
   }
 ] 

@@ -257,7 +257,63 @@ src/
 - Form validation with Swedish error messages
 
 ## Navigation Structure
-- **Main Navigation**: Dashboard, Produktkatalog, Lägg en beställning, Orderhistorik, Kontakt & Support, Profil
-- **Admin Navigation**: Admin Dashboard, Kunder, Ordrar, Produkter, Inställningar
-- **Customer Access**: All customers can access product catalog
-- **Admin Access**: Full product management capabilities
+- **Main Navigation**: Dashboard, Produktkatalog, Marknadsföringsmaterial, Lägg en beställning, Orderhistorik, Kontakt & Support, Profil
+- **Admin Navigation**: Admin Dashboard, Kunder, Ordrar, Produkter, Marknadsföring, Inställningar
+- **Customer Access**: All customers can access product catalog and marketing materials
+- **Admin Access**: Full product management and marketing materials management
+
+## Marketing Materials System (Latest)
+- **Admin Interface**: Full upload/management system at `/admin/marketing`
+- **Customer Interface**: View and download materials at `/marketing`
+- **File Support**: Images, videos, PDFs, Word docs, archives (all formats)
+- **Two Types**: Generic materials (all customers) + Customer-specific materials
+- **Auto-populate**: Import from existing products database
+- **Modern 2025 Design**: Gradients, animations, smart filtering
+- **Statistics Dashboard**: Material counts and categorization
+- **Swedish Localization**: Complete Swedish UI throughout
+- **Download System**: One-click downloads with proper file naming
+- **Security**: Admin-only uploads, role-based viewing permissions
+
+### Marketing Materials Database Schema
+```javascript
+// Firestore Collections:
+// marketingMaterials (generic materials)
+// users/{userId}/marketingMaterials (customer-specific)
+{
+  id: string,
+  name: string,
+  category: string, // 'Allmänt', 'Produktbilder', 'EAN-koder', etc.
+  fileType: string,
+  fileSize: number,
+  downloadUrl: string,
+  uploadedBy: string,
+  createdAt: timestamp,
+  metadata: object
+}
+```
+
+## IMPORTANT: Storage Rules Hack
+**CRITICAL ISSUE**: Firebase Storage rules cannot access named database `b8s-reseller-db` for admin role verification. Database lookups in storage rules fail even with correct syntax.
+
+**Current Workaround**: Hardcoded admin user IDs in storage rules instead of database lookups:
+```javascript
+function isAdmin() {
+  return request.auth.uid in [
+    '9AudFilG8VeYHcFnKgUtQkByAmn1',  // Primary admin
+    '9yKlFQEhb4dbSwa206BxXVZWdgs2',  // Admin 2  
+    'hCu3TDpe5XZ0adTp5eGLpGxDvL13'   // Admin 3
+  ];
+}
+```
+
+**TODO**: Investigate why storage rules cannot access named database. May need to:
+1. Use default database for admin users only
+2. Find alternative Firebase Storage rules syntax
+3. Implement server-side admin verification
+4. Update to newer Firebase Storage rules version
+
+**Files Affected**: 
+- `storage.rules` - Uses hardcoded admin IDs
+- `src/utils/marketingMaterials.js` - Marketing materials utilities
+- `src/pages/admin/AdminMarketingMaterials.jsx` - Admin interface
+- `src/pages/MarketingMaterialsPage.jsx` - Customer interface

@@ -345,9 +345,26 @@ function MarketingMaterialsPage() {
                           )}
                         </div>
 
-                        {/* File Icon */}
-                        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl">
-                          <span className="text-3xl">{getFileIcon(material.fileType)}</span>
+                        {/* File Preview/Icon */}
+                        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl overflow-hidden">
+                          {material.fileType === 'image' && material.downloadURL ? (
+                            <img 
+                              src={material.downloadURL}
+                              alt={material.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                // Fallback to icon if image fails to load
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'block';
+                              }}
+                            />
+                          ) : null}
+                          <span 
+                            className="text-3xl"
+                            style={{ display: material.fileType === 'image' && material.downloadURL ? 'none' : 'block' }}
+                          >
+                            {getFileIcon(material.fileType)}
+                          </span>
                         </div>
 
                         {/* Material Info */}

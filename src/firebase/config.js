@@ -10,7 +10,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyCsYgMVRlipm-PxsHPZOxew5tqcZ_3Kccw",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "b8shield-reseller-app.firebaseapp.com",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "b8shield-reseller-app",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "b8shield-reseller-app.appspot.com",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "b8shield-reseller-app.firebasestorage.app",
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "996315128348",
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:996315128348:web:75388494e2bcdfa1f3f5d9",
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-7JFF08MLM2"
