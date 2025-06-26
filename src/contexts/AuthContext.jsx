@@ -171,6 +171,7 @@ export function AuthProvider({ children }) {
           role: 'user',
           active: false, // Require admin activation
           isActive: false,
+          marginal: 35, // Default margin percentage
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
@@ -504,6 +505,97 @@ export function AuthProvider({ children }) {
     }
   }
 
+  // Update any user's profile - Admin only
+  async function updateAnyUserProfile(userId, data) {
+    try {
+      if (isDemoMode) {
+        // Demo mode: mock user profile update
+        setDemoUsers(users => 
+          users.map(user => 
+            user.id === userId 
+              ? { ...user, ...data, updatedAt: new Date().toISOString() } 
+              : user
+          )
+        );
+        
+        toast.success('Customer profile updated successfully (Demo Mode)');
+        return true;
+      } else {
+        // Real Firebase user profile update
+        if (!isAdmin) throw new Error('Unauthorized');
+        
+        const profileData = {
+          ...data,
+          updatedAt: new Date().toISOString()
+        };
+        
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, profileData);
+        
+        // Also update in the default database if it exists
+        try {
+          const defaultUserRef = doc(defaultDb, 'users', userId);
+          await updateDoc(defaultUserRef, profileData);
+        } catch (error) {
+          console.error('Error updating profile in default database:', error);
+          // Continue even if default DB update fails
+        }
+        
+        toast.success('Customer profile updated successfully');
+        return true;
+      }
+    } catch (error) {
+      toast.error('Failed to update customer profile');
+      throw error;
+    }
+  }
+
+  // Update user margin - Admin only
+  async function updateUserMarginal(userId, newMarginal) {
+    try {
+      if (isDemoMode) {
+        // Demo mode: mock user margin update
+        setDemoUsers(users => 
+          users.map(user => 
+            user.id === userId 
+              ? { ...user, marginal: newMarginal, updatedAt: new Date().toISOString() } 
+              : user
+          )
+        );
+        
+        toast.success(`Customer margin updated to ${newMarginal}% successfully (Demo Mode)`);
+        return true;
+      } else {
+        // Real Firebase user margin update
+        if (!isAdmin) throw new Error('Unauthorized');
+        
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, {
+          marginal: newMarginal,
+          updatedAt: new Date().toISOString()
+        });
+        
+        // Also update the margin in the default database if it exists
+        try {
+          const defaultUserRef = doc(defaultDb, 'users', userId);
+          await updateDoc(defaultUserRef, {
+            marginal: newMarginal,
+            updatedAt: new Date().toISOString()
+          });
+        } catch (error) {
+          console.error('Error updating margin in default database:', error);
+          // Continue even if default DB update fails
+        }
+        
+        toast.success(`Customer margin updated to ${newMarginal}% successfully`);
+        return true;
+      }
+    } catch (error) {
+      toast.error('Failed to update customer margin');
+      throw error;
+    }
+  }
+
   // Context value
   const value = {
     currentUser,
@@ -519,9 +611,11 @@ export function AuthProvider({ children }) {
     updateUserEmail,
     updateUserPassword,
     updateUserProfile,
+    updateAnyUserProfile,
     getAllUsers,
     toggleUserActive,
-    updateUserRole
+    updateUserRole,
+    updateUserMarginal
   };
 
   return (

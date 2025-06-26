@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useSimpleAuth } from '../contexts/SimpleAuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { getAuth, updatePassword as firebaseUpdatePassword } from 'firebase/auth';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { db, defaultDb } from '../firebase/config';
@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import AppLayout from '../components/layout/AppLayout';
 
 const ProfilePage = () => {
-  const { currentUser } = useSimpleAuth();
+  const { currentUser, updateUserProfile } = useAuth();
   const [userData, setUserData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -19,8 +19,12 @@ const ProfilePage = () => {
   const [formData, setFormData] = useState({
     companyName: '',
     contactPerson: '',
-    phoneNumber: '',
+    phone: '',
     address: '',
+    city: '',
+    postalCode: '',
+    country: 'Sverige',
+    orgNumber: '',
     newPassword: '',
     confirmPassword: '',
   });
@@ -46,8 +50,12 @@ const ProfilePage = () => {
             ...prev,
             companyName: data.companyName || '',
             contactPerson: data.contactPerson || '',
-            phoneNumber: data.phoneNumber || '',
+            phone: data.phone || '',
             address: data.address || '',
+            city: data.city || '',
+            postalCode: data.postalCode || '',
+            country: data.country || 'Sverige',
+            orgNumber: data.orgNumber || '',
           }));
         } else {
           console.log('User not found in named database, trying default database');
@@ -63,8 +71,12 @@ const ProfilePage = () => {
               ...prev,
               companyName: data.companyName || '',
               contactPerson: data.contactPerson || '',
-              phoneNumber: data.phoneNumber || '',
+              phone: data.phone || '',
               address: data.address || '',
+              city: data.city || '',
+              postalCode: data.postalCode || '',
+              country: data.country || 'Sverige',
+              orgNumber: data.orgNumber || '',
             }));
           } else {
             console.log('No user found in either database, creating profile');
@@ -187,26 +199,16 @@ const ProfilePage = () => {
       const profileData = {
         companyName: formData.companyName,
         contactPerson: formData.contactPerson,
-        phoneNumber: formData.phoneNumber,
+        phone: formData.phone,
         address: formData.address,
-        updatedAt: new Date().toISOString()
+        city: formData.city,
+        postalCode: formData.postalCode,
+        country: formData.country,
+        orgNumber: formData.orgNumber,
       };
       
-      // Try to update in both databases
-      const userDocRef = doc(db, 'users', currentUser.uid);
-      const defaultUserDocRef = doc(defaultDb, 'users', currentUser.uid);
-      
-      try {
-        await updateDoc(userDocRef, profileData);
-      } catch (error) {
-        console.error('Error updating profile in named database:', error);
-      }
-      
-      try {
-        await updateDoc(defaultUserDocRef, profileData);
-      } catch (error) {
-        console.error('Error updating profile in default database:', error);
-      }
+      // Use AuthContext method for updating
+      await updateUserProfile(profileData);
       
       // Update local state
       setUserData(prev => ({
@@ -243,13 +245,13 @@ const ProfilePage = () => {
           {/* Header */}
           <div className="px-4 py-5 border-b border-gray-200 sm:px-6 flex justify-between items-center">
             <h1 className="text-lg leading-6 font-medium text-gray-900">
-              Your Profile
+              Din Profil
             </h1>
             <Link
               to="/"
               className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
             >
-              Back to Dashboard
+              Tillbaka till Dashboard
             </Link>
           </div>
 
@@ -268,37 +270,53 @@ const ProfilePage = () => {
             )}
 
             <div className="mb-6">
-              <h2 className="text-xl font-medium text-gray-900 mb-4">Profile Information</h2>
+              <h2 className="text-xl font-medium text-gray-900 mb-4">Profilinformation</h2>
               
               {!isEditing ? (
                 <div className="bg-gray-50 p-4 rounded-md">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-500">Email</p>
+                      <p className="text-sm text-gray-500">E-post</p>
                       <p className="font-medium">{currentUser?.email}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Company Name</p>
-                      <p className="font-medium">{userData?.companyName || 'Not set'}</p>
+                      <p className="text-sm text-gray-500">Företagsnamn</p>
+                      <p className="font-medium">{userData?.companyName || 'Ej angivet'}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Contact Person</p>
-                      <p className="font-medium">{userData?.contactPerson || 'Not set'}</p>
+                      <p className="text-sm text-gray-500">Kontaktperson</p>
+                      <p className="font-medium">{userData?.contactPerson || 'Ej angivet'}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Phone Number</p>
-                      <p className="font-medium">{userData?.phoneNumber || 'Not set'}</p>
+                      <p className="text-sm text-gray-500">Telefon</p>
+                      <p className="font-medium">{userData?.phone || 'Ej angivet'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Organisationsnummer</p>
+                      <p className="font-medium">{userData?.orgNumber || 'Ej angivet'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Stad</p>
+                      <p className="font-medium">{userData?.city || 'Ej angivet'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Postnummer</p>
+                      <p className="font-medium">{userData?.postalCode || 'Ej angivet'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Land</p>
+                      <p className="font-medium">{userData?.country || 'Sverige'}</p>
                     </div>
                     <div className="md:col-span-2">
-                      <p className="text-sm text-gray-500">Address</p>
-                      <p className="font-medium">{userData?.address || 'Not set'}</p>
+                      <p className="text-sm text-gray-500">Adress</p>
+                      <p className="font-medium">{userData?.address || 'Ej angivet'}</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700"
+                    className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
                   >
-                    Edit Profile
+                    Redigera Profil
                   </button>
                 </div>
               ) : (
@@ -306,7 +324,7 @@ const ProfilePage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="companyName" className="block text-sm font-medium text-gray-700">
-                        Company Name
+                        Företagsnamn *
                       </label>
                       <input
                         type="text"
@@ -314,12 +332,13 @@ const ProfilePage = () => {
                         id="companyName"
                         value={formData.companyName}
                         onChange={handleChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        required
                       />
                     </div>
                     <div>
                       <label htmlFor="contactPerson" className="block text-sm font-medium text-gray-700">
-                        Contact Person
+                        Kontaktperson *
                       </label>
                       <input
                         type="text"
@@ -327,34 +346,96 @@ const ProfilePage = () => {
                         id="contactPerson"
                         value={formData.contactPerson}
                         onChange={handleChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        required
                       />
                     </div>
                     <div>
-                      <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
-                        Phone Number
+                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                        Telefon
+                      </label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        id="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="08-123 456 78"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="orgNumber" className="block text-sm font-medium text-gray-700">
+                        Organisationsnummer
                       </label>
                       <input
                         type="text"
-                        name="phoneNumber"
-                        id="phoneNumber"
-                        value={formData.phoneNumber}
+                        name="orgNumber"
+                        id="orgNumber"
+                        value={formData.orgNumber}
                         onChange={handleChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="556123-4567"
                       />
                     </div>
                     <div className="md:col-span-2">
                       <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-                        Address
+                        Adress
                       </label>
-                      <textarea
+                      <input
+                        type="text"
                         name="address"
                         id="address"
-                        rows="3"
                         value={formData.address}
                         onChange={handleChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                      ></textarea>
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Gatuadress 123"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="city" className="block text-sm font-medium text-gray-700">
+                        Stad
+                      </label>
+                      <input
+                        type="text"
+                        name="city"
+                        id="city"
+                        value={formData.city}
+                        onChange={handleChange}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Stockholm"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700">
+                        Postnummer
+                      </label>
+                      <input
+                        type="text"
+                        name="postalCode"
+                        id="postalCode"
+                        value={formData.postalCode}
+                        onChange={handleChange}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="123 45"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="country" className="block text-sm font-medium text-gray-700">
+                        Land
+                      </label>
+                      <select
+                        name="country"
+                        id="country"
+                        value={formData.country}
+                        onChange={handleChange}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="Sverige">Sverige</option>
+                        <option value="Norge">Norge</option>
+                        <option value="Danmark">Danmark</option>
+                        <option value="Finland">Finland</option>
+                      </select>
                     </div>
                   </div>
                   <div className="flex justify-end space-x-3">
@@ -364,14 +445,14 @@ const ProfilePage = () => {
                       className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                       disabled={loading}
                     >
-                      Cancel
+                      Avbryt
                     </button>
                     <button
                       type="submit"
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700"
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
                       disabled={loading}
                     >
-                      {loading ? 'Saving...' : 'Save Changes'}
+                      {loading ? 'Sparar...' : 'Spara Ändringar'}
                     </button>
                   </div>
                 </form>
@@ -379,12 +460,12 @@ const ProfilePage = () => {
             </div>
 
             <div className="border-t border-gray-200 pt-6">
-              <h2 className="text-xl font-medium text-gray-900 mb-4">Change Password</h2>
+              <h2 className="text-xl font-medium text-gray-900 mb-4">Ändra Lösenord</h2>
               <form onSubmit={handlePasswordUpdate} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
-                      New Password
+                      Nytt Lösenord
                     </label>
                     <input
                       type="password"
@@ -392,12 +473,12 @@ const ProfilePage = () => {
                       id="newPassword"
                       value={formData.newPassword}
                       onChange={handleChange}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
                   <div>
                     <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                      Confirm New Password
+                      Bekräfta Nytt Lösenord
                     </label>
                     <input
                       type="password"
@@ -405,17 +486,17 @@ const ProfilePage = () => {
                       id="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
                 </div>
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
                     disabled={loading}
                   >
-                    {loading ? 'Updating...' : 'Update Password'}
+                    {loading ? 'Uppdaterar...' : 'Uppdatera Lösenord'}
                   </button>
                 </div>
               </form>

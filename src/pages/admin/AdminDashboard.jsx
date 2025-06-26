@@ -153,7 +153,7 @@ const AdminDashboard = () => {
           <div className="p-6">
             <div className="mb-8">
               <h2 className="text-xl font-medium text-gray-900 mb-4">Welcome, {users[0]?.companyName}</h2>
-              <p className="text-gray-600">This is your admin dashboard where you can manage users and orders.</p>
+              <p className="text-gray-600">Detta är din adminpanel där du kan hantera kunder och beställningar.</p>
             </div>
 
             {/* Stats Cards */}
@@ -209,8 +209,8 @@ const AdminDashboard = () => {
                 to="/admin/users"
                 className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition duration-150 border border-gray-200"
               >
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Manage Users</h3>
-                <p className="text-gray-600">View and manage user accounts</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Hantera Kunder</h3>
+                                  <p className="text-gray-600">Visa och hantera kundkonton</p>
               </Link>
               
               <Link

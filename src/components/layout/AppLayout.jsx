@@ -74,7 +74,7 @@ const AppLayout = ({ children }) => {
       icon: ChartBarIcon,
     },
     {
-      name: 'Användare',
+      name: 'Kunder',
       path: '/admin/users',
       icon: UsersIcon,
     },

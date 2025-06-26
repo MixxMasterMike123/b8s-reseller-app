@@ -1,0 +1,162 @@
+# B8Shield Reseller Portal - Cursor Rules
+
+## Project Overview
+B8Shield is a Swedish reseller portal for JPH Innovation AB's fishing lure protection product. The portal manages customer orders, user accounts, and provides admin functionality for customer management.
+
+## Technology Stack
+- **Frontend**: React 18 + Vite
+- **Styling**: Tailwind CSS
+- **Backend**: Firebase (Firestore, Auth, Hosting)
+- **State Management**: React Context API
+- **Routing**: React Router
+- **Icons**: Heroicons
+- **Notifications**: react-hot-toast
+- **Date Handling**: date-fns with Swedish locale
+
+## Key Project Structure
+```
+src/
+├── components/
+│   ├── auth/ (PrivateRoute, AdminRoute)
+│   └── layout/ (AppLayout)
+├── contexts/ (AuthContext, OrderContext)
+├── pages/
+│   ├── admin/ (AdminDashboard, AdminUsers, AdminOrders, AdminProducts)
+│   └── [user pages]
+├── firebase/config.js
+└── utils/
+```
+
+## Language & Terminology
+- **Primary Language**: Swedish (Svenska)
+- **Users**: Referred to as "Kunder" (customers) or "Företag" (companies)
+- **UI Text**: Swedish throughout (e.g., "Kundhantering", "Beställningar", "Inställningar")
+- **Field Names**: Swedish database fields (e.g., `marginal`, `företagsnamn`)
+
+## Key Features Implemented
+
+### Customer Management System
+- Individual customer margins (default: 35%)
+- Admin can edit customer margins inline
+- Customer activation/deactivation
+- Role management (user/admin)
+- Swedish terminology throughout
+
+### Authentication & Authorization
+- Firebase Authentication
+- Role-based access (user/admin)
+- Admin-only routes and functions
+- Account activation required
+
+### Order Management
+- Order creation and tracking
+- Status management
+- Order history
+- Admin order oversight
+
+## Database Schema (Firestore)
+
+### Users Collection
+```javascript
+{
+  id: string,
+  email: string,
+  companyName: string,
+  contactPerson: string,
+  role: 'user' | 'admin',
+  active: boolean,
+  marginal: number, // Customer margin percentage (default: 35)
+  createdAt: string,
+  updatedAt: string
+}
+```
+
+### Orders Collection
+```javascript
+{
+  id: string,
+  userId: string,
+  status: string,
+  items: array,
+  totalAmount: number,
+  createdAt: string,
+  updatedAt: string
+}
+```
+
+## Coding Conventions
+
+### React Patterns
+- Functional components with hooks
+- Context API for global state
+- Custom hooks for reusable logic
+- Consistent error handling with toast notifications
+
+### Styling Guidelines
+- Tailwind CSS utility classes
+- Consistent color scheme (blue primary, gray neutrals)
+- Mobile-first responsive design
+- Hover states and transitions
+
+### Firebase Integration
+- Dual database support (named + default)
+- Error handling for offline scenarios
+- Real-time updates where appropriate
+- Proper security rules
+
+## Admin Features
+- Customer management with inline editing
+- Margin percentage control per customer
+- User activation/deactivation
+- Order oversight and management
+- Dashboard with key metrics
+
+## Swedish UI Text Examples
+- "Kundhantering" (Customer Management)
+- "Lägg en beställning" (Place an Order)
+- "Orderhistorik" (Order History)
+- "Inställningar" (Settings)
+- "Aktivera/Inaktivera" (Activate/Deactivate)
+- "Marginal %" (Margin %)
+
+## Development Workflow
+1. Build: `npm run build`
+2. Deploy: `firebase deploy --only hosting`
+3. Test locally: `npm run dev`
+4. Firebase console: https://console.firebase.google.com/project/b8shield-reseller-app
+
+## Live URLs
+- **Production**: https://b8shield-reseller-app.web.app
+- **Admin Login**: micke.ohlen@gmail.com / temporaryPassword123
+
+## Key Implementation Notes
+- No demo mode in production (isDemoMode = false)
+- Default customer margin: 35%
+- All new customers require admin activation
+- Swedish date formatting throughout
+- Mobile-responsive design priority
+- Consistent error handling and user feedback
+
+## Recent Major Updates
+- Implemented individual customer margin system with role-based access control
+- Updated terminology from "Users" to "Kunder" throughout the application
+- Added inline editing for customer margins in list view
+- Enhanced admin dashboard with Swedish translations
+- Completed customer management system with full CRUD operations
+- Created comprehensive customer profile editing system (/admin/users/:id/edit)
+- Optimized customer list view layout for better mobile responsiveness
+- Simplified list view by moving activate/deactivate to detailed edit page
+
+## Customer Management Features
+- **List View**: Compact table with inline margin editing, role management, search/filter
+- **Detailed Edit**: Full customer profile editing with all fields and admin controls
+- **Role-Based Access**: Admins see margin field, regular users cannot edit margins
+- **Swedish Localization**: Complete Swedish terminology and validation messages
+- **Mobile Optimized**: Responsive design with vertical stacking for small screens
+
+## Customer Profile Fields
+- Company information (name, org number)
+- Contact details (person, phone, email)  
+- Address information (street, city, postal code, country)
+- Admin-only fields (margin %, role, active status, notes)
+- Form validation with Swedish error messages

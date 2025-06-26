@@ -17,6 +17,7 @@ import TestAuthPage from './pages/TestAuthPage';
 // Admin Pages
 import AdminPage from './pages/AdminPage';
 import AdminUsers from './pages/admin/AdminUsers';
+import AdminUserEdit from './pages/admin/AdminUserEdit';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrderDetail from './pages/admin/AdminOrderDetail';
@@ -53,6 +54,7 @@ function App() {
       {/* Admin routes */}
       <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
       <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+      <Route path="/admin/users/:userId/edit" element={<AdminRoute><AdminUserEdit /></AdminRoute>} />
       <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
       <Route path="/admin/orders/:orderId" element={<AdminRoute><AdminOrderDetail /></AdminRoute>} />
       <Route path="/admin/products" element={<AdminRoute><AdminProducts /></AdminRoute>} />

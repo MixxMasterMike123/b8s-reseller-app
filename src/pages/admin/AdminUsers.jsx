@@ -5,15 +5,16 @@ import toast from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
 
 const AdminUsers = () => {
-  const { getAllUsers, toggleUserActive, updateUserRole } = useAuth();
+  const { getAllUsers, updateUserRole, updateUserMarginal } = useAuth();
   
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [actionLoading, setActionLoading] = useState(false);
   const [roleUpdateLoading, setRoleUpdateLoading] = useState(false);
+  const [marginalUpdateLoading, setMarginalUpdateLoading] = useState(false);
+  const [editingMarginals, setEditingMarginals] = useState({});
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -52,31 +53,12 @@ const AdminUsers = () => {
     setFilteredUsers(filtered);
   }, [searchTerm, statusFilter, users]);
 
-  const handleToggleUserStatus = async (userId, currentStatus) => {
-    try {
-      setActionLoading(true);
-      await toggleUserActive(userId, !currentStatus);
-      
-      // Update the local state after successful toggle
-      setUsers(prevUsers => 
-        prevUsers.map(user => 
-          user.id === userId ? { ...user, active: !currentStatus } : user
-        )
-      );
-      
-      toast.success(`Användare ${!currentStatus ? 'aktiverad' : 'inaktiverad'}`);
-    } catch (error) {
-      console.error('Error toggling user status:', error);
-      toast.error('Kunde inte uppdatera användarstatus');
-    } finally {
-      setActionLoading(false);
-    }
-  };
+
 
   const handleRoleChange = async (userId, currentRole, newRole) => {
     if (currentRole === newRole) return;
     
-    if (window.confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
+    if (window.confirm(`Är du säker på att du vill ändra denna kunds roll till ${newRole === 'admin' ? 'Admin' : 'Kund'}?`)) {
       try {
         setRoleUpdateLoading(true);
         await updateUserRole(userId, newRole);
@@ -88,14 +70,62 @@ const AdminUsers = () => {
           )
         );
         
-        toast.success(`User role updated to ${newRole} successfully`);
+        toast.success(`Kundroll uppdaterad till ${newRole === 'admin' ? 'Admin' : 'Kund'} framgångsrikt`);
       } catch (error) {
         console.error('Error updating user role:', error);
-        toast.error('Could not update user role');
+        toast.error('Kunde inte uppdatera kundroll');
       } finally {
         setRoleUpdateLoading(false);
       }
     }
+  };
+
+  const handleMarginalChange = async (userId, newMarginal) => {
+    const marginalNum = parseFloat(newMarginal);
+    if (isNaN(marginalNum) || marginalNum < 0 || marginalNum > 100) {
+      toast.error('Marginal måste vara mellan 0 och 100%');
+      return;
+    }
+
+    try {
+      setMarginalUpdateLoading(true);
+      await updateUserMarginal(userId, marginalNum);
+      
+      // Update the local state after successful margin change
+      setUsers(prevUsers => 
+        prevUsers.map(user => 
+          user.id === userId ? { ...user, marginal: marginalNum } : user
+        )
+      );
+      
+      // Clear editing state
+      setEditingMarginals(prev => {
+        const newState = { ...prev };
+        delete newState[userId];
+        return newState;
+      });
+      
+    } catch (error) {
+      console.error('Error updating user marginal:', error);
+      toast.error('Kunde inte uppdatera marginal');
+    } finally {
+      setMarginalUpdateLoading(false);
+    }
+  };
+
+  const startEditingMarginal = (userId, currentMarginal) => {
+    setEditingMarginals(prev => ({
+      ...prev,
+      [userId]: currentMarginal || 35
+    }));
+  };
+
+  const cancelEditingMarginal = (userId) => {
+    setEditingMarginals(prev => {
+      const newState = { ...prev };
+      delete newState[userId];
+      return newState;
+    });
   };
 
   return (
@@ -104,7 +134,7 @@ const AdminUsers = () => {
         {/* Header */}
         <div className="px-4 py-5 border-b border-gray-200 sm:px-6 flex justify-between items-center">
           <h1 className="text-lg leading-6 font-medium text-gray-900">
-            User Management
+            Kundhantering
           </h1>
           <Link
             to="/admin"
@@ -120,7 +150,7 @@ const AdminUsers = () => {
             <div className="relative flex-1">
               <input
                 type="text"
-                placeholder="Search by name, email, or company..."
+                placeholder="Sök efter namn, e-post eller företag..."
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 pl-10 py-2"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -138,15 +168,15 @@ const AdminUsers = () => {
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
-                <option value="all">All Users</option>
-                <option value="active">Active Users</option>
-                <option value="inactive">Inactive Users</option>
+                <option value="all">Alla Kunder</option>
+                <option value="active">Aktiva Kunder</option>
+                <option value="inactive">Inaktiva Kunder</option>
               </select>
             </div>
           </div>
         </div>
 
-        {/* User list */}
+        {/* Kundlista */}
         <div className="p-6">
           {loading ? (
             <div className="flex justify-center py-8">
@@ -157,75 +187,125 @@ const AdminUsers = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Company
+                    <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Företag
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
+                    <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Kontakt
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Contact Person
+                    <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Roll
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Role
+                    <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Marginal
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
+                    <th scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Åtgärder
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {user.companyName || 'N/A'}
+                      <td className="px-3 py-3 text-sm font-medium text-gray-900">
+                        <div>
+                          <div className="font-medium">{user.companyName || 'N/A'}</div>
+                          <div className="text-xs text-gray-500">{user.email}</div>
+                        </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.email}
+                      <td className="px-3 py-3 text-sm text-gray-500">
+                        <div>
+                          <div>{user.contactPerson || 'N/A'}</div>
+                          <div className="text-xs text-gray-400">{user.phone || ''}</div>
+                        </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.contactPerson || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div className="flex items-center">
-                          <span className={`mr-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      <td className="px-2 py-3 text-sm text-gray-500">
+                        <div className="flex flex-col space-y-1">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                             user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
                           }`}>
-                            {user.role === 'admin' ? 'Admin' : 'User'}
+                            {user.role === 'admin' ? 'Admin' : 'Kund'}
                           </span>
                           <select
                             value={user.role}
                             onChange={(e) => handleRoleChange(user.id, user.role, e.target.value)}
                             disabled={roleUpdateLoading}
-                            className="text-xs border border-gray-300 rounded py-0.5 px-1"
+                            className="text-xs border border-gray-300 rounded py-0.5 px-1 w-full"
                           >
-                            <option value="user">User</option>
+                            <option value="user">Kund</option>
                             <option value="admin">Admin</option>
                           </select>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-2 py-3 text-sm text-gray-500">
+                        <div className="flex flex-col items-center">
+                          {editingMarginals[user.id] !== undefined ? (
+                            <div className="flex flex-col space-y-1 w-full">
+                              <div className="flex items-center space-x-1">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  step="0.5"
+                                  value={editingMarginals[user.id]}
+                                  onChange={(e) => setEditingMarginals(prev => ({
+                                    ...prev,
+                                    [user.id]: e.target.value
+                                  }))}
+                                  className="w-12 text-xs border border-gray-300 rounded px-1 py-0.5"
+                                  disabled={marginalUpdateLoading}
+                                />
+                                <span className="text-xs text-gray-400">%</span>
+                              </div>
+                              <div className="flex justify-center space-x-1">
+                                <button
+                                  onClick={() => handleMarginalChange(user.id, editingMarginals[user.id])}
+                                  disabled={marginalUpdateLoading}
+                                  className="text-xs text-green-600 hover:text-green-700 disabled:opacity-50"
+                                >
+                                  ✓
+                                </button>
+                                <button
+                                  onClick={() => cancelEditingMarginal(user.id)}
+                                  disabled={marginalUpdateLoading}
+                                  className="text-xs text-red-600 hover:text-red-700 disabled:opacity-50"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center space-y-1">
+                              <span className="text-sm font-medium">
+                                {user.marginal || 35}%
+                              </span>
+                              <button
+                                onClick={() => startEditingMarginal(user.id, user.marginal || 35)}
+                                className="text-xs text-blue-600 hover:text-blue-700"
+                              >
+                                ✏️
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-2 py-3 text-sm text-gray-500">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                           user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}>
-                          {user.active ? 'Active' : 'Inactive'}
+                          {user.active ? 'Aktiv' : 'Inaktiv'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => handleToggleUserStatus(user.id, user.active)}
-                          disabled={actionLoading}
-                          className={`inline-flex items-center px-3 py-1 border text-sm leading-4 font-medium rounded-md ${
-                            user.active
-                              ? 'border-red-300 text-red-700 bg-red-50 hover:bg-red-100'
-                              : 'border-green-300 text-green-700 bg-green-50 hover:bg-green-100'
-                          } disabled:opacity-50`}
+                      <td className="px-3 py-3 text-right text-sm font-medium">
+                        <Link
+                          to={`/admin/users/${user.id}/edit`}
+                          className="inline-flex items-center px-3 py-1 border border-blue-300 text-sm leading-4 font-medium rounded text-blue-700 bg-blue-50 hover:bg-blue-100"
                         >
-                          {user.active ? 'Deactivate' : 'Activate'}
-                        </button>
+                          Redigera
+                        </Link>
                       </td>
                     </tr>
                   ))}
@@ -234,7 +314,7 @@ const AdminUsers = () => {
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-500">No users found matching your criteria.</p>
+              <p className="text-gray-500">Inga kunder hittades som matchar dina kriterier.</p>
             </div>
           )}
         </div>
