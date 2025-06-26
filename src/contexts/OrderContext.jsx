@@ -15,7 +15,7 @@ import {
   serverTimestamp,
   setDoc
 } from 'firebase/firestore';
-import { db, defaultDb, isDemoMode } from '../firebase/config';
+import { db, isDemoMode } from '../firebase/config';
 import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
 

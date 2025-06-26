@@ -99,7 +99,7 @@ src/
 - Hover states and transitions
 
 ### Firebase Integration
-- Dual database support (named + default)
+- **ALWAYS use named database**: `b8s-reseller-db` (NEVER use default database)
 - Error handling for offline scenarios
 - Real-time updates where appropriate
 - Proper security rules
@@ -130,6 +130,7 @@ src/
 - **Admin Login**: micke.ohlen@gmail.com / temporaryPassword123
 
 ## Key Implementation Notes
+- **Database**: ALWAYS use named database `b8s-reseller-db` (NEVER use default database)
 - No demo mode in production (isDemoMode = false)
 - Default customer margin: 35%
 - All new customers require admin activation

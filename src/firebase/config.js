@@ -25,7 +25,6 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase services with the specific database name
 const auth = getAuth(app);
 const db = getFirestore(app, 'b8s-reseller-db');
-const defaultDb = getFirestore(app); // Keep reference to default DB for functions
 const storage = getStorage(app);
 const functions = getFunctions(app);
 
@@ -36,6 +35,6 @@ export const getDirectStorageUrl = (path) => {
   return `https://firebasestorage.googleapis.com/v0/b/${firebaseConfig.storageBucket}/o/${encodeURIComponent(path)}?alt=media`;
 };
 
-export { auth, db, defaultDb, storage, functions, isDemoMode };
+export { auth, db, storage, functions, isDemoMode };
 
 export default app; 

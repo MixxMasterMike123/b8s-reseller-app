@@ -18,7 +18,7 @@ import {
   where, 
   getDocs 
 } from 'firebase/firestore';
-import { auth, db, defaultDb, isDemoMode } from '../firebase/config';
+import { auth, db, isDemoMode } from '../firebase/config';
 import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
@@ -112,16 +112,7 @@ export function AuthProvider({ children }) {
               setUserData(data);
               setIsAdmin(data.role === 'admin');
             } else {
-              // If not found, try the default database
-              const defaultUserDoc = await getDoc(doc(defaultDb, 'users', user.uid));
-              
-              if (defaultUserDoc.exists()) {
-                const data = defaultUserDoc.data();
-                setUserData(data);
-                setIsAdmin(data.role === 'admin');
-              } else {
-                console.error('User document not found in Firestore');
-              }
+              console.error('User document not found in Firestore');
             }
           } catch (error) {
             console.error('Error fetching user data:', error);
@@ -177,7 +168,6 @@ export function AuthProvider({ children }) {
         };
 
         await setDoc(doc(db, 'users', user.uid), userProfile);
-        await setDoc(doc(defaultDb, 'users', user.uid), userProfile);
 
         return user;
       }
@@ -347,20 +337,13 @@ export function AuthProvider({ children }) {
           updatedAt: new Date().toISOString()
         };
         
-        // Update in both databases
+        // Update in named database
         const userRef = doc(db, 'users', currentUser.uid);
-        const defaultUserRef = doc(defaultDb, 'users', currentUser.uid);
         
         try {
           await updateDoc(userRef, profileData);
         } catch (error) {
           console.error('Error updating profile in named database:', error);
-        }
-        
-        try {
-          await updateDoc(defaultUserRef, profileData);
-        } catch (error) {
-          console.error('Error updating profile in default database:', error);
         }
         
         // Update local userData state
@@ -437,18 +420,7 @@ export function AuthProvider({ children }) {
           updatedAt: new Date().toISOString()
         });
         
-        // Also update status in the default database if it exists
-        try {
-          const defaultUserRef = doc(defaultDb, 'users', userId);
-          await updateDoc(defaultUserRef, {
-            active: activeStatus,
-            isActive: activeStatus, // Update both properties
-            updatedAt: new Date().toISOString()
-          });
-        } catch (error) {
-          console.error('Error updating status in default database:', error);
-          // Continue even if default DB update fails
-        }
+
         
         toast.success(`User ${activeStatus ? 'activated' : 'deactivated'} successfully`);
         return true;
@@ -484,17 +456,7 @@ export function AuthProvider({ children }) {
           updatedAt: new Date().toISOString()
         });
         
-        // Also update the role in the default database if it exists
-        try {
-          const defaultUserRef = doc(defaultDb, 'users', userId);
-          await updateDoc(defaultUserRef, {
-            role: newRole,
-            updatedAt: new Date().toISOString()
-          });
-        } catch (error) {
-          console.error('Error updating role in default database:', error);
-          // Continue even if default DB update fails
-        }
+
         
         toast.success(`User role updated to ${newRole} successfully`);
         return true;
@@ -532,14 +494,7 @@ export function AuthProvider({ children }) {
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, profileData);
         
-        // Also update in the default database if it exists
-        try {
-          const defaultUserRef = doc(defaultDb, 'users', userId);
-          await updateDoc(defaultUserRef, profileData);
-        } catch (error) {
-          console.error('Error updating profile in default database:', error);
-          // Continue even if default DB update fails
-        }
+
         
         toast.success('Customer profile updated successfully');
         return true;
@@ -575,17 +530,7 @@ export function AuthProvider({ children }) {
           updatedAt: new Date().toISOString()
         });
         
-        // Also update the margin in the default database if it exists
-        try {
-          const defaultUserRef = doc(defaultDb, 'users', userId);
-          await updateDoc(defaultUserRef, {
-            marginal: newMarginal,
-            updatedAt: new Date().toISOString()
-          });
-        } catch (error) {
-          console.error('Error updating margin in default database:', error);
-          // Continue even if default DB update fails
-        }
+
         
         toast.success(`Customer margin updated to ${newMarginal}% successfully`);
         return true;

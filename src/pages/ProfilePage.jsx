@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getAuth, updatePassword as firebaseUpdatePassword } from 'firebase/auth';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
-import { db, defaultDb } from '../firebase/config';
+import { db } from '../firebase/config';
 import toast from 'react-hot-toast';
 import AppLayout from '../components/layout/AppLayout';
 
@@ -72,86 +72,42 @@ const ProfilePage = () => {
             sameAsCompanyAddress: data.sameAsCompanyAddress !== false,
           }));
         } else {
-          console.log('User not found in named database, trying default database');
-          // Try default database as fallback
-          const defaultUserDocRef = doc(defaultDb, 'users', currentUser.uid);
-          userDocSnap = await getDoc(defaultUserDocRef);
+          console.log('No user found in named database, creating profile');
+          // Create new user profile
+          const newUserData = {
+            email: currentUser.email,
+            companyName: '',
+            contactPerson: '',
+            phoneNumber: '',
+            address: '',
+            role: 'user',
+            active: true,
+            isActive: true,
+            sameAsCompanyAddress: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
           
-          if (userDocSnap.exists()) {
-            console.log('User found in default database');
-            const data = userDocSnap.data();
-            setUserData(data);
-            setSameAsCompanyAddress(data.sameAsCompanyAddress !== false);
-            setFormData(prev => ({
-              ...prev,
-              companyName: data.companyName || '',
-              contactPerson: data.contactPerson || '',
-              phone: data.phone || '',
-              address: data.address || '',
-              city: data.city || '',
-              postalCode: data.postalCode || '',
-              country: data.country || 'Sverige',
-              orgNumber: data.orgNumber || '',
-              // Delivery address fields
-              deliveryAddress: data.deliveryAddress || '',
-              deliveryCity: data.deliveryCity || '',
-              deliveryPostalCode: data.deliveryPostalCode || '',
-              deliveryCountry: data.deliveryCountry || 'Sverige',
-              sameAsCompanyAddress: data.sameAsCompanyAddress !== false,
-            }));
-          } else {
-            console.log('No user found in either database, creating profile');
-            // Create new user in both databases
-            try {
-              const newUserData = {
-                email: currentUser.email,
-                companyName: '',
-                contactPerson: '',
-                phoneNumber: '',
-                address: '',
-                role: 'user',
-                active: true,
-                isActive: true,
-                sameAsCompanyAddress: true,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-              };
-              
-              // Try to set document in named database
-              try {
-                console.log('Creating profile in named database');
-                await setDoc(doc(db, 'users', currentUser.uid), newUserData);
-                console.log('Profile created in named database');
-              } catch (nameDbError) {
-                console.error('Error creating profile in named database:', nameDbError);
-              }
-              
-              // Try to set document in default database
-              try {
-                console.log('Creating profile in default database');
-                await setDoc(doc(defaultDb, 'users', currentUser.uid), newUserData);
-                console.log('Profile created in default database');
-              } catch (defaultDbError) {
-                console.error('Error creating profile in default database:', defaultDbError);
-              }
-              
-              setUserData(newUserData);
-              setSameAsCompanyAddress(true);
-              setFormData(prev => ({
-                ...prev,
-                companyName: '',
-                contactPerson: '',
-                phoneNumber: '',
-                address: '',
-                sameAsCompanyAddress: true,
-              }));
-              
-              toast.success('Profile created. Please update your information.');
-            } catch (createError) {
-              console.error('Error creating user profile:', createError);
-              toast.error('Could not create your profile. Please contact support.');
-            }
+          try {
+            console.log('Creating profile in named database');
+            await setDoc(doc(db, 'users', currentUser.uid), newUserData);
+            console.log('Profile created in named database');
+          } catch (nameDbError) {
+            console.error('Error creating profile in named database:', nameDbError);
           }
+          
+          setUserData(newUserData);
+          setSameAsCompanyAddress(true);
+          setFormData(prev => ({
+            ...prev,
+            companyName: '',
+            contactPerson: '',
+            phoneNumber: '',
+            address: '',
+            sameAsCompanyAddress: true,
+          }));
+          
+          toast.success('Profile created. Please update your information.');
         }
       } catch (error) {
         console.error('Error fetching user data:', error);

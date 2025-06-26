@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
-import { db, defaultDb } from '../../firebase/config';
+import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import ProductMenu from '../../components/ProductMenu';
@@ -38,19 +38,23 @@ function AdminProducts() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
+        console.log('📥 Fetching products from named database: b8s-reseller-db');
+        
         const querySnapshot = await getDocs(collection(db, 'products'));
         const productsData = [];
 
         querySnapshot.forEach((doc) => {
+          console.log('📄 Found product:', doc.id, doc.data().name);
           productsData.push({
             id: doc.id,
             ...doc.data()
           });
         });
 
+        console.log('📊 Total products fetched:', productsData.length);
         setProducts(productsData);
       } catch (err) {
-        console.error('Error fetching products:', err);
+        console.error('❌ Error fetching products:', err);
         setError('Failed to load products');
       } finally {
         setLoading(false);
@@ -162,16 +166,7 @@ function AdminProducts() {
           // Show success message for primary DB
           toast.success('Product added successfully');
           
-          // Only attempt to add to default DB if flag is enabled
-          if (USE_DEFAULT_DB && namedDbRef) {
-            try {
-              // Use the same ID for consistency
-              await setDoc(doc(defaultDb, 'products', namedDbRef.id), finalProductData);
-              console.log("Product added to default DB");
-            } catch (error) {
-              console.log("Skipping default DB update due to permissions");
-            }
-          }
+
         } catch (error) {
           console.error("Error adding product to named DB:", error);
           toast.error('Failed to add product to database');
@@ -201,26 +196,7 @@ function AdminProducts() {
           // Show success message for primary DB
           toast.success('Product updated successfully');
           
-          // Only attempt to update default DB if flag is enabled
-          if (USE_DEFAULT_DB) {
-            try {
-              const defaultDocRef = doc(defaultDb, 'products', selectedProduct.id);
-              const defaultDocSnap = await getDoc(defaultDocRef);
-              
-              if (defaultDocSnap.exists()) {
-                await updateDoc(defaultDocRef, finalProductData);
-                console.log("Updated product in default DB");
-              } else {
-                await setDoc(defaultDocRef, {
-                  ...finalProductData,
-                  createdAt: serverTimestamp()
-                });
-                console.log("Created product in default DB with specific ID");
-              }
-            } catch (error) {
-              console.log("Skipping default DB update due to permissions");
-            }
-          }
+
         } catch (error) {
           console.error("Error updating product in named DB:", error);
           toast.error('Failed to update product');
@@ -251,7 +227,10 @@ function AdminProducts() {
   };
 
   const handleDeleteProduct = async (productId) => {
+    console.log('🗑️ Starting deletion process for product ID:', productId);
+    
     if (!window.confirm('Är du säker på att du vill ta bort denna produkt? Denna åtgärd kan inte ångras.')) {
+      console.log('❌ User cancelled deletion');
       return;
     }
     
@@ -259,47 +238,52 @@ function AdminProducts() {
       setLoading(true);
       let deletionSuccessful = false;
       
-      // Delete from named database
+      console.log('🔄 Attempting to delete from named database (b8s-reseller-db)...');
+      
+      // Delete from named database (b8s-reseller-db)
       try {
         const docRef = doc(db, 'products', productId);
+        console.log('📄 Document reference created:', docRef.path);
+        
         await deleteDoc(docRef);
-        console.log("Product deleted from named DB");
+        console.log('✅ Product successfully deleted from named DB');
         deletionSuccessful = true;
       } catch (error) {
-        console.error("Error deleting product from named DB:", error);
-        // Only show error if it's not a "document not found" error
-        if (error.code !== 'not-found') {
-          toast.error('Kunde inte ta bort produkten från databasen');
+        console.error('❌ Error deleting product from named DB:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        
+        if (error.code === 'not-found') {
+          console.log('ℹ️ Product was not found in named DB (already deleted or never existed)');
+          deletionSuccessful = true; // Consider this a success
+        } else {
+          toast.error('Kunde inte ta bort produkten från databasen: ' + error.message);
           setLoading(false);
           return;
-        } else {
-          console.log("Product was already deleted from named DB");
-          deletionSuccessful = true;
-        }
-      }
-      
-      // Only attempt to delete from default DB if flag is enabled
-      if (USE_DEFAULT_DB) {
-        try {
-          const defaultDocRef = doc(defaultDb, 'products', productId);
-          await deleteDoc(defaultDocRef);
-          console.log("Product deleted from default DB");
-        } catch (error) {
-          console.log("Skipping default DB delete due to permissions or document not found:", error.code);
         }
       }
       
       if (deletionSuccessful) {
+        console.log('🔄 Updating local state...');
         // Update local state - remove the product from the list
-        setProducts(prevProducts => prevProducts.filter(product => product.id !== productId));
+        setProducts(prevProducts => {
+          const newProducts = prevProducts.filter(product => product.id !== productId);
+          console.log('📊 Products before deletion:', prevProducts.length);
+          console.log('📊 Products after deletion:', newProducts.length);
+          return newProducts;
+        });
         toast.success('Produkten har tagits bort');
+        console.log('✅ Deletion process completed successfully');
+      } else {
+        console.log('❌ Deletion was not successful');
       }
       
     } catch (err) {
-      console.error('Error deleting product:', err);
+      console.error('💥 Unexpected error during deletion:', err);
       toast.error('Kunde inte ta bort produkten: ' + (err.message || 'Okänt fel'));
     } finally {
       setLoading(false);
+      console.log('🏁 Deletion process finished');
     }
   };
 
