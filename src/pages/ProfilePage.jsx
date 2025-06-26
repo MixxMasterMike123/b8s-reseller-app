@@ -15,6 +15,7 @@ const ProfilePage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [dataLoading, setDataLoading] = useState(true);
+  const [sameAsCompanyAddress, setSameAsCompanyAddress] = useState(true);
   
   const [formData, setFormData] = useState({
     companyName: '',
@@ -25,6 +26,12 @@ const ProfilePage = () => {
     postalCode: '',
     country: 'Sverige',
     orgNumber: '',
+    // Delivery address fields
+    deliveryAddress: '',
+    deliveryCity: '',
+    deliveryPostalCode: '',
+    deliveryCountry: 'Sverige',
+    sameAsCompanyAddress: true,
     newPassword: '',
     confirmPassword: '',
   });
@@ -46,6 +53,7 @@ const ProfilePage = () => {
           console.log('User found in named database');
           const data = userDocSnap.data();
           setUserData(data);
+          setSameAsCompanyAddress(data.sameAsCompanyAddress !== false); // Default to true if not set
           setFormData(prev => ({
             ...prev,
             companyName: data.companyName || '',
@@ -56,6 +64,12 @@ const ProfilePage = () => {
             postalCode: data.postalCode || '',
             country: data.country || 'Sverige',
             orgNumber: data.orgNumber || '',
+            // Delivery address fields
+            deliveryAddress: data.deliveryAddress || '',
+            deliveryCity: data.deliveryCity || '',
+            deliveryPostalCode: data.deliveryPostalCode || '',
+            deliveryCountry: data.deliveryCountry || 'Sverige',
+            sameAsCompanyAddress: data.sameAsCompanyAddress !== false,
           }));
         } else {
           console.log('User not found in named database, trying default database');
@@ -67,6 +81,7 @@ const ProfilePage = () => {
             console.log('User found in default database');
             const data = userDocSnap.data();
             setUserData(data);
+            setSameAsCompanyAddress(data.sameAsCompanyAddress !== false);
             setFormData(prev => ({
               ...prev,
               companyName: data.companyName || '',
@@ -77,6 +92,12 @@ const ProfilePage = () => {
               postalCode: data.postalCode || '',
               country: data.country || 'Sverige',
               orgNumber: data.orgNumber || '',
+              // Delivery address fields
+              deliveryAddress: data.deliveryAddress || '',
+              deliveryCity: data.deliveryCity || '',
+              deliveryPostalCode: data.deliveryPostalCode || '',
+              deliveryCountry: data.deliveryCountry || 'Sverige',
+              sameAsCompanyAddress: data.sameAsCompanyAddress !== false,
             }));
           } else {
             console.log('No user found in either database, creating profile');
@@ -91,6 +112,7 @@ const ProfilePage = () => {
                 role: 'user',
                 active: true,
                 isActive: true,
+                sameAsCompanyAddress: true,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
               };
@@ -114,12 +136,14 @@ const ProfilePage = () => {
               }
               
               setUserData(newUserData);
+              setSameAsCompanyAddress(true);
               setFormData(prev => ({
                 ...prev,
                 companyName: '',
                 contactPerson: '',
                 phoneNumber: '',
                 address: '',
+                sameAsCompanyAddress: true,
               }));
               
               toast.success('Profile created. Please update your information.');
@@ -145,6 +169,15 @@ const ProfilePage = () => {
     setFormData({
       ...formData,
       [name]: value,
+    });
+  };
+
+  const handleCheckboxChange = (e) => {
+    const checked = e.target.checked;
+    setSameAsCompanyAddress(checked);
+    setFormData({
+      ...formData,
+      sameAsCompanyAddress: checked,
     });
   };
 
@@ -205,6 +238,12 @@ const ProfilePage = () => {
         postalCode: formData.postalCode,
         country: formData.country,
         orgNumber: formData.orgNumber,
+        // Delivery address fields
+        deliveryAddress: sameAsCompanyAddress ? formData.address : formData.deliveryAddress,
+        deliveryCity: sameAsCompanyAddress ? formData.city : formData.deliveryCity,
+        deliveryPostalCode: sameAsCompanyAddress ? formData.postalCode : formData.deliveryPostalCode,
+        deliveryCountry: sameAsCompanyAddress ? formData.country : formData.deliveryCountry,
+        sameAsCompanyAddress: sameAsCompanyAddress,
       };
       
       // Use AuthContext method for updating
@@ -273,45 +312,90 @@ const ProfilePage = () => {
               <h2 className="text-xl font-medium text-gray-900 mb-4">Profilinformation</h2>
               
               {!isEditing ? (
-                <div className="bg-gray-50 p-4 rounded-md">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500">E-post</p>
-                      <p className="font-medium">{currentUser?.email}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Företagsnamn</p>
-                      <p className="font-medium">{userData?.companyName || 'Ej angivet'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Kontaktperson</p>
-                      <p className="font-medium">{userData?.contactPerson || 'Ej angivet'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Telefon</p>
-                      <p className="font-medium">{userData?.phone || 'Ej angivet'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Organisationsnummer</p>
-                      <p className="font-medium">{userData?.orgNumber || 'Ej angivet'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Stad</p>
-                      <p className="font-medium">{userData?.city || 'Ej angivet'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Postnummer</p>
-                      <p className="font-medium">{userData?.postalCode || 'Ej angivet'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Land</p>
-                      <p className="font-medium">{userData?.country || 'Sverige'}</p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <p className="text-sm text-gray-500">Adress</p>
-                      <p className="font-medium">{userData?.address || 'Ej angivet'}</p>
+                <div className="bg-gray-50 p-6 rounded-lg space-y-6">
+                  {/* Company Information */}
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-3 pb-2 border-b border-gray-200">
+                      Företagsinformation
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-500">E-post</p>
+                        <p className="font-medium">{currentUser?.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Företagsnamn</p>
+                        <p className="font-medium">{userData?.companyName || 'Ej angivet'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Kontaktperson</p>
+                        <p className="font-medium">{userData?.contactPerson || 'Ej angivet'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Telefon</p>
+                        <p className="font-medium">{userData?.phone || 'Ej angivet'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Organisationsnummer</p>
+                        <p className="font-medium">{userData?.orgNumber || 'Ej angivet'}</p>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Company Address */}
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-3 pb-2 border-b border-gray-200">
+                      Företagsadress
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2">
+                        <p className="text-sm text-gray-500">Gatuadress</p>
+                        <p className="font-medium">{userData?.address || 'Ej angivet'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Postnummer</p>
+                        <p className="font-medium">{userData?.postalCode || 'Ej angivet'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Stad</p>
+                        <p className="font-medium">{userData?.city || 'Ej angivet'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Land</p>
+                        <p className="font-medium">{userData?.country || 'Sverige'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Delivery Address */}
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-3 pb-2 border-b border-gray-200">
+                      Leveransadress
+                    </h3>
+                    {userData?.sameAsCompanyAddress !== false ? (
+                      <p className="text-sm text-gray-600 italic">Samma som företagsadress</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                          <p className="text-sm text-gray-500">Leveransadress</p>
+                          <p className="font-medium">{userData?.deliveryAddress || 'Ej angivet'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Postnummer</p>
+                          <p className="font-medium">{userData?.deliveryPostalCode || 'Ej angivet'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Stad</p>
+                          <p className="font-medium">{userData?.deliveryCity || 'Ej angivet'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Land</p>
+                          <p className="font-medium">{userData?.deliveryCountry || 'Sverige'}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   <button
                     onClick={() => setIsEditing(true)}
                     className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
@@ -320,125 +404,226 @@ const ProfilePage = () => {
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleProfileUpdate} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="companyName" className="block text-sm font-medium text-gray-700">
-                        Företagsnamn *
-                      </label>
-                      <input
-                        type="text"
-                        name="companyName"
-                        id="companyName"
-                        value={formData.companyName}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="contactPerson" className="block text-sm font-medium text-gray-700">
-                        Kontaktperson *
-                      </label>
-                      <input
-                        type="text"
-                        name="contactPerson"
-                        id="contactPerson"
-                        value={formData.contactPerson}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                        Telefon
-                      </label>
-                      <input
-                        type="tel"
-                        name="phone"
-                        id="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="08-123 456 78"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="orgNumber" className="block text-sm font-medium text-gray-700">
-                        Organisationsnummer
-                      </label>
-                      <input
-                        type="text"
-                        name="orgNumber"
-                        id="orgNumber"
-                        value={formData.orgNumber}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="556123-4567"
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-                        Adress
-                      </label>
-                      <input
-                        type="text"
-                        name="address"
-                        id="address"
-                        value={formData.address}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Gatuadress 123"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="city" className="block text-sm font-medium text-gray-700">
-                        Stad
-                      </label>
-                      <input
-                        type="text"
-                        name="city"
-                        id="city"
-                        value={formData.city}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Stockholm"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700">
-                        Postnummer
-                      </label>
-                      <input
-                        type="text"
-                        name="postalCode"
-                        id="postalCode"
-                        value={formData.postalCode}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="123 45"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="country" className="block text-sm font-medium text-gray-700">
-                        Land
-                      </label>
-                      <select
-                        name="country"
-                        id="country"
-                        value={formData.country}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="Sverige">Sverige</option>
-                        <option value="Norge">Norge</option>
-                        <option value="Danmark">Danmark</option>
-                        <option value="Finland">Finland</option>
-                      </select>
+                <form onSubmit={handleProfileUpdate} className="space-y-8">
+                  {/* Company Information Section */}
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                      Företagsinformation
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="companyName" className="block text-sm font-medium text-gray-700">
+                          Företagsnamn *
+                        </label>
+                        <input
+                          type="text"
+                          name="companyName"
+                          id="companyName"
+                          value={formData.companyName}
+                          onChange={handleChange}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="contactPerson" className="block text-sm font-medium text-gray-700">
+                          Kontaktperson *
+                        </label>
+                        <input
+                          type="text"
+                          name="contactPerson"
+                          id="contactPerson"
+                          value={formData.contactPerson}
+                          onChange={handleChange}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                          Telefon
+                        </label>
+                        <input
+                          type="tel"
+                          name="phone"
+                          id="phone"
+                          value={formData.phone}
+                          onChange={handleChange}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="08-123 456 78"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="orgNumber" className="block text-sm font-medium text-gray-700">
+                          Organisationsnummer
+                        </label>
+                        <input
+                          type="text"
+                          name="orgNumber"
+                          id="orgNumber"
+                          value={formData.orgNumber}
+                          onChange={handleChange}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="556123-4567"
+                        />
+                      </div>
                     </div>
                   </div>
-                  <div className="flex justify-end space-x-3">
+
+                  {/* Company Address Section */}
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                      Företagsadress
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2">
+                        <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+                          Gatuadress
+                        </label>
+                        <input
+                          type="text"
+                          name="address"
+                          id="address"
+                          value={formData.address}
+                          onChange={handleChange}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Gatuadress 123"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700">
+                          Postnummer
+                        </label>
+                        <input
+                          type="text"
+                          name="postalCode"
+                          id="postalCode"
+                          value={formData.postalCode}
+                          onChange={handleChange}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="123 45"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="city" className="block text-sm font-medium text-gray-700">
+                          Stad
+                        </label>
+                        <input
+                          type="text"
+                          name="city"
+                          id="city"
+                          value={formData.city}
+                          onChange={handleChange}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Stockholm"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="country" className="block text-sm font-medium text-gray-700">
+                          Land
+                        </label>
+                        <select
+                          name="country"
+                          id="country"
+                          value={formData.country}
+                          onChange={handleChange}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="Sverige">Sverige</option>
+                          <option value="Norge">Norge</option>
+                          <option value="Danmark">Danmark</option>
+                          <option value="Finland">Finland</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Delivery Address Section */}
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                      Leveransadress
+                    </h3>
+                    
+                    <div className="mb-4">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={sameAsCompanyAddress}
+                          onChange={handleCheckboxChange}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">
+                          Samma som företagsadress
+                        </span>
+                      </label>
+                    </div>
+                    
+                    {!sameAsCompanyAddress && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                          <label htmlFor="deliveryAddress" className="block text-sm font-medium text-gray-700">
+                            Leveransadress
+                          </label>
+                          <input
+                            type="text"
+                            name="deliveryAddress"
+                            id="deliveryAddress"
+                            value={formData.deliveryAddress}
+                            onChange={handleChange}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Leveransadress 123"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="deliveryPostalCode" className="block text-sm font-medium text-gray-700">
+                            Postnummer
+                          </label>
+                          <input
+                            type="text"
+                            name="deliveryPostalCode"
+                            id="deliveryPostalCode"
+                            value={formData.deliveryPostalCode}
+                            onChange={handleChange}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="123 45"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="deliveryCity" className="block text-sm font-medium text-gray-700">
+                            Stad
+                          </label>
+                          <input
+                            type="text"
+                            name="deliveryCity"
+                            id="deliveryCity"
+                            value={formData.deliveryCity}
+                            onChange={handleChange}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Stockholm"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="deliveryCountry" className="block text-sm font-medium text-gray-700">
+                            Land
+                          </label>
+                          <select
+                            name="deliveryCountry"
+                            id="deliveryCountry"
+                            value={formData.deliveryCountry}
+                            onChange={handleChange}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            <option value="Sverige">Sverige</option>
+                            <option value="Norge">Norge</option>
+                            <option value="Danmark">Danmark</option>
+                            <option value="Finland">Finland</option>
+                          </select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                     <button
                       type="button"
                       onClick={() => setIsEditing(false)}

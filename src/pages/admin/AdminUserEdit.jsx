@@ -22,6 +22,12 @@ const AdminUserEdit = () => {
     postalCode: '',
     country: 'Sverige',
     orgNumber: '',
+    // Delivery address fields
+    deliveryAddress: '',
+    deliveryCity: '',
+    deliveryPostalCode: '',
+    deliveryCountry: 'Sverige',
+    sameAsCompanyAddress: true,
     marginal: 35,
     role: 'user',
     active: true,
@@ -53,6 +59,12 @@ const AdminUserEdit = () => {
           postalCode: foundUser.postalCode || '',
           country: foundUser.country || 'Sverige',
           orgNumber: foundUser.orgNumber || '',
+          // Delivery address fields
+          deliveryAddress: foundUser.deliveryAddress || '',
+          deliveryCity: foundUser.deliveryCity || '',
+          deliveryPostalCode: foundUser.deliveryPostalCode || '',
+          deliveryCountry: foundUser.deliveryCountry || 'Sverige',
+          sameAsCompanyAddress: foundUser.sameAsCompanyAddress !== false,
           marginal: foundUser.marginal || 35,
           role: foundUser.role || 'user',
           active: foundUser.active !== undefined ? foundUser.active : true,
@@ -134,6 +146,12 @@ const AdminUserEdit = () => {
         postalCode: formData.postalCode,
         country: formData.country,
         orgNumber: formData.orgNumber,
+        // Delivery address fields
+        deliveryAddress: formData.sameAsCompanyAddress ? formData.address : formData.deliveryAddress,
+        deliveryCity: formData.sameAsCompanyAddress ? formData.city : formData.deliveryCity,
+        deliveryPostalCode: formData.sameAsCompanyAddress ? formData.postalCode : formData.deliveryPostalCode,
+        deliveryCountry: formData.sameAsCompanyAddress ? formData.country : formData.deliveryCountry,
+        sameAsCompanyAddress: formData.sameAsCompanyAddress,
         notes: formData.notes
       };
 
@@ -313,13 +331,13 @@ const AdminUserEdit = () => {
             </div>
           </div>
 
-          {/* Address Information */}
+          {/* Company Address Information */}
           <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Adressinformation</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Företagsadress</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                  Adress
+                  Gatuadress
                 </label>
                 <input
                   type="text"
@@ -329,21 +347,6 @@ const AdminUserEdit = () => {
                   onChange={handleInputChange}
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   placeholder="Gatuadress 123"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                  Stad
-                </label>
-                <input
-                  type="text"
-                  id="city"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Stockholm"
                 />
               </div>
               
@@ -359,6 +362,21 @@ const AdminUserEdit = () => {
                   onChange={handleInputChange}
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   placeholder="123 45"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+                  Stad
+                </label>
+                <input
+                  type="text"
+                  id="city"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleInputChange}
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="Stockholm"
                 />
               </div>
               
@@ -380,6 +398,93 @@ const AdminUserEdit = () => {
                 </select>
               </div>
             </div>
+          </div>
+
+          {/* Delivery Address Information */}
+          <div className="bg-gray-50 rounded-lg p-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Leveransadress</h3>
+            
+            <div className="mb-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="sameAsCompanyAddress"
+                  checked={formData.sameAsCompanyAddress}
+                  onChange={handleInputChange}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="ml-2 text-sm text-gray-700">
+                  Samma som företagsadress
+                </span>
+              </label>
+            </div>
+            
+            {!formData.sameAsCompanyAddress && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label htmlFor="deliveryAddress" className="block text-sm font-medium text-gray-700 mb-1">
+                    Leveransadress
+                  </label>
+                  <input
+                    type="text"
+                    id="deliveryAddress"
+                    name="deliveryAddress"
+                    value={formData.deliveryAddress}
+                    onChange={handleInputChange}
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Leveransadress 123"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="deliveryPostalCode" className="block text-sm font-medium text-gray-700 mb-1">
+                    Postnummer
+                  </label>
+                  <input
+                    type="text"
+                    id="deliveryPostalCode"
+                    name="deliveryPostalCode"
+                    value={formData.deliveryPostalCode}
+                    onChange={handleInputChange}
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="123 45"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="deliveryCity" className="block text-sm font-medium text-gray-700 mb-1">
+                    Stad
+                  </label>
+                  <input
+                    type="text"
+                    id="deliveryCity"
+                    name="deliveryCity"
+                    value={formData.deliveryCity}
+                    onChange={handleInputChange}
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Stockholm"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="deliveryCountry" className="block text-sm font-medium text-gray-700 mb-1">
+                    Land
+                  </label>
+                  <select
+                    id="deliveryCountry"
+                    name="deliveryCountry"
+                    value={formData.deliveryCountry}
+                    onChange={handleInputChange}
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="Sverige">Sverige</option>
+                    <option value="Norge">Norge</option>
+                    <option value="Danmark">Danmark</option>
+                    <option value="Finland">Finland</option>
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Admin Only Section */}
