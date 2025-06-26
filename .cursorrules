@@ -273,6 +273,9 @@ src/
 - **Swedish Localization**: Complete Swedish UI throughout
 - **Download System**: One-click downloads with proper file naming
 - **Security**: Admin-only uploads, role-based viewing permissions
+- **Image Previews**: Real image thumbnails from Firebase Storage (fixed fileType detection)
+- **Visual Interface**: Actual image previews for JPG/PNG/GIF/WebP/SVG files
+- **Fallback System**: File type icons for non-images or failed loads
 
 ### Marketing Materials Database Schema
 ```javascript
@@ -315,5 +318,15 @@ function isAdmin() {
 **Files Affected**: 
 - `storage.rules` - Uses hardcoded admin IDs
 - `src/utils/marketingMaterials.js` - Marketing materials utilities
-- `src/pages/admin/AdminMarketingMaterials.jsx` - Admin interface
-- `src/pages/MarketingMaterialsPage.jsx` - Customer interface
+- `src/pages/admin/AdminMarketingMaterials.jsx` - Admin interface with image previews
+- `src/pages/MarketingMaterialsPage.jsx` - Customer interface with image previews
+
+## Latest Bug Fixes (Latest)
+
+### Marketing Materials Image Previews (Fixed)
+- **Issue**: Materials showed emoji icons instead of actual image previews
+- **Root Cause**: `getFileType()` returns `'image'` but components checked for `'image/'` (MIME format)
+- **Solution**: Changed condition from `material.fileType?.startsWith('image/')` to `material.fileType === 'image'`
+- **Result**: Real image thumbnails now display from Firebase Storage `downloadURL`
+- **Affected Files**: `MarketingMaterialsPage.jsx`, `AdminMarketingMaterials.jsx`
+- **Status**: ✅ Fixed and deployed
