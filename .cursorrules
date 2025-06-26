@@ -22,6 +22,7 @@ src/
 ├── contexts/ (AuthContext, OrderContext)
 ├── pages/
 │   ├── admin/ (AdminDashboard, AdminUsers, AdminOrders, AdminProducts)
+│   ├── ProductViewPage (Customer product catalog)
 │   └── [user pages]
 ├── firebase/config.js
 └── utils/
@@ -41,6 +42,15 @@ src/
 - Customer activation/deactivation
 - Role management (user/admin)
 - Swedish terminology throughout
+- Comprehensive customer profiles with delivery addresses
+
+### Product Management & Catalog
+- **Admin Product Management**: Full CRUD operations with Swedish interface
+- **Customer Product Catalog**: View-only access at `/products` route
+- **EAN Code Support**: String field + PNG/JPG and SVG image uploads
+- **Download Capabilities**: Customers can download product images and EAN codes
+- **Sorting & Filtering**: Alphabetical sorting, product filter dropdown
+- **Mobile Optimized**: Responsive design for all devices
 
 ### Authentication & Authorization
 - Firebase Authentication
@@ -63,9 +73,40 @@ src/
   email: string,
   companyName: string,
   contactPerson: string,
+  phone: string,
+  orgNumber: string,
+  address: string,
+  city: string,
+  postalCode: string,
+  country: string,
+  deliveryAddress: string,
+  deliveryCity: string,
+  deliveryPostalCode: string,
+  deliveryCountry: string,
+  sameAsCompanyAddress: boolean,
   role: 'user' | 'admin',
   active: boolean,
   marginal: number, // Customer margin percentage (default: 35)
+  notes: string,
+  createdAt: string,
+  updatedAt: string
+}
+```
+
+### Products Collection
+```javascript
+{
+  id: string,
+  name: string,
+  description: string,
+  size: string,
+  basePrice: number,
+  manufacturingCost: number,
+  isActive: boolean,
+  imageData: string, // Base64 product image
+  eanCode: string,
+  eanImagePng: string, // Base64 PNG/JPG EAN barcode
+  eanImageSvg: string, // Base64 SVG EAN barcode
   createdAt: string,
   updatedAt: string
 }
@@ -110,14 +151,26 @@ src/
 - User activation/deactivation
 - Order oversight and management
 - Dashboard with key metrics
+- Complete product management with EAN code support
+
+## Customer Features
+- Product catalog browsing (`/products`)
+- Download product images and EAN codes
+- View-only access to active products
+- Mobile-friendly interface
+- Swedish localization throughout
 
 ## Swedish UI Text Examples
 - "Kundhantering" (Customer Management)
+- "Produktkatalog" (Product Catalog)
+- "Produkthantering" (Product Management)
 - "Lägg en beställning" (Place an Order)
 - "Orderhistorik" (Order History)
 - "Inställningar" (Settings)
 - "Aktivera/Inaktivera" (Activate/Deactivate)
 - "Marginal %" (Margin %)
+- "EAN-kod" (EAN Code)
+- "Ladda ner" (Download)
 
 ## Development Workflow
 1. Build: `npm run build`
@@ -139,14 +192,45 @@ src/
 - Consistent error handling and user feedback
 
 ## Recent Major Updates
-- Implemented individual customer margin system with role-based access control
-- Updated terminology from "Users" to "Kunder" throughout the application
-- Added inline editing for customer margins in list view
-- Enhanced admin dashboard with Swedish translations
-- Completed customer management system with full CRUD operations
-- Created comprehensive customer profile editing system (/admin/users/:id/edit)
-- Optimized customer list view layout for better mobile responsiveness
-- Simplified list view by moving activate/deactivate to detailed edit page
+
+### Product Management System (Latest)
+- **Complete Swedish Translation**: All product management UI in Swedish
+- **EAN Code Support**: Added EAN code string field and image uploads (PNG/JPG + SVG)
+- **Enhanced Product Form**: Professional styling with proper validation
+- **Alphabetical Sorting**: Products sorted by name by default
+- **Margin Field Removal**: Margins now handled at customer profile level
+- **Image Upload Support**: Product images and EAN barcode images
+- **Mobile Optimization**: Responsive design for all screen sizes
+
+### Customer Product Catalog (Latest)
+- **New Route**: `/products` for customer product browsing
+- **View-Only Access**: Customers can browse but not edit products
+- **Download Functionality**: Download product images and EAN codes
+- **Filter & Search**: Product dropdown filter for easy navigation
+- **Detailed Product View**: Full product information display
+- **Navigation Integration**: Added "Produktkatalog" to main menu
+- **Professional Design**: Consistent with portal styling
+
+### Enhanced Customer Profiles
+- **Delivery Address Fields**: Separate delivery address with "same as company" option
+- **Comprehensive Registration**: Modern sectioned signup form
+- **Address Management**: Both company and delivery addresses
+- **Enhanced Profile Pages**: Structured view with collapsible sections
+- **Admin Profile Management**: Full customer profile editing capabilities
+
+### Customer Management System
+- **Individual Customer Margins**: Each customer has custom percentage (default 35%)
+- **Role-Based Access Control**: Admins can edit margins, customers cannot
+- **Terminology Update**: Changed from "Users" to "Kunder" throughout
+- **Inline Editing**: Direct margin editing in customer list
+- **Comprehensive Profiles**: Full customer information management
+- **Swedish Localization**: Complete Swedish terminology and validation
+
+### Database Cleanup & Optimization
+- **Single Database Usage**: Removed all references to default database
+- **Consistent Firebase Integration**: All operations use `b8s-reseller-db`
+- **Improved Error Handling**: Better debugging and error messages
+- **Performance Optimization**: Streamlined database operations
 
 ## Customer Management Features
 - **List View**: Compact table with inline margin editing, role management, search/filter
@@ -155,9 +239,25 @@ src/
 - **Swedish Localization**: Complete Swedish terminology and validation messages
 - **Mobile Optimized**: Responsive design with vertical stacking for small screens
 
+## Product Management Features
+- **Admin Interface**: Full CRUD operations with Swedish translation
+- **Customer Catalog**: View-only product browsing with download capabilities
+- **EAN Code Support**: String field and dual image format support (PNG/JPG + SVG)
+- **Image Management**: Product images and barcode images
+- **Sorting & Filtering**: Alphabetical sorting, product filter dropdown
+- **Download System**: One-click downloads with proper file naming
+- **Mobile Responsive**: Works on all device sizes
+
 ## Customer Profile Fields
 - Company information (name, org number)
 - Contact details (person, phone, email)  
-- Address information (street, city, postal code, country)
+- Company address (street, city, postal code, country)
+- Delivery address (separate fields with "same as company" option)
 - Admin-only fields (margin %, role, active status, notes)
 - Form validation with Swedish error messages
+
+## Navigation Structure
+- **Main Navigation**: Dashboard, Produktkatalog, Lägg en beställning, Orderhistorik, Kontakt & Support, Profil
+- **Admin Navigation**: Admin Dashboard, Kunder, Ordrar, Produkter, Inställningar
+- **Customer Access**: All customers can access product catalog
+- **Admin Access**: Full product management capabilities
