@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import AppLayout from '../../components/layout/AppLayout';
 import toast from 'react-hot-toast';
 import {
   getGenericMaterials,
   uploadGenericMaterial,
-  updateGenericMaterial,
   deleteGenericMaterial,
   populateFromProducts,
   getFileType,
@@ -16,14 +15,14 @@ import {
 
 function AdminMarketingMaterials() {
   const { isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [populating, setPopulating] = useState(false);
   const [showUploadForm, setShowUploadForm] = useState(false);
-  const [editingMaterial, setEditingMaterial] = useState(null);
 
-  // Form state
+  // Form state (only for new uploads)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -74,7 +73,7 @@ function AdminMarketingMaterials() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.file && !editingMaterial) {
+    if (!formData.file) {
       toast.error('Välj en fil att ladda upp');
       return;
     }
@@ -82,28 +81,17 @@ function AdminMarketingMaterials() {
     try {
       setUploading(true);
       
-      if (editingMaterial) {
-        // Update existing material (metadata only)
-        await updateGenericMaterial(editingMaterial.id, {
-          name: formData.name,
-          description: formData.description,
-          category: formData.category
-        });
-        toast.success('Material uppdaterat');
-      } else {
-        // Upload new material
-        await uploadGenericMaterial(formData.file, {
-          name: formData.name,
-          description: formData.description,
-          category: formData.category
-        });
-        toast.success('Material uppladdat');
-      }
+      // Upload new material
+      await uploadGenericMaterial(formData.file, {
+        name: formData.name,
+        description: formData.description,
+        category: formData.category
+      });
+      toast.success('Material uppladdat');
 
       // Reset form and reload
       setFormData({ name: '', description: '', category: 'allmänt', file: null });
       setShowUploadForm(false);
-      setEditingMaterial(null);
       await loadMaterials();
     } catch (error) {
       console.error('Error uploading material:', error);
@@ -114,14 +102,8 @@ function AdminMarketingMaterials() {
   };
 
   const handleEdit = (material) => {
-    setEditingMaterial(material);
-    setFormData({
-      name: material.name,
-      description: material.description || '',
-      category: material.category || 'allmänt',
-      file: null
-    });
-    setShowUploadForm(true);
+    // Navigate to dedicated edit page
+    navigate(`/admin/marketing/${material.id}/edit`);
   };
 
   const handleDelete = async (materialId) => {
@@ -219,7 +201,6 @@ function AdminMarketingMaterials() {
               <button
                 onClick={() => {
                   setShowUploadForm(true);
-                  setEditingMaterial(null);
                   setFormData({ name: '', description: '', category: 'allmänt', file: null });
                 }}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
@@ -230,11 +211,11 @@ function AdminMarketingMaterials() {
           </div>
         </div>
 
-        {/* Upload Form */}
+        {/* Upload Form (only for new materials) */}
         {showUploadForm && (
           <div className="mb-8 bg-white shadow rounded-lg p-6">
             <h2 className="text-lg font-medium text-gray-900 mb-4">
-              {editingMaterial ? 'Redigera Material' : 'Ladda upp Nytt Material'}
+              Ladda upp Nytt Material
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -280,25 +261,23 @@ function AdminMarketingMaterials() {
                 />
               </div>
 
-              {!editingMaterial && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Fil * (Bilder, Videos, PDF, Word-dokument)
-                  </label>
-                  <input
-                    type="file"
-                    required
-                    onChange={handleFileChange}
-                    accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.mp4,.mov,.avi,.webm,.mkv,.pdf,.doc,.docx,.txt,.rtf,.zip,.rar"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  {formData.file && (
-                    <p className="mt-1 text-sm text-gray-600">
-                      Vald fil: {formData.file.name} ({formatFileSize(formData.file.size)})
-                    </p>
-                  )}
-                </div>
-              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Fil * (Bilder, Videos, PDF, Word-dokument)
+                </label>
+                <input
+                  type="file"
+                  required
+                  onChange={handleFileChange}
+                  accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.mp4,.mov,.avi,.webm,.mkv,.pdf,.doc,.docx,.txt,.rtf,.zip,.rar"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {formData.file && (
+                  <p className="mt-1 text-sm text-gray-600">
+                    Vald fil: {formData.file.name} ({formatFileSize(formData.file.size)})
+                  </p>
+                )}
+              </div>
 
               <div className="flex gap-3">
                 <button
@@ -306,14 +285,11 @@ function AdminMarketingMaterials() {
                   disabled={uploading}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
                 >
-                  {uploading ? 'Sparar...' : (editingMaterial ? 'Uppdatera' : 'Ladda upp')}
+                  {uploading ? 'Laddar upp...' : 'Ladda upp'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowUploadForm(false);
-                    setEditingMaterial(null);
-                  }}
+                  onClick={() => setShowUploadForm(false)}
                   className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                 >
                   Avbryt

@@ -25,6 +25,7 @@ import AdminOrders from './pages/admin/AdminOrders';
 import AdminOrderDetail from './pages/admin/AdminOrderDetail';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminMarketingMaterials from './pages/admin/AdminMarketingMaterials';
+import AdminMarketingMaterialEdit from './pages/admin/AdminMarketingMaterialEdit';
 
 // B2C Shop Components (new)
 import PublicStorefront from './pages/shop/PublicStorefront';
@@ -173,6 +174,12 @@ function App() {
               <Route path="/admin/marketing" element={
                 <AdminRoute>
                   <AdminMarketingMaterials />
+                </AdminRoute>
+              } />
+              
+              <Route path="/admin/marketing/:materialId/edit" element={
+                <AdminRoute>
+                  <AdminMarketingMaterialEdit />
                 </AdminRoute>
               } />
               

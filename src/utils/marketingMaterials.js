@@ -141,6 +141,25 @@ export const getGenericMaterials = async () => {
   }
 };
 
+export const getGenericMaterialById = async (materialId) => {
+  try {
+    const materialRef = doc(db, 'marketingMaterials', materialId);
+    const materialSnap = await getDoc(materialRef);
+    
+    if (materialSnap.exists()) {
+      return {
+        id: materialSnap.id,
+        ...materialSnap.data()
+      };
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error('Error fetching generic material by ID:', error);
+    throw error;
+  }
+};
+
 export const updateGenericMaterial = async (materialId, updates) => {
   try {
     const materialRef = doc(db, 'marketingMaterials', materialId);
