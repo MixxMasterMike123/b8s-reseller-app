@@ -27,8 +27,8 @@ function ProductViewPage() {
 
         querySnapshot.forEach((doc) => {
           const productData = doc.data();
-          // Only show active products to customers
-          if (productData.isActive !== false) {
+          // Only show active products that are available for B2B
+          if (productData.isActive !== false && productData.availability?.b2b !== false) {
             productsData.push({
               id: doc.id,
               ...productData
@@ -43,7 +43,7 @@ function ProductViewPage() {
           return nameA.localeCompare(nameB);
         });
 
-        console.log('📊 Active products loaded:', productsData.length);
+        console.log('📊 Active B2B products loaded:', productsData.length);
         setProducts(productsData);
       } catch (err) {
         console.error('❌ Error fetching products:', err);
