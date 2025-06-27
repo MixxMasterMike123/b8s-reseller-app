@@ -321,15 +321,25 @@ exports.logAffiliateClick = functions.https.onCall(async (data, context) => {
   }
 
   try {
+    // console.log(`[DEBUG] logAffiliateClick called for code: ${affiliateCode}. Stripped-down function.`);
+    // return { success: true, message: "Debug mode: Function called successfully." };
+
+    /*
     const affiliatesRef = db.collection('affiliates');
     const q = query(affiliatesRef, where("affiliateCode", "==", affiliateCode));
     const querySnapshot = await getDocs(q);
+    */
+    
+    // Use the older, chained syntax compatible with the installed SDK version.
+    const querySnapshot = await db.collection('affiliates').where("affiliateCode", "==", affiliateCode).get();
 
     if (querySnapshot.empty) {
-      // Don't throw an error, just log it. A user might type in a bad code.
       console.warn(`Affiliate click logged for non-existent code: ${affiliateCode}`);
       return { success: false, error: "Invalid code" };
     }
+    
+    // console.log(`[DEBUG] Step 2 Success: Found affiliate for code ${affiliateCode}.`);
+    // return { success: true, message: "Debug mode: Step 2 passed." };
 
     const affiliateDoc = querySnapshot.docs[0];
     const affiliateId = affiliateDoc.id;
@@ -355,8 +365,8 @@ exports.logAffiliateClick = functions.https.onCall(async (data, context) => {
       affiliateCode: affiliateCode,
       affiliateId: affiliateId,
       timestamp: Timestamp.now(),
-      ipAddress: context.rawRequest.ip,
-      userAgent: context.rawRequest.headers['user-agent'] || '',
+      ipAddress: context.rawRequest?.ip || 'unknown',
+      userAgent: context.rawRequest?.headers?.['user-agent'] || 'unknown',
       converted: false, // This will be updated upon purchase
     };
 
@@ -365,8 +375,10 @@ exports.logAffiliateClick = functions.https.onCall(async (data, context) => {
     return { success: true };
 
   } catch (error) {
-    console.error(`Error logging click for code ${affiliateCode}:`, error);
-    throw new functions.https.HttpsError('internal', 'An internal error occurred while logging the click.');
+    const errorMessage = error.message || 'Unknown error';
+    console.error(`Error logging click for code ${affiliateCode}:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    // Send the specific error message back to the client for better debugging.
+    throw new functions.https.HttpsError('internal', `Backend Error: ${errorMessage}`, { originalError: error });
   }
 });
 
