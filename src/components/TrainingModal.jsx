@@ -308,22 +308,22 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[95vh] overflow-hidden flex flex-col">
           {/* Header */}
-          <div className={`${currentSlideData.bgColor} px-6 py-4 border-b border-gray-200 flex-shrink-0`}>
+          <div className="bg-[#459CA8] px-6 py-4 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <currentSlideData.icon className={`h-6 w-6 ${currentSlideData.iconColor} mr-3`} />
+                <currentSlideData.icon className="h-6 w-6 text-white mr-3" />
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-lg font-semibold text-white">
                     {currentSlideData.title}
                   </h2>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-white/90">
                     {currentSlideData.subtitle}
                   </p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-white/70 hover:text-white transition-colors"
               >
                 <XMarkIcon className="h-6 w-6" />
               </button>
@@ -331,13 +331,13 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
             
             {/* Progress Bar */}
             <div className="mt-4">
-              <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
+              <div className="flex items-center justify-between text-xs text-white/90 mb-2">
                 <span>Steg {currentSlide + 1} av {slides.length}</span>
                 <span>{Math.round(((currentSlide + 1) / slides.length) * 100)}%</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-white/20 rounded-full h-2">
                 <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  className="bg-white h-2 rounded-full transition-all duration-300"
                   style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }}
                 />
               </div>
@@ -345,47 +345,57 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
           </div>
 
           {/* Content - Now flexible height */}
-          <div className="px-6 py-6 flex-grow overflow-y-auto">
+          <div className="px-6 py-6 flex-grow overflow-y-auto bg-white">
             {currentSlideData.content}
           </div>
 
           {/* Footer */}
           <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <button
-                onClick={handlePrev}
-                disabled={isFirstSlide}
-                className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isFirstSlide
-                    ? 'text-gray-400 cursor-not-allowed'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-                }`}
-              >
-                <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                Föregående
-              </button>
-              
-              <div className="flex items-center text-xs text-gray-500">
-                <ClockIcon className="h-4 w-4 mr-1" />
-                ~{5 - currentSlide} min kvar
+            <div className="flex flex-col space-y-3">
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={handlePrev}
+                  disabled={isFirstSlide}
+                  className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isFirstSlide
+                      ? 'text-gray-400 cursor-not-allowed'
+                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                  }`}
+                >
+                  <ArrowLeftIcon className="h-4 w-4 mr-2" />
+                  Föregående
+                </button>
+                
+                <div className="flex items-center text-xs text-gray-500">
+                  <ClockIcon className="h-4 w-4 mr-1" />
+                  ~{5 - currentSlide} min kvar
+                </div>
+                
+                <button
+                  onClick={handleNext}
+                  className="flex items-center px-6 py-2 bg-[#EE7E31] text-white rounded-lg text-sm font-medium hover:bg-[#EE7E31]/90 transition-colors"
+                >
+                  {isLastSlide ? (
+                    <>
+                      <CheckCircleIcon className="h-4 w-4 mr-2" />
+                      Börja sälja!
+                    </>
+                  ) : (
+                    <>
+                      Nästa
+                      <ArrowRightIcon className="h-4 w-4 ml-2" />
+                    </>
+                  )}
+                </button>
               </div>
               
-              <button
-                onClick={handleNext}
-                className="flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-              >
-                {isLastSlide ? (
-                  <>
-                    <CheckCircleIcon className="h-4 w-4 mr-2" />
-                    Börja sälja!
-                  </>
-                ) : (
-                  <>
-                    Nästa
-                    <ArrowRightIcon className="h-4 w-4 ml-2" />
-                  </>
-                )}
-              </button>
+              {/* Progress Bar moved to footer */}
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-[#459CA8] h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }}
+                />
+              </div>
             </div>
           </div>
         </div>
