@@ -24,11 +24,14 @@ function MarketingMaterialsPage() {
     { value: 'allmänt', label: 'Allmänt' },
     { value: 'produktbilder', label: 'Produktbilder' },
     { value: 'ean-koder', label: 'EAN-koder' },
+    { value: 'annonser', label: 'Annonser' },
     { value: 'broschyrer', label: 'Broschyrer' },
     { value: 'videos', label: 'Videos' },
     { value: 'prislista', label: 'Prislista' },
     { value: 'instruktioner', label: 'Instruktioner' },
-    { value: 'kundspecifikt', label: 'Kundspecifikt' }
+    { value: 'dokument', label: 'Dokument' },
+    { value: 'kundspecifikt', label: 'Kundspecifikt' },
+    { value: 'övrigt', label: 'Övrigt' }
   ];
 
   const fileTypes = [
