@@ -2,6 +2,19 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AppLayout from '../components/layout/AppLayout';
+import { 
+  ShoppingCartIcon, 
+  DocumentTextIcon, 
+  CogIcon,
+  MegaphoneIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
+  QuestionMarkCircleIcon,
+  PhoneIcon,
+  CheckCircleIcon,
+  UserGroupIcon,
+  ClipboardDocumentListIcon
+} from '@heroicons/react/24/outline';
 
 const DashboardPage = () => {
   const { userData, currentUser } = useAuth();
@@ -12,282 +25,247 @@ const DashboardPage = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-7xl mx-auto">
-        {/* Debug Info */}
-        <div className="bg-green-100 border-l-4 border-green-500 p-4 mb-4">
-          <h3 className="text-sm font-medium text-green-800">Debug Info (B2B Reseller Mode)</h3>
-          <p className="text-xs text-green-700">
-            Hostname: {hostname} | Subdomain: {subdomain} | Full URL: {window.location.href}
-          </p>
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Debug Info - Subtle */}
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+          <div className="flex items-center">
+            <InformationCircleIcon className="h-4 w-4 text-gray-400 mr-2" />
+            <span className="text-xs text-gray-600">
+              B2B Mode: {hostname} | {subdomain}
+            </span>
+          </div>
         </div>
 
-        {/* Banner Image */}
-        <div className="w-full mb-8">
+        {/* Hero Banner - Clean */}
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <img 
             src="/images/b8s_top.webp" 
             alt="B8Shield Banner" 
-            className="w-full h-64 md:h-80 lg:h-96 object-cover rounded-lg shadow-lg"
+            className="w-full h-48 md:h-64 object-cover"
           />
         </div>
 
-        {/* Welcome Section */}
-        <div className="bg-white rounded-lg shadow-md p-8 mb-8">
-          <div className="text-center mb-6">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Välkommen till JPH Innovations återförsäljarportal
+        {/* Welcome Section - Dashboard Style */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="px-6 py-5 border-b border-gray-200">
+            <h1 className="text-xl font-semibold text-gray-900">
+              Återförsäljarportal
             </h1>
-            <div className="w-24 h-1 bg-blue-600 mx-auto mb-6"></div>
+            <p className="mt-1 text-sm text-gray-600">
+              JPH Innovation AB - B8Shield
+            </p>
           </div>
           
-          <div className="max-w-4xl mx-auto text-gray-700 leading-relaxed">
-            <p className="text-lg mb-6">
-              Ni är nu inloggade i vår återförsäljarportal – ett verktyg skapat för att göra ert samarbete med oss så smidigt och effektivt som möjligt.
-            </p>
-            
-            <div className="bg-blue-50 rounded-lg p-6 mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Här kan ni:</h2>
-              <ul className="space-y-3">
-                <li className="flex items-start">
-                  <span className="text-blue-600 mr-3 mt-1">•</span>
-                  <span className="text-gray-700">Lägga beställningar direkt</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-blue-600 mr-3 mt-1">•</span>
-                  <span className="text-gray-700">Få en överblick över er orderhistorik</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-blue-600 mr-3 mt-1">•</span>
-                  <span className="text-gray-700">Ladda ner aktuellt marknadsmaterial för ert sälj- och kampanjarbete</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="border-l-4 border-blue-600 pl-6 mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Om B8Shield</h2>
-              <p className="text-gray-700 mb-4">
-                B8Shield är en svensk innovation som gör det möjligt att fiska fritt – även i tät vegetation – utan att kompromissa med känslan i fisket. Produkten minskar risken att fastna, vilket sparar både tid, frustration och kostnaden för förlorade drag. Det gör B8Shield till ett uppskattat hjälpmedel för såväl sportfiskare som fritidsfiskare.
+          <div className="px-6 py-5">
+            <div className="prose prose-sm max-w-none text-gray-700">
+              <p className="mb-4">
+                Välkommen till vår återförsäljarportal – ett verktyg för att göra ert samarbete med oss så smidigt som möjligt.
               </p>
-              <p className="text-gray-700">
-                Vi utvecklar och förbättrar vårt material kontinuerligt. Har ni behov av specifikt säljstöd eller saknar något i portalen är ni alltid välkomna att kontakta oss – vi producerar själva allt innehåll och kan snabbt ta fram det ni behöver.
-              </p>
-            </div>
-
-            <div className="text-center bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6">
-              <p className="text-lg font-medium">
-                Tack för förtroendet – vi ser fram emot ett framgångsrikt samarbete.
-              </p>
+              
+              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <h3 className="text-sm font-medium text-gray-900 mb-3">Funktioner:</h3>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-start">
+                    <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <span>Lägga beställningar direkt</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <span>Överblick över orderhistorik</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <span>Ladda ner marknadsföringsmaterial</span>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Navigation Cards */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          {/* Navigation Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-            <Link
-              to="/order"
-              className="bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg rounded-lg p-6 hover:shadow-xl hover:from-green-600 hover:to-green-700 transition duration-300 transform hover:-translate-y-1"
-            >
-              <div className="flex items-center mb-3">
-                <svg className="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                <h3 className="text-lg font-semibold">Lägg en beställning</h3>
+        {/* Navigation Cards - Dashboard Style */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Link
+            to="/order"
+            className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group"
+          >
+            <div className="flex items-center mb-3">
+              <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
+                <ShoppingCartIcon className="h-6 w-6 text-blue-600" />
               </div>
-              <p className="text-green-100">Skapa en ny beställning för dina kunder</p>
-            </Link>
-            
-            <Link
-              to="/order-history"
-              className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg rounded-lg p-6 hover:shadow-xl hover:from-blue-600 hover:to-blue-700 transition duration-300 transform hover:-translate-y-1"
-            >
-              <div className="flex items-center mb-3">
-                <svg className="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <h3 className="text-lg font-semibold">Orderhistorik</h3>
+              <h3 className="ml-3 text-base font-medium text-gray-900">Lägg beställning</h3>
+            </div>
+            <p className="text-sm text-gray-600">Skapa en ny beställning för dina kunder</p>
+          </Link>
+          
+          <Link
+            to="/orders"
+            className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group"
+          >
+            <div className="flex items-center mb-3">
+              <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-gray-100 transition-colors">
+                <ClipboardDocumentListIcon className="h-6 w-6 text-gray-600" />
               </div>
-              <p className="text-blue-100">Visa och spåra dina tidigare beställningar</p>
-            </Link>
+              <h3 className="ml-3 text-base font-medium text-gray-900">Orderhistorik</h3>
+            </div>
+            <p className="text-sm text-gray-600">Visa och spåra dina tidigare beställningar</p>
+          </Link>
 
-            {userData?.role === 'admin' && (
-              <Link
-                to="/admin"
-                className="bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg rounded-lg p-6 hover:shadow-xl hover:from-purple-600 hover:to-purple-700 transition duration-300 transform hover:-translate-y-1"
-              >
-                <div className="flex items-center mb-3">
-                  <svg className="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <h3 className="text-lg font-semibold">Admin Dashboard</h3>
+          {userData?.role === 'admin' && (
+            <Link
+              to="/admin"
+              className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group"
+            >
+              <div className="flex items-center mb-3">
+                <div className="p-2 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
+                  <CogIcon className="h-6 w-6 text-indigo-600" />
                 </div>
-                <p className="text-purple-100">Få åtkomst till adminkontroller och inställningar</p>
-              </Link>
-            )}
-          </div>
+                <h3 className="ml-3 text-base font-medium text-gray-900">Administration</h3>
+              </div>
+              <p className="text-sm text-gray-600">Åtkomst till adminkontroller och inställningar</p>
+            </Link>
+          )}
         </div>
 
-        {/* Store Staff Information Section */}
-        <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg shadow-lg p-8 border-l-4 border-orange-500">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-orange-800 mb-4">
-              📢 Viktig info till butikspersonal
-            </h2>
-            <div className="w-32 h-1 bg-orange-500 mx-auto"></div>
+        {/* Store Staff Information - Dashboard Cards */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center">
+              <MegaphoneIcon className="h-5 w-5 text-amber-600 mr-2" />
+              <h2 className="text-lg font-medium text-gray-900">
+                Information för butikspersonal
+              </h2>
+            </div>
           </div>
 
-          <div className="max-w-5xl mx-auto space-y-8">
-            {/* Introduction */}
-            <div className="bg-white rounded-lg p-6 shadow-md">
-              <p className="text-gray-700 text-lg leading-relaxed mb-4">
-                B8Shield är en ny och unik produkt som löser ett vanligt problem för fiskare - att fastna i undervattensvegetation och andra undervattenshinder.
+          <div className="p-6 space-y-6">
+            {/* Introduction Card */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-700 mb-3">
+                B8Shield är en ny och unik produkt som löser problemet med att fastna i undervattensvegetation.
               </p>
-              <p className="text-gray-700 text-lg leading-relaxed mb-4">
-                B8Shield är samtidigt en helt ny typ av både produkt och produktkategori.
-              </p>
-              <div className="bg-orange-100 border-l-4 border-orange-400 p-4 rounded">
-                <p className="text-orange-800 font-medium italic">
-                  "Kunderna vet därför inte ännu vad B8Shield är eller vilket problem den löser, och därför söker man således inte aktivt efter B8Shield trots att man har problemet med att fastna"
+              <div className="bg-amber-50 border-l-4 border-amber-400 p-3 rounded-r">
+                <p className="text-sm text-amber-800 italic">
+                  "Kunderna vet inte ännu vad B8Shield är eller vilket problem den löser"
                 </p>
               </div>
             </div>
 
             {/* Key Actions */}
-            <div className="bg-white rounded-lg p-6 shadow-md">
-              <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                <span className="bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-3 text-sm font-bold">!</span>
-                Av den orsaken är det avgörande att ni:
-              </h3>
-              
-              <div className="space-y-6">
-                <div className="flex items-start">
-                  <span className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 text-lg font-bold flex-shrink-0 mt-1">1</span>
-                  <p className="text-gray-700 text-lg">
-                    <strong>Ge butiksstället en synlig och central plats i butiken</strong>, gärna nära kassan.
-                  </p>
-                </div>
-                
-                <div className="flex items-start">
-                  <span className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 text-lg font-bold flex-shrink-0 mt-1">2</span>
-                  <p className="text-gray-700 text-lg">
-                    <strong>Aktivt säljer och förklarar produkten för kunderna.</strong> Gör man inte det är sannolikheten stor att kunderna inte uppmärksammar produkten och därmed inte köper produkten vilket vare sig vi eller ni vinner på.
-                  </p>
-                </div>
-                
-                <div className="flex items-start">
-                  <span className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 text-lg font-bold flex-shrink-0 mt-1">3</span>
-                  <p className="text-gray-700 text-lg">
-                    <strong>För att försäkra säljprocessen ytterligare</strong> skickar vi också med ett antal lösa B8Shields. Med fördel kan dessa läggas i en skål vid stället så att kund kan få klämma och känna på produkten.
-                  </p>
-                </div>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex items-center mb-4">
+                <ExclamationTriangleIcon className="h-5 w-5 text-red-600 mr-2" />
+                <h3 className="text-base font-medium text-gray-900">
+                  Viktiga åtgärder:
+                </h3>
               </div>
               
-              <div className="mt-6 bg-green-100 border-l-4 border-green-400 p-4 rounded">
-                <p className="text-green-800 font-medium italic">
-                  "När kunden dock väl förstår vad B8Shield är och gör, är den lätt att välja, men kunden måste förstå det först".
-                </p>
+              <div className="space-y-4">
+                <div className="flex items-start">
+                  <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                  <p className="ml-3 text-sm text-gray-700">
+                    <strong>Synlig placering:</strong> Ge produkten en central plats i butiken, gärna nära kassan.
+                  </p>
+                </div>
+                
+                <div className="flex items-start">
+                  <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                  <p className="ml-3 text-sm text-gray-700">
+                    <strong>Aktivt säljarbete:</strong> Förklara produkten för kunderna - utan detta uppmärksammas den inte.
+                  </p>
+                </div>
+                
+                <div className="flex items-start">
+                  <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                  <p className="ml-3 text-sm text-gray-700">
+                    <strong>Produktdemo:</strong> Lägg lösa B8Shields i en skål så kunder kan känna på produkten.
+                  </p>
+                </div>
               </div>
             </div>
 
             {/* Product Explanation */}
-            <div className="bg-white rounded-lg p-6 shadow-md">
-              <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-                🎯 Så förklarar du produkten på 15 sekunder:
-              </h3>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex items-center mb-4">
+                <UserGroupIcon className="h-5 w-5 text-green-600 mr-2" />
+                <h3 className="text-base font-medium text-gray-900">
+                  Förklara produkten på 15 sekunder:
+                </h3>
+              </div>
               
-              <div className="space-y-6">
+              <div className="space-y-3 text-sm text-gray-700">
                 <div className="flex items-start">
-                  <span className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 text-lg font-bold flex-shrink-0 mt-1">1</span>
-                  <p className="text-gray-700 text-lg">
-                    B8Shield hindrar fiskedrag från att fastna i undervattensvegetation och andra undervattenshinder.
-                  </p>
+                  <span className="flex-shrink-0 w-5 h-5 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">1</span>
+                  <span>B8Shield hindrar fiskedrag från att fastna i undervattensvegetation.</span>
                 </div>
                 
                 <div className="flex items-start">
-                  <span className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 text-lg font-bold flex-shrink-0 mt-1">2</span>
-                  <div className="text-gray-700 text-lg">
-                    <p className="mb-3 font-semibold">B8Shield finns i 4 olika utföranden:</p>
-                    <ul className="space-y-2 ml-4">
-                      <li className="flex items-start">
-                        <span className="text-gray-400 mr-2">•</span>
-                        <span><strong>TRANSPARENT.</strong> När man inte vill kompromissa med fiskedragets naturliga färger och utseende.</span>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="text-red-500 mr-2">•</span>
-                        <span><strong>BETESRÖD.</strong> Utnyttja den traditionella röda färgen på många betesfiskar för att attrahera mer fisk.</span>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="text-yellow-500 mr-2">•</span>
-                        <span><strong>FLUORESCERANDE.</strong> När du skall natt fiska och vill attrahera fiskar i grumliga eller mörka vatten.</span>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="text-blue-500 mr-2">•</span>
-                        <span><strong>GLITTER.</strong> När man skall fiska i stark solljus hjälper dess gnistrande färg till med att attrahera mer fisk.</span>
-                      </li>
+                  <span className="flex-shrink-0 w-5 h-5 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">2</span>
+                  <div>
+                    <p className="font-medium mb-2">Finns i 4 utföranden:</p>
+                    <ul className="space-y-1 ml-4 text-xs">
+                      <li>• <strong>Transparent:</strong> Naturliga färger</li>
+                      <li>• <strong>Betesröd:</strong> Attraherar fisk</li>
+                      <li>• <strong>Fluorescerande:</strong> För nattfiske</li>
+                      <li>• <strong>Glitter:</strong> För stark solljus</li>
                     </ul>
                   </div>
                 </div>
                 
                 <div className="flex items-start">
-                  <span className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 text-lg font-bold flex-shrink-0 mt-1">3</span>
-                  <p className="text-gray-700 text-lg">
-                    B8Shield fästs på tre-krok. Passat till krokstorlek 2, 4 och 6, där storlek 2 också passar på krokstorlek 1. Krokstorlek 1/0 och 2/0 kommer inom kort.
-                  </p>
-                </div>
-                
-                <div className="flex items-start">
-                  <span className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 text-lg font-bold flex-shrink-0 mt-1">4</span>
-                  <p className="text-gray-700 text-lg">
-                    B8Shields är designad så att man enkelt kan växla den mellan olika drag vid behov.
-                  </p>
+                  <span className="flex-shrink-0 w-5 h-5 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">3</span>
+                  <span>Fästs på tre-krok. Passar krokstorlek 2, 4 och 6.</span>
                 </div>
               </div>
             </div>
 
             {/* FAQ Section */}
-            <div className="bg-white rounded-lg p-6 shadow-md">
-              <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-                ❓ Vanliga frågor – och vad du svarar:
-              </h3>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex items-center mb-4">
+                <QuestionMarkCircleIcon className="h-5 w-5 text-blue-600 mr-2" />
+                <h3 className="text-base font-medium text-gray-900">
+                  Vanliga frågor:
+                </h3>
+              </div>
               
-              <div className="space-y-6">
-                <div className="border-l-4 border-blue-400 pl-6 py-4 bg-blue-50 rounded-r-lg">
-                  <h4 className="font-bold text-blue-800 mb-2">Fråga 1: Kommer fisken sluta hugga?</h4>
-                  <p className="text-blue-700">
-                    <strong>Svar:</strong> Nej, B8Shield påverkar inte krokens förmåga att kroka fisk. Under ett bett flexar sköldens vingar för att exponera krokarna, vilket säkerställer en lyckad fångst. Du krokar helt enkelt fisken som vanligt.
+              <div className="space-y-3">
+                <div className="border-l-4 border-blue-400 pl-3 bg-blue-50 py-2 rounded-r">
+                  <h4 className="text-sm font-medium text-blue-900 mb-1">Kommer fisken sluta hugga?</h4>
+                  <p className="text-xs text-blue-800">
+                    Nej, B8Shield påverkar inte krokens förmåga att kroka fisk.
                   </p>
                 </div>
                 
-                <div className="border-l-4 border-green-400 pl-6 py-4 bg-green-50 rounded-r-lg">
-                  <h4 className="font-bold text-green-800 mb-2">Fråga 2: Förstör det gången på draget?</h4>
-                  <p className="text-green-700">
-                    <strong>Svar:</strong> Nej, B8Shield är testad med många typer av drag. Ingen skillnad i gång.
+                <div className="border-l-4 border-green-400 pl-3 bg-green-50 py-2 rounded-r">
+                  <h4 className="text-sm font-medium text-green-900 mb-1">Förstör det gången på draget?</h4>
+                  <p className="text-xs text-green-800">
+                    Nej, B8Shield är testad med många typer av drag. Ingen skillnad i gång.
                   </p>
                 </div>
                 
-                <div className="border-l-4 border-purple-400 pl-6 py-4 bg-purple-50 rounded-r-lg">
-                  <h4 className="font-bold text-purple-800 mb-2">Fråga 3: När ska man använda den?</h4>
-                  <p className="text-purple-700">
-                    <strong>Svar:</strong> När du fiskar där det finns många undervattenhinder som ex. undervattensvegetation eller där det är stenigt, alltså där fisken ofta gömmer sig.
+                <div className="border-l-4 border-purple-400 pl-3 bg-purple-50 py-2 rounded-r">
+                  <h4 className="text-sm font-medium text-purple-900 mb-1">När ska man använda den?</h4>
+                  <p className="text-xs text-purple-800">
+                    När du fiskar där det finns undervattenshinder som vegetation eller stenar.
                   </p>
                 </div>
               </div>
             </div>
 
             {/* Contact Information */}
-            <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white rounded-lg p-6 shadow-md">
-              <h3 className="text-2xl font-bold mb-6 text-center">
-                📞 KONTAKTUPPGIFTER
-              </h3>
+            <div className="bg-gray-800 text-white rounded-lg p-4">
+              <div className="flex items-center mb-3">
+                <PhoneIcon className="h-5 w-5 text-gray-300 mr-2" />
+                <h3 className="text-base font-medium">Kontaktuppgifter</h3>
+              </div>
               
-              <div className="text-center space-y-2 text-lg">
-                <p className="font-bold text-xl text-blue-300">JPH Innovation AB</p>
-                <p>Östergatan 30 C</p>
-                <p>152 43 Södertälje</p>
-                <p>SWEDEN</p>
-                <p className="mt-4">
-                  <a href="mailto:info@b8shield.com" className="text-blue-300 hover:text-blue-200 underline font-semibold">
+              <div className="text-sm space-y-1">
+                <p className="font-medium text-blue-200">JPH Innovation AB</p>
+                <p className="text-gray-300">Östergatan 30 C</p>
+                <p className="text-gray-300">152 43 Södertälje</p>
+                <p className="text-gray-300">SWEDEN</p>
+                <p className="mt-2">
+                  <a href="mailto:info@b8shield.com" className="text-blue-300 hover:text-blue-200 underline">
                     info@b8shield.com
                   </a>
                 </p>
