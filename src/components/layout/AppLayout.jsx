@@ -136,8 +136,8 @@ const AppLayout = ({ children }) => {
           <div className="flex flex-shrink-0 items-center px-4 py-6">
             <Link to="/" className="flex items-center">
               <img
-                src="/images/B8Shield-Logotype 1.svg" 
-                alt="B8shield Logo"
+                src="/images/JPH_logo.webp" 
+                alt="JPH Innovation AB Logo"
                 className="h-10 w-auto"
               />
             </Link>
@@ -286,8 +286,8 @@ const AppLayout = ({ children }) => {
               <div className="flex w-full items-center">
                 <Link to="/">
                   <img
-                    src="/images/B8Shield-Logotype 1.svg" 
-                    alt="B8shield Logo"
+                    src="/images/JPH_logo.webp" 
+                    alt="JPH Innovation AB Logo"
                     className="h-8 w-auto"
                   />
                 </Link>
@@ -331,8 +331,8 @@ const AppLayout = ({ children }) => {
               <div className="flex flex-shrink-0 items-center px-4">
                 <Link to="/">
                   <img
-                    src="/images/B8Shield-Logotype 1.svg" 
-                    alt="B8shield Logo"
+                    src="/images/JPH_logo.webp" 
+                    alt="JPH Innovation AB Logo"
                     className="h-8 w-auto"
                   />
                 </Link>
