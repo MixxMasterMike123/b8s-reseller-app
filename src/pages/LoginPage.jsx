@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useSimpleAuth } from '../contexts/SimpleAuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const LoginPage = () => {
-  const { login } = useSimpleAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/dashboard';
