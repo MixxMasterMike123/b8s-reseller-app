@@ -17,7 +17,7 @@ export function useSimpleAuth() {
   return useContext(SimpleAuthContext);
 }
 
-export function SimpleAuthProvider({ children }) {
+export function SimpleAuthContextProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
