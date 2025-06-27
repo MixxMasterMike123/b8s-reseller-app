@@ -11,7 +11,7 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
   // Variant type mapping for database search
   const variantMapping = {
     'TRANSPARENT': ['transparent', 'Transparent'],
-    'BETESRÖD': ['röd', 'Röd', 'red', 'Red'],
+    'RÖD': ['röd', 'Röd', 'red', 'Red'],
     'FLUORESCERANDE': ['fluorescerande', 'Fluorescerande', 'fluorescent', 'Fluorescent', 'fluor', 'Fluor'],
     'GLITTER': ['glitter', 'Glitter']
   };
@@ -98,7 +98,7 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
   const getVariantDescription = (variant) => {
     const descriptions = {
       'TRANSPARENT': 'Den transparenta varianten av B8Shield bevarar fiskedragets naturliga färger och utseende. Perfekt när du vill ha maximalt skydd utan att kompromissa med dragets ursprungliga attraktivitet.',
-      'BETESRÖD': 'Den röda varianten utnyttjar den traditionella röda färgen som många betesfiskar har. Denna färg har visat sig vara mycket effektiv för att attrahera rovfisk i olika vattenförhållanden.',
+      'RÖD': 'Den röda varianten utnyttjar den traditionella röda färgen som många betesfiskar har. Denna färg har visat sig vara mycket effektiv för att attrahera rovfisk i olika vattenförhållanden.',
       'FLUORESCERANDE': 'Den fluorescerande varianten är speciellt utvecklad för nattfiske och fiske i grumliga eller mörka vatten. Lyser upp och gör draget mer synligt för fisken även under svåra förhållanden.',
       'GLITTER': 'Glitter-varianten är perfekt för fiske i stark solljus. De gnistrande partiklarna reflekterar ljuset och skapar en attraktiv blinkning som lockar fisken från långt håll.'
     };
@@ -115,7 +115,7 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
 
     const variantSpecific = {
       'TRANSPARENT': ['Bevarar dragets naturliga färger', 'Diskret skydd'],
-      'BETESRÖD': ['Attraherar rovfisk', 'Traditionell betesfärg'],
+      'RÖD': ['Attraherar rovfisk', 'Traditionell betesfärg'],
       'FLUORESCERANDE': ['Synlig i mörka vatten', 'Perfekt för nattfiske'],
       'GLITTER': ['Reflekterar solljus', 'Attraktiv blinkning']
     };
@@ -269,7 +269,7 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
 const getSalesTip = (variant) => {
   const tips = {
     'TRANSPARENT': 'vill ha skydd utan att ändra dragets utseende.',
-    'BETESRÖD': 'fiskar efter rovfisk och vill attrahera mer fisk.',
+    'RÖD': 'fiskar efter rovfisk och vill attrahera mer fisk.',
     'FLUORESCERANDE': 'fiskar på kvällar eller i grumliga vatten.',
     'GLITTER': 'fiskar i stark solljus och vill ha extra attraktion.'
   };

@@ -161,7 +161,7 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { name: 'TRANSPARENT', desc: 'När man inte vill kompromissa med fiskedragets naturliga färger och utseende' },
-                    { name: 'BETESRÖD', desc: 'Utnyttja den traditionella röda färgen på många betesfiskar för att attrahera mer fisk' },
+                    { name: 'RÖD', desc: 'Utnyttja den traditionella röda färgen på många betesfiskar för att attrahera mer fisk' },
                     { name: 'FLUORESCERANDE', desc: 'När du skall natt fiska och vill attrahera fiskar i grumliga eller mörka vatten' },
                     { name: 'GLITTER', desc: 'När man skall fiska i stark solljus hjälper dess gnistrande färg till med att attrahera mer fisk' }
                   ].map((variant, idx) => (

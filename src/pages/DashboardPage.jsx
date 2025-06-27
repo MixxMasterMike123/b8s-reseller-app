@@ -233,7 +233,7 @@ const DashboardPage = () => {
                     <p className="font-medium mb-2">B8Shield finns i 4 olika utföranden:</p>
                     <ul className="space-y-2 ml-4 text-xs">
                       <li>• <strong>TRANSPARENT.</strong> När man inte vill kompromissa med fiskedragets naturliga färger och utseende.</li>
-                      <li>• <strong>BETESRÖD.</strong> Utnyttja den traditionella röda färgen på många betesfiskar för att attrahera mer fisk.</li>
+                      <li>• <strong>RÖD.</strong> Utnyttja den traditionella röda färgen på många betesfiskar för att attrahera mer fisk.</li>
                       <li>• <strong>FLUORESCERANDE.</strong> När du skall natt fiska och vill attrahera fiskar i grumliga eller mörka vatten.</li>
                       <li>• <strong>GLITTER.</strong> När man skall fiska i stark solljus hjälper dess gnistrande färg till med att attrahera mer fisk.</li>
                     </ul>
