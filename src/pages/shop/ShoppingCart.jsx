@@ -3,12 +3,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { SHIPPING_COSTS } from '../../contexts/CartContext';
 import toast from 'react-hot-toast';
+import ShopNavigation from '../../components/shop/ShopNavigation';
 
 const ShoppingCart = () => {
   const { cart, updateQuantity, removeFromCart, updateShippingCountry, calculateTotals } = useCart();
   const navigate = useNavigate();
 
   const { subtotal, vat, shipping, total } = calculateTotals();
+  
+  // Calculate total items in cart
+  const cartItemCount = cart.items.reduce((total, item) => total + item.quantity, 0);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('sv-SE', {
@@ -47,23 +51,7 @@ const ShoppingCart = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              B8Shield™
-            </Link>
-            
-            {/* Breadcrumb */}
-            <div className="hidden md:flex items-center space-x-2 text-sm text-gray-500">
-              <Link to="/" className="hover:text-blue-600 transition-colors">Hem</Link>
-              <span>/</span>
-              <span className="text-gray-900">Varukorg</span>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <ShopNavigation breadcrumb="Varukorg" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Din Varukorg</h1>

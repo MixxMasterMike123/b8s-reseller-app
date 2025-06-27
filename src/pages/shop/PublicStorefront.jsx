@@ -4,6 +4,8 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getProductImage } from '../../utils/productImages';
 import toast from 'react-hot-toast';
+import { useCart } from '../../contexts/CartContext';
+import ShopNavigation from '../../components/shop/ShopNavigation';
 
 const PublicStorefront = () => {
   const [products, setProducts] = useState([]);
@@ -119,6 +121,8 @@ const PublicStorefront = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <ShopNavigation />
+      
       {/* Debug Info */}
       <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4">
         <div className="max-w-7xl mx-auto">
@@ -128,44 +132,6 @@ const PublicStorefront = () => {
           </p>
         </div>
       </div>
-
-      {/* Navigation Header */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                B8Shield™
-              </div>
-              <span className="text-sm text-gray-500 hidden sm:block">Store</span>
-            </div>
-            
-            <div className="hidden md:flex items-center space-x-8">
-              <Link to="/" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">
-                Produkter
-              </Link>
-              <Link to="/cart" className="text-gray-700 hover:text-blue-600 transition-colors font-medium relative">
-                Varukorg
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  0
-                </span>
-              </Link>
-              <Link to="/login" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-full hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl">
-                Logga in
-              </Link>
-            </div>
-
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <button className="text-gray-700 hover:text-blue-600">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
