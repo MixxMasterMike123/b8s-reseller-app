@@ -337,20 +337,6 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
                 <XMarkIcon className="h-6 w-6" />
               </button>
             </div>
-            
-            {/* Progress Bar */}
-            <div className="mt-4">
-              <div className="flex items-center justify-between text-xs text-white/90 mb-2">
-                <span>Steg {currentSlide + 1} av {slides.length}</span>
-                <span>{Math.round(((currentSlide + 1) / slides.length) * 100)}%</span>
-              </div>
-              <div className="w-full bg-white/20 rounded-full h-2">
-                <div 
-                  className="bg-white h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }}
-                />
-              </div>
-            </div>
           </div>
 
           {/* Content - Now flexible height */}
@@ -361,7 +347,20 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
           {/* Footer */}
           <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
             <div className="flex flex-col space-y-3">
-              <div className="flex items-center justify-between">
+              {/* Step counter and progress bar */}
+              <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                <span>Steg {currentSlide + 1} av {slides.length}</span>
+                <span>{Math.round(((currentSlide + 1) / slides.length) * 100)}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-[#459CA8] h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }}
+                />
+              </div>
+
+              {/* Navigation buttons */}
+              <div className="flex items-center justify-between pt-2">
                 <button
                   onClick={handlePrev}
                   disabled={isFirstSlide}
@@ -396,14 +395,6 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
                     </>
                   )}
                 </button>
-              </div>
-              
-              {/* Progress Bar moved to footer */}
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-[#459CA8] h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }}
-                />
               </div>
             </div>
           </div>
