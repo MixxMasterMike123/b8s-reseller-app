@@ -349,7 +349,7 @@ function MarketingMaterialsPage() {
                 <div className="p-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {materials.map((material) => (
-                      <div key={`${material.source}-${material.id}`} className="group relative bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-xl p-5 hover:shadow-lg transition-all duration-300 hover:scale-105">
+                      <div key={`${material.source}-${material.id}`} className="group relative bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-xl p-5 hover:shadow-lg transition-all duration-300 hover:scale-105 flex flex-col h-full">
                         {/* Category Pill */}
                         <div className="absolute top-3 right-3 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
                           {material.category || 'Övrigt'}
@@ -386,8 +386,8 @@ function MarketingMaterialsPage() {
                           </span>
                         </div>
 
-                        {/* Material Info */}
-                        <div className="text-center space-y-2">
+                        {/* Material Info - Flex grow to push button down */}
+                        <div className="text-center space-y-2 flex-grow">
                           <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">
                             {material.name}
                           </h3>
@@ -406,7 +406,7 @@ function MarketingMaterialsPage() {
                           </div>
                         </div>
 
-                        {/* Download Button */}
+                        {/* Download Button - Always at bottom */}
                         <button
                           onClick={() => handleDownload(material)}
                           className="mt-4 w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
