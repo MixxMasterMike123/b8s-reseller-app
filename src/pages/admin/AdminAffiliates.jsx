@@ -1,16 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { db, functions } from '../../firebase/config';
 import { collection, getDocs, doc, deleteDoc, query, where, orderBy } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
+import { UsersIcon, CheckCircleIcon, ClockIcon, ChartBarIcon, CursorArrowRaysIcon, TrashIcon, PencilIcon } from '@heroicons/react/24/outline';
+
+const StatCard = ({ icon, title, value, color }) => (
+  <div className="bg-white p-6 rounded-2xl shadow-lg flex items-center space-x-4">
+    <div className={`w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center ${color}`}>
+      {icon}
+    </div>
+    <div>
+      <p className="text-sm text-gray-500 font-medium">{title}</p>
+      <p className="text-3xl font-bold text-gray-900">{value}</p>
+    </div>
+  </div>
+);
 
 const AdminAffiliates = () => {
   const [applications, setApplications] = useState([]);
   const [affiliates, setAffiliates] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  const stats = useMemo(() => {
+    if (affiliates.length === 0) {
+      return { totalClicks: 0, totalConversions: 0 };
+    }
+    const totalClicks = affiliates.reduce((acc, aff) => acc + (aff.stats?.clicks || 0), 0);
+    const totalConversions = affiliates.reduce((acc, aff) => acc + (aff.stats?.conversions || 0), 0);
+    return { totalClicks, totalConversions };
+  }, [affiliates]);
 
   useEffect(() => {
     fetchData();
@@ -101,96 +123,118 @@ const AdminAffiliates = () => {
 
   return (
     <AppLayout>
-      <div className="container mx-auto p-4 md:p-8">
-        <h1 className="text-3xl font-bold mb-8">Hantera Affiliates</h1>
-        
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Inkomna Ansökningar</h2>
-
-          {loading ? (
-            <p>Laddar ansökningar...</p>
-          ) : applications.length === 0 ? (
-            <p className="text-gray-500">Inga nya ansökningar.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Namn</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">E-post</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kanal</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Åtgärder</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {applications.map((app) => (
-                    <tr key={app.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{app.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{app.email}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <a href={app.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{app.website || 'N/A'}</a>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <StatusBadge status={app.status} />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        {app.status === 'pending' && (
-                          <div className="flex justify-end space-x-2">
-                            <button onClick={() => handleApprove(app.id)} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-xs font-semibold">Godkänn</button>
-                            <Link to={`/admin/affiliates/application/${app.id}`} className="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 text-xs font-semibold">
-                              Visa
-                            </Link>
-                            <button onClick={() => handleDeny(app.id)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs font-semibold">Neka</button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Affiliate-hantering</h1>
+            <p className="text-gray-600">Hantera nya ansökningar och se statistik för dina aktiva affiliates.</p>
         </div>
 
-        {/* Existing Affiliates List */}
-        <div className="bg-white p-6 rounded-lg shadow-md mt-12">
-          <h2 className="text-xl font-semibold mb-4">Aktiva Affiliates</h2>
+        {/* Stats Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <StatCard 
+            icon={<UsersIcon className="h-6 w-6 text-white" />}
+            title="Väntande Ansökningar"
+            value={applications.length}
+            color="bg-yellow-500"
+          />
+          <StatCard 
+            icon={<CursorArrowRaysIcon className="h-6 w-6 text-white" />}
+            title="Totalt antal klick"
+            value={stats.totalClicks.toLocaleString('sv-SE')}
+            color="bg-blue-500"
+          />
+          <StatCard 
+            icon={<CheckCircleIcon className="h-6 w-6 text-white" />}
+            title="Totala Konverteringar"
+            value={stats.totalConversions.toLocaleString('sv-SE')}
+            color="bg-green-500"
+          />
+        </div>
 
+        {/* Pending Applications */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+            <ClockIcon className="h-6 w-6 mr-3 text-yellow-600" />
+            Inkomna Ansökningar
+          </h2>
+          <div className="bg-white p-6 rounded-2xl shadow-lg">
+            {loading ? (
+              <p>Laddar ansökningar...</p>
+            ) : applications.length === 0 ? (
+              <p className="text-gray-500">Inga nya ansökningar.</p>
+            ) : (
+              <ul className="divide-y divide-gray-200">
+                {applications.map(app => (
+                  <li key={app.id} className="py-4 flex items-center justify-between">
+                    <div>
+                      <p className="text-md font-semibold text-gray-900">{app.name}</p>
+                      <p className="text-sm text-gray-600">{app.email}</p>
+                    </div>
+                    <button onClick={() => navigate(`/admin/affiliates/application/${app.id}`)} className="ml-4 inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-600 hover:bg-yellow-700">
+                      Granska
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        {/* Active Affiliates */}
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+            <ChartBarIcon className="h-6 w-6 mr-3 text-green-600" />
+            Aktiva Affiliates ({affiliates.length})
+          </h2>
           {loading ? (
             <p>Laddar affiliates...</p>
           ) : affiliates.length === 0 ? (
-            <p className="text-gray-500">Inga aktiva affiliates hittades.</p>
+            <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+              <p className="text-gray-500">Inga aktiva affiliates hittades.</p>
+            </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Namn</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Affiliate-kod</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Konverteringar</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Intjänat</th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Åtgärder</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {affiliates.map((aff) => (
-                    <tr key={aff.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{aff.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono bg-gray-50 text-gray-600">{aff.affiliateCode}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm"><StatusBadge status={aff.status} /></td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{aff.stats?.conversions || 0}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(aff.stats?.totalEarnings)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <Link to={`/admin/affiliates/manage/${aff.id}`} className="text-blue-600 hover:text-blue-800 font-semibold">
-                          Hantera
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {affiliates.map((affiliate) => (
+                <div key={affiliate.id} className="bg-white rounded-2xl shadow-lg p-6 flex flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between items-start">
+                      <h3 className="text-lg font-bold text-gray-900 truncate">{affiliate.name}</h3>
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        affiliate.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {affiliate.status}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-500">{affiliate.email}</p>
+                    <a href={affiliate.website} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline truncate block">{affiliate.website}</a>
+                    
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
+                        <dt className="text-sm font-medium text-gray-500">Provision</dt>
+                        <dd className="text-sm text-gray-900 font-semibold">{affiliate.commissionRate}%</dd>
+                        
+                        <dt className="text-sm font-medium text-gray-500">Klick</dt>
+                        <dd className="text-sm text-gray-900">{(affiliate.stats?.clicks || 0).toLocaleString('sv-SE')}</dd>
+                        
+                        <dt className="text-sm font-medium text-gray-500">Konverteringar</dt>
+                        <dd className="text-sm text-gray-900">{(affiliate.stats?.conversions || 0).toLocaleString('sv-SE')}</dd>
+                        
+                        <dt className="text-sm font-medium text-gray-500">Intjänat</dt>
+                        <dd className="text-sm text-gray-900 font-bold">{formatCurrency(affiliate.stats?.totalEarnings)}</dd>
+                      </dl>
+                    </div>
+                  </div>
+                  <div className="mt-6 flex justify-end">
+                    <button
+                      onClick={() => navigate(`/admin/affiliates/manage/${affiliate.id}`)}
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      <PencilIcon className="h-5 w-5 mr-2" />
+                      Hantera
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
