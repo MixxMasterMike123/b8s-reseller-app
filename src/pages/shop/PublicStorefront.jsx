@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 
 const PublicStorefront = () => {
   const [products, setProducts] = useState([]);
+  const [groupedProducts, setGroupedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
@@ -23,7 +24,8 @@ const PublicStorefront = () => {
       setLoading(true);
       const q = query(
         collection(db, 'products'),
-        where('isActive', '==', true)
+        where('isActive', '==', true),
+        where('availability.b2c', '==', true) // Only show B2C available products
       );
       const querySnapshot = await getDocs(q);
       
@@ -38,12 +40,51 @@ const PublicStorefront = () => {
       // Sort products alphabetically
       productList.sort((a, b) => a.name.localeCompare(b.name));
       setProducts(productList);
+      
+      // Group products by color (extract color from name)
+      const grouped = groupProductsByColor(productList);
+      setGroupedProducts(grouped);
+      
     } catch (error) {
       console.error('Error loading products:', error);
       toast.error('Kunde inte ladda produkter');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Group products by color and return one representative product per color
+  const groupProductsByColor = (products) => {
+    const colorGroups = {};
+    
+    products.forEach(product => {
+      // Extract color from product name (assuming format like "B8Shield Röd", "B8Shield Transparent", etc.)
+      const colorMatch = product.name.match(/B8Shield\s+(.+?)(?:\s+\d|$)/i);
+      const color = colorMatch ? colorMatch[1].trim() : 'Standard';
+      
+      if (!colorGroups[color]) {
+        colorGroups[color] = {
+          color: color,
+          products: [],
+          representativeProduct: product // Use first product as representative
+        };
+      }
+      
+      colorGroups[color].products.push(product);
+    });
+    
+    // Return array of representative products with their variants
+    return Object.values(colorGroups).map(group => ({
+      ...group.representativeProduct,
+      colorVariant: group.color,
+      variants: group.products,
+      availableSizes: group.products.map(p => ({
+        id: p.id,
+        size: p.size || 'Standard',
+        price: p.b2cPrice || p.basePrice,
+        name: p.name
+      }))
+    }));
   };
 
   const formatPrice = (price) => {
@@ -56,6 +97,24 @@ const PublicStorefront = () => {
   const addToCart = (product) => {
     // TODO: Implement cart functionality
     toast.success(`${product.name} tillagd i varukorgen!`);
+  };
+
+  // Get the best available image for B2C display
+  const getB2cProductImage = (product) => {
+    // Priority: B2C main image > B2C gallery first image > B2B image > legacy image > generated image
+    if (product.b2cImageUrl) return product.b2cImageUrl;
+    if (product.b2cImageGallery && product.b2cImageGallery.length > 0) return product.b2cImageGallery[0];
+    if (product.b2bImageUrl) return product.b2bImageUrl;
+    if (product.imageUrl) return product.imageUrl;
+    if (product.imageData) return product.imageData;
+    return getProductImage(product.name);
+  };
+
+  // Get product description - prefer B2C description
+  const getB2cProductDescription = (product) => {
+    if (product.descriptions?.b2c) return product.descriptions.b2c;
+    if (product.description) return product.description;
+    return `B8Shield ${product.colorVariant || ''} - Vasskydd som förhindrar att dina fiskedrag fastnar`;
   };
 
   return (
@@ -110,26 +169,35 @@ const PublicStorefront = () => {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-indigo-600/10 to-purple-600/10"></div>
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img
+            src="/images/Fil-000-222.jpg"
+            alt="B8Shield fishing background"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-900/70 via-indigo-900/60 to-purple-900/70"></div>
+        </div>
+        
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
           <div className="text-center">
-            <div className="inline-flex items-center px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full text-sm font-medium text-blue-600 border border-blue-200/50 mb-8">
+            <div className="inline-flex items-center px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full text-sm font-medium text-blue-600 border border-blue-200/50 mb-8">
               <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
               Ny innovation från Sverige
             </div>
             
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-gray-900 mb-6">
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white mb-6 drop-shadow-lg">
               Fastna
-              <span className="bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent"> aldrig </span>
+              <span className="bg-gradient-to-r from-red-400 to-red-500 bg-clip-text text-transparent"> aldrig </span>
               mer!
             </h1>
             
-            <p className="text-xl sm:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl sm:text-2xl text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
               B8Shield™ – Vasskydd som förhindrar att dina fiskedrag fastnar i vassen utan att påverka ditt fiske.
             </p>
 
             {/* Social Proof */}
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 mb-12 max-w-2xl mx-auto border border-gray-200/50">
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 mb-12 max-w-2xl mx-auto border border-white/20 shadow-xl">
               <div className="flex items-center justify-center mb-4">
                 <div className="flex text-yellow-400">
                   {[...Array(5)].map((_, i) => (
@@ -152,7 +220,7 @@ const PublicStorefront = () => {
               >
                 Handla nu
               </button>
-              <button className="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-full text-lg font-semibold hover:border-blue-600 hover:text-blue-600 transition-all duration-300">
+              <button className="border-2 border-white/70 text-white px-8 py-4 rounded-full text-lg font-semibold hover:border-white hover:bg-white/10 transition-all duration-300 backdrop-blur-sm">
                 Läs mer
               </button>
             </div>
@@ -181,7 +249,7 @@ const PublicStorefront = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {products.map((product, index) => (
+              {groupedProducts.map((product, index) => (
                 <div 
                   key={product.id} 
                   className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-blue-200 transform hover:-translate-y-2"
@@ -189,29 +257,40 @@ const PublicStorefront = () => {
                 >
                   {/* Product Image */}
                   <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
-                    {product.imageData ? (
-                      <img
-                        src={product.imageData}
-                        alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                      />
-                    ) : (
-                      <img
-                        src={getProductImage(product.name)}
-                        alt={product.name}
-                        className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700 p-4"
-                      />
+                    <img
+                      src={getB2cProductImage(product)}
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    />
+                    
+                    {/* Color Badge */}
+                    <div className="absolute top-4 left-4">
+                      <span className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-gray-700 shadow-sm">
+                        {product.colorVariant}
+                      </span>
+                    </div>
+                    
+                    {/* Sizes Available Badge */}
+                    {product.availableSizes && product.availableSizes.length > 1 && (
+                      <div className="absolute top-4 right-4">
+                        <span className="bg-blue-600/90 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium shadow-sm">
+                          {product.availableSizes.length} storlekar
+                        </span>
+                      </div>
                     )}
                     
                     {/* Quick Actions Overlay */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
                       <div className="flex space-x-3">
-                        <button className="bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-colors">
+                        <Link
+                          to={`/product/${product.id}`}
+                          className="bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-colors"
+                        >
                           <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
-                        </button>
+                        </Link>
                         <button 
                           onClick={() => addToCart(product)}
                           className="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 transition-colors"
@@ -228,20 +307,27 @@ const PublicStorefront = () => {
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                        {product.name}
+                        B8Shield™ {product.colorVariant}
                       </h3>
-                      <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent text-2xl font-bold">
-                        {formatPrice(product.basePrice)}
-                      </span>
+                      <div className="text-right">
+                        <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent text-2xl font-bold">
+                          {formatPrice(product.b2cPrice || product.basePrice)}
+                        </span>
+                        {product.availableSizes && product.availableSizes.length > 1 && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            från {formatPrice(Math.min(...product.availableSizes.map(s => s.price)))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     
                     <p className="text-gray-600 mb-6 line-clamp-2">
-                      {product.description}
+                      {getB2cProductDescription(product)}
                     </p>
 
                     <div className="flex space-x-3">
                       <Link
-                        to={`/product/${product.id}`}
+                        to={`/product/${product.id}?color=${encodeURIComponent(product.colorVariant)}`}
                         className="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-4 py-3 rounded-xl font-semibold hover:from-gray-200 hover:to-gray-300 transition-all duration-300 text-center"
                       >
                         Visa detaljer
@@ -250,7 +336,7 @@ const PublicStorefront = () => {
                         onClick={() => addToCart(product)}
                         className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg"
                       >
-                        Lägg i varukorg
+                        Välj storlek
                       </button>
                     </div>
                   </div>
@@ -259,7 +345,7 @@ const PublicStorefront = () => {
             </div>
           )}
 
-          {!loading && products.length === 0 && (
+          {!loading && groupedProducts.length === 0 && (
             <div className="text-center py-16">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

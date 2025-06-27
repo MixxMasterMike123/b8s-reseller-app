@@ -214,17 +214,17 @@ function ProductViewPage() {
                 {/* Product Images */}
                 <div className="space-y-6">
                   {/* Main Product Image */}
-                  {selectedProduct.imageData && (
+                  {(selectedProduct.imageUrl || selectedProduct.imageData) && (
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <h3 className="text-sm font-medium text-gray-700 mb-3">Produktbild</h3>
                       <div className="space-y-3">
                         <img 
-                          src={selectedProduct.imageData} 
+                          src={selectedProduct.imageUrl || selectedProduct.imageData} 
                           alt={selectedProduct.name} 
                           className="w-full h-64 object-contain border border-gray-200 rounded-md bg-white"
                         />
                         <button
-                          onClick={() => handleDownloadImage(selectedProduct.imageData, selectedProduct.name, 'product')}
+                          onClick={() => handleDownloadImage(selectedProduct.imageUrl || selectedProduct.imageData, selectedProduct.name, 'product')}
                           className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         >
                           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -237,20 +237,20 @@ function ProductViewPage() {
                   )}
 
                   {/* EAN Code Images */}
-                  {(selectedProduct.eanImagePng || selectedProduct.eanImageSvg) && (
+                  {(selectedProduct.eanImagePngUrl || selectedProduct.eanImagePng || selectedProduct.eanImageSvgUrl || selectedProduct.eanImageSvg) && (
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <h3 className="text-sm font-medium text-gray-700 mb-3">EAN-kod bilder</h3>
                       <div className="space-y-4">
-                        {selectedProduct.eanImagePng && (
+                        {(selectedProduct.eanImagePngUrl || selectedProduct.eanImagePng) && (
                           <div className="space-y-2">
                             <p className="text-xs text-gray-600">PNG/JPG Format</p>
                             <img 
-                              src={selectedProduct.eanImagePng} 
+                              src={selectedProduct.eanImagePngUrl || selectedProduct.eanImagePng} 
                               alt="EAN-kod PNG" 
                               className="w-full h-20 object-contain border border-gray-200 rounded bg-white"
                             />
                             <button
-                              onClick={() => handleDownloadImage(selectedProduct.eanImagePng, selectedProduct.name, 'ean_png')}
+                              onClick={() => handleDownloadImage(selectedProduct.eanImagePngUrl || selectedProduct.eanImagePng, selectedProduct.name, 'ean_png')}
                               className="w-full inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                             >
                               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -261,16 +261,16 @@ function ProductViewPage() {
                           </div>
                         )}
 
-                        {selectedProduct.eanImageSvg && (
+                        {(selectedProduct.eanImageSvgUrl || selectedProduct.eanImageSvg) && (
                           <div className="space-y-2">
                             <p className="text-xs text-gray-600">SVG Format</p>
                             <img 
-                              src={selectedProduct.eanImageSvg} 
+                              src={selectedProduct.eanImageSvgUrl || selectedProduct.eanImageSvg} 
                               alt="EAN-kod SVG" 
                               className="w-full h-20 object-contain border border-gray-200 rounded bg-white"
                             />
                             <button
-                              onClick={() => handleDownloadImage(selectedProduct.eanImageSvg, selectedProduct.name, 'ean_svg')}
+                              onClick={() => handleDownloadImage(selectedProduct.eanImageSvgUrl || selectedProduct.eanImageSvg, selectedProduct.name, 'ean_svg')}
                               className="w-full inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                             >
                               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -336,9 +336,9 @@ function ProductViewPage() {
                       <tr key={product.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => handleProductSelect(product)}>
                         <td className="px-6 py-4">
                           <div className="flex items-center">
-                            {product.imageData ? (
+                            {(product.imageUrl || product.imageData) ? (
                               <img 
-                                src={product.imageData} 
+                                src={product.imageUrl || product.imageData} 
                                 alt={product.name} 
                                 className="w-12 h-12 mr-4 object-cover rounded-md border border-gray-200"
                               />
@@ -362,10 +362,10 @@ function ProductViewPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">{product.eanCode || 'Ej angivet'}</div>
-                          {(product.eanImagePng || product.eanImageSvg) && (
+                          {(product.eanImagePngUrl || product.eanImagePng || product.eanImageSvgUrl || product.eanImageSvg) && (
                             <div className="text-xs text-gray-500 mt-1">
-                              {product.eanImagePng && 'PNG '}
-                              {product.eanImageSvg && 'SVG'}
+                              {(product.eanImagePngUrl || product.eanImagePng) && 'PNG '}
+                              {(product.eanImageSvgUrl || product.eanImageSvg) && 'SVG'}
                             </div>
                           )}
                         </td>

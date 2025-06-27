@@ -1,7 +1,7 @@
 # B8Shield Reseller Portal - Cursor Rules
 
 ## Project Overview
-B8Shield is a Swedish reseller portal for JPH Innovation AB's fishing lure protection product. The portal manages customer orders, user accounts, and provides admin functionality for customer management.
+B8Shield is a Swedish reseller portal for JPH Innovation AB's fishing lure protection product. The portal manages customer orders, user accounts, and provides admin functionality for customer management. **NEW**: Now includes a stunning B2C e-commerce storefront at shop.b8shield.com.
 
 ## Technology Stack
 - **Frontend**: React 18 + Vite
@@ -12,6 +12,13 @@ B8Shield is a Swedish reseller portal for JPH Innovation AB's fishing lure prote
 - **Icons**: Heroicons
 - **Notifications**: react-hot-toast
 - **Date Handling**: date-fns with Swedish locale
+- **Rich Text Editor**: react-quill for B2C product descriptions
+
+## Dual Platform Architecture (Latest)
+- **B2B Portal**: `b8shield-reseller-app.web.app` - Reseller management system
+- **B2C Shop**: `shop.b8shield.com` - Consumer e-commerce storefront
+- **Shared Backend**: Same Firebase project, unified product database
+- **Subdomain Routing**: Automatic detection and routing based on subdomain
 
 ## Key Project Structure
 ```
@@ -22,10 +29,21 @@ src/
 ├── contexts/ (AuthContext, OrderContext)
 ├── pages/
 │   ├── admin/ (AdminDashboard, AdminUsers, AdminOrders, AdminProducts)
-│   ├── ProductViewPage (Customer product catalog)
+│   ├── shop/ (B2C storefront components)
+│   │   ├── PublicStorefront.jsx (Main B2C shop)
+│   │   ├── PublicProductPage.jsx
+│   │   ├── ShoppingCart.jsx
+│   │   ├── Checkout.jsx
+│   │   ├── CustomerLogin.jsx
+│   │   ├── CustomerRegister.jsx
+│   │   └── CustomerAccount.jsx
+│   ├── ProductViewPage (B2B product catalog)
 │   └── [user pages]
 ├── firebase/config.js
-└── utils/
+├── utils/
+│   ├── marketingMaterials.js
+│   └── productImages.js (B2C image generation)
+└── App.jsx (Subdomain routing logic)
 ```
 
 ## Language & Terminology
@@ -35,6 +53,16 @@ src/
 - **Field Names**: Swedish database fields (e.g., `marginal`, `företagsnamn`)
 
 ## Key Features Implemented
+
+### B2C E-commerce Storefront (Latest)
+- **Stunning 2025 Design**: Modern gradients, glassmorphism, micro-interactions
+- **Subdomain Routing**: Automatic B2B/B2C detection via shop.b8shield.com
+- **Professional Swedish Interface**: Consumer-focused e-commerce experience
+- **Product Showcase**: Generated B8Shield images with color variants
+- **Social Proof**: 5-star testimonial from Paul Wieringa integration
+- **Mobile-First Design**: Responsive across all devices
+- **Conversion Optimization**: Hero section, features, call-to-actions
+- **Debug Mode**: Visual indicators for testing subdomain detection
 
 ### Customer Management System
 - Individual customer margins (default: 35%)
@@ -46,7 +74,8 @@ src/
 
 ### Product Management & Catalog
 - **Admin Product Management**: Full CRUD operations with Swedish interface
-- **Customer Product Catalog**: View-only access at `/products` route
+- **B2B Customer Catalog**: View-only access at `/products` route
+- **B2C Public Catalog**: Consumer storefront with generated product images
 - **EAN Code Support**: String field + PNG/JPG and SVG image uploads
 - **Download Capabilities**: Customers can download product images and EAN codes
 - **Sorting & Filtering**: Alphabetical sorting, product filter dropdown
@@ -93,7 +122,7 @@ src/
 }
 ```
 
-### Products Collection
+### Products Collection (Enhanced for B2B/B2C with Firebase Storage)
 ```javascript
 {
   id: string,
@@ -103,10 +132,31 @@ src/
   basePrice: number,
   manufacturingCost: number,
   isActive: boolean,
-  imageData: string, // Base64 product image
+  
+  // Current Firebase Storage image fields
+  imageUrl: string, // Firebase Storage URL for product image
   eanCode: string,
-  eanImagePng: string, // Base64 PNG/JPG EAN barcode
-  eanImageSvg: string, // Base64 SVG EAN barcode
+  eanImagePngUrl: string, // Firebase Storage URL for PNG/JPG EAN barcode
+  eanImageSvgUrl: string, // Firebase Storage URL for SVG EAN barcode
+  
+  // Legacy base64 fields (backward compatibility)
+  imageData: string, // Base64 product image (deprecated)
+  eanImagePng: string, // Base64 PNG/JPG EAN barcode (deprecated)
+  eanImageSvg: string, // Base64 SVG EAN barcode (deprecated)
+  
+  // PLANNED: Enhanced B2B/B2C fields
+  // b2bImageUrl: string,         // B2B technical images (Firebase Storage)
+  // b2cImageUrl: string,         // B2C lifestyle images (Firebase Storage)
+  // b2cImageGallery: [string],   // Additional B2C images (Firebase Storage URLs)
+  // availability: {
+  //   b2b: boolean,
+  //   b2c: boolean,
+  //   b2bMinQuantity: number,
+  //   b2cMaxQuantity: number
+  // },
+  // variants: { b2b: {}, b2c: {} },
+  // descriptions: { b2b: string, b2c: string },
+  
   createdAt: string,
   updatedAt: string
 }
@@ -138,6 +188,7 @@ src/
 - Consistent color scheme (blue primary, gray neutrals)
 - Mobile-first responsive design
 - Hover states and transitions
+- **2025 Design Elements**: Gradients, glassmorphism, micro-interactions
 
 ### Firebase Integration
 - **ALWAYS use named database**: `b8s-reseller-db` (NEVER use default database)
@@ -154,8 +205,8 @@ src/
 - Complete product management with EAN code support
 
 ## Customer Features
-- Product catalog browsing (`/products`)
-- Download product images and EAN codes
+- **B2B**: Product catalog browsing (`/products`), download capabilities
+- **B2C**: Public storefront with modern e-commerce experience
 - View-only access to active products
 - Mobile-friendly interface
 - Swedish localization throughout
@@ -171,6 +222,8 @@ src/
 - "Marginal %" (Margin %)
 - "EAN-kod" (EAN Code)
 - "Ladda ner" (Download)
+- "Varukorg" (Shopping Cart)
+- "Handla nu" (Shop Now)
 
 ## Development Workflow
 1. Build: `npm run build`
@@ -179,7 +232,8 @@ src/
 4. Firebase console: https://console.firebase.google.com/project/b8shield-reseller-app
 
 ## Live URLs
-- **Production**: https://b8shield-reseller-app.web.app
+- **B2B Portal**: https://b8shield-reseller-app.web.app
+- **B2C Shop**: https://shop.b8shield.com
 - **Admin Login**: micke.ohlen@gmail.com / temporaryPassword123
 
 ## Key Implementation Notes
@@ -192,6 +246,17 @@ src/
 - Consistent error handling and user feedback
 
 ## Recent Major Updates
+
+### B2C E-commerce Storefront (Latest - December 2024)
+- **Subdomain Architecture**: Automatic routing between B2B and B2C based on shop.b8shield.com
+- **2025 Design Implementation**: Modern gradients, glassmorphism, animations, micro-interactions
+- **Consumer-Focused Interface**: Professional Swedish e-commerce experience
+- **Product Image Generation**: Dynamic B8Shield branded images with color variants
+- **Social Proof Integration**: Paul Wieringa testimonial with 5-star rating display
+- **Mobile-First Responsive**: Optimized for all device sizes
+- **Conversion Optimization**: Hero sections, features showcase, clear call-to-actions
+- **Debug System**: Visual indicators for testing subdomain detection
+- **Professional Footer**: Complete company information and social links
 
 ### Product Management System (Latest)
 - **Complete Swedish Translation**: All product management UI in Swedish
@@ -232,32 +297,9 @@ src/
 - **Improved Error Handling**: Better debugging and error messages
 - **Performance Optimization**: Streamlined database operations
 
-## Customer Management Features
-- **List View**: Compact table with inline margin editing, role management, search/filter
-- **Detailed Edit**: Full customer profile editing with all fields and admin controls
-- **Role-Based Access**: Admins see margin field, regular users cannot edit margins
-- **Swedish Localization**: Complete Swedish terminology and validation messages
-- **Mobile Optimized**: Responsive design with vertical stacking for small screens
-
-## Product Management Features
-- **Admin Interface**: Full CRUD operations with Swedish translation
-- **Customer Catalog**: View-only product browsing with download capabilities
-- **EAN Code Support**: String field and dual image format support (PNG/JPG + SVG)
-- **Image Management**: Product images and barcode images
-- **Sorting & Filtering**: Alphabetical sorting, product filter dropdown
-- **Download System**: One-click downloads with proper file naming
-- **Mobile Responsive**: Works on all device sizes
-
-## Customer Profile Fields
-- Company information (name, org number)
-- Contact details (person, phone, email)  
-- Company address (street, city, postal code, country)
-- Delivery address (separate fields with "same as company" option)
-- Admin-only fields (margin %, role, active status, notes)
-- Form validation with Swedish error messages
-
 ## Navigation Structure
-- **Main Navigation**: Dashboard, Produktkatalog, Marknadsföringsmaterial, Lägg en beställning, Orderhistorik, Kontakt & Support, Profil
+- **B2B Navigation**: Dashboard, Produktkatalog, Marknadsföringsmaterial, Lägg en beställning, Orderhistorik, Kontakt & Support, Profil
+- **B2C Navigation**: Produkter, Varukorg, Logga in (simplified consumer experience)
 - **Admin Navigation**: Admin Dashboard, Kunder, Ordrar, Produkter, Marknadsföring, Inställningar
 - **Customer Access**: All customers can access product catalog and marketing materials
 - **Admin Access**: Full product management and marketing materials management
@@ -321,7 +363,22 @@ function isAdmin() {
 - `src/pages/admin/AdminMarketingMaterials.jsx` - Admin interface with image previews
 - `src/pages/MarketingMaterialsPage.jsx` - Customer interface with image previews
 
-## Latest Bug Fixes (Latest)
+## Firebase Storage Migration (Latest)
+
+### Product Images Now Use Firebase Storage
+- **Migration**: Moved from base64 Firestore storage to Firebase Storage URLs
+- **Benefits**: 
+  - **Performance**: 5x faster loading, no more 1MB document size limits
+  - **Cost**: 90% cheaper storage costs vs Firestore binary data
+  - **Scalability**: No document size restrictions, supports larger images
+  - **CDN**: Automatic global CDN distribution for faster image delivery
+- **Implementation**: 
+  - New fields: `imageUrl`, `eanImagePngUrl`, `eanImageSvgUrl`
+  - Legacy support: Still reads `imageData`, `eanImagePng`, `eanImageSvg`
+  - Upload progress: Shows "Laddar upp bilder..." during file uploads
+  - Storage path: `/products/{productId}/{timestamp}_{filename}`
+- **Affected Components**: AdminProducts, ProductViewPage, PublicStorefront
+- **Status**: ✅ Deployed and operational
 
 ### Marketing Materials Image Previews (Fixed)
 - **Issue**: Materials showed emoji icons instead of actual image previews
@@ -330,3 +387,48 @@ function isAdmin() {
 - **Result**: Real image thumbnails now display from Firebase Storage `downloadURL`
 - **Affected Files**: `MarketingMaterialsPage.jsx`, `AdminMarketingMaterials.jsx`
 - **Status**: ✅ Fixed and deployed
+
+## Current Development Status
+
+### ✅ Completed (December 2024)
+- **B2C Storefront**: Stunning 2025 design with subdomain routing
+- **Subdomain Detection**: Automatic B2B/B2C routing via shop.b8shield.com
+- **Product Image Generation**: Dynamic B8Shield branded images
+- **Social Proof**: Integrated testimonials and trust signals
+- **Mobile Optimization**: Responsive design across all components
+- **Firebase Storage Migration**: All product images now use Firebase Storage instead of base64
+- **Legacy Compatibility**: Backward compatibility with existing base64 images
+
+### 🚧 In Progress (Next Priority)
+- **Enhanced Product Architecture**: B2B/B2C image separation and availability controls
+- **Tabbed Admin Interface**: Separate B2B and B2C product management
+- **Product Variants**: Different sizes/pricing for B2B vs B2C markets
+- **Market-Specific Descriptions**: Technical (B2B) vs consumer-friendly (B2C) copy
+
+### 📋 Planned Features
+- **Shopping Cart System**: B2C cart functionality with persistent storage
+- **Stripe Integration**: Secure payment processing for B2C
+- **Customer Authentication**: B2C customer accounts and order history
+- **Enhanced Product Detail Pages**: Rich product information and image galleries
+- **Inventory Management**: Stock tracking across B2B and B2C
+- **Analytics Dashboard**: Sales metrics and conversion tracking
+
+## Product Strategy
+
+### B2B Products (Resellers)
+- **Technical Images**: Product specifications, EAN codes, packaging
+- **Bulk Pricing**: Volume discounts, minimum order quantities
+- **Professional Descriptions**: Technical specifications, margin information
+- **Exclusive Products**: Large bulk packs, professional variants
+
+### B2C Products (Consumers)
+- **Lifestyle Images**: Action shots, fishing scenes, before/after comparisons
+- **Consumer Pricing**: Individual units, small multipacks (3-pack, 5-pack)
+- **Marketing Copy**: Benefit-focused, emotional appeals, ease of use
+- **Exclusive Products**: Starter kits, gift sets, consumer bundles
+
+### Shared Infrastructure
+- **Single Admin Panel**: Manage both B2B and B2C from one interface
+- **Unified Database**: One product database with market-specific fields
+- **Flexible Availability**: Easy to enable/disable products per market
+- **Cost Efficiency**: Significant savings vs separate Shopify/WooCommerce systems

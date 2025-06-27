@@ -92,6 +92,12 @@ function App() {
                     </PrivateRoute>
                   } />
                   
+                  <Route path="/dashboard" element={
+                    <AdminRoute>
+                      <AdminDashboard />
+                    </AdminRoute>
+                  } />
+                  
                   <Route path="/products" element={
                     <PrivateRoute>
                       <ProductViewPage />

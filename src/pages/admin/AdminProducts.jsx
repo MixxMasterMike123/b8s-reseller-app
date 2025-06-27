@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase/config';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { db, storage } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import ProductMenu from '../../components/ProductMenu';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
-// Maximum size for Base64 images (1MB)
-const MAX_IMAGE_SIZE = 1 * 1024 * 1024; 
+// Maximum size for image files (5MB)
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; 
 
 // Flag to disable default database operations
 const USE_DEFAULT_DB = false;
@@ -19,12 +22,23 @@ function AdminProducts() {
   const [error, setError] = useState('');
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [activeTab, setActiveTab] = useState('general'); // 'general', 'b2b', 'b2c'
+  
+  // B2B Image states
+  const [b2bImageFile, setB2bImageFile] = useState(null);
+  const [b2bImagePreview, setB2bImagePreview] = useState(null);
   const [eanPngFile, setEanPngFile] = useState(null);
   const [eanPngPreview, setEanPngPreview] = useState(null);
   const [eanSvgFile, setEanSvgFile] = useState(null);
   const [eanSvgPreview, setEanSvgPreview] = useState(null);
+  
+  // B2C Image states
+  const [b2cImageFile, setB2cImageFile] = useState(null);
+  const [b2cImagePreview, setB2cImagePreview] = useState(null);
+  const [b2cGalleryFiles, setB2cGalleryFiles] = useState([]);
+  const [b2cGalleryPreviews, setB2cGalleryPreviews] = useState([]);
+  
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -32,45 +46,73 @@ function AdminProducts() {
     manufacturingCost: 0,
     isActive: true,
     size: '',
-    imageData: '', // We'll store the base64 image data here
+    
+    // Legacy fields (backward compatibility)
+    imageUrl: '',
+    eanCode: '',
+    eanImagePngUrl: '',
+    eanImageSvgUrl: '',
+    
+    // Enhanced B2B/B2C fields
+    b2bImageUrl: '',
+    b2bImageGallery: [],
+    b2cImageUrl: '',
+    b2cImageGallery: [],
+    b2cPrice: 0, // B2C price including VAT (moms)
+    
+    // Market availability
+    availability: {
+      b2b: true,
+      b2c: true,
+      b2bMinQuantity: 1,
+      b2cMaxQuantity: 10
+    },
+    
+    // Market-specific descriptions
+    descriptions: {
+      b2b: '',
+      b2c: ''
+    }
   });
   const [filteredProduct, setFilteredProduct] = useState(null);
 
   // Load products from Firestore
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      console.log('📊 Fetching products from named database (b8s-reseller-db)...');
+      
+      const querySnapshot = await getDocs(collection(db, 'products'));
+      const productsData = [];
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        productsData.push({
+          id: doc.id,
+          ...data
+        });
+      });
+      
+      // Sort products by name (default sorting)
+      productsData.sort((a, b) => {
+        const nameA = (a.name || '').toLowerCase();
+        const nameB = (b.name || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+      
+      console.log(`✅ Successfully loaded ${productsData.length} products from named DB`);
+      setProducts(productsData);
+      setError('');
+    } catch (err) {
+      console.error('❌ Error fetching products from named DB:', err);
+      setError('Failed to load products: ' + err.message);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        console.log('📥 Fetching products from named database: b8s-reseller-db');
-        
-        const querySnapshot = await getDocs(collection(db, 'products'));
-        const productsData = [];
-
-        querySnapshot.forEach((doc) => {
-          console.log('📄 Found product:', doc.id, doc.data().name);
-          productsData.push({
-            id: doc.id,
-            ...doc.data()
-          });
-        });
-
-        // Sort products by name (default sorting)
-        productsData.sort((a, b) => {
-          const nameA = (a.name || '').toLowerCase();
-          const nameB = (b.name || '').toLowerCase();
-          return nameA.localeCompare(nameB);
-        });
-
-        console.log('📊 Total products fetched:', productsData.length);
-        setProducts(productsData);
-      } catch (err) {
-        console.error('❌ Error fetching products:', err);
-        setError('Failed to load products');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProducts();
   }, []);
 
@@ -83,17 +125,47 @@ function AdminProducts() {
       manufacturingCost: 0,
       isActive: true,
       size: '',
-      imageData: '',
+      
+      // Legacy fields (backward compatibility)
+      imageUrl: '',
       eanCode: '',
-      eanImagePng: '',
-      eanImageSvg: '',
+      eanImagePngUrl: '',
+      eanImageSvgUrl: '',
+      
+      // Enhanced B2B/B2C fields
+      b2bImageUrl: '',
+      b2bImageGallery: [],
+      b2cImageUrl: '',
+      b2cImageGallery: [],
+      b2cPrice: 0, // B2C price including VAT (moms)
+      
+      // Market availability
+      availability: {
+        b2b: true,
+        b2c: true,
+        b2bMinQuantity: 1,
+        b2cMaxQuantity: 10
+      },
+      
+      // Market-specific descriptions
+      descriptions: {
+        b2b: '',
+        b2c: ''
+      }
     });
-    setImageFile(null);
-    setImagePreview(null);
+    
+    // Reset all image states
+    setB2bImageFile(null);
+    setB2bImagePreview(null);
     setEanPngFile(null);
     setEanPngPreview(null);
     setEanSvgFile(null);
     setEanSvgPreview(null);
+    setB2cImageFile(null);
+    setB2cImagePreview(null);
+    setB2cGalleryFiles([]);
+    setB2cGalleryPreviews([]);
+    
     setIsAddingProduct(true);
   };
 
@@ -106,17 +178,47 @@ function AdminProducts() {
       manufacturingCost: product.manufacturingCost || 0,
       isActive: product.isActive !== false,
       size: product.size || '',
-      imageData: product.imageData || '',
+      
+      // Legacy fields (backward compatibility)
+      imageUrl: product.imageUrl || product.imageData || '',
       eanCode: product.eanCode || '',
-      eanImagePng: product.eanImagePng || '',
-      eanImageSvg: product.eanImageSvg || '',
+      eanImagePngUrl: product.eanImagePngUrl || product.eanImagePng || '',
+      eanImageSvgUrl: product.eanImageSvgUrl || product.eanImageSvg || '',
+      
+      // Enhanced B2B/B2C fields
+      b2bImageUrl: product.b2bImageUrl || '',
+      b2bImageGallery: product.b2bImageGallery || [],
+      b2cImageUrl: product.b2cImageUrl || '',
+      b2cImageGallery: product.b2cImageGallery || [],
+      b2cPrice: product.b2cPrice || 0, // B2C price including VAT (moms)
+      
+      // Market availability
+      availability: {
+        b2b: product.availability?.b2b !== false,
+        b2c: product.availability?.b2c !== false,
+        b2bMinQuantity: product.availability?.b2bMinQuantity || 1,
+        b2cMaxQuantity: product.availability?.b2cMaxQuantity || 10
+      },
+      
+      // Market-specific descriptions
+      descriptions: {
+        b2b: product.descriptions?.b2b || '',
+        b2c: product.descriptions?.b2c || ''
+      }
     });
-    setImageFile(null);
-    setImagePreview(product.imageData || null);
+    
+    // Reset all image states
+    setB2bImageFile(null);
+    setB2bImagePreview(product.b2bImageUrl || product.imageUrl || product.imageData || null);
     setEanPngFile(null);
-    setEanPngPreview(product.eanImagePng || null);
+    setEanPngPreview(product.eanImagePngUrl || product.eanImagePng || null);
     setEanSvgFile(null);
-    setEanSvgPreview(product.eanImageSvg || null);
+    setEanSvgPreview(product.eanImageSvgUrl || product.eanImageSvg || null);
+    setB2cImageFile(null);
+    setB2cImagePreview(product.b2cImageUrl || null);
+    setB2cGalleryFiles([]);
+    setB2cGalleryPreviews(product.b2cImageGallery || []);
+    
     setIsAddingProduct(true);
   };
 
@@ -132,7 +234,26 @@ function AdminProducts() {
     }
   };
 
-  const handleImageChange = (e) => {
+  // Upload image to Firebase Storage
+  const uploadImageToStorage = async (file, productId, imageType) => {
+    try {
+      const timestamp = Date.now();
+      const fileName = `${imageType}_${timestamp}_${file.name}`;
+      const storageRef = ref(storage, `products/${productId}/${fileName}`);
+      
+      console.log(`📤 Uploading ${imageType} to Firebase Storage...`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      
+      console.log(`✅ ${imageType} uploaded successfully`);
+      return downloadURL;
+    } catch (error) {
+      console.error(`❌ Error uploading ${imageType}:`, error);
+      throw error;
+    }
+  };
+
+  const handleB2bImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     
@@ -144,18 +265,46 @@ function AdminProducts() {
 
     // Create a preview URL for the selected image
     const previewURL = URL.createObjectURL(file);
-    setImagePreview(previewURL);
-    setImageFile(file);
+    setB2bImagePreview(previewURL);
+    setB2bImageFile(file);
+  };
+
+  const handleB2cImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
     
-    // Read the file as base64
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData({ ...formData, imageData: reader.result });
-    };
-    reader.onerror = () => {
-      toast.error('Kunde inte läsa bildfilen');
-    };
-    reader.readAsDataURL(file);
+    // Check file size
+    if (file.size > MAX_IMAGE_SIZE) {
+      toast.error(`Bilden är för stor. Maximal storlek är ${MAX_IMAGE_SIZE / (1024 * 1024)}MB`);
+      return;
+    }
+
+    // Create a preview URL for the selected image
+    const previewURL = URL.createObjectURL(file);
+    setB2cImagePreview(previewURL);
+    setB2cImageFile(file);
+  };
+
+  const handleB2cGalleryChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    
+    // Check file sizes
+    const oversizedFiles = files.filter(file => file.size > MAX_IMAGE_SIZE);
+    if (oversizedFiles.length > 0) {
+      toast.error(`${oversizedFiles.length} filer är för stora. Maximal storlek är ${MAX_IMAGE_SIZE / (1024 * 1024)}MB`);
+      return;
+    }
+
+    // Create preview URLs for the selected images
+    const previewURLs = files.map(file => URL.createObjectURL(file));
+    setB2cGalleryPreviews(prev => [...prev, ...previewURLs]);
+    setB2cGalleryFiles(prev => [...prev, ...files]);
+  };
+
+  const removeB2cGalleryImage = (index) => {
+    setB2cGalleryPreviews(prev => prev.filter((_, i) => i !== index));
+    setB2cGalleryFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleEanPngChange = (e) => {
@@ -178,16 +327,6 @@ function AdminProducts() {
     const previewURL = URL.createObjectURL(file);
     setEanPngPreview(previewURL);
     setEanPngFile(file);
-    
-    // Read the file as base64
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData({ ...formData, eanImagePng: reader.result });
-    };
-    reader.onerror = () => {
-      toast.error('Kunde inte läsa EAN-bildfilen');
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleEanSvgChange = (e) => {
@@ -210,67 +349,121 @@ function AdminProducts() {
     const previewURL = URL.createObjectURL(file);
     setEanSvgPreview(previewURL);
     setEanSvgFile(file);
-    
-    // Read the file as base64
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData({ ...formData, eanImageSvg: reader.result });
-    };
-    reader.onerror = () => {
-      toast.error('Kunde inte läsa EAN SVG-filen');
-    };
-    reader.readAsDataURL(file);
+  };
+
+  const handleB2cMoreInfoChange = (content) => {
+    setFormData({
+      ...formData,
+      descriptions: {
+        ...formData.descriptions,
+        b2cMoreInfo: content
+      }
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!formData.name || formData.basePrice <= 0) {
-      toast.error('Please fill in all required fields');
+      toast.error('Vänligen fyll i alla obligatoriska fält');
       return;
     }
     
     try {
       setLoading(true);
-      const finalProductData = {
+      setUploading(true);
+      
+      let finalProductData = {
         ...formData,
         updatedAt: serverTimestamp()
       };
+      
+      // Generate product ID for new products (for storage path)
+      const productId = selectedProduct ? selectedProduct.id : `prod_${Date.now()}`;
+      
+      // Upload images to Firebase Storage if new files are selected
+      if (b2bImageFile) {
+        console.log('📤 Uploading B2B image...');
+        const b2bImageUrl = await uploadImageToStorage(b2bImageFile, productId, 'b2b');
+        finalProductData.b2bImageUrl = b2bImageUrl;
+        
+        // Remove legacy b2bImageData field if it exists
+        if (finalProductData.b2bImageData) {
+          delete finalProductData.b2bImageData;
+        }
+      }
+      
+      if (eanPngFile) {
+        console.log('📤 Uploading EAN PNG image...');
+        const eanPngUrl = await uploadImageToStorage(eanPngFile, productId, 'ean_png');
+        finalProductData.eanImagePngUrl = eanPngUrl;
+        
+        // Remove legacy eanImagePng field if it exists
+        if (finalProductData.eanImagePng) {
+          delete finalProductData.eanImagePng;
+        }
+      }
+      
+      if (eanSvgFile) {
+        console.log('📤 Uploading EAN SVG image...');
+        const eanSvgUrl = await uploadImageToStorage(eanSvgFile, productId, 'ean_svg');
+        finalProductData.eanImageSvgUrl = eanSvgUrl;
+        
+        // Remove legacy eanImageSvg field if it exists
+        if (finalProductData.eanImageSvg) {
+          delete finalProductData.eanImageSvg;
+        }
+      }
+      
+             if (b2cImageFile) {
+         console.log('📤 Uploading B2C image...');
+         const b2cImageUrl = await uploadImageToStorage(b2cImageFile, productId, 'b2c_main');
+         finalProductData.b2cImageUrl = b2cImageUrl;
+         
+         // Remove legacy b2cImageData field if it exists
+         if (finalProductData.b2cImageData) {
+           delete finalProductData.b2cImageData;
+         }
+       }
+       
+       // Upload B2C gallery images
+       if (b2cGalleryFiles.length > 0) {
+         console.log(`📤 Uploading ${b2cGalleryFiles.length} B2C gallery images...`);
+         const galleryUrls = [];
+         
+         for (let i = 0; i < b2cGalleryFiles.length; i++) {
+           const file = b2cGalleryFiles[i];
+           const galleryUrl = await uploadImageToStorage(file, productId, `b2c_gallery_${i}`);
+           galleryUrls.push(galleryUrl);
+         }
+         
+         finalProductData.b2cImageGallery = galleryUrls;
+       }
       
       if (!selectedProduct) {
         // Adding new product
         finalProductData.createdAt = serverTimestamp();
         
         // Create product in named database
-        let namedDbRef;
         try {
-          // Use addDoc instead of setDoc with auto-generated ID
-          namedDbRef = await addDoc(collection(db, 'products'), finalProductData);
+          const namedDbRef = await addDoc(collection(db, 'products'), finalProductData);
           console.log("Product added to named DB with ID:", namedDbRef.id);
-          
-          // Show success message for primary DB
-          toast.success('Product added successfully');
-          
-
+          toast.success('Produkt tillagd framgångsrikt');
         } catch (error) {
           console.error("Error adding product to named DB:", error);
-          toast.error('Failed to add product to database');
-          setLoading(false);
+          toast.error('Misslyckades med att lägga till produkt i databasen');
           return;
         }
       } else {
         // Updating existing product
         try {
-          // First check if the product exists in named database
           const docRef = doc(db, 'products', selectedProduct.id);
           const docSnap = await getDoc(docRef);
           
           if (docSnap.exists()) {
-            // Update the existing document
             await updateDoc(docRef, finalProductData);
             console.log("Updated product in named DB");
           } else {
-            // Create document with the specific ID if it doesn't exist
             await setDoc(docRef, {
               ...finalProductData,
               createdAt: serverTimestamp()
@@ -278,43 +471,34 @@ function AdminProducts() {
             console.log("Created product in named DB with specific ID");
           }
           
-          // Show success message for primary DB
-          toast.success('Product updated successfully');
-          
-
+          toast.success('Produkt uppdaterad framgångsrikt');
         } catch (error) {
           console.error("Error updating product in named DB:", error);
-          toast.error('Failed to update product');
-          setLoading(false);
+          toast.error('Misslyckades med att uppdatera produkt');
           return;
         }
       }
       
       // Refresh products list
-      const querySnapshot = await getDocs(collection(db, 'products'));
-      const productsData = [];
-      
-      querySnapshot.forEach((doc) => {
-        productsData.push({
-          id: doc.id,
-          ...doc.data()
-        });
-      });
-      
-      // Sort products by name (default sorting)
-      productsData.sort((a, b) => {
-        const nameA = (a.name || '').toLowerCase();
-        const nameB = (b.name || '').toLowerCase();
-        return nameA.localeCompare(nameB);
-      });
-      
-      setProducts(productsData);
+      await fetchProducts();
       setIsAddingProduct(false);
+      
+      // Clear file states
+      setB2bImageFile(null);
+      setB2bImagePreview(null);
+      setEanPngFile(null);
+      setEanSvgFile(null);
+      setB2cImageFile(null);
+      setB2cImagePreview(null);
+      setB2cGalleryFiles([]);
+      setB2cGalleryPreviews([]);
+      
     } catch (err) {
       console.error('Error saving product:', err);
-      toast.error('Failed to save product');
+      toast.error('Misslyckades med att spara produkt: ' + err.message);
     } finally {
       setLoading(false);
+      setUploading(false);
     }
   };
 
@@ -414,10 +598,10 @@ function AdminProducts() {
                   manufacturingCost: 10,
                   isActive: true,
                   size: '',
-                  imageData: '',
+                  imageUrl: '',
                 });
-                setImageFile(null);
-                setImagePreview(null);
+                setB2bImageFile(null);
+                setB2bImagePreview(null);
                 setIsAddingProduct(true);
               }}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
@@ -451,207 +635,490 @@ function AdminProducts() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       ) : isAddingProduct ? (
-        /* Product Form */
+        /* Product Form with Tabs */
         <div className="bg-white shadow rounded-lg mb-8">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">
               {selectedProduct ? 'Redigera Produkt' : 'Lägg till Ny Produkt'}
             </h2>
+            
+            {/* Tab Navigation */}
+            <div className="flex space-x-8">
+              <button
+                type="button"
+                onClick={() => setActiveTab('general')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'general'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Allmänt
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('b2b')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'b2b'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                B2B (Återförsäljare)
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('b2c')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'b2c'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                B2C (Konsument)
+              </button>
+            </div>
           </div>
           
           <form onSubmit={handleSubmit} className="p-6">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {/* Product Name */}
-              <div className="sm:col-span-2">
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Produktnamn *
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              
-              {/* Size */}
-              <div>
-                <label htmlFor="size" className="block text-sm font-medium text-gray-700 mb-2">
-                  Storlek
-                </label>
-                <input
-                  type="text"
-                  id="size"
-                  name="size"
-                  value={formData.size}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="t.ex. Liten, Medium, Stor eller specifika mått"
-                />
-              </div>
-              
-              {/* Base Price */}
-              <div>
-                <label htmlFor="basePrice" className="block text-sm font-medium text-gray-700 mb-2">
-                  Grundpris (SEK, exkl. moms) *
-                </label>
-                <input
-                  type="number"
-                  id="basePrice"
-                  name="basePrice"
-                  value={formData.basePrice}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  min="0"
-                  step="0.01"
-                  required
-                />
-              </div>
-              
-              {/* Manufacturing Cost */}
-              <div>
-                <label htmlFor="manufacturingCost" className="block text-sm font-medium text-gray-700 mb-2">
-                  Tillverkningskostnad (SEK)
-                </label>
-                <input
-                  type="number"
-                  id="manufacturingCost"
-                  name="manufacturingCost"
-                  value={formData.manufacturingCost}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-              
-              {/* Active Status */}
-              <div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="isActive"
-                    name="isActive"
-                    checked={formData.isActive}
-                    onChange={handleInputChange}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
-                    Aktiv
+            {/* Tab Content */}
+            {activeTab === 'general' && (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                {/* Product Name */}
+                <div className="sm:col-span-2">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                    Produktnamn *
                   </label>
-                </div>
-              </div>
-              
-              {/* Product Image */}
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Produktbild (Max 1MB)
-                </label>
-                <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
                   <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    required
                   />
-                  {imagePreview && (
-                    <div className="flex-shrink-0">
-                      <img 
-                        src={imagePreview} 
-                        alt="Produktförhandsvisning" 
-                        className="w-32 h-32 object-cover border border-gray-300 rounded-md"
-                      />
-                    </div>
-                  )}
                 </div>
-                <p className="mt-2 text-xs text-gray-500">
-                  Observera: Bilder lagras som Base64-data direkt i databasen. 
-                  Håll bilderna små (under 1MB) för bättre prestanda.
-                </p>
+                
+                {/* Size */}
+                <div>
+                  <label htmlFor="size" className="block text-sm font-medium text-gray-700 mb-2">
+                    Storlek
+                  </label>
+                  <input
+                    type="text"
+                    id="size"
+                    name="size"
+                    value={formData.size}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="t.ex. Liten, Medium, Stor eller specifika mått"
+                  />
+                </div>
+                
+                {/* Base Price */}
+                <div>
+                  <label htmlFor="basePrice" className="block text-sm font-medium text-gray-700 mb-2">
+                    Grundpris (SEK, exkl. moms) *
+                  </label>
+                  <input
+                    type="number"
+                    id="basePrice"
+                    name="basePrice"
+                    value={formData.basePrice}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    min="0"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                
+                {/* Manufacturing Cost */}
+                <div>
+                  <label htmlFor="manufacturingCost" className="block text-sm font-medium text-gray-700 mb-2">
+                    Tillverkningskostnad (SEK)
+                  </label>
+                  <input
+                    type="number"
+                    id="manufacturingCost"
+                    name="manufacturingCost"
+                    value={formData.manufacturingCost}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                
+                {/* Active Status */}
+                <div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="isActive"
+                      name="isActive"
+                      checked={formData.isActive}
+                      onChange={handleInputChange}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
+                      Aktiv
+                    </label>
+                  </div>
+                </div>
+                
+                {/* Market Availability */}
+                <div className="sm:col-span-2">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Marknadstillgänglighet</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="b2bAvailable"
+                          checked={formData.availability?.b2b || false}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            availability: {
+                              ...formData.availability,
+                              b2b: e.target.checked
+                            }
+                          })}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="b2bAvailable" className="ml-2 block text-sm text-gray-700">
+                          Tillgänglig för B2B (Återförsäljare)
+                        </label>
+                      </div>
+                      
+                      {formData.availability?.b2b && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Minsta orderkvantitet (B2B)
+                          </label>
+                          <input
+                            type="number"
+                            value={formData.availability?.b2bMinQuantity || 1}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              availability: {
+                                ...formData.availability,
+                                b2bMinQuantity: parseInt(e.target.value) || 1
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            min="1"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="b2cAvailable"
+                          checked={formData.availability?.b2c || false}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            availability: {
+                              ...formData.availability,
+                              b2c: e.target.checked
+                            }
+                          })}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="b2cAvailable" className="ml-2 block text-sm text-gray-700">
+                          Tillgänglig för B2C (Konsumenter)
+                        </label>
+                      </div>
+                      
+                      {formData.availability?.b2c && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Max orderkvantitet (B2C)
+                          </label>
+                          <input
+                            type="number"
+                            value={formData.availability?.b2cMaxQuantity || 10}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              availability: {
+                                ...formData.availability,
+                                b2cMaxQuantity: parseInt(e.target.value) || 10
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            min="1"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
-              
-                             {/* Description */}
-               <div className="sm:col-span-2">
-                 <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                   Beskrivning
-                 </label>
-                 <textarea
-                   id="description"
-                   name="description"
-                   value={formData.description}
-                   onChange={handleInputChange}
-                   rows="3"
-                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                 ></textarea>
-               </div>
+            )}
+            
+            {activeTab === 'b2b' && (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                {/* B2B Description */}
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    B2B Beskrivning (Teknisk information för återförsäljare)
+                  </label>
+                  <textarea
+                    value={formData.descriptions?.b2b || ''}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      descriptions: {
+                        ...formData.descriptions,
+                        b2b: e.target.value
+                      }
+                    })}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Tekniska specifikationer, installationsanvisningar, etc."
+                  />
+                </div>
+                
+                {/* B2B Product Image */}
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    B2B Produktbild (Teknisk bild, Max 5MB)
+                  </label>
+                  <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleB2bImageChange}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    {b2bImagePreview && (
+                      <div className="flex-shrink-0">
+                        <img 
+                          src={b2bImagePreview} 
+                          alt="B2B Produktförhandsvisning" 
+                          className="w-32 h-32 object-cover border border-gray-300 rounded-md"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Tekniska bilder för återförsäljare (produktspecifikationer, förpackning, etc.)
+                  </p>
+                </div>
+                
+                {/* EAN Code */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    EAN-kod
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.eanCode || ''}
+                    onChange={(e) => setFormData({ ...formData, eanCode: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="t.ex. 1234567890123"
+                  />
+                </div>
+                
+                {/* EAN Code Image PNG/JPG */}
+                <div className="sm:col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    EAN-kod bild (PNG/JPG)
+                  </label>
+                  <div className="space-y-3">
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg"
+                      onChange={handleEanPngChange}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    {eanPngPreview && (
+                      <div className="flex-shrink-0">
+                        <img 
+                          src={eanPngPreview} 
+                          alt="EAN-kod förhandsvisning" 
+                          className="w-32 h-20 object-contain border border-gray-300 rounded-md bg-white"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-               {/* EAN Code */}
-               <div className="sm:col-span-2">
-                 <label htmlFor="eanCode" className="block text-sm font-medium text-gray-700 mb-2">
-                   EAN-kod
-                 </label>
-                 <input
-                   type="text"
-                   id="eanCode"
-                   name="eanCode"
-                   value={formData.eanCode}
-                   onChange={handleInputChange}
-                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                   placeholder="t.ex. 1234567890123"
-                 />
-               </div>
+                {/* EAN Code Image SVG */}
+                <div className="sm:col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    EAN-kod bild (SVG)
+                  </label>
+                  <div className="space-y-3">
+                    <input
+                      type="file"
+                      accept="image/svg+xml"
+                      onChange={handleEanSvgChange}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    {eanSvgPreview && (
+                      <div className="flex-shrink-0">
+                        <img 
+                          src={eanSvgPreview} 
+                          alt="EAN-kod SVG förhandsvisning" 
+                          className="w-32 h-20 object-contain border border-gray-300 rounded-md bg-white"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {activeTab === 'b2c' && (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                {/* B2C Price */}
+                <div className="sm:col-span-2">
+                  <label htmlFor="b2cPrice" className="block text-sm font-medium text-gray-700 mb-2">
+                    B2C Pris (SEK, inkl. moms) *
+                  </label>
+                  <input
+                    type="number"
+                    id="b2cPrice"
+                    name="b2cPrice"
+                    value={formData.b2cPrice}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                    min="0"
+                    step="0.01"
+                    placeholder="Konsumentpris inklusive moms"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Detta pris visas för konsumenter på shop.b8shield.com och inkluderar 25% moms
+                  </p>
+                </div>
+                
+                {/* B2C Description */}
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    B2C Beskrivning (Konsumentvänlig beskrivning)
+                  </label>
+                  <textarea
+                    value={formData.descriptions?.b2c || ''}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      descriptions: {
+                        ...formData.descriptions,
+                        b2c: e.target.value
+                      }
+                    })}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                    placeholder="Marknadsföringstext, fördelar för konsumenten, användningsområden..."
+                  />
+                </div>
 
-               {/* EAN Code Image PNG/JPG */}
-               <div className="sm:col-span-1">
-                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                   EAN-kod bild (PNG/JPG)
-                 </label>
-                 <div className="space-y-3">
-                   <input
-                     type="file"
-                     accept="image/png,image/jpeg,image/jpg"
-                     onChange={handleEanPngChange}
-                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                   />
-                   {eanPngPreview && (
-                     <div className="flex-shrink-0">
-                       <img 
-                         src={eanPngPreview} 
-                         alt="EAN-kod förhandsvisning" 
-                         className="w-32 h-20 object-contain border border-gray-300 rounded-md bg-white"
-                       />
-                     </div>
-                   )}
-                 </div>
-               </div>
-
-               {/* EAN Code Image SVG */}
-               <div className="sm:col-span-1">
-                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                   EAN-kod bild (SVG)
-                 </label>
-                 <div className="space-y-3">
-                   <input
-                     type="file"
-                     accept="image/svg+xml"
-                     onChange={handleEanSvgChange}
-                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                   />
-                   {eanSvgPreview && (
-                     <div className="flex-shrink-0">
-                       <img 
-                         src={eanSvgPreview} 
-                         alt="EAN-kod SVG förhandsvisning" 
-                         className="w-32 h-20 object-contain border border-gray-300 rounded-md bg-white"
-                       />
-                     </div>
-                   )}
-                 </div>
-               </div>
-             </div>
+                {/* B2C More Info (WYSIWYG) */}
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Mer Information (Detaljerad produktinformation)
+                  </label>
+                  <div className="border border-gray-300 rounded-md overflow-hidden bg-white">
+                    <ReactQuill
+                      value={formData.descriptions?.b2cMoreInfo || ''}
+                      onChange={(content) => setFormData({
+                        ...formData,
+                        descriptions: {
+                          ...formData.descriptions,
+                          b2cMoreInfo: content
+                        }
+                      })}
+                      modules={{
+                        toolbar: [
+                          [{ 'header': [1, 2, 3, false] }],
+                          ['bold', 'italic', 'underline', 'strike'],
+                          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                          [{ 'color': [] }, { 'background': [] }],
+                          ['link', 'image'],
+                          ['clean']
+                        ]
+                      }}
+                      theme="snow"
+                      placeholder="Lägg till detaljerad produktinformation här..."
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Använd editorn för att lägga till detaljerad produktinformation, specifikationer, instruktioner, etc.
+                  </p>
+                </div>
+                
+                {/* B2C Main Image */}
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    B2C Huvudbild (Lifestyle/Marketing bild, Max 5MB)
+                  </label>
+                  <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleB2cImageChange}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                    />
+                    {b2cImagePreview && (
+                      <div className="flex-shrink-0">
+                        <img 
+                          src={b2cImagePreview} 
+                          alt="B2C Produktförhandsvisning" 
+                          className="w-32 h-32 object-cover border border-gray-300 rounded-md"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Lifestyle-bilder för konsumenter (användning, miljö, action shots, etc.)
+                  </p>
+                </div>
+                
+                {/* B2C Image Gallery */}
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    B2C Bildgalleri (Flera lifestyle-bilder, Max 5MB per bild)
+                  </label>
+                  <div className="space-y-4">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleB2cGalleryChange}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                    />
+                    
+                    {/* Gallery Previews */}
+                    {b2cGalleryPreviews.length > 0 && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {b2cGalleryPreviews.map((preview, index) => (
+                          <div key={index} className="relative">
+                            <img 
+                              src={preview} 
+                              alt={`B2C Gallery ${index + 1}`} 
+                              className="w-full h-24 object-cover border border-gray-300 rounded-md"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeB2cGalleryImage(index)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Ytterligare bilder som visar produkten i användning, olika vinklar, etc.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Form Actions */}
             <div className="mt-8 flex justify-end gap-3">
@@ -664,10 +1131,15 @@ function AdminProducts() {
               </button>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || uploading}
                 className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? (
+                {uploading ? (
+                  <span className="flex items-center">
+                    <span className="animate-spin h-4 w-4 mr-2 border-b-2 border-white rounded-full"></span>
+                    Laddar upp bilder...
+                  </span>
+                ) : loading ? (
                   <span className="flex items-center">
                     <span className="animate-spin h-4 w-4 mr-2 border-b-2 border-white rounded-full"></span>
                     Sparar...
@@ -731,9 +1203,9 @@ function AdminProducts() {
                     <tr key={product.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <div className="flex items-center">
-                          {product.imageData ? (
+                          {product.imageUrl ? (
                             <img 
-                              src={product.imageData} 
+                              src={product.imageUrl} 
                               alt={product.name} 
                               className="w-12 h-12 mr-4 object-cover rounded-md border border-gray-200"
                             />
@@ -757,10 +1229,10 @@ function AdminProducts() {
                        </td>
                        <td className="px-6 py-4 whitespace-nowrap">
                          <div className="text-sm text-gray-900">{product.eanCode || 'Ej angivet'}</div>
-                         {(product.eanImagePng || product.eanImageSvg) && (
+                         {(product.eanImagePngUrl || product.eanImageSvgUrl) && (
                            <div className="text-xs text-gray-500 mt-1">
-                             {product.eanImagePng && 'PNG '}
-                             {product.eanImageSvg && 'SVG'}
+                             {product.eanImagePngUrl && 'PNG '}
+                             {product.eanImageSvgUrl && 'SVG'}
                            </div>
                          )}
                        </td>

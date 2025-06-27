@@ -545,6 +545,7 @@ export function AuthProvider({ children }) {
   const value = {
     currentUser,
     userData,
+    userProfile: userData, // Alias for backward compatibility
     loading,
     isAdmin,
     error,
