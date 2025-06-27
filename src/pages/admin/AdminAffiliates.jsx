@@ -3,12 +3,14 @@ import { db, functions } from '../../firebase/config';
 import { collection, getDocs, doc, deleteDoc, query, where, orderBy } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
+import { Link, useNavigate } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
 
 const AdminAffiliates = () => {
   const [applications, setApplications] = useState([]);
   const [affiliates, setAffiliates] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchData();
@@ -46,6 +48,8 @@ const AdminAffiliates = () => {
       if (result.data.success) {
         toast.success(`Affiliate godkänd! Kod: ${result.data.affiliateCode}`, { id: toastId, duration: 5000 });
         fetchData(); // Refresh both lists
+        // Optional: navigate to the new affiliate's edit page
+        // navigate(`/admin/affiliates/manage/${result.data.newAffiliateId}`);
       } else {
         throw new Error(result.data.error || 'Okänt fel vid godkännande.');
       }
@@ -133,8 +137,11 @@ const AdminAffiliates = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         {app.status === 'pending' && (
                           <div className="flex justify-end space-x-2">
-                            <button onClick={() => handleApprove(app.id)} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-xs">Godkänn</button>
-                            <button onClick={() => handleDeny(app.id)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs">Neka</button>
+                            <button onClick={() => handleApprove(app.id)} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-xs font-semibold">Godkänn</button>
+                            <Link to={`/admin/affiliates/application/${app.id}`} className="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 text-xs font-semibold">
+                              Visa
+                            </Link>
+                            <button onClick={() => handleDeny(app.id)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs font-semibold">Neka</button>
                           </div>
                         )}
                       </td>
@@ -176,7 +183,9 @@ const AdminAffiliates = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{aff.stats?.conversions || 0}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(aff.stats?.totalEarnings)}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button className="text-blue-600 hover:text-blue-800">Hantera</button>
+                        <Link to={`/admin/affiliates/manage/${aff.id}`} className="text-blue-600 hover:text-blue-800 font-semibold">
+                          Hantera
+                        </Link>
                       </td>
                     </tr>
                   ))}

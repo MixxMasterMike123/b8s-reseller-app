@@ -50,6 +50,7 @@ import ShippingInfo from './pages/shop/ShippingInfo';
 import AffiliateRegistration from './pages/shop/AffiliateRegistration';
 import AffiliatePortal from './pages/shop/AffiliatePortal';
 import AdminAffiliates from './pages/admin/AdminAffiliates';
+import AdminAffiliateEdit from './pages/admin/AdminAffiliateEdit';
 
 import { Toaster } from 'react-hot-toast';
 
@@ -240,6 +241,18 @@ function App() {
               <Route path="/admin/affiliates" element={
                 <AdminRoute>
                   <AdminAffiliates />
+                </AdminRoute>
+              } />
+
+              <Route path="/admin/affiliates/application/:id" element={
+                <AdminRoute>
+                  <AdminAffiliateEdit />
+                </AdminRoute>
+              } />
+
+              <Route path="/admin/affiliates/manage/:id" element={
+                <AdminRoute>
+                  <AdminAffiliateEdit />
                 </AdminRoute>
               } />
               

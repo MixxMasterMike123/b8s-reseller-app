@@ -1,91 +1,85 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
-import { useSimpleAuth as useAuth } from '../../contexts/SimpleAuthContext';
+import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { db } from '../../firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import CustomerLogin from './CustomerLogin';
 
 const AffiliatePortal = () => {
-  const { currentUser } = useAuth();
+  const { currentUser } = useSimpleAuth();
   const [affiliateData, setAffiliateData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  const fetchAffiliateData = useCallback(async () => {
     if (!currentUser) {
       setLoading(false);
-      // User not logged in, maybe redirect or show login prompt later
       return;
     }
 
-    const fetchAffiliateData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const affiliatesRef = collection(db, 'affiliates');
-        // Query by email, as it's the most reliable link to the auth user
-        const q = query(affiliatesRef, where("email", "==", currentUser.email), where("status", "==", "active"));
-        const querySnapshot = await getDocs(q);
+    setLoading(true);
+    setError(null);
+    try {
+      const affiliatesRef = collection(db, 'affiliates');
+      const q = query(affiliatesRef, where("email", "==", currentUser.email), where("status", "==", "active"));
+      const querySnapshot = await getDocs(q);
 
-        if (querySnapshot.empty) {
-          setError("Du är inte en godkänd affiliate. Ansök idag!");
-          setAffiliateData(null);
-        } else {
-          // Should only be one result
-          const docData = querySnapshot.docs[0].data();
-          setAffiliateData(docData);
-        }
-      } catch (err) {
-        console.error("Error fetching affiliate data:", err);
-        setError("Kunde inte ladda affiliate-data. Försök igen senare.");
-      } finally {
-        setLoading(false);
+      if (querySnapshot.empty) {
+        setError("Du är inte en godkänd affiliate. Ansök idag!");
+        setAffiliateData(null);
+      } else {
+        const docData = querySnapshot.docs[0].data();
+        setAffiliateData(docData);
       }
-    };
-
-    fetchAffiliateData();
+    } catch (err) {
+      console.error("Error fetching affiliate data:", err);
+      setError("Kunde inte ladda affiliate-data. Försök igen senare.");
+    } finally {
+      setLoading(false);
+    }
   }, [currentUser]);
+
+  useEffect(() => {
+    fetchAffiliateData();
+  }, [fetchAffiliateData, currentUser]);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(amount);
   };
 
-  if (loading) {
+  if (!currentUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Laddar portal...</p>
-      </div>
-    );
-  }
-  
-  if (error) {
-     return (
       <div className="min-h-screen bg-gray-50">
         <ShopNavigation />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-          <h1 className="text-2xl font-bold text-red-600">Ett fel uppstod</h1>
-          <p className="text-gray-700 mt-2">{error}</p>
-          {error.includes("Ansök idag") && (
-             <Link to="/affiliate-registration" className="mt-4 inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-              Bli Affiliate
-            </Link>
-          )}
+            <h1 className="text-2xl font-bold mb-4">Affiliate Portal</h1>
+            <p className="text-gray-600 mb-8">Vänligen logga in för att se din instrumentpanel.</p>
+            <div className="max-w-md mx-auto">
+                <CustomerLogin onLoginSuccess={() => fetchAffiliateData()} />
+            </div>
+            <p className="mt-8">
+                Inte en affiliate än?{' '}
+                <Link to="/affiliate-registration" className="font-medium text-blue-600 hover:text-blue-800">
+                    Ansök här!
+                </Link>
+            </p>
         </div>
         <ShopFooter />
       </div>
     );
   }
 
-  if (!affiliateData) {
+  if (!affiliateData && !loading) {
      return (
       <div className="min-h-screen bg-gray-50">
         <ShopNavigation />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-          <h1 className="text-2xl font-bold">Ingen åtkomst</h1>
-          <p className="text-gray-700 mt-2">Vänligen logga in för att se din affiliate-portal.</p>
-          <Link to="/shop/login" className="mt-4 inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-            Logga in
+          <h1 className="text-2xl font-bold text-red-600">Ingen åtkomst</h1>
+          <p className="text-gray-700 mt-2">{error || "Vi kunde inte hitta ett aktivt affiliate-konto kopplat till din e-post."}</p>
+          <Link to="/affiliate-registration" className="mt-4 inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+            Ansök för att bli Affiliate
           </Link>
         </div>
         <ShopFooter />
@@ -96,7 +90,6 @@ const AffiliatePortal = () => {
   const affiliateLink = `https://shop.b8shield.com/?ref=${affiliateData.affiliateCode}`;
 
   return (
-    // This page should be protected by a route that checks if the user is an active affiliate
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <ShopNavigation />
       

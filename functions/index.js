@@ -204,27 +204,50 @@ exports.approveAffiliate = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('invalid-argument', 'The function must be called with an "applicationId".');
   }
 
-  const applicationRef = db.collection('affiliateApplications').doc(applicationId);
-  const affiliateRef = db.collection('affiliates').doc(); // Create a new doc with a random ID
-
   try {
+    const applicationRef = db.collection('affiliateApplications').doc(applicationId);
     const applicationDoc = await applicationRef.get();
     if (!applicationDoc.exists) {
       throw new functions.https.HttpsError('not-found', 'Affiliate application not found.');
     }
     const appData = applicationDoc.data();
 
-    // 2. Generate a unique, human-readable affiliate code.
-    const namePart = appData.name.split(' ')[0].toUpperCase().replace(/[^A-Z]/g, '');
+    // 2. Create a Firebase Auth user for the affiliate.
+    const tempPassword = Math.random().toString(36).slice(-8);
+    let authUser;
+    let wasExistingAuthUser = false;
+
+    try {
+      authUser = await admin.auth().createUser({
+        email: appData.email,
+        emailVerified: true,
+        password: tempPassword,
+        displayName: appData.name,
+      });
+    } catch (error) {
+       if (error.code === 'auth/email-already-exists') {
+        // If auth user exists, find them and use their UID.
+        authUser = await admin.auth().getUserByEmail(appData.email);
+        wasExistingAuthUser = true;
+        console.log(`User with email ${appData.email} already exists. Using existing auth UID.`);
+      } else {
+        throw error; // Rethrow other auth errors
+      }
+    }
+
+    // 3. Generate a unique, human-readable affiliate code.
+    const namePart = appData.name.split(' ')[0].toUpperCase().replace(/[^A-Z]/g, '').substring(0, 8);
     const randomPart = Math.floor(100 + Math.random() * 900); // 3-digit random number
     const affiliateCode = `${namePart}-${randomPart}`;
 
-    // 3. Create the new affiliate record.
+    // 4. Create the new affiliate record.
+    const affiliateRef = db.collection('affiliates').doc(authUser.uid); // Use auth UID as document ID
+    
     const newAffiliateData = {
-      ...appData, // Carry over name, email, website, etc.
-      id: affiliateRef.id,
+      id: authUser.uid, // This is the Firebase Auth UID
       affiliateCode,
       status: 'active',
+      ...appData, // Carry over name, email, website etc. from application
       commissionRate: 15, // Default commission rate
       stats: {
         clicks: 0,
@@ -238,13 +261,43 @@ exports.approveAffiliate = functions.https.onCall(async (data, context) => {
       approvedBy: context.auth.uid,
     };
 
-    // 4. Use a batch write to make the operation atomic.
+    // 5. Use a batch write to make the operation atomic.
     const batch = db.batch();
     batch.set(affiliateRef, newAffiliateData);
     batch.delete(applicationRef);
     await batch.commit();
     
-    // TODO: Send a welcome email to the new affiliate with their code.
+    // 6. Send a welcome email to the new affiliate with their code and temp password.
+    const loginInstructions = wasExistingAuthUser
+      ? `<p>Du hade redan ett konto hos B8Shield, så du kan logga in med ditt befintliga lösenord. Om du har glömt det kan du återställa det på inloggningssidan.</p>`
+      : `<ul>
+          <li><strong>Användarnamn:</strong> ${appData.email}</li>
+          <li><strong>Tillfälligt lösenord:</strong> ${tempPassword}</li>
+        </ul>
+        <p>Vi rekommenderar starkt att du byter ditt lösenord efter första inloggningen.</p>`;
+
+    const welcomeEmail = {
+      from: '"B8Shield" <b8shield.reseller@gmail.com>',
+      to: appData.email,
+      subject: 'Välkommen till B8Shield Affiliate Program!',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px;">
+          <h2>Grattis, ${appData.name}!</h2>
+          <p>Din ansökan till B8Shields affiliate-program har blivit godkänd.</p>
+          <p>Här är dina inloggningsuppgifter för <a href="https://shop.b8shield.com/affiliate-portal">Affiliate-portalen</a>:</p>
+          ${loginInstructions}
+          <hr>
+          <h3>Din unika affiliatelänk:</h3>
+          <p>Använd denna länk för att tjäna provision på alla köp:</p>
+          <p><strong><a href="https://shop.b8shield.com/?ref=${affiliateCode}">https://shop.b8shield.com/?ref=${affiliateCode}</a></strong></p>
+          <br>
+          <p>Lycka till med försäljningen!</p>
+          <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(welcomeEmail);
 
     return { success: true, affiliateCode: affiliateCode };
 
@@ -331,7 +384,7 @@ exports.processAffiliateConversion = functions.firestore
     try {
       // 2. Find the affiliate.
       const affiliatesRef = db.collection('affiliates');
-      const q = query(affiliatesRef, where("affiliateCode", "==", affiliateCode));
+      const q = query(affiliatesRef, where("affiliateCode", "==", affiliateCode), limit(1));
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
