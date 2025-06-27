@@ -1522,4 +1522,53 @@ exports.sendStatusUpdateHttp = functions.https.onRequest(async (req, res) => {
       error: error.message 
     });
   }
+});
+
+// Add this new endpoint
+exports.productFeed = functions.https.onRequest(async (req, res) => {
+  try {
+    const products = await admin.firestore()
+      .collection('products')
+      .where('availability.b2c', '==', true)
+      .get();
+
+    const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
+  <channel>
+    <title>B8Shield - Vasskydd för fiskedrag</title>
+    <link>https://shop.b8shield.com</link>
+    <description>Innovativa vasskydd för dina fiskedrag</description>
+    ${products.docs.map(doc => {
+      const product = doc.data();
+      return `
+    <item>
+      <g:id>${doc.id}</g:id>
+      <g:title>${product.name}</g:title>
+      <g:description>${product.descriptions?.b2c || product.description}</g:description>
+      <g:link>https://shop.b8shield.com/produkt/${doc.id}</g:link>
+      <g:image_link>${product.b2cImageUrl || product.imageUrl}</g:image_link>
+      <g:condition>new</g:condition>
+      <g:availability>${product.stock > 0 ? 'in stock' : 'out of stock'}</g:availability>
+      <g:price>${product.b2cPrice || product.basePrice} SEK</g:price>
+      <g:brand>B8Shield</g:brand>
+      <g:gtin>${product.eanCode || ''}</g:gtin>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:google_product_category>Sporting Goods > Outdoor Recreation > Fishing > Fishing Tackle > Fishing Lures &amp; Flies</g:google_product_category>
+      <g:custom_label_0>${product.size || 'Standard'}</g:custom_label_0>
+      <g:shipping>
+        <g:country>SE</g:country>
+        <g:service>Standard</g:service>
+        <g:price>49 SEK</g:price>
+      </g:shipping>
+    </item>`;
+    }).join('')}
+  </channel>
+</rss>`;
+
+    res.set('Content-Type', 'application/xml');
+    res.send(xmlContent);
+  } catch (error) {
+    console.error('Error generating product feed:', error);
+    res.status(500).send('Error generating product feed');
+  }
 }); 
