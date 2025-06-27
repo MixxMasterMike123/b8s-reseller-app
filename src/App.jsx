@@ -91,12 +91,6 @@ function App() {
                 </PrivateRoute>
               } />
               
-              <Route path="/dashboard" element={
-                <AdminRoute>
-                  <AdminDashboard />
-                </AdminRoute>
-              } />
-              
               <Route path="/products" element={
                 <PrivateRoute>
                   <ProductViewPage />
@@ -139,7 +133,7 @@ function App() {
                 </PrivateRoute>
               } />
               
-              {/* Admin Routes */}
+              {/* Admin Routes - Grouped under /admin prefix */}
               <Route path="/admin" element={
                 <AdminRoute>
                   <AdminDashboard />
@@ -181,6 +175,9 @@ function App() {
                   <AdminMarketingMaterials />
                 </AdminRoute>
               } />
+              
+              {/* Catch-all redirect */}
+              <Route path="*" element={<Navigate to="/" replace />} />
             </>
           )}
         </Routes>
