@@ -30,7 +30,8 @@ function MarketingMaterialsPage() {
     handleMouseEnter,
     handleMouseLeave,
     handleTouchStart,
-    handleClick
+    handleClick,
+    openPreview
   } = useImagePreview(300);
 
   const categories = [
@@ -349,42 +350,15 @@ function MarketingMaterialsPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {materials.map((material) => (
                       <div key={`${material.source}-${material.id}`} className="group relative bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-xl p-5 hover:shadow-lg transition-all duration-300 hover:scale-105">
-                        {/* Source Badge */}
-                        <div className="absolute top-3 right-3">
-                          {material.source === 'customer' ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              Ditt material
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              Allmänt
-                            </span>
-                          )}
+                        {/* Category Pill */}
+                        <div className="absolute top-3 right-3 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                          {material.category || 'Övrigt'}
                         </div>
 
-                        {/* File Preview/Icon with Hover Preview */}
+                        {/* Material Preview */}
                         <div 
-                          className="relative flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl overflow-hidden cursor-pointer"
-                          onMouseEnter={() => {
-                            if (material.fileType === 'image' && material.downloadURL) {
-                              handleMouseEnter(material.downloadURL, material.name);
-                            }
-                          }}
-                          onMouseLeave={() => {
-                            if (material.fileType === 'image') {
-                              handleMouseLeave();
-                            }
-                          }}
-                          onTouchStart={() => {
-                            if (material.fileType === 'image' && material.downloadURL) {
-                              handleTouchStart(material.downloadURL, material.name);
-                            }
-                          }}
-                          onClick={() => {
-                            if (material.fileType === 'image' && material.downloadURL) {
-                              handleClick(material.downloadURL, material.name);
-                            }
-                          }}
+                          className="relative w-[62px] h-[62px] bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg overflow-hidden group cursor-pointer mx-auto"
+                          onClick={() => material.fileType === 'image' && material.downloadURL && openPreview(material.downloadURL, material.name)}
                         >
                           {material.fileType === 'image' && material.downloadURL ? (
                             <>
@@ -405,8 +379,8 @@ function MarketingMaterialsPage() {
                             </>
                           ) : null}
                           <span 
-                            className="text-3xl"
-                            style={{ display: material.fileType === 'image' && material.downloadURL ? 'none' : 'block' }}
+                            className="text-2xl flex items-center justify-center h-full"
+                            style={{ display: material.fileType === 'image' && material.downloadURL ? 'none' : 'flex' }}
                           >
                             {getFileIcon(material.fileType)}
                           </span>
