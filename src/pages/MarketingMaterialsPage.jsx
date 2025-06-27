@@ -351,7 +351,7 @@ function MarketingMaterialsPage() {
                     {materials.map((material) => (
                       <div key={`${material.source}-${material.id}`} className="group relative bg-white border border-gray-200 rounded-xl p-6 hover:shadow-xl hover:border-blue-200 transition-all duration-300 flex flex-col h-full">
                         {/* Category Pill */}
-                        <div className="absolute top-4 right-4 px-3 py-1.5 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                        <div className="absolute top-4 right-4 z-10 px-3 py-1.5 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
                           {material.category || 'Övrigt'}
                         </div>
 
