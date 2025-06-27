@@ -333,12 +333,20 @@ exports.logAffiliateClick = functions.https.onCall(async (data, context) => {
 
     const affiliateDoc = querySnapshot.docs[0];
     const affiliateId = affiliateDoc.id;
-    const affiliateData = affiliateDoc.data();
 
     // Use a transaction to safely increment the click count
     await db.runTransaction(async (transaction) => {
       const affiliateToUpdateRef = db.collection('affiliates').doc(affiliateId);
-      const newClicks = (affiliateData.stats.clicks || 0) + 1;
+      const affiliateSnapshot = await transaction.get(affiliateToUpdateRef);
+
+      if (!affiliateSnapshot.exists) {
+        throw "Affiliate document not found in transaction!";
+      }
+
+      const affiliateData = affiliateSnapshot.data();
+      const stats = affiliateData.stats || {};
+      const newClicks = (stats.clicks || 0) + 1;
+      
       transaction.update(affiliateToUpdateRef, { 'stats.clicks': newClicks });
     });
 
