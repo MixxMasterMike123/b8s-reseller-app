@@ -222,3 +222,35 @@ We'll need to run a one-time migration to:
 4. Initialize new image fields
 
 Would you like me to implement this enhanced architecture? It gives you maximum flexibility while maintaining all existing functionality! 
+
+
+
+Missing Mandatory E-commerce Pages:
+1. Legal & Compliance Pages (CRITICAL)
+Terms of Service (/terms) - Required by EU law
+Privacy Policy (/privacy) - GDPR compliance mandatory
+Return Policy (/returns) - EU consumer rights
+Shipping Information (/shipping) - Delivery terms
+Cookie Policy (/cookies) - EU cookie law
+
+2. Customer Support Pages
+Contact Us (/contact) - Customer service
+FAQ (/faq) - Common questions
+Order Tracking (/track-order) - Order status lookup
+
+3. Business Information Pages
+About Us (/about) - Company information
+Delivery Information (/delivery) - Shipping details
+
+4. Functional Pages (Partially Done)
+⚠️ Checkout - Currently just placeholder
+⚠️ Customer Account - Basic structure only
+⚠️ Order Confirmation - Missing completely
+⚠️ Order History - For logged-in customers
+
+🎯 Immediate Priority (Legal Compliance):
+These pages are legally required for EU e-commerce:
+Privacy Policy (GDPR compliance)
+Terms of Service (Consumer rights)
+Return Policy (14-day return right)
+Cookie Policy (EU cookie directive)

@@ -26,12 +26,20 @@ src/
 ├── components/
 │   ├── auth/ (PrivateRoute, AdminRoute)
 │   ├── layout/ (AppLayout)
-│   └── shop/ (Shared B2C components)
-│       └── ShopNavigation.jsx (Shared header with cart)
+│   ├── shop/ (Shared B2C components)
+│   │   └── ShopNavigation.jsx (Shared header with cart)
+│   ├── TrainingModal.jsx (Sales training system)
+│   ├── ProductDetailPopup.jsx (Product detail overlay)
+│   ├── ImagePreviewModal.jsx (Image preview system)
+│   ├── OrderStatusMenu.jsx (Order status dropdown)
+│   └── ProductMenu.jsx (Product selection dropdown)
 ├── contexts/
-│   ├── AuthContext.jsx
+│   ├── AuthContext.jsx (Complete auth + user management)
 │   ├── CartContext.jsx (Shopping cart state management)
-│   └── OrderContext.jsx
+│   ├── OrderContext.jsx (Order management + demo mode)
+│   └── SimpleAuthContext.jsx (Simplified auth for B2C)
+├── hooks/
+│   └── useImagePreview.js (Image preview functionality)
 ├── pages/
 │   ├── admin/ (AdminDashboard, AdminUsers, AdminOrders, AdminProducts)
 │   ├── shop/ (B2C storefront components)
@@ -43,11 +51,16 @@ src/
 │   │   ├── CustomerRegister.jsx
 │   │   └── CustomerAccount.jsx
 │   ├── ProductViewPage (B2B product catalog)
-│   └── [user pages]
+│   ├── MarketingMaterialsPage.jsx (Customer materials interface)
+│   ├── ProfilePage.jsx (Enhanced user profiles)
+│   ├── OrderHistoryPage.jsx (Order tracking)
+│   ├── DashboardPage.jsx (Main B2B dashboard)
+│   └── [other user pages]
 ├── firebase/config.js
 ├── utils/
-│   ├── marketingMaterials.js
-│   └── productImages.js (B2C image generation)
+│   ├── marketingMaterials.js (Materials management)
+│   ├── productImages.js (B2C image generation)
+│   └── productFeed.js (Product data utilities)
 └── App.jsx (Subdomain routing logic)
 ```
 
@@ -58,6 +71,25 @@ src/
 - **Field Names**: Swedish database fields (e.g., `marginal`, `företagsnamn`)
 
 ## Key Features Implemented
+
+### Sales Training System (Latest)
+- **TrainingModal Component**: Interactive sales training for resellers
+- **6-Step Training Process**: Welcome, problem explanation, key actions, sales pitch, objections handling, completion
+- **Product Detail Integration**: Clickable product variants with detailed popups
+- **Certification System**: Training completion tracking
+- **Modern UI Design**: Brand colors (#459CA8 header, #EE7E31 buttons), progress tracking
+- **Swedish Content**: Complete Swedish sales training materials
+- **Responsive Design**: Mobile-optimized training interface
+
+### Enhanced Context Architecture (Latest)
+- **AuthContext**: Complete authentication with demo mode, user management, margin control
+- **CartContext**: Full shopping cart with localStorage persistence, shipping costs, VAT calculations
+- **OrderContext**: Order management with demo mode, status tracking, admin controls
+- **SimpleAuthContext**: Lightweight auth for B2C customers
+
+### Custom Hooks System (Latest)
+- **useImagePreview**: Image preview functionality with modal support
+- **Reusable Logic**: Consistent patterns across components
 
 ### B2C E-commerce Storefront (Latest)
 - **Stunning 2025 Design**: Modern gradients, glassmorphism, micro-interactions
@@ -94,9 +126,10 @@ src/
 
 ### Order Management
 - Order creation and tracking
-- Status management
-- Order history
+- Status management with history
+- Order history with Swedish date formatting
 - Admin order oversight
+- Demo mode support for testing
 
 ## Database Schema (Firestore)
 
@@ -167,7 +200,7 @@ src/
 }
 ```
 
-### Orders Collection
+### Orders Collection (Enhanced)
 ```javascript
 {
   id: string,
@@ -175,8 +208,18 @@ src/
   status: string,
   items: array,
   totalAmount: number,
+  statusHistory: [
+    {
+      from: string,
+      to: string,
+      changedBy: string,
+      changedAt: string,
+      displayName: string
+    }
+  ],
   createdAt: string,
-  updatedAt: string
+  updatedAt: string,
+  cancelledAt: string // Optional
 }
 ```
 
@@ -194,6 +237,7 @@ src/
 - Mobile-first responsive design
 - Hover states and transitions
 - **2025 Design Elements**: Gradients, glassmorphism, micro-interactions
+- **Brand Colors**: #459CA8 (primary), #EE7E31 (accent)
 
 ### Icon Usage (CRITICAL RULE)
 - **NEVER EVER use emojis in code** (🚫 NO: '🖼️', '🎥', '📄', etc.)
@@ -249,7 +293,7 @@ src/
 
 ## Key Implementation Notes
 - **Database**: ALWAYS use named database `b8s-reseller-db` (NEVER use default database)
-- No demo mode in production (isDemoMode = false)
+- **Demo Mode**: Comprehensive demo mode in AuthContext and OrderContext for testing
 - Default customer margin: 35%
 - All new customers require admin activation
 - Swedish date formatting throughout
@@ -257,6 +301,28 @@ src/
 - Consistent error handling and user feedback
 
 ## Recent Major Updates
+
+### Sales Training System (Latest - December 2024)
+- **Interactive Training Modal**: 6-step sales training for B8Shield resellers
+- **Product Integration**: Clickable product variants with detailed popups
+- **Swedish Content**: Complete sales training in Swedish
+- **Modern Design**: Brand colors, progress tracking, responsive layout
+- **Certification Flow**: Training completion tracking system
+- **Real Product Data**: Integration with actual product variants (TRANSPARENT, RÖD, FLUORESCERANDE, GLITTER)
+
+### Enhanced Context Architecture (Latest)
+- **AuthContext Enhancements**: Demo mode, user management, margin control, comprehensive user operations
+- **CartContext Implementation**: Shopping cart with localStorage, shipping costs (Nordic 19 SEK, International 59 SEK), VAT calculations
+- **OrderContext Expansion**: Order management, status tracking, admin controls, demo mode support
+- **SimpleAuthContext**: Lightweight authentication for B2C customers
+
+### Component System Expansion (Latest)
+- **TrainingModal**: Interactive sales training system
+- **ProductDetailPopup**: Product detail overlay with variants
+- **ImagePreviewModal**: Image preview functionality
+- **OrderStatusMenu**: Order status management dropdown
+- **ProductMenu**: Product selection dropdown
+- **useImagePreview Hook**: Reusable image preview logic
 
 ### B2C E-commerce Storefront (Latest - June 2025)
 - **Shared Navigation**: New `ShopNavigation` component for consistent header across all B2C pages
@@ -416,7 +482,11 @@ function isAdmin() {
 
 ## Current Development Status
 
-### ✅ Completed (June 2025)
+### ✅ Completed (December 2024)
+- **Sales Training System**: Complete interactive training modal with Swedish content
+- **Enhanced Context Architecture**: AuthContext, CartContext, OrderContext with demo mode
+- **Custom Hooks**: useImagePreview and other reusable logic
+- **Component System**: TrainingModal, ProductDetailPopup, ImagePreviewModal, OrderStatusMenu
 - **B2C Storefront**: Stunning 2025 design with subdomain routing
 - **Shopping Cart System**: Full cart functionality with persistent storage, shipping costs, and VAT
 - **Subdomain Detection**: Automatic B2B/B2C routing via shop.b8shield.com
@@ -458,3 +528,10 @@ function isAdmin() {
 - **Unified Database**: One product database with market-specific fields
 - **Flexible Availability**: Easy to enable/disable products per market
 - **Cost Efficiency**: Significant savings vs separate Shopify/WooCommerce systems
+
+## Demo Mode System (Latest)
+- **Complete Demo Mode**: Available in AuthContext and OrderContext for testing
+- **Mock Data**: Demo users, orders, and products for development
+- **Feature Parity**: All features work in demo mode
+- **Easy Toggle**: isDemoMode flag in firebase/config.js
+- **Testing**: Allows full system testing without real Firebase data

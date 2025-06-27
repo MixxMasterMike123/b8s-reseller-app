@@ -36,6 +36,13 @@ import CustomerAccount from './pages/shop/CustomerAccount';
 import CustomerLogin from './pages/shop/CustomerLogin';
 import CustomerRegister from './pages/shop/CustomerRegister';
 
+// Legal & Compliance Pages
+import PrivacyPolicy from './pages/shop/PrivacyPolicy';
+import TermsOfService from './pages/shop/TermsOfService';
+import ReturnPolicy from './pages/shop/ReturnPolicy';
+import CookiePolicy from './pages/shop/CookiePolicy';
+import ShippingInfo from './pages/shop/ShippingInfo';
+
 import { Toaster } from 'react-hot-toast';
 
 function App() {
@@ -77,6 +84,14 @@ function App() {
               <Route path="/login" element={<CustomerLogin />} />
               <Route path="/register" element={<CustomerRegister />} />
               <Route path="/account" element={<CustomerAccount />} />
+              
+              {/* Legal & Compliance Pages */}
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/returns" element={<ReturnPolicy />} />
+              <Route path="/cookies" element={<CookiePolicy />} />
+              <Route path="/shipping" element={<ShippingInfo />} />
+              
               <Route path="*" element={<Navigate to="/" replace />} />
             </>
           ) : (
