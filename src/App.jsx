@@ -51,145 +51,153 @@ function App() {
 
   console.log('App Mode:', appMode, 'Hostname:', hostname, 'Subdomain:', subdomain);
 
+  const content = (
+    <Router>
+      <div className="min-h-screen bg-gray-50">
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+          }}
+        />
+        
+        <Routes>
+          {appMode === 'shop' ? (
+            // B2C Shop Routes
+            <>
+              <Route path="/" element={<PublicStorefront />} />
+              <Route path="/product/:id" element={<PublicProductPage />} />
+              <Route path="/cart" element={<ShoppingCart />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/login" element={<CustomerLogin />} />
+              <Route path="/register" element={<CustomerRegister />} />
+              <Route path="/account" element={<CustomerAccount />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </>
+          ) : (
+            // B2B Reseller Portal Routes (existing)
+            <>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              
+              <Route path="/" element={
+                <PrivateRoute>
+                  <DashboardPage />
+                </PrivateRoute>
+              } />
+              
+              <Route path="/dashboard" element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              } />
+              
+              <Route path="/products" element={
+                <PrivateRoute>
+                  <ProductViewPage />
+                </PrivateRoute>
+              } />
+              
+              <Route path="/marketing" element={
+                <PrivateRoute>
+                  <MarketingMaterialsPage />
+                </PrivateRoute>
+              } />
+              
+              <Route path="/order" element={
+                <PrivateRoute>
+                  <OrderPage />
+                </PrivateRoute>
+              } />
+              
+              <Route path="/orders" element={
+                <PrivateRoute>
+                  <OrderHistoryPage />
+                </PrivateRoute>
+              } />
+              
+              <Route path="/orders/:orderId" element={
+                <PrivateRoute>
+                  <OrderDetailPage />
+                </PrivateRoute>
+              } />
+              
+              <Route path="/profile" element={
+                <PrivateRoute>
+                  <ProfilePage />
+                </PrivateRoute>
+              } />
+              
+              <Route path="/contact" element={
+                <PrivateRoute>
+                  <ContactPage />
+                </PrivateRoute>
+              } />
+              
+              {/* Admin Routes */}
+              <Route path="/admin" element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              } />
+              
+              <Route path="/admin/users" element={
+                <AdminRoute>
+                  <AdminUsers />
+                </AdminRoute>
+              } />
+              
+              <Route path="/admin/users/:userId/edit" element={
+                <AdminRoute>
+                  <AdminUserEdit />
+                </AdminRoute>
+              } />
+              
+              <Route path="/admin/orders" element={
+                <AdminRoute>
+                  <AdminOrders />
+                </AdminRoute>
+              } />
+              
+              <Route path="/admin/orders/:orderId" element={
+                <AdminRoute>
+                  <AdminOrderDetail />
+                </AdminRoute>
+              } />
+              
+              <Route path="/admin/products" element={
+                <AdminRoute>
+                  <AdminProducts />
+                </AdminRoute>
+              } />
+              
+              <Route path="/admin/marketing" element={
+                <AdminRoute>
+                  <AdminMarketingMaterials />
+                </AdminRoute>
+              } />
+            </>
+          )}
+        </Routes>
+      </div>
+    </Router>
+  );
+
   return (
     <AuthProvider>
       <OrderProvider>
-        <Router>
-          <div className="min-h-screen bg-gray-50">
-            <Toaster 
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: '#363636',
-                  color: '#fff',
-                },
-              }}
-            />
-            
-            <Routes>
-              {appMode === 'shop' ? (
-                // B2C Shop Routes
-                <CartProvider>
-                  <>
-                    <Route path="/" element={<PublicStorefront />} />
-                    <Route path="/product/:id" element={<PublicProductPage />} />
-                    <Route path="/cart" element={<ShoppingCart />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/login" element={<CustomerLogin />} />
-                    <Route path="/register" element={<CustomerRegister />} />
-                    <Route path="/account" element={<CustomerAccount />} />
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </>
-                </CartProvider>
-              ) : (
-                // B2B Reseller Portal Routes (existing)
-                <>
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/register" element={<RegisterPage />} />
-                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                  
-                  <Route path="/" element={
-                    <PrivateRoute>
-                      <DashboardPage />
-                    </PrivateRoute>
-                  } />
-                  
-                  <Route path="/dashboard" element={
-                    <AdminRoute>
-                      <AdminDashboard />
-                    </AdminRoute>
-                  } />
-                  
-                  <Route path="/products" element={
-                    <PrivateRoute>
-                      <ProductViewPage />
-                    </PrivateRoute>
-                  } />
-                  
-                  <Route path="/marketing" element={
-                    <PrivateRoute>
-                      <MarketingMaterialsPage />
-                    </PrivateRoute>
-                  } />
-                  
-                  <Route path="/order" element={
-                    <PrivateRoute>
-                      <OrderPage />
-                    </PrivateRoute>
-                  } />
-                  
-                  <Route path="/orders" element={
-                    <PrivateRoute>
-                      <OrderHistoryPage />
-                    </PrivateRoute>
-                  } />
-                  
-                  <Route path="/orders/:orderId" element={
-                    <PrivateRoute>
-                      <OrderDetailPage />
-                    </PrivateRoute>
-                  } />
-                  
-                  <Route path="/profile" element={
-                    <PrivateRoute>
-                      <ProfilePage />
-                    </PrivateRoute>
-                  } />
-                  
-                  <Route path="/contact" element={
-                    <PrivateRoute>
-                      <ContactPage />
-                    </PrivateRoute>
-                  } />
-                  
-                  {/* Admin Routes */}
-                  <Route path="/admin" element={
-                    <AdminRoute>
-                      <AdminDashboard />
-                    </AdminRoute>
-                  } />
-                  
-                  <Route path="/admin/users" element={
-                    <AdminRoute>
-                      <AdminUsers />
-                    </AdminRoute>
-                  } />
-                  
-                  <Route path="/admin/users/:userId/edit" element={
-                    <AdminRoute>
-                      <AdminUserEdit />
-                    </AdminRoute>
-                  } />
-                  
-                  <Route path="/admin/orders" element={
-                    <AdminRoute>
-                      <AdminOrders />
-                    </AdminRoute>
-                  } />
-                  
-                  <Route path="/admin/orders/:orderId" element={
-                    <AdminRoute>
-                      <AdminOrderDetail />
-                    </AdminRoute>
-                  } />
-                  
-                  <Route path="/admin/products" element={
-                    <AdminRoute>
-                      <AdminProducts />
-                    </AdminRoute>
-                  } />
-                  
-                  <Route path="/admin/marketing" element={
-                    <AdminRoute>
-                      <AdminMarketingMaterials />
-                    </AdminRoute>
-                  } />
-                </>
-              )}
-            </Routes>
-          </div>
-        </Router>
+        {appMode === 'shop' ? (
+          <CartProvider>
+            {content}
+          </CartProvider>
+        ) : (
+          content
+        )}
       </OrderProvider>
     </AuthProvider>
   );
