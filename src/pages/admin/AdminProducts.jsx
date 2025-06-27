@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import ProductMenu from '../../components/ProductMenu';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import AppLayout from '../../components/layout/AppLayout';
 
 // Maximum size for image files (5MB)
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; 
@@ -565,711 +566,715 @@ function AdminProducts() {
 
   if (!isAdmin) {
     return (
-      <div className="p-6">
-        <p>Du har inte behörighet att komma åt denna sida.</p>
-        <Link to="/" className="text-blue-600 hover:underline">Tillbaka till Dashboard</Link>
-      </div>
+      <AppLayout>
+        <div className="p-6">
+          <p>Du har inte behörighet att komma åt denna sida.</p>
+          <Link to="/" className="text-blue-600 hover:underline">Tillbaka till Dashboard</Link>
+        </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Produkthantering</h1>
-            <p className="mt-1 text-sm text-gray-600">Hantera produkter i systemet</p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Link 
-              to="/admin" 
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Tillbaka till Admin
-            </Link>
-            <button 
-              onClick={() => {
-                setSelectedProduct(null);
-                setFormData({
-                  name: 'B8Shield Röd',
-                  description: 'B8Shield Röd skydd för smartphones',
-                  basePrice: 71.2,
-                  manufacturingCost: 10,
-                  isActive: true,
-                  size: '',
-                  imageUrl: '',
-                });
-                setB2bImageFile(null);
-                setB2bImagePreview(null);
-                setIsAddingProduct(true);
-              }}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            >
-              Lägg till Röd Produkt
-            </button>
-            <button 
-              onClick={handleAddNewClick}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Lägg till Ny Produkt
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4">
-          <div className="flex">
-            <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
+    <AppLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Produkthantering</h1>
+              <p className="mt-1 text-sm text-gray-600">Hantera produkter i systemet</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link 
+                to="/admin" 
+                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Tillbaka till Admin
+              </Link>
+              <button 
+                onClick={() => {
+                  setSelectedProduct(null);
+                  setFormData({
+                    name: 'B8Shield Röd',
+                    description: 'B8Shield Röd skydd för smartphones',
+                    basePrice: 71.2,
+                    manufacturingCost: 10,
+                    isActive: true,
+                    size: '',
+                    imageUrl: '',
+                  });
+                  setB2bImageFile(null);
+                  setB2bImagePreview(null);
+                  setIsAddingProduct(true);
+                }}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                Lägg till Röd Produkt
+              </button>
+              <button 
+                onClick={handleAddNewClick}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Lägg till Ny Produkt
+              </button>
             </div>
           </div>
         </div>
-      )}
 
-      {/* Loading State */}
-      {loading && !isAddingProduct ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      ) : isAddingProduct ? (
-        /* Product Form with Tabs */
-        <div className="bg-white shadow rounded-lg mb-8">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">
-              {selectedProduct ? 'Redigera Produkt' : 'Lägg till Ny Produkt'}
-            </h2>
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4">
+            <div className="flex">
+              <div className="ml-3">
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && !isAddingProduct ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : isAddingProduct ? (
+          /* Product Form with Tabs */
+          <div className="bg-white shadow rounded-lg mb-8">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-medium text-gray-900 mb-4">
+                {selectedProduct ? 'Redigera Produkt' : 'Lägg till Ny Produkt'}
+              </h2>
+              
+              {/* Tab Navigation */}
+              <div className="flex space-x-8">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('general')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'general'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Allmänt
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('b2b')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'b2b'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  B2B (Återförsäljare)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('b2c')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'b2c'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  B2C (Konsument)
+                </button>
+              </div>
+            </div>
             
-            {/* Tab Navigation */}
-            <div className="flex space-x-8">
-              <button
-                type="button"
-                onClick={() => setActiveTab('general')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'general'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Allmänt
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('b2b')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'b2b'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                B2B (Återförsäljare)
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('b2c')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'b2c'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                B2C (Konsument)
-              </button>
-            </div>
-          </div>
-          
-          <form onSubmit={handleSubmit} className="p-6">
-            {/* Tab Content */}
-            {activeTab === 'general' && (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                {/* Product Name */}
-                <div className="sm:col-span-2">
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Produktnamn *
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  />
-                </div>
-                
-                {/* Size */}
-                <div>
-                  <label htmlFor="size" className="block text-sm font-medium text-gray-700 mb-2">
-                    Storlek
-                  </label>
-                  <input
-                    type="text"
-                    id="size"
-                    name="size"
-                    value={formData.size}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="t.ex. Liten, Medium, Stor eller specifika mått"
-                  />
-                </div>
-                
-                {/* Base Price */}
-                <div>
-                  <label htmlFor="basePrice" className="block text-sm font-medium text-gray-700 mb-2">
-                    Grundpris (SEK, exkl. moms) *
-                  </label>
-                  <input
-                    type="number"
-                    id="basePrice"
-                    name="basePrice"
-                    value={formData.basePrice}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    min="0"
-                    step="0.01"
-                    required
-                  />
-                </div>
-                
-                {/* Manufacturing Cost */}
-                <div>
-                  <label htmlFor="manufacturingCost" className="block text-sm font-medium text-gray-700 mb-2">
-                    Tillverkningskostnad (SEK)
-                  </label>
-                  <input
-                    type="number"
-                    id="manufacturingCost"
-                    name="manufacturingCost"
-                    value={formData.manufacturingCost}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-                
-                {/* Active Status */}
-                <div>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="isActive"
-                      name="isActive"
-                      checked={formData.isActive}
-                      onChange={handleInputChange}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
-                      Aktiv
+            <form onSubmit={handleSubmit} className="p-6">
+              {/* Tab Content */}
+              {activeTab === 'general' && (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  {/* Product Name */}
+                  <div className="sm:col-span-2">
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                      Produktnamn *
                     </label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
                   </div>
-                </div>
-                
-                {/* Market Availability */}
-                <div className="sm:col-span-2">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Marknadstillgänglighet</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          id="b2bAvailable"
-                          checked={formData.availability?.b2b || false}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            availability: {
-                              ...formData.availability,
-                              b2b: e.target.checked
-                            }
-                          })}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <label htmlFor="b2bAvailable" className="ml-2 block text-sm text-gray-700">
-                          Tillgänglig för B2B (Återförsäljare)
-                        </label>
-                      </div>
-                      
-                      {formData.availability?.b2b && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Minsta orderkvantitet (B2B)
-                          </label>
+                  
+                  {/* Size */}
+                  <div>
+                    <label htmlFor="size" className="block text-sm font-medium text-gray-700 mb-2">
+                      Storlek
+                    </label>
+                    <input
+                      type="text"
+                      id="size"
+                      name="size"
+                      value={formData.size}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="t.ex. Liten, Medium, Stor eller specifika mått"
+                    />
+                  </div>
+                  
+                  {/* Base Price */}
+                  <div>
+                    <label htmlFor="basePrice" className="block text-sm font-medium text-gray-700 mb-2">
+                      Grundpris (SEK, exkl. moms) *
+                    </label>
+                    <input
+                      type="number"
+                      id="basePrice"
+                      name="basePrice"
+                      value={formData.basePrice}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      min="0"
+                      step="0.01"
+                      required
+                    />
+                  </div>
+                  
+                  {/* Manufacturing Cost */}
+                  <div>
+                    <label htmlFor="manufacturingCost" className="block text-sm font-medium text-gray-700 mb-2">
+                      Tillverkningskostnad (SEK)
+                    </label>
+                    <input
+                      type="number"
+                      id="manufacturingCost"
+                      name="manufacturingCost"
+                      value={formData.manufacturingCost}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                  
+                  {/* Active Status */}
+                  <div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="isActive"
+                        name="isActive"
+                        checked={formData.isActive}
+                        onChange={handleInputChange}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
+                        Aktiv
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {/* Market Availability */}
+                  <div className="sm:col-span-2">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Marknadstillgänglighet</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div className="flex items-center">
                           <input
-                            type="number"
-                            value={formData.availability?.b2bMinQuantity || 1}
+                            type="checkbox"
+                            id="b2bAvailable"
+                            checked={formData.availability?.b2b || false}
                             onChange={(e) => setFormData({
                               ...formData,
                               availability: {
                                 ...formData.availability,
-                                b2bMinQuantity: parseInt(e.target.value) || 1
+                                b2b: e.target.checked
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                            min="1"
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                           />
+                          <label htmlFor="b2bAvailable" className="ml-2 block text-sm text-gray-700">
+                            Tillgänglig för B2B (Återförsäljare)
+                          </label>
                         </div>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          id="b2cAvailable"
-                          checked={formData.availability?.b2c || false}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            availability: {
-                              ...formData.availability,
-                              b2c: e.target.checked
-                            }
-                          })}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <label htmlFor="b2cAvailable" className="ml-2 block text-sm text-gray-700">
-                          Tillgänglig för B2C (Konsumenter)
-                        </label>
+                        
+                        {formData.availability?.b2b && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Minsta orderkvantitet (B2B)
+                            </label>
+                            <input
+                              type="number"
+                              value={formData.availability?.b2bMinQuantity || 1}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                availability: {
+                                  ...formData.availability,
+                                  b2bMinQuantity: parseInt(e.target.value) || 1
+                                }
+                              })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                              min="1"
+                            />
+                          </div>
+                        )}
                       </div>
                       
-                      {formData.availability?.b2c && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Max orderkvantitet (B2C)
-                          </label>
+                      <div className="space-y-4">
+                        <div className="flex items-center">
                           <input
-                            type="number"
-                            value={formData.availability?.b2cMaxQuantity || 10}
+                            type="checkbox"
+                            id="b2cAvailable"
+                            checked={formData.availability?.b2c || false}
                             onChange={(e) => setFormData({
                               ...formData,
                               availability: {
                                 ...formData.availability,
-                                b2cMaxQuantity: parseInt(e.target.value) || 10
+                                b2c: e.target.checked
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                            min="1"
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                           />
+                          <label htmlFor="b2cAvailable" className="ml-2 block text-sm text-gray-700">
+                            Tillgänglig för B2C (Konsumenter)
+                          </label>
                         </div>
-                      )}
+                        
+                        {formData.availability?.b2c && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Max orderkvantitet (B2C)
+                            </label>
+                            <input
+                              type="number"
+                              value={formData.availability?.b2cMaxQuantity || 10}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                availability: {
+                                  ...formData.availability,
+                                  b2cMaxQuantity: parseInt(e.target.value) || 10
+                                }
+                              })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                              min="1"
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
-            
-            {activeTab === 'b2b' && (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                {/* B2B Description */}
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    B2B Beskrivning (Teknisk information för återförsäljare)
-                  </label>
-                  <textarea
-                    value={formData.descriptions?.b2b || ''}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      descriptions: {
-                        ...formData.descriptions,
-                        b2b: e.target.value
-                      }
-                    })}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Tekniska specifikationer, installationsanvisningar, etc."
-                  />
-                </div>
-                
-                {/* B2B Product Image */}
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    B2B Produktbild (Teknisk bild, Max 5MB)
-                  </label>
-                  <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleB2bImageChange}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                    />
-                    {b2bImagePreview && (
-                      <div className="flex-shrink-0">
-                        <img 
-                          src={b2bImagePreview} 
-                          alt="B2B Produktförhandsvisning" 
-                          className="w-32 h-32 object-cover border border-gray-300 rounded-md"
-                        />
-                      </div>
-                    )}
-                  </div>
-                  <p className="mt-2 text-xs text-gray-500">
-                    Tekniska bilder för återförsäljare (produktspecifikationer, förpackning, etc.)
-                  </p>
-                </div>
-                
-                {/* EAN Code */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    EAN-kod
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.eanCode || ''}
-                    onChange={(e) => setFormData({ ...formData, eanCode: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="t.ex. 1234567890123"
-                  />
-                </div>
-                
-                {/* EAN Code Image PNG/JPG */}
-                <div className="sm:col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    EAN-kod bild (PNG/JPG)
-                  </label>
-                  <div className="space-y-3">
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/jpg"
-                      onChange={handleEanPngChange}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                    />
-                    {eanPngPreview && (
-                      <div className="flex-shrink-0">
-                        <img 
-                          src={eanPngPreview} 
-                          alt="EAN-kod förhandsvisning" 
-                          className="w-32 h-20 object-contain border border-gray-300 rounded-md bg-white"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* EAN Code Image SVG */}
-                <div className="sm:col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    EAN-kod bild (SVG)
-                  </label>
-                  <div className="space-y-3">
-                    <input
-                      type="file"
-                      accept="image/svg+xml"
-                      onChange={handleEanSvgChange}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                    />
-                    {eanSvgPreview && (
-                      <div className="flex-shrink-0">
-                        <img 
-                          src={eanSvgPreview} 
-                          alt="EAN-kod SVG förhandsvisning" 
-                          className="w-32 h-20 object-contain border border-gray-300 rounded-md bg-white"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {activeTab === 'b2c' && (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                {/* B2C Price */}
-                <div className="sm:col-span-2">
-                  <label htmlFor="b2cPrice" className="block text-sm font-medium text-gray-700 mb-2">
-                    B2C Pris (SEK, inkl. moms) *
-                  </label>
-                  <input
-                    type="number"
-                    id="b2cPrice"
-                    name="b2cPrice"
-                    value={formData.b2cPrice}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                    min="0"
-                    step="0.01"
-                    placeholder="Konsumentpris inklusive moms"
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    Detta pris visas för konsumenter på shop.b8shield.com och inkluderar 25% moms
-                  </p>
-                </div>
-                
-                {/* B2C Description */}
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    B2C Beskrivning (Konsumentvänlig beskrivning)
-                  </label>
-                  <textarea
-                    value={formData.descriptions?.b2c || ''}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      descriptions: {
-                        ...formData.descriptions,
-                        b2c: e.target.value
-                      }
-                    })}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                    placeholder="Marknadsföringstext, fördelar för konsumenten, användningsområden..."
-                  />
-                </div>
-
-                {/* B2C More Info (WYSIWYG) */}
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Mer Information (Detaljerad produktinformation)
-                  </label>
-                  <div className="border border-gray-300 rounded-md overflow-hidden bg-white">
-                    <ReactQuill
-                      value={formData.descriptions?.b2cMoreInfo || ''}
-                      onChange={(content) => setFormData({
+              )}
+              
+              {activeTab === 'b2b' && (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  {/* B2B Description */}
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      B2B Beskrivning (Teknisk information för återförsäljare)
+                    </label>
+                    <textarea
+                      value={formData.descriptions?.b2b || ''}
+                      onChange={(e) => setFormData({
                         ...formData,
                         descriptions: {
                           ...formData.descriptions,
-                          b2cMoreInfo: content
+                          b2b: e.target.value
                         }
                       })}
-                      modules={{
-                        toolbar: [
-                          [{ 'header': [1, 2, 3, false] }],
-                          ['bold', 'italic', 'underline', 'strike'],
-                          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                          [{ 'color': [] }, { 'background': [] }],
-                          ['link', 'image'],
-                          ['clean']
-                        ]
-                      }}
-                      theme="snow"
-                      placeholder="Lägg till detaljerad produktinformation här..."
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Tekniska specifikationer, installationsanvisningar, etc."
                     />
                   </div>
-                  <p className="mt-2 text-xs text-gray-500">
-                    Använd editorn för att lägga till detaljerad produktinformation, specifikationer, instruktioner, etc.
-                  </p>
-                </div>
-                
-                {/* B2C Main Image */}
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    B2C Huvudbild (Lifestyle/Marketing bild, Max 5MB)
-                  </label>
-                  <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
+                  
+                  {/* B2B Product Image */}
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      B2B Produktbild (Teknisk bild, Max 5MB)
+                    </label>
+                    <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleB2bImageChange}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                      {b2bImagePreview && (
+                        <div className="flex-shrink-0">
+                          <img 
+                            src={b2bImagePreview} 
+                            alt="B2B Produktförhandsvisning" 
+                            className="w-32 h-32 object-cover border border-gray-300 rounded-md"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Tekniska bilder för återförsäljare (produktspecifikationer, förpackning, etc.)
+                    </p>
+                  </div>
+                  
+                  {/* EAN Code */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      EAN-kod
+                    </label>
                     <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleB2cImageChange}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                      type="text"
+                      value={formData.eanCode || ''}
+                      onChange={(e) => setFormData({ ...formData, eanCode: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="t.ex. 1234567890123"
                     />
-                    {b2cImagePreview && (
-                      <div className="flex-shrink-0">
-                        <img 
-                          src={b2cImagePreview} 
-                          alt="B2C Produktförhandsvisning" 
-                          className="w-32 h-32 object-cover border border-gray-300 rounded-md"
-                        />
-                      </div>
-                    )}
                   </div>
-                  <p className="mt-2 text-xs text-gray-500">
-                    Lifestyle-bilder för konsumenter (användning, miljö, action shots, etc.)
-                  </p>
-                </div>
-                
-                {/* B2C Image Gallery */}
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    B2C Bildgalleri (Flera lifestyle-bilder, Max 5MB per bild)
-                  </label>
-                  <div className="space-y-4">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleB2cGalleryChange}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-                    />
-                    
-                    {/* Gallery Previews */}
-                    {b2cGalleryPreviews.length > 0 && (
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {b2cGalleryPreviews.map((preview, index) => (
-                          <div key={index} className="relative">
-                            <img 
-                              src={preview} 
-                              alt={`B2C Gallery ${index + 1}`} 
-                              className="w-full h-24 object-cover border border-gray-300 rounded-md"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeB2cGalleryImage(index)}
-                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                  
+                  {/* EAN Code Image PNG/JPG */}
+                  <div className="sm:col-span-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      EAN-kod bild (PNG/JPG)
+                    </label>
+                    <div className="space-y-3">
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg"
+                        onChange={handleEanPngChange}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                      {eanPngPreview && (
+                        <div className="flex-shrink-0">
+                          <img 
+                            src={eanPngPreview} 
+                            alt="EAN-kod förhandsvisning" 
+                            className="w-32 h-20 object-contain border border-gray-300 rounded-md bg-white"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <p className="mt-2 text-xs text-gray-500">
-                    Ytterligare bilder som visar produkten i användning, olika vinklar, etc.
-                  </p>
-                </div>
-              </div>
-            )}
 
-            {/* Form Actions */}
-            <div className="mt-8 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setIsAddingProduct(false)}
-                className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                Avbryt
-              </button>
-              <button
-                type="submit"
-                disabled={loading || uploading}
-                className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {uploading ? (
-                  <span className="flex items-center">
-                    <span className="animate-spin h-4 w-4 mr-2 border-b-2 border-white rounded-full"></span>
-                    Laddar upp bilder...
-                  </span>
-                ) : loading ? (
-                  <span className="flex items-center">
-                    <span className="animate-spin h-4 w-4 mr-2 border-b-2 border-white rounded-full"></span>
-                    Sparar...
-                  </span>
-                ) : (
-                  'Spara Produkt'
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      ) : (
-        /* Product List */
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <h2 className="text-lg font-medium text-gray-900">Produktlista</h2>
-              <div className="w-full sm:w-64">
-                <ProductMenu 
-                  products={products} 
-                  selectedProduct={filteredProduct} 
-                  onProductSelect={(product) => setFilteredProduct(product)} 
-                />
+                  {/* EAN Code Image SVG */}
+                  <div className="sm:col-span-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      EAN-kod bild (SVG)
+                    </label>
+                    <div className="space-y-3">
+                      <input
+                        type="file"
+                        accept="image/svg+xml"
+                        onChange={handleEanSvgChange}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                      {eanSvgPreview && (
+                        <div className="flex-shrink-0">
+                          <img 
+                            src={eanSvgPreview} 
+                            alt="EAN-kod SVG förhandsvisning" 
+                            className="w-32 h-20 object-contain border border-gray-300 rounded-md bg-white"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {activeTab === 'b2c' && (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  {/* B2C Price */}
+                  <div className="sm:col-span-2">
+                    <label htmlFor="b2cPrice" className="block text-sm font-medium text-gray-700 mb-2">
+                      B2C Pris (SEK, inkl. moms) *
+                    </label>
+                    <input
+                      type="number"
+                      id="b2cPrice"
+                      name="b2cPrice"
+                      value={formData.b2cPrice}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      min="0"
+                      step="0.01"
+                      placeholder="Konsumentpris inklusive moms"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Detta pris visas för konsumenter på shop.b8shield.com och inkluderar 25% moms
+                    </p>
+                  </div>
+                  
+                  {/* B2C Description */}
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      B2C Beskrivning (Konsumentvänlig beskrivning)
+                    </label>
+                    <textarea
+                      value={formData.descriptions?.b2c || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        descriptions: {
+                          ...formData.descriptions,
+                          b2c: e.target.value
+                        }
+                      })}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      placeholder="Marknadsföringstext, fördelar för konsumenten, användningsområden..."
+                    />
+                  </div>
+
+                  {/* B2C More Info (WYSIWYG) */}
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Mer Information (Detaljerad produktinformation)
+                    </label>
+                    <div className="border border-gray-300 rounded-md overflow-hidden bg-white">
+                      <ReactQuill
+                        value={formData.descriptions?.b2cMoreInfo || ''}
+                        onChange={(content) => setFormData({
+                          ...formData,
+                          descriptions: {
+                            ...formData.descriptions,
+                            b2cMoreInfo: content
+                          }
+                        })}
+                        modules={{
+                          toolbar: [
+                            [{ 'header': [1, 2, 3, false] }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            [{ 'color': [] }, { 'background': [] }],
+                            ['link', 'image'],
+                            ['clean']
+                          ]
+                        }}
+                        theme="snow"
+                        placeholder="Lägg till detaljerad produktinformation här..."
+                      />
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Använd editorn för att lägga till detaljerad produktinformation, specifikationer, instruktioner, etc.
+                    </p>
+                  </div>
+                  
+                  {/* B2C Main Image */}
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      B2C Huvudbild (Lifestyle/Marketing bild, Max 5MB)
+                    </label>
+                    <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleB2cImageChange}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                      />
+                      {b2cImagePreview && (
+                        <div className="flex-shrink-0">
+                          <img 
+                            src={b2cImagePreview} 
+                            alt="B2C Produktförhandsvisning" 
+                            className="w-32 h-32 object-cover border border-gray-300 rounded-md"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Lifestyle-bilder för konsumenter (användning, miljö, action shots, etc.)
+                    </p>
+                  </div>
+                  
+                  {/* B2C Image Gallery */}
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      B2C Bildgalleri (Flera lifestyle-bilder, Max 5MB per bild)
+                    </label>
+                    <div className="space-y-4">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleB2cGalleryChange}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                      />
+                      
+                      {/* Gallery Previews */}
+                      {b2cGalleryPreviews.length > 0 && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          {b2cGalleryPreviews.map((preview, index) => (
+                            <div key={index} className="relative">
+                              <img 
+                                src={preview} 
+                                alt={`B2C Gallery ${index + 1}`} 
+                                className="w-full h-24 object-cover border border-gray-300 rounded-md"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeB2cGalleryImage(index)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Ytterligare bilder som visar produkten i användning, olika vinklar, etc.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Form Actions */}
+              <div className="mt-8 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsAddingProduct(false)}
+                  className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Avbryt
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || uploading}
+                  className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploading ? (
+                    <span className="flex items-center">
+                      <span className="animate-spin h-4 w-4 mr-2 border-b-2 border-white rounded-full"></span>
+                      Laddar upp bilder...
+                    </span>
+                  ) : loading ? (
+                    <span className="flex items-center">
+                      <span className="animate-spin h-4 w-4 mr-2 border-b-2 border-white rounded-full"></span>
+                      Sparar...
+                    </span>
+                  ) : (
+                    'Spara Produkt'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        ) : (
+          /* Product List */
+          <div className="bg-white shadow rounded-lg overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2 className="text-lg font-medium text-gray-900">Produktlista</h2>
+                <div className="w-full sm:w-64">
+                  <ProductMenu 
+                    products={products} 
+                    selectedProduct={filteredProduct} 
+                    onProductSelect={(product) => setFilteredProduct(product)} 
+                  />
+                </div>
               </div>
             </div>
-          </div>
-          
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Produkt
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Storlek
-                  </th>
-                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                     Pris
-                   </th>
-                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                     EAN-kod
-                   </th>
-                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                     Status
-                   </th>
+            
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Produkt
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Storlek
+                    </th>
+                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Pris
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      EAN-kod
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Åtgärder
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                                 {products.length === 0 ? (
-                   <tr>
-                     <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
-                       Inga produkter hittades
-                     </td>
-                   </tr>
-                ) : (
-                  (filteredProduct ? [filteredProduct] : products).map((product) => (
-                    <tr key={product.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center">
-                          {product.imageUrl ? (
-                            <img 
-                              src={product.imageUrl} 
-                              alt={product.name} 
-                              className="w-12 h-12 mr-4 object-cover rounded-md border border-gray-200"
-                            />
-                          ) : (
-                            <div className="w-12 h-12 mr-4 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
-                              <span className="text-xs text-gray-500">Ingen bild</span>
+                                     {products.length === 0 ? (
+                     <tr>
+                       <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                         Inga produkter hittades
+                       </td>
+                     </tr>
+                  ) : (
+                    (filteredProduct ? [filteredProduct] : products).map((product) => (
+                      <tr key={product.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center">
+                            {product.imageUrl ? (
+                              <img 
+                                src={product.imageUrl} 
+                                alt={product.name} 
+                                className="w-12 h-12 mr-4 object-cover rounded-md border border-gray-200"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 mr-4 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
+                                <span className="text-xs text-gray-500">Ingen bild</span>
+                              </div>
+                            )}
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                              <div className="text-sm text-gray-500 max-w-xs truncate">{product.description}</div>
                             </div>
-                          )}
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                            <div className="text-sm text-gray-500 max-w-xs truncate">{product.description}</div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{product.size || 'Ej angivet'}</div>
-                      </td>
-                                             <td className="px-6 py-4 whitespace-nowrap">
-                         <div className="text-sm text-gray-900">{product.basePrice?.toFixed(2)} SEK</div>
-                         <div className="text-sm text-gray-500">Kostnad: {product.manufacturingCost?.toFixed(2)} SEK</div>
-                       </td>
-                       <td className="px-6 py-4 whitespace-nowrap">
-                         <div className="text-sm text-gray-900">{product.eanCode || 'Ej angivet'}</div>
-                         {(product.eanImagePngUrl || product.eanImageSvgUrl) && (
-                           <div className="text-xs text-gray-500 mt-1">
-                             {product.eanImagePngUrl && 'PNG '}
-                             {product.eanImageSvgUrl && 'SVG'}
-                           </div>
-                         )}
-                       </td>
-                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          product.isActive 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {product.isActive ? 'Aktiv' : 'Inaktiv'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button 
-                          onClick={() => handleEditClick(product)} 
-                          disabled={loading}
-                          className="text-blue-600 hover:text-blue-900 mr-4 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Redigera
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteProduct(product.id)} 
-                          disabled={loading}
-                          className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {loading ? 'Tar bort...' : 'Ta bort'}
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{product.size || 'Ej angivet'}</div>
+                        </td>
+                                           <td className="px-6 py-4 whitespace-nowrap">
+                           <div className="text-sm text-gray-900">{product.basePrice?.toFixed(2)} SEK</div>
+                           <div className="text-sm text-gray-500">Kostnad: {product.manufacturingCost?.toFixed(2)} SEK</div>
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           <div className="text-sm text-gray-900">{product.eanCode || 'Ej angivet'}</div>
+                           {(product.eanImagePngUrl || product.eanImageSvgUrl) && (
+                             <div className="text-xs text-gray-500 mt-1">
+                               {product.eanImagePngUrl && 'PNG '}
+                               {product.eanImageSvgUrl && 'SVG'}
+                             </div>
+                           )}
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            product.isActive 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {product.isActive ? 'Aktiv' : 'Inaktiv'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button 
+                            onClick={() => handleEditClick(product)} 
+                            disabled={loading}
+                            className="text-blue-600 hover:text-blue-900 mr-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Redigera
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteProduct(product.id)} 
+                            disabled={loading}
+                            className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {loading ? 'Tar bort...' : 'Ta bort'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </AppLayout>
   );
 }
 
