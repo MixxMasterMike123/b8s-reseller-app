@@ -13,7 +13,7 @@ import {
 } from '../../utils/marketingMaterials';
 
 function AdminMarketingMaterialEdit() {
-  const { id } = useParams();
+  const { materialId } = useParams();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const [material, setMaterial] = useState(null);
@@ -40,16 +40,36 @@ function AdminMarketingMaterialEdit() {
   ];
 
   useEffect(() => {
-    if (isAdmin && id) {
-      loadMaterial();
+    console.log('AdminMarketingMaterialEdit: useEffect triggered - isAdmin:', isAdmin, 'materialId:', materialId);
+    
+    if (isAdmin === false) {
+      console.log('AdminMarketingMaterialEdit: User is not admin, stopping loading');
+      setLoading(false);
+      return;
     }
-  }, [isAdmin, id]);
+    
+    if (isAdmin === true && materialId) {
+      console.log('AdminMarketingMaterialEdit: Loading material with ID:', materialId);
+      loadMaterial();
+    } else if (isAdmin === true && !materialId) {
+      console.log('AdminMarketingMaterialEdit: No material ID provided');
+      toast.error('Inget material-ID angivet');
+      navigate('/admin/marketing');
+    } else {
+      console.log('AdminMarketingMaterialEdit: Waiting for admin status...');
+      // Keep loading while waiting for isAdmin to be determined
+    }
+  }, [isAdmin, materialId]);
 
   const loadMaterial = async () => {
     try {
+      console.log('AdminMarketingMaterialEdit: Starting to load material...');
       setLoading(true);
-      const materialData = await getGenericMaterialById(id);
+      const materialData = await getGenericMaterialById(materialId);
+      console.log('AdminMarketingMaterialEdit: Material data received:', materialData);
+      
       if (!materialData) {
+        console.log('AdminMarketingMaterialEdit: No material data found');
         toast.error('Material hittades inte');
         navigate('/admin/marketing');
         return;
@@ -62,11 +82,13 @@ function AdminMarketingMaterialEdit() {
         category: materialData.category || 'allmänt',
         file: null
       });
+      console.log('AdminMarketingMaterialEdit: Material loaded successfully');
     } catch (error) {
-      console.error('Error loading material:', error);
-      toast.error('Kunde inte ladda material');
+      console.error('AdminMarketingMaterialEdit: Error loading material:', error);
+      toast.error('Kunde inte ladda material: ' + error.message);
       navigate('/admin/marketing');
     } finally {
+      console.log('AdminMarketingMaterialEdit: Setting loading to false');
       setLoading(false);
     }
   };
@@ -89,7 +111,7 @@ function AdminMarketingMaterialEdit() {
       
       if (replaceFile && formData.file) {
         // Delete old material and upload new one with same metadata
-        await deleteGenericMaterial(id);
+        await deleteGenericMaterial(materialId);
         await uploadGenericMaterial(formData.file, {
           name: formData.name,
           description: formData.description,
@@ -98,7 +120,7 @@ function AdminMarketingMaterialEdit() {
         toast.success('Material ersatt framgångsrikt');
       } else {
         // Update metadata only
-        await updateGenericMaterial(id, {
+        await updateGenericMaterial(materialId, {
           name: formData.name,
           description: formData.description,
           category: formData.category
@@ -122,7 +144,7 @@ function AdminMarketingMaterialEdit() {
 
     try {
       setSaving(true);
-      await deleteGenericMaterial(id);
+      await deleteGenericMaterial(materialId);
       toast.success('Material borttaget');
       navigate('/admin/marketing');
     } catch (error) {
