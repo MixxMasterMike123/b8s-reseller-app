@@ -214,6 +214,8 @@ src/
   status: string,
   items: array,
   totalAmount: number,
+  affiliateCode: string, // Optional: code of the referring affiliate
+  affiliateCommission: number, // Optional: commission amount earned from this order
   statusHistory: [
     {
       from: string,

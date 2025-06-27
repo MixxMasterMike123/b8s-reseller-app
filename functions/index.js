@@ -1,12 +1,13 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
+const { getFirestore, Timestamp, query, where, getDocs, orderBy, limit } = require("firebase-admin/firestore");
 
 // Initialize Firebase Admin
 admin.initializeApp();
 
-// Initialize Firestore
-const db = admin.firestore();
+// Initialize Firestore for the CORRECT named database
+const db = getFirestore('b8s-reseller-db');
 db.settings({ ignoreUndefinedProperties: true });
 
 // Create transporter for sending emails using Gmail SMTP
@@ -185,6 +186,223 @@ const getEmailTemplate = (status, orderData, userData) => {
 };
 
 /**
+ * [NEW] Callable function to approve an affiliate application.
+ */
+exports.approveAffiliate = functions.https.onCall(async (data, context) => {
+  // 1. Authentication Check: Ensure the user is an authenticated admin.
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
+  }
+
+  const adminUserDoc = await db.collection('users').doc(context.auth.uid).get();
+  if (!adminUserDoc.exists || adminUserDoc.data().role !== 'admin') {
+    throw new functions.https.HttpsError('permission-denied', 'Only admins can approve affiliates.');
+  }
+
+  const { applicationId } = data;
+  if (!applicationId) {
+    throw new functions.https.HttpsError('invalid-argument', 'The function must be called with an "applicationId".');
+  }
+
+  const applicationRef = db.collection('affiliateApplications').doc(applicationId);
+  const affiliateRef = db.collection('affiliates').doc(); // Create a new doc with a random ID
+
+  try {
+    const applicationDoc = await applicationRef.get();
+    if (!applicationDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Affiliate application not found.');
+    }
+    const appData = applicationDoc.data();
+
+    // 2. Generate a unique, human-readable affiliate code.
+    const namePart = appData.name.split(' ')[0].toUpperCase().replace(/[^A-Z]/g, '');
+    const randomPart = Math.floor(100 + Math.random() * 900); // 3-digit random number
+    const affiliateCode = `${namePart}-${randomPart}`;
+
+    // 3. Create the new affiliate record.
+    const newAffiliateData = {
+      ...appData, // Carry over name, email, website, etc.
+      id: affiliateRef.id,
+      affiliateCode,
+      status: 'active',
+      commissionRate: 15, // Default commission rate
+      stats: {
+        clicks: 0,
+        conversions: 0,
+        totalEarnings: 0,
+        balance: 0,
+      },
+      paymentInfo: {},
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+      approvedBy: context.auth.uid,
+    };
+
+    // 4. Use a batch write to make the operation atomic.
+    const batch = db.batch();
+    batch.set(affiliateRef, newAffiliateData);
+    batch.delete(applicationRef);
+    await batch.commit();
+    
+    // TODO: Send a welcome email to the new affiliate with their code.
+
+    return { success: true, affiliateCode: affiliateCode };
+
+  } catch (error) {
+    console.error("Error approving affiliate:", error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    throw new functions.https.HttpsError('internal', 'An internal error occurred while approving the affiliate.');
+  }
+});
+
+/**
+ * [NEW] Callable function to log an affiliate link click.
+ */
+exports.logAffiliateClick = functions.https.onCall(async (data, context) => {
+  const { affiliateCode } = data;
+
+  if (!affiliateCode) {
+    throw new functions.https.HttpsError('invalid-argument', 'The function must be called with an "affiliateCode".');
+  }
+
+  try {
+    const affiliatesRef = db.collection('affiliates');
+    const q = query(affiliatesRef, where("affiliateCode", "==", affiliateCode));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      // Don't throw an error, just log it. A user might type in a bad code.
+      console.warn(`Affiliate click logged for non-existent code: ${affiliateCode}`);
+      return { success: false, error: "Invalid code" };
+    }
+
+    const affiliateDoc = querySnapshot.docs[0];
+    const affiliateId = affiliateDoc.id;
+    const affiliateData = affiliateDoc.data();
+
+    // Use a transaction to safely increment the click count
+    await db.runTransaction(async (transaction) => {
+      const affiliateToUpdateRef = db.collection('affiliates').doc(affiliateId);
+      const newClicks = (affiliateData.stats.clicks || 0) + 1;
+      transaction.update(affiliateToUpdateRef, { 'stats.clicks': newClicks });
+    });
+
+    // Log the click event to the affiliateClicks collection
+    const clickData = {
+      affiliateCode: affiliateCode,
+      affiliateId: affiliateId,
+      timestamp: Timestamp.now(),
+      ipAddress: context.rawRequest.ip,
+      userAgent: context.rawRequest.headers['user-agent'] || '',
+      converted: false, // This will be updated upon purchase
+    };
+
+    await db.collection('affiliateClicks').add(clickData);
+    
+    return { success: true };
+
+  } catch (error) {
+    console.error(`Error logging click for code ${affiliateCode}:`, error);
+    throw new functions.https.HttpsError('internal', 'An internal error occurred while logging the click.');
+  }
+});
+
+/**
+ * [NEW] Triggered when a new order is created. Checks for an affiliate code 
+ * and processes the conversion if one exists.
+ */
+exports.processAffiliateConversion = functions.firestore
+  .document('orders/{orderId}')
+  .onCreate(async (snap, context) => {
+    const orderData = snap.data();
+    const orderId = context.params.orderId;
+
+    // 1. Check if the order has an affiliate code.
+    if (!orderData.affiliateCode) {
+      console.log(`Order ${orderId} has no affiliate code. Skipping conversion.`);
+      return null;
+    }
+
+    const { affiliateCode, totalAmount } = orderData;
+    console.log(`Processing affiliate conversion for order ${orderId} with code ${affiliateCode}`);
+
+    try {
+      // 2. Find the affiliate.
+      const affiliatesRef = db.collection('affiliates');
+      const q = query(affiliatesRef, where("affiliateCode", "==", affiliateCode));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        console.error(`Affiliate with code ${affiliateCode} not found for order ${orderId}.`);
+        return null;
+      }
+      const affiliateDoc = querySnapshot.docs[0];
+      const affiliateId = affiliateDoc.id;
+      const affiliateData = affiliateDoc.data();
+
+      // 3. Calculate commission.
+      const commissionRate = (affiliateData.commissionRate || 15) / 100;
+      const commissionAmount = totalAmount * commissionRate;
+
+      // 4. Update affiliate stats and the order in a transaction.
+      const affiliateRef = db.collection('affiliates').doc(affiliateId);
+      const orderRef = db.collection('orders').doc(orderId);
+
+      await db.runTransaction(async (transaction) => {
+        const currentAffiliateDoc = await transaction.get(affiliateRef);
+        if (!currentAffiliateDoc.exists) {
+            throw "Affiliate not found!";
+        }
+        const stats = currentAffiliateDoc.data().stats || {};
+        const newConversions = (stats.conversions || 0) + 1;
+        const newBalance = (stats.balance || 0) + commissionAmount;
+        const newTotalEarnings = (stats.totalEarnings || 0) + commissionAmount;
+
+        transaction.update(affiliateRef, {
+          'stats.conversions': newConversions,
+          'stats.balance': newBalance,
+          'stats.totalEarnings': newTotalEarnings,
+          'updatedAt': Timestamp.now()
+        });
+        
+        // Also update the order with the commission amount
+        transaction.update(orderRef, { affiliateCommission: commissionAmount });
+      });
+
+      console.log(`Successfully processed conversion for affiliate ${affiliateId}. Commission: ${commissionAmount}`);
+
+      // 5. Mark the original click as converted.
+      // Find the most recent, non-converted click from this affiliate.
+      const clicksRef = db.collection('affiliateClicks');
+      const clickQuery = query(
+        clicksRef, 
+        where("affiliateCode", "==", affiliateCode), 
+        where("converted", "==", false),
+        orderBy("timestamp", "desc"),
+        limit(1)
+      );
+      const clickSnapshot = await getDocs(clickQuery);
+      if (!clickSnapshot.empty) {
+        const clickDoc = clickSnapshot.docs[0];
+        await db.collection('affiliateClicks').doc(clickDoc.id).update({
+          converted: true,
+          orderId: orderId,
+          commissionAmount: commissionAmount,
+        });
+        console.log(`Marked click ${clickDoc.id} as converted.`);
+      }
+
+      return null;
+
+    } catch (error) {
+      console.error(`Error processing conversion for order ${orderId}:`, error);
+      return null;
+    }
+  });
+
+/**
  * Send order confirmation emails when a new order is created
  */
 exports.sendOrderConfirmationEmails = functions.firestore
@@ -199,127 +417,59 @@ exports.sendOrderConfirmationEmails = functions.firestore
         .collection("users")
         .doc(orderData.userId)
         .get();
-      
+
       if (!userSnapshot.exists) {
-        console.error(`User ${orderData.userId} not found for order ${orderId}`);
-        return null;
+        console.error(`User with ID ${orderData.userId} not found.`);
+        return;
       }
 
       const userData = userSnapshot.data();
-      
-      // Handle different order formats
-      let orderSummary = '';
-      let totalAmount = 0;
-      
-      if (orderData.items && Array.isArray(orderData.items)) {
-        // Standard format with items array
-        orderSummary = orderData.items.map((item) => 
-          `${item.name} x ${item.quantity} - ${item.price * item.quantity} SEK`
-        ).join("\n");
-        
-        totalAmount = orderData.items.reduce(
-          (total, item) => total + item.price * item.quantity, 0
-        );
-      } else if (orderData.prisInfo) {
-        // New format from order page
-        orderSummary = `B8 Shield (${orderData.color || ''}) - Size: ${orderData.size || ''} x ${orderData.antalForpackningar || 0}`;
-        totalAmount = orderData.prisInfo.totalPris || 0;
-      } else {
-        console.error('Unknown order format:', orderData);
-        return null;
+
+      // Get email template for 'pending' status
+      const emailTemplate = getEmailTemplate('pending', orderData, userData);
+
+      if (!emailTemplate) {
+        console.error(`Email template not found for status: pending`);
+        return;
       }
 
-      // Email to customer
-      const customerEmail = {
-        from: `"B8Shield" <info@b8shield.com>`,
+      // Send email to customer
+      const mailOptions = {
+        from: '"B8Shield" <b8shield.reseller@gmail.com>',
         to: userData.email,
-        subject: `Orderbekräftelse: ${orderData.orderNumber}`,
-        text: `
-          Tack för din beställning!
-          
-          Ordernummer: ${orderData.orderNumber}
-          Orderdatum: ${new Date(orderData.createdAt.toDate()).toLocaleString('sv-SE')}
-          
-          Artiklar:
-          ${orderSummary}
-          
-          Totalt: ${totalAmount} SEK
-          
-          Kontakta oss om du har några frågor.
-          
-          Med vänliga hälsningar,
-          B8Shield Team
-        `,
+        subject: emailTemplate.subject,
+        text: emailTemplate.text,
+        html: emailTemplate.html,
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log(`Order confirmation email sent to ${userData.email}`);
+
+      // Send email to admin
+      const adminMailOptions = {
+        from: '"B8Shield" <b8shield.reseller@gmail.com>',
+        to: "b8shield.reseller@gmail.com",
+        subject: `New Order Received: ${orderData.orderNumber}`,
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
-            </div>
-            <h2>Tack för din beställning!</h2>
-            <p><strong>Ordernummer:</strong> ${orderData.orderNumber}</p>
-            <p><strong>Orderdatum:</strong> ${new Date(orderData.createdAt.toDate()).toLocaleString('sv-SE')}</p>
-            
-            <h3>Artiklar:</h3>
-            <p>${orderSummary.split('\n').join('<br>')}</p>
-            
-            <p><strong>Totalt:</strong> ${totalAmount} SEK</p>
-            
-            <p>Kontakta oss om du har några frågor.</p>
-            
-            <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+          <div style="font-family: Arial, sans-serif;">
+            <h2>New Order Received</h2>
+            <p><strong>Order Number:</strong> ${orderData.orderNumber}</p>
+            <p><strong>Company:</strong> ${userData.companyName}</p>
+            <p><strong>Contact:</strong> ${userData.contactPerson}</p>
+            <p><strong>Email:</strong> ${userData.email}</p>
+            <h3>Order Details:</h3>
+            <ul>
+              ${orderData.items.map(item => `<li>${item.name} - ${item.quantity} pcs @ ${item.price} SEK</li>`).join('')}
+            </ul>
+            <p><strong>Total Amount:</strong> ${orderData.totalAmount} SEK</p>
           </div>
         `,
       };
 
-      // Email to admin
-      const adminEmail = {
-        from: `"B8Shield System" <info@b8shield.com>`,
-        to: "micke.ohlen@gmail.com",
-        subject: `Ny beställning: ${orderData.orderNumber}`,
-        text: `
-          En ny beställning har lagts.
-          
-          Ordernummer: ${orderData.orderNumber}
-          Orderdatum: ${new Date(orderData.createdAt.toDate()).toLocaleString('sv-SE')}
-          
-          Kund: ${userData.companyName} (${userData.email})
-          Kontakt: ${userData.contactPerson}, ${userData.phoneNumber}
-          
-          Artiklar:
-          ${orderSummary}
-          
-          Totalt: ${totalAmount} SEK
-        `,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
-            </div>
-            <h2>En ny beställning har lagts</h2>
-            <p><strong>Ordernummer:</strong> ${orderData.orderNumber}</p>
-            <p><strong>Orderdatum:</strong> ${new Date(orderData.createdAt.toDate()).toLocaleString('sv-SE')}</p>
-            
-            <h3>Kund:</h3>
-            <p>${userData.companyName} (${userData.email})<br>
-            Kontakt: ${userData.contactPerson}, ${userData.phoneNumber}</p>
-            
-            <h3>Artiklar:</h3>
-            <p>${orderSummary.split('\n').join('<br>')}</p>
-            
-            <p><strong>Totalt:</strong> ${totalAmount} SEK</p>
-          </div>
-        `,
-      };
-
-      // Send emails
-      await transporter.sendMail(customerEmail);
-      await transporter.sendMail(adminEmail);
-      
-      console.log(`Order confirmation emails sent for order ${orderId}`);
-      return null;
+      await transporter.sendMail(adminMailOptions);
+      console.log(`Admin notification email sent.`);
     } catch (error) {
-      console.error("Error sending order confirmation emails:", error);
-      return null;
+      console.error('Error sending order confirmation emails:', error);
     }
   });
 

@@ -158,6 +158,26 @@ export const OrderProvider = ({ children }) => {
         
         return newOrder;
       } else {
+        // --- AFFILIATE TRACKING ---
+        let affiliateCode = null;
+        try {
+          const affiliateInfoStr = localStorage.getItem('b8s_affiliate_ref');
+          if (affiliateInfoStr) {
+            const affiliateInfo = JSON.parse(affiliateInfoStr);
+            // Check if the code is still valid (not expired)
+            if (new Date().getTime() < affiliateInfo.expiry) {
+              affiliateCode = affiliateInfo.code;
+              console.log(`Attaching affiliate code ${affiliateCode} to order.`);
+            } else {
+              // Clear expired code
+              localStorage.removeItem('b8s_affiliate_ref');
+            }
+          }
+        } catch (e) {
+          console.error("Error reading affiliate code from localStorage", e);
+        }
+        // --- END AFFILIATE TRACKING ---
+
         // Make sure orderData has an orderNumber
         const orderToCreate = {
           ...orderData,
@@ -167,6 +187,11 @@ export const OrderProvider = ({ children }) => {
           updatedAt: serverTimestamp(),
           status: 'pending',
         };
+
+        // Add affiliate code to order if it exists
+        if (affiliateCode) {
+          orderToCreate.affiliateCode = affiliateCode;
+        }
 
         // For Cloud Functions - they expect items array for email notification
         // Convert our single product to an items array if it doesn't exist

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../../firebase/config';
-import { collection, getDocs, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { db, functions } from '../../firebase/config';
+import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
 
@@ -32,28 +33,21 @@ const AdminAffiliates = () => {
     }
   };
 
-  const handleApprove = async (appId, appData) => {
+  const handleApprove = async (appId) => {
     const toastId = toast.loading('Godkänner affiliate...');
     try {
-      // Here you would typically:
-      // 1. Create a user account if one doesn't exist
-      // 2. Add them to the 'affiliates' collection
-      // 3. Generate a unique affiliateCode
-      // 4. Send a welcome email with login details and affiliate link
+      const approveAffiliate = httpsCallable(functions, 'approveAffiliate');
+      const result = await approveAffiliate({ applicationId: appId });
 
-      // For now, we'll just update the status.
-      // A more complete implementation is needed.
-      const appRef = doc(db, 'affiliateApplications', appId);
-      await updateDoc(appRef, {
-        status: 'approved',
-        approvedAt: serverTimestamp()
-      });
-      
-      toast.success('Affiliate godkänd!', { id: toastId });
-      fetchApplications(); // Refresh list
+      if (result.data.success) {
+        toast.success(`Affiliate godkänd! Kod: ${result.data.affiliateCode}`, { id: toastId, duration: 5000 });
+        fetchApplications(); // Refresh list
+      } else {
+        throw new Error(result.data.error || 'Okänt fel vid godkännande.');
+      }
     } catch (error) {
       console.error("Error approving affiliate: ", error);
-      toast.error('Kunde inte godkänna affiliate.', { id: toastId });
+      toast.error(`Kunde inte godkänna affiliate: ${error.message}`, { id: toastId });
     }
   };
 
@@ -123,7 +117,7 @@ const AdminAffiliates = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         {app.status === 'pending' && (
                           <div className="flex justify-end space-x-2">
-                            <button onClick={() => handleApprove(app.id, app)} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-xs">Godkänn</button>
+                            <button onClick={() => handleApprove(app.id)} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-xs">Godkänn</button>
                             <button onClick={() => handleDeny(app.id)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs">Neka</button>
                           </div>
                         )}

@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { SimpleAuthContextProvider } from './contexts/SimpleAuthContext';
 import { OrderProvider } from './contexts/OrderContext';
 import { CartProvider } from './contexts/CartContext';
+import { functions } from './firebase/config';
+import { httpsCallable } from 'firebase/functions';
 
 // B2B Reseller Portal Components (existing)
 import PrivateRoute from './components/auth/PrivateRoute';
@@ -62,6 +65,33 @@ function App() {
   // Default to reseller for now (existing behavior)
   const appMode = isShopSubdomain ? 'shop' : 'reseller';
 
+  useEffect(() => {
+    const handleAffiliateLink = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const refCode = params.get('ref');
+
+      if (refCode) {
+        console.log(`Affiliate code detected: ${refCode}`);
+        
+        // Store the affiliate code in localStorage with a 30-day expiry
+        const expiry = new Date().getTime() + 30 * 24 * 60 * 60 * 1000; // 30 days
+        const affiliateInfo = { code: refCode, expiry: expiry };
+        localStorage.setItem('b8s_affiliate_ref', JSON.stringify(affiliateInfo));
+
+        // Call a cloud function to log the click (fire and forget)
+        try {
+          const logClick = httpsCallable(functions, 'logAffiliateClick');
+          await logClick({ affiliateCode: refCode });
+          console.log(`Successfully logged click for affiliate code: ${refCode}`);
+        } catch (error) {
+          console.error("Error logging affiliate click:", error);
+        }
+      }
+    };
+
+    handleAffiliateLink();
+  }, []);
+
   console.log('App Mode:', appMode, 'Hostname:', hostname, 'Subdomain:', subdomain);
 
   const content = (
@@ -98,8 +128,8 @@ function App() {
               <Route path="/shipping" element={<ShippingInfo />} />
               
               {/* Affiliate Program */}
-              <Route path="/affiliate-program" element={<AffiliateRegistration />} />
-              <Route path="/affiliate-portal" element={<AffiliatePortal />} /> {/* Should be behind auth */}
+              <Route path="/affiliate-registration" element={<AffiliateRegistration />} />
+              <Route path="/affiliate-portal" element={<AffiliatePortal />} />
               
               <Route path="*" element={<Navigate to="/" replace />} />
             </>
@@ -224,15 +254,13 @@ function App() {
 
   return (
     <AuthProvider>
-      <OrderProvider>
-        {appMode === 'shop' ? (
+      <SimpleAuthContextProvider>
+        <OrderProvider>
           <CartProvider>
             {content}
           </CartProvider>
-        ) : (
-          content
-        )}
-      </OrderProvider>
+        </OrderProvider>
+      </SimpleAuthContextProvider>
     </AuthProvider>
   );
 }
