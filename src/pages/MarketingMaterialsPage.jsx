@@ -349,73 +349,81 @@ function MarketingMaterialsPage() {
                 <div className="p-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {materials.map((material) => (
-                      <div key={`${material.source}-${material.id}`} className="group relative bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-xl p-5 hover:shadow-lg transition-all duration-300 hover:scale-105 flex flex-col h-full">
+                      <div key={`${material.source}-${material.id}`} className="group relative bg-white border border-gray-200 rounded-xl p-6 hover:shadow-xl hover:border-blue-200 transition-all duration-300 flex flex-col h-full">
                         {/* Category Pill */}
-                        <div className="absolute top-3 right-3 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                        <div className="absolute top-4 right-4 px-3 py-1.5 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
                           {material.category || 'Övrigt'}
                         </div>
 
                         {/* Material Preview */}
-                        <div 
-                          className="relative w-[62px] h-[62px] bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg overflow-hidden group cursor-pointer mx-auto"
-                          onClick={() => material.fileType === 'image' && material.downloadURL && openPreview(material.downloadURL, material.name)}
-                        >
-                          {material.fileType === 'image' && material.downloadURL ? (
-                            <>
-                              <img 
-                                src={material.downloadURL}
-                                alt={material.name}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  // Fallback to icon if image fails to load
-                                  e.target.style.display = 'none';
-                                  e.target.nextSibling.style.display = 'block';
-                                }}
-                              />
-                              {/* Hover Indicator */}
-                              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                                <MagnifyingGlassIcon className="h-6 w-6 text-white" />
-                              </div>
-                            </>
-                          ) : null}
-                          <span 
-                            className="text-2xl flex items-center justify-center h-full"
-                            style={{ display: material.fileType === 'image' && material.downloadURL ? 'none' : 'flex' }}
+                        <div className="mb-6">
+                          <div 
+                            className="relative w-20 h-20 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl overflow-hidden cursor-pointer mx-auto shadow-sm border border-gray-100"
+                            onClick={() => material.fileType === 'image' && material.downloadURL && openPreview(material.downloadURL, material.name)}
                           >
-                            {getFileIcon(material.fileType)}
-                          </span>
+                            {material.fileType === 'image' && material.downloadURL ? (
+                              <>
+                                <img 
+                                  src={material.downloadURL}
+                                  alt={material.name}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    // Fallback to icon if image fails to load
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'block';
+                                  }}
+                                />
+                                {/* Hover Indicator */}
+                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                                  <MagnifyingGlassIcon className="h-6 w-6 text-white" />
+                                </div>
+                              </>
+                            ) : null}
+                            <span 
+                              className="text-3xl flex items-center justify-center h-full text-gray-400"
+                              style={{ display: material.fileType === 'image' && material.downloadURL ? 'none' : 'flex' }}
+                            >
+                              {getFileIcon(material.fileType)}
+                            </span>
+                          </div>
                         </div>
 
-                        {/* Material Info - Flex grow to push button down */}
-                        <div className="text-center space-y-2 flex-grow">
-                          <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">
-                            {material.name}
-                          </h3>
-                          
-                          {material.description && (
-                            <p className="text-xs text-gray-600 line-clamp-2">
-                              {material.description}
-                            </p>
-                          )}
-
-                          <div className="text-xs text-gray-500 space-y-1">
-                            <p className="truncate">{material.fileName}</p>
-                            {material.fileSize && (
-                              <p>{formatFileSize(material.fileSize)}</p>
+                        {/* Material Info - Hierarchical spacing */}
+                        <div className="text-center space-y-4 flex-grow">
+                          <div className="space-y-2">
+                            <h3 className="font-semibold text-gray-900 text-base leading-tight line-clamp-2">
+                              {material.name}
+                            </h3>
+                            
+                            {material.description && (
+                              <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                                {material.description}
+                              </p>
                             )}
+                          </div>
+
+                          <div className="pt-2 border-t border-gray-100">
+                            <div className="text-xs text-gray-500 space-y-1">
+                              <p className="truncate font-medium">{material.fileName}</p>
+                              {material.fileSize && (
+                                <p className="text-gray-400">{formatFileSize(material.fileSize)}</p>
+                              )}
+                            </div>
                           </div>
                         </div>
 
                         {/* Download Button - Always at bottom */}
-                        <button
-                          onClick={() => handleDownload(material)}
-                          className="mt-4 w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
-                        >
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          Ladda ner
-                        </button>
+                        <div className="mt-6 pt-4 border-t border-gray-100">
+                          <button
+                            onClick={() => handleDownload(material)}
+                            className="w-full inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-sm hover:shadow-md"
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Ladda ner
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
