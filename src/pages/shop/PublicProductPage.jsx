@@ -5,6 +5,7 @@ import { db } from '../../firebase/config';
 import { getProductImage } from '../../utils/productImages';
 import toast from 'react-hot-toast';
 import { generateProductSchema } from '../../utils/productFeed';
+import { useCart } from '../../contexts/CartContext';
 
 const PublicProductPage = () => {
   const { id } = useParams();
@@ -18,6 +19,7 @@ const PublicProductPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const { addToCart, cart } = useCart();
 
   useEffect(() => {
     if (id) {
@@ -96,14 +98,20 @@ const PublicProductPage = () => {
     }
   };
 
-  const addToCart = () => {
-    if (!selectedVariant || !selectedSize) {
-      toast.error('Välj en storlek först');
+  const handleAddToCart = () => {
+    if (!selectedSize) {
+      toast.error('Vänligen välj en storlek');
       return;
     }
-    
-    // TODO: Implement cart functionality
-    toast.success(`${selectedVariant.name} (${quantity} st) tillagd i varukorgen!`);
+
+    const selectedVariant = variants.find(v => v.id === selectedSize);
+    if (!selectedVariant) {
+      toast.error('Ogiltig storlek vald');
+      return;
+    }
+
+    addToCart(selectedVariant, quantity, selectedVariant.size);
+    toast.success('Produkt tillagd i varukorgen');
   };
 
   const formatPrice = (price) => {
@@ -323,7 +331,7 @@ const PublicProductPage = () => {
                 </div>
                 
                 <button
-                  onClick={addToCart}
+                  onClick={handleAddToCart}
                   disabled={!selectedSize}
                   className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >

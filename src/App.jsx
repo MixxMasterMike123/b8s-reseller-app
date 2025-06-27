@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { OrderProvider } from './contexts/OrderContext';
+import { CartProvider } from './contexts/CartContext';
 
 // B2B Reseller Portal Components (existing)
 import PrivateRoute from './components/auth/PrivateRoute';
@@ -69,16 +70,18 @@ function App() {
             <Routes>
               {appMode === 'shop' ? (
                 // B2C Shop Routes
-                <>
-                  <Route path="/" element={<PublicStorefront />} />
-                  <Route path="/product/:id" element={<PublicProductPage />} />
-                  <Route path="/cart" element={<ShoppingCart />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/login" element={<CustomerLogin />} />
-                  <Route path="/register" element={<CustomerRegister />} />
-                  <Route path="/account" element={<CustomerAccount />} />
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </>
+                <CartProvider>
+                  <>
+                    <Route path="/" element={<PublicStorefront />} />
+                    <Route path="/product/:id" element={<PublicProductPage />} />
+                    <Route path="/cart" element={<ShoppingCart />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/login" element={<CustomerLogin />} />
+                    <Route path="/register" element={<CustomerRegister />} />
+                    <Route path="/account" element={<CustomerAccount />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </>
+                </CartProvider>
               ) : (
                 // B2B Reseller Portal Routes (existing)
                 <>
