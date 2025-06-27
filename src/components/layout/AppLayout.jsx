@@ -111,6 +111,12 @@ const AppLayout = ({ children }) => {
       description: 'Hantera marknadsföringsmaterial',
     },
     {
+      name: 'Affiliates',
+      path: '/admin/affiliates',
+      icon: UsersIcon,
+      description: 'Hantera affiliate-partners',
+    },
+    {
       name: 'Inställningar',
       path: '/admin/settings',
       icon: Cog6ToothIcon,

@@ -229,6 +229,45 @@ src/
 }
 ```
 
+### Affiliates Collection
+```javascript
+{
+  id: string, // Firebase Auth UID of the user
+  email: string,
+  name: string,
+  affiliateCode: string, // Unique, human-readable code for links
+  status: 'pending' | 'active' | 'suspended',
+  commissionRate: number, // e.g., 15 for 15%
+  stats: {
+    clicks: number,
+    conversions: number,
+    totalEarnings: number,
+    balance: number // Unpaid earnings
+  },
+  paymentInfo: {
+    method: 'bank' | 'swish' | 'paypal',
+    details: object
+  },
+  createdAt: timestamp,
+  updatedAt: timestamp
+}
+```
+
+### AffiliateClicks Collection
+```javascript
+{
+  id: string,
+  affiliateCode: string,
+  timestamp: timestamp,
+  ipAddress: string,
+  userAgent: string,
+  landingPage: string, // The page the user landed on
+  converted: boolean,
+  orderId: string, // Reference to the order if converted
+  commissionAmount: number // Commission earned from this click
+}
+```
+
 ## Coding Conventions
 
 ### React Patterns

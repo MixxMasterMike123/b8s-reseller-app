@@ -63,6 +63,11 @@ const ShopFooter = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/affiliate-program" className="text-gray-300 hover:text-white transition-colors">
+                  Affiliate-program
+                </Link>
+              </li>
+              <li>
                 <a href="mailto:info@b8shield.com" className="text-gray-300 hover:text-white transition-colors">
                   Kundtjänst
                 </a>

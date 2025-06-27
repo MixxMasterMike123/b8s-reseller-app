@@ -43,6 +43,11 @@ import ReturnPolicy from './pages/shop/ReturnPolicy';
 import CookiePolicy from './pages/shop/CookiePolicy';
 import ShippingInfo from './pages/shop/ShippingInfo';
 
+// Affiliate Program Pages
+import AffiliateRegistration from './pages/shop/AffiliateRegistration';
+import AffiliatePortal from './pages/shop/AffiliatePortal';
+import AdminAffiliates from './pages/admin/AdminAffiliates';
+
 import { Toaster } from 'react-hot-toast';
 
 function App() {
@@ -91,6 +96,10 @@ function App() {
               <Route path="/returns" element={<ReturnPolicy />} />
               <Route path="/cookies" element={<CookiePolicy />} />
               <Route path="/shipping" element={<ShippingInfo />} />
+              
+              {/* Affiliate Program */}
+              <Route path="/affiliate-program" element={<AffiliateRegistration />} />
+              <Route path="/affiliate-portal" element={<AffiliatePortal />} /> {/* Should be behind auth */}
               
               <Route path="*" element={<Navigate to="/" replace />} />
             </>
@@ -195,6 +204,12 @@ function App() {
               <Route path="/admin/marketing/:materialId/edit" element={
                 <AdminRoute>
                   <AdminMarketingMaterialEdit />
+                </AdminRoute>
+              } />
+
+              <Route path="/admin/affiliates" element={
+                <AdminRoute>
+                  <AdminAffiliates />
                 </AdminRoute>
               } />
               
