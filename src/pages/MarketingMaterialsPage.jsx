@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AppLayout from '../components/layout/AppLayout';
+import ImagePreviewModal from '../components/ImagePreviewModal';
+import { useImagePreview } from '../hooks/useImagePreview';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import {
   getGenericMaterials,
@@ -18,6 +21,17 @@ function MarketingMaterialsPage() {
   const [selectedCategory, setSelectedCategory] = useState('alla');
   const [selectedType, setSelectedType] = useState('alla');
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Image preview functionality
+  const {
+    isPreviewOpen,
+    previewData,
+    closePreview,
+    handleMouseEnter,
+    handleMouseLeave,
+    handleTouchStart,
+    handleClick
+  } = useImagePreview(300);
 
   const categories = [
     { value: 'alla', label: 'Alla kategorier' },
@@ -348,19 +362,47 @@ function MarketingMaterialsPage() {
                           )}
                         </div>
 
-                        {/* File Preview/Icon */}
-                        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl overflow-hidden">
+                        {/* File Preview/Icon with Hover Preview */}
+                        <div 
+                          className="relative flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl overflow-hidden cursor-pointer"
+                          onMouseEnter={() => {
+                            if (material.fileType === 'image' && material.downloadURL) {
+                              handleMouseEnter(material.downloadURL, material.name);
+                            }
+                          }}
+                          onMouseLeave={() => {
+                            if (material.fileType === 'image') {
+                              handleMouseLeave();
+                            }
+                          }}
+                          onTouchStart={() => {
+                            if (material.fileType === 'image' && material.downloadURL) {
+                              handleTouchStart(material.downloadURL, material.name);
+                            }
+                          }}
+                          onClick={() => {
+                            if (material.fileType === 'image' && material.downloadURL) {
+                              handleClick(material.downloadURL, material.name);
+                            }
+                          }}
+                        >
                           {material.fileType === 'image' && material.downloadURL ? (
-                            <img 
-                              src={material.downloadURL}
-                              alt={material.name}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                // Fallback to icon if image fails to load
-                                e.target.style.display = 'none';
-                                e.target.nextSibling.style.display = 'block';
-                              }}
-                            />
+                            <>
+                              <img 
+                                src={material.downloadURL}
+                                alt={material.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  // Fallback to icon if image fails to load
+                                  e.target.style.display = 'none';
+                                  e.target.nextSibling.style.display = 'block';
+                                }}
+                              />
+                              {/* Hover Indicator */}
+                              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                                <MagnifyingGlassIcon className="h-6 w-6 text-white" />
+                              </div>
+                            </>
                           ) : null}
                           <span 
                             className="text-3xl"
@@ -408,6 +450,14 @@ function MarketingMaterialsPage() {
             ))}
           </div>
         )}
+
+        {/* Image Preview Modal */}
+        <ImagePreviewModal
+          isOpen={isPreviewOpen}
+          onClose={closePreview}
+          imageUrl={previewData?.imageUrl}
+          imageName={previewData?.imageName}
+        />
       </div>
     </AppLayout>
   );
