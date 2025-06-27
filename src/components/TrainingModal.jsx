@@ -30,41 +30,67 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
 
   const slides = [
     {
+      id: 'welcome',
+      title: 'Välkommen',
+      subtitle: 'Till B8Shield återförsäljarportal',
+      icon: UserGroupIcon,
+      iconColor: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      content: (
+        <div className="space-y-4">
+          <div className="bg-white rounded-lg p-6 border border-blue-200">
+            <p className="text-gray-700 mb-4">
+              Välkommen till vår återförsäljarportal – ett verktyg för att göra ert samarbete med oss så smidigt som möjligt.
+            </p>
+            
+            <h3 className="font-semibold text-gray-900 mb-3">Funktioner:</h3>
+            <ul className="space-y-2">
+              <li className="flex items-center text-gray-700">
+                <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+                Lägga beställningar direkt
+              </li>
+              <li className="flex items-center text-gray-700">
+                <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+                Överblick över orderhistorik
+              </li>
+              <li className="flex items-center text-gray-700">
+                <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+                Ladda ner marknadsföringsmaterial
+              </li>
+            </ul>
+          </div>
+        </div>
+      )
+    },
+    {
       id: 'problem',
-      title: 'B8Shield är ANNORLUNDA',
-      subtitle: 'Kunder vet inte vad det är',
+      title: 'Viktig info till butikspersonal',
+      subtitle: 'Om B8Shield',
       icon: ExclamationTriangleIcon,
       iconColor: 'text-amber-600',
       bgColor: 'bg-amber-50',
       content: (
         <div className="space-y-4">
-          <div className="text-center">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-              <h3 className="font-semibold text-red-900 mb-2">Problemet:</h3>
-              <p className="text-sm text-red-800">
-                B8Shield löser ett vanligt problem - att fastna i undervattensvegetation
-              </p>
-            </div>
-            
-            <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r">
-              <p className="text-sm text-amber-800 italic font-medium">
-                "Kunderna vet inte ännu vad B8Shield är eller vilket problem den löser, 
-                och därför söker man inte aktivt efter B8Shield trots att man har problemet"
-              </p>
-            </div>
+          <div className="bg-white rounded-lg p-4 border border-amber-200">
+            <p className="text-gray-700 mb-4">
+              B8Shield är en ny och unik produkt som löser ett vanligt problem för fiskare - att fastna i undervattensvegetation och andra undervattenshinder.
+            </p>
+            <p className="text-gray-700 mb-4">
+              B8Shield är samtidigt en helt ny typ av både produkt och produktkategori.
+            </p>
           </div>
           
-          <div className="text-center mt-6">
-            <div className="bg-blue-600 text-white rounded-lg p-3">
-              <p className="font-semibold">Därför måste DU förklara produkten!</p>
-            </div>
+          <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r">
+            <p className="text-sm text-amber-800 italic">
+              "Kunderna vet därför inte ännu vad B8Shield är eller vilket problem den löser, och därför söker man således inte aktivt efter B8Shield trots att man har problemet med att fastna"
+            </p>
           </div>
         </div>
       )
     },
     {
       id: 'actions',
-      title: '3 Avgörande Åtgärder',
+      title: 'Av den orsaken är det avgörande att ni',
       subtitle: 'För att sälja B8Shield',
       icon: ExclamationTriangleIcon,
       iconColor: 'text-red-600',
@@ -75,12 +101,8 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
             <div className="flex items-start bg-white rounded-lg p-4 border border-blue-200">
               <span className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</span>
               <div className="ml-3">
-                <div className="flex items-center mb-1">
-                  <MapPinIcon className="h-4 w-4 text-blue-600 mr-1" />
-                  <h4 className="font-semibold text-gray-900">Central Plats</h4>
-                </div>
                 <p className="text-sm text-gray-700">
-                  Ge butiksstället en synlig och central plats, gärna nära kassan
+                  Ge butiksstället en synlig och central plats i butiken, gärna nära kassan.
                 </p>
               </div>
             </div>
@@ -88,12 +110,8 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
             <div className="flex items-start bg-white rounded-lg p-4 border border-blue-200">
               <span className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</span>
               <div className="ml-3">
-                <div className="flex items-center mb-1">
-                  <SpeakerWaveIcon className="h-4 w-4 text-blue-600 mr-1" />
-                  <h4 className="font-semibold text-gray-900">Aktivt Säljarbete</h4>
-                </div>
                 <p className="text-sm text-gray-700">
-                  Förklara produkten aktivt - annars uppmärksammas den inte
+                  Aktivt säljer och förklarar produkten för kunderna. Gör man inte det är sannolikheten stor att kunderna inte uppmärksammar produkten och därmed inte köper produkten vilket vare sig vi eller ni vinner på.
                 </p>
               </div>
             </div>
@@ -101,12 +119,8 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
             <div className="flex items-start bg-white rounded-lg p-4 border border-blue-200">
               <span className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</span>
               <div className="ml-3">
-                <div className="flex items-center mb-1">
-                  <HandRaisedIcon className="h-4 w-4 text-blue-600 mr-1" />
-                  <h4 className="font-semibold text-gray-900">Låt Kunder Känna</h4>
-                </div>
                 <p className="text-sm text-gray-700">
-                  Lägg lösa B8Shields i en skål så kunder kan klämma och känna
+                  För att försäkra säljprocessen ytterligare skickar vi också med ett antal lösa B8Shields. Med fördel kan dessa läggas i en skål vid stället så att kund kan få klämma och känna på produkten.
                 </p>
               </div>
             </div>
@@ -114,8 +128,7 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
           
           <div className="bg-green-50 border-l-4 border-green-400 p-3 rounded-r mt-4">
             <p className="text-sm text-green-800 italic">
-              "När kunden väl förstår vad B8Shield är, är den lätt att välja - 
-              men kunden måste förstå det först"
+              "När kunden dock väl förstår vad B8Shield är och gör, är den lätt att välja, men kunden måste förstå det först"
             </p>
           </div>
         </div>
@@ -123,7 +136,7 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
     },
     {
       id: 'pitch',
-      title: '15-Sekunders Säljpitch',
+      title: 'Så förklarar du produkten på 15 sekunder',
       subtitle: 'Säg detta till kunden',
       icon: UserGroupIcon,
       iconColor: 'text-green-600',
@@ -134,24 +147,23 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
             <div className="flex items-center mb-3">
               <span className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">1</span>
               <p className="text-sm font-medium">
-                "B8Shield hindrar fiskedrag från att fastna i vegetation och undervattenshinder"
+                B8Shield hindrar fiskedrag från att fastna i undervattensvegetation och andra undervattenshinder.
               </p>
             </div>
           </div>
           
           <div className="bg-white rounded-lg p-4 border border-green-200">
-            <div className="flex items-start mb-3">
+            <div className="flex items-start">
               <span className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-1">2</span>
               <div className="flex-1">
                 <p className="text-sm font-medium mb-3">B8Shield finns i 4 olika utföranden:</p>
-                <p className="text-xs text-blue-600 mb-3 italic">Klicka på varianterna för att se produktbilder och beskrivningar:</p>
                 
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { name: 'TRANSPARENT', desc: 'Naturliga färger' },
-                    { name: 'BETESRÖD', desc: 'Attraherar fisk' },
-                    { name: 'FLUORESCERANDE', desc: 'För nattfiske' },
-                    { name: 'GLITTER', desc: 'För stark solljus' }
+                    { name: 'TRANSPARENT', desc: 'När man inte vill kompromissa med fiskedragets naturliga färger och utseende' },
+                    { name: 'BETESRÖD', desc: 'Utnyttja den traditionella röda färgen på många betesfiskar för att attrahera mer fisk' },
+                    { name: 'FLUORESCERANDE', desc: 'När du skall natt fiska och vill attrahera fiskar i grumliga eller mörka vatten' },
+                    { name: 'GLITTER', desc: 'När man skall fiska i stark solljus hjälper dess gnistrande färg till med att attrahera mer fisk' }
                   ].map((variant, idx) => (
                     <button
                       key={idx}
@@ -171,12 +183,21 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg p-4 border border-green-200">
             <div className="flex items-center">
               <span className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">3</span>
               <p className="text-sm">
-                Passar krokstorlek 2, 4 och 6. Enkelt att växla mellan olika drag.
+                B8Shield fästs på tre-krok. Passat till krokstorlek 2, 4 och 6, där storlek 2 också passar på krokstorlek 1. Krokstorlek 1/0 och 2/0 kommer inom kort.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg p-4 border border-green-200">
+            <div className="flex items-center">
+              <span className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">4</span>
+              <p className="text-sm">
+                B8Shields är designad så att man enkelt kan växla den mellan olika drag vid behov.
               </p>
             </div>
           </div>
@@ -185,8 +206,8 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
     },
     {
       id: 'objections',
-      title: 'Hantera Invändningar',
-      subtitle: 'När kunden säger...',
+      title: 'Vanliga frågor',
+      subtitle: 'Och vad du svarar',
       icon: QuestionMarkCircleIcon,
       iconColor: 'text-blue-600',
       bgColor: 'bg-blue-50',
@@ -195,13 +216,12 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
           <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r">
             <div className="flex items-center mb-2">
               <QuestionMarkCircleIcon className="h-4 w-4 text-blue-600 mr-2" />
-              <h4 className="font-semibold text-blue-900">"Kommer fisken sluta hugga?"</h4>
+              <h4 className="font-semibold text-blue-900">Kommer fisken sluta hugga?</h4>
             </div>
             <div className="flex items-start">
               <ChatBubbleLeftRightIcon className="h-4 w-4 text-blue-600 mr-2 mt-0.5" />
               <p className="text-sm text-blue-800">
-                <strong>Svar:</strong> "Nej, B8Shield påverkar inte krokens förmåga. 
-                Sköldens vingar flexar under bett så kroken fungerar normalt."
+                <strong>Svar:</strong> Nej, B8Shield påverkar inte krokens förmåga att kroka fisk. Under ett bett flexar sköldens vingar för att exponera krokarna, vilket säkerställer en lyckad fångst. Du krokar helt enkelt fisken som vanligt.
               </p>
             </div>
           </div>
@@ -209,13 +229,12 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
           <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-r">
             <div className="flex items-center mb-2">
               <QuestionMarkCircleIcon className="h-4 w-4 text-green-600 mr-2" />
-              <h4 className="font-semibold text-green-900">"Förstör det gången på draget?"</h4>
+              <h4 className="font-semibold text-green-900">Förstör det gången på draget?</h4>
             </div>
             <div className="flex items-start">
               <ChatBubbleLeftRightIcon className="h-4 w-4 text-green-600 mr-2 mt-0.5" />
               <p className="text-sm text-green-800">
-                <strong>Svar:</strong> "Nej, B8Shield är testad med många drag. 
-                Ingen skillnad i gång."
+                <strong>Svar:</strong> Nej, B8Shield är testad med många typer av drag. Ingen skillnad i gång.
               </p>
             </div>
           </div>
@@ -223,13 +242,12 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
           <div className="bg-purple-50 border-l-4 border-purple-400 p-4 rounded-r">
             <div className="flex items-center mb-2">
               <QuestionMarkCircleIcon className="h-4 w-4 text-purple-600 mr-2" />
-              <h4 className="font-semibold text-purple-900">"När ska man använda den?"</h4>
+              <h4 className="font-semibold text-purple-900">När ska man använda den?</h4>
             </div>
             <div className="flex items-start">
               <ChatBubbleLeftRightIcon className="h-4 w-4 text-purple-600 mr-2 mt-0.5" />
               <p className="text-sm text-purple-800">
-                <strong>Svar:</strong> "När du fiskar där det finns vegetation eller stenar - 
-                alltså där fisken gömmer sig."
+                <strong>Svar:</strong> När du fiskar där det finns många undervattenhinder som ex. undervattensvegetation eller där det är stenigt, alltså där fisken ofta gömmer sig.
               </p>
             </div>
           </div>
@@ -267,15 +285,6 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
                 Öka din försäljning med rätt teknik
               </li>
             </ul>
-          </div>
-          
-          <div className="bg-blue-50 rounded-lg p-4">
-            <div className="flex items-start">
-              <ExclamationTriangleIcon className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
-              <p className="text-sm text-blue-800">
-                <strong>Tips:</strong> All information finns alltid tillgänglig på startsidan för snabb referens
-              </p>
-            </div>
           </div>
         </div>
       )
