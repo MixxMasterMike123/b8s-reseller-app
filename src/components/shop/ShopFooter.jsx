@@ -50,7 +50,7 @@ const ShopFooter = () => {
 
           {/* Customer Service */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Kundservice</h3>
+            <h3 className="text-lg font-semibold mb-4">Kundservice & Info</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link to="/shipping" className="text-gray-300 hover:text-white transition-colors">
@@ -63,8 +63,13 @@ const ShopFooter = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/affiliate-program" className="text-gray-300 hover:text-white transition-colors">
-                  Affiliate-program
+                <Link to="/affiliate-registration" className="text-gray-300 hover:text-white transition-colors">
+                  Bli en affiliate
+                </Link>
+              </li>
+               <li>
+                <Link to="/affiliate-portal" className="text-gray-300 hover:text-white transition-colors">
+                  Affiliate-portal
                 </Link>
               </li>
               <li>

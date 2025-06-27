@@ -1,33 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { db, functions } from '../../firebase/config';
-import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc, query, where, orderBy } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
 
 const AdminAffiliates = () => {
   const [applications, setApplications] = useState([]);
+  const [affiliates, setAffiliates] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchApplications();
+    fetchData();
   }, []);
 
-  const fetchApplications = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const querySnapshot = await getDocs(collection(db, 'affiliateApplications'));
-      const apps = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      // Sort by status: pending first
-      apps.sort((a, b) => {
-        if (a.status === 'pending' && b.status !== 'pending') return -1;
-        if (a.status !== 'pending' && b.status === 'pending') return 1;
-        return 0;
-      });
+      // Fetch pending applications
+      const appQuery = query(collection(db, 'affiliateApplications'), where("status", "==", "pending"));
+      const appSnapshot = await getDocs(appQuery);
+      const apps = appSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setApplications(apps);
+
+      // Fetch all approved/managed affiliates
+      const affiliateQuery = query(collection(db, 'affiliates'), orderBy('createdAt', 'desc'));
+      const affiliateSnapshot = await getDocs(affiliateQuery);
+      const affiliateList = affiliateSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setAffiliates(affiliateList);
+
     } catch (error) {
-      console.error("Error fetching affiliate applications: ", error);
-      toast.error('Kunde inte hämta affiliate-ansökningar.');
+      console.error("Error fetching affiliate data: ", error);
+      toast.error('Kunde inte hämta affiliate-data.');
     } finally {
       setLoading(false);
     }
@@ -41,7 +45,7 @@ const AdminAffiliates = () => {
 
       if (result.data.success) {
         toast.success(`Affiliate godkänd! Kod: ${result.data.affiliateCode}`, { id: toastId, duration: 5000 });
-        fetchApplications(); // Refresh list
+        fetchData(); // Refresh both lists
       } else {
         throw new Error(result.data.error || 'Okänt fel vid godkännande.');
       }
@@ -58,11 +62,10 @@ const AdminAffiliates = () => {
     const toastId = toast.loading('Nekar ansökan...');
     try {
       // For now, we just delete the application.
-      // You might want to move it to a 'denied' status instead.
       await deleteDoc(doc(db, 'affiliateApplications', appId));
       
       toast.success('Ansökan har nekats och raderats.', { id: toastId });
-      fetchApplications(); // Refresh list
+      fetchData(); // Refresh both lists
     } catch (error) {
       console.error("Error denying affiliate: ", error);
       toast.error('Kunde inte neka ansökan.', { id: toastId });
@@ -74,9 +77,22 @@ const AdminAffiliates = () => {
     const statusStyles = {
       pending: "bg-yellow-100 text-yellow-800",
       approved: "bg-green-100 text-green-800",
+      active: "bg-green-100 text-green-800",
+      suspended: "bg-orange-100 text-orange-800",
       denied: "bg-red-100 text-red-800",
     };
-    return <span className={`${baseClasses} ${statusStyles[status] || 'bg-gray-100 text-gray-800'}`}>{status}</span>;
+    const statusText = {
+      pending: "Väntar",
+      approved: "Godkänd",
+      active: "Aktiv",
+      suspended: "Suspenderad",
+      denied: "Nekad"
+    };
+    return <span className={`${baseClasses} ${statusStyles[status] || 'bg-gray-100 text-gray-800'}`}>{statusText[status] || status}</span>;
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(amount || 0);
   };
 
   return (
@@ -121,6 +137,46 @@ const AdminAffiliates = () => {
                             <button onClick={() => handleDeny(app.id)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs">Neka</button>
                           </div>
                         )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Existing Affiliates List */}
+        <div className="bg-white p-6 rounded-lg shadow-md mt-12">
+          <h2 className="text-xl font-semibold mb-4">Aktiva Affiliates</h2>
+
+          {loading ? (
+            <p>Laddar affiliates...</p>
+          ) : affiliates.length === 0 ? (
+            <p className="text-gray-500">Inga aktiva affiliates hittades.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Namn</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Affiliate-kod</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Konverteringar</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Intjänat</th>
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Åtgärder</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {affiliates.map((aff) => (
+                    <tr key={aff.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{aff.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono bg-gray-50 text-gray-600">{aff.affiliateCode}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm"><StatusBadge status={aff.status} /></td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{aff.stats?.conversions || 0}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(aff.stats?.totalEarnings)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button className="text-blue-600 hover:text-blue-800">Hantera</button>
                       </td>
                     </tr>
                   ))}
