@@ -132,7 +132,7 @@ const AdminAffiliateEdit = () => {
               <DetailItem label="Namn" value={data.name} />
               <DetailItem label="E-post" value={data.email} />
               <DetailItem label="Hemsida/Kanal" value={<a href={data.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{data.website}</a>} />
-              <DetailItem label="Beskrivning" value={<p className="whitespace-pre-wrap">{data.description}</p>} />
+              <DetailItem label="Beskrivning" value={data.message ? <p className="whitespace-pre-wrap">{data.message}</p> : null} />
               {!isApplication && <DetailItem label="Status" value={data.status} />}
               {!isApplication && <DetailItem label="Affiliate-kod" value={data.affiliateCode} />}
               {!isApplication && <DetailItem label="Provision" value={`${data.commissionRate}%`} />}

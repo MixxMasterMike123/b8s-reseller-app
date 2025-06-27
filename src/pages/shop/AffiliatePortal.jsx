@@ -49,6 +49,14 @@ const AffiliatePortal = () => {
     return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(amount);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Laddar portal...</p>
+      </div>
+    );
+  }
+
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -71,13 +79,14 @@ const AffiliatePortal = () => {
     );
   }
 
-  if (!affiliateData && !loading) {
+  if (!affiliateData) {
      return (
       <div className="min-h-screen bg-gray-50">
         <ShopNavigation />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
           <h1 className="text-2xl font-bold text-red-600">Ingen åtkomst</h1>
           <p className="text-gray-700 mt-2">{error || "Vi kunde inte hitta ett aktivt affiliate-konto kopplat till din e-post."}</p>
+          <p className="text-gray-500 text-sm mt-1">Observera: Det kan ta några minuter efter godkännande innan portalen blir aktiv.</p>
           <Link to="/affiliate-registration" className="mt-4 inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
             Ansök för att bli Affiliate
           </Link>

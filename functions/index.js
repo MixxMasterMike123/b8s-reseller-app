@@ -246,8 +246,8 @@ exports.approveAffiliate = functions.https.onCall(async (data, context) => {
     const newAffiliateData = {
       id: authUser.uid, // This is the Firebase Auth UID
       affiliateCode,
-      status: 'active',
       ...appData, // Carry over name, email, website etc. from application
+      status: 'active', // This now correctly overrides the 'pending' status from appData
       commissionRate: 15, // Default commission rate
       stats: {
         clicks: 0,
