@@ -195,6 +195,12 @@ src/
 - Hover states and transitions
 - **2025 Design Elements**: Gradients, glassmorphism, micro-interactions
 
+### Icon Usage (CRITICAL RULE)
+- **NEVER EVER use emojis in code** (🚫 NO: '🖼️', '🎥', '📄', etc.)
+- **ALWAYS use real icon libraries instead** (✅ YES: Heroicons, Lucide, etc.)
+- **Reason**: Emojis cause rendering issues, accessibility problems, and inconsistent display across devices
+- **Exception**: Only use emojis in user-facing content/text, never in UI components or file type indicators
+
 ### Firebase Integration
 - **ALWAYS use named database**: `b8s-reseller-db` (NEVER use default database)
 - Error handling for offline scenarios
@@ -327,6 +333,17 @@ src/
 - **Image Previews**: Real image thumbnails from Firebase Storage (fixed fileType detection)
 - **Visual Interface**: Actual image previews for JPG/PNG/GIF/WebP/SVG files
 - **Fallback System**: File type icons for non-images or failed loads
+- **Categories Available**:
+  - **Allmänt**: General marketing materials
+  - **Produktbilder**: Product images and photos
+  - **EAN-koder**: EAN barcode images and files
+  - **Annonser**: Ready-to-print PDF advertisements, brochures, flyers
+  - **Broschyrer**: Marketing brochures and pamphlets
+  - **Videos**: Video marketing materials
+  - **Prislista**: Price lists and catalogs
+  - **Instruktioner**: User manuals and instructions
+  - **Dokument**: General documents
+  - **Övrigt**: Other miscellaneous materials
 
 ### Marketing Materials Database Schema
 ```javascript
@@ -336,7 +353,7 @@ src/
 {
   id: string,
   name: string,
-  category: string, // 'Allmänt', 'Produktbilder', 'EAN-koder', etc.
+  category: string, // 'allmänt', 'produktbilder', 'ean-koder', 'annonser', 'broschyrer', 'videos', 'prislista', 'instruktioner', 'dokument', 'övrigt'
   fileType: string,
   fileSize: number,
   downloadUrl: string,
