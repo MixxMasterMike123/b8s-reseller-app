@@ -187,23 +187,35 @@ const AdminOrders = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ordernummer</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kund</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Totalt</th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Åtgärd</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ordernummer</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kund</th>
+                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Totalt</th>
+                    <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Åtgärd</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {sortedOrders.map(order => (
                     <tr key={order.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-800">{order.orderNumber || order.id}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{formatDate(order.createdAt)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                        {order.companyName || `${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''}`.trim() || order.customerInfo?.email || 'Gäst'}
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm font-mono text-gray-800">{order.orderNumber || order.id}</span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                            order.source === 'b2c' 
+                              ? 'bg-purple-100 text-purple-800'
+                              : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {order.source === 'b2c' ? 'B2C' : 'B2B'}
+                          </span>
+                        </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold text-gray-900">
+                      <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-600">{formatDate(order.createdAt)}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{order.companyName || `${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''}`.trim()}</div>
+                        <div className="text-xs text-gray-500">{order.customerInfo?.email || 'Gäst'}</div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium text-gray-900">
                         {new Intl.NumberFormat('sv-SE', { 
                           style: 'currency', 
                           currency: 'SEK',
@@ -215,15 +227,18 @@ const AdminOrders = () => {
                             : (order.prisInfo?.totalPris || order.totalAmount || 0)
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <td className="px-4 py-3 whitespace-nowrap text-center">
                         <OrderStatusMenu
                           currentStatus={order.status}
                           onStatusChange={(newStatus) => handleStatusUpdate(order.id, newStatus)}
                           disabled={loading}
                         />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <Link to={`/admin/orders/${order.id}`} className="text-blue-600 hover:text-blue-800">
+                      <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
+                        <Link
+                          to={`/admin/orders/${order.id}`}
+                          className="text-blue-600 hover:text-blue-800 font-medium"
+                        >
                           Hantera
                         </Link>
                       </td>
