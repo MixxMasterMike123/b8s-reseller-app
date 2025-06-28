@@ -16,4 +16,59 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* Print styles */
+@media print {
+  /* Hide everything by default */
+  body > * {
+    display: none !important;
+  }
+
+  /* Only show print-specific content */
+  #print-iframe {
+    display: block !important;
+  }
+
+  .print-only {
+    display: block !important;
+    background: white;
+    color: black;
+  }
+
+  /* Basic print styles */
+  @page {
+    size: A4;
+    margin: 2cm;
+  }
+
+  /* Table styles */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    page-break-inside: avoid;
+  }
+
+  th, td {
+    padding: 8pt;
+    text-align: left;
+    border-bottom: 1pt solid #ddd;
+  }
+
+  /* Force background colors in print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* Hide print-only elements in normal view */
+.print-only {
+  display: none;
+}
+
+#print-iframe {
+  display: none;
+  width: 0;
+  height: 0;
 } 
