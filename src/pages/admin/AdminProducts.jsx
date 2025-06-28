@@ -564,6 +564,15 @@ function AdminProducts() {
     }
   };
 
+  // Add this helper function at the top level of the component
+  const getProductImage = (product) => {
+    // Priority: B2B image > legacy Firebase Storage URL > legacy base64 > placeholder
+    if (product.b2bImageUrl) return product.b2bImageUrl;
+    if (product.imageUrl) return product.imageUrl;
+    if (product.imageData) return product.imageData;
+    return null;
+  };
+
   if (!isAdmin) {
     return (
       <AppLayout>
@@ -1207,17 +1216,20 @@ function AdminProducts() {
                       <tr key={product.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
                           <div className="flex items-center">
-                            {product.imageUrl ? (
-                              <img 
-                                src={product.imageUrl} 
-                                alt={product.name} 
-                                className="w-12 h-12 mr-4 object-cover rounded-md border border-gray-200"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 mr-4 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
-                                <span className="text-xs text-gray-500">Ingen bild</span>
-                              </div>
-                            )}
+                            {(() => {
+                              const imageUrl = getProductImage(product);
+                              return imageUrl ? (
+                                <img 
+                                  src={imageUrl} 
+                                  alt={product.name} 
+                                  className="w-12 h-12 mr-4 object-cover rounded-md border border-gray-200"
+                                />
+                              ) : (
+                                <div className="w-12 h-12 mr-4 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
+                                  <span className="text-xs text-gray-500">Ingen bild</span>
+                                </div>
+                              );
+                            })()}
                             <div>
                               <div className="text-sm font-medium text-gray-900">{product.name}</div>
                               <div className="text-sm text-gray-500 max-w-xs truncate">{product.description}</div>

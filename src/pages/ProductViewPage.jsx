@@ -87,6 +87,15 @@ function ProductViewPage() {
     setSelectedProduct(null);
   };
 
+  // Add this helper function at the top level of the component
+  const getProductImage = (product) => {
+    // Priority: B2B image > legacy Firebase Storage URL > legacy base64 > placeholder
+    if (product.b2bImageUrl) return product.b2bImageUrl;
+    if (product.imageUrl) return product.imageUrl;
+    if (product.imageData) return product.imageData;
+    return null;
+  };
+
   if (!currentUser) {
     return (
       <AppLayout>
@@ -214,27 +223,30 @@ function ProductViewPage() {
                 {/* Product Images */}
                 <div className="space-y-6">
                   {/* Main Product Image */}
-                  {(selectedProduct.imageUrl || selectedProduct.imageData) && (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="text-sm font-medium text-gray-700 mb-3">Produktbild</h3>
-                      <div className="space-y-3">
-                        <img 
-                          src={selectedProduct.imageUrl || selectedProduct.imageData} 
-                          alt={selectedProduct.name} 
-                          className="w-full h-64 object-contain border border-gray-200 rounded-md bg-white"
-                        />
-                        <button
-                          onClick={() => handleDownloadImage(selectedProduct.imageUrl || selectedProduct.imageData, selectedProduct.name, 'product')}
-                          className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          Ladda ner produktbild
-                        </button>
+                  {(() => {
+                    const imageUrl = getProductImage(selectedProduct);
+                    return imageUrl ? (
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h3 className="text-sm font-medium text-gray-700 mb-3">Produktbild</h3>
+                        <div className="space-y-3">
+                          <img 
+                            src={imageUrl} 
+                            alt={selectedProduct.name} 
+                            className="w-full h-64 object-contain border border-gray-200 rounded-md bg-white"
+                          />
+                          <button
+                            onClick={() => handleDownloadImage(imageUrl, selectedProduct.name, 'product')}
+                            className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Ladda ner produktbild
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    ) : null;
+                  })()}
 
                   {/* EAN Code Images */}
                   {(selectedProduct.eanImagePngUrl || selectedProduct.eanImagePng || selectedProduct.eanImageSvgUrl || selectedProduct.eanImageSvg) && (
@@ -336,17 +348,20 @@ function ProductViewPage() {
                       <tr key={product.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => handleProductSelect(product)}>
                         <td className="px-6 py-4">
                           <div className="flex items-center">
-                            {(product.imageUrl || product.imageData) ? (
-                              <img 
-                                src={product.imageUrl || product.imageData} 
-                                alt={product.name} 
-                                className="w-12 h-12 mr-4 object-cover rounded-md border border-gray-200"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 mr-4 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
-                                <span className="text-xs text-gray-500">Ingen bild</span>
-                              </div>
-                            )}
+                            {(() => {
+                              const imageUrl = getProductImage(product);
+                              return imageUrl ? (
+                                <img 
+                                  src={imageUrl} 
+                                  alt={product.name} 
+                                  className="w-12 h-12 mr-4 object-cover rounded-md border border-gray-200"
+                                />
+                              ) : (
+                                <div className="w-12 h-12 mr-4 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
+                                  <span className="text-xs text-gray-500">Ingen bild</span>
+                                </div>
+                              );
+                            })()}
                             <div>
                               <div className="text-sm font-medium text-gray-900">{product.name}</div>
                               <div className="text-sm text-gray-500 max-w-xs truncate">{product.description}</div>

@@ -30,6 +30,14 @@ const ProductMenu = ({ products, selectedProduct, onProductSelect }) => {
     setIsOpen(false);
   };
 
+  // Add this helper function at the top level of the component
+  const getProductImage = (product) => {
+    if (product.b2bImageUrl) return product.b2bImageUrl;
+    if (product.imageUrl) return product.imageUrl;
+    if (product.imageData) return product.imageData;
+    return null;
+  };
+
   return (
     <div className="relative inline-block w-full" ref={menuRef}>
       <button
@@ -68,13 +76,16 @@ const ProductMenu = ({ products, selectedProduct, onProductSelect }) => {
                   onClick={() => handleProductSelect(product)}
                 >
                   <div className="flex items-center">
-                    {product.imageData && (
-                      <img 
-                        src={product.imageData} 
-                        alt={product.name} 
-                        className="w-8 h-8 mr-3 object-cover rounded"
-                      />
-                    )}
+                    {(() => {
+                      const imageUrl = getProductImage(product);
+                      return imageUrl ? (
+                        <img 
+                          src={imageUrl} 
+                          alt={product.name} 
+                          className="w-8 h-8 mr-3 object-cover rounded"
+                        />
+                      ) : null;
+                    })()}
                     <div>
                       <div className="font-medium">{product.name}</div>
                       {product.size && <div className="text-xs text-gray-500">Size: {product.size}</div>}

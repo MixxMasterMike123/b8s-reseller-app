@@ -69,6 +69,15 @@ const OrderPage = () => {
     });
   };
 
+  // Add this helper function at the top level of the component
+  const getProductImage = (product) => {
+    // Priority: B2B image > legacy Firebase Storage URL > legacy base64 > placeholder
+    if (product.b2bImageUrl) return product.b2bImageUrl;
+    if (product.imageUrl) return product.imageUrl;
+    if (product.imageData) return product.imageData;
+    return null;
+  };
+
   // Fetch products from Firestore
   useEffect(() => {
     const fetchProducts = async () => {
@@ -440,9 +449,6 @@ const OrderPage = () => {
                 'Glitter': 'glitter'
               };
               
-              // Log all products for debugging
-              console.log("All products:", products.map(p => ({ id: p.id, name: p.name })));
-              
               // Create color buckets - we need to manually create one for each color
               const colorProducts = {
                 'transparent': null,
@@ -452,17 +458,14 @@ const OrderPage = () => {
               };
               
               // Find one product for each color
-              products.filter(p => p.imageData).forEach(product => {
+              products.forEach(product => {
                 // Skip if no name
                 if (!product.name) return;
-                
-                console.log("Checking product:", product.name);
                 
                 // Check for Transparent
                 if (product.name.includes("Transparent")) {
                   if (!colorProducts['transparent']) {
                     colorProducts['transparent'] = product;
-                    console.log(`  Added to map: transparent = ${product.name}`);
                   }
                 }
                 // Check for Red variants
@@ -470,39 +473,41 @@ const OrderPage = () => {
                         product.name.toLowerCase().includes("rod") || product.name.includes("RED")) {
                   if (!colorProducts['rod']) {
                     colorProducts['rod'] = product;
-                    console.log(`  Added to map: rod = ${product.name}`);
                   }
                 }
                 // Check for Fluorescent variants
                 else if (product.name.includes("Fluorescent") || product.name.includes("Fluor")) {
                   if (!colorProducts['florerande']) {
                     colorProducts['florerande'] = product;
-                    console.log(`  Added to map: florerande = ${product.name}`);
                   }
                 }
                 // Check for Glitter
                 else if (product.name.includes("Glitter")) {
                   if (!colorProducts['glitter']) {
                     colorProducts['glitter'] = product;
-                    console.log(`  Added to map: glitter = ${product.name}`);
                   }
                 }
               });
-              
-              // Check if we have all expected colors and log the collected info
-              console.log("Collected color products:", Object.entries(colorProducts)
-                .map(([id, p]) => `${id}: ${p ? p.name : 'missing'}`));
               
               // Render one product per color (only if we have a product for that color)
               return Object.entries(colorProducts)
                 .filter(([_, product]) => product !== null)
                 .map(([colorId, product]) => (
                   <div key={product.id} className="text-center">
-                    <img 
-                      src={product.imageData} 
-                      alt={product.name} 
-                      className={`w-full h-40 object-cover rounded mb-2 border-2 ${farger[colorId] ? 'border-blue-500' : 'border-transparent'}`} 
-                    />
+                    {(() => {
+                      const imageUrl = getProductImage(product);
+                      return imageUrl ? (
+                        <img 
+                          src={imageUrl} 
+                          alt={product.name} 
+                          className={`w-full h-40 object-cover rounded mb-2 border-2 ${farger[colorId] ? 'border-blue-500' : 'border-transparent'}`} 
+                        />
+                      ) : (
+                        <div className="w-full h-40 bg-gray-100 rounded mb-2 border-2 flex items-center justify-center">
+                          <span className="text-sm text-gray-500">Ingen bild</span>
+                        </div>
+                      );
+                    })()}
                     <p className="text-sm font-medium">{product.name}</p>
                   </div>
                 ));
