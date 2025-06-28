@@ -64,7 +64,9 @@ const OrderStatusMenu = ({ currentStatus, onStatusChange, disabled, className = 
       <button
         type="button"
         disabled={disabled}
-        className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded border ${getStatusStyles(currentStatus)} ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-opacity-80'}`}
+        className={`inline-flex w-32 justify-center items-center px-4 py-2 text-sm font-medium rounded-md ${
+          getStatusStyles(currentStatus)
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-opacity-80'}`}
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="mr-1">{getCurrentStatusLabel()}</span>
