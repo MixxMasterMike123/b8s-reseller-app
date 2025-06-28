@@ -4,49 +4,64 @@ import { Link } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
+import OrderStatusMenu from '../../components/OrderStatusMenu';
 
 const AdminOrders = () => {
-  const { orders, loading, error, getOrderById } = useOrder();
+  const { getAllOrders, updateOrderStatus, loading: contextLoading, error: contextError } = useOrder();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('b2b'); // 'b2b' or 'b2c'
+  const [activeStatusTab, setActiveStatusTab] = useState('all');
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        const fetchedOrders = await getAllOrders();
+        setOrders(fetchedOrders);
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, [getAllOrders]);
 
   const filteredOrders = useMemo(() => {
-    // Guard against orders being undefined during initial load
     if (!Array.isArray(orders)) {
       return [];
     }
 
-    let sourceFiltered = orders.filter(order => {
-      if (activeTab === 'b2b') {
-        // Show orders with source 'b2b' or those without a source property (legacy orders)
-        return order.source === 'b2b' || !order.source;
-      }
-      return order.source === 'b2c';
-    });
-
-    if (!searchTerm) {
-      return sourceFiltered;
+    let statusFiltered = orders;
+    if (activeStatusTab !== 'all') {
+      statusFiltered = orders.filter(order => order.status === activeStatusTab);
     }
 
-    return sourceFiltered.filter(order =>
+    if (!searchTerm) {
+      return statusFiltered;
+    }
+
+    return statusFiltered.filter(order =>
       (order.orderNumber && order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (order.userId && order.userId.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (order.customerInfo?.email && order.customerInfo.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (order.customerInfo?.firstName && order.customerInfo.firstName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (order.customerInfo?.lastName && order.customerInfo.lastName.toLowerCase().includes(searchTerm.toLowerCase()))
+      (order.customerInfo?.lastName && order.customerInfo.lastName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (order.companyName && order.companyName.toLowerCase().includes(searchTerm.toLowerCase()))
     );
-  }, [orders, searchTerm, activeTab]);
+  }, [orders, searchTerm, activeStatusTab]);
 
   const sortedOrders = useMemo(() => {
     return [...filteredOrders].sort((a, b) => {
-      const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
-      const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+      const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+      const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
       return dateB - dateA;
     });
   }, [filteredOrders]);
   
   const formatDate = (date) => {
-    // Improved date handling to prevent crashes
     if (!date) return 'N/A';
     try {
       const jsDate = date.toDate ? date.toDate() : new Date(date);
@@ -59,15 +74,14 @@ const AdminOrders = () => {
       return 'Datumfel';
     }
   };
-
-  const getStatusClass = (status) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed': return 'bg-blue-100 text-blue-800';
-      case 'shipped': return 'bg-indigo-100 text-indigo-800';
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+  
+  const handleStatusUpdate = async (orderId, newStatus) => {
+    try {
+      await updateOrderStatus(orderId, newStatus);
+      const fetchedOrders = await getAllOrders();
+      setOrders(fetchedOrders);
+    } catch (updateError) {
+      console.error("Failed to update status from AdminOrders:", updateError);
     }
   };
 
@@ -84,6 +98,17 @@ const AdminOrders = () => {
     </button>
   );
 
+  const statusTabs = [
+    { key: 'all', label: 'Alla' },
+    { key: 'pending', label: 'Väntar' },
+    { key: 'processing', label: 'Behandlas' },
+    { key: 'shipped', label: 'Skickad' },
+    { key: 'delivered', label: 'Levererad' },
+    { key: 'cancelled', label: 'Avbruten' },
+  ];
+
+  const currentError = error || contextError;
+
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -99,16 +124,23 @@ const AdminOrders = () => {
         </div>
         
         <div className="mb-6">
-          <div className="flex space-x-2 border-b border-gray-200 pb-2">
-            <TabButton tabName="b2b" label="Återförsäljare" activeTab={activeTab} setActiveTab={setActiveTab} />
-            <TabButton tabName="b2c" label="Kunder" activeTab={activeTab} setActiveTab={setActiveTab} />
+          <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 pb-2">
+            {statusTabs.map(tab => (
+              <TabButton
+                key={tab.key}
+                tabName={tab.key}
+                label={tab.label}
+                activeTab={activeStatusTab}
+                setActiveTab={setActiveStatusTab}
+              />
+            ))}
           </div>
         </div>
 
-        {loading ? (
+        {loading || contextLoading ? (
           <p>Laddar ordrar...</p>
-        ) : error ? (
-          <p className="text-red-500">Fel vid laddning av ordrar: {error}</p>
+        ) : currentError ? (
+          <p className="text-red-500">Fel vid laddning av ordrar: {currentError}</p>
         ) : (
           <div className="bg-white shadow-lg rounded-lg overflow-hidden">
             <div className="overflow-x-auto">
@@ -117,9 +149,7 @@ const AdminOrders = () => {
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ordernummer</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {activeTab === 'b2b' ? 'Företag' : 'Kund'}
-                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kund</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Totalt</th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Åtgärd</th>
@@ -131,17 +161,16 @@ const AdminOrders = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-800">{order.orderNumber || order.id}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{formatDate(order.createdAt)}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                        {activeTab === 'b2b' 
-                          ? order.companyName || order.customerInfo?.email || 'N/A' // Fallback for B2B
-                          : `${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''}`.trim() || order.customerInfo?.email || 'Guest'}
+                        {order.companyName || `${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''}`.trim() || order.customerInfo?.email || 'Gäst'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold text-gray-900">
                         {new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(order.totalAmount || order.total || 0)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(order.status)}`}>
-                          {order.status}
-                        </span>
+                        <OrderStatusMenu 
+                          order={order}
+                          onUpdateStatus={(newStatus) => handleStatusUpdate(order.id, newStatus)}
+                        />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <Link to={`/admin/orders/${order.id}`} className="text-blue-600 hover:text-blue-800">
