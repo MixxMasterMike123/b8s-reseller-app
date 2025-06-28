@@ -5,6 +5,7 @@ import AppLayout from '../../components/layout/AppLayout';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import OrderStatusMenu from '../../components/OrderStatusMenu';
+import { toast } from 'react-hot-toast';
 
 const AdminOrders = () => {
   const { getAllOrders, updateOrderStatus, loading: contextLoading, error: contextError } = useOrder();
@@ -88,11 +89,20 @@ const AdminOrders = () => {
   
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
+      setLoading(true);
       await updateOrderStatus(orderId, newStatus);
+      
+      // Fetch all orders again to update the list
       const fetchedOrders = await getAllOrders();
       setOrders(fetchedOrders);
-    } catch (updateError) {
-      console.error("Failed to update status from AdminOrders:", updateError);
+      
+      // Show success message
+      toast.success('Orderstatus uppdaterad');
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      toast.error('Kunde inte uppdatera orderstatus');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -206,9 +216,10 @@ const AdminOrders = () => {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <OrderStatusMenu 
-                          order={order}
-                          onUpdateStatus={(newStatus) => handleStatusUpdate(order.id, newStatus)}
+                        <OrderStatusMenu
+                          currentStatus={order.status}
+                          onStatusChange={(newStatus) => handleStatusUpdate(order.id, newStatus)}
+                          disabled={loading}
                         />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
