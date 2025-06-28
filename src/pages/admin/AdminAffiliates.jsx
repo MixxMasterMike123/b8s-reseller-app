@@ -195,32 +195,58 @@ const AdminAffiliates = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {affiliates.map((affiliate) => (
-                <div key={affiliate.id} className="bg-white rounded-2xl shadow-lg p-6 flex flex-col justify-between">
+                <div key={affiliate.id} className="bg-white rounded-2xl shadow-lg p-6 flex flex-col justify-between hover:shadow-xl transition-all duration-200">
                   <div>
-                    <div className="flex justify-between items-start">
+                    <div className="flex justify-between items-start mb-3">
                       <h3 className="text-lg font-bold text-gray-900 truncate">{affiliate.name}</h3>
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        affiliate.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {affiliate.status}
-                      </span>
+                      <StatusBadge status={affiliate.status} />
                     </div>
-                    <p className="text-sm text-gray-500">{affiliate.email}</p>
-                    <a href={affiliate.website} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline truncate block">{affiliate.website}</a>
+                    <p className="text-sm text-gray-500 mb-2">{affiliate.email}</p>
+                    
+                    {/* Affiliate Code Section */}
+                    <div className="bg-blue-50 rounded-lg p-3 mb-4">
+                      <p className="text-xs text-blue-600 font-medium mb-1">Affiliate Kod</p>
+                      <div className="font-mono text-sm bg-white px-3 py-2 rounded border border-blue-100">
+                        {affiliate.affiliateCode}
+                      </div>
+                    </div>
+
+                    {/* Website Link */}
+                    {affiliate.website && (
+                      <a 
+                        href={affiliate.website} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-sm text-blue-600 hover:text-blue-800 hover:underline truncate block mb-4"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {affiliate.website}
+                      </a>
+                    )}
                     
                     <div className="mt-4 pt-4 border-t border-gray-200">
-                      <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
+                      <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
                         <dt className="text-sm font-medium text-gray-500">Provision</dt>
                         <dd className="text-sm text-gray-900 font-semibold">{affiliate.commissionRate}%</dd>
                         
-                        <dt className="text-sm font-medium text-gray-500">Klick</dt>
-                        <dd className="text-sm text-gray-900">{(affiliate.stats?.clicks || 0).toLocaleString('sv-SE')}</dd>
+                        <dt className="text-sm font-medium text-gray-500">Rabatt</dt>
+                        <dd className="text-sm text-gray-900 font-semibold">{affiliate.checkoutDiscount || 0}%</dd>
+                        
+                        <dt className="text-sm font-medium text-gray-500">Besök</dt>
+                        <dd className="text-sm text-gray-900 font-semibold">{(affiliate.stats?.clicks || 0).toLocaleString('sv-SE')}</dd>
                         
                         <dt className="text-sm font-medium text-gray-500">Konverteringar</dt>
-                        <dd className="text-sm text-gray-900">{(affiliate.stats?.conversions || 0).toLocaleString('sv-SE')}</dd>
+                        <dd className="text-sm text-gray-900 font-semibold">{(affiliate.stats?.conversions || 0).toLocaleString('sv-SE')}</dd>
+                        
+                        <dt className="text-sm font-medium text-gray-500">Konv.grad</dt>
+                        <dd className="text-sm text-gray-900 font-semibold">
+                          {affiliate.stats?.clicks ? 
+                            ((affiliate.stats.conversions / affiliate.stats.clicks) * 100).toFixed(1) : 
+                            0}%
+                        </dd>
                         
                         <dt className="text-sm font-medium text-gray-500">Intjänat</dt>
-                        <dd className="text-sm text-gray-900 font-bold">{formatCurrency(affiliate.stats?.totalEarnings)}</dd>
+                        <dd className="text-sm text-gray-900 font-bold text-green-600">{formatCurrency(affiliate.stats?.totalEarnings)}</dd>
                       </dl>
                     </div>
                   </div>
