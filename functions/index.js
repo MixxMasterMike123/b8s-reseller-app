@@ -386,79 +386,63 @@ exports.approveAffiliate = functions.https.onCall(async (data, context) => {
  * [NEW] Callable function to log an affiliate link click.
  */
 exports.logAffiliateClick = functions
-  .runWith({
-    timeoutSeconds: 30,
-    memory: '128MB'
-  })
   .region('us-central1')
   .https.onCall(async (data, context) => {
-  const { affiliateCode } = data;
+    const { affiliateCode } = data;
 
-  if (!affiliateCode) {
-    throw new functions.https.HttpsError('invalid-argument', 'The function must be called with an "affiliateCode".');
-  }
-
-  try {
-    // console.log(`[DEBUG] logAffiliateClick called for code: ${affiliateCode}. Stripped-down function.`);
-    // return { success: true, message: "Debug mode: Function called successfully." };
-
-    /*
-    const affiliatesRef = db.collection('affiliates');
-    const q = query(affiliatesRef, where("affiliateCode", "==", affiliateCode));
-    const querySnapshot = await getDocs(q);
-    */
-    
-    // Use the older, chained syntax compatible with the installed SDK version.
-    const querySnapshot = await db.collection('affiliates').where("affiliateCode", "==", affiliateCode).get();
-
-    if (querySnapshot.empty) {
-      console.warn(`Affiliate click logged for non-existent code: ${affiliateCode}`);
-      return { success: false, error: "Invalid code" };
+    if (!affiliateCode) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'The function must be called with an affiliateCode.'
+      );
     }
-    
-    // console.log(`[DEBUG] Step 2 Success: Found affiliate for code ${affiliateCode}.`);
-    // return { success: true, message: "Debug mode: Step 2 passed." };
 
-    const affiliateDoc = querySnapshot.docs[0];
-    const affiliateId = affiliateDoc.id;
+    try {
+      // Get affiliate details
+      const affiliatesRef = db.collection('affiliates');
+      const q = affiliatesRef.where('affiliateCode', '==', affiliateCode).where('status', '==', 'active');
+      const affiliateSnapshot = await q.get();
 
-    // Use a transaction to safely increment the click count
-    await db.runTransaction(async (transaction) => {
-      const affiliateToUpdateRef = db.collection('affiliates').doc(affiliateId);
-      const affiliateSnapshot = await transaction.get(affiliateToUpdateRef);
-
-      if (!affiliateSnapshot.exists) {
-        throw "Affiliate document not found in transaction!";
+      if (affiliateSnapshot.empty) {
+        throw new functions.https.HttpsError(
+          'not-found',
+          `No active affiliate found for code: ${affiliateCode}`
+        );
       }
 
-      const affiliateData = affiliateSnapshot.data();
-      const stats = affiliateData.stats || {};
-      const newClicks = (stats.clicks || 0) + 1;
-      
-      transaction.update(affiliateToUpdateRef, { 'stats.clicks': newClicks });
-    });
+      const affiliateDoc = affiliateSnapshot.docs[0];
+      const affiliate = affiliateDoc.data();
 
-    // Log the click event to the affiliateClicks collection
-    const clickData = {
-      affiliateCode: affiliateCode,
-      affiliateId: affiliateId,
-      timestamp: Timestamp.now(),
-      ipAddress: context.rawRequest?.ip || 'unknown',
-      userAgent: context.rawRequest?.headers?.['user-agent'] || 'unknown',
-      converted: false, // This will be updated upon purchase
-    };
+      // Create click record
+      const clickRef = await db.collection('affiliateClicks').add({
+        affiliateCode: affiliateCode,
+        affiliateId: affiliateDoc.id,
+        timestamp: admin.firestore.Timestamp.now(),
+        ipAddress: context.rawRequest?.ip || 'unknown',
+        userAgent: context.rawRequest?.headers?.['user-agent'] || 'unknown',
+        landingPage: context.rawRequest?.headers?.referer || 'unknown',
+        converted: false,
+      });
 
-    await db.collection('affiliateClicks').add(clickData);
-    
-    return { success: true };
+      // Update affiliate stats
+      await affiliateDoc.ref.update({
+        'stats.clicks': admin.firestore.FieldValue.increment(1)
+      });
 
-  } catch (error) {
-    const errorMessage = error.message || 'Unknown error';
-    console.error(`Error logging click for code ${affiliateCode}:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
-    // Send the specific error message back to the client for better debugging.
-    throw new functions.https.HttpsError('internal', `Backend Error: ${errorMessage}`, { originalError: error });
-  }
-});
+      return { 
+        success: true, 
+        message: `Click logged for affiliate ${affiliateCode}`,
+        clickId: clickRef.id
+      };
+
+    } catch (error) {
+      console.error(`Error logging affiliate click for code ${affiliateCode}:`, error);
+      throw new functions.https.HttpsError(
+        'internal',
+        'Error logging affiliate click.'
+      );
+    }
+  });
 
 /**
  * [NEW & REFACTORED] This is an HTTP function invoked from the client-side after
@@ -2257,5 +2241,87 @@ exports.processB2COrderCompletion = functions
         success: false, 
         error: `Processing failed: ${error.message}` 
       };
+    }
+  });
+
+/**
+ * [NEW] HTTP endpoint for affiliate click logging
+ */
+exports.logAffiliateClickHttp = functions
+  .region('us-central1')
+  .https.onRequest(async (req, res) => {
+    // Enable CORS
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', '*');
+    res.set('Access-Control-Max-Age', '3600');
+
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    // Only allow POST
+    if (req.method !== 'POST') {
+      res.status(405).send('Method Not Allowed');
+      return;
+    }
+
+    const { affiliateCode } = req.body;
+
+    if (!affiliateCode) {
+      res.status(400).json({
+        success: false,
+        error: 'The request must include an affiliateCode.'
+      });
+      return;
+    }
+
+    try {
+      // Get affiliate details
+      const affiliatesRef = db.collection('affiliates');
+      const q = affiliatesRef.where('affiliateCode', '==', affiliateCode).where('status', '==', 'active');
+      const affiliateSnapshot = await q.get();
+
+      if (affiliateSnapshot.empty) {
+        res.status(404).json({
+          success: false,
+          error: `No active affiliate found for code: ${affiliateCode}`
+        });
+        return;
+      }
+
+      const affiliateDoc = affiliateSnapshot.docs[0];
+      const affiliate = affiliateDoc.data();
+
+      // Create click record
+      const clickRef = await db.collection('affiliateClicks').add({
+        affiliateCode: affiliateCode,
+        affiliateId: affiliateDoc.id,
+        timestamp: admin.firestore.Timestamp.now(),
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.headers['user-agent'] || 'unknown',
+        landingPage: req.headers.referer || 'unknown',
+        converted: false,
+      });
+
+      // Update affiliate stats
+      await affiliateDoc.ref.update({
+        'stats.clicks': admin.firestore.FieldValue.increment(1)
+      });
+
+      res.status(200).json({ 
+        success: true, 
+        message: `Click logged for affiliate ${affiliateCode}`,
+        clickId: clickRef.id
+      });
+
+    } catch (error) {
+      console.error(`Error logging affiliate click for code ${affiliateCode}:`, error);
+      res.status(500).json({
+        success: false,
+        error: 'Error logging affiliate click.'
+      });
     }
   });
