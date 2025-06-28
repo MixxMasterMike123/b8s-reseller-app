@@ -1,7 +1,13 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
-const { getFirestore, Timestamp, query, where, getDocs, orderBy, limit } = require("firebase-admin/firestore");
+const { getFirestore, Timestamp, query, where, getDocs, orderBy, limit, FieldValue } = require("firebase-admin/firestore");
+const cors = require('cors')({
+  origin: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true
+});
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -379,7 +385,13 @@ exports.approveAffiliate = functions.https.onCall(async (data, context) => {
 /**
  * [NEW] Callable function to log an affiliate link click.
  */
-exports.logAffiliateClick = functions.https.onCall(async (data, context) => {
+exports.logAffiliateClick = functions
+  .runWith({
+    timeoutSeconds: 30,
+    memory: '128MB'
+  })
+  .region('us-central1')
+  .https.onCall(async (data, context) => {
   const { affiliateCode } = data;
 
   if (!affiliateCode) {
@@ -449,102 +461,143 @@ exports.logAffiliateClick = functions.https.onCall(async (data, context) => {
 });
 
 /**
- * [REFACTORED] Firestore trigger to process affiliate conversion on new order.
- * This automatically runs when a new document is created in the 'orders' collection.
+ * [NEW & REFACTORED] This is an HTTP function invoked from the client-side after
+ * a successful B2C order creation. Using HTTP instead of Callable for better CORS support.
  */
-exports.processAffiliateConversion = functions.firestore
-  .document('orders/{orderId}')
-  .onCreate(async (snap, context) => {
-    const orderData = snap.data();
-    const orderId = context.params.orderId;
+exports.processB2COrderCompletion = functions
+  .runWith({
+    timeoutSeconds: 60,
+    memory: '256MB'
+  })
+  .region('us-central1')
+  .https.onRequest(async (req, res) => {
+    // Enable CORS
+    res.set('Access-Control-Allow-Origin', 'https://shop.b8shield.com');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.set('Access-Control-Max-Age', '3600');
 
-    // Check if the order has an affiliate code
-    if (!orderData.affiliateCode) {
-      console.log(`Order ${orderId} has no affiliate code. Skipping conversion processing.`);
-      return null;
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
     }
 
-    const { affiliateCode, total, subtotal } = orderData;
-    console.log(`Processing conversion for order ${orderId} with affiliate code ${affiliateCode}`);
+    // Only allow POST
+    if (req.method !== 'POST') {
+      res.status(405).send('Method Not Allowed');
+      return;
+    }
 
     try {
-      const affiliatesRef = db.collection('affiliates');
-      const q = query(affiliatesRef, where("affiliateCode", "==", affiliateCode));
-      const affiliateSnapshot = await getDocs(q);
+      const { orderId } = req.body;
 
-      if (affiliateSnapshot.empty) {
-        console.error(`Affiliate with code ${affiliateCode} not found for order ${orderId}.`);
-        return null;
+      if (!orderId) {
+        res.status(400).json({ 
+          success: false, 
+          error: 'The function must be called with an "orderId".' 
+        });
+        return;
       }
 
-      const affiliateDoc = affiliateSnapshot.docs[0];
+      console.log(`Processing B2C order completion for orderId: ${orderId}`);
+      const localDb = db; // Use the correct named database
+
+      // --- Start of Affiliate Conversion Logic ---
+      const orderRef = localDb.collection('orders').doc(orderId);
+      const orderSnap = await orderRef.get();
+
+      if (!orderSnap.exists) {
+        console.error(`Order ${orderId} not found in b8s-reseller-db.`);
+        res.status(404).json({ 
+          success: false, 
+          error: `Order ${orderId} not found in database` 
+        });
+        return;
+      }
+
+      const orderData = orderSnap.data();
+      const { affiliateCode } = orderData;
+
+      if (!affiliateCode) {
+        console.log('No affiliate code found for order, skipping commission.');
+        res.json({ success: true, message: 'Order processed (no affiliate)' });
+        return;
+      }
+
+      // Get affiliate details
+      const affiliateSnap = await localDb
+        .collection('affiliates')
+        .where('affiliateCode', '==', affiliateCode)
+        .where('status', '==', 'active')
+        .limit(1)
+        .get();
+
+      if (affiliateSnap.empty) {
+        console.error(`No active affiliate found for code: ${affiliateCode}`);
+        res.json({ success: true, message: 'Order processed (invalid affiliate)' });
+        return;
+      }
+
+      const affiliateDoc = affiliateSnap.docs[0];
       const affiliate = affiliateDoc.data();
-      const affiliateId = affiliateDoc.id;
 
-      // Calculate commission (e.g., based on subtotal to avoid including shipping/taxes)
-      const commissionRate = affiliate.commissionRate || 0; // Default to 0 if not set
-      const commissionAmount = (subtotal || 0) * (commissionRate / 100);
+      // Calculate commission
+      const orderTotal = orderData.total || 0;
+      const commissionRate = affiliate.commissionRate || 15; // Default 15%
+      const commissionAmount = (orderTotal * (commissionRate / 100));
 
-      // Update affiliate's stats
-      const affiliateRef = db.collection('affiliates').doc(affiliateId);
-      await db.runTransaction(async (transaction) => {
-        const affiliateToUpdateRef = db.collection('affiliates').doc(affiliateId);
-        const affiliateSnapshot = await transaction.get(affiliateToUpdateRef);
-        
-        if (!affiliateSnapshot.exists) {
-          throw `Affiliate document ${affiliateId} not found in transaction!`;
-        }
-
-        const newConversions = (affiliate.stats.conversions || 0) + 1;
-        const newTotalEarnings = (affiliate.stats.totalEarnings || 0) + commissionAmount;
-        const newBalance = (affiliate.stats.balance || 0) + commissionAmount;
-        
-        transaction.update(affiliateToUpdateRef, { 
-          'stats.conversions': newConversions,
-          'stats.totalEarnings': newTotalEarnings,
-          'stats.balance': newBalance,
-        });
+      // Update affiliate stats
+      await affiliateDoc.ref.update({
+        'stats.conversions': FieldValue.increment(1),
+        'stats.totalEarnings': FieldValue.increment(commissionAmount),
+        'stats.balance': FieldValue.increment(commissionAmount)
       });
 
-      // Find the original click and mark it as converted
-      const clicksRef = db.collection('affiliateClicks');
-      const clickQuery = query(clicksRef, 
-        where("affiliateCode", "==", affiliateCode), 
-        where("converted", "==", false),
-        orderBy("timestamp", "desc"),
-        limit(1)
-      );
-      const clickSnapshot = await getDocs(clickQuery);
-
-      if (!clickSnapshot.empty) {
-        const clickDoc = clickSnapshot.docs[0];
-        await clickDoc.ref.update({
-          converted: true,
-          orderId: orderId,
-          commissionAmount: commissionAmount,
-        });
-        console.log(`Marked click ${clickDoc.id} as converted for order ${orderId}.`);
-      } else {
-         console.log(`No unconverted click found for affiliate ${affiliateCode}. Might be a direct purchase or cookie expired.`);
+      // Update the click to mark conversion
+      if (orderData.affiliateClickId) {
+        await localDb
+          .collection('affiliateClicks')
+          .doc(orderData.affiliateClickId)
+          .update({
+            converted: true,
+            orderId: orderId,
+            commissionAmount: commissionAmount
+          });
       }
 
-       // Finally, update the order with the commission details
-      await snap.ref.update({
-        affiliateCommission: commissionAmount
+      console.log(`Successfully processed affiliate commission for order ${orderId}`);
+      res.json({ 
+        success: true, 
+        message: 'Order processed with affiliate commission',
+        commission: commissionAmount 
       });
-
-      console.log(`Successfully processed conversion for affiliate ${affiliate.name} (Code: ${affiliateCode})`);
-      return null;
 
     } catch (error) {
-      console.error(`Error processing affiliate conversion for order ${orderId}:`, error);
-      // We can add more robust error handling here, like writing to an "error" collection
-      return null;
+      console.error('Error processing B2C order completion:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Internal server error processing order' 
+      });
     }
   });
 
 /**
+ * [DEPRECATED] This trigger is no longer reliable due to the named database limitation.
+ * It is replaced by the `processB2COrderCompletion` callable function.
+ * We are keeping it here but it should be removed later.
+ */
+exports.processAffiliateConversion = functions.firestore
+  .document('order-triggers/{orderId}')
+  .onCreate(async (snap, context) => {
+    console.log(`DEPRECATED trigger fired for ${context.params.orderId}. No action taken.`);
+    return null;
+  });
+
+/**
  * Send order confirmation emails when a new order is created
+ * NOTE: This trigger may not work reliably with named databases in some Firebase setups.
+ * If emails aren't being sent, consider calling sendOrderConfirmationHttp directly from client.
  */
 exports.sendOrderConfirmationEmails = functions.firestore
   .document("orders/{orderId}")
@@ -552,6 +605,8 @@ exports.sendOrderConfirmationEmails = functions.firestore
     try {
       const orderData = snapshot.data();
       const orderId = context.params.orderId;
+
+      console.log(`Email trigger fired for order ${orderId} from named database`);
 
       let customerEmail;
       let customerName;
@@ -568,6 +623,7 @@ exports.sendOrderConfirmationEmails = functions.firestore
               ${orderData.items.map(item => `<li>${item.name} - ${item.quantity} pcs @ ${item.price} SEK</li>`).join('')}
             </ul>
             <p><strong>Total Amount:</strong> ${orderData.total} SEK</p>
+            ${orderData.affiliateCode ? `<p><strong>Affiliate Code:</strong> ${orderData.affiliateCode}</p>` : ''}
           </div>
         `
       };
@@ -584,7 +640,7 @@ exports.sendOrderConfirmationEmails = functions.firestore
         }
       
       } else { // Legacy or B2B order
-        // Get user data for B2B orders
+        // Use the named database for B2B user lookup
         const userSnapshot = await db
           .collection("users")
           .doc(orderData.userId)
@@ -611,6 +667,7 @@ exports.sendOrderConfirmationEmails = functions.firestore
                 ${orderData.items.map(item => `<li>${item.name} - ${item.quantity} pcs @ ${item.price} SEK</li>`).join('')}
               </ul>
               <p><strong>Total Amount:</strong> ${orderData.totalAmount || orderData.total} SEK</p>
+              ${orderData.affiliateCode ? `<p><strong>Affiliate Code:</strong> ${orderData.affiliateCode}</p>` : ''}
             </div>
           `;
         }
@@ -1913,3 +1970,292 @@ exports.productFeed = functions.https.onRequest(async (req, res) => {
     res.status(500).send('Error generating product feed');
   }
 }); 
+
+/**
+ * [NEW] HTTP endpoint for B2C order processing
+ */
+exports.processB2COrderCompletionHttp = functions
+  .runWith({
+    timeoutSeconds: 60,
+    memory: '256MB'
+  })
+  .region('us-central1')
+  .https.onRequest(async (req, res) => {
+    // Enable CORS with more permissive settings for testing
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', '*');
+    res.set('Access-Control-Max-Age', '3600');
+
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    // Only allow POST
+    if (req.method !== 'POST') {
+      res.status(405).send('Method Not Allowed');
+      return;
+    }
+
+    try {
+      const { orderId } = req.body;
+
+      if (!orderId) {
+        res.status(400).json({ 
+          success: false, 
+          error: 'The function must be called with an "orderId".' 
+        });
+        return;
+      }
+
+      console.log(`Processing B2C order completion for orderId: ${orderId}`);
+      const localDb = db; // Use the correct named database
+
+      // --- Start of Affiliate Conversion Logic ---
+      const orderRef = localDb.collection('orders').doc(orderId);
+      const orderSnap = await orderRef.get();
+
+      if (!orderSnap.exists) {
+        console.error(`Order ${orderId} not found in b8s-reseller-db.`);
+        res.status(404).json({ 
+          success: false, 
+          error: `Order ${orderId} not found in database` 
+        });
+        return;
+      }
+
+      const orderData = orderSnap.data();
+      const { affiliateCode } = orderData;
+
+      if (!affiliateCode) {
+        console.log('No affiliate code found for order, skipping commission.');
+        res.json({ success: true, message: 'Order processed (no affiliate)' });
+        return;
+      }
+
+      // Get affiliate details
+      const affiliateSnap = await localDb
+        .collection('affiliates')
+        .where('affiliateCode', '==', affiliateCode)
+        .where('status', '==', 'active')
+        .limit(1)
+        .get();
+
+      if (affiliateSnap.empty) {
+        console.error(`No active affiliate found for code: ${affiliateCode}`);
+        res.json({ success: true, message: 'Order processed (invalid affiliate)' });
+        return;
+      }
+
+      const affiliateDoc = affiliateSnap.docs[0];
+      const affiliate = affiliateDoc.data();
+
+      // Calculate commission
+      const orderTotal = orderData.total || 0;
+      const commissionRate = affiliate.commissionRate || 15; // Default 15%
+      const commissionAmount = (orderTotal * (commissionRate / 100));
+
+      // Update affiliate stats
+      await affiliateDoc.ref.update({
+        'stats.conversions': FieldValue.increment(1),
+        'stats.totalEarnings': FieldValue.increment(commissionAmount),
+        'stats.balance': FieldValue.increment(commissionAmount)
+      });
+
+      // Update the click to mark conversion
+      if (orderData.affiliateClickId) {
+        await localDb
+          .collection('affiliateClicks')
+          .doc(orderData.affiliateClickId)
+          .update({
+            converted: true,
+            orderId: orderId,
+            commissionAmount: commissionAmount
+          });
+      }
+
+      console.log(`Successfully processed affiliate commission for order ${orderId}`);
+      res.json({ 
+        success: true, 
+        message: 'Order processed with affiliate commission',
+        commission: commissionAmount 
+      });
+
+    } catch (error) {
+      console.error('Error processing B2C order completion:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Internal server error processing order' 
+      });
+    }
+  });
+
+// Keep the original callable function unchanged
+exports.processB2COrderCompletion = functions
+  .runWith({
+    timeoutSeconds: 60,
+    memory: '256MB'
+  })
+  .region('us-central1')
+  .https.onCall(async (data, context) => {
+    // Validate request origin
+    const allowedOrigins = [
+      'https://shop.b8shield.com',
+      'https://b8shield-reseller-app.web.app',
+      'http://localhost:5173' // For local development
+    ];
+    
+    const origin = data.origin || context.rawRequest?.headers?.origin;
+    if (!allowedOrigins.includes(origin)) {
+      throw new functions.https.HttpsError(
+        'permission-denied',
+        'Origin not allowed'
+      );
+    }
+
+    const { orderId } = data;
+
+    if (!orderId) {
+      throw new functions.https.HttpsError(
+        'invalid-argument', 
+        'The function must be called with an "orderId".'
+      );
+    }
+
+    console.log(`Processing B2C order completion for orderId: ${orderId}`);
+    const localDb = db; // Use the correct named database
+
+    try {
+      // --- Start of Affiliate Conversion Logic ---
+      const orderRef = localDb.collection('orders').doc(orderId);
+      const orderSnap = await orderRef.get();
+
+      if (!orderSnap.exists) {
+        console.error(`Order ${orderId} not found in b8s-reseller-db.`);
+        return { success: false, error: `Order ${orderId} not found in database` };
+      }
+
+      const orderData = orderSnap.data();
+      console.log(`Processing order ${orderId}. Affiliate code: ${orderData.affiliateCode || 'none'}`);
+
+      if (orderData.affiliateCode) {
+        console.log(`Processing conversion for order ${orderId} with affiliate code: ${orderData.affiliateCode}`);
+
+        // Find the affiliate by code
+        const affiliatesRef = localDb.collection('affiliates');
+        const q = affiliatesRef.where('affiliateCode', '==', orderData.affiliateCode).where('status', '==', 'active');
+        const affiliateSnapshot = await q.get();
+
+        if (affiliateSnapshot.empty) {
+          console.error(`No active affiliate found for code: ${orderData.affiliateCode}`);
+          return { success: false, error: `No active affiliate found for code: ${orderData.affiliateCode}` };
+        }
+
+        const affiliateDoc = affiliateSnapshot.docs[0];
+        const affiliate = affiliateDoc.data();
+        const affiliateId = affiliateDoc.id;
+        console.log(`Found affiliate: ${affiliate.name} (ID: ${affiliateId})`);
+
+        // Calculate commission - try multiple fields for compatibility
+        const commissionRate = affiliate.commissionRate / 100;
+        const orderAmount = orderData.subtotal || orderData.total || orderData.totalAmount || 0;
+        const commissionAmount = orderAmount * commissionRate;
+
+        console.log(`Commission calculation: ${orderAmount} * ${commissionRate} = ${commissionAmount}`);
+
+        if (commissionAmount > 0) {
+          try {
+            // Update affiliate stats in a transaction
+            await localDb.runTransaction(async (transaction) => {
+              const affiliateRef = localDb.collection('affiliates').doc(affiliateId);
+              const currentAffiliateDoc = await transaction.get(affiliateRef);
+              
+              if (!currentAffiliateDoc.exists) {
+                throw new Error("Affiliate not found during transaction.");
+              }
+              
+              const currentStats = currentAffiliateDoc.data().stats || {};
+              const newStats = {
+                conversions: (currentStats.conversions || 0) + 1,
+                totalEarnings: (currentStats.totalEarnings || 0) + commissionAmount,
+                balance: (currentStats.balance || 0) + commissionAmount,
+                clicks: currentStats.clicks || 0,
+              };
+              
+              console.log(`Updating affiliate stats:`, newStats);
+              transaction.update(affiliateRef, { stats: newStats });
+            });
+
+            // Update the order with commission information
+            await orderRef.update({ 
+              affiliateCommission: commissionAmount, 
+              affiliateId: affiliateId,
+              conversionProcessed: true,
+              conversionProcessedAt: admin.firestore.Timestamp.now()
+            });
+
+            console.log(`Successfully updated stats and order for affiliate ${affiliateId}.`);
+
+            // Try to mark corresponding click as converted
+            // Since we don't have clickId in order, find the most recent click by this affiliate
+            try {
+              const clicksRef = localDb.collection('affiliateClicks');
+              const recentClicksQuery = clicksRef
+                .where('affiliateCode', '==', orderData.affiliateCode)
+                .where('converted', '==', false)
+                .orderBy('timestamp', 'desc')
+                .limit(1);
+              
+              const recentClicksSnapshot = await recentClicksQuery.get();
+              
+              if (!recentClicksSnapshot.empty) {
+                const clickDoc = recentClicksSnapshot.docs[0];
+                await clickDoc.ref.update({
+                  converted: true,
+                  orderId: orderId,
+                  commissionAmount: commissionAmount,
+                  convertedAt: admin.firestore.Timestamp.now()
+                });
+                console.log(`Click document ${clickDoc.id} marked as converted.`);
+              } else {
+                console.log(`No unconverted clicks found for affiliate code ${orderData.affiliateCode}`);
+              }
+            } catch (clickError) {
+              console.error(`Error updating click record:`, clickError);
+              // Don't fail the whole process if click update fails
+            }
+
+            return { 
+              success: true, 
+              message: `Processed order ${orderId}`,
+              affiliateCommission: commissionAmount,
+              affiliateId: affiliateId
+            };
+
+          } catch (error) {
+            console.error(`Failed to process conversion transaction for order ${orderId}. Error:`, error);
+            return { 
+              success: false, 
+              error: `Transaction failed: ${error.message}` 
+            };
+          }
+        } else {
+          console.log(`Commission amount is 0 for order ${orderId}, skipping affiliate processing`);
+          return { success: true, message: `Order ${orderId} processed, but no commission (amount: ${orderAmount})` };
+        }
+      } else {
+        console.log(`No affiliate code found for order ${orderId}`);
+        return { success: true, message: `Order ${orderId} processed (no affiliate)` };
+      }
+      // --- End of Affiliate Conversion Logic ---
+
+    } catch (error) {
+      console.error(`Error processing order completion for ${orderId}:`, error);
+      return { 
+        success: false, 
+        error: `Processing failed: ${error.message}` 
+      };
+    }
+  });
