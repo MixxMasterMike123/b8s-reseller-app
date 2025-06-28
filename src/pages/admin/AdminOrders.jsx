@@ -7,6 +7,44 @@ import { sv } from 'date-fns/locale';
 import OrderStatusMenu from '../../components/OrderStatusMenu';
 import { toast } from 'react-hot-toast';
 
+const getStatusStyles = (status) => {
+  switch (status) {
+    case 'pending':
+      return 'bg-yellow-100 text-yellow-800'; // Waiting for confirmation
+    case 'confirmed':
+      return 'bg-blue-100 text-blue-800'; // Confirmed
+    case 'processing':
+      return 'bg-purple-100 text-purple-800'; // Processing
+    case 'shipped':
+      return 'bg-indigo-100 text-indigo-800'; // Shipped
+    case 'delivered':
+      return 'bg-green-100 text-green-800'; // Delivered
+    case 'cancelled':
+      return 'bg-red-100 text-red-800'; // Cancelled
+    default:
+      return 'bg-gray-100 text-gray-800'; // Unknown status
+  }
+};
+
+const getStatusLabel = (status) => {
+  switch (status) {
+    case 'pending':
+      return 'Väntar';
+    case 'confirmed':
+      return 'Bekräftad';
+    case 'processing':
+      return 'Behandlas';
+    case 'shipped':
+      return 'Skickad';
+    case 'delivered':
+      return 'Levererad';
+    case 'cancelled':
+      return 'Avbruten';
+    default:
+      return 'Okänd';
+  }
+};
+
 const AdminOrders = () => {
   const { getAllOrders, updateOrderStatus, loading: contextLoading, error: contextError } = useOrder();
   const [orders, setOrders] = useState([]);
@@ -228,11 +266,17 @@ const AdminOrders = () => {
                         )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-center">
-                        <OrderStatusMenu
-                          currentStatus={order.status}
-                          onStatusChange={(newStatus) => handleStatusUpdate(order.id, newStatus)}
-                          disabled={loading}
-                        />
+                        <div className="flex items-center justify-center">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusStyles(order.status)}`}>
+                            {getStatusLabel(order.status)}
+                          </span>
+                          <OrderStatusMenu
+                            currentStatus={order.status}
+                            onStatusChange={(newStatus) => handleStatusUpdate(order.id, newStatus)}
+                            disabled={loading}
+                            className="ml-2"
+                          />
+                        </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
                         <Link

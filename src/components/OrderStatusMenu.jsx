@@ -1,14 +1,33 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-const OrderStatusMenu = ({ currentStatus, onStatusChange }) => {
+const getStatusStyles = (status) => {
+  switch (status) {
+    case 'pending':
+      return 'bg-yellow-100 text-yellow-800 border-yellow-200'; // Waiting for confirmation
+    case 'confirmed':
+      return 'bg-blue-100 text-blue-800 border-blue-200'; // Confirmed
+    case 'processing':
+      return 'bg-purple-100 text-purple-800 border-purple-200'; // Processing
+    case 'shipped':
+      return 'bg-indigo-100 text-indigo-800 border-indigo-200'; // Shipped
+    case 'delivered':
+      return 'bg-green-100 text-green-800 border-green-200'; // Delivered
+    case 'cancelled':
+      return 'bg-red-100 text-red-800 border-red-200'; // Cancelled
+    default:
+      return 'bg-gray-100 text-gray-800 border-gray-200'; // Unknown status
+  }
+};
+
+const OrderStatusMenu = ({ currentStatus, onStatusChange, disabled, className = '' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
 
-  // Status options
+  // Status options with shorter labels
   const statusOptions = [
-    { value: 'pending', label: 'Väntar på bekräftelse' },
+    { value: 'pending', label: 'Väntar' },
     { value: 'confirmed', label: 'Bekräftad' },
-    { value: 'processing', label: 'Under behandling' },
+    { value: 'processing', label: 'Behandlas' },
     { value: 'shipped', label: 'Skickad' },
     { value: 'delivered', label: 'Levererad' },
     { value: 'cancelled', label: 'Avbruten' }
@@ -17,7 +36,7 @@ const OrderStatusMenu = ({ currentStatus, onStatusChange }) => {
   // Get current status label
   const getCurrentStatusLabel = () => {
     const status = statusOptions.find(option => option.value === currentStatus);
-    return status ? status.label : 'Okänd status';
+    return status ? status.label : 'Okänd';
   };
 
   // Handle click outside to close menu
@@ -41,19 +60,19 @@ const OrderStatusMenu = ({ currentStatus, onStatusChange }) => {
   };
 
   return (
-    <div className="relative inline-block" ref={menuRef}>
+    <div className={`relative inline-block ${className}`} ref={menuRef}>
       <button
         type="button"
-        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-md shadow-sm border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        disabled={disabled}
+        className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded border ${getStatusStyles(currentStatus)} ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-opacity-80'}`}
         onClick={() => setIsOpen(!isOpen)}
       >
-        {getCurrentStatusLabel()}
+        <span className="mr-1">{getCurrentStatusLabel()}</span>
         <svg
-          className="w-5 h-5 ml-2 -mr-1 inline-block"
+          className="w-4 h-4"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 20 20"
           fill="currentColor"
-          aria-hidden="true"
         >
           <path
             fillRule="evenodd"
@@ -64,20 +83,20 @@ const OrderStatusMenu = ({ currentStatus, onStatusChange }) => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+        <div className="absolute right-0 z-10 mt-1 w-40 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
           <div className="py-1">
             {statusOptions.map((option) => (
               <button
                 key={option.value}
-                className={`block w-full text-left px-4 py-2 text-sm ${
+                className={`flex items-center w-full px-3 py-1.5 text-xs ${
                   option.value === currentStatus
-                    ? 'bg-gray-100 text-gray-900'
+                    ? getStatusStyles(option.value)
                     : 'text-gray-700 hover:bg-gray-50'
                 }`}
                 onClick={() => handleStatusSelect(option.value)}
               >
                 {option.value === currentStatus && (
-                  <svg className="h-5 w-5 inline-block mr-2 text-green-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <svg className="h-3 w-3 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 )}
