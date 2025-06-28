@@ -1,11 +1,30 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
-import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db, functions } from '../../firebase/config';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
-import { ArrowLeftIcon, PencilIcon, CheckIcon, XMarkIcon, TagIcon, LinkIcon, AtSymbolIcon, PhoneIcon, HomeIcon } from '@heroicons/react/24/solid';
+import { 
+  ArrowLeftIcon, 
+  PencilIcon, 
+  CheckIcon, 
+  XMarkIcon, 
+  TagIcon, 
+  LinkIcon, 
+  ChartBarIcon,
+  CurrencyEuroIcon,
+  UserGroupIcon,
+  ClockIcon,
+  GlobeAltIcon,
+  ChatBubbleLeftIcon,
+  DocumentTextIcon,
+  BanknotesIcon,
+  ShoppingCartIcon,
+  HomeIcon
+} from '@heroicons/react/24/solid';
+import { format } from 'date-fns';
+import { sv } from 'date-fns/locale';
 
 const SocialLinks = ({ socials }) => {
   if (!socials || Object.values(socials).every(val => !val)) {
@@ -13,11 +32,11 @@ const SocialLinks = ({ socials }) => {
   }
 
   const socialPlatforms = [
-    { key: 'website', name: 'Hemsida' },
-    { key: 'instagram', name: 'Instagram' },
-    { key: 'youtube', name: 'YouTube' },
-    { key: 'facebook', name: 'Facebook' },
-    { key: 'tiktok', name: 'TikTok' },
+    { key: 'website', name: 'Hemsida', icon: <GlobeAltIcon className="h-4 w-4" /> },
+    { key: 'instagram', name: 'Instagram', icon: <LinkIcon className="h-4 w-4" /> },
+    { key: 'youtube', name: 'YouTube', icon: <LinkIcon className="h-4 w-4" /> },
+    { key: 'facebook', name: 'Facebook', icon: <LinkIcon className="h-4 w-4" /> },
+    { key: 'tiktok', name: 'TikTok', icon: <LinkIcon className="h-4 w-4" /> },
   ];
 
   return (
@@ -25,9 +44,16 @@ const SocialLinks = ({ socials }) => {
       {socialPlatforms.map(platform =>
         socials[platform.key] ? (
           <li key={platform.key}>
-            <a href={socials[platform.key]} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
-              <LinkIcon className="h-4 w-4 mr-2 text-gray-400" />
-              <span>{platform.name}: {socials[platform.key]}</span>
+            <a 
+              href={socials[platform.key]} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-blue-600 hover:underline flex items-center group"
+            >
+              <span className="text-gray-400 group-hover:text-blue-600 transition-colors mr-2">
+                {platform.icon}
+              </span>
+              <span>{platform.name}</span>
             </a>
           </li>
         ) : null
@@ -35,6 +61,30 @@ const SocialLinks = ({ socials }) => {
     </ul>
   );
 };
+
+const StatCard = ({ icon, title, value, color = "bg-blue-500" }) => (
+  <div className="bg-white p-6 rounded-xl shadow-md">
+    <div className="flex items-center">
+      <div className={`${color} rounded-lg p-3`}>
+        {React.cloneElement(icon, { className: "h-6 w-6 text-white" })}
+      </div>
+      <div className="ml-4">
+        <p className="text-sm text-gray-500">{title}</p>
+        <p className="text-xl font-semibold">{value}</p>
+      </div>
+    </div>
+  </div>
+);
+
+const DetailItem = ({ label, children, icon }) => (
+  <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
+    <dt className="text-sm font-medium text-gray-500 flex items-center">
+      {icon && <span className="mr-2 text-gray-400">{icon}</span>}
+      {label}
+    </dt>
+    <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{children || '-'}</dd>
+  </div>
+);
 
 const AdminAffiliateEdit = () => {
   const { id } = useParams();
@@ -45,11 +95,43 @@ const AdminAffiliateEdit = () => {
   const [loading, setLoading] = useState(true);
   const [isApplication, setIsApplication] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [affiliateStats, setAffiliateStats] = useState(null);
+  const [recentOrders, setRecentOrders] = useState([]);
 
   // Editable fields
   const [commissionRate, setCommissionRate] = useState('');
   const [checkoutDiscount, setCheckoutDiscount] = useState('');
   const [status, setStatus] = useState('');
+
+  const fetchAffiliateStats = async (affiliateCode) => {
+    try {
+      // Get recent orders with this affiliate code
+      const ordersRef = collection(db, 'orders');
+      const q = query(ordersRef, where('affiliateCode', '==', affiliateCode));
+      const orderSnap = await getDocs(q);
+      const orders = orderSnap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setRecentOrders(orders);
+
+      // Get click data
+      const clicksRef = collection(db, 'affiliateClicks');
+      const clicksQuery = query(clicksRef, where('affiliateCode', '==', affiliateCode));
+      const clicksSnap = await getDocs(clicksQuery);
+      const clicks = clicksSnap.docs.map(doc => doc.data());
+
+      setAffiliateStats({
+        totalClicks: clicks.length,
+        uniqueClicks: new Set(clicks.map(c => c.ipAddress)).size,
+        totalOrders: orders.length,
+        totalEarnings: orders.reduce((sum, order) => sum + (order.affiliateCommission || 0), 0),
+        conversionRate: orders.length > 0 ? ((orders.length / clicks.length) * 100).toFixed(1) : 0
+      });
+    } catch (error) {
+      console.error('Error fetching affiliate stats:', error);
+    }
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -68,6 +150,7 @@ const AdminAffiliateEdit = () => {
           setCommissionRate(docData.commissionRate || '15');
           setCheckoutDiscount(docData.checkoutDiscount === undefined ? '10' : docData.checkoutDiscount);
           setStatus(docData.status || 'active');
+          await fetchAffiliateStats(docData.affiliateCode);
         }
       } else {
         toast.error('Dokumentet hittades inte.');
@@ -89,7 +172,6 @@ const AdminAffiliateEdit = () => {
     const toastId = toast.loading('Godkänner affiliate...');
     try {
       const approveAffiliate = httpsCallable(functions, 'approveAffiliate');
-      // Pass all relevant data from the application to the cloud function
       const applicationData = {
         applicationId: id,
         name: data.name,
@@ -113,8 +195,8 @@ const AdminAffiliateEdit = () => {
   };
   
   const handleDeny = async () => {
-     if (!window.confirm('Är du säker på att du vill neka och radera denna ansökan?')) return;
-     const toastId = toast.loading('Nekar ansökan...');
+    if (!window.confirm('Är du säker på att du vill neka och radera denna ansökan?')) return;
+    const toastId = toast.loading('Nekar ansökan...');
     try {
       await deleteDoc(doc(db, 'affiliateApplications', id));
       toast.success('Ansökan har nekats och raderats.', { id: toastId });
@@ -150,193 +232,356 @@ const AdminAffiliateEdit = () => {
   if (loading) return <AppLayout><div className="text-center p-8">Laddar...</div></AppLayout>;
   if (!data) return <AppLayout><div className="text-center p-8">Ingen data hittades.</div></AppLayout>;
 
-  const DetailItem = ({ label, children }) => (
-    <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
-      <dt className="text-sm font-medium text-gray-500">{label}</dt>
-      <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{children || '-'}</dd>
-    </div>
-  );
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(amount || 0);
+  };
+
+  const formatDate = (date) => {
+    if (!date) return '-';
+    return format(date.toDate(), 'PPP', { locale: sv });
+  };
+
+  const StatusBadge = ({ status }) => {
+    const baseClasses = "px-3 py-1 text-xs font-medium rounded-full";
+    const statusStyles = {
+      active: "bg-green-100 text-green-800",
+      suspended: "bg-orange-100 text-orange-800",
+      pending: "bg-yellow-100 text-yellow-800"
+    };
+    const statusText = {
+      active: "Aktiv",
+      suspended: "Suspenderad",
+      pending: "Väntar"
+    };
+    return (
+      <span className={`${baseClasses} ${statusStyles[status] || 'bg-gray-100 text-gray-800'}`}>
+        {statusText[status] || status}
+      </span>
+    );
+  };
 
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-6">
-          <Link to="/admin/affiliates" className="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900">
-            <ArrowLeftIcon className="h-5 w-5 mr-2" />
-            Tillbaka till affiliates
-          </Link>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <Link to="/admin/affiliates" className="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 mb-2">
+              <ArrowLeftIcon className="h-5 w-5 mr-2" />
+              Tillbaka till affiliates
+            </Link>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {isApplication ? `Ansökan från ${data.name}` : `Affiliate: ${data.name}`}
+            </h1>
+          </div>
+          {!isApplication && !isEditing && (
+            <button 
+              onClick={() => setIsEditing(true)} 
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <PencilIcon className="h-5 w-5 mr-2" />
+              Redigera
+            </button>
+          )}
         </div>
 
-        <div className="bg-white shadow-2xl rounded-2xl overflow-hidden">
-          <div className="px-6 py-5 bg-gray-50 border-b border-gray-200">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold text-gray-900">
-                {isApplication ? `Ansökan från ${data.name}` : `Hantera ${data.name}`}
-              </h2>
-              {!isApplication && !isEditing && (
-                 <button 
-                  onClick={() => setIsEditing(true)} 
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                 >
-                   <PencilIcon className="h-5 w-5 mr-2" />
-                   Redigera
-                 </button>
+        {/* Quick Stats for Active Affiliates */}
+        {!isApplication && affiliateStats && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <StatCard 
+              icon={<ChartBarIcon />}
+              title="Totalt antal besök"
+              value={affiliateStats.totalClicks.toLocaleString('sv-SE')}
+            />
+            <StatCard 
+              icon={<ShoppingCartIcon />}
+              title="Konverteringsgrad"
+              value={`${affiliateStats.conversionRate}%`}
+              color="bg-green-500"
+            />
+            <StatCard 
+              icon={<UserGroupIcon />}
+              title="Unika besökare"
+              value={affiliateStats.uniqueClicks.toLocaleString('sv-SE')}
+              color="bg-purple-500"
+            />
+            <StatCard 
+              icon={<BanknotesIcon />}
+              title="Total intjäning"
+              value={formatCurrency(affiliateStats.totalEarnings)}
+              color="bg-emerald-500"
+            />
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Info Column */}
+          <div className="lg:col-span-2 space-y-8">
+            <form onSubmit={handleSave}>
+              {/* Basic Info Card */}
+              <div className="bg-white shadow-lg rounded-2xl overflow-hidden mb-8">
+                <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                      <UserGroupIcon className="h-6 w-6 mr-2 text-gray-500" />
+                      Grundinformation
+                    </h2>
+                    {!isApplication && (
+                      <StatusBadge status={data.status} />
+                    )}
+                  </div>
+                </div>
+                
+                <div className="p-6">
+                  <div className="space-y-6">
+                    <DetailItem 
+                      label="Namn" 
+                      icon={<UserGroupIcon className="h-5 w-5" />}
+                    >
+                      {data.name}
+                    </DetailItem>
+                    
+                    <DetailItem 
+                      label="E-post" 
+                      icon={<LinkIcon className="h-5 w-5" />}
+                    >
+                      <a href={`mailto:${data.email}`} className="text-blue-600 hover:underline">
+                        {data.email}
+                      </a>
+                    </DetailItem>
+
+                    {!isApplication && (
+                      <>
+                        <DetailItem 
+                          label="Affiliate Kod" 
+                          icon={<TagIcon className="h-5 w-5" />}
+                        >
+                          <code className="bg-blue-50 px-3 py-1 rounded-md font-mono text-blue-700">
+                            {data.affiliateCode}
+                          </code>
+                        </DetailItem>
+
+                        <DetailItem 
+                          label="Skapad" 
+                          icon={<ClockIcon className="h-5 w-5" />}
+                        >
+                          {formatDate(data.createdAt)}
+                        </DetailItem>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Settings Card */}
+              {!isApplication && (
+                <div className="bg-white shadow-lg rounded-2xl overflow-hidden mb-8">
+                  <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
+                    <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                      <CurrencyEuroIcon className="h-6 w-6 mr-2 text-gray-500" />
+                      Inställningar
+                    </h2>
+                  </div>
+                  
+                  <div className="p-6">
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Status
+                          </label>
+                          {isEditing ? (
+                            <select 
+                              value={status} 
+                              onChange={(e) => setStatus(e.target.value)}
+                              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            >
+                              <option value="active">Aktiv</option>
+                              <option value="suspended">Suspenderad</option>
+                            </select>
+                          ) : (
+                            <StatusBadge status={status} />
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Provision
+                          </label>
+                          {isEditing ? (
+                            <div className="relative rounded-md shadow-sm">
+                              <input
+                                type="number"
+                                value={commissionRate}
+                                onChange={(e) => setCommissionRate(e.target.value)}
+                                className="block w-full rounded-md border-gray-300 pr-12 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                              />
+                              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                <span className="text-gray-500 sm:text-sm">%</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-lg font-semibold">{data.commissionRate}%</span>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Rabatt vid checkout
+                          </label>
+                          {isEditing ? (
+                            <div className="relative rounded-md shadow-sm">
+                              <input
+                                type="number"
+                                value={checkoutDiscount}
+                                onChange={(e) => setCheckoutDiscount(e.target.value)}
+                                className="block w-full rounded-md border-gray-300 pr-12 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                              />
+                              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                <span className="text-gray-500 sm:text-sm">%</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-lg font-semibold">{data.checkoutDiscount}%</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {isEditing && (
+                        <div className="flex justify-end space-x-3 mt-6">
+                          <button
+                            type="button"
+                            onClick={() => setIsEditing(false)}
+                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          >
+                            Avbryt
+                          </button>
+                          <button
+                            type="submit"
+                            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          >
+                            Spara ändringar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               )}
-            </div>
-             {isApplication && <p className="text-sm text-gray-500 mt-1">Granska ansökan nedan och välj att godkänna eller neka.</p>}
+
+              {/* Marketing Info */}
+              <div className="bg-white shadow-lg rounded-2xl overflow-hidden mb-8">
+                <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
+                  <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                    <ChartBarIcon className="h-6 w-6 mr-2 text-gray-500" />
+                    Marknadsföring
+                  </h2>
+                </div>
+                
+                <div className="p-6">
+                  <div className="space-y-6">
+                    <DetailItem 
+                      label="Primär kanal"
+                      icon={<ChatBubbleLeftIcon className="h-5 w-5" />}
+                    >
+                      {data.promotionMethod}
+                    </DetailItem>
+
+                    <DetailItem 
+                      label="Meddelande"
+                      icon={<DocumentTextIcon className="h-5 w-5" />}
+                    >
+                      <p className="whitespace-pre-wrap">{data.message || '-'}</p>
+                    </DetailItem>
+
+                    <DetailItem 
+                      label="Sociala medier"
+                      icon={<GlobeAltIcon className="h-5 w-5" />}
+                    >
+                      <SocialLinks socials={data.socials} />
+                    </DetailItem>
+                  </div>
+                </div>
+              </div>
+            </form>
           </div>
 
-          <form onSubmit={handleSave}>
-            <div className="px-6 py-6">
-              <dl className="space-y-6">
+          {/* Side Column */}
+          <div className="space-y-8">
+            {/* Address Card */}
+            <div className="bg-white shadow-lg rounded-2xl overflow-hidden">
+              <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
+                <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                  <HomeIcon className="h-6 w-6 mr-2 text-gray-500" />
+                  Adress
+                </h2>
+              </div>
+              
+              <div className="p-6">
+                <address className="not-italic">
+                  <p className="text-gray-900">{data.address}</p>
+                  <p className="text-gray-900">{data.postalCode}</p>
+                  <p className="text-gray-900">{data.city}</p>
+                  <p className="text-gray-900">{data.country}</p>
+                </address>
+              </div>
+            </div>
+
+            {/* Recent Orders */}
+            {!isApplication && recentOrders.length > 0 && (
+              <div className="bg-white shadow-lg rounded-2xl overflow-hidden">
+                <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
+                  <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                    <ShoppingCartIcon className="h-6 w-6 mr-2 text-gray-500" />
+                    Senaste ordrar
+                  </h2>
+                </div>
                 
-                {/* Applicant Info Card */}
-                <div className="p-6 bg-gray-50 rounded-xl">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Ansökandes Information</h3>
+                <div className="p-6">
                   <div className="space-y-4">
-                    <DetailItem label="Namn">{data.name}</DetailItem>
-                    <DetailItem label="E-post">{data.email}</DetailItem>
-                    <DetailItem label="Telefon">{data.phone}</DetailItem>
-                  </div>
-                </div>
-
-                {/* Address Info Card */}
-                 {(data.address || data.city) && (
-                  <div className="p-6 bg-gray-50 rounded-xl">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Adress</h3>
-                    <div className="space-y-4">
-                      <DetailItem label="Gatuadress">{data.address}</DetailItem>
-                      <DetailItem label="Postnummer">{data.postalCode}</DetailItem>
-                      <DetailItem label="Stad">{data.city}</DetailItem>
-                      <DetailItem label="Land">{data.country}</DetailItem>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Marketing & Channels Card */}
-                <div className="p-6 bg-gray-50 rounded-xl">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Kanaler & Marknadsföring</h3>
-                   <div className="space-y-4">
-                      <DetailItem label="Primär kanal">{data.promotionMethod}</DetailItem>
-                      <DetailItem label="Meddelande">{data.message || '-'}</DetailItem>
-                      <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
-                        <dt className="text-sm font-medium text-gray-500">Sociala medier</dt>
-                        <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                          <SocialLinks socials={data.socials} />
-                        </dd>
+                    {recentOrders.slice(0, 5).map((order) => (
+                      <div key={order.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Order #{order.id.slice(0, 8)}</p>
+                          <p className="text-sm text-gray-500">{formatDate(order.createdAt)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-gray-900">{formatCurrency(order.totalAmount)}</p>
+                          <p className="text-sm text-green-600">{formatCurrency(order.affiliateCommission)}</p>
+                        </div>
                       </div>
+                    ))}
                   </div>
                 </div>
-
-                {/* Settings for approving an application */}
-                {isApplication && (
-                    <div className="p-6 bg-white rounded-xl border-2 border-blue-200">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Godkännandeinställningar</h3>
-                       <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
-                         <dt className="text-sm font-medium text-gray-500 flex items-center">
-                           <TagIcon className="h-5 w-5 mr-2 text-gray-400" />
-                           Rabatt vid checkout
-                         </dt>
-                         <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                             <div className="relative mt-1 rounded-md shadow-sm w-full max-w-xs">
-                               <input type="number" value={checkoutDiscount} onChange={(e) => setCheckoutDiscount(e.target.value)} className="block w-full rounded-md border-gray-300 pr-12 focus:border-blue-500 focus:ring-blue-500 sm:text-sm" />
-                               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                                 <span className="text-gray-500 sm:text-sm">%</span>
-                               </div>
-                             </div>
-                             <p className="text-xs text-gray-500 mt-1">Ange den rabatt i procent som kunderna får när de använder denna affiliate-länk/kod. Standard är 10%.</p>
-                         </dd>
-                       </div>
-                    </div>
-                )}
-                
-                {/* Display for existing affiliates */}
-                {!isApplication && (
-                  <div className="p-6 bg-gray-50 rounded-xl">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Affiliate-inställningar</h3>
-                     <dl className="sm:divide-y sm:divide-gray-200">
-                        <DetailItem label="Affiliate-kod"><span>{data.affiliateCode}</span></DetailItem>
-                        <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
-                          <dt className="text-sm font-medium text-gray-500">Status</dt>
-                          <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                            {isEditing ? (
-                              <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full max-w-xs rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
-                                <option value="active">Aktiv</option>
-                                <option value="suspended">Suspenderad</option>
-                              </select>
-                            ) : (
-                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${data.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                                {data.status}
-                              </span>
-                            )}
-                          </dd>
-                        </div>
-                        <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
-                          <dt className="text-sm font-medium text-gray-500">Provision</dt>
-                          <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                            {isEditing ? (
-                              <div className="relative mt-1 rounded-md shadow-sm w-full max-w-xs">
-                                <input type="number" value={commissionRate} onChange={(e) => setCommissionRate(e.target.value)} className="block w-full rounded-md border-gray-300 pr-12 focus:border-blue-500 focus:ring-blue-500 sm:text-sm" />
-                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                                  <span className="text-gray-500 sm:text-sm">%</span>
-                                </div>
-                              </div>
-                            ) : (
-                              <span>{data.commissionRate}%</span>
-                            )}
-                          </dd>
-                        </div>
-                        <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
-                          <dt className="text-sm font-medium text-gray-500 flex items-center">
-                            <TagIcon className="h-5 w-5 mr-2 text-gray-400" />
-                            Rabatt vid checkout
-                          </dt>
-                          <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                            {isEditing ? (
-                              <div className="relative mt-1 rounded-md shadow-sm w-full max-w-xs">
-                                <input type="number" value={checkoutDiscount} onChange={(e) => setCheckoutDiscount(e.target.value)} className="block w-full rounded-md border-gray-300 pr-12 focus:border-blue-500 focus:ring-blue-500 sm:text-sm" />
-                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                                  <span className="text-gray-500 sm:text-sm">%</span>
-                                </div>
-                              </div>
-                            ) : (
-                              <span>{data.checkoutDiscount}%</span>
-                            )}
-                          </dd>
-                        </div>
-                    </dl>
-                  </div>
-                )}
-              </dl>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="px-6 py-4 bg-gray-50">
-              {isEditing && !isApplication && (
-                <div className="flex justify-end space-x-3">
-                  <button type="button" onClick={() => setIsEditing(false)} className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none">
-                    Avbryt
-                  </button>
-                  <button type="submit" disabled={loading} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:bg-green-300">
-                    {loading ? 'Sparar...' : 'Spara ändringar'}
-                  </button>
-                </div>
-              )}
-              {isApplication && (
-                <div className="flex justify-end space-x-3">
-                  <button type="button" onClick={handleDeny} className="inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700">
-                    <XMarkIcon className="h-5 w-5 mr-2" />
-                    Neka
-                  </button>
-                  <button type="button" onClick={handleApprove} className="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700">
-                    <CheckIcon className="h-5 w-5 mr-2" />
-                    Godkänn Ansökan
-                  </button>
-                </div>
-              )}
-            </div>
-          </form>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Action Buttons for Applications */}
+        {isApplication && (
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={handleDeny}
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                >
+                  <XMarkIcon className="h-5 w-5 mr-2" />
+                  Neka
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApprove}
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                >
+                  <CheckIcon className="h-5 w-5 mr-2" />
+                  Godkänn
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AppLayout>
   );
