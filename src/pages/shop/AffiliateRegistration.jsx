@@ -10,7 +10,18 @@ const AffiliateRegistration = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    website: '',
+    phone: '',
+    address: '',
+    postalCode: '',
+    city: '',
+    country: 'SE',
+    socials: {
+      website: '',
+      instagram: '',
+      youtube: '',
+      facebook: '',
+      tiktok: '',
+    },
     promotionMethod: '',
     message: ''
   });
@@ -18,7 +29,19 @@ const AffiliateRegistration = () => {
   const [submitted, setSubmitted] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name.startsWith('socials.')) {
+      const socialPlatform = name.split('.')[1];
+      setFormData(prev => ({
+        ...prev,
+        socials: {
+          ...prev.socials,
+          [socialPlatform]: value
+        }
+      }));
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -60,6 +83,7 @@ const AffiliateRegistration = () => {
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-6">
+                <h3 className="text-lg font-semibold text-gray-800">Grunduppgifter</h3>
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                     Fullständigt Namn <span className="text-red-500">*</span>
@@ -91,23 +115,115 @@ const AffiliateRegistration = () => {
                 </div>
                 
                 <div>
-                  <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
-                    Webbplats eller sociala medier (länk)
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                    Telefonnummer
                   </label>
                   <input
-                    type="url"
-                    name="website"
-                    id="website"
-                    value={formData.website}
+                    type="tel"
+                    name="phone"
+                    id="phone"
+                    value={formData.phone}
                     onChange={handleChange}
-                    placeholder="https://exempel.com"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
+                <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t">Adressuppgifter</h3>
+                
+                <div>
+                  <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                    Gatuadress
+                  </label>
+                  <input
+                    type="text"
+                    name="address"
+                    id="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="md:col-span-1">
+                    <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700 mb-1">
+                      Postnummer
+                    </label>
+                    <input
+                      type="text"
+                      name="postalCode"
+                      id="postalCode"
+                      value={formData.postalCode}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+                      Stad
+                    </label>
+                    <input
+                      type="text"
+                      name="city"
+                      id="city"
+                      value={formData.city}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                 <div>
+                  <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
+                    Land
+                  </label>
+                  <select
+                    name="country"
+                    id="country"
+                    value={formData.country}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="SE">Sverige</option>
+                    <option value="NO">Norge</option>
+                    <option value="DK">Danmark</option>
+                    <option value="FI">Finland</option>
+                    <option value="DE">Tyskland</option>
+                    <option value="GB">Storbritannien</option>
+                    {/* Add more countries as needed */}
+                  </select>
+                </div>
+
+                <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t">Kanaler & Marknadsföring</h3>
+
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">Länka till dina relevanta kanaler. Fyll i de som är applicerbara.</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    <div>
+                      <label htmlFor="socials.website" className="block text-sm font-medium text-gray-700 mb-1">Webbplats / Blogg</label>
+                      <input type="url" name="socials.website" id="socials.website" value={formData.socials.website} onChange={handleChange} placeholder="https://dinsida.se" className="w-full px-4 py-2 border border-gray-300 rounded-lg"/>
+                    </div>
+                    <div>
+                      <label htmlFor="socials.instagram" className="block text-sm font-medium text-gray-700 mb-1">Instagram</label>
+                      <input type="url" name="socials.instagram" id="socials.instagram" value={formData.socials.instagram} onChange={handleChange} placeholder="https://instagram.com/dittnamn" className="w-full px-4 py-2 border border-gray-300 rounded-lg"/>
+                    </div>
+                    <div>
+                      <label htmlFor="socials.youtube" className="block text-sm font-medium text-gray-700 mb-1">YouTube</label>
+                      <input type="url" name="socials.youtube" id="socials.youtube" value={formData.socials.youtube} onChange={handleChange} placeholder="https://youtube.com/c/dinkanal" className="w-full px-4 py-2 border border-gray-300 rounded-lg"/>
+                    </div>
+                     <div>
+                      <label htmlFor="socials.facebook" className="block text-sm font-medium text-gray-700 mb-1">Facebook</label>
+                      <input type="url" name="socials.facebook" id="socials.facebook" value={formData.socials.facebook} onChange={handleChange} placeholder="https://facebook.com/dinsida" className="w-full px-4 py-2 border border-gray-300 rounded-lg"/>
+                    </div>
+                     <div>
+                      <label htmlFor="socials.tiktok" className="block text-sm font-medium text-gray-700 mb-1">TikTok</label>
+                      <input type="url" name="socials.tiktok" id="socials.tiktok" value={formData.socials.tiktok} onChange={handleChange} placeholder="https://tiktok.com/@dittnamn" className="w-full px-4 py-2 border border-gray-300 rounded-lg"/>
+                    </div>
+                  </div>
+                </div>
+                
                 <div>
                   <label htmlFor="promotionMethod" className="block text-sm font-medium text-gray-700 mb-1">
-                    Hur planerar du att marknadsföra B8Shield? <span className="text-red-500">*</span>
+                    Vilken är din primära kanal för marknadsföring? <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="promotionMethod"

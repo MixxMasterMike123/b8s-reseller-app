@@ -199,7 +199,20 @@ exports.approveAffiliate = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('permission-denied', 'Only admins can approve affiliates.');
   }
 
-  const { applicationId } = data;
+  const { 
+    applicationId, 
+    checkoutDiscount,
+    name,
+    email,
+    phone,
+    address,
+    postalCode,
+    city,
+    country,
+    socials,
+    promotionMethod,
+    message
+   } = data;
   if (!applicationId) {
     throw new functions.https.HttpsError('invalid-argument', 'The function must be called with an "applicationId".');
   }
@@ -244,28 +257,35 @@ exports.approveAffiliate = functions.https.onCall(async (data, context) => {
     const affiliateRef = db.collection('affiliates').doc(authUser.uid); // Use auth UID as document ID
     
     const newAffiliateData = {
-      id: authUser.uid, // This is the Firebase Auth UID
+      id: authUser.uid,
       affiliateCode,
-      ...appData, // Carry over name, email, website etc. from application
-      status: 'active', // This now correctly overrides the 'pending' status from appData
-      commissionRate: 15, // Default commission rate
+      name,
+      email,
+      phone,
+      address,
+      postalCode,
+      city,
+      country,
+      socials,
+      promotionMethod,
+      message,
+      status: 'active',
+      commissionRate: 15, // Default commission
+      checkoutDiscount: checkoutDiscount || 10,
       stats: {
         clicks: 0,
         conversions: 0,
         totalEarnings: 0,
         balance: 0,
       },
-      paymentInfo: {},
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
-      approvedBy: context.auth.uid,
     };
 
-    // 5. Use a batch write to make the operation atomic.
-    const batch = db.batch();
-    batch.set(affiliateRef, newAffiliateData);
-    batch.delete(applicationRef);
-    await batch.commit();
+    await affiliateRef.set(newAffiliateData);
+
+    // 5. Delete the original application.
+    await applicationRef.delete();
     
     // 6. Send a welcome email to the new affiliate with their code and temp password.
     const loginInstructions = wasExistingAuthUser

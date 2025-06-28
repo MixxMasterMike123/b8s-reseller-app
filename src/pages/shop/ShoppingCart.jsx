@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { SHIPPING_COSTS } from '../../contexts/CartContext';
@@ -6,10 +6,31 @@ import toast from 'react-hot-toast';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 
 const ShoppingCart = () => {
-  const { cart, updateQuantity, removeFromCart, updateShippingCountry, calculateTotals } = useCart();
+  const { cart, updateQuantity, removeFromCart, updateShippingCountry, calculateTotals, applyDiscountCode, removeDiscount } = useCart();
   const navigate = useNavigate();
+  const [discountCodeInput, setDiscountCodeInput] = useState('');
 
-  const { subtotal, vat, shipping, total } = calculateTotals();
+  const { subtotal, vat, shipping, total, discountAmount, discountCode, discountPercentage } = calculateTotals();
+  
+  // Pre-fill discount input if a code is applied to the cart from context
+  useEffect(() => {
+    if (discountCode) {
+      setDiscountCodeInput(discountCode);
+    } else {
+      setDiscountCodeInput('');
+    }
+  }, [discountCode]);
+  
+  const getCountryName = (countryCode) => {
+    switch(countryCode) {
+        case 'SE': return 'Sverige';
+        case 'NO': return 'Norge';
+        case 'DK': return 'Danmark';
+        case 'FI': return 'Finland';
+        case 'IS': return 'Island';
+        default: return 'Övriga länder';
+    }
+  }
   
   // Calculate total items in cart
   const cartItemCount = cart.items.reduce((total, item) => total + item.quantity, 0);
@@ -39,6 +60,20 @@ const ShoppingCart = () => {
 
   const handleCountryChange = (event) => {
     updateShippingCountry(event.target.value);
+  };
+
+  const handleApplyDiscount = async () => {
+    if (!discountCodeInput.trim()) {
+      toast.error('Vänligen ange en rabattkod.');
+      return;
+    }
+    const result = await applyDiscountCode(discountCodeInput);
+    if (result.success) {
+      toast.success(result.message);
+      setDiscountCodeInput('');
+    } else {
+      toast.error(result.message);
+    }
   };
 
   const handleCheckout = () => {
@@ -157,26 +192,70 @@ const ShoppingCart = () => {
                 </select>
               </div>
 
+              {/* Discount Code Section */}
+              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Rabattkod</h3>
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={discountCodeInput}
+                    onChange={(e) => setDiscountCodeInput(e.target.value)}
+                    placeholder="Ange din kod"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    disabled={!!discountCode}
+                  />
+                  <button
+                    onClick={handleApplyDiscount}
+                    disabled={!!discountCode}
+                    className="px-6 py-3 bg-gray-800 text-white font-semibold rounded-xl hover:bg-gray-900 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Applicera
+                  </button>
+                </div>
+              </div>
+
               {/* Order Summary */}
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Ordersammanfattning</h3>
                 
-                <div className="space-y-3 text-gray-600">
-                  <div className="flex justify-between">
+                <div className="space-y-3">
+                  <div className="flex justify-between text-gray-700">
                     <span>Delsumma</span>
                     <span>{formatPrice(subtotal)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Moms (25%)</span>
-                    <span>{formatPrice(vat)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Frakt</span>
+
+                  {discountAmount > 0 && (
+                     <div className="flex justify-between items-center">
+                       <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-1 rounded-full">
+                         Affiliate rabatt, {discountPercentage}%
+                       </span>
+                       <span className="text-green-600 font-semibold">- {formatPrice(discountAmount)}</span>
+                     </div>
+                  )}
+
+                  <div className="flex justify-between text-gray-700">
+                    <span>Frakt ({getCountryName(cart.shippingCountry)})</span>
                     <span>{formatPrice(shipping)}</span>
                   </div>
-                  <div className="border-t border-gray-200 pt-3 flex justify-between font-semibold text-gray-900">
+                </div>
+
+                <div className="border-t border-gray-200 my-4"></div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between font-bold text-gray-900 text-xl">
                     <span>Totalt</span>
                     <span>{formatPrice(total)}</span>
+                  </div>
+                  <div className="flex justify-end text-sm text-gray-500">
+                    <span>
+                      Varav Moms (25%){' '}
+                      {new Intl.NumberFormat('sv-SE', {
+                        style: 'currency',
+                        currency: 'SEK',
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }).format(vat)}
+                    </span>
                   </div>
                 </div>
               </div>

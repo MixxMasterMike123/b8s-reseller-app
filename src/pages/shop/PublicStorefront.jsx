@@ -120,6 +120,54 @@ const PublicStorefront = () => {
     return `B8Shield ${product.colorVariant || ''} - Vasskydd som förhindrar att dina fiskedrag fastnar`;
   };
 
+  const ProductQuickView = ({ product, onClose }) => {
+    const cart = useCart();
+    const [selectedSize, setSelectedSize] = useState(product.availableSizes[0]?.size || 'Standard');
+    const [quantity, setQuantity] = useState(1);
+    
+    const handleAddToCart = () => {
+      const productToAdd = product.availableSizes.find(p => p.size === selectedSize);
+      if (productToAdd) {
+        cart.addToCart(productToAdd, quantity, selectedSize);
+        toast.success(`${productToAdd.name} tillagd i varukorgen!`);
+      }
+      onClose();
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="bg-white rounded-lg p-8 max-w-md w-full">
+          <h2 className="text-2xl font-bold mb-6">Välj storlek</h2>
+          <div className="flex flex-col gap-4">
+            {product.availableSizes.map((size) => (
+              <button
+                key={size.id}
+                onClick={() => setSelectedSize(size.size)}
+                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
+              >
+                {size.size}
+              </button>
+            ))}
+          </div>
+          <div className="mt-8">
+            <button 
+              onClick={handleAddToCart}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            >
+              Lägg i varukorgen
+            </button>
+          </div>
+          <button
+            onClick={onClose}
+            className="mt-4 w-full bg-gray-200 text-gray-700 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-gray-300"
+          >
+            Avbryt
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <ShopNavigation />
@@ -259,7 +307,9 @@ const PublicStorefront = () => {
                           </svg>
                         </Link>
                         <button 
-                          onClick={() => addToCart(product)}
+                          onClick={() => {
+                            setSelectedProduct(product);
+                          }}
                           className="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 transition-colors"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -300,7 +350,9 @@ const PublicStorefront = () => {
                         Visa detaljer
                       </Link>
                       <button
-                        onClick={() => addToCart(product)}
+                        onClick={() => {
+                          setSelectedProduct(product);
+                        }}
                         className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg"
                       >
                         Välj storlek
@@ -370,6 +422,10 @@ const PublicStorefront = () => {
 
       {/* Footer */}
       <ShopFooter />
+
+      {selectedProduct && (
+        <ProductQuickView product={selectedProduct} onClose={() => setSelectedProduct(null)} />
+      )}
     </div>
   );
 };
