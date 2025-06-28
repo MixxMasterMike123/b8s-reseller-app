@@ -194,7 +194,16 @@ const AdminOrders = () => {
                         {order.companyName || `${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''}`.trim() || order.customerInfo?.email || 'Gäst'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold text-gray-900">
-                        {new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(order.totalAmount || order.total || 0)}
+                        {new Intl.NumberFormat('sv-SE', { 
+                          style: 'currency', 
+                          currency: 'SEK',
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        }).format(
+                          order.source === 'b2c' 
+                            ? (order.total || 0)
+                            : (order.prisInfo?.totalPris || order.totalAmount || 0)
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <OrderStatusMenu 
@@ -210,6 +219,25 @@ const AdminOrders = () => {
                     </tr>
                   ))}
                 </tbody>
+                {activeSourceTab === 'b2b' && sortedOrders.length > 0 && (
+                  <tfoot className="bg-gray-50 font-semibold">
+                    <tr>
+                      <td colSpan="3" className="px-6 py-4 text-right text-gray-700">Totalsumma:</td>
+                      <td className="px-6 py-4 text-right text-gray-900">
+                        {new Intl.NumberFormat('sv-SE', { 
+                          style: 'currency', 
+                          currency: 'SEK' 
+                        }).format(
+                          sortedOrders.reduce((sum, order) => {
+                            const total = order.prisInfo?.totalPris || order.totalAmount || order.total || 0;
+                            return sum + total;
+                          }, 0)
+                        )}
+                      </td>
+                      <td colSpan="2"></td>
+                    </tr>
+                  </tfoot>
+                )}
               </table>
             </div>
           </div>

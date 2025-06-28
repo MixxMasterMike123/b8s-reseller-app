@@ -194,14 +194,37 @@ export const OrderProvider = ({ children }) => {
         }
 
         // For Cloud Functions - they expect items array for email notification
-        // Convert our single product to an items array if it doesn't exist
-        if (!orderToCreate.items) {
-          orderToCreate.items = [{
-            name: "B8 Shield",
-            quantity: orderToCreate.antalForpackningar || 0,
-            price: orderToCreate.prisInfo?.produktPris / (orderToCreate.antalForpackningar || 1) || 0
-          }];
+        // Convert our single product to an items array if it doesn't exist or is empty
+        if (!orderToCreate.items || orderToCreate.items.length === 0) {
+          // For B2B orders, create items array from fordelning
+          if (orderToCreate.fordelning && Array.isArray(orderToCreate.fordelning)) {
+            orderToCreate.items = orderToCreate.fordelning.map(item => ({
+              name: "B8 Shield",
+              color: item.color,
+              size: item.size,
+              quantity: item.quantity,
+              price: orderToCreate.prisInfo?.produktPris / orderToCreate.antalForpackningar || 0
+            }));
+          } else {
+            // Fallback for simple orders
+            orderToCreate.items = [{
+              name: "B8 Shield",
+              color: orderToCreate.color || 'Blandade färger',
+              size: orderToCreate.size || 'Blandade storlekar',
+              quantity: orderToCreate.antalForpackningar || 0,
+              price: orderToCreate.prisInfo?.produktPris / (orderToCreate.antalForpackningar || 1) || 0
+            }];
+          }
         }
+        
+        // Ensure all items have the required fields
+        orderToCreate.items = orderToCreate.items.map(item => ({
+          name: item.name || "B8 Shield",
+          color: item.color || 'Blandade färger',
+          size: item.size || 'Blandade storlekar',
+          quantity: item.quantity || 0,
+          price: item.price || 0
+        }));
 
         // Save to the named database only
         const orderRef = await addDoc(collection(db, "orders"), orderToCreate);
@@ -210,6 +233,19 @@ export const OrderProvider = ({ children }) => {
           id: savedOrderId,
           ...orderToCreate
         };
+        
+        // Get user profile for email
+        let userProfileForEmail;
+        if (orderToCreate.source === 'b2b') {
+          try {
+            const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+            if (userDoc.exists()) {
+              userProfileForEmail = userDoc.data();
+            }
+          } catch (error) {
+            console.error('Error fetching user profile for email:', error);
+          }
+        }
         
         // Trigger email notification via HTTP function
         try {
@@ -221,7 +257,7 @@ export const OrderProvider = ({ children }) => {
             body: JSON.stringify({
               orderId: savedOrderId,
               orderData: savedOrder,
-              userData: userProfile || {
+              userData: userProfileForEmail || {
                 email: currentUser.email,
                 companyName: orderData.companyName || 'Unknown Company',
                 contactPerson: orderData.contactPerson || currentUser.displayName || 'Unknown'

@@ -12,16 +12,9 @@ import { db } from '../../firebase/config';
 
 // Add a helper function to parse and display order distribution data
 const getOrderDistribution = (order) => {
-  // If fordelning property exists (direct mapping of color_size to quantity)
-  if (order.fordelning && Object.keys(order.fordelning).length > 0) {
-    return Object.entries(order.fordelning).map(([key, antal]) => {
-      const [farg, storlek] = key.split('_');
-      return {
-        color: farg,
-        size: storlek.replace('storlek', ''),
-        quantity: antal
-      };
-    });
+  // If fordelning is already an array of objects with color, size, quantity
+  if (order.fordelning && Array.isArray(order.fordelning)) {
+    return order.fordelning;
   }
   
   // If orderDetails.distribution exists (array of color/size/quantity objects)
@@ -29,10 +22,22 @@ const getOrderDistribution = (order) => {
     return order.orderDetails.distribution;
   }
   
+  // If fordelning is old format (object with color_size keys)
+  if (order.fordelning && typeof order.fordelning === 'object' && !Array.isArray(order.fordelning)) {
+    return Object.entries(order.fordelning).map(([key, antal]) => {
+      const [farg, storlek] = key.split('_');
+      return {
+        color: farg,
+        size: storlek?.replace('storlek', '') || '',
+        quantity: antal
+      };
+    });
+  }
+  
   // Fallback to creating a single entry with the total quantity
   return [{
-    color: order.farger?.join(', ') || order.color || 'Blandade färger',
-    size: order.storlekar?.join(', ') || order.size || 'Blandade storlekar',
+    color: order.color || 'Blandade färger',
+    size: order.size || 'Blandade storlekar',
     quantity: order.antalForpackningar || 0
   }];
 };

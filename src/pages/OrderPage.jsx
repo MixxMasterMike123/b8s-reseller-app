@@ -356,7 +356,13 @@ const OrderPage = () => {
         source: 'b2b',
         userId: currentUser.uid,
         status: 'pending',
-        items: [],
+        items: distribution.map(item => ({
+          name: "B8 Shield",
+          color: item.color,
+          size: item.size,
+          quantity: item.quantity,
+          price: inkopspris
+        })),
         fordelning: distribution,
         antalForpackningar: antalForpackningar,
         color: selectedColors.join(', '),
@@ -364,7 +370,7 @@ const OrderPage = () => {
         
         // Company information from user profile
         companyName: userProfile?.companyName || '',
-        contactName: userProfile?.displayName || currentUser?.displayName || '',
+        contactName: userProfile?.contactPerson || userProfile?.displayName || currentUser?.displayName || '',
         address: userProfile?.address || '',
         postalCode: userProfile?.postalCode || '',
         city: userProfile?.city || '',
