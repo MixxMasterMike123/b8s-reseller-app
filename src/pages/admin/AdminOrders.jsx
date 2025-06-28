@@ -266,17 +266,11 @@ const AdminOrders = () => {
                         )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-center">
-                        <div className="flex items-center justify-center">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusStyles(order.status)}`}>
-                            {getStatusLabel(order.status)}
-                          </span>
-                          <OrderStatusMenu
-                            currentStatus={order.status}
-                            onStatusChange={(newStatus) => handleStatusUpdate(order.id, newStatus)}
-                            disabled={loading}
-                            className="ml-2"
-                          />
-                        </div>
+                        <OrderStatusMenu
+                          currentStatus={order.status}
+                          onStatusChange={(newStatus) => handleStatusUpdate(order.id, newStatus)}
+                          disabled={loading}
+                        />
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
                         <Link
