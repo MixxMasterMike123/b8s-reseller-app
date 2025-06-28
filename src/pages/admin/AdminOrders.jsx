@@ -12,6 +12,7 @@ const AdminOrders = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeSourceTab, setActiveSourceTab] = useState('all'); // 'all', 'b2b', 'b2c'
   const [activeStatusTab, setActiveStatusTab] = useState('all');
 
   useEffect(() => {
@@ -34,11 +35,21 @@ const AdminOrders = () => {
       return [];
     }
 
-    let statusFiltered = orders;
+    // 1. Filter by Source
+    let sourceFiltered = orders;
+    if (activeSourceTab === 'b2b') {
+      sourceFiltered = orders.filter(order => order.source === 'b2b' || !order.source); // !order.source for legacy B2B
+    } else if (activeSourceTab === 'b2c') {
+      sourceFiltered = orders.filter(order => order.source === 'b2c');
+    }
+    
+    // 2. Filter by Status
+    let statusFiltered = sourceFiltered;
     if (activeStatusTab !== 'all') {
-      statusFiltered = orders.filter(order => order.status === activeStatusTab);
+      statusFiltered = sourceFiltered.filter(order => order.status === activeStatusTab);
     }
 
+    // 3. Filter by Search Term
     if (!searchTerm) {
       return statusFiltered;
     }
@@ -51,7 +62,7 @@ const AdminOrders = () => {
       (order.customerInfo?.lastName && order.customerInfo.lastName.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (order.companyName && order.companyName.toLowerCase().includes(searchTerm.toLowerCase()))
     );
-  }, [orders, searchTerm, activeStatusTab]);
+  }, [orders, searchTerm, activeSourceTab, activeStatusTab]);
 
   const sortedOrders = useMemo(() => {
     return [...filteredOrders].sort((a, b) => {
@@ -88,7 +99,7 @@ const AdminOrders = () => {
   const TabButton = ({ tabName, label, activeTab, setActiveTab }) => (
     <button
       onClick={() => setActiveTab(tabName)}
-      className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
         activeTab === tabName
           ? 'bg-blue-600 text-white shadow'
           : 'text-gray-600 hover:bg-gray-200'
@@ -97,6 +108,12 @@ const AdminOrders = () => {
       {label}
     </button>
   );
+
+  const sourceTabs = [
+    { key: 'all', label: 'Alla Källor' },
+    { key: 'b2b', label: 'Återförsäljare (B2B)' },
+    { key: 'b2c', label: 'Kunder (B2C)' },
+  ];
 
   const statusTabs = [
     { key: 'all', label: 'Alla' },
@@ -123,8 +140,21 @@ const AdminOrders = () => {
           />
         </div>
         
-        <div className="mb-6">
-          <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 pb-2">
+        <div className="mb-6 space-y-4">
+          <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 pb-3">
+             <span className="text-sm font-semibold text-gray-600 mr-2">Källa:</span>
+            {sourceTabs.map(tab => (
+              <TabButton
+                key={tab.key}
+                tabName={tab.key}
+                label={tab.label}
+                activeTab={activeSourceTab}
+                setActiveTab={setActiveSourceTab}
+              />
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-semibold text-gray-600 mr-2">Status:</span>
             {statusTabs.map(tab => (
               <TabButton
                 key={tab.key}
