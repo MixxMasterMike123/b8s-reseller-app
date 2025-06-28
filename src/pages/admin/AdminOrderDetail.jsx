@@ -264,6 +264,10 @@ const AdminOrderDetail = () => {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   if (loading) {
     return (
       <AppLayout>
@@ -651,6 +655,15 @@ const AdminOrderDetail = () => {
           >
             Back to Order List
           </Link>
+        </div>
+
+        <div className="flex justify-between mt-8 print:hidden">
+          <button
+            onClick={handlePrint}
+            className="px-4 py-2 text-sm bg-blue-500 text-white hover:bg-blue-600 rounded-md"
+          >
+            Skriv ut
+          </button>
         </div>
       </div>
     </AppLayout>
