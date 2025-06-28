@@ -60,9 +60,12 @@ service cloud.firestore {
       allow read: if isActiveUser() && (
         resource.data.userId == request.auth.uid || isAdmin()
       );
-      // Active users can create orders, but only for themselves
-      allow create: if isActiveUser() && 
-        request.resource.data.userId == request.auth.uid;
+      // Active users can create orders for themselves (B2B).
+      // Guests or B2C users can create orders if the source is 'b2c'. If a userId is included, it must match the authenticated user.
+      allow create: if (isActiveUser() && request.resource.data.userId == request.auth.uid) ||
+                       (request.resource.data.source == 'b2c' && (
+                         !('userId' in request.resource.data) || request.resource.data.userId == request.auth.uid
+                       ));
       // Users can update their own orders to cancel them, admins can update any order
       allow update: if isActiveUser() && (
         (resource.data.userId == request.auth.uid && 

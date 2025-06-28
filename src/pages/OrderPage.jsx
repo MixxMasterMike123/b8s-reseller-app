@@ -352,8 +352,12 @@ const OrderPage = () => {
       
       // Create the order object with fields that match what OrderDetailPage expects
       const orderData = {
-        // Basic order info
         orderNumber: generateOrderNumber(),
+        source: 'b2b',
+        userId: currentUser.uid,
+        status: 'pending',
+        items: [],
+        fordelning: distribution,
         antalForpackningar: antalForpackningar,
         color: selectedColors.join(', '),
         size: mainSize,

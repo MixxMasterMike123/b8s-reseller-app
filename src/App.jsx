@@ -53,6 +53,9 @@ import AdminAffiliates from './pages/admin/AdminAffiliates';
 import AdminAffiliateEdit from './pages/admin/AdminAffiliateEdit';
 import AffiliateTracker from './components/AffiliateTracker';
 
+// Order Confirmation
+import OrderConfirmation from './pages/shop/OrderConfirmation';
+
 import { Toaster } from 'react-hot-toast';
 
 function App() {
@@ -95,6 +98,7 @@ function App() {
               <Route path="/product/:id" element={<PublicProductPage />} />
               <Route path="/cart" element={<ShoppingCart />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
               <Route path="/login" element={<CustomerLogin />} />
               <Route path="/register" element={<CustomerRegister />} />
               <Route path="/account" element={<CustomerAccount />} />

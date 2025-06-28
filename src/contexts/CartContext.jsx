@@ -47,11 +47,26 @@ export const CartProvider = ({ children }) => {
     // First, check for an affiliate link in localStorage if no discount is applied yet
     const affiliateRef = localStorage.getItem('b8s_affiliate_ref');
     if (affiliateRef && !cart.discountCode) {
-      const { code, expiry } = JSON.parse(affiliateRef);
-      if (new Date().getTime() < expiry && code) {
-        // Affiliate ref exists and is valid, apply it silently
-        applyDiscountCode(code, { silent: true });
-        return; // Exit here since applyDiscountCode will trigger a state update
+      try {
+        const affiliateInfo = JSON.parse(affiliateRef);
+        // Ensure the object has the properties we expect
+        if (affiliateInfo && affiliateInfo.code && typeof affiliateInfo.expiry === 'number') {
+          if (new Date().getTime() < affiliateInfo.expiry) {
+            // Affiliate ref exists and is valid, apply it silently
+            applyDiscountCode(affiliateInfo.code, { silent: true });
+            return; // Exit here since applyDiscountCode will trigger a state update
+          } else {
+            // It's expired, remove it
+            localStorage.removeItem('b8s_affiliate_ref');
+          }
+        } else {
+          // Malformed object, remove it
+          localStorage.removeItem('b8s_affiliate_ref');
+        }
+      } catch (error) {
+        // Not valid JSON, remove it
+        console.error("Error parsing affiliate ref from localStorage:", error);
+        localStorage.removeItem('b8s_affiliate_ref');
       }
     }
 

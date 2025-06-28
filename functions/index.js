@@ -186,6 +186,52 @@ const getEmailTemplate = (status, orderData, userData) => {
 };
 
 /**
+ * TEMPORARY B2C Email Templates until they can be merged with the main one
+ */
+const getB2CEmailTemplate = (status, orderData, customerInfo) => {
+  const orderNumber = orderData.orderNumber;
+  const customerName = customerInfo.name;
+  
+  const templates = {
+    pending: {
+      subject: `Tack för din beställning, ${customerName}! (Order ${orderNumber})`,
+      text: `
+        Hej ${customerName},
+        
+        Tack för din beställning från B8Shield! Vi har mottagit din order och kommer att behandla den snarast.
+        
+        Ordernummer: ${orderNumber}
+        Status: Mottagen
+        
+        Du kommer att få ytterligare uppdateringar när din order behandlas och skickas. Du kan se din orderstatus här: ${`https://shop.b8shield.com/order-confirmation/${orderData.id || ''}`}
+        
+        Med vänliga hälsningar,
+        B8Shield Team
+      `,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+          </div>
+          <h2>Hej ${customerName},</h2>
+          <p>Tack för din beställning! Vi har mottagit din order och kommer att behandla den snarast.</p>
+          <p><strong>Ordernummer:</strong> ${orderNumber}</p>
+          <p><strong>Status:</strong> Mottagen</p>
+          <p>Du kommer att få ett nytt mail när din order har skickats. Du kan se din orderinformation på vår hemsida:</p>
+          <div style="text-align: center; margin: 20px 0;">
+             <a href="https://shop.b8shield.com/order-confirmation/${orderData.id || ''}" style="background-color: #459CA8; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Visa din beställning</a>
+          </div>
+          <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+        </div>
+      `
+    },
+    // Future B2C templates for shipped, etc. can go here
+  };
+  
+  return templates[status] || templates.pending;
+};
+
+/**
  * [NEW] Callable function to approve an affiliate application.
  */
 exports.approveAffiliate = functions.https.onCall(async (data, context) => {
@@ -403,8 +449,8 @@ exports.logAffiliateClick = functions.https.onCall(async (data, context) => {
 });
 
 /**
- * [NEW] Triggered when a new order is created. Checks for an affiliate code 
- * and processes the conversion if one exists.
+ * [REFACTORED] Firestore trigger to process affiliate conversion on new order.
+ * This automatically runs when a new document is created in the 'orders' collection.
  */
 exports.processAffiliateConversion = functions.firestore
   .document('orders/{orderId}')
@@ -412,85 +458,87 @@ exports.processAffiliateConversion = functions.firestore
     const orderData = snap.data();
     const orderId = context.params.orderId;
 
-    // 1. Check if the order has an affiliate code.
+    // Check if the order has an affiliate code
     if (!orderData.affiliateCode) {
-      console.log(`Order ${orderId} has no affiliate code. Skipping conversion.`);
+      console.log(`Order ${orderId} has no affiliate code. Skipping conversion processing.`);
       return null;
     }
 
-    const { affiliateCode, totalAmount } = orderData;
-    console.log(`Processing affiliate conversion for order ${orderId} with code ${affiliateCode}`);
+    const { affiliateCode, total, subtotal } = orderData;
+    console.log(`Processing conversion for order ${orderId} with affiliate code ${affiliateCode}`);
 
     try {
-      // 2. Find the affiliate.
       const affiliatesRef = db.collection('affiliates');
-      const q = query(affiliatesRef, where("affiliateCode", "==", affiliateCode), limit(1));
-      const querySnapshot = await getDocs(q);
+      const q = query(affiliatesRef, where("affiliateCode", "==", affiliateCode));
+      const affiliateSnapshot = await getDocs(q);
 
-      if (querySnapshot.empty) {
+      if (affiliateSnapshot.empty) {
         console.error(`Affiliate with code ${affiliateCode} not found for order ${orderId}.`);
         return null;
       }
-      const affiliateDoc = querySnapshot.docs[0];
+
+      const affiliateDoc = affiliateSnapshot.docs[0];
+      const affiliate = affiliateDoc.data();
       const affiliateId = affiliateDoc.id;
-      const affiliateData = affiliateDoc.data();
 
-      // 3. Calculate commission.
-      const commissionRate = (affiliateData.commissionRate || 15) / 100;
-      const commissionAmount = totalAmount * commissionRate;
+      // Calculate commission (e.g., based on subtotal to avoid including shipping/taxes)
+      const commissionRate = affiliate.commissionRate || 0; // Default to 0 if not set
+      const commissionAmount = (subtotal || 0) * (commissionRate / 100);
 
-      // 4. Update affiliate stats and the order in a transaction.
+      // Update affiliate's stats
       const affiliateRef = db.collection('affiliates').doc(affiliateId);
-      const orderRef = db.collection('orders').doc(orderId);
-
       await db.runTransaction(async (transaction) => {
-        const currentAffiliateDoc = await transaction.get(affiliateRef);
-        if (!currentAffiliateDoc.exists) {
-            throw "Affiliate not found!";
-        }
-        const stats = currentAffiliateDoc.data().stats || {};
-        const newConversions = (stats.conversions || 0) + 1;
-        const newBalance = (stats.balance || 0) + commissionAmount;
-        const newTotalEarnings = (stats.totalEarnings || 0) + commissionAmount;
-
-        transaction.update(affiliateRef, {
-          'stats.conversions': newConversions,
-          'stats.balance': newBalance,
-          'stats.totalEarnings': newTotalEarnings,
-          'updatedAt': Timestamp.now()
-        });
+        const affiliateToUpdateRef = db.collection('affiliates').doc(affiliateId);
+        const affiliateSnapshot = await transaction.get(affiliateToUpdateRef);
         
-        // Also update the order with the commission amount
-        transaction.update(orderRef, { affiliateCommission: commissionAmount });
+        if (!affiliateSnapshot.exists) {
+          throw `Affiliate document ${affiliateId} not found in transaction!`;
+        }
+
+        const newConversions = (affiliate.stats.conversions || 0) + 1;
+        const newTotalEarnings = (affiliate.stats.totalEarnings || 0) + commissionAmount;
+        const newBalance = (affiliate.stats.balance || 0) + commissionAmount;
+        
+        transaction.update(affiliateToUpdateRef, { 
+          'stats.conversions': newConversions,
+          'stats.totalEarnings': newTotalEarnings,
+          'stats.balance': newBalance,
+        });
       });
 
-      console.log(`Successfully processed conversion for affiliate ${affiliateId}. Commission: ${commissionAmount}`);
-
-      // 5. Mark the original click as converted.
-      // Find the most recent, non-converted click from this affiliate.
+      // Find the original click and mark it as converted
       const clicksRef = db.collection('affiliateClicks');
-      const clickQuery = query(
-        clicksRef, 
+      const clickQuery = query(clicksRef, 
         where("affiliateCode", "==", affiliateCode), 
         where("converted", "==", false),
         orderBy("timestamp", "desc"),
         limit(1)
       );
       const clickSnapshot = await getDocs(clickQuery);
+
       if (!clickSnapshot.empty) {
         const clickDoc = clickSnapshot.docs[0];
-        await db.collection('affiliateClicks').doc(clickDoc.id).update({
+        await clickDoc.ref.update({
           converted: true,
           orderId: orderId,
           commissionAmount: commissionAmount,
         });
-        console.log(`Marked click ${clickDoc.id} as converted.`);
+        console.log(`Marked click ${clickDoc.id} as converted for order ${orderId}.`);
+      } else {
+         console.log(`No unconverted click found for affiliate ${affiliateCode}. Might be a direct purchase or cookie expired.`);
       }
 
+       // Finally, update the order with the commission details
+      await snap.ref.update({
+        affiliateCommission: commissionAmount
+      });
+
+      console.log(`Successfully processed conversion for affiliate ${affiliate.name} (Code: ${affiliateCode})`);
       return null;
 
     } catch (error) {
-      console.error(`Error processing conversion for order ${orderId}:`, error);
+      console.error(`Error processing affiliate conversion for order ${orderId}:`, error);
+      // We can add more robust error handling here, like writing to an "error" collection
       return null;
     }
   });
@@ -505,64 +553,114 @@ exports.sendOrderConfirmationEmails = functions.firestore
       const orderData = snapshot.data();
       const orderId = context.params.orderId;
 
-      // Get user data
-      const userSnapshot = await db
-        .collection("users")
-        .doc(orderData.userId)
-        .get();
-
-      if (!userSnapshot.exists) {
-        console.error(`User with ID ${orderData.userId} not found.`);
-        return;
-      }
-
-      const userData = userSnapshot.data();
-
-      // Get email template for 'pending' status
-      const emailTemplate = getEmailTemplate('pending', orderData, userData);
-
-      if (!emailTemplate) {
-        console.error(`Email template not found for status: pending`);
-        return;
-      }
-
-      // Send email to customer
-      const mailOptions = {
-        from: '"B8Shield" <b8shield.reseller@gmail.com>',
-        to: userData.email,
-        subject: emailTemplate.subject,
-        text: emailTemplate.text,
-        html: emailTemplate.html,
-      };
-
-      await transporter.sendMail(mailOptions);
-      console.log(`Order confirmation email sent to ${userData.email}`);
-
-      // Send email to admin
-      const adminMailOptions = {
-        from: '"B8Shield" <b8shield.reseller@gmail.com>',
-        to: "b8shield.reseller@gmail.com",
-        subject: `New Order Received: ${orderData.orderNumber}`,
-        html: `
+      let customerEmail;
+      let customerName;
+      let adminEmailDetails = {
+        subject: `New B2C Order Received: ${orderData.orderNumber}`,
+        body: `
           <div style="font-family: Arial, sans-serif;">
-            <h2>New Order Received</h2>
+            <h2>New B2C Guest Order Received</h2>
             <p><strong>Order Number:</strong> ${orderData.orderNumber}</p>
-            <p><strong>Company:</strong> ${userData.companyName}</p>
-            <p><strong>Contact:</strong> ${userData.contactPerson}</p>
-            <p><strong>Email:</strong> ${userData.email}</p>
+            <p><strong>Customer:</strong> ${orderData.customerInfo.firstName} ${orderData.customerInfo.lastName}</p>
+            <p><strong>Email:</strong> ${orderData.customerInfo.email}</p>
             <h3>Order Details:</h3>
             <ul>
               ${orderData.items.map(item => `<li>${item.name} - ${item.quantity} pcs @ ${item.price} SEK</li>`).join('')}
             </ul>
-            <p><strong>Total Amount:</strong> ${orderData.totalAmount} SEK</p>
+            <p><strong>Total Amount:</strong> ${orderData.total} SEK</p>
           </div>
-        `,
+        `
       };
 
+      // Handle B2C (guest or simple auth user) vs B2B (full auth user)
+      if (orderData.source === 'b2c') {
+        customerEmail = orderData.customerInfo.email;
+        customerName = orderData.customerInfo.firstName || 'Customer';
+        
+        // If a B2C user is logged in, add that to the admin email
+        if(orderData.userId) {
+           adminEmailDetails.subject = `New B2C Order (Logged-in User): ${orderData.orderNumber}`;
+           adminEmailDetails.body += `<p><strong>User ID:</strong> ${orderData.userId}</p>`;
+        }
+      
+      } else { // Legacy or B2B order
+        // Get user data for B2B orders
+        const userSnapshot = await db
+          .collection("users")
+          .doc(orderData.userId)
+          .get();
+
+        if (!userSnapshot.exists) {
+          console.error(`B2B user with ID ${orderData.userId} not found for order ${orderId}.`);
+          // Don't send customer email if we can't find them
+        } else {
+          const userData = userSnapshot.data();
+          customerEmail = userData.email;
+          customerName = userData.contactPerson || userData.companyName;
+          
+          adminEmailDetails.subject = `New B2B Order Received: ${orderData.orderNumber}`;
+          adminEmailDetails.body = `
+            <div style="font-family: Arial, sans-serif;">
+              <h2>New B2B Order Received</h2>
+              <p><strong>Order Number:</strong> ${orderData.orderNumber}</p>
+              <p><strong>Company:</strong> ${userData.companyName}</p>
+              <p><strong>Contact:</strong> ${userData.contactPerson}</p>
+              <p><strong>Email:</strong> ${userData.email}</p>
+              <h3>Order Details:</h3>
+              <ul>
+                ${orderData.items.map(item => `<li>${item.name} - ${item.quantity} pcs @ ${item.price} SEK</li>`).join('')}
+              </ul>
+              <p><strong>Total Amount:</strong> ${orderData.totalAmount || orderData.total} SEK</p>
+            </div>
+          `;
+        }
+      }
+
+      // 1. Send email to customer (if email is available)
+      if (customerEmail) {
+        let customerTemplate;
+
+        if (orderData.source === 'b2c') {
+          customerTemplate = getB2CEmailTemplate('pending', orderData, { name: customerName });
+        } else {
+          // For B2B, we need the full userData object for the original template
+          const userSnapshot = await db.collection("users").doc(orderData.userId).get();
+          if (userSnapshot.exists) {
+            customerTemplate = getEmailTemplate('pending', orderData, userSnapshot.data());
+          }
+        }
+        
+        if (customerTemplate) {
+            const mailOptions = {
+              from: '"B8Shield" <b8shield.reseller@gmail.com>',
+              to: customerEmail,
+              subject: customerTemplate.subject,
+              text: customerTemplate.text,
+              html: customerTemplate.html,
+            };
+
+            await transporter.sendMail(mailOptions);
+            console.log(`Order confirmation email sent to ${customerEmail}`);
+        } else {
+            console.log(`Could not generate email template for order ${orderId}. Skipping customer confirmation.`);
+        }
+      } else {
+         console.log(`No customer email available for order ${orderId}. Skipping customer confirmation.`);
+      }
+
+      // 2. Send email to admin
+      const adminMailOptions = {
+        from: '"B8Shield" <b8shield.reseller@gmail.com>',
+        to: "b8shield.reseller@gmail.com", // Admin's email address
+        subject: adminEmailDetails.subject,
+        html: adminEmailDetails.body,
+      };
+      
       await transporter.sendMail(adminMailOptions);
-      console.log(`Admin notification email sent.`);
+      console.log(`Admin notification sent for order ${orderId}.`);
+
     } catch (error) {
-      console.error('Error sending order confirmation emails:', error);
+      console.error(`Error sending confirmation emails for order ${context.params.orderId}:`, error);
     }
   });
 

@@ -51,6 +51,31 @@ const AdminOrderDetail = () => {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [fetchAttempted, setFetchAttempted] = useState(false);
 
+  // Use guest data if it exists, otherwise use fetched user data
+  const displayUser = order?.customerInfo ? {
+    email: order.customerInfo.email,
+    companyName: `${order.customerInfo.firstName} ${order.customerInfo.lastName} (Guest)`,
+    contactPerson: `${order.customerInfo.firstName} ${order.customerInfo.lastName}`,
+    phone: 'Not specified',
+    role: 'Guest',
+    active: true, // Guests are implicitly active for this order
+  } : userData;
+
+  const displayAddress = order?.shippingAddress ? {
+    company: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
+    contactPerson: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
+    address: `${order.shippingAddress.address}${order.shippingAddress.apartment ? `, ${order.shippingAddress.apartment}` : ''}, ${order.shippingAddress.postalCode} ${order.shippingAddress.city}, ${order.shippingAddress.country}`,
+  } : {
+    company: userData?.companyName,
+    contactPerson: userData?.contactPerson,
+    address: [
+      userData?.deliveryAddress, 
+      userData?.deliveryPostalCode, 
+      userData?.deliveryCity, 
+      userData?.deliveryCountry
+    ].filter(Boolean).join(', ') || 'Not specified'
+  };
+
   // Fetch user data based on userId
   const fetchUserData = useCallback(async (userId) => {
     if (!userId) return null;
