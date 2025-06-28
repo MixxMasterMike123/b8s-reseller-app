@@ -22,48 +22,64 @@ code {
 @media print {
   @page {
     margin: 2cm;
+    size: A4;
   }
 
+  /* Hide everything by default */
+  body > * {
+    display: none;
+  }
+
+  /* Only show the main order content */
+  body > #root > div > div.p-4 {
+    display: block !important;
+  }
+
+  /* Basic print styles */
   body {
     background: white;
     font-size: 12pt;
+    color: black;
   }
 
+  /* Hide non-printable elements */
   nav, 
   footer,
-  .print\:hidden {
+  .print\:hidden,
+  button,
+  .sidebar,
+  .navigation {
     display: none !important;
   }
 
-  .container {
-    max-width: none;
-    padding: 0;
-    margin: 0;
-  }
-
+  /* Table styles */
   table {
+    width: 100%;
+    border-collapse: collapse;
     page-break-inside: avoid;
   }
 
-  /* Ensure URLs are displayed after links in print */
-  a[href^="http"]:after {
-    content: " (" attr(href) ")";
-  }
-
-  /* Add company information in header */
-  .print-header {
-    text-align: center;
-    margin-bottom: 2cm;
-  }
-
-  .print-header h1 {
-    font-size: 24pt;
-    margin-bottom: 0.5cm;
+  th, td {
+    padding: 8pt;
+    text-align: left;
+    border-bottom: 1pt solid #ddd;
   }
 
   /* Force background colors in print */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  /* Remove shadows and borders */
+  .shadow,
+  .shadow-md,
+  .shadow-lg {
+    box-shadow: none !important;
+  }
+
+  /* Ensure good contrast */
+  h1, h2, h3, h4, h5, h6 {
+    color: black;
   }
 } 

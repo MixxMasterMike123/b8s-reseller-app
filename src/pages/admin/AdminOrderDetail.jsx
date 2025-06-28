@@ -335,335 +335,109 @@ const AdminOrderDetail = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <div>
-            <div className="flex items-center mb-2">
-              <Link to="/admin/orders" className="text-blue-600 hover:text-blue-800 mr-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                </svg>
-              </Link>
-              <h1 className="text-2xl font-bold text-gray-800">Admin Order Details</h1>
-            </div>
-            <p className="text-gray-600">Order Number: <span className="font-semibold">{order.orderNumber}</span></p>
+      <div className="max-w-6xl mx-auto print:max-w-none print:mx-0">
+        <div className="p-4">
+          {/* Print title - only visible when printing */}
+          <div className="hidden print:block print:mb-8">
+            <h1 className="text-2xl font-bold text-center">{order.id}</h1>
           </div>
-          <div className="mt-4 md:mt-0 flex items-center flex-wrap gap-2">
-            <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${statusColor} mr-2`}>
-              {statusText}
-            </span>
-            
-            <div className="flex items-center">
-              {updateStatusLoading ? (
-                <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-blue-600 border-r-transparent mr-2"></div>
-              ) : (
-                <OrderStatusMenu 
-                  currentStatus={order.status} 
-                  onStatusChange={handleStatusUpdate} 
-                />
-              )}
-            </div>
-            
-            <button
-              onClick={handleDeleteOrder}
-              disabled={deleteLoading}
-              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-2"
-            >
-              {deleteLoading ? 'Deleting...' : 'Delete Order'}
-            </button>
-          </div>
-        </div>
 
-        {/* User Information - Enhanced with user profile data */}
-        <div className="bg-gray-50 p-4 rounded-lg mb-6">
-          <h2 className="text-lg font-semibold mb-3 text-gray-800">User Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-gray-700">
-                <span className="font-medium">User ID:</span> {order.userId || 'Not available'}
-              </p>
-              <p className="text-gray-700">
-                <span className="font-medium">Company/Name:</span> {displayUser.companyName}
-              </p>
-              <p className="text-gray-700">
-                <span className="font-medium">Contact Person:</span> {displayUser.contactPerson}
-              </p>
-              <p className="text-gray-700">
-                <span className="font-medium">Role:</span> {displayUser.role}
-              </p>
-              <p className="text-gray-700">
-                <span className="font-medium">Account Status:</span>{' '}
-                <span className={`px-2 py-0.5 text-xs rounded-full ${displayUser.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {displayUser.active ? 'Active' : 'Inactive'}
-                </span>
-              </p>
-            </div>
-            <div>
-              <p className="text-gray-700">
-                <span className="font-medium">Email:</span> {displayUser.email}
-              </p>
-              <p className="text-gray-700">
-                <span className="font-medium">Phone:</span> {displayUser.phone}
-              </p>
-              {userData && (
-                <>
-                  <p className="text-gray-700">
-                    <span className="font-medium">Account Created:</span> {userData.createdAt ? formatDate(userData.createdAt) : 'Unknown'}
-                  </p>
-                  <p className="text-gray-700">
-                    <span className="font-medium">Last Updated:</span> {userData.updatedAt ? formatDate(userData.updatedAt) : 'Unknown'}
-                  </p>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold mb-3 text-gray-800">Order Information</h2>
-            <div className="space-y-2">
-              <p className="text-gray-700">
-                <span className="font-medium">Date:</span> {formatDate(order.createdAt)}
-              </p>
-              <p className="text-gray-700">
-                <span className="font-medium">Status:</span> {statusText}
-              </p>
-              <p className="text-gray-700">
-                <span className="font-medium">Payment Method:</span> {order.paymentMethod || 'Invoice'}
-              </p>
-              {order.deliveryMethod && (
-                <p className="text-gray-700">
-                  <span className="font-medium">Delivery Method:</span> {order.deliveryMethod}
-                </p>
-              )}
-              {order.source && (
-                <p className="text-gray-700">
-                  <span className="font-medium">Order Source:</span>{' '}
-                  <span className={`px-2 py-0.5 text-xs rounded-full ${order.source === 'b2c' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>
-                    {order.source === 'b2c' ? 'B2C Shop' : 'B2B Portal'}
-                  </span>
-                </p>
-              )}
-              {order.source === 'b2c' && order.affiliateCode && (
-                <p className="text-gray-700">
-                  <span className="font-medium">REF Code:</span>{' '}
-                  <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-800">
-                    {order.affiliateCode}
-                  </span>
-                  {order.affiliateDiscount && (
-                    <span className="ml-2 text-sm text-gray-500">
-                      ({order.affiliateDiscount.percentage}% rabatt)
-                    </span>
-                  )}
-                </p>
-              )}
+          {/* Regular view content - hidden during print */}
+          <div className="print:hidden flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">Orderdetaljer</h1>
+            <div className="flex gap-2">
+              <button
+                onClick={() => navigate('/admin/orders')}
+                className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
+              >
+                Tillbaka
+              </button>
+              <button
+                onClick={handlePrint}
+                className="px-4 py-2 text-sm bg-blue-500 text-white hover:bg-blue-600 rounded-md"
+              >
+                Skriv ut
+              </button>
             </div>
           </div>
 
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold mb-3 text-gray-800">Delivery Address</h2>
-            <div className="space-y-2">
-              <p className="text-gray-700">
-                <span className="font-medium">Name/Company:</span> {displayAddress.company}
-              </p>
-              <p className="text-gray-700">
-                <span className="font-medium">Contact Person:</span> {displayAddress.contactPerson}
-              </p>
-              <p className="text-gray-700">
-                <span className="font-medium">Address:</span> {displayAddress.address}
-              </p>
-            </div>
-          </div>
-        </div>
+          {/* Main content - this is what gets printed */}
+          <div className="bg-white rounded-lg shadow p-6 print:shadow-none print:p-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 print:gap-8">
+              <div>
+                <h2 className="text-lg font-semibold mb-4">Orderinformation</h2>
+                <div className="space-y-2">
+                  <p><span className="font-medium">Order ID:</span> {order.id}</p>
+                  <p><span className="font-medium">Datum:</span> {format(new Date(order.createdAt), 'PPP', { locale: sv })}</p>
+                  <p><span className="font-medium">Status:</span> <span className="print:inline-block"><OrderStatusMenu
+                    currentStatus={order.status}
+                    onStatusChange={(newStatus) => updateOrderStatus(order.id, newStatus)}
+                    disabled={loading}
+                  /></span></p>
+                  <p><span className="font-medium">Totalt belopp:</span> {order.totalAmount} kr</p>
+                </div>
+              </div>
 
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800">Order Items</h2>
-          <div className="bg-gray-50 p-4 rounded-lg overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Color</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {order.source === 'b2c' ? (
-                  // B2C order items
-                  order.items.map((item, index) => (
-                    <tr key={index}>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.name}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.color || '-'}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.size || '-'}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.quantity} st</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
-                        {item.price?.toLocaleString('sv-SE', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
-                        })} kr
-                      </td>
+              {order.user && (
+                <div>
+                  <h2 className="text-lg font-semibold mb-4">Kundinformation</h2>
+                  <div className="space-y-2">
+                    <p><span className="font-medium">Företag:</span> {order.user.companyName}</p>
+                    <p><span className="font-medium">Kontaktperson:</span> {order.user.contactPerson}</p>
+                    <p><span className="font-medium">Email:</span> {order.user.email}</p>
+                    <p><span className="font-medium">Telefon:</span> {order.user.phone}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-8">
+              <h2 className="text-lg font-semibold mb-4">Produkter</h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produkt</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Antal</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Pris</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Totalt</th>
                     </tr>
-                  ))
-                ) : (
-                  // B2B order items
-                  getOrderDistribution(order).map((item, index) => (
-                    <tr key={index}>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">B8 Shield</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.color}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.size}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.quantity} st</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
-                        {index === 0 && order.prisInfo?.produktPris ? 
-                          `${order.prisInfo.produktPris.toLocaleString('sv-SE', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                          })} kr` : ''}
-                      </td>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {order.items.map((item, index) => (
+                      <tr key={index}>
+                        <td className="px-4 py-3 text-sm">{item.name}</td>
+                        <td className="px-4 py-3 text-sm text-right">{item.quantity}</td>
+                        <td className="px-4 py-3 text-sm text-right">{item.price} kr</td>
+                        <td className="px-4 py-3 text-sm text-right">{item.quantity * item.price} kr</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colSpan="3" className="px-4 py-3 text-sm font-medium text-right">Totalt:</td>
+                      <td className="px-4 py-3 text-sm font-medium text-right">{order.totalAmount} kr</td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium">Subtotal:</td>
-                  <td className="px-4 py-4 text-sm text-gray-700 text-right">
-                    {order.source === 'b2c' ? (
-                      `${order.subtotal?.toLocaleString('sv-SE', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })} kr`
-                    ) : (
-                      `${order.prisInfo?.produktPris?.toLocaleString('sv-SE', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })} kr`
-                    )}
-                  </td>
-                </tr>
-                {order.source === 'b2c' && order.discountAmount > 0 && (
-                  <tr>
-                    <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium text-green-600">
-                      Affiliate rabatt ({order.affiliateCode}), {order.discountPercentage}%:
-                    </td>
-                    <td className="px-4 py-4 text-sm text-green-600 text-right">
-                      - {order.discountAmount?.toLocaleString('sv-SE', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })} kr
-                    </td>
-                  </tr>
-                )}
-                {order.source === 'b2c' && order.shipping > 0 && (
-                  <tr>
-                    <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium">Shipping:</td>
-                    <td className="px-4 py-4 text-sm text-gray-700 text-right">
-                      {order.shipping.toLocaleString('sv-SE', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })} kr
-                    </td>
-                  </tr>
-                )}
-                <tr>
-                  <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium">VAT (25%):</td>
-                  <td className="px-4 py-4 text-sm text-gray-700 text-right">
-                    {order.source === 'b2c' ? (
-                      `${order.vat?.toLocaleString('sv-SE', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })} kr`
-                    ) : (
-                      `${order.prisInfo?.moms?.toLocaleString('sv-SE', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })} kr`
-                    )}
-                  </td>
-                </tr>
-                <tr>
-                  <td colSpan="4" className="px-4 py-4 text-sm text-right font-bold">Total:</td>
-                  <td className="px-4 py-4 text-sm font-bold text-gray-800 text-right">
-                    {order.source === 'b2c' ? (
-                      `${order.total?.toLocaleString('sv-SE', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })} kr`
-                    ) : (
-                      `${order.prisInfo?.totalPris?.toLocaleString('sv-SE', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })} kr`
-                    )}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </div>
-
-        {order.note && (
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-2 text-gray-800">Notes</h2>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-gray-700">{order.note}</p>
+                  </tfoot>
+                </table>
+              </div>
             </div>
+
+            {order.statusHistory && order.statusHistory.length > 0 && (
+              <div className="mt-8 print:hidden">
+                <h2 className="text-lg font-semibold mb-4">Statushistorik</h2>
+                <div className="space-y-2">
+                  {order.statusHistory.map((status, index) => (
+                    <p key={index} className="text-sm">
+                      {format(new Date(status.changedAt), 'Pp', { locale: sv })} - 
+                      Ändrad från <span className="font-medium">{status.from}</span> till <span className="font-medium">{status.to}</span>
+                      {status.changedBy && <span> av {status.displayName}</span>}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        )}
-
-        {/* Status History Section */}
-        {order.statusHistory && order.statusHistory.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-2 text-gray-800">Status History</h2>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <ul className="space-y-3">
-                {order.statusHistory.map((history, index) => (
-                  <li key={index} className="border-b border-gray-200 pb-2 last:border-0 last:pb-0">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="font-medium">Status changed from </span>
-                        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusInfo(history.from).color}`}>
-                          {getStatusInfo(history.from).text}
-                        </span>
-                        <span className="font-medium"> to </span>
-                        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusInfo(history.to).color}`}>
-                          {getStatusInfo(history.to).text}
-                        </span>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {history.changedAt ? formatDate(history.changedAt) : 'N/A'}
-                      </div>
-                    </div>
-                    {history.displayName && (
-                      <div className="text-sm text-gray-500 mt-1">
-                        By: {history.displayName}
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
-
-        <div className="flex justify-between mt-8">
-          <Link
-            to="/admin/orders"
-            className="text-blue-600 hover:text-blue-800 font-medium"
-          >
-            Back to Order List
-          </Link>
-        </div>
-
-        <div className="flex justify-between mt-8 print:hidden">
-          <button
-            onClick={handlePrint}
-            className="px-4 py-2 text-sm bg-blue-500 text-white hover:bg-blue-600 rounded-md"
-          >
-            Skriv ut
-          </button>
         </div>
       </div>
     </AppLayout>
