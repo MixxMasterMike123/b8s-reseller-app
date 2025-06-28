@@ -147,12 +147,14 @@ const Checkout = () => {
         shippingCountry: cart.shippingCountry,
         
         // Affiliate tracking from fresh calculation
-        ...(freshTotals.appliedAffiliate && {
-          affiliateCode: freshTotals.appliedAffiliate.code,
+        // Add affiliate data if present
+        ...(cart.discountCode && {
+          affiliateCode: cart.discountCode,
+          affiliateClickId: cart.affiliateClickId,
           affiliateDiscount: {
-            code: freshTotals.appliedAffiliate.code,
-            percentage: freshTotals.discountPercentage,
-            amount: freshTotals.discountAmount,
+            code: cart.discountCode,
+            percentage: cart.discountPercentage || 0,
+            amount: cart.discountAmount || 0,
           },
         }),
         
@@ -162,9 +164,36 @@ const Checkout = () => {
 
       console.log("Submitting the following order data to Firestore:", orderData);
 
+      // 1. Create the main order in the named database ('b8s-reseller-db')
       const docRef = await addDoc(collection(db, 'orders'), orderData);
-      
       console.log("Order created successfully with ID:", docRef.id);
+
+      // 2. Call the post-order processing function
+      try {
+        console.log('Calling post-order processing function...');
+        const timestamp = Date.now();
+        const functionUrl = `https://us-central1-b8shield-reseller-app.cloudfunctions.net/processB2COrderCompletionHttp?_=${timestamp}`;
+        
+        const response = await fetch(functionUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache',
+          },
+          body: JSON.stringify({ orderId: docRef.id }),
+        });
+
+        if (!response.ok) {
+          console.error('CRITICAL: Failed to call post-order processing function.', await response.text());
+          toast.error("Ett bakgrundsfel inträffade. Din order har tagits emot, men kontakta support om du inte får en bekräftelse.", { duration: 10000 });
+        } else {
+          const result = await response.json();
+          console.log('Post-order processing completed successfully:', result);
+        }
+      } catch (error) {
+        console.error('CRITICAL: Failed to call post-order processing function.', error);
+        toast.error("Ett bakgrundsfel inträffade. Din order har tagits emot, men kontakta support om du inte får en bekräftelse.", { duration: 10000 });
+      }
       
       toast.success(
         `Tack för din beställning! Ordernummer: ${orderNumber}`, 

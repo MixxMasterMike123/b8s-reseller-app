@@ -34,6 +34,7 @@ export const CartProvider = ({ children }) => {
       discountCode: null,
       discountAmount: 0,
       discountPercentage: 0,
+      affiliateClickId: null,
     };
     return initialCart;
   });
@@ -107,7 +108,12 @@ export const CartProvider = ({ children }) => {
       total,
       discountAmount,
       discountCode: cart.discountCode,
-      discountPercentage: cart.discountPercentage || 0
+      discountPercentage: cart.discountPercentage || 0,
+      // Include affiliate data if present
+      ...(cart.discountCode && {
+        affiliateCode: cart.discountCode,
+        affiliateClickId: cart.affiliateClickId
+      })
     };
   };
 
@@ -123,7 +129,7 @@ export const CartProvider = ({ children }) => {
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
-        setCart(prev => ({ ...prev, discountCode: null, discountAmount: 0, discountPercentage: 0 }));
+        setCart(prev => ({ ...prev, discountCode: null, discountAmount: 0, discountPercentage: 0, affiliateClickId: null }));
         return { success: false, message: 'Ogiltig rabattkod.' };
       }
 
@@ -137,11 +143,26 @@ export const CartProvider = ({ children }) => {
       // Round the discount to the nearest whole number to avoid floating point issues
       const roundedDiscount = Math.round(discountValue);
 
+      // Get the affiliate click ID from localStorage
+      let affiliateClickId = null;
+      const affiliateRef = localStorage.getItem('b8s_affiliate_ref');
+      if (affiliateRef) {
+        try {
+          const affiliateInfo = JSON.parse(affiliateRef);
+          if (affiliateInfo && affiliateInfo.clickId) {
+            affiliateClickId = affiliateInfo.clickId;
+          }
+        } catch (error) {
+          console.error("Error parsing affiliate click ID:", error);
+        }
+      }
+
       setCart(prev => ({
         ...prev,
         discountCode: trimmedCode,
         discountAmount: roundedDiscount,
         discountPercentage: discountPercentage,
+        affiliateClickId: affiliateClickId,
       }));
       
       if (!options.silent) {
@@ -164,6 +185,7 @@ export const CartProvider = ({ children }) => {
       discountCode: null,
       discountAmount: 0,
       discountPercentage: 0,
+      affiliateClickId: null,
     }));
   };
 
@@ -239,6 +261,7 @@ export const CartProvider = ({ children }) => {
       discountCode: null,
       discountAmount: 0,
       discountPercentage: 0,
+      affiliateClickId: null,
     });
   };
 
