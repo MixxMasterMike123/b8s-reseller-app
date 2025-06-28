@@ -52,22 +52,35 @@ const AdminOrderDetail = () => {
   const [fetchAttempted, setFetchAttempted] = useState(false);
 
   // Use guest data if it exists, otherwise use fetched user data
-  const displayUser = order?.customerInfo ? {
-    email: order.customerInfo.email,
-    companyName: `${order.customerInfo.firstName} ${order.customerInfo.lastName} (Guest)`,
-    contactPerson: `${order.customerInfo.firstName} ${order.customerInfo.lastName}`,
+  const displayUser = order?.source === 'b2c' ? {
+    email: order.customerInfo?.email || 'Not specified',
+    companyName: `${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''} (B2C Customer)`.trim(),
+    contactPerson: `${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''}`.trim() || 'Not specified',
     phone: 'Not specified',
-    role: 'Guest',
-    active: true, // Guests are implicitly active for this order
-  } : userData;
+    role: 'B2C Customer',
+    active: true, // B2C customers are implicitly active for their order
+  } : userData || {
+    email: 'Not specified',
+    companyName: 'Not specified',
+    contactPerson: 'Not specified',
+    phone: 'Not specified',
+    role: 'User',
+    active: false
+  };
 
-  const displayAddress = order?.shippingAddress ? {
-    company: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
-    contactPerson: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
-    address: `${order.shippingAddress.address}${order.shippingAddress.apartment ? `, ${order.shippingAddress.apartment}` : ''}, ${order.shippingAddress.postalCode} ${order.shippingAddress.city}, ${order.shippingAddress.country}`,
+  const displayAddress = order?.source === 'b2c' ? {
+    company: `${order.shippingAddress?.firstName || ''} ${order.shippingAddress?.lastName || ''}`.trim() || 'Not specified',
+    contactPerson: `${order.shippingAddress?.firstName || ''} ${order.shippingAddress?.lastName || ''}`.trim() || 'Not specified',
+    address: [
+      order.shippingAddress?.address,
+      order.shippingAddress?.apartment,
+      order.shippingAddress?.postalCode,
+      order.shippingAddress?.city,
+      order.shippingAddress?.country
+    ].filter(Boolean).join(', ') || 'Not specified'
   } : {
-    company: userData?.companyName,
-    contactPerson: userData?.contactPerson,
+    company: userData?.companyName || 'Not specified',
+    contactPerson: userData?.contactPerson || 'Not specified',
     address: [
       userData?.deliveryAddress, 
       userData?.deliveryPostalCode, 
@@ -361,34 +374,38 @@ const AdminOrderDetail = () => {
                 <span className="font-medium">User ID:</span> {order.userId || 'Not available'}
               </p>
               <p className="text-gray-700">
-                <span className="font-medium">Company:</span> {userData?.companyName || order.companyName || 'Not specified'}
+                <span className="font-medium">Company/Name:</span> {displayUser.companyName}
               </p>
               <p className="text-gray-700">
-                <span className="font-medium">Contact Person:</span> {userData?.contactPerson || order.contactName || 'Not specified'}
+                <span className="font-medium">Contact Person:</span> {displayUser.contactPerson}
               </p>
               <p className="text-gray-700">
-                <span className="font-medium">Role:</span> {userData?.role || 'User'}
+                <span className="font-medium">Role:</span> {displayUser.role}
               </p>
               <p className="text-gray-700">
                 <span className="font-medium">Account Status:</span>{' '}
-                <span className={`px-2 py-0.5 text-xs rounded-full ${userData?.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {userData?.active ? 'Active' : 'Inactive'}
+                <span className={`px-2 py-0.5 text-xs rounded-full ${displayUser.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  {displayUser.active ? 'Active' : 'Inactive'}
                 </span>
               </p>
             </div>
             <div>
               <p className="text-gray-700">
-                <span className="font-medium">Email:</span> {userData?.email || order.email || 'Not specified'}
+                <span className="font-medium">Email:</span> {displayUser.email}
               </p>
               <p className="text-gray-700">
-                <span className="font-medium">Phone:</span> {userData?.phoneNumber || order.phone || 'Not specified'}
+                <span className="font-medium">Phone:</span> {displayUser.phone}
               </p>
-              <p className="text-gray-700">
-                <span className="font-medium">Account Created:</span> {userData?.createdAt ? formatDate(userData.createdAt) : 'Unknown'}
-              </p>
-              <p className="text-gray-700">
-                <span className="font-medium">Last Updated:</span> {userData?.updatedAt ? formatDate(userData.updatedAt) : 'Unknown'}
-              </p>
+              {userData && (
+                <>
+                  <p className="text-gray-700">
+                    <span className="font-medium">Account Created:</span> {userData.createdAt ? formatDate(userData.createdAt) : 'Unknown'}
+                  </p>
+                  <p className="text-gray-700">
+                    <span className="font-medium">Last Updated:</span> {userData.updatedAt ? formatDate(userData.updatedAt) : 'Unknown'}
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -411,6 +428,27 @@ const AdminOrderDetail = () => {
                   <span className="font-medium">Delivery Method:</span> {order.deliveryMethod}
                 </p>
               )}
+              {order.source && (
+                <p className="text-gray-700">
+                  <span className="font-medium">Order Source:</span>{' '}
+                  <span className={`px-2 py-0.5 text-xs rounded-full ${order.source === 'b2c' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>
+                    {order.source === 'b2c' ? 'B2C Shop' : 'B2B Portal'}
+                  </span>
+                </p>
+              )}
+              {order.source === 'b2c' && order.affiliateCode && (
+                <p className="text-gray-700">
+                  <span className="font-medium">REF Code:</span>{' '}
+                  <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-800">
+                    {order.affiliateCode}
+                  </span>
+                  {order.affiliateDiscount && (
+                    <span className="ml-2 text-sm text-gray-500">
+                      ({order.affiliateDiscount.percentage}% rabatt)
+                    </span>
+                  )}
+                </p>
+              )}
             </div>
           </div>
 
@@ -418,24 +456,14 @@ const AdminOrderDetail = () => {
             <h2 className="text-lg font-semibold mb-3 text-gray-800">Delivery Address</h2>
             <div className="space-y-2">
               <p className="text-gray-700">
-                <span className="font-medium">Company:</span> {userData?.companyName || order.companyName || 'Not specified'}
+                <span className="font-medium">Name/Company:</span> {displayAddress.company}
               </p>
               <p className="text-gray-700">
-                <span className="font-medium">Contact Person:</span> {userData?.contactPerson || order.contactName || 'Not specified'}
+                <span className="font-medium">Contact Person:</span> {displayAddress.contactPerson}
               </p>
               <p className="text-gray-700">
-                <span className="font-medium">Address:</span> {userData?.address || order.address || 'Not specified'}
+                <span className="font-medium">Address:</span> {displayAddress.address}
               </p>
-              {(userData?.postalCode || order.postalCode) && (userData?.city || order.city) && (
-                <p className="text-gray-700">
-                  <span className="font-medium">Postal Code & City:</span> {userData?.postalCode || order.postalCode}, {userData?.city || order.city}
-                </p>
-              )}
-              {(userData?.country || order.country) && (
-                <p className="text-gray-700">
-                  <span className="font-medium">Country:</span> {userData?.country || order.country}
-                </p>
-              )}
             </div>
           </div>
         </div>
@@ -454,48 +482,112 @@ const AdminOrderDetail = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {getOrderDistribution(order).map((item, index) => (
-                  <tr key={index}>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">B8 Shield</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.color}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.size}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.quantity} st</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
-                      {index === 0 && order.prisInfo?.produktPris ? 
-                        `${order.prisInfo.produktPris.toLocaleString('sv-SE', {
+                {order.source === 'b2c' ? (
+                  // B2C order items
+                  order.items.map((item, index) => (
+                    <tr key={index}>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.name}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.color || '-'}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.size || '-'}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.quantity} st</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
+                        {item.price?.toLocaleString('sv-SE', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2
-                        })} kr` : ''}
-                    </td>
-                  </tr>
-                ))}
+                        })} kr
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  // B2B order items
+                  getOrderDistribution(order).map((item, index) => (
+                    <tr key={index}>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">B8 Shield</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.color}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.size}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.quantity} st</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
+                        {index === 0 && order.prisInfo?.produktPris ? 
+                          `${order.prisInfo.produktPris.toLocaleString('sv-SE', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                          })} kr` : ''}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
               <tfoot>
                 <tr>
                   <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium">Subtotal:</td>
                   <td className="px-4 py-4 text-sm text-gray-700 text-right">
-                    {order.prisInfo?.produktPris?.toLocaleString('sv-SE', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    })} kr
+                    {order.source === 'b2c' ? (
+                      `${order.subtotal?.toLocaleString('sv-SE', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })} kr`
+                    ) : (
+                      `${order.prisInfo?.produktPris?.toLocaleString('sv-SE', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })} kr`
+                    )}
                   </td>
                 </tr>
+                {order.source === 'b2c' && order.discountAmount > 0 && (
+                  <tr>
+                    <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium text-green-600">
+                      Affiliate rabatt ({order.affiliateCode}), {order.discountPercentage}%:
+                    </td>
+                    <td className="px-4 py-4 text-sm text-green-600 text-right">
+                      - {order.discountAmount?.toLocaleString('sv-SE', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })} kr
+                    </td>
+                  </tr>
+                )}
+                {order.source === 'b2c' && order.shipping > 0 && (
+                  <tr>
+                    <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium">Shipping:</td>
+                    <td className="px-4 py-4 text-sm text-gray-700 text-right">
+                      {order.shipping.toLocaleString('sv-SE', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })} kr
+                    </td>
+                  </tr>
+                )}
                 <tr>
                   <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium">VAT (25%):</td>
                   <td className="px-4 py-4 text-sm text-gray-700 text-right">
-                    {order.prisInfo?.moms?.toLocaleString('sv-SE', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    })} kr
+                    {order.source === 'b2c' ? (
+                      `${order.vat?.toLocaleString('sv-SE', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })} kr`
+                    ) : (
+                      `${order.prisInfo?.moms?.toLocaleString('sv-SE', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })} kr`
+                    )}
                   </td>
                 </tr>
                 <tr>
                   <td colSpan="4" className="px-4 py-4 text-sm text-right font-bold">Total:</td>
                   <td className="px-4 py-4 text-sm font-bold text-gray-800 text-right">
-                    {order.prisInfo?.totalPris?.toLocaleString('sv-SE', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    })} kr
+                    {order.source === 'b2c' ? (
+                      `${order.total?.toLocaleString('sv-SE', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })} kr`
+                    ) : (
+                      `${order.prisInfo?.totalPris?.toLocaleString('sv-SE', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })} kr`
+                    )}
                   </td>
                 </tr>
               </tfoot>

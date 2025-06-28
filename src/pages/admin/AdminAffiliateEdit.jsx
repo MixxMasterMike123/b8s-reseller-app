@@ -62,16 +62,14 @@ const SocialLinks = ({ socials }) => {
   );
 };
 
-const StatCard = ({ icon, title, value, color = "bg-blue-500" }) => (
-  <div className="bg-white p-6 rounded-xl shadow-md">
-    <div className="flex items-center">
-      <div className={`${color} rounded-lg p-3`}>
-        {React.cloneElement(icon, { className: "h-6 w-6 text-white" })}
-      </div>
-      <div className="ml-4">
-        <p className="text-sm text-gray-500">{title}</p>
-        <p className="text-xl font-semibold">{value}</p>
-      </div>
+const StatCard = ({ icon, title, value, color }) => (
+  <div className="bg-white p-4 rounded-2xl shadow-lg flex items-start space-x-3">
+    <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center ${color}`}>
+      {React.cloneElement(icon, { className: "h-5 w-5 text-white" })}
+    </div>
+    <div className="min-w-0 flex-1">
+      <p className="text-xs text-gray-500 font-medium mb-1 line-clamp-2">{title}</p>
+      <p className="text-xl font-bold text-gray-900 truncate">{value}</p>
     </div>
   </div>
 );
@@ -103,6 +101,15 @@ const AdminAffiliateEdit = () => {
   const [checkoutDiscount, setCheckoutDiscount] = useState('');
   const [status, setStatus] = useState('');
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('sv-SE', {
+      style: 'currency',
+      currency: 'SEK',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount || 0);
+  };
+
   const fetchAffiliateStats = async (affiliateCode) => {
     try {
       // Get recent orders with this affiliate code
@@ -112,8 +119,7 @@ const AdminAffiliateEdit = () => {
       const orders = orderSnap.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
-      setRecentOrders(orders);
+      })).filter(order => order.status !== 'cancelled'); // Only count non-cancelled orders
 
       // Get click data
       const clicksRef = collection(db, 'affiliateClicks');
@@ -121,48 +127,66 @@ const AdminAffiliateEdit = () => {
       const clicksSnap = await getDocs(clicksQuery);
       const clicks = clicksSnap.docs.map(doc => doc.data());
 
+      // Calculate unique clicks by IP
+      const uniqueClicks = new Set(clicks.map(c => c.ipAddress)).size;
+      const totalClicks = clicks.length;
+      const totalOrders = orders.length;
+
+      setRecentOrders(orders);
       setAffiliateStats({
-        totalClicks: clicks.length,
-        uniqueClicks: new Set(clicks.map(c => c.ipAddress)).size,
-        totalOrders: orders.length,
-        totalEarnings: orders.reduce((sum, order) => sum + (order.affiliateCommission || 0), 0),
-        conversionRate: orders.length > 0 ? ((orders.length / clicks.length) * 100).toFixed(1) : 0
+        totalClicks,
+        uniqueClicks,
+        totalOrders,
+        totalEarnings: data?.stats?.totalEarnings || 0,
+        conversionRate: totalClicks > 0 ? ((totalOrders / totalClicks) * 100).toFixed(1) : '0.0'
       });
     } catch (error) {
       console.error('Error fetching affiliate stats:', error);
+      toast.error('Kunde inte hämta affiliate-statistik');
     }
   };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const isApp = location.pathname.includes('/application/');
-    setIsApplication(isApp);
-    const collectionName = isApp ? 'affiliateApplications' : 'affiliates';
-
     try {
-      const docRef = doc(db, collectionName, id);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        const docData = docSnap.data();
-        setData(docData);
-        if (!isApp) {
-          setCommissionRate(docData.commissionRate || '15');
-          setCheckoutDiscount(docData.checkoutDiscount === undefined ? '10' : docData.checkoutDiscount);
-          setStatus(docData.status || 'active');
-          await fetchAffiliateStats(docData.affiliateCode);
-        }
+      // First check if this is an application
+      const appRef = doc(db, 'affiliateApplications', id);
+      const appSnap = await getDoc(appRef);
+      
+      if (appSnap.exists()) {
+        setData(appSnap.data());
+        setIsApplication(true);
       } else {
-        toast.error('Dokumentet hittades inte.');
-        navigate('/admin/affiliates');
+        // If not an application, get affiliate data
+        const affiliateRef = doc(db, 'affiliates', id);
+        const affiliateSnap = await getDoc(affiliateRef);
+        
+        if (affiliateSnap.exists()) {
+          const affiliateData = affiliateSnap.data();
+          setData(affiliateData);
+          setIsApplication(false);
+          
+          // Only fetch stats after we have the affiliate data
+          if (affiliateData.affiliateCode) {
+            await fetchAffiliateStats(affiliateData.affiliateCode);
+          }
+          
+          // Set form values
+          setCommissionRate(affiliateData.commissionRate?.toString() || '');
+          setCheckoutDiscount(affiliateData.checkoutDiscount?.toString() || '');
+          setStatus(affiliateData.status || '');
+        } else {
+          toast.error('Kunde inte hitta affiliate eller ansökan.');
+          navigate('/admin/affiliates');
+        }
       }
     } catch (error) {
-      console.error("Fel vid hämtning av dokument:", error);
-      toast.error('Kunde inte hämta information.');
+      console.error('Error fetching data:', error);
+      toast.error('Kunde inte hämta data.');
     } finally {
       setLoading(false);
     }
-  }, [id, location.pathname, navigate]);
+  }, [id, navigate]);
 
   useEffect(() => {
     fetchData();
@@ -228,13 +252,9 @@ const AdminAffiliateEdit = () => {
       setLoading(false);
     }
   };
-  
+
   if (loading) return <AppLayout><div className="text-center p-8">Laddar...</div></AppLayout>;
   if (!data) return <AppLayout><div className="text-center p-8">Ingen data hittades.</div></AppLayout>;
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(amount || 0);
-  };
 
   const formatDate = (date) => {
     if (!date) return '-';
@@ -274,29 +294,24 @@ const AdminAffiliateEdit = () => {
             </h1>
           </div>
           {!isApplication && !isEditing && (
-            <button 
+          <button
               onClick={() => setIsEditing(true)} 
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
+          >
               <PencilIcon className="h-5 w-5 mr-2" />
               Redigera
-            </button>
+          </button>
           )}
-        </div>
+      </div>
 
         {/* Quick Stats for Active Affiliates */}
-        {!isApplication && affiliateStats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {!isApplication && data && affiliateStats && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
             <StatCard 
               icon={<ChartBarIcon />}
               title="Totalt antal besök"
               value={affiliateStats.totalClicks.toLocaleString('sv-SE')}
-            />
-            <StatCard 
-              icon={<ShoppingCartIcon />}
-              title="Konverteringsgrad"
-              value={`${affiliateStats.conversionRate}%`}
-              color="bg-green-500"
+              color="bg-blue-500"
             />
             <StatCard 
               icon={<UserGroupIcon />}
@@ -305,9 +320,21 @@ const AdminAffiliateEdit = () => {
               color="bg-purple-500"
             />
             <StatCard 
+              icon={<ShoppingCartIcon />}
+              title="Konverteringar"
+              value={affiliateStats.totalOrders.toLocaleString('sv-SE')}
+              color="bg-orange-500"
+            />
+            <StatCard 
+              icon={<ChartBarIcon />}
+              title="Konverteringsgrad"
+              value={`${affiliateStats.conversionRate}%`}
+              color="bg-green-500"
+            />
+            <StatCard 
               icon={<BanknotesIcon />}
-              title="Total intjäning"
-              value={formatCurrency(affiliateStats.totalEarnings)}
+              title="Provision"
+              value={formatCurrency(data.stats?.totalEarnings || 0)}
               color="bg-emerald-500"
             />
           </div>
@@ -328,9 +355,9 @@ const AdminAffiliateEdit = () => {
                     {!isApplication && (
                       <StatusBadge status={data.status} />
                     )}
-                  </div>
-                </div>
-                
+        </div>
+      </div>
+
                 <div className="p-6">
                   <div className="space-y-6">
                     <DetailItem 
@@ -369,8 +396,8 @@ const AdminAffiliateEdit = () => {
                       </>
                     )}
                   </div>
-                </div>
-              </div>
+            </div>
+            </div>
 
               {/* Settings Card */}
               {!isApplication && (
@@ -380,41 +407,41 @@ const AdminAffiliateEdit = () => {
                       <CurrencyEuroIcon className="h-6 w-6 mr-2 text-gray-500" />
                       Inställningar
                     </h2>
-                  </div>
-                  
+            </div>
+
                   <div className="p-6">
                     <div className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
+            <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Status
                           </label>
                           {isEditing ? (
-                            <select 
+              <select
                               value={status} 
                               onChange={(e) => setStatus(e.target.value)}
                               className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                            >
+              >
                               <option value="active">Aktiv</option>
                               <option value="suspended">Suspenderad</option>
-                            </select>
+              </select>
                           ) : (
                             <StatusBadge status={status} />
                           )}
-                        </div>
+            </div>
 
-                        <div>
+            <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Provision
                           </label>
                           {isEditing ? (
                             <div className="relative rounded-md shadow-sm">
-                              <input
-                                type="number"
+              <input
+                type="number"
                                 value={commissionRate}
                                 onChange={(e) => setCommissionRate(e.target.value)}
                                 className="block w-full rounded-md border-gray-300 pr-12 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                              />
+              />
                               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
                                 <span className="text-gray-500 sm:text-sm">%</span>
                               </div>
@@ -422,16 +449,16 @@ const AdminAffiliateEdit = () => {
                           ) : (
                             <span className="text-lg font-semibold">{data.commissionRate}%</span>
                           )}
-                        </div>
+            </div>
 
-                        <div>
+            <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Rabatt vid checkout
                           </label>
                           {isEditing ? (
                             <div className="relative rounded-md shadow-sm">
-                              <input
-                                type="number"
+              <input
+                type="number"
                                 value={checkoutDiscount}
                                 onChange={(e) => setCheckoutDiscount(e.target.value)}
                                 className="block w-full rounded-md border-gray-300 pr-12 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
@@ -465,7 +492,7 @@ const AdminAffiliateEdit = () => {
                       )}
                     </div>
                   </div>
-                </div>
+            </div>
               )}
 
               {/* Marketing Info */}
@@ -475,10 +502,10 @@ const AdminAffiliateEdit = () => {
                     <ChartBarIcon className="h-6 w-6 mr-2 text-gray-500" />
                     Marknadsföring
                   </h2>
-                </div>
-                
+        </div>
+
                 <div className="p-6">
-                  <div className="space-y-6">
+        <div className="space-y-6">
                     <DetailItem 
                       label="Primär kanal"
                       icon={<ChatBubbleLeftIcon className="h-5 w-5" />}
@@ -535,18 +562,24 @@ const AdminAffiliateEdit = () => {
                     Senaste ordrar
                   </h2>
                 </div>
-                
+
                 <div className="p-6">
                   <div className="space-y-4">
                     {recentOrders.slice(0, 5).map((order) => (
-                      <div key={order.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                      <div 
+                        key={order.id} 
+                        className="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                        onClick={() => navigate(`/admin/orders/${order.id}`)}
+                      >
                         <div>
-                          <p className="text-sm font-medium text-gray-900">Order #{order.id.slice(0, 8)}</p>
+                          <p className="text-sm font-medium text-gray-900">
+                            Order #{order.orderNumber || order.id}
+                          </p>
                           <p className="text-sm text-gray-500">{formatDate(order.createdAt)}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-medium text-gray-900">{formatCurrency(order.totalAmount)}</p>
-                          <p className="text-sm text-green-600">{formatCurrency(order.affiliateCommission)}</p>
+                          <p className="text-sm font-medium text-gray-900">{formatCurrency(order.total || order.totalAmount || 0)}</p>
+                          <p className="text-sm text-green-600">{formatCurrency(order.affiliateCommission || 0)}</p>
                         </div>
                       </div>
                     ))}
@@ -587,4 +620,4 @@ const AdminAffiliateEdit = () => {
   );
 };
 
-export default AdminAffiliateEdit; 
+export default AdminAffiliateEdit;

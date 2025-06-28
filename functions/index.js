@@ -388,18 +388,18 @@ exports.approveAffiliate = functions.https.onCall(async (data, context) => {
 exports.logAffiliateClick = functions
   .region('us-central1')
   .https.onCall(async (data, context) => {
-    const { affiliateCode } = data;
+  const { affiliateCode } = data;
 
-    if (!affiliateCode) {
+  if (!affiliateCode) {
       throw new functions.https.HttpsError(
         'invalid-argument',
         'The function must be called with an affiliateCode.'
       );
-    }
+  }
 
-    try {
+  try {
       // Get affiliate details
-      const affiliatesRef = db.collection('affiliates');
+    const affiliatesRef = db.collection('affiliates');
       const q = affiliatesRef.where('affiliateCode', '==', affiliateCode).where('status', '==', 'active');
       const affiliateSnapshot = await q.get();
 
@@ -415,11 +415,11 @@ exports.logAffiliateClick = functions
 
       // Create click record
       const clickRef = await db.collection('affiliateClicks').add({
-        affiliateCode: affiliateCode,
+      affiliateCode: affiliateCode,
         affiliateId: affiliateDoc.id,
         timestamp: admin.firestore.Timestamp.now(),
-        ipAddress: context.rawRequest?.ip || 'unknown',
-        userAgent: context.rawRequest?.headers?.['user-agent'] || 'unknown',
+      ipAddress: context.rawRequest?.ip || 'unknown',
+      userAgent: context.rawRequest?.headers?.['user-agent'] || 'unknown',
         landingPage: context.rawRequest?.headers?.referer || 'unknown',
         converted: false,
       });
@@ -428,21 +428,21 @@ exports.logAffiliateClick = functions
       await affiliateDoc.ref.update({
         'stats.clicks': admin.firestore.FieldValue.increment(1)
       });
-
+    
       return { 
         success: true, 
         message: `Click logged for affiliate ${affiliateCode}`,
         clickId: clickRef.id
       };
 
-    } catch (error) {
+  } catch (error) {
       console.error(`Error logging affiliate click for code ${affiliateCode}:`, error);
       throw new functions.https.HttpsError(
         'internal',
         'Error logging affiliate click.'
       );
-    }
-  });
+  }
+});
 
 /**
  * [NEW & REFACTORED] This is an HTTP function invoked from the client-side after
@@ -476,23 +476,23 @@ exports.processB2COrderCompletion = functions
     try {
       const { orderId } = req.body;
 
-      if (!orderId) {
+  if (!orderId) {
         res.status(400).json({ 
           success: false, 
           error: 'The function must be called with an "orderId".' 
         });
         return;
-      }
+  }
 
-      console.log(`Processing B2C order completion for orderId: ${orderId}`);
-      const localDb = db; // Use the correct named database
+  console.log(`Processing B2C order completion for orderId: ${orderId}`);
+  const localDb = db; // Use the correct named database
 
-      // --- Start of Affiliate Conversion Logic ---
-      const orderRef = localDb.collection('orders').doc(orderId);
-      const orderSnap = await orderRef.get();
+  // --- Start of Affiliate Conversion Logic ---
+  const orderRef = localDb.collection('orders').doc(orderId);
+  const orderSnap = await orderRef.get();
 
-      if (!orderSnap.exists) {
-        console.error(`Order ${orderId} not found in b8s-reseller-db.`);
+  if (!orderSnap.exists) {
+    console.error(`Order ${orderId} not found in b8s-reseller-db.`);
         res.status(404).json({ 
           success: false, 
           error: `Order ${orderId} not found in database` 
@@ -500,7 +500,7 @@ exports.processB2COrderCompletion = functions
         return;
       }
 
-      const orderData = orderSnap.data();
+    const orderData = orderSnap.data();
       const { affiliateCode } = orderData;
 
       if (!affiliateCode) {
@@ -524,7 +524,7 @@ exports.processB2COrderCompletion = functions
       }
 
       const affiliateDoc = affiliateSnap.docs[0];
-      const affiliate = affiliateDoc.data();
+        const affiliate = affiliateDoc.data();
 
       // Calculate commission
       const orderTotal = orderData.total || 0;
@@ -544,8 +544,8 @@ exports.processB2COrderCompletion = functions
           .collection('affiliateClicks')
           .doc(orderData.affiliateClickId)
           .update({
-            converted: true,
-            orderId: orderId,
+                converted: true,
+                orderId: orderId,
             commissionAmount: commissionAmount
           });
       }
@@ -557,14 +557,14 @@ exports.processB2COrderCompletion = functions
         commission: commissionAmount 
       });
 
-    } catch (error) {
+          } catch (error) {
       console.error('Error processing B2C order completion:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Internal server error processing order' 
       });
     }
-  });
+});
 
 /**
  * [DEPRECATED] This trigger is no longer reliable due to the named database limitation.
@@ -2323,5 +2323,5 @@ exports.logAffiliateClickHttp = functions
         success: false,
         error: 'Error logging affiliate click.'
       });
-    }
-  });
+  }
+}); 
