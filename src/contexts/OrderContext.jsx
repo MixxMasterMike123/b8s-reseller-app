@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { 
   collection, 
   addDoc, 
@@ -120,7 +120,7 @@ export const OrderProvider = ({ children }) => {
   };
 
   // Generate an order number with format B8-YYYYMMDD-XXXX (where XXXX is a random number)
-  const generateOrderNumber = () => {
+  const generateOrderNumber = useCallback(() => {
     const date = new Date();
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -128,10 +128,10 @@ export const OrderProvider = ({ children }) => {
     const random = Math.floor(1000 + Math.random() * 9000); // Random 4-digit number
     
     return `B8-${year}${month}${day}-${random}`;
-  };
+  }, []);
 
   // Create a new order
-  const createOrder = async (orderData) => {
+  const createOrder = useCallback(async (orderData) => {
     try {
       setLoading(true);
       setError(null);
@@ -250,10 +250,10 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser, demoOrders]);
 
   // Get an order by ID
-  const getOrderById = async (orderId) => {
+  const getOrderById = useCallback(async (orderId) => {
     try {
       setLoading(true);
       setError(null);
@@ -315,7 +315,7 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser, demoOrders, isAdmin]);
 
   // Helper function to process Firestore timestamps to stable format
   // This prevents re-render loops caused by timestamp objects changing identity
@@ -349,7 +349,7 @@ export const OrderProvider = ({ children }) => {
   };
 
   // Get user's orders
-  const getUserOrders = async () => {
+  const getUserOrders = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -393,10 +393,10 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser, demoOrders]);
 
   // Get recent orders
-  const getRecentOrders = async (limitCount = 5) => {
+  const getRecentOrders = useCallback(async (limitCount = 5) => {
     try {
       setLoading(true);
       setError(null);
@@ -453,10 +453,10 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser, isAdmin, demoOrders]);
 
   // Get all orders (admin only)
-  const getAllOrders = async () => {
+  const getAllOrders = useCallback(async () => {
     try {
       console.log('getAllOrders: Starting to fetch orders');
       setLoading(true);
@@ -515,10 +515,10 @@ export const OrderProvider = ({ children }) => {
       console.log('getAllOrders: Setting loading to false');
       setLoading(false);
     }
-  };
+  }, [currentUser, isAdmin, demoOrders]);
 
   // Update order status (admin only)
-  const updateOrderStatus = async (orderId, newStatus, additionalData = {}) => {
+  const updateOrderStatus = useCallback(async (orderId, newStatus, additionalData = {}) => {
     try {
       setLoading(true);
       setError(null);
@@ -631,7 +631,7 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser, isAdmin, demoOrders]);
 
   // Get order statistics (admin only) - memoized with useCallback
   const getOrderStats = useCallback(async () => {
@@ -695,7 +695,7 @@ export const OrderProvider = ({ children }) => {
   }, [currentUser, isAdmin, demoOrders, isDemoMode]);
 
   // Delete order (admin only)
-  const deleteOrder = async (orderId) => {
+  const deleteOrder = useCallback(async (orderId) => {
     try {
       setLoading(true);
       setError(null);
@@ -736,10 +736,10 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser, isAdmin, demoOrders]);
 
   // Cancel an order (user can cancel their own pending orders)
-  const cancelOrder = async (orderId) => {
+  const cancelOrder = useCallback(async (orderId) => {
     try {
       setLoading(true);
       setError(null);
@@ -823,10 +823,10 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser, isAdmin, demoOrders]);
 
   // Update product settings (admin only)
-  async function updateProductSettings(settings) {
+  const updateProductSettings = useCallback(async (settings) => {
     try {
       setLoading(true);
       setError('');
@@ -854,10 +854,10 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }
+  }, [isAdmin]);
   
   // Create default B8 Shield products (used when products collection is empty)
-  const createDefaultProducts = async () => {
+  const createDefaultProducts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -937,9 +937,9 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser, isAdmin]);
 
-  const value = {
+  const value = useMemo(() => ({
     loading,
     error,
     PRODUCT_SETTINGS,
@@ -956,7 +956,11 @@ export const OrderProvider = ({ children }) => {
     updateProductSettings,
     createDefaultProducts,
     isDemoMode
-  };
+  }), [
+    loading, error, createOrder, getOrderById, getUserOrders, getRecentOrders, 
+    getAllOrders, updateOrderStatus, getOrderStats, deleteOrder, cancelOrder, 
+    updateProductSettings, createDefaultProducts
+  ]);
 
   return (
     <OrderContext.Provider value={value}>
