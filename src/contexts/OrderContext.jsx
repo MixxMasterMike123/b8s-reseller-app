@@ -207,14 +207,14 @@ export const OrderProvider = ({ children }) => {
             }));
           } else {
             // Fallback for simple orders
-            orderToCreate.items = [{
-              name: "B8 Shield",
+          orderToCreate.items = [{
+            name: "B8 Shield",
               color: orderToCreate.color || 'Blandade färger',
               size: orderToCreate.size || 'Blandade storlekar',
-              quantity: orderToCreate.antalForpackningar || 0,
-              price: orderToCreate.prisInfo?.produktPris / (orderToCreate.antalForpackningar || 1) || 0
-            }];
-          }
+            quantity: orderToCreate.antalForpackningar || 0,
+            price: orderToCreate.prisInfo?.produktPris / (orderToCreate.antalForpackningar || 1) || 0
+          }];
+        }
         }
         
         // Ensure all items have the required fields

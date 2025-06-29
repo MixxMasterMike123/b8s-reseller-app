@@ -169,7 +169,7 @@ const AdminAffiliateEdit = () => {
           // Only fetch stats after we have the affiliate data
           if (affiliateData.affiliateCode) {
             await fetchAffiliateStats(affiliateData.affiliateCode);
-          }
+      }
           
           // Set form values
           setCommissionRate(affiliateData.commissionRate?.toString() || '');
@@ -312,22 +312,22 @@ const AdminAffiliateEdit = () => {
               title="Totalt antal besök"
               value={affiliateStats.totalClicks.toLocaleString('sv-SE')}
               color="bg-blue-500"
-            />
+        />
             <StatCard 
               icon={<UserGroupIcon />}
               title="Unika besökare"
               value={affiliateStats.uniqueClicks.toLocaleString('sv-SE')}
               color="bg-purple-500"
-            />
+        />
             <StatCard 
               icon={<ShoppingCartIcon />}
               title="Konverteringar"
               value={affiliateStats.totalOrders.toLocaleString('sv-SE')}
               color="bg-orange-500"
-            />
+        />
             <StatCard 
               icon={<ChartBarIcon />}
-              title="Konverteringsgrad"
+          title="Konverteringsgrad"
               value={`${affiliateStats.conversionRate}%`}
               color="bg-green-500"
             />
@@ -336,8 +336,8 @@ const AdminAffiliateEdit = () => {
               title="Provision"
               value={formatCurrency(data.stats?.totalEarnings || 0)}
               color="bg-emerald-500"
-            />
-          </div>
+        />
+      </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -550,10 +550,10 @@ const AdminAffiliateEdit = () => {
                   <p className="text-gray-900">{data.city}</p>
                   <p className="text-gray-900">{data.country}</p>
                 </address>
-              </div>
             </div>
+          </div>
 
-            {/* Recent Orders */}
+          {/* Recent Orders */}
             {!isApplication && recentOrders.length > 0 && (
               <div className="bg-white shadow-lg rounded-2xl overflow-hidden">
                 <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
@@ -571,10 +571,10 @@ const AdminAffiliateEdit = () => {
                         className="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                         onClick={() => navigate(`/admin/orders/${order.id}`)}
                       >
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
                             Order #{order.orderNumber || order.id}
-                          </p>
+                    </p>
                           <p className="text-sm text-gray-500">{formatDate(order.createdAt)}</p>
                         </div>
                         <div className="text-right">
@@ -585,7 +585,7 @@ const AdminAffiliateEdit = () => {
                     ))}
                   </div>
                 </div>
-              </div>
+            </div>
             )}
           </div>
         </div>

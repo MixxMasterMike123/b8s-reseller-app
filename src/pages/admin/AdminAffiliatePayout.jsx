@@ -23,7 +23,7 @@ import {
 const AdminAffiliatePayout = () => {
   const { affiliateId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   
   const [affiliate, setAffiliate] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -111,6 +111,12 @@ const AdminAffiliatePayout = () => {
     if (!validateForm()) {
       return;
     }
+
+    // Check if user is authenticated
+    if (!currentUser || !currentUser.uid) {
+      toast.error('Du måste vara inloggad för att behandla betalningar');
+      return;
+    }
     
     setProcessing(true);
     
@@ -127,7 +133,7 @@ const AdminAffiliatePayout = () => {
         invoiceUrl: uploadResult.url,
         invoiceFileName: uploadResult.fileName,
         notes: notes.trim(),
-        processedBy: user.uid
+        processedBy: currentUser.uid
       };
       
       const result = await processAffiliatePayout(affiliateId, payoutData);

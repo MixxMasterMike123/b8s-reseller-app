@@ -266,7 +266,7 @@ const AdminOrders = () => {
                         )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-center">
-                        <OrderStatusMenu
+                        <OrderStatusMenu 
                           currentStatus={order.status}
                           onStatusChange={(newStatus) => handleStatusUpdate(order.id, newStatus)}
                           disabled={loading}
