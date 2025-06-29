@@ -338,6 +338,14 @@ src/
 - **B2C Shop**: https://shop.b8shield.com
 - **Admin Login**: micke.ohlen@gmail.com / temporaryPassword123
 
+## Testing & Deployment Status
+- **B2B Portal**: ✅ Fully operational and production-ready
+- **B2C Shop**: ✅ Frontend complete, ⚠️ awaiting payment integration for live sales
+- **Affiliate System**: ✅ Fully functional with real tracking and commission calculations
+- **Legal Compliance**: ✅ EU/Swedish law compliant, ready for business operations
+- **Debug Mode**: Available in development with visual indicators for subdomain detection
+- **Demo Mode**: Complete mock data system available via `isDemoMode` flag in firebase/config.js
+
 ## Key Implementation Notes
 - **Database**: ALWAYS use named database `b8s-reseller-db` (NEVER use default database)
 - **Demo Mode**: Comprehensive demo mode in AuthContext and OrderContext for testing
@@ -550,23 +558,118 @@ function isAdmin() {
   - **Shipping Information** (`/shipping`): Delivery terms, costs, and policies
   - **Professional Footer**: ShopFooter component with all legal links and trust badges
   - **Status**: ✅ LIVE and EU law compliant - shop ready for business operations
+- **Complete Affiliate System**: Full end-to-end affiliate program with tracking, commissions, and payouts
+- **Advanced Checkout Flow**: Multi-step checkout with contact, shipping, and payment steps (awaiting payment integration)
+- **Order Management**: B2C orders integrate with existing B2B order system
+- **Firebase Functions**: Cloud functions for order processing and affiliate commission calculations
 
 ### 🚧 In Progress (Next Priority)
+- **Payment Integration (CRITICAL)**: Stripe/Klarna/Swish integration for live payments
 - **Enhanced Product Architecture**: B2B/B2C image separation and availability controls
 - **Tabbed Admin Interface**: Separate B2B and B2C product management
 - **Product Variants**: Different sizes/pricing for B2B vs B2C markets
 - **Market-Specific Descriptions**: Technical (B2B) vs consumer-friendly (B2C) copy
+
+## Critical Implementation Notes
+
+### Payment System Status
+- **Current State**: Checkout flow is complete but uses "Mock" payment processing
+- **Integration Needed**: Stripe + Klarna + Swish payment providers
+- **Checkout Flow**: 3-step process (Contact → Shipping → Payment) ready for payment integration
+- **Order Creation**: Orders are created in Firebase but marked as 'pending' payment
+- **Function Integration**: `processB2COrderCompletionHttp` cloud function handles post-order processing
+- **Affiliate Attribution**: Payment integration must preserve affiliate tracking and commission calculation
+
+### Known Technical Limitations
+- **Firebase Storage Rules**: Cannot query named database `b8s-reseller-db` in storage rules - uses hardcoded admin UIDs as workaround
+- **Database Consistency**: All operations use named database except storage rules authentication
+- **CORS Configuration**: Cloud functions configured for cross-origin requests from shop subdomain
 
 ### 📋 Planned Features
 - **Stripe Integration**: Secure payment processing for B2C (HIGH PRIORITY)
 - **Customer Authentication**: B2C customer accounts and order history
 - **Enhanced Product Detail Pages**: Rich product information and image galleries
 - **Inventory Management**: Stock tracking across B2B and B2C
+- **Package Tracking**: PostNord/Nordic/EU shipping status integration
 - **Analytics Dashboard**: Sales metrics and conversion tracking
 - **Contact Us Page**: Customer support contact form
 - **FAQ Page**: Frequently asked questions
 - **Order Tracking**: Customer order status lookup
 - **About Us Page**: Company information and story
+
+## Affiliate System (Latest - FULLY IMPLEMENTED)
+
+### Complete Affiliate Infrastructure
+- **Registration & Approval**: `AffiliateRegistration.jsx` - Application form with validation
+- **Affiliate Portal**: `AffiliatePortal.jsx` - Dashboard with stats, links, and materials
+- **Click Tracking**: `AffiliateTracker.jsx` - URL parameter capture and localStorage persistence
+- **Commission System**: Automatic discount application and order attribution
+- **Admin Management**: Full CRUD operations for affiliates, payouts, and analytics
+- **Payout System**: `AdminAffiliatePayout.jsx` - Invoice upload and payment processing
+- **Marketing Materials**: Dedicated affiliate materials distribution system
+
+### Database Schema - Affiliates (COMPLETE)
+```javascript
+// affiliates collection - LIVE and operational
+{
+  id: string, // Firebase Auth UID
+  email: string,
+  name: string,
+  affiliateCode: string, // Unique human-readable code
+  status: 'pending' | 'active' | 'suspended',
+  commissionRate: number, // Commission percentage
+  checkoutDiscount: number, // Discount percentage for customers
+  stats: {
+    clicks: number,
+    conversions: number,
+    totalEarnings: number,
+    balance: number
+  },
+  paymentInfo: { method: string, details: object },
+  createdAt: timestamp,
+  updatedAt: timestamp
+}
+
+// affiliateClicks collection - LIVE and operational
+{
+  id: string,
+  affiliateCode: string,
+  timestamp: timestamp,
+  ipAddress: string,
+  userAgent: string,
+  landingPage: string,
+  converted: boolean,
+  orderId: string,
+  commissionAmount: number
+}
+
+// affiliatePayouts collection - LIVE and operational
+{
+  id: string,
+  affiliateId: string,
+  amount: number,
+  invoiceNumber: string,
+  invoiceUrl: string,
+  status: 'pending' | 'processed' | 'completed',
+  processedBy: string,
+  processedAt: timestamp,
+  notes: string
+}
+```
+
+### Affiliate Tracking Flow (IMPLEMENTED)
+1. **Click Capture**: URL `?ref=AFFILIATE_CODE` captured by AffiliateTracker
+2. **Attribution Storage**: 7-day localStorage persistence with expiry tracking
+3. **Discount Application**: Automatic code application in CartContext
+4. **Order Attribution**: Commission calculation on checkout completion
+5. **Payout Management**: Admin interface for processing affiliate payments
+
+### Affiliate Admin Features (COMPLETE)
+- **AdminAffiliates.jsx**: List all affiliates with stats and quick actions
+- **AdminAffiliateEdit.jsx**: Detailed affiliate management with commission settings
+- **AdminAffiliateAnalytics.jsx**: Performance analytics and reporting
+- **AdminAffiliatePayout.jsx**: Payment processing with invoice upload
+- **Real-time Stats**: Click tracking, conversion rates, earnings calculations
 
 ## Product Strategy
 
