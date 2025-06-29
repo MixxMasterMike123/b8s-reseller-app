@@ -160,21 +160,30 @@ export const OrderProvider = ({ children }) => {
       } else {
         // --- AFFILIATE TRACKING ---
         let affiliateCode = null;
+        console.log('🔍 Checking for affiliate code during order creation...');
+        
         try {
           const affiliateInfoStr = localStorage.getItem('b8s_affiliate_ref');
+          console.log('📦 Raw affiliate data from localStorage:', affiliateInfoStr);
+          
           if (affiliateInfoStr) {
             const affiliateInfo = JSON.parse(affiliateInfoStr);
+            console.log('🔍 Parsed affiliate info:', affiliateInfo);
+            
             // Check if the code is still valid (not expired)
             if (new Date().getTime() < affiliateInfo.expiry) {
               affiliateCode = affiliateInfo.code;
-              console.log(`Attaching affiliate code ${affiliateCode} to order.`);
+              console.log(`✅ Attaching affiliate code ${affiliateCode} to order.`);
             } else {
+              console.log('🕒 Affiliate code expired, not attaching to order');
               // Clear expired code
               localStorage.removeItem('b8s_affiliate_ref');
             }
+          } else {
+            console.log('❌ No affiliate code found in localStorage');
           }
         } catch (e) {
-          console.error("Error reading affiliate code from localStorage", e);
+          console.error("❌ Error reading affiliate code from localStorage", e);
         }
         // --- END AFFILIATE TRACKING ---
 
@@ -191,6 +200,9 @@ export const OrderProvider = ({ children }) => {
         // Add affiliate code to order if it exists
         if (affiliateCode) {
           orderToCreate.affiliateCode = affiliateCode;
+          console.log(`🏷️ Order will be created with affiliate code: ${affiliateCode}`);
+        } else {
+          console.log('🚫 Order will be created without affiliate code');
         }
 
         // For Cloud Functions - they expect items array for email notification

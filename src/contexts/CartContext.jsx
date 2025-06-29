@@ -45,37 +45,85 @@ export const CartProvider = ({ children }) => {
 
   // Effect to auto-apply affiliate discount and recalculate on cart changes
   useEffect(() => {
-    // First, check for an affiliate link in localStorage if no discount is applied yet
-    const affiliateRef = localStorage.getItem('b8s_affiliate_ref');
-    if (affiliateRef && !cart.discountCode) {
-      try {
-        const affiliateInfo = JSON.parse(affiliateRef);
-        // Ensure the object has the properties we expect
-        if (affiliateInfo && affiliateInfo.code && typeof affiliateInfo.expiry === 'number') {
-          if (new Date().getTime() < affiliateInfo.expiry) {
-            // Affiliate ref exists and is valid, apply it silently
-            applyDiscountCode(affiliateInfo.code, { silent: true });
-            return; // Exit here since applyDiscountCode will trigger a state update
+    const checkAndApplyAffiliateCode = () => {
+      const affiliateRef = localStorage.getItem('b8s_affiliate_ref');
+      if (affiliateRef) {
+        try {
+          const affiliateInfo = JSON.parse(affiliateRef);
+          // Ensure the object has the properties we expect
+          if (affiliateInfo && affiliateInfo.code && typeof affiliateInfo.expiry === 'number') {
+            if (new Date().getTime() < affiliateInfo.expiry) {
+              // Check if this is a different code than currently applied
+              if (cart.discountCode !== affiliateInfo.code) {
+                console.log(`🔄 Applying new affiliate code: ${affiliateInfo.code} (was: ${cart.discountCode || 'none'})`);
+                applyDiscountCode(affiliateInfo.code, { silent: true });
+                return;
+              }
+            } else {
+              // It's expired, remove it
+              console.log('🕒 Affiliate code expired, removing');
+              localStorage.removeItem('b8s_affiliate_ref');
+              if (cart.discountCode) {
+                removeDiscount();
+              }
+            }
           } else {
-            // It's expired, remove it
+            // Malformed object, remove it
+            console.warn('🚨 Malformed affiliate data, removing');
             localStorage.removeItem('b8s_affiliate_ref');
+            if (cart.discountCode) {
+              removeDiscount();
+            }
           }
-        } else {
-          // Malformed object, remove it
+        } catch (error) {
+          // Not valid JSON, remove it
+          console.error("❌ Error parsing affiliate ref from localStorage:", error);
           localStorage.removeItem('b8s_affiliate_ref');
+          if (cart.discountCode) {
+            removeDiscount();
+          }
         }
-      } catch (error) {
-        // Not valid JSON, remove it
-        console.error("Error parsing affiliate ref from localStorage:", error);
-        localStorage.removeItem('b8s_affiliate_ref');
+      } else if (cart.discountCode) {
+        // No affiliate ref but discount is applied - this shouldn't happen, clear it
+        console.log('🧹 No affiliate ref found but discount applied, clearing');
+        removeDiscount();
       }
-    }
 
-    // If a discount code is already applied, just recalculate the discount amount
-    if (cart.discountCode) {
-      applyDiscountCode(cart.discountCode, { silent: true });
-    }
+      // If a discount code is already applied, just recalculate the discount amount
+      if (cart.discountCode) {
+        applyDiscountCode(cart.discountCode, { silent: true });
+      }
+    };
+
+    checkAndApplyAffiliateCode();
   }, [cart.items]);
+
+  // Listen for storage events to handle affiliate code changes from other tabs/components
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'b8s_affiliate_ref') {
+        console.log('📡 Affiliate code changed in storage, re-checking');
+        // Small delay to ensure localStorage is updated
+        setTimeout(() => {
+          const affiliateRef = localStorage.getItem('b8s_affiliate_ref');
+          if (affiliateRef) {
+            try {
+              const affiliateInfo = JSON.parse(affiliateRef);
+              if (affiliateInfo && affiliateInfo.code && cart.discountCode !== affiliateInfo.code) {
+                console.log(`🔄 Storage event: Applying affiliate code ${affiliateInfo.code}`);
+                applyDiscountCode(affiliateInfo.code, { silent: true });
+              }
+            } catch (error) {
+              console.error('❌ Error parsing affiliate code from storage event:', error);
+            }
+          }
+        }, 100);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [cart.discountCode]);
 
   // Calculate shipping cost based on country
   const getShippingCost = (country) => {

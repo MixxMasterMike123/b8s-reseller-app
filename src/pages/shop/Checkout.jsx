@@ -36,6 +36,19 @@ const Checkout = () => {
 
   const { subtotal, vat, shipping, total, discountAmount, discountCode, discountPercentage, appliedAffiliate } = calculateTotals();
 
+  // Debug: Show current affiliate status
+  const [showDebug, setShowDebug] = useState(false);
+  const debugAffiliateStatus = () => {
+    const affiliateRef = localStorage.getItem('b8s_affiliate_ref');
+    const cartData = localStorage.getItem('b8shield_cart');
+    
+    return {
+      localStorage: affiliateRef ? JSON.parse(affiliateRef) : null,
+      cartDiscount: discountCode,
+      cartData: cartData ? JSON.parse(cartData) : null
+    };
+  };
+
   useEffect(() => {
     // Auto-fill email if user is logged in
     if (user?.email && !contactInfo.email) {
