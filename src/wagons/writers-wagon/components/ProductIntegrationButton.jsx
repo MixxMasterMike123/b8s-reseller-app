@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { SparklesIcon } from '@heroicons/react/24/outline';
 import WritersWagonPanel from './WritersWagonPanel.jsx';
+import { WritersWagonManifest } from '../WagonManifest.js';
 
 const ProductIntegrationButton = ({ 
   product, 
@@ -12,6 +13,11 @@ const ProductIntegrationButton = ({
   className = '',
   disabled = false 
 }) => {
+  // 🚂 WAGON ENABLE/DISABLE CHECK - Respect manifest settings
+  if (!WritersWagonManifest.enabled) {
+    return null; // Gracefully hide when wagon is disabled
+  }
+
   const [showPanel, setShowPanel] = useState(false);
 
   const handleContentGenerated = (generatedContent) => {

@@ -3,8 +3,9 @@ import { getAPIKey, getContentTypeConfig, WRITERS_WAGON_CONFIG } from './Writers
 
 class WritersWagonAPI {
   constructor() {
-    this.baseURL = 'https://api.anthropic.com/v1/messages';
-    this.apiKey = null;
+    // Use Firebase Function proxy instead of direct Claude API
+    this.baseURL = 'https://us-central1-b8shield-reseller-app.cloudfunctions.net/generateContentWithClaude';
+    this.apiKey = null; // Not needed - handled by Firebase Function
     this.requestCount = 0;
     this.costTracking = {
       totalRequests: 0,
@@ -18,20 +19,12 @@ class WritersWagonAPI {
   }
 
   initializeAPIKey() {
-    try {
-      this.apiKey = getAPIKey();
-      console.log('✅ Writer\'s Wagon: API key initialized');
-    } catch (error) {
-      console.error('❌ Writer\'s Wagon: API key initialization failed:', error.message);
-    }
+    // API key is handled by Firebase Function proxy - no client-side key needed
+    console.log('✅ Writer\'s Wagon: Using Firebase Function proxy for API calls');
   }
 
   // Main content generation method
   async generateContent(contentType, prompt, options = {}) {
-    if (!this.apiKey) {
-      throw new Error('Writer\'s Wagon: API key not available');
-    }
-
     const config = getContentTypeConfig(contentType);
     const requestOptions = {
       ...config,
@@ -51,22 +44,23 @@ class WritersWagonAPI {
     }
   }
 
-  // Core API request method with retry logic
+  // Core API request method with retry logic (Firebase Function proxy)
   async makeRequest(options, retryCount = 0) {
     const { model, maxTokens, temperature, prompt, systemRole } = options;
     const config = WRITERS_WAGON_CONFIG.MODELS[model] || WRITERS_WAGON_CONFIG.MODELS[WRITERS_WAGON_CONFIG.CURRENT_MODEL];
 
+    // Build the complete prompt with system context
+    const fullPrompt = this.buildPrompt(prompt, systemRole);
+    const systemPrompt = this.getSystemPrompt(systemRole);
+    const combinedPrompt = `${systemPrompt}\n\n${fullPrompt}`;
+
     const requestData = {
+      prompt: combinedPrompt,
       model: config.id,
-      max_tokens: maxTokens || WRITERS_WAGON_CONFIG.API.maxTokens,
+      maxTokens: maxTokens || WRITERS_WAGON_CONFIG.API.maxTokens,
       temperature: temperature !== undefined ? temperature : WRITERS_WAGON_CONFIG.API.temperature,
-      messages: [
-        {
-          role: 'user',
-          content: this.buildPrompt(prompt, systemRole)
-        }
-      ],
-      system: this.getSystemPrompt(systemRole)
+      userId: options.userId || 'anonymous',
+      wagonId: 'writers-wagon'
     };
 
     try {
@@ -76,9 +70,8 @@ class WritersWagonAPI {
       const response = await fetch(this.baseURL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': this.apiKey,
-          'anthropic-version': '2023-06-01'
+          'Content-Type': 'application/json'
+          // No API key needed - handled by Firebase Function
         },
         body: JSON.stringify(requestData),
         signal: controller.signal
@@ -88,12 +81,25 @@ class WritersWagonAPI {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(`API Error ${response.status}: ${errorData.error?.message || 'Unknown error'}`);
+        throw new Error(`Firebase Function Error ${response.status}: ${errorData.error || 'Unknown error'}`);
       }
 
       const data = await response.json();
+      
+      // Check if the Firebase Function response indicates success
+      if (!data.success) {
+        throw new Error(`Generation failed: ${data.error || 'Unknown error'}`);
+      }
+
+      // Convert Firebase Function response to expected format
+      const claudeResponse = {
+        content: [{ text: data.content }],
+        model: data.model,
+        usage: data.usage || {}
+      };
+
       this.requestCount++;
-      return data;
+      return claudeResponse;
 
     } catch (error) {
       if (error.name === 'AbortError') {

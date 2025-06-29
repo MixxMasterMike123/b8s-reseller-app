@@ -10,6 +10,9 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import AppLayout from '../../components/layout/AppLayout';
 
+// 🚂 SINGLE CONNECTION - Direct import (if wagon exists)
+import ProductIntegrationButton from '../../wagons/writers-wagon/components/ProductIntegrationButton.jsx';
+
 // Maximum size for image files (5MB)
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; 
 
@@ -868,9 +871,31 @@ function AdminProducts() {
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   {/* B2B Description */}
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      B2B Beskrivning (Teknisk information för återförsäljare)
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        B2B Beskrivning (Teknisk information för återförsäljare)
+                      </label>
+                      <ProductIntegrationButton 
+                        product={formData}
+                        variant="button"
+                        className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1 text-xs"
+                        onContentGenerated={(content) => {
+                          if (content.contentType === 'b2b-technical' || content.contentType === 'dual-content') {
+                            const b2bContent = content.contentType === 'dual-content' ? 
+                              content.content.split('**B2C BESKRIVNING:**')[0].replace('**B2B BESKRIVNING:**', '').trim() :
+                              content.content;
+                            setFormData({
+                              ...formData,
+                              descriptions: {
+                                ...formData.descriptions,
+                                b2b: b2bContent
+                              }
+                            });
+                            toast.success('B2B-innehåll genererat och infört!');
+                          }
+                        }}
+                      />
+                    </div>
                     <textarea
                       value={formData.descriptions?.b2b || ''}
                       onChange={(e) => setFormData({
@@ -1002,9 +1027,31 @@ function AdminProducts() {
                   
                   {/* B2C Description */}
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      B2C Beskrivning (Konsumentvänlig beskrivning)
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        B2C Beskrivning (Konsumentvänlig beskrivning)
+                      </label>
+                      <ProductIntegrationButton 
+                        product={formData}
+                        variant="button"
+                        className="bg-gradient-to-r from-green-500 to-blue-600 text-white px-3 py-1 text-xs"
+                        onContentGenerated={(content) => {
+                          if (content.contentType === 'b2c-marketing' || content.contentType === 'dual-content') {
+                            const b2cContent = content.contentType === 'dual-content' ? 
+                              content.content.split('**B2C BESKRIVNING:**')[1]?.trim() || content.content :
+                              content.content;
+                            setFormData({
+                              ...formData,
+                              descriptions: {
+                                ...formData.descriptions,
+                                b2c: b2cContent
+                              }
+                            });
+                            toast.success('B2C-innehåll genererat och infört!');
+                          }
+                        }}
+                      />
+                    </div>
                     <textarea
                       value={formData.descriptions?.b2c || ''}
                       onChange={(e) => setFormData({
@@ -1250,20 +1297,32 @@ function AdminProducts() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button 
-                            onClick={() => handleEditClick(product)} 
-                            disabled={loading}
-                            className="text-blue-600 hover:text-blue-900 mr-4 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Redigera
-                          </button>
-                          <button 
-                            onClick={() => handleDeleteProduct(product.id)} 
-                            disabled={loading}
-                            className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {loading ? 'Tar bort...' : 'Ta bort'}
-                          </button>
+                          <div className="flex items-center justify-end space-x-2">
+                            <ProductIntegrationButton 
+                              product={product}
+                              variant="icon-button"
+                              className="mr-1"
+                              onContentGenerated={(content, productData) => {
+                                // Show a success message
+                                toast.success(`AI-innehåll genererat för ${productData.name}`);
+                                console.log('Generated content:', content);
+                              }}
+                            />
+                            <button 
+                              onClick={() => handleEditClick(product)} 
+                              disabled={loading}
+                              className="text-blue-600 hover:text-blue-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Redigera
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteProduct(product.id)} 
+                              disabled={loading}
+                              className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {loading ? 'Tar bort...' : 'Ta bort'}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))

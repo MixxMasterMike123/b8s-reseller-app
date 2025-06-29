@@ -2324,4 +2324,335 @@ exports.logAffiliateClickHttp = functions
         error: 'Error logging affiliate click.'
       });
   }
-}); 
+});
+
+/**
+ * [NEW] Claude API Proxy for Writer's Wagon™
+ * Handles AI content generation requests to avoid CORS issues
+ */
+exports.generateContentWithClaude = functions
+  .region('us-central1')
+  .https.onRequest(async (req, res) => {
+    // Enable CORS for B8Shield domains
+    const allowedOrigins = [
+      'https://b8shield-reseller-app.web.app',
+      'https://shop.b8shield.com',
+      'http://localhost:5173', // Local development
+      'http://localhost:3000'  // Alternative local port
+    ];
+    
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.set('Access-Control-Allow-Origin', origin);
+    }
+    
+    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.set('Access-Control-Max-Age', '3600');
+
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    // Only allow POST
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'Method Not Allowed' });
+      return;
+    }
+
+    try {
+      const { 
+        prompt, 
+        model = 'claude-3-5-sonnet-20241022', 
+        maxTokens = 1000,
+        temperature = 0.7 
+      } = req.body;
+
+      if (!prompt) {
+        res.status(400).json({ error: 'Prompt is required' });
+        return;
+      }
+
+      // Claude API key from environment variables
+      const claudeApiKey = functions.config().claude?.api_key;
+      if (!claudeApiKey) {
+        console.error('Claude API key not configured');
+        res.status(500).json({ error: 'API key not configured' });
+        return;
+      }
+
+      console.log(`🎯 Writer's Wagon: Generating content with ${model}`);
+
+      // Make request to Claude API
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': claudeApiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: model,
+          max_tokens: maxTokens,
+          temperature: temperature,
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Claude API error: ${response.status} - ${errorText}`);
+        res.status(response.status).json({ 
+          error: `Claude API error: ${response.status}`,
+          details: errorText
+        });
+        return;
+      }
+
+      const data = await response.json();
+      
+      // Extract the generated content
+      const generatedContent = data.content?.[0]?.text || 'No content generated';
+      
+      console.log(`✅ Writer's Wagon: Content generated successfully (${generatedContent.length} chars)`);
+
+      // Return the generated content
+      res.status(200).json({
+        success: true,
+        content: generatedContent,
+        model: model,
+        usage: data.usage || {}
+      });
+
+    } catch (error) {
+      console.error('Error generating content with Claude:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to generate content',
+        details: error.message
+      });
+    }
+  });
+
+/**
+ * [NEW] Pre-deployed Setup Function for Wagons
+ * Handles API key configuration and wagon setup without requiring customer deployment
+ */
+exports.setupWritersWagon = functions
+  .region('us-central1')
+  .https.onRequest(async (req, res) => {
+    // Enable CORS for B8Shield domains
+    const allowedOrigins = [
+      'https://b8shield-reseller-app.web.app',
+      'https://shop.b8shield.com',
+      'http://localhost:5173',
+      'http://localhost:3000'
+    ];
+    
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.set('Access-Control-Allow-Origin', origin);
+    }
+    
+    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.set('Access-Control-Max-Age', '3600');
+
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'Method Not Allowed' });
+      return;
+    }
+
+    try {
+      const { action, apiKey, wagonId, userId } = req.body;
+
+      if (action === 'setup' && apiKey && wagonId) {
+        // Store encrypted API key for this user/wagon combination
+        const wagonConfigRef = db.collection('wagonConfigurations').doc(`${userId || 'default'}_${wagonId}`);
+        
+        // Simple encryption (in production, use proper encryption)
+        const encryptedKey = Buffer.from(apiKey).toString('base64');
+        
+        await wagonConfigRef.set({
+          wagonId: wagonId,
+          userId: userId || 'default',
+          encryptedApiKey: encryptedKey,
+          status: 'active',
+          setupAt: admin.firestore.Timestamp.now(),
+          lastUsed: admin.firestore.Timestamp.now()
+        });
+
+        console.log(`✅ Writer's Wagon: Setup completed for ${wagonId}`);
+
+        res.status(200).json({
+          success: true,
+          message: `${wagonId} setup completed successfully`,
+          wagonId: wagonId
+        });
+
+      } else if (action === 'test' && wagonId) {
+        // Test if wagon is configured
+        const wagonConfigRef = db.collection('wagonConfigurations').doc(`${userId || 'default'}_${wagonId}`);
+        const wagonDoc = await wagonConfigRef.get();
+
+        if (wagonDoc.exists) {
+          res.status(200).json({ success: true, configured: true });
+        } else {
+          res.status(200).json({ success: true, configured: false });
+        }
+
+      } else {
+        res.status(400).json({ error: 'Invalid request parameters' });
+      }
+
+    } catch (error) {
+      console.error('Setup error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Setup failed',
+        details: error.message
+      });
+    }
+  });
+
+/**
+ * [UPDATED] Claude API Proxy with User-specific API Keys
+ */
+exports.generateContentWithClaude = functions
+  .region('us-central1')
+  .https.onRequest(async (req, res) => {
+    // Enable CORS for B8Shield domains
+    const allowedOrigins = [
+      'https://b8shield-reseller-app.web.app',
+      'https://shop.b8shield.com',
+      'http://localhost:5173',
+      'http://localhost:3000'
+    ];
+    
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.set('Access-Control-Allow-Origin', origin);
+    }
+    
+    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.set('Access-Control-Max-Age', '3600');
+
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'Method Not Allowed' });
+      return;
+    }
+
+    try {
+      const { 
+        prompt, 
+        model = 'claude-3-5-sonnet-20241022', 
+        maxTokens = 1000,
+        temperature = 0.7,
+        userId = 'default',
+        wagonId = 'writers-wagon'
+      } = req.body;
+
+      if (!prompt) {
+        res.status(400).json({ error: 'Prompt is required' });
+        return;
+      }
+
+      // Get user-specific API key
+      const wagonConfigRef = db.collection('wagonConfigurations').doc(`${userId}_${wagonId}`);
+      const wagonDoc = await wagonConfigRef.get();
+
+      let claudeApiKey;
+      if (wagonDoc.exists) {
+        // Use user's API key
+        const encryptedKey = wagonDoc.data().encryptedApiKey;
+        claudeApiKey = Buffer.from(encryptedKey, 'base64').toString('utf8');
+        
+        // Update last used
+        await wagonConfigRef.update({ lastUsed: admin.firestore.Timestamp.now() });
+      } else {
+        // Fallback to system API key (if available)
+        claudeApiKey = functions.config().claude?.api_key;
+        if (!claudeApiKey) {
+          res.status(400).json({ 
+            error: 'No API key configured. Please setup your wagon first.',
+            setupRequired: true
+          });
+          return;
+        }
+      }
+
+      console.log(`🎯 Writer's Wagon: Generating content with ${model} for ${userId}`);
+
+      // Make request to Claude API
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': claudeApiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: model,
+          max_tokens: maxTokens,
+          temperature: temperature,
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Claude API error: ${response.status} - ${errorText}`);
+        res.status(response.status).json({ 
+          error: `Claude API error: ${response.status}`,
+          details: errorText
+        });
+        return;
+      }
+
+      const data = await response.json();
+      
+      // Extract the generated content
+      const generatedContent = data.content?.[0]?.text || 'No content generated';
+      
+      console.log(`✅ Writer's Wagon: Content generated successfully (${generatedContent.length} chars)`);
+
+      // Return the generated content
+      res.status(200).json({
+        success: true,
+        content: generatedContent,
+        model: model,
+        usage: data.usage || {}
+      });
+
+    } catch (error) {
+      console.error('Error generating content with Claude:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to generate content',
+        details: error.message
+      });
+    }
+  });

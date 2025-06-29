@@ -21,7 +21,8 @@ import {
   PhoneIcon,
   CubeIcon,
   MegaphoneIcon,
-  SparklesIcon
+  SparklesIcon,
+  CpuChipIcon
 } from '@heroicons/react/24/outline';
 
 const AppLayout = ({ children }) => {
@@ -218,7 +219,10 @@ const AppLayout = ({ children }) => {
                           <div className="w-full border-t border-gray-300" />
                         </div>
                         <div className="relative flex justify-center">
-                          <span className="bg-white px-2 text-xs text-gray-500 uppercase tracking-wider font-semibold">🚂 AI Vagnar</span>
+                          <span className="bg-white px-2 text-xs text-gray-500 uppercase tracking-wider font-semibold flex items-center">
+                            <CpuChipIcon className="h-4 w-4 mr-1" />
+                            AI Vagnar
+                          </span>
                         </div>
                       </div>
                       
@@ -232,9 +236,7 @@ const AppLayout = ({ children }) => {
                               : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                           }`}
                         >
-                          <div className="mr-3 h-5 w-5 flex-shrink-0 text-blue-500">
-                            ✨
-                          </div>
+                          <SparklesIcon className="mr-3 h-5 w-5 flex-shrink-0 text-blue-500" />
                           <div>
                             <div>{item.title}</div>
                             <div className="text-xs text-gray-500">{item.description}</div>
