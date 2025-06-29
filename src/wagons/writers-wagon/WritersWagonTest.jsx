@@ -82,7 +82,7 @@ const WritersWagonTest = () => {
             </p>
             <div className="bg-yellow-100 rounded p-3 font-mono text-sm">
               <p className="mb-2">1. Skapa eller uppdatera <code>.env.local</code> filen:</p>
-              <pre className="text-yellow-900">VITE_CLAUDE_API_KEY=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</pre>
+              <pre className="text-yellow-900">VITE_CLAUDE_API_KEY=your-claude-api-key-here</pre>
               <p className="mt-2">2. Starta om utvecklingsservern: <code>npm run dev</code></p>
             </div>
           </div>

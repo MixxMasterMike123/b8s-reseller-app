@@ -10,7 +10,7 @@ Create or update your `.env.local` file in the project root:
 
 ```bash
 # Add your Claude API key
-VITE_CLAUDE_API_KEY=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
+VITE_CLAUDE_API_KEY=your-claude-api-key-here
 ```
 
 ### 2. Test the Integration
