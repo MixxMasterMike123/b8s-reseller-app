@@ -3,6 +3,7 @@ import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import { doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db, functions } from '../../firebase/config';
 import { httpsCallable } from 'firebase/functions';
+import { getAffiliatePayoutHistory, formatCurrency as formatPayoutCurrency, formatDate as formatPayoutDate } from '../../utils/affiliatePayouts';
 import toast from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
 import { 
@@ -21,7 +22,10 @@ import {
   DocumentTextIcon,
   BanknotesIcon,
   ShoppingCartIcon,
-  HomeIcon
+  HomeIcon,
+  DocumentArrowDownIcon,
+  CalendarDaysIcon,
+  ReceiptPercentIcon
 } from '@heroicons/react/24/solid';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
@@ -95,6 +99,8 @@ const AdminAffiliateEdit = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [affiliateStats, setAffiliateStats] = useState(null);
   const [recentOrders, setRecentOrders] = useState([]);
+  const [payoutHistory, setPayoutHistory] = useState([]);
+  const [loadingPayouts, setLoadingPayouts] = useState(false);
 
   // Editable fields
   const [commissionRate, setCommissionRate] = useState('');
@@ -146,6 +152,19 @@ const AdminAffiliateEdit = () => {
     }
   };
 
+  const fetchPayoutHistory = async (affiliateId) => {
+    setLoadingPayouts(true);
+    try {
+      const payouts = await getAffiliatePayoutHistory(affiliateId);
+      setPayoutHistory(payouts);
+    } catch (error) {
+      console.error('Error fetching payout history:', error);
+      toast.error('Kunde inte hämta utbetalningshistorik');
+    } finally {
+      setLoadingPayouts(false);
+    }
+  };
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -169,7 +188,8 @@ const AdminAffiliateEdit = () => {
           // Only fetch stats after we have the affiliate data
           if (affiliateData.affiliateCode) {
             await fetchAffiliateStats(affiliateData.affiliateCode);
-      }
+            await fetchPayoutHistory(id);
+          }
           
           // Set form values
           setCommissionRate(affiliateData.commissionRate?.toString() || '');
@@ -571,10 +591,10 @@ const AdminAffiliateEdit = () => {
                         className="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                         onClick={() => navigate(`/admin/orders/${order.id}`)}
                       >
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
                             Order #{order.orderNumber || order.id}
-                    </p>
+                          </p>
                           <p className="text-sm text-gray-500">{formatDate(order.createdAt)}</p>
                         </div>
                         <div className="text-right">
@@ -585,7 +605,117 @@ const AdminAffiliateEdit = () => {
                     ))}
                   </div>
                 </div>
-            </div>
+              </div>
+            )}
+
+            {/* Payment History */}
+            {!isApplication && (
+              <div className="bg-white shadow-lg rounded-2xl overflow-hidden">
+                <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
+                  <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                    <BanknotesIcon className="h-6 w-6 mr-2 text-gray-500" />
+                    Utbetalningshistorik
+                    {data?.stats?.payoutCount > 0 && (
+                      <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                        {data.stats.payoutCount} utbetalningar
+                      </span>
+                    )}
+                  </h2>
+                </div>
+
+                <div className="p-6">
+                  {loadingPayouts ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                      <span className="ml-2 text-gray-600">Laddar utbetalningar...</span>
+                    </div>
+                  ) : payoutHistory.length > 0 ? (
+                    <div className="space-y-4">
+                      {payoutHistory.map((payout) => (
+                        <div key={payout.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <ReceiptPercentIcon className="h-5 w-5 text-green-600" />
+                                <span className="font-medium text-gray-900">
+                                  {formatPayoutCurrency(payout.payoutAmount)}
+                                </span>
+                                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                  {payout.status === 'completed' ? 'Slutförd' : payout.status}
+                                </span>
+                              </div>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                                <div className="flex items-center">
+                                  <CalendarDaysIcon className="h-4 w-4 mr-1" />
+                                  {formatPayoutDate(payout.payoutDate)}
+                                </div>
+                                <div className="flex items-center">
+                                  <DocumentTextIcon className="h-4 w-4 mr-1" />
+                                  Faktura: {payout.invoiceNumber}
+                                </div>
+                              </div>
+
+                              {payout.notes && (
+                                <p className="text-sm text-gray-600 mt-2 italic">
+                                  "{payout.notes}"
+                                </p>
+                              )}
+                            </div>
+
+                            {payout.invoiceUrl && (
+                              <a
+                                href={payout.invoiceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="ml-4 flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                                title="Ladda ner faktura"
+                              >
+                                <DocumentArrowDownIcon className="h-4 w-4 mr-1" />
+                                Ladda ner
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Summary Stats */}
+                      {data?.stats && (
+                        <div className="mt-6 pt-6 border-t border-gray-200">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                            <div className="bg-blue-50 rounded-lg p-4">
+                              <p className="text-sm text-blue-600 font-medium">Totalt utbetalt</p>
+                              <p className="text-lg font-bold text-blue-900">
+                                {formatPayoutCurrency(data.stats.totalPaidOut || 0)}
+                              </p>
+                            </div>
+                            <div className="bg-green-50 rounded-lg p-4">
+                              <p className="text-sm text-green-600 font-medium">Aktuellt saldo</p>
+                              <p className="text-lg font-bold text-green-900">
+                                {formatPayoutCurrency(data.stats.balance || 0)}
+                              </p>
+                            </div>
+                            <div className="bg-gray-50 rounded-lg p-4">
+                              <p className="text-sm text-gray-600 font-medium">Antal utbetalningar</p>
+                              <p className="text-lg font-bold text-gray-900">
+                                {data.stats.payoutCount || 0}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <BanknotesIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500 text-sm">Inga utbetalningar ännu</p>
+                      <p className="text-gray-400 text-xs mt-1">
+                        Utbetalningar kommer att visas här när de har genomförts
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         </div>
