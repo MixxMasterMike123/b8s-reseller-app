@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import AppLayout from '../../../components/layout/AppLayout';
 import { useDiningContacts } from '../hooks/useDiningContacts';
 import { useDiningActivities } from '../hooks/useDiningActivities';
+import B2BImportButton from './B2BImportButton';
 import {
   BuildingStorefrontIcon,
   UserGroupIcon,
@@ -141,6 +142,8 @@ const DiningDashboard = () => {
                 <option value="month">Denna månad</option>
                 <option value="quarter">Detta kvartal</option>
               </select>
+              
+              <B2BImportButton />
               
               <Link
                 to="/admin/dining/contacts/new"

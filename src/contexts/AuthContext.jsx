@@ -169,6 +169,18 @@ export function AuthProvider({ children }) {
 
         await setDoc(doc(db, 'users', user.uid), userProfile);
 
+        // 🚂🍽️ Auto-import to The Dining Wagon™ CRM
+        try {
+          const { autoImportNewB2BUser } = await import('../wagons/dining-wagon/utils/b2bIntegration');
+          await autoImportNewB2BUser({
+            id: user.uid,
+            uid: user.uid,
+            ...userProfile
+          });
+        } catch (error) {
+          console.error('CRM auto-import failed (registration still successful):', error);
+        }
+
         return user;
       }
     } catch (error) {
@@ -420,7 +432,13 @@ export function AuthProvider({ children }) {
           updatedAt: new Date().toISOString()
         });
         
-
+        // 🚂🍽️ Sync status to The Dining Wagon™ CRM
+        try {
+          const { syncB2BStatusToCRM } = await import('../wagons/dining-wagon/utils/b2bIntegration');
+          await syncB2BStatusToCRM(userId, { active: activeStatus });
+        } catch (error) {
+          console.error('CRM sync failed (user status update successful):', error);
+        }
         
         toast.success(`User ${activeStatus ? 'activated' : 'deactivated'} successfully`);
         return true;
@@ -530,7 +548,13 @@ export function AuthProvider({ children }) {
           updatedAt: new Date().toISOString()
         });
         
-
+        // 🚂🍽️ Sync margin to The Dining Wagon™ CRM (affects priority)
+        try {
+          const { syncB2BStatusToCRM } = await import('../wagons/dining-wagon/utils/b2bIntegration');
+          await syncB2BStatusToCRM(userId, { marginal: newMarginal });
+        } catch (error) {
+          console.error('CRM sync failed (margin update successful):', error);
+        }
         
         toast.success(`Customer margin updated to ${newMarginal}% successfully`);
         return true;
