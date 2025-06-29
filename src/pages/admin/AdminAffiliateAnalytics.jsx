@@ -17,7 +17,6 @@ import {
 const AdminAffiliateAnalytics = () => {
   const [affiliates, setAffiliates] = useState([]);
   const [clicks, setClicks] = useState([]);
-  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30'); // days
   const [selectedMetric, setSelectedMetric] = useState('revenue');
@@ -29,7 +28,7 @@ const AdminAffiliateAnalytics = () => {
   const fetchAnalyticsData = async () => {
     setLoading(true);
     try {
-      // Fetch affiliates
+      // Fetch affiliates with their real stats
       const affiliatesQuery = query(collection(db, 'affiliates'), orderBy('createdAt', 'desc'));
       const affiliatesSnapshot = await getDocs(affiliatesQuery);
       const affiliatesData = affiliatesSnapshot.docs.map(doc => ({
@@ -37,7 +36,7 @@ const AdminAffiliateAnalytics = () => {
         ...doc.data()
       }));
 
-      // Fetch clicks (last 30 days for performance)
+      // Fetch clicks for traffic source analysis
       const clicksQuery = query(
         collection(db, 'affiliateClicks'),
         orderBy('timestamp', 'desc'),
@@ -49,22 +48,19 @@ const AdminAffiliateAnalytics = () => {
         ...doc.data()
       }));
 
-      // Fetch orders with affiliate data
-      const ordersQuery = query(
-        collection(db, 'orders'),
-        where('affiliateCode', '!=', null),
-        orderBy('createdAt', 'desc'),
-        limit(500)
-      );
-      const ordersSnapshot = await getDocs(ordersQuery);
-      const ordersData = ordersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      console.log('Real Analytics Data:', {
+        totalAffiliates: affiliatesData.length,
+        totalClicks: clicksData.length,
+        affiliatesList: affiliatesData.map(a => ({ 
+          name: a.name, 
+          code: a.affiliateCode, 
+          status: a.status,
+          stats: a.stats 
+        }))
+      });
 
       setAffiliates(affiliatesData);
       setClicks(clicksData);
-      setOrders(ordersData);
     } catch (error) {
       console.error('Error fetching analytics data:', error);
     } finally {
@@ -85,26 +81,17 @@ const AdminAffiliateAnalytics = () => {
     return 'other';
   };
 
-  // Analytics calculations
+  // Analytics calculations using real affiliate stats
   const analytics = useMemo(() => {
-    const now = new Date();
-    const daysAgo = new Date(now.getTime() - (parseInt(timeRange) * 24 * 60 * 60 * 1000));
+    // Filter active affiliates
+    const activeAffiliates = affiliates.filter(a => a.status === 'active');
 
-    // Filter data by time range
-    const recentClicks = clicks.filter(click => {
-      const clickDate = new Date(click.timestamp?.toDate ? click.timestamp.toDate() : click.timestamp);
-      return clickDate >= daysAgo;
-    });
-
-    const recentOrders = orders.filter(order => {
-      const orderDate = new Date(order.createdAt);
-      return orderDate >= daysAgo;
-    });
-
-    // Traffic source analysis
+    // Traffic source analysis using real affiliate stats
     const trafficSources = {};
-    affiliates.forEach(affiliate => {
+    activeAffiliates.forEach(affiliate => {
       const source = getTrafficSource(affiliate);
+      const stats = affiliate.stats || { clicks: 0, conversions: 0, totalEarnings: 0 };
+      
       if (!trafficSources[source]) {
         trafficSources[source] = {
           clicks: 0,
@@ -113,47 +100,26 @@ const AdminAffiliateAnalytics = () => {
           affiliates: 0
         };
       }
+      
       trafficSources[source].affiliates++;
+      trafficSources[source].clicks += stats.clicks || 0;
+      trafficSources[source].conversions += stats.conversions || 0;
+      trafficSources[source].revenue += stats.totalEarnings || 0;
     });
 
-    // Add clicks and conversions by source
-    recentClicks.forEach(click => {
-      const affiliate = affiliates.find(a => a.affiliateCode === click.affiliateCode);
-      if (affiliate) {
-        const source = getTrafficSource(affiliate);
-        if (trafficSources[source]) {
-          trafficSources[source].clicks++;
-          if (click.converted) {
-            trafficSources[source].conversions++;
-          }
-        }
-      }
-    });
-
-    // Add revenue by source
-    recentOrders.forEach(order => {
-      const affiliate = affiliates.find(a => a.affiliateCode === order.affiliateCode);
-      if (affiliate) {
-        const source = getTrafficSource(affiliate);
-        if (trafficSources[source]) {
-          trafficSources[source].revenue += order.affiliateCommission || 0;
-        }
-      }
-    });
-
-    // Top performers
-    const topPerformers = affiliates
+    // Top performers using real stats
+    const topPerformers = activeAffiliates
       .map(affiliate => {
-        const affiliateClicks = recentClicks.filter(c => c.affiliateCode === affiliate.affiliateCode);
-        const affiliateOrders = recentOrders.filter(o => o.affiliateCode === affiliate.affiliateCode);
-        const revenue = affiliateOrders.reduce((sum, order) => sum + (order.affiliateCommission || 0), 0);
+        const stats = affiliate.stats || { clicks: 0, conversions: 0, totalEarnings: 0, balance: 0 };
+        const conversionRate = stats.clicks > 0 ? (stats.conversions / stats.clicks * 100) : 0;
         
         return {
           ...affiliate,
-          recentClicks: affiliateClicks.length,
-          recentConversions: affiliateOrders.length,
-          recentRevenue: revenue,
-          conversionRate: affiliateClicks.length > 0 ? (affiliateOrders.length / affiliateClicks.length * 100) : 0,
+          recentClicks: stats.clicks,
+          recentConversions: stats.conversions,
+          recentRevenue: stats.totalEarnings,
+          currentBalance: stats.balance,
+          conversionRate,
           trafficSource: getTrafficSource(affiliate)
         };
       })
@@ -173,10 +139,11 @@ const AdminAffiliateAnalytics = () => {
       })
       .slice(0, 10);
 
-    // Overall stats
-    const totalClicks = recentClicks.length;
-    const totalConversions = recentOrders.length;
-    const totalRevenue = recentOrders.reduce((sum, order) => sum + (order.affiliateCommission || 0), 0);
+    // Overall stats from real affiliate data
+    const totalClicks = activeAffiliates.reduce((sum, a) => sum + (a.stats?.clicks || 0), 0);
+    const totalConversions = activeAffiliates.reduce((sum, a) => sum + (a.stats?.conversions || 0), 0);
+    const totalRevenue = activeAffiliates.reduce((sum, a) => sum + (a.stats?.totalEarnings || 0), 0);
+    const totalBalance = activeAffiliates.reduce((sum, a) => sum + (a.stats?.balance || 0), 0);
     const overallConversionRate = totalClicks > 0 ? (totalConversions / totalClicks * 100) : 0;
 
     return {
@@ -185,13 +152,14 @@ const AdminAffiliateAnalytics = () => {
       totalClicks,
       totalConversions,
       totalRevenue,
+      totalBalance,
       overallConversionRate,
-      activeAffiliates: affiliates.filter(a => a.status === 'active').length
+      activeAffiliates: activeAffiliates.length
     };
-  }, [affiliates, clicks, orders, timeRange, selectedMetric]);
+  }, [affiliates, selectedMetric]);
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(amount);
+    return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(amount || 0);
   };
 
   const getSourceIcon = (source) => {
@@ -233,48 +201,42 @@ const AdminAffiliateAnalytics = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex items-center">
               <Link 
                 to="/admin/affiliates" 
-                className="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 mb-2"
+                className="mr-4 p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <ArrowLeftIcon className="h-5 w-5 mr-2" />
-                Tillbaka till Affiliates
+                <ArrowLeftIcon className="h-6 w-6" />
               </Link>
-              <h1 className="text-3xl font-bold text-gray-900">Affiliate Analytics</h1>
-              <p className="text-lg text-gray-600 mt-2">Detaljerad analys av affiliate-prestanda och trafikkällor</p>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Affiliate Analytics</h1>
+                <p className="text-gray-600">Detaljerad prestandaanalys för dina affiliates</p>
+              </div>
             </div>
-          </div>
-
-          {/* Time Range Selector */}
-          <div className="mt-6 flex gap-2">
-            {[
-              { value: '7', label: '7 dagar' },
-              { value: '30', label: '30 dagar' },
-              { value: '90', label: '90 dagar' },
-              { value: '365', label: '1 år' }
-            ].map(range => (
-              <button
-                key={range.value}
-                onClick={() => setTimeRange(range.value)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  timeRange === range.value
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                }`}
+            
+            {/* Time Range Selector */}
+            <div className="flex items-center space-x-4">
+              <label className="text-sm font-medium text-gray-700">Tidsperiod:</label>
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(e.target.value)}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {range.label}
-              </button>
-            ))}
+                <option value="7">7 dagar</option>
+                <option value="30">30 dagar</option>
+                <option value="90">90 dagar</option>
+                <option value="365">1 år</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        {/* Overview Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -308,6 +270,18 @@ const AdminAffiliateAnalytics = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Total Provision</p>
                 <p className="text-2xl font-bold text-gray-900">{formatCurrency(analytics.totalRevenue)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <CurrencyDollarIcon className="h-8 w-8 text-green-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Obetald Provision</p>
+                <p className="text-2xl font-bold text-gray-900">{formatCurrency(analytics.totalBalance)}</p>
               </div>
             </div>
           </div>
@@ -415,7 +389,7 @@ const AdminAffiliateAnalytics = () => {
                     Affiliate
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Källa
+                    Trafikkälla
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Klick
@@ -424,10 +398,13 @@ const AdminAffiliateAnalytics = () => {
                     Konverteringar
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Rate
+                    Konv.grad
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Provision
+                    Total Provision
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Obetalt
                   </th>
                 </tr>
               </thead>
@@ -463,6 +440,9 @@ const AdminAffiliateAnalytics = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
                       {formatCurrency(affiliate.recentRevenue)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                      {formatCurrency(affiliate.currentBalance)}
                     </td>
                   </tr>
                 ))}
