@@ -3,12 +3,19 @@ import { db } from '../firebase/config';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { ArrowDownTrayIcon, MagnifyingGlassIcon, PhotoIcon, DocumentIcon, FilmIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline';
 import { useImagePreview } from '../hooks/useImagePreview';
+import ImagePreviewModal from './ImagePreviewModal';
 
 const AffiliateMarketingMaterials = ({ affiliateCode }) => {
   const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
-  const { previewImage, ImagePreviewModal } = useImagePreview();
+  
+  const {
+    isPreviewOpen,
+    previewData,
+    openPreview,
+    closePreview
+  } = useImagePreview();
 
   useEffect(() => {
     fetchMarketingMaterials();
@@ -172,7 +179,7 @@ const AffiliateMarketingMaterials = ({ affiliateCode }) => {
                     {material.fileType === 'image' && material.downloadURL ? (
                       <div 
                         className="relative h-32 bg-white rounded-md overflow-hidden cursor-pointer group"
-                        onClick={() => previewImage(material.downloadURL, material.name)}
+                        onClick={() => openPreview(material.downloadURL, material.name)}
                       >
                         <img 
                           src={material.downloadURL}
@@ -230,7 +237,12 @@ const AffiliateMarketingMaterials = ({ affiliateCode }) => {
         ))}
       </div>
 
-      <ImagePreviewModal />
+      <ImagePreviewModal
+        isOpen={isPreviewOpen}
+        onClose={closePreview}
+        imageUrl={previewData?.imageUrl}
+        imageName={previewData?.imageName}
+      />
     </div>
   );
 };
