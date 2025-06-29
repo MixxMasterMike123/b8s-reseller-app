@@ -51,6 +51,7 @@ import AffiliateRegistration from './pages/shop/AffiliateRegistration';
 import AffiliatePortal from './pages/shop/AffiliatePortal';
 import AdminAffiliates from './pages/admin/AdminAffiliates';
 import AdminAffiliateEdit from './pages/admin/AdminAffiliateEdit';
+import AdminAffiliateAnalytics from './pages/admin/AdminAffiliateAnalytics';
 import AffiliateTracker from './components/AffiliateTracker';
 
 // Order Confirmation
@@ -223,6 +224,12 @@ function App() {
               <Route path="/admin/affiliates" element={
                 <AdminRoute>
                   <AdminAffiliates />
+                </AdminRoute>
+              } />
+
+              <Route path="/admin/affiliates/analytics" element={
+                <AdminRoute>
+                  <AdminAffiliateAnalytics />
                 </AdminRoute>
               } />
 

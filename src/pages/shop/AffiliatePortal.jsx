@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
+import AffiliateMarketingMaterials from '../../components/AffiliateMarketingMaterials';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { db } from '../../firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -135,15 +136,14 @@ const AffiliatePortal = () => {
               </div>
             </div>
 
-            {/* Marketing Materials Placeholder */}
+            {/* Marketing Materials Section */}
             <div className="bg-white p-6 rounded-2xl shadow-lg">
               <h2 className="text-2xl font-semibold text-gray-800 mb-4">Marknadsföringsmaterial</h2>
-              <p className="text-gray-600 mb-4">
-                Här kommer du snart att hitta bilder, banners och textannonser för att hjälpa dig marknadsföra B8Shield.
+              <p className="text-gray-600 mb-6">
+                Ladda ner bilder, banners och annonser för att marknadsföra B8Shield effektivt.
               </p>
-              <Link to="#" className="text-blue-600 hover:underline">
-                Utforska material (kommer snart)
-              </Link>
+              
+              <AffiliateMarketingMaterials affiliateCode={affiliateData.affiliateCode} />
             </div>
           </main>
 
