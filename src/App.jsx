@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { SimpleAuthContextProvider } from './contexts/SimpleAuthContext';
@@ -287,15 +287,22 @@ function App() {
                   key={`${wagonId}-${path}`} 
                   path={path}
                   element={
-                    isPrivate ? (
-                      adminOnly ? (
-                        <AdminRoute><Component /></AdminRoute>
+                    <Suspense fallback={
+                      <div className="flex items-center justify-center py-12">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+                        <span className="ml-3 text-lg text-gray-600">Laddar wagon...</span>
+                      </div>
+                    }>
+                      {isPrivate ? (
+                        adminOnly ? (
+                          <AdminRoute><Component /></AdminRoute>
+                        ) : (
+                          <PrivateRoute><Component /></PrivateRoute>
+                        )
                       ) : (
-                        <PrivateRoute><Component /></PrivateRoute>
-                      )
-                    ) : (
-                      <Component />
-                    )
+                        <Component />
+                      )}
+                    </Suspense>
                   }
                 />
               ))}
