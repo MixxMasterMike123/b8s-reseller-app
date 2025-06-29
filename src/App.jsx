@@ -52,6 +52,7 @@ import AffiliatePortal from './pages/shop/AffiliatePortal';
 import AdminAffiliates from './pages/admin/AdminAffiliates';
 import AdminAffiliateEdit from './pages/admin/AdminAffiliateEdit';
 import AdminAffiliateAnalytics from './pages/admin/AdminAffiliateAnalytics';
+import AdminAffiliatePayout from './pages/admin/AdminAffiliatePayout';
 import AffiliateTracker from './components/AffiliateTracker';
 
 // Order Confirmation
@@ -242,6 +243,12 @@ function App() {
               <Route path="/admin/affiliates/manage/:id" element={
                 <AdminRoute>
                   <AdminAffiliateEdit />
+                </AdminRoute>
+              } />
+
+              <Route path="/admin/affiliates/payout/:affiliateId" element={
+                <AdminRoute>
+                  <AdminAffiliatePayout />
                 </AdminRoute>
               } />
               

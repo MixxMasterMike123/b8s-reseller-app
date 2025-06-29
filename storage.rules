@@ -57,6 +57,17 @@ service firebase.storage {
       allow write: if request.auth != null && isAdmin();
     }
     
+    // Affiliate invoice storage (admin only)
+    match /affiliates/{affiliateId}/invoices/{fileName} {
+      allow read: if request.auth != null && (
+        // Admin can read all invoices
+        isAdmin() ||
+        // Affiliate can read their own invoices
+        request.auth.uid == affiliateId
+      );
+      allow write: if request.auth != null && isAdmin(); // Only admins can upload invoices
+    }
+    
     // Helper function for admin check (hardcoded due to named database access issues)
     function isAdmin() {
       return request.auth.uid in [

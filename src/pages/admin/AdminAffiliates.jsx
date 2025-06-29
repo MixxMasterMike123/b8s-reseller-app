@@ -5,7 +5,7 @@ import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
-import { UsersIcon, CheckCircleIcon, ClockIcon, ChartBarIcon, CursorArrowRaysIcon, TrashIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { UsersIcon, CheckCircleIcon, ClockIcon, ChartBarIcon, CursorArrowRaysIcon, TrashIcon, PencilIcon, BanknotesIcon } from '@heroicons/react/24/outline';
 
 const StatCard = ({ icon, title, value, color }) => (
   <div className="bg-white p-6 rounded-2xl shadow-lg flex items-center space-x-4">
@@ -261,7 +261,7 @@ const AdminAffiliates = () => {
                       </dl>
                     </div>
                   </div>
-                  <div className="mt-6 flex justify-end">
+                  <div className="mt-6 flex justify-end space-x-2">
                     <button
                       onClick={() => navigate(`/admin/affiliates/manage/${affiliate.id}`)}
                       className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -269,6 +269,16 @@ const AdminAffiliates = () => {
                       <PencilIcon className="h-5 w-5 mr-2" />
                       Hantera
                     </button>
+                    
+                    {affiliate.stats?.balance > 0 && (
+                      <button
+                        onClick={() => navigate(`/admin/affiliates/payout/${affiliate.id}`)}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                      >
+                        <BanknotesIcon className="h-5 w-5 mr-2" />
+                        Betala
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
