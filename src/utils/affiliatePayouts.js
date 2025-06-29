@@ -134,10 +134,11 @@ export const processAffiliatePayout = async (affiliateId, payoutData) => {
  */
 export const getAffiliatePayoutHistory = async (affiliateId) => {
   try {
+    // Use a simpler query that doesn't require a composite index
+    // We'll filter by affiliateId and sort in memory if needed
     const payoutsQuery = query(
       collection(db, 'affiliatePayouts'),
-      where('affiliateId', '==', affiliateId),
-      orderBy('payoutDate', 'desc')
+      where('affiliateId', '==', affiliateId)
     );
     
     const snapshot = await getDocs(payoutsQuery);
@@ -145,6 +146,13 @@ export const getAffiliatePayoutHistory = async (affiliateId) => {
       id: doc.id,
       ...doc.data()
     }));
+
+    // Sort by payoutDate in descending order (newest first) in memory
+    payouts.sort((a, b) => {
+      const dateA = a.payoutDate?.toDate?.() || new Date(a.payoutDate);
+      const dateB = b.payoutDate?.toDate?.() || new Date(b.payoutDate);
+      return dateB - dateA;
+    });
 
     return payouts;
   } catch (error) {

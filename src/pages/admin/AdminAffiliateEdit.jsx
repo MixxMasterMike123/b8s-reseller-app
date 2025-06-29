@@ -154,11 +154,42 @@ const AdminAffiliateEdit = () => {
 
   const fetchPayoutHistory = async (affiliateId) => {
     setLoadingPayouts(true);
+    console.log('🔍 Fetching payout history for affiliate ID:', affiliateId);
+    
     try {
       const payouts = await getAffiliatePayoutHistory(affiliateId);
+      console.log('📊 Payout history results:', payouts);
       setPayoutHistory(payouts);
+      
+      if (payouts.length === 0) {
+        console.log('⚠️ No payouts found for affiliate ID:', affiliateId);
+        // Let's also try to fetch all payouts to see what's in the database
+        console.log('🔍 Checking all payouts in database...');
+        
+        // Debug: Get all payouts to see what's available
+        const allPayoutsQuery = query(collection(db, 'affiliatePayouts'));
+        const allPayoutsSnap = await getDocs(allPayoutsQuery);
+        const allPayouts = allPayoutsSnap.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        console.log('📋 All payouts in database:', allPayouts);
+        
+        // Check if there are payouts for this affiliate with different ID format
+        const matchingPayouts = allPayouts.filter(p => 
+          p.affiliateId === affiliateId || 
+          p.affiliateId === data?.id ||
+          p.affiliateCode === data?.affiliateCode
+        );
+        console.log('🔍 Matching payouts found:', matchingPayouts);
+        
+        if (matchingPayouts.length > 0) {
+          console.log('✅ Found payouts with different ID matching, using those');
+          setPayoutHistory(matchingPayouts);
+        }
+      }
     } catch (error) {
-      console.error('Error fetching payout history:', error);
+      console.error('❌ Error fetching payout history:', error);
       toast.error('Kunde inte hämta utbetalningshistorik');
     } finally {
       setLoadingPayouts(false);
@@ -187,6 +218,14 @@ const AdminAffiliateEdit = () => {
           
           // Only fetch stats after we have the affiliate data
           if (affiliateData.affiliateCode) {
+            console.log('🔍 Affiliate data loaded:', {
+              id: id,
+              affiliateId: affiliateData.id,
+              affiliateCode: affiliateData.affiliateCode,
+              email: affiliateData.email,
+              name: affiliateData.name
+            });
+            
             await fetchAffiliateStats(affiliateData.affiliateCode);
             await fetchPayoutHistory(id);
           }
