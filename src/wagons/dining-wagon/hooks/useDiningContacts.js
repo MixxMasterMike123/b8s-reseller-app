@@ -16,11 +16,13 @@ import toast from 'react-hot-toast';
 
 export const useDiningContacts = () => {
   const [contacts, setContacts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start as true
   const [error, setError] = useState(null);
+  const [hasInitialized, setHasInitialized] = useState(false); // Track if Firebase has responded
 
   // Real-time contact subscription
   useEffect(() => {
+    console.log('🍽️ Setting up Firebase subscription...');
     setLoading(true);
     
     const contactsRef = collection(db, 'diningContacts');
@@ -28,17 +30,31 @@ export const useDiningContacts = () => {
     
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {
-        const contactsData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        console.log('🍽️ Firebase snapshot received:', {
+          size: snapshot.size,
+          empty: snapshot.empty,
+          docs: snapshot.docs.length
+        });
+        
+        const contactsData = snapshot.docs.map(doc => {
+          const data = doc.data();
+          console.log('🍽️ Contact loaded:', { id: doc.id, companyName: data.companyName });
+          return {
+            id: doc.id,
+            ...data
+          };
+        });
+        
+        console.log('🍽️ Total contacts loaded:', contactsData.length);
         setContacts(contactsData);
         setLoading(false);
+        setHasInitialized(true); // Mark as initialized after first Firebase response
       },
       (error) => {
-        console.error('Error fetching contacts:', error);
+        console.error('❌ Firebase error fetching contacts:', error);
         setError('Kunde inte ladda kontakter');
         setLoading(false);
+        setHasInitialized(true); // Mark as initialized even on error
         toast.error('Kunde inte ladda gästlistan');
       }
     );
@@ -191,6 +207,7 @@ export const useDiningContacts = () => {
     contacts,
     loading,
     error,
+    hasInitialized, // Export the initialization state
     
     // CRUD operations
     addContact,

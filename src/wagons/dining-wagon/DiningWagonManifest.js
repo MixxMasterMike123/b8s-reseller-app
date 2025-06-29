@@ -49,6 +49,13 @@ export const DiningWagonManifest = {
       title: 'Kontakter - The Dining Wagon™'
     },
     {
+      path: '/admin/dining/contacts/new',
+      component: 'ContactForm',
+      private: true,
+      adminOnly: true,
+      title: 'Ny Kontakt - The Dining Wagon™'
+    },
+    {
       path: '/admin/dining/contacts/:id',
       component: 'ContactDetail',
       private: true,

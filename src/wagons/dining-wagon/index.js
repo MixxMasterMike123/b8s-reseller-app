@@ -9,6 +9,7 @@ import { lazy } from 'react';
 // Main components
 const DiningDashboard = lazy(() => import('./components/DiningDashboard.jsx'));
 const ContactList = lazy(() => import('./components/ContactList.jsx'));
+const ContactForm = lazy(() => import('./components/ContactForm.jsx'));
 const ContactDetail = lazy(() => import('./components/ContactDetail.jsx'));
 const ActivityCenter = lazy(() => import('./components/ActivityCenter.jsx'));
 const FollowUpCenter = lazy(() => import('./components/FollowUpCenter.jsx'));
@@ -26,6 +27,7 @@ const DiningWagon = {
   components: {
     DiningDashboard,
     ContactList,
+    ContactForm,
     ContactDetail,
     ActivityCenter,
     FollowUpCenter,
@@ -80,6 +82,7 @@ export { DiningWagon };
 export {
   DiningDashboard,
   ContactList,
+  ContactForm,
   ContactDetail,
   ActivityCenter,
   FollowUpCenter,
