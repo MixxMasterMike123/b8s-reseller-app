@@ -236,65 +236,60 @@ const AdminAffiliateAnalytics = () => {
         </div>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <ChartBarIcon className="h-8 w-8 text-blue-600" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+          {/* Total Clicks */}
+          <div className="bg-white rounded-2xl shadow-lg p-5">
+            <div className="text-center">
+              <div className="flex justify-center mb-3">
+                <ChartBarIcon className="h-7 w-7 text-blue-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Totala Klick</p>
-                <p className="text-2xl font-bold text-gray-900">{analytics.totalClicks.toLocaleString('sv-SE')}</p>
-              </div>
+              <p className="text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">Totala Klick</p>
+              <p className="text-3xl font-bold text-gray-900 leading-none">{analytics.totalClicks.toLocaleString('sv-SE')}</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <ArrowTrendingUpIcon className="h-8 w-8 text-green-600" />
+          {/* Conversions */}
+          <div className="bg-white rounded-2xl shadow-lg p-5">
+            <div className="text-center">
+              <div className="flex justify-center mb-3">
+                <ArrowTrendingUpIcon className="h-7 w-7 text-green-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Konverteringar</p>
-                <p className="text-2xl font-bold text-gray-900">{analytics.totalConversions}</p>
-                <p className="text-sm text-gray-500">{analytics.overallConversionRate.toFixed(1)}% rate</p>
-              </div>
+              <p className="text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">Konverteringar</p>
+              <p className="text-3xl font-bold text-gray-900 leading-none mb-1">{analytics.totalConversions}</p>
+              <p className="text-xs font-medium text-green-600">{analytics.overallConversionRate.toFixed(1)}% rate</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <CurrencyDollarIcon className="h-8 w-8 text-yellow-600" />
+          {/* Total Commission */}
+          <div className="bg-white rounded-2xl shadow-lg p-5">
+            <div className="text-center">
+              <div className="flex justify-center mb-3">
+                <CurrencyDollarIcon className="h-7 w-7 text-yellow-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Total Provision</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(analytics.totalRevenue)}</p>
-              </div>
+              <p className="text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">Total Provision</p>
+              <p className="text-2xl font-bold text-gray-900 leading-none">{formatCurrency(analytics.totalRevenue)}</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <CurrencyDollarIcon className="h-8 w-8 text-green-600" />
+          {/* Unpaid Commission */}
+          <div className="bg-white rounded-2xl shadow-lg p-5">
+            <div className="text-center">
+              <div className="flex justify-center mb-3">
+                <CurrencyDollarIcon className="h-7 w-7 text-green-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Obetald Provision</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(analytics.totalBalance)}</p>
-              </div>
+              <p className="text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">Obetald<br/>Provision</p>
+              <p className="text-2xl font-bold text-gray-900 leading-none">{formatCurrency(analytics.totalBalance)}</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <UserGroupIcon className="h-8 w-8 text-purple-600" />
+          {/* Active Affiliates */}
+          <div className="bg-white rounded-2xl shadow-lg p-5">
+            <div className="text-center">
+              <div className="flex justify-center mb-3">
+                <UserGroupIcon className="h-7 w-7 text-purple-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Aktiva Affiliates</p>
-                <p className="text-2xl font-bold text-gray-900">{analytics.activeAffiliates}</p>
-              </div>
+              <p className="text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">Aktiva Affiliates</p>
+              <p className="text-3xl font-bold text-gray-900 leading-none">{analytics.activeAffiliates}</p>
             </div>
           </div>
         </div>

@@ -4,6 +4,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import AppLayout from '../../components/layout/AppLayout';
 import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { format } from 'date-fns';
+import { sv } from 'date-fns/locale';
 
 const AdminDashboard = () => {
   const { currentUser } = useAuth();
@@ -15,6 +17,63 @@ const AdminDashboard = () => {
     totalOrders: 0,
     recentOrders: []
   });
+
+  // Helper function to format Firestore timestamps
+  const formatOrderDate = (timestamp) => {
+    try {
+      if (!timestamp) return 'Okänt datum';
+      
+      // Handle Firestore Timestamp
+      if (timestamp.toDate) {
+        return format(timestamp.toDate(), 'd MMM yyyy', { locale: sv });
+      }
+      
+      // Handle regular Date or timestamp string
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) return 'Okänt datum';
+      
+      return format(date, 'd MMM yyyy', { locale: sv });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Okänt datum';
+    }
+  };
+
+  // Helper function to determine if order is B2B or B2C
+  const getOrderSource = (order) => {
+    // Check for B2C indicators
+    if (order.customerInfo || order.source === 'b2c' || order.platform === 'shop') {
+      return { type: 'B2C', color: 'bg-green-100 text-green-800' };
+    }
+    
+    // Check for B2B indicators (default)
+    if (order.userId || order.source === 'b2b' || !order.customerInfo) {
+      return { type: 'B2B', color: 'bg-blue-100 text-blue-800' };
+    }
+    
+    // Default to B2B
+    return { type: 'B2B', color: 'bg-blue-100 text-blue-800' };
+  };
+
+  // Helper function to format order value
+  const formatOrderValue = (order) => {
+    let amount = 0;
+    
+    // B2C orders store total in 'total' field
+    if (order.source === 'b2c' || order.customerInfo) {
+      amount = order.total;
+    } 
+    // B2B orders store total in 'prisInfo.totalPris' field  
+    else {
+      amount = order.prisInfo?.totalPris || order.totalAmount;
+    }
+    
+    if (amount === null || amount === undefined || isNaN(amount)) {
+      return 'Okänt belopp';
+    }
+    
+    return `${amount.toLocaleString('sv-SE')} SEK`;
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -204,42 +263,54 @@ const AdminDashboard = () => {
             <h3 className="text-lg leading-6 font-medium text-gray-900">Senaste ordrar</h3>
           </div>
           <div className="divide-y divide-gray-200">
-            {stats.recentOrders.map((order) => (
-              <div key={order.id} className="px-4 py-4 sm:px-6 hover:bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <div className="truncate">
-                    <div className="flex text-sm">
-                      <p className="font-medium text-blue-600 truncate">{order.orderNumber || order.id}</p>
-                      <p className="ml-1 flex-shrink-0 font-normal text-gray-500">
-                        från {new Date(order.createdAt).toLocaleDateString('sv-SE')}
-                      </p>
-                    </div>
-                    <div className="mt-2 flex">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" />
-                        </svg>
-                        {order.items?.length || 0} produkter
-                      </div>
-                      <div className="ml-6 flex items-center text-sm text-gray-500">
-                        <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                        </svg>
-                        {order.totalAmount?.toLocaleString('sv-SE')} SEK
-                      </div>
-                    </div>
-                  </div>
-                  <div className="ml-6 flex-shrink-0">
-                    <Link
-                      to={`/admin/orders/${order.id}`}
-                      className="font-medium text-blue-600 hover:text-blue-500"
-                    >
-                      Visa detaljer
-                    </Link>
-                  </div>
-                </div>
+            {stats.recentOrders.length === 0 ? (
+              <div className="px-4 py-8 text-center text-gray-500">
+                <p>Inga ordrar hittades</p>
               </div>
-            ))}
+            ) : (
+              stats.recentOrders.map((order) => {
+                const orderSource = getOrderSource(order);
+                return (
+                  <div key={order.id} className="px-4 py-4 sm:px-6 hover:bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <div className="truncate">
+                        <div className="flex items-center text-sm">
+                          <p className="font-medium text-blue-600 truncate">{order.orderNumber || order.id}</p>
+                          <span className={`ml-3 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${orderSource.color}`}>
+                            {orderSource.type}
+                          </span>
+                          <p className="ml-3 flex-shrink-0 font-normal text-gray-500">
+                            från {formatOrderDate(order.createdAt)}
+                          </p>
+                        </div>
+                        <div className="mt-2 flex">
+                          <div className="flex items-center text-sm text-gray-500">
+                            <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" />
+                            </svg>
+                            {order.items?.length || 0} produkter
+                          </div>
+                          <div className="ml-6 flex items-center text-sm text-gray-500">
+                            <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                            </svg>
+                            {formatOrderValue(order)}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="ml-6 flex-shrink-0">
+                        <Link
+                          to={`/admin/orders/${order.id}`}
+                          className="font-medium text-blue-600 hover:text-blue-500"
+                        >
+                          Visa detaljer
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
           <div className="bg-gray-50 px-4 py-4 sm:px-6">
             <div className="text-sm">
