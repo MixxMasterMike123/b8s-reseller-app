@@ -58,6 +58,15 @@ service firebase.storage {
       allow write: if request.auth != null && isAdmin();
     }
     
+    // CRM documents for customers (The Dining Wagon™)
+    match /marketing-materials/customers/{customerId}/crm-documents/{fileName} {
+      allow read: if request.auth != null && (
+        isAdmin() ||
+        request.auth.uid == customerId
+      );
+      allow write: if request.auth != null && isAdmin();
+    }
+    
     // Affiliate invoice storage (admin only upload, affiliates can read their own)
     match /affiliates/{affiliateId}/invoices/{fileName} {
       allow read: if request.auth != null && (

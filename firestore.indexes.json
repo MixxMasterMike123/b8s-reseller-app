@@ -31,6 +31,14 @@
         { "fieldPath": "isActive", "order": "ASCENDING" },
         { "fieldPath": "companyName", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "diningFollowUps",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "scheduledDateTime", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import AppLayout from '../../../components/layout/AppLayout';
 import { useDiningContacts } from '../hooks/useDiningContacts';
 import { useDiningActivities } from '../hooks/useDiningActivities';
+import DocumentCenter from './DocumentCenter';
 import {
   ArrowLeftIcon,
   UserIcon,
@@ -20,7 +21,8 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
   TagIcon,
-  StarIcon
+  StarIcon,
+  FolderIcon
 } from '@heroicons/react/24/outline';
 import {
   StarIcon as StarSolid,
@@ -39,6 +41,7 @@ const ContactDetail = () => {
   const [showAddActivity, setShowAddActivity] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
+  const [showDocumentCenter, setShowDocumentCenter] = useState(false);
   
   // New activity form
   const [newActivity, setNewActivity] = useState({
@@ -232,8 +235,9 @@ const ContactDetail = () => {
   }
 
   return (
-    <AppLayout>
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <>
+      <AppLayout>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -257,13 +261,22 @@ const ContactDetail = () => {
             
             <div className="flex items-center space-x-3">
               {!isEditing ? (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors"
-                >
-                  <PencilIcon className="h-5 w-5" />
-                  <span>Redigera</span>
-                </button>
+                <>
+                  <button
+                    onClick={() => setShowDocumentCenter(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors"
+                  >
+                    <FolderIcon className="h-5 w-5" />
+                    <span>Dokument</span>
+                  </button>
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors"
+                  >
+                    <PencilIcon className="h-5 w-5" />
+                    <span>Redigera</span>
+                  </button>
+                </>
               ) : (
                 <div className="flex space-x-2">
                   <button
@@ -666,6 +679,15 @@ const ContactDetail = () => {
         </div>
       </div>
     </AppLayout>
+
+    {/* Document Center Modal */}
+    <DocumentCenter
+      contactId={contact?.id}
+      contactName={contact?.companyName}
+      isOpen={showDocumentCenter}
+      onClose={() => setShowDocumentCenter(false)}
+    />
+    </>
   );
 };
 
