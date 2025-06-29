@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+
+// 🚂 WAGON SYSTEM: Import wagon registry for menu items
+import wagonRegistry from '../../wagons/WagonRegistry.js';
 
 // Icons
 import { 
@@ -17,7 +20,8 @@ import {
   ChartBarIcon,
   PhoneIcon,
   CubeIcon,
-  MegaphoneIcon
+  MegaphoneIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 
 const AppLayout = ({ children }) => {
@@ -26,7 +30,23 @@ const AppLayout = ({ children }) => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
+  // 🚂 WAGON SYSTEM: State for wagon menu items
+  const [wagonMenuItems, setWagonMenuItems] = useState([]);
+  
   const isAdmin = userProfile?.role === 'admin';
+
+  // 🚂 WAGON SYSTEM: Load wagon menu items
+  useEffect(() => {
+    const loadWagonMenuItems = () => {
+      const menuItems = wagonRegistry.getAdminMenuItems();
+      setWagonMenuItems(menuItems);
+      console.log(`🚂 AppLayout: Loaded ${menuItems.length} wagon menu items`);
+    };
+
+    // Small delay to ensure wagons are discovered first
+    const timer = setTimeout(loadWagonMenuItems, 100);
+    return () => clearTimeout(timer);
+  }, []);
   
   const handleLogout = async () => {
     try {
@@ -189,6 +209,40 @@ const AppLayout = ({ children }) => {
                       </div>
                     </Link>
                   ))}
+
+                  {/* 🚂 WAGON SYSTEM: Auto-generated wagon menu items */}
+                  {wagonMenuItems.length > 0 && (
+                    <>
+                      <div className="relative my-4">
+                        <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                          <div className="w-full border-t border-gray-300" />
+                        </div>
+                        <div className="relative flex justify-center">
+                          <span className="bg-white px-2 text-xs text-gray-500 uppercase tracking-wider font-semibold">🚂 AI Vagnar</span>
+                        </div>
+                      </div>
+                      
+                      {wagonMenuItems.map((item) => (
+                        <Link
+                          key={`wagon-${item.wagonId}`}
+                          to={item.path}
+                          className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                            isActive(item.path)
+                              ? 'bg-blue-50 text-blue-700'
+                              : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                          }`}
+                        >
+                          <div className="mr-3 h-5 w-5 flex-shrink-0 text-blue-500">
+                            ✨
+                          </div>
+                          <div>
+                            <div>{item.title}</div>
+                            <div className="text-xs text-gray-500">{item.description}</div>
+                          </div>
+                        </Link>
+                      ))}
+                    </>
+                  )}
                 </>
               ) : (
                 <>

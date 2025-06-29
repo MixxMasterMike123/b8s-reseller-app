@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { SimpleAuthContextProvider } from './contexts/SimpleAuthContext';
@@ -6,6 +6,9 @@ import { OrderProvider } from './contexts/OrderContext';
 import { CartProvider } from './contexts/CartContext';
 import { functions } from './firebase/config';
 import { httpsCallable } from 'firebase/functions';
+
+// 🚂 WAGON SYSTEM: Single connection point
+import wagonRegistry from './wagons/WagonRegistry.js';
 
 // B2B Reseller Portal Components (existing)
 import PrivateRoute from './components/auth/PrivateRoute';
@@ -61,6 +64,9 @@ import OrderConfirmation from './pages/shop/OrderConfirmation';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
+  // 🚂 WAGON SYSTEM: State for wagon routes
+  const [wagonRoutes, setWagonRoutes] = useState([]);
+
   // Detect subdomain to determine which app to show
   const hostname = window.location.hostname;
   const subdomain = hostname.split('.')[0];
@@ -71,6 +77,29 @@ function App() {
   
   // Default to reseller for now (existing behavior)
   const appMode = isShopSubdomain ? 'shop' : 'reseller';
+
+  // 🚂 WAGON SYSTEM: Auto-discover all wagons (ONLY CONNECTION POINT NEEDED!)
+  useEffect(() => {
+    const initializeWagons = async () => {
+      console.log('🚂 B8Shield Train: Connecting wagons...');
+      
+      // Discover and connect all wagons
+      await wagonRegistry.discoverWagons();
+      
+      // Get wagon routes for the current app mode
+      const routes = wagonRegistry.getRoutes();
+      const filteredRoutes = routes.filter(route => {
+        // For now, only add admin routes to B2B app
+        return appMode === 'reseller' && route.path.startsWith('/admin');
+      });
+      
+      setWagonRoutes(filteredRoutes);
+      
+      console.log(`✅ B8Shield Train: ${filteredRoutes.length} wagon routes connected for ${appMode} mode`);
+    };
+
+    initializeWagons();
+  }, [appMode]);
 
   // The affiliate link handling logic has been moved to the AffiliateTracker component.
   // This ensures it runs on every route change.
@@ -251,6 +280,25 @@ function App() {
                   <AdminAffiliatePayout />
                 </AdminRoute>
               } />
+
+              {/* 🚂 WAGON SYSTEM: Auto-generated wagon routes */}
+              {wagonRoutes.map(({ path, component: Component, adminOnly, private: isPrivate, wagonId }) => (
+                <Route 
+                  key={`${wagonId}-${path}`} 
+                  path={path}
+                  element={
+                    isPrivate ? (
+                      adminOnly ? (
+                        <AdminRoute><Component /></AdminRoute>
+                      ) : (
+                        <PrivateRoute><Component /></PrivateRoute>
+                      )
+                    ) : (
+                      <Component />
+                    )
+                  }
+                />
+              ))}
               
               {/* Catch-all redirect */}
               <Route path="*" element={<Navigate to="/" replace />} />
