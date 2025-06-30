@@ -38,16 +38,31 @@ const AppLayout = ({ children }) => {
 
   // 🚂 WAGON SYSTEM: Load wagon menu items
   useEffect(() => {
-    const loadWagonMenuItems = () => {
-      const menuItems = wagonRegistry.getAdminMenuItems();
-      setWagonMenuItems(menuItems);
-      console.log(`🚂 AppLayout: Loaded ${menuItems.length} wagon menu items`);
+    const loadWagonMenuItems = async () => {
+      try {
+        // Check if we have a current user for permission checking
+        if (currentUser) {
+          const menuItems = await wagonRegistry.getAdminMenuItems(currentUser.uid);
+          setWagonMenuItems(menuItems);
+          console.log(`🚂 AppLayout: Loaded ${menuItems.length} wagon menu items for user ${currentUser.uid}`);
+        } else {
+          // Fallback to sync version for non-authenticated users
+          const menuItems = wagonRegistry.getAdminMenuItemsSync();
+          setWagonMenuItems(menuItems);
+          console.log(`🚂 AppLayout: Loaded ${menuItems.length} wagon menu items (no user permissions)`);
+        }
+      } catch (error) {
+        console.error('Error loading wagon menu items:', error);
+        // Fallback to sync version on error
+        const menuItems = wagonRegistry.getAdminMenuItemsSync();
+        setWagonMenuItems(menuItems);
+      }
     };
 
     // Small delay to ensure wagons are discovered first
     const timer = setTimeout(loadWagonMenuItems, 100);
     return () => clearTimeout(timer);
-  }, []);
+  }, [currentUser]);
   
   const handleLogout = async () => {
     try {

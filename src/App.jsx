@@ -32,6 +32,7 @@ import AdminOrderDetail from './pages/admin/AdminOrderDetail';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminMarketingMaterials from './pages/admin/AdminMarketingMaterials';
 import AdminMarketingMaterialEdit from './pages/admin/AdminMarketingMaterialEdit';
+import AdminSettings from './pages/admin/AdminSettings';
 
 // B2C Shop Components (new)
 import PublicStorefront from './pages/shop/PublicStorefront';
@@ -89,8 +90,8 @@ function App() {
       // Get wagon routes for the current app mode
       const routes = wagonRegistry.getRoutes();
       const filteredRoutes = routes.filter(route => {
-        // For now, only add admin routes to B2B app
-        return appMode === 'reseller' && route.path.startsWith('/admin');
+        // Add all routes for B2B app (admin and user routes)
+        return appMode === 'reseller';
       });
       
       setWagonRoutes(filteredRoutes);
@@ -278,6 +279,12 @@ function App() {
               <Route path="/admin/affiliates/payout/:affiliateId" element={
                 <AdminRoute>
                   <AdminAffiliatePayout />
+                </AdminRoute>
+              } />
+
+              <Route path="/admin/settings" element={
+                <AdminRoute>
+                  <AdminSettings />
                 </AdminRoute>
               } />
 

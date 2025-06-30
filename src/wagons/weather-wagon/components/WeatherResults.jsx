@@ -12,7 +12,8 @@ import {
   CalendarDaysIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  BeakerIcon
+  BeakerIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import AppLayout from '../../../components/layout/AppLayout';
 import { getLocationWeatherForecast } from '../utils/weatherAPI.js';
@@ -184,6 +185,7 @@ const WeatherResults = () => {
                 <h1 className="text-2xl font-bold text-gray-900">{data.location.name}</h1>
                 <p className="text-gray-600">
                   10-dagars fiskeprognos • {data.dailyForecasts.length} dagar tillgänglig
+                  {data.summary?.hasWaterData && ' • Inkl. vattendata'}
                 </p>
               </div>
             </div>
@@ -192,6 +194,240 @@ const WeatherResults = () => {
               <span className="text-sm font-medium">Fiskeprognos</span>
             </div>
           </div>
+          
+          {/* Enhanced Water Data Summary with Comprehensive Information */}
+          {(data.waterData?.available || data.waterData?.availability?.limitations?.length > 0) && (
+            <div className="mt-4">
+              {data.waterData.available && (
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h3 className="text-sm font-semibold text-blue-900 mb-3 flex items-center space-x-2">
+                    <span>Omfattande vattenförhållanden</span>
+                    {data.waterData.availability.fishingInsights?.length > 0 && (
+                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                        {data.waterData.availability.fishingInsights.length} fisketips
+                      </span>
+                    )}
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    {/* Water Level (Real Variation) */}
+                    {data.waterData.level?.availability?.hasData && (
+                      <div className="bg-white rounded-lg p-3 border border-blue-100">
+                        <h4 className="font-medium text-gray-900 mb-2 flex items-center space-x-2">
+                          <span>🌊 Vattenstånd</span>
+                          {data.waterData.level.availability.dataType === 'reference' && (
+                            <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                              Referens
+                            </span>
+                          )}
+                        </h4>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Nivåvariation:</span>
+                            <span className={`font-medium ${data.waterData.level.current > 5 ? 'text-blue-600' : data.waterData.level.current < -5 ? 'text-orange-600' : 'text-green-600'}`}>
+                              {data.waterData.level.current > 0 ? '+' : ''}{data.waterData.level.current?.toFixed(1)} {data.waterData.level.unit}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Status:</span>
+                            <span className="font-medium">{data.waterData.level.status}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Trend:</span>
+                            <span className="font-medium">{data.waterData.level.trend}</span>
+                          </div>
+                          <div className="text-xs text-gray-500 mt-2">
+                            Station: {data.waterData.level.station}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Water Flow */}
+                    {data.waterData.flow?.availability?.hasData && (
+                      <div className="bg-white rounded-lg p-3 border border-blue-100">
+                        <h4 className="font-medium text-gray-900 mb-2">🌊 Vattenföring</h4>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Aktuellt flöde:</span>
+                            <span className="font-medium">{data.waterData.flow.current?.toFixed(1)} {data.waterData.flow.unit}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Variation från normal:</span>
+                            <span className={`font-medium ${data.waterData.flow.variation > 20 ? 'text-blue-600' : data.waterData.flow.variation < -20 ? 'text-orange-600' : 'text-green-600'}`}>
+                              {data.waterData.flow.variation > 0 ? '+' : ''}{data.waterData.flow.variation?.toFixed(0)}%
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Status:</span>
+                            <span className="font-medium">{data.waterData.flow.status}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Trend:</span>
+                            <span className="font-medium">{data.waterData.flow.trend}</span>
+                          </div>
+                          {data.waterData.flow.fishingImpact && (
+                            <div className="text-xs text-blue-700 bg-blue-50 p-2 rounded mt-2">
+                              💡 {data.waterData.flow.fishingImpact}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Water Quality */}
+                    {data.waterData.quality?.availability?.hasData && (
+                      <div className="bg-white rounded-lg p-3 border border-blue-100">
+                        <h4 className="font-medium text-gray-900 mb-2">🧪 Vattenkvalitet</h4>
+                        <div className="space-y-2 text-sm">
+                          {data.waterData.quality.oxygen && (
+                            <div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Syrgashalt:</span>
+                                <span className="font-medium">{data.waterData.quality.oxygen.value?.toFixed(1)} mg/l</span>
+                              </div>
+                              <div className="text-xs text-gray-500">{data.waterData.quality.oxygen.status}</div>
+                              {data.waterData.quality.oxygen.fishingImpact && (
+                                <div className="text-xs text-green-700 bg-green-50 p-1 rounded mt-1">
+                                  {data.waterData.quality.oxygen.fishingImpact}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          
+                          {data.waterData.quality.pH && (
+                            <div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">pH-värde:</span>
+                                <span className="font-medium">{data.waterData.quality.pH.value?.toFixed(1)}</span>
+                              </div>
+                              <div className="text-xs text-gray-500">{data.waterData.quality.pH.status}</div>
+                            </div>
+                          )}
+                          
+                          {data.waterData.quality.clarity && (
+                            <div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Siktdjup:</span>
+                                <span className="font-medium">{data.waterData.quality.clarity.visibility?.toFixed(1)} m</span>
+                              </div>
+                              <div className="text-xs text-gray-500">{data.waterData.quality.clarity.status}</div>
+                              {data.waterData.quality.clarity.fishingImpact && (
+                                <div className="text-xs text-blue-700 bg-blue-50 p-1 rounded mt-1">
+                                  {data.waterData.quality.clarity.fishingImpact}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Ice Conditions */}
+                    {data.waterData.ice?.availability?.hasData && (
+                      <div className="bg-white rounded-lg p-3 border border-blue-100">
+                        <h4 className="font-medium text-gray-900 mb-2">🧊 Isförhållanden</h4>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Istjocklek:</span>
+                            <span className="font-medium">{data.waterData.ice.thickness?.toFixed(0)} {data.waterData.ice.unit}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Säkerhet:</span>
+                            <span className={`font-medium text-sm ${data.waterData.ice.safety?.includes('OSÄKER') ? 'text-red-600' : data.waterData.ice.safety?.includes('BRA') ? 'text-green-600' : 'text-yellow-600'}`}>
+                              {data.waterData.ice.safety}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Trend:</span>
+                            <span className="font-medium">{data.waterData.ice.trend}</span>
+                          </div>
+                          {data.waterData.ice.fishingAdvice && (
+                            <div className="text-xs text-blue-700 bg-blue-50 p-2 rounded mt-2">
+                              ❄️ {data.waterData.ice.fishingAdvice}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Water Temperature (Enhanced) */}
+                    {data.waterData.temperature?.availability?.hasData && (
+                      <div className="bg-white rounded-lg p-3 border border-blue-100">
+                        <h4 className="font-medium text-gray-900 mb-2 flex items-center space-x-2">
+                          <span>🌡️ Vattentemperatur</span>
+                          {data.waterData.temperature.availability.dataType === 'reference' && (
+                            <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                              Referens
+                            </span>
+                          )}
+                        </h4>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Aktuell temp:</span>
+                            <span className="font-medium">{data.waterData.temperature.current?.toFixed(1)}°C</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Trend:</span>
+                            <span className="font-medium">{data.waterData.temperature.trend}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Fiskzon:</span>
+                            <span className="font-medium text-blue-600">{data.waterData.temperature.fishingZone}</span>
+                          </div>
+                          {data.waterData.temperature.thermocline && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Termoklindjup:</span>
+                              <span className="font-medium">{data.waterData.temperature.thermocline} m</span>
+                            </div>
+                          )}
+                          <div className="text-xs text-gray-500 mt-2">
+                            Station: {data.waterData.temperature.station}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Comprehensive Fishing Insights */}
+                  {data.waterData.availability.fishingInsights?.length > 0 && (
+                    <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                      <h4 className="font-medium text-green-900 mb-2">🎣 Fiskeinsikter baserat på vattendata</h4>
+                      <div className="space-y-2">
+                        {data.waterData.availability.fishingInsights.map((insight, index) => (
+                          <div key={index} className="text-sm text-green-800 bg-white p-2 rounded border-l-4 border-green-400">
+                            <span className="font-medium">{insight.parameter}:</span> {insight.insight}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Data Limitations and Suggestions */}
+              {data.waterData.availability?.limitations?.length > 0 && (
+                <div className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <h4 className="font-medium text-yellow-900 mb-2">⚠️ Begränsad vattendata för denna plats</h4>
+                  <div className="space-y-2">
+                    {data.waterData.availability.limitations.map((limitation, index) => (
+                      <div key={index} className="text-sm">
+                        <div className="text-yellow-800">
+                          <span className="font-medium">{limitation.parameter}:</span> {limitation.message}
+                        </div>
+                        {limitation.suggestion && (
+                          <div className="text-yellow-700 text-xs mt-1">
+                            💡 {limitation.suggestion}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Best Fishing Days Highlight */}
@@ -199,19 +435,27 @@ const WeatherResults = () => {
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
             <SunIcon className="h-5 w-5 text-yellow-500" />
             <span>Bästa fiskedagarna</span>
+            {data.summary?.hasWaterData && (
+              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                Inkl. vattendata
+              </span>
+            )}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {bestDays.map((day, index) => (
-              <div key={day.date} className="bg-white rounded-lg p-4 border border-gray-200">
+            {data.bestFishingDays.map((day, index) => (
+              <div key={day.date} className={`p-4 rounded-lg border-2 ${getScoreBgColor(day.fishing.color)}`}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-gray-900">{getDayLabel(day)}</span>
-                  <span className="text-sm text-gray-500">{day.dayMonth}</span>
+                  <span className="font-medium text-gray-900">{getDayLabel(day)} {day.dayMonth}</span>
+                  <span className={`px-2 py-1 rounded-full text-sm font-medium border ${getScoreColor(day.fishing.color)}`}>
+                    #{index + 1}
+                  </span>
                 </div>
-                <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getScoreColor(day.fishing.color)}`}>
-                  {day.fishing.score}/100 - {day.fishing.rating}
-                </div>
-                <div className="mt-2 text-sm text-gray-600">
-                  {day.tempMin?.toFixed(0)}° - {day.tempMax?.toFixed(0)}°C
+                <div className="text-2xl font-bold text-gray-900 mb-1">{day.fishing.score}/100</div>
+                <div className="text-sm text-gray-600 mb-2">{day.fishing.rating}</div>
+                <div className="space-y-1">
+                  {day.fishing.factors.slice(0, 2).map((factor, i) => (
+                    <div key={i} className="text-xs text-gray-600">• {factor}</div>
+                  ))}
                 </div>
               </div>
             ))}
@@ -301,6 +545,22 @@ const WeatherResults = () => {
                           </div>
                         ))}
                       </div>
+                      {day.waterData?.available && (
+                        <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                          <h5 className="text-sm font-medium text-blue-900 mb-2">Vattenförhållanden</h5>
+                          <div className="text-sm text-blue-800 space-y-1">
+                            {day.waterData.temperature && (
+                              <div>Temp: {day.waterData.temperature.current.toFixed(1)}°C ({day.waterData.temperature.trend.toLowerCase()})</div>
+                            )}
+                            {day.waterData.level && (
+                              <div>Nivå: {day.waterData.level.current} {day.waterData.level.unit} ({day.waterData.level.trend.toLowerCase()})</div>
+                            )}
+                            {day.waterData.temperature?.fishingZone && (
+                              <div>Fiskezone: {day.waterData.temperature.fishingZone}</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     
                     {/* Weather Details */}
@@ -343,14 +603,21 @@ const WeatherResults = () => {
           ))}
         </div>
 
-        {/* Footer Info */}
+        {/* Comprehensive Footer Info */}
         <div className="bg-gray-50 rounded-lg p-6 text-center text-sm text-gray-500">
           <p>
-            <strong>Datakällor:</strong> SMHI väderdata • Astronomiska beräkningar för månfaser • 
-            Fiskeförhållanden baserat på meteorologiska faktorer
+            <strong>Datakällor:</strong> SMHI väderdata • SMHI hydrologiska data{data.waterData?.available && ' (vattenstånd, vattenföring, temperatur)'} • 
+            {data.waterData?.quality?.availability?.hasData && 'SMHI miljöövervakning (syrgashalt, pH, siktdjup) • '}
+            {data.waterData?.ice?.availability?.hasData && 'SMHI isdata • '}
+            Astronomiska beräkningar för månfaser
           </p>
-          <p className="mt-2">
-            Prognosdata uppdateras var 6:e timme • Använd som vägledning för fiskeplanering
+          <p className="mt-1">
+            <strong>Fiskeanalys:</strong> Beräkningar baserat på meteorologiska{data.waterData?.available && ', hydrologiska'}{data.waterData?.quality?.availability?.hasData && ' och vattenkvalitetsdata'} • 
+            Omfattande vattenförhållanden för svensk fiskemiljö
+          </p>
+          <p className="mt-2 text-xs">
+            Väderdata uppdateras var 6:e timme • Vattendata från närmaste SMHI-stationer • 
+            Använd som vägledning för fiskeplanering • Kontrollera alltid lokala förhållanden
           </p>
         </div>
       </div>

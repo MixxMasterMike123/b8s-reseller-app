@@ -8,7 +8,7 @@ export const WritersWagonManifest = {
   version: '1.0.0',
   description: 'AI-powered content generation for B2B and B2C product descriptions',
   type: 'ai-content', // Category of functionality
-  enabled: false, // Easy on/off switch
+  enabled: true, // Easy on/off switch
 
   // Wagon author and metadata
   author: 'B8Shield Development Team',

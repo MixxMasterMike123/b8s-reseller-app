@@ -92,5 +92,13 @@ service cloud.firestore {
       // Only admins can create/update/delete settings
       allow write: if isAdmin();
     }
+
+    // User wagon settings collection
+    match /userWagonSettings/{userId} {
+      // Users can read their own wagon settings, admins can read all
+      allow read: if isActiveUser() && (request.auth.uid == userId || isAdmin());
+      // Only admins can create/update/delete wagon settings
+      allow write: if isAdmin();
+    }
   }
 }
