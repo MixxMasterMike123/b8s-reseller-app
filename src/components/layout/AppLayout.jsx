@@ -33,6 +33,7 @@ const AppLayout = ({ children }) => {
   
   // 🚂 WAGON SYSTEM: State for wagon menu items
   const [wagonMenuItems, setWagonMenuItems] = useState([]);
+  const [userWagonMenuItems, setUserWagonMenuItems] = useState([]);
   
   const isAdmin = userProfile?.role === 'admin';
 
@@ -40,22 +41,30 @@ const AppLayout = ({ children }) => {
   useEffect(() => {
     const loadWagonMenuItems = async () => {
       try {
-        // Check if we have a current user for permission checking
+        // Load admin menu items
         if (currentUser) {
-          const menuItems = await wagonRegistry.getAdminMenuItems(currentUser.uid);
-          setWagonMenuItems(menuItems);
-          console.log(`🚂 AppLayout: Loaded ${menuItems.length} wagon menu items for user ${currentUser.uid}`);
+          const adminMenuItems = await wagonRegistry.getAdminMenuItems(currentUser.uid);
+          setWagonMenuItems(adminMenuItems);
+          console.log(`🚂 AppLayout: Loaded ${adminMenuItems.length} admin wagon menu items for user ${currentUser.uid}`);
         } else {
           // Fallback to sync version for non-authenticated users
-          const menuItems = wagonRegistry.getAdminMenuItemsSync();
-          setWagonMenuItems(menuItems);
-          console.log(`🚂 AppLayout: Loaded ${menuItems.length} wagon menu items (no user permissions)`);
+          const adminMenuItems = wagonRegistry.getAdminMenuItemsSync();
+          setWagonMenuItems(adminMenuItems);
+          console.log(`🚂 AppLayout: Loaded ${adminMenuItems.length} admin wagon menu items (no user permissions)`);
         }
+
+        // Load user menu items (for regular user navigation)
+        const userMenuItems = wagonRegistry.getUserMenuItemsSync();
+        setUserWagonMenuItems(userMenuItems);
+        console.log(`🚂 AppLayout: Loaded ${userMenuItems.length} user wagon menu items`);
+        
       } catch (error) {
         console.error('Error loading wagon menu items:', error);
         // Fallback to sync version on error
-        const menuItems = wagonRegistry.getAdminMenuItemsSync();
-        setWagonMenuItems(menuItems);
+        const adminMenuItems = wagonRegistry.getAdminMenuItemsSync();
+        const userMenuItems = wagonRegistry.getUserMenuItemsSync();
+        setWagonMenuItems(adminMenuItems);
+        setUserWagonMenuItems(userMenuItems);
       }
     };
 
@@ -283,6 +292,41 @@ const AppLayout = ({ children }) => {
                       {item.name}
                     </Link>
                   ))}
+
+                  {/* 🚂 WAGON SYSTEM: User wagon menu items */}
+                  {userWagonMenuItems.length > 0 && (
+                    <>
+                      <div className="relative my-4">
+                        <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                          <div className="w-full border-t border-gray-300" />
+                        </div>
+                        <div className="relative flex justify-center">
+                          <span className="bg-white px-2 text-xs text-gray-500 uppercase tracking-wider font-semibold flex items-center">
+                            <CpuChipIcon className="h-4 w-4 mr-1" />
+                            AI Verktyg
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {userWagonMenuItems.map((item) => (
+                        <Link
+                          key={`user-wagon-${item.wagonId}`}
+                          to={item.path}
+                          className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                            isActive(item.path)
+                              ? 'bg-blue-50 text-blue-700'
+                              : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                          }`}
+                        >
+                          <SparklesIcon className="mr-3 h-5 w-5 flex-shrink-0 text-blue-500" />
+                          <div>
+                            <div>{item.title}</div>
+                            <div className="text-xs text-gray-500">{item.description}</div>
+                          </div>
+                        </Link>
+                      ))}
+                    </>
+                  )}
                   
                   {/* Admin Section Link for admin users */}
                   {isAdmin && (
@@ -436,6 +480,42 @@ const AppLayout = ({ children }) => {
                       {item.name}
                     </Link>
                   ))}
+
+                  {/* 🚂 WAGON SYSTEM: User wagon menu items (mobile) */}
+                  {userWagonMenuItems.length > 0 && (
+                    <>
+                      <div className="relative my-4">
+                        <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                          <div className="w-full border-t border-gray-300" />
+                        </div>
+                        <div className="relative flex justify-center">
+                          <span className="bg-white px-2 text-xs text-gray-500 uppercase tracking-wider font-semibold flex items-center">
+                            <CpuChipIcon className="h-4 w-4 mr-1" />
+                            AI Verktyg
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {userWagonMenuItems.map((item) => (
+                        <Link
+                          key={`user-wagon-mobile-${item.wagonId}`}
+                          to={item.path}
+                          className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
+                            isActive(item.path)
+                              ? 'bg-blue-50 text-blue-700'
+                              : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                          }`}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          <SparklesIcon className="mr-4 h-6 w-6 flex-shrink-0 text-blue-500" />
+                          <div>
+                            <div>{item.title}</div>
+                            <div className="text-xs text-gray-500">{item.description}</div>
+                          </div>
+                        </Link>
+                      ))}
+                    </>
+                  )}
                   
                   {isAdmin && (
                     <>

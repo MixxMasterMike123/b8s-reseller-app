@@ -201,6 +201,26 @@ class WagonRegistry {
   }
 
   /**
+   * Get all user menu items from wagons (for regular user navigation)
+   * Core app calls this to build regular user navigation
+   */
+  getUserMenuItemsSync() {
+    const menuItems = [];
+    
+    for (const wagon of this.wagons.values()) {
+      if (wagon.manifest.userMenu) {
+        menuItems.push({
+          ...wagon.manifest.userMenu,
+          wagonId: wagon.manifest.id,
+          component: wagon.components[wagon.manifest.routes?.[0]?.component]
+        });
+      }
+    }
+
+    return menuItems.sort((a, b) => (a.order || 999) - (b.order || 999));
+  }
+
+  /**
    * Get all routes from wagons
    * Core app calls this to register routes
    */

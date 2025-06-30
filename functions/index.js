@@ -2656,3 +2656,284 @@ exports.generateContentWithClaude = functions
       });
     }
   });
+
+/**
+ * FishTrip Wagon API Proxy - SMHI Weather Data
+ */
+exports.getFishTripWeatherData = functions
+  .region('us-central1')
+  .https.onRequest(async (req, res) => {
+    // Enable CORS for B8Shield domains
+    const allowedOrigins = [
+      'https://b8shield-reseller-app.web.app',
+      'https://shop.b8shield.com',
+      'http://localhost:5173',
+      'http://localhost:3000'
+    ];
+    
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.set('Access-Control-Allow-Origin', origin);
+    }
+    
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.set('Access-Control-Max-Age', '3600');
+
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    try {
+      const { lat, lon } = req.method === 'GET' ? req.query : req.body;
+
+      if (!lat || !lon) {
+        res.status(400).json({ error: 'Latitude and longitude are required' });
+        return;
+      }
+
+      console.log(`🎣 FishTrip: Fetching weather data for ${lat}, ${lon}`);
+
+      // Fetch weather data from SMHI
+      const weatherUrl = `https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geotype/point/lon/${lon}/lat/${lat}/data.json`;
+      const weatherResponse = await fetch(weatherUrl);
+
+      if (!weatherResponse.ok) {
+        console.error(`SMHI Weather API error: ${weatherResponse.status}`);
+        res.status(weatherResponse.status).json({ 
+          error: `SMHI Weather API error: ${weatherResponse.status}`,
+          details: 'Weather data not available for this location'
+        });
+        return;
+      }
+
+      const weatherData = await weatherResponse.json();
+      
+      console.log(`✅ FishTrip: Weather data fetched successfully`);
+
+      res.status(200).json({
+        success: true,
+        data: weatherData,
+        source: 'SMHI',
+        location: { lat: parseFloat(lat), lon: parseFloat(lon) }
+      });
+
+    } catch (error) {
+      console.error('Error fetching weather data:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch weather data',
+        details: error.message
+      });
+    }
+  });
+
+/**
+ * FishTrip Wagon API Proxy - SMHI Water Data
+ */
+exports.getFishTripWaterData = functions
+  .region('us-central1')
+  .https.onRequest(async (req, res) => {
+    // Enable CORS for B8Shield domains
+    const allowedOrigins = [
+      'https://b8shield-reseller-app.web.app',
+      'https://shop.b8shield.com',
+      'http://localhost:5173',
+      'http://localhost:3000'
+    ];
+    
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.set('Access-Control-Allow-Origin', origin);
+    }
+    
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.set('Access-Control-Max-Age', '3600');
+
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    try {
+      const { parameter, stationId } = req.method === 'GET' ? req.query : req.body;
+
+      if (!parameter || !stationId) {
+        res.status(400).json({ error: 'Parameter and stationId are required' });
+        return;
+      }
+
+      console.log(`🎣 FishTrip: Fetching water data for parameter ${parameter}, station ${stationId}`);
+
+      // Fetch water data from SMHI
+      const waterUrl = `https://opendata-download-hydroobs.smhi.se/api/version/latest/parameter/${parameter}/station/${stationId}/period/latest-months/data.json`;
+      const waterResponse = await fetch(waterUrl);
+
+      if (!waterResponse.ok) {
+        console.error(`SMHI Water API error: ${waterResponse.status}`);
+        res.status(waterResponse.status).json({ 
+          error: `SMHI Water API error: ${waterResponse.status}`,
+          details: 'Water data not available for this station/parameter'
+        });
+        return;
+      }
+
+      const waterData = await waterResponse.json();
+      
+      console.log(`✅ FishTrip: Water data fetched successfully`);
+
+      res.status(200).json({
+        success: true,
+        data: waterData,
+        source: 'SMHI',
+        parameter: parameter,
+        station: stationId
+      });
+
+    } catch (error) {
+      console.error('Error fetching water data:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch water data',
+        details: error.message
+      });
+    }
+  });
+
+/**
+ * FishTrip Wagon API Proxy - Claude AI Analysis
+ */
+exports.getFishTripAIAnalysis = functions
+  .region('us-central1')
+  .https.onRequest(async (req, res) => {
+    // Enable CORS for B8Shield domains
+    const allowedOrigins = [
+      'https://b8shield-reseller-app.web.app',
+      'https://shop.b8shield.com',
+      'http://localhost:5173',
+      'http://localhost:3000'
+    ];
+    
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.set('Access-Control-Allow-Origin', origin);
+    }
+    
+    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.set('Access-Control-Max-Age', '3600');
+
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'Method Not Allowed' });
+      return;
+    }
+
+    try {
+      const { 
+        prompt, 
+        model = 'claude-3-5-sonnet-20241022', 
+        maxTokens = 2000,
+        temperature = 0.7,
+        userId = 'default'
+      } = req.body;
+
+      if (!prompt) {
+        res.status(400).json({ error: 'Prompt is required' });
+        return;
+      }
+
+      // Try to get user-specific API key first, then fallback to fishtrip wagon config
+      let claudeApiKey;
+      
+      // Check for FishTrip wagon specific config
+      const fishTripConfigRef = db.collection('wagonConfigurations').doc(`${userId}_fishtrip-wagon`);
+      const fishTripDoc = await fishTripConfigRef.get();
+      
+      if (fishTripDoc.exists) {
+        const encryptedKey = fishTripDoc.data().encryptedApiKey;
+        claudeApiKey = Buffer.from(encryptedKey, 'base64').toString('utf8');
+        await fishTripConfigRef.update({ lastUsed: admin.firestore.Timestamp.now() });
+      } else {
+        // Fallback to Writers Wagon config if available
+        const writersConfigRef = db.collection('wagonConfigurations').doc(`${userId}_writers-wagon`);
+        const writersDoc = await writersConfigRef.get();
+        
+        if (writersDoc.exists) {
+          const encryptedKey = writersDoc.data().encryptedApiKey;
+          claudeApiKey = Buffer.from(encryptedKey, 'base64').toString('utf8');
+        } else {
+          // Final fallback to system API key
+          claudeApiKey = functions.config().claude?.api_key;
+          if (!claudeApiKey) {
+            res.status(400).json({ 
+              error: 'No Claude API key configured. Please setup your API key first.',
+              setupRequired: true
+            });
+            return;
+          }
+        }
+      }
+
+      console.log(`🎣 FishTrip: Generating AI analysis with ${model} for ${userId}`);
+
+      // Make request to Claude API
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': claudeApiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: model,
+          max_tokens: maxTokens,
+          temperature: temperature,
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Claude API error: ${response.status} - ${errorText}`);
+        res.status(response.status).json({ 
+          error: `Claude API error: ${response.status}`,
+          details: errorText
+        });
+        return;
+      }
+
+      const data = await response.json();
+      
+      // Extract the generated content
+      const generatedContent = data.content?.[0]?.text || 'No analysis generated';
+      
+      console.log(`✅ FishTrip: AI analysis generated successfully (${generatedContent.length} chars)`);
+
+      res.status(200).json({
+        success: true,
+        content: generatedContent,
+        model: model,
+        usage: data.usage || {}
+      });
+
+    } catch (error) {
+      console.error('Error generating FishTrip AI analysis:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to generate AI analysis',
+        details: error.message
+      });
+    }
+  });
