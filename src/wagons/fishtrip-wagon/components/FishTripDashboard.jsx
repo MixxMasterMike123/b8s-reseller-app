@@ -226,41 +226,42 @@ const FishTripDashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Overview Tab - Always visible on desktop, conditional on mobile */}
-              {activeTab === 'overview' && (
-                <>
-                  <WeatherCard weather={analysis.weather} />
-                  <WaterConditionsCard water={analysis.water} />
-                </>
-              )}
-
-              {/* Weather Tab */}
-              {activeTab === 'weather' && (
-                <WeatherCard weather={analysis.weather} detailed={true} />
-              )}
-
-              {/* Water Tab */}
-              {activeTab === 'water' && (
-                <WaterConditionsCard water={analysis.water} detailed={true} />
-              )}
-
-              {/* Desktop: Always show overview cards */}
-              <div className="hidden lg:block">
-                {activeTab !== 'overview' && (
+              {/* Mobile: Tab-based content */}
+              <div className="lg:hidden">
+                {activeTab === 'overview' && (
                   <>
                     <WeatherCard weather={analysis.weather} />
                     <WaterConditionsCard water={analysis.water} />
                   </>
                 )}
+
+                {activeTab === 'weather' && (
+                  <WeatherCard weather={analysis.weather} detailed={true} />
+                )}
+
+                {activeTab === 'water' && (
+                  <WaterConditionsCard water={analysis.water} detailed={true} />
+                )}
+
+                {activeTab === 'planner' && (
+                  <TripPlannerCard 
+                    location={analysis.location}
+                    fishTripService={fishTripService}
+                    onLocationChange={handleLocationSearch}
+                  />
+                )}
               </div>
 
-              {/* Trip Planner Tab */}
-              {activeTab === 'planner' && (
+              {/* Desktop: Always show all content */}
+              <div className="hidden lg:block space-y-6">
+                <WeatherCard weather={analysis.weather} detailed={false} />
+                <WaterConditionsCard water={analysis.water} detailed={false} />
                 <TripPlannerCard 
                   location={analysis.location}
                   fishTripService={fishTripService}
+                  onLocationChange={handleLocationSearch}
                 />
-              )}
+              </div>
             </div>
 
             {/* Sidebar */}

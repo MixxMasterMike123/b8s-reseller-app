@@ -1,14 +1,28 @@
 // TripPlannerCard component - Multi-day fishing trip planning
 // Mobile-optimized trip planner with AI enhancement
 
-import React, { useState } from 'react';
-import { CalendarIcon, MapPinIcon, ClockIcon } from '@heroicons/react/24/outline';
+import React, { useState, useEffect } from 'react';
+import { CalendarIcon, MapPinIcon, ClockIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';
 
-const TripPlannerCard = ({ location, fishTripService, className = '' }) => {
+const TripPlannerCard = ({ location, fishTripService, onLocationChange, className = '' }) => {
   const [days, setDays] = useState(3);
   const [loading, setLoading] = useState(false);
   const [tripPlan, setTripPlan] = useState(null);
+  const [lastLocationKey, setLastLocationKey] = useState(null);
+
+  // Reset trip plan when location changes
+  useEffect(() => {
+    if (location) {
+      const locationKey = `${location.lat}_${location.lon}`;
+      if (lastLocationKey && lastLocationKey !== locationKey) {
+        console.log('🗺️ Location changed, resetting trip plan');
+        setTripPlan(null);
+        toast.info('Ny plats vald - skapa en ny fiskeplan');
+      }
+      setLastLocationKey(locationKey);
+    }
+  }, [location, lastLocationKey]);
 
   const handlePlanTrip = async () => {
     if (!location || !fishTripService) return;
@@ -40,6 +54,27 @@ const TripPlannerCard = ({ location, fishTripService, className = '' }) => {
     if (score >= 60) return 'text-blue-600 bg-blue-100';
     if (score >= 40) return 'text-yellow-600 bg-yellow-100';
     return 'text-red-600 bg-red-100';
+  };
+
+  const handleLocationSuggestion = (suggestedLocation) => {
+    if (onLocationChange) {
+      onLocationChange(suggestedLocation);
+      toast.success(`Byter till ${suggestedLocation} för bättre fiskeförhållanden`);
+    }
+  };
+
+  // Swedish fishing locations for variety
+  const alternativeLocations = [
+    'Vänern', 'Vättern', 'Mälaren', 'Storsjön', 'Siljan', 'Bolmen', 
+    'Kultsjön', 'Hornavan', 'Torneträsk', 'Åsnen'
+  ];
+
+  const getSuggestedLocation = (currentLocation, dayIndex) => {
+    // Suggest different locations for variety, excluding current
+    const alternatives = alternativeLocations.filter(loc => 
+      !currentLocation.name.toLowerCase().includes(loc.toLowerCase())
+    );
+    return alternatives[dayIndex % alternatives.length];
   };
 
   return (
@@ -127,9 +162,13 @@ const TripPlannerCard = ({ location, fishTripService, className = '' }) => {
                     <h5 className="font-medium text-gray-900">
                       Dag {index + 1} - {formatDate(day.date)}
                     </h5>
-                    {index === tripPlan.bestDay && (
-                      <span className="text-xs text-green-600 font-medium">Bästa dagen</span>
-                    )}
+                    <div className="flex items-center space-x-2 text-xs text-gray-600 mt-1">
+                      <MapPinIcon className="h-3 w-3" />
+                      <span>{tripPlan.location.name}</span>
+                      {index === tripPlan.bestDay && (
+                        <span className="text-green-600 font-medium">• Bästa dagen</span>
+                      )}
+                    </div>
                   </div>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getScoreColor(day.fishingScore)}`}>
                     {day.fishingScore}/100
@@ -176,6 +215,24 @@ const TripPlannerCard = ({ location, fishTripService, className = '' }) => {
                         <li key={recIndex}>• {rec}</li>
                       ))}
                     </ul>
+                  </div>
+                )}
+
+                {/* Location suggestion for poor conditions */}
+                {day.fishingScore < 50 && onLocationChange && (
+                  <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-yellow-800">
+                        Svåra förhållanden. Överväg att byta plats?
+                      </span>
+                      <button
+                        onClick={() => handleLocationSuggestion(getSuggestedLocation(tripPlan.location, index))}
+                        className="flex items-center space-x-1 text-yellow-700 hover:text-yellow-900 font-medium"
+                      >
+                        <span>Prova {getSuggestedLocation(tripPlan.location, index)}</span>
+                        <ArrowRightIcon className="h-3 w-3" />
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
