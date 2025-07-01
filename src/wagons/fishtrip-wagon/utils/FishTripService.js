@@ -1,14 +1,14 @@
 // FishTrip Service - Main orchestrator for fishing intelligence
-// Combines SMHI weather, water data, and AI enhancement
-// Mobile-optimized for Swedish fishing conditions
+// Upgraded to MET Norway APIs for superior marine and weather forecasting
+// Mobile-optimized for Nordic fishing conditions
 
-import SMHIClient from '../api/SMHIClient.js';
+import METNorwayClient from '../api/METNorwayClient.js';
 import ClaudeClient from '../api/ClaudeClient.js';
 import { geocodeLocation, getCurrentLocation, reverseGeocode } from './geocoding.js';
 
 class FishTripService {
   constructor() {
-    this.smhiClient = new SMHIClient();
+    this.metClient = new METNorwayClient();
     this.claudeClient = new ClaudeClient();
     this.cache = new Map();
     this.cacheTimeout = 30 * 60 * 1000; // 30 minutes
@@ -20,14 +20,16 @@ class FishTripService {
       // Step 1: Resolve location to coordinates
       const locationData = await this.resolveLocation(location);
       
-      // Step 2: Gather all data in parallel
-      const [weatherData, waterData] = await Promise.all([
-        this.getWeatherData(locationData.lat, locationData.lon),
-        this.getWaterData(locationData.lat, locationData.lon)
-      ]);
+      // Step 2: Get comprehensive MET Norway data (weather + ocean + tidal + solar/lunar)
+      console.log('🌊 FishTripService: Fetching comprehensive MET Norway data...');
+      const metData = await this.metClient.getFishingConditions(
+        locationData.lat, 
+        locationData.lon, 
+        locationData.altitude
+      );
 
-      // Step 3: Calculate base fishing score
-      const baseScore = this.calculateFishingScore(weatherData, waterData);
+      // Step 3: Calculate enhanced fishing score with all data
+      const baseScore = this.calculateEnhancedFishingScore(metData.data);
 
       // Step 4: AI enhancement (if enabled and API available)
       let aiAnalysis = null;
@@ -35,27 +37,30 @@ class FishTripService {
         try {
           aiAnalysis = await this.getAIAnalysis({
             ...locationData,
-            weather: weatherData,
-            waterConditions: waterData
+            metData: metData.data
           });
         } catch (error) {
           console.warn('AI analysis failed, continuing without:', error.message);
         }
       }
 
-      // Step 5: Compile comprehensive result
+      // Step 5: Compile comprehensive result with enhanced data
       const result = {
         location: locationData,
-        weather: weatherData,
-        water: waterData,
+        weather: metData.data.weather,
+        ocean: metData.data.ocean,
+        tidal: metData.data.tidal,
+        solarLunar: metData.data.solarLunar,
+        nowcast: metData.data.nowcast,
         fishingScore: baseScore,
         aiAnalysis: aiAnalysis,
-        recommendations: this.generateRecommendations(weatherData, waterData, baseScore),
-        timestamp: new Date().toISOString(),
-        dataQuality: this.assessDataQuality(weatherData, waterData)
+        recommendations: this.generateEnhancedRecommendations(metData.data, baseScore),
+        timestamp: metData.timestamp,
+        dataQuality: this.assessEnhancedDataQuality(metData.data),
+        apiSource: 'MET Norway'
       };
 
-      console.log('🎣 FishTripService: Final analysis result:', result);
+      console.log('🎣 FishTripService: Enhanced analysis result:', result);
       return result;
 
     } catch (error) {
@@ -165,18 +170,142 @@ class FishTripService {
     }
   }
 
-  // Calculate overall fishing score (0-100)
+  // Enhanced fishing score calculation with comprehensive MET Norway data
+  calculateEnhancedFishingScore(metData) {
+    let score = 50; // Base score
+    const weights = {
+      weather: 0.35,    // Weather conditions (35%)
+      ocean: 0.25,      // Ocean/marine conditions (25%)
+      solar: 0.20,      // Solar/lunar factors (20%)
+      nowcast: 0.10,    // Real-time conditions (10%)
+      tidal: 0.10       // Tidal influence (10%)
+    };
+
+    // Weather scoring (35% of total)
+    if (metData.weather?.daily && metData.weather.daily.length > 0) {
+      const todayWeather = metData.weather.daily[0];
+      const weatherScore = todayWeather.fishingScore || 50;
+      score += (weatherScore - 50) * weights.weather;
+    }
+
+    // Ocean conditions scoring (25% of total)
+    if (metData.ocean?.current) {
+      let oceanScore = 50;
+      const ocean = metData.ocean.current;
+      
+      // Sea temperature scoring (critical for fish activity)
+      if (ocean.seaTemperature) {
+        const temp = ocean.seaTemperature;
+        if (temp >= 12 && temp <= 18) {
+          oceanScore += 25; // Optimal sea temperature
+        } else if (temp >= 8 && temp <= 22) {
+          oceanScore += 15; // Good sea temperature
+        } else if (temp < 4 || temp > 25) {
+          oceanScore -= 20; // Poor sea temperature
+        }
+      }
+
+      // Wave conditions scoring
+      if (ocean.waveHeight !== undefined) {
+        const waves = ocean.waveHeight;
+        if (waves <= 1.5) {
+          oceanScore += 20; // Calm seas - excellent for fishing
+        } else if (waves <= 3.0) {
+          oceanScore += 10; // Moderate seas - good for fishing
+        } else if (waves > 5.0) {
+          oceanScore -= 25; // Rough seas - poor for fishing
+        }
+      }
+
+      score += (oceanScore - 50) * weights.ocean;
+    }
+
+    // Solar/lunar scoring (20% of total)
+    if (metData.solarLunar) {
+      let solarScore = 50;
+      const solar = metData.solarLunar;
+      
+      // Moon phase scoring (fish are more active during new/full moon)
+      if (solar.moon?.illumination !== undefined) {
+        const illumination = solar.moon.illumination;
+        if (illumination < 0.1 || illumination > 0.9) {
+          solarScore += 15; // New moon or full moon - peak activity
+        } else if (illumination >= 0.25 && illumination <= 0.75) {
+          solarScore += 8; // Quarter moons - good activity
+        }
+      }
+
+      // Dawn/dusk timing (fish are most active during transitions)
+      if (solar.sun?.sunrise && solar.sun?.sunset) {
+        const now = new Date();
+        const sunrise = new Date(solar.sun.sunrise);
+        const sunset = new Date(solar.sun.sunset);
+        const hourNow = now.getUTCHours();
+        const sunriseHour = sunrise.getUTCHours();
+        const sunsetHour = sunset.getUTCHours();
+        
+        // Bonus for planning around dawn/dusk
+        if (Math.abs(hourNow - sunriseHour) <= 2 || Math.abs(hourNow - sunsetHour) <= 2) {
+          solarScore += 12; // Peak feeding times
+        }
+      }
+
+      score += (solarScore - 50) * weights.solar;
+    }
+
+    // Real-time conditions scoring (10% of total)
+    if (metData.nowcast?.current) {
+      let nowcastScore = 50;
+      const current = metData.nowcast.current;
+      
+      // Stable conditions bonus
+      if (current.precipitation <= 0.5) {
+        nowcastScore += 10; // Dry conditions
+      }
+      
+      // Optimal pressure
+      if (current.pressure && current.pressure >= 1013 && current.pressure <= 1023) {
+        nowcastScore += 10; // High pressure system
+      }
+
+      score += (nowcastScore - 50) * weights.nowcast;
+    }
+
+    // Tidal influence scoring (10% of total)
+    if (metData.tidal?.data && metData.tidal.data.length > 0) {
+      let tidalScore = 50;
+      
+      // Tidal movement enhances fishing (fish are more active during tide changes)
+      const currentTide = metData.tidal.data[0];
+      const nextTide = metData.tidal.data[1];
+      
+      if (currentTide && nextTide) {
+        const tidalRange = Math.abs(nextTide.total - currentTide.total);
+        if (tidalRange > 0.3) {
+          tidalScore += 20; // Strong tidal movement - excellent
+        } else if (tidalRange > 0.1) {
+          tidalScore += 10; // Moderate tidal movement - good
+        }
+      }
+
+      score += (tidalScore - 50) * weights.tidal;
+    }
+
+    return Math.max(0, Math.min(100, Math.round(score)));
+  }
+
+  // Legacy method for backward compatibility
   calculateFishingScore(weatherData, waterData) {
     let score = 50; // Base score
 
     // Weather scoring (40% of total)
-    if (weatherData.daily && weatherData.daily.length > 0) {
+    if (weatherData?.daily && weatherData.daily.length > 0) {
       const todayWeather = weatherData.daily[0];
       score += (todayWeather.fishingScore - 50) * 0.4;
     }
 
     // Water conditions scoring (30% of total)
-    if (waterData.available) {
+    if (waterData?.available) {
       let waterScore = 50;
       
       // Water temperature scoring
@@ -372,7 +501,259 @@ class FishTripService {
     return recommendations;
   }
 
-  // Assess data quality
+  // Generate enhanced recommendations with comprehensive MET Norway data
+  generateEnhancedRecommendations(metData, score) {
+    const recommendations = [];
+
+    // Overall score-based recommendations
+    if (score >= 85) {
+      recommendations.push({
+        type: 'excellent',
+        title: 'Fantastiska fiskeförhållanden',
+        message: 'Exceptionella förhållanden! Alla parametrar är optimala för fiske.',
+        priority: 'high',
+        icon: 'star'
+      });
+    } else if (score >= 70) {
+      recommendations.push({
+        type: 'good',
+        title: 'Utmärkta fiskeförhållanden',
+        message: 'Mycket bra förutsättningar för framgångsrikt fiske.',
+        priority: 'high',
+        icon: 'thumb-up'
+      });
+    } else if (score >= 55) {
+      recommendations.push({
+        type: 'fair',
+        title: 'Goda fiskeförhållanden',
+        message: 'Rimliga chanser för napp med rätt teknik och plats.',
+        priority: 'medium',
+        icon: 'information'
+      });
+    } else {
+      recommendations.push({
+        type: 'poor',
+        title: 'Utmanande förhållanden',
+        message: 'Svåra förhållanden. Överväg att vänta eller justera strategi.',
+        priority: 'low',
+        icon: 'exclamation-triangle'
+      });
+    }
+
+    // Ocean/marine specific recommendations
+    if (metData.ocean?.current) {
+      const ocean = metData.ocean.current;
+      
+      if (ocean.waveHeight > 3) {
+        recommendations.push({
+          type: 'waves',
+          title: 'Höga vågor',
+          message: `Våghöjd ${ocean.waveHeight}m. Sök skyddade områden eller vänta på lugnare väder.`,
+          priority: 'high',
+          icon: 'exclamation-circle'
+        });
+      } else if (ocean.waveHeight <= 1) {
+        recommendations.push({
+          type: 'calm_seas',
+          title: 'Lugnt hav',
+          message: 'Perfekta förhållanden för båtfiske och kastfiske.',
+          priority: 'medium',
+          icon: 'check-circle'
+        });
+      }
+
+      if (ocean.seaTemperature && ocean.seaTemperature >= 15) {
+        recommendations.push({
+          type: 'warm_water',
+          title: 'Varmt havsvatten',
+          message: `Vattentemperatur ${ocean.seaTemperature}°C. Fisk är aktiv på grunt vatten.`,
+          priority: 'medium',
+          icon: 'fire'
+        });
+      }
+    }
+
+    // Tidal recommendations
+    if (metData.tidal?.data && metData.tidal.data.length >= 2) {
+      const currentTide = metData.tidal.data[0];
+      const nextTide = metData.tidal.data[1];
+      const tidalChange = Math.abs(nextTide.total - currentTide.total);
+      
+      if (tidalChange > 0.5) {
+        recommendations.push({
+          type: 'strong_tide',
+          title: 'Stark tidvattenrörelse',
+          message: `Stor tidvattenskillnad (${tidalChange.toFixed(1)}m). Utmärkta förhållanden för fiske.`,
+          priority: 'high',
+          icon: 'arrow-up-down'
+        });
+      }
+
+      recommendations.push({
+        type: 'tidal_timing',
+        title: 'Tidvattentips',
+        message: `Fiska 1-2 timmar före och efter tidvattenskifte för bästa resultat.`,
+        priority: 'medium',
+        icon: 'clock'
+      });
+    }
+
+    // Solar/lunar recommendations
+    if (metData.solarLunar) {
+      const solar = metData.solarLunar;
+      
+      if (solar.sun?.sunrise && solar.sun?.sunset) {
+        const sunrise = new Date(solar.sun.sunrise).toLocaleTimeString('sv-SE', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+        const sunset = new Date(solar.sun.sunset).toLocaleTimeString('sv-SE', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+        
+        recommendations.push({
+          type: 'golden_hours',
+          title: 'Bästa fisketider',
+          message: `Gryning (${sunrise}) och skymning (${sunset}) är optimala för fiske.`,
+          priority: 'high',
+          icon: 'sun'
+        });
+      }
+
+      if (solar.moon?.illumination !== undefined) {
+        const illumination = solar.moon.illumination;
+        if (illumination < 0.1) {
+          recommendations.push({
+            type: 'new_moon',
+            title: 'Nymåne',
+            message: 'Nymåne gynnar fiske - fisk är mer aktiva utan månljus.',
+            priority: 'medium',
+            icon: 'moon'
+          });
+        } else if (illumination > 0.9) {
+          recommendations.push({
+            type: 'full_moon',
+            title: 'Fullmåne',
+            message: 'Fullmåne kan ge intensivt fiske, särskilt på natten.',
+            priority: 'medium',
+            icon: 'moon'
+          });
+        }
+      }
+    }
+
+    // Real-time condition recommendations
+    if (metData.nowcast?.current) {
+      const current = metData.nowcast.current;
+      
+      if (current.precipitation > 2) {
+        recommendations.push({
+          type: 'rain',
+          title: 'Nederbörd pågår',
+          message: 'Aktivt regn kan påverka fisket. Ha skydd tillgängligt.',
+          priority: 'medium',
+          icon: 'cloud-rain'
+        });
+      }
+
+      if (current.pressure && current.pressure > 1020) {
+        recommendations.push({
+          type: 'high_pressure',
+          title: 'Högtryck',
+          message: 'Stabilt högtryck gynnar fiske med klara, lugna förhållanden.',
+          priority: 'medium',
+          icon: 'arrow-up'
+        });
+      }
+    }
+
+    return recommendations;
+  }
+
+  // Assess enhanced data quality with comprehensive MET Norway data
+  assessEnhancedDataQuality(metData) {
+    const quality = {
+      overall: 'high',
+      weather: 'high',
+      ocean: 'unknown',
+      tidal: 'unknown',
+      solar: 'high',
+      nowcast: 'unknown',
+      coverage: [],
+      limitations: [],
+      confidence: 90
+    };
+
+    // Weather data quality (MET Norway is generally excellent)
+    if (metData.weather?.daily && metData.weather.daily.length > 0) {
+      quality.weather = 'high';
+      quality.coverage.push('9-dagars väderprognos');
+    } else {
+      quality.weather = 'low';
+      quality.limitations.push('Ofullständig väderdata');
+      quality.confidence -= 20;
+    }
+
+    // Ocean data quality (only available for coastal areas)
+    if (metData.ocean?.current) {
+      quality.ocean = 'high';
+      quality.coverage.push('Havsförhållanden (vågor, temperatur)');
+    } else {
+      quality.ocean = 'unavailable';
+      quality.coverage.push('Havsdata ej tillgänglig (inland)');
+      quality.confidence -= 5; // Minor reduction for inland locations
+    }
+
+    // Tidal data quality (Norwegian harbors only)
+    if (metData.tidal?.data && metData.tidal.data.length > 0) {
+      quality.tidal = 'high';
+      quality.coverage.push(`Tidvattendata (${metData.tidal.harbor.name})`);
+    } else {
+      quality.tidal = 'unavailable';
+      quality.coverage.push('Tidvattendata ej tillgänglig');
+      quality.confidence -= 10;
+    }
+
+    // Solar/lunar data quality (global coverage)
+    if (metData.solarLunar) {
+      quality.solar = 'high';
+      quality.coverage.push('Sol- och måndata');
+    } else {
+      quality.solar = 'low';
+      quality.limitations.push('Ofullständig sol/måndata');
+      quality.confidence -= 15;
+    }
+
+    // Nowcast quality (Nordic coverage only)
+    if (metData.nowcast?.current) {
+      quality.nowcast = 'high';
+      quality.coverage.push('Realtidsdata (5-min uppdatering)');
+    } else {
+      quality.nowcast = 'unavailable';
+      quality.coverage.push('Realtidsdata ej tillgänglig');
+      quality.confidence -= 10;
+    }
+
+    // Determine overall quality
+    const highQuality = [quality.weather, quality.solar].filter(q => q === 'high').length;
+    const availableOptional = [quality.ocean, quality.tidal, quality.nowcast].filter(q => q === 'high').length;
+    
+    if (highQuality >= 2 && availableOptional >= 2) {
+      quality.overall = 'excellent';
+    } else if (highQuality >= 2 && availableOptional >= 1) {
+      quality.overall = 'high';
+    } else if (highQuality >= 1) {
+      quality.overall = 'medium';
+    } else {
+      quality.overall = 'low';
+      quality.confidence = Math.max(30, quality.confidence);
+    }
+
+    return quality;
+  }
+
+  // Legacy method for backward compatibility
   assessDataQuality(weatherData, waterData) {
     let quality = 'good';
     const issues = [];
