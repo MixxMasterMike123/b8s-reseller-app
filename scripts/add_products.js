@@ -67,7 +67,7 @@ const settings = {
   id: 'product-settings',
   FORSALJNINGSPRIS_INKL_MOMS: 89,
   TILLVERKNINGSKOSTNAD: 10,
-  DEFAULT_MARGINAL: 35,
+  DEFAULT_MARGINAL: 40,
   createdAt: serverTimestamp(),
   updatedAt: serverTimestamp()
 };

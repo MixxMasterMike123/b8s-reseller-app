@@ -349,7 +349,7 @@ src/
 ## Key Implementation Notes
 - **Database**: ALWAYS use named database `b8s-reseller-db` (NEVER use default database)
 - **Demo Mode**: Comprehensive demo mode in AuthContext and OrderContext for testing
-- Default customer margin: 35%
+- Default customer margin: 40%
 - All new customers require admin activation
 - Swedish date formatting throughout
 - Mobile-responsive design priority

@@ -1510,7 +1510,7 @@ exports.setupCompleteDatabase = functions.https.onRequest(async (req, res) => {
     const appSettings = {
       FORSALJNINGSPRIS_INKL_MOMS: 89,
       TILLVERKNINGSKOSTNAD: 10,
-      DEFAULT_MARGINAL: 35,
+      DEFAULT_MARGINAL: 40,
       COMPANY_NAME: 'B8Shield',
       COMPANY_EMAIL: 'b8shield.reseller@gmail.com',
       ADMIN_EMAIL: 'micke.ohlen@gmail.com',

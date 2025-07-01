@@ -162,7 +162,7 @@ export function AuthProvider({ children }) {
           role: 'user',
           active: false, // Require admin activation
           isActive: false,
-          marginal: 35, // Default margin percentage
+          marginal: 40, // Default margin percentage
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };

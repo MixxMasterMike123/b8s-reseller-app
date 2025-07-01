@@ -116,7 +116,7 @@ export const OrderProvider = ({ children }) => {
   const PRODUCT_SETTINGS = {
     FORSALJNINGSPRIS_INKL_MOMS: 89, // kr per förpackning inkl moms
     TILLVERKNINGSKOSTNAD: 10, // kr per förpackning
-    DEFAULT_MARGINAL: 35 // Default margin percentage
+    DEFAULT_MARGINAL: 40 // Default margin percentage
   };
 
   // Generate an order number with format B8-YYYYMMDD-XXXX (where XXXX is a random number)
@@ -955,7 +955,7 @@ export const OrderProvider = ({ children }) => {
         id: 'product-settings',
         FORSALJNINGSPRIS_INKL_MOMS: 89,
         TILLVERKNINGSKOSTNAD: 10,
-        DEFAULT_MARGINAL: 35,
+        DEFAULT_MARGINAL: 40,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
