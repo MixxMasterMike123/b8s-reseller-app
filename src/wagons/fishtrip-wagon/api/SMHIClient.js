@@ -95,7 +95,10 @@ class SMHIClient {
         windSpeed: this.getParameter(entry.parameters, 'ws'),
         windDirection: this.getParameter(entry.parameters, 'wd'),
         humidity: this.getParameter(entry.parameters, 'r'),
-        precipitation: this.getParameter(entry.parameters, 'pcat'),
+        precipitationCategory: this.getParameter(entry.parameters, 'pcat'),
+        precipitationMean: this.getParameter(entry.parameters, 'pmean') || 0,
+        precipitationMin: this.getParameter(entry.parameters, 'pmin') || 0,
+        precipitationMax: this.getParameter(entry.parameters, 'pmax') || 0,
         cloudCover: this.getParameter(entry.parameters, 'tcc_mean'),
         visibility: this.getParameter(entry.parameters, 'vis')
       };
@@ -123,7 +126,7 @@ class SMHIClient {
           avgSpeed: dayData.reduce((sum, h) => sum + h.windSpeed, 0) / dayData.length,
           maxSpeed: Math.max(...dayData.map(h => h.windSpeed))
         },
-        precipitation: dayData.some(h => h.precipitation > 0),
+        precipitation: this.processPrecipitationData(dayData),
         cloudCover: dayData.reduce((sum, h) => sum + h.cloudCover, 0) / dayData.length,
         fishingScore: this.calculateDailyFishingScore(dayData)
       };
@@ -138,6 +141,58 @@ class SMHIClient {
   getParameter(parameters, name) {
     const param = parameters.find(p => p.name === name);
     return param ? param.values[0] : null;
+  }
+
+  // Process precipitation data using SMHI scale
+  processPrecipitationData(dayData) {
+    const precipAmounts = dayData.map(h => h.precipitationMean).filter(p => p > 0);
+    const precipCategories = dayData.map(h => h.precipitationCategory).filter(c => c > 0);
+    
+    const totalAmount = precipAmounts.reduce((sum, amount) => sum + amount, 0);
+    const hasAny = precipCategories.length > 0 || totalAmount > 0;
+    const maxCategory = precipCategories.length > 0 ? Math.max(...precipCategories) : 0;
+    
+    // SMHI precipitation categories:
+    // 0 = No precipitation
+    // 1 = Snow  
+    // 2 = Snow and rain
+    // 3 = Rain
+    // 4 = Drizzle
+    // 5 = Freezing rain
+    // 6 = Freezing drizzle
+    const categoryText = this.getPrecipitationCategoryText(maxCategory);
+    
+    return {
+      hasAny,
+      total: Math.round(totalAmount * 10) / 10, // Round to 1 decimal
+      category: maxCategory,
+      categoryText,
+      intensity: this.getPrecipitationIntensity(totalAmount)
+    };
+  }
+
+  // Get Swedish text for precipitation category
+  getPrecipitationCategoryText(category) {
+    const categories = {
+      0: 'Ingen nederbörd',
+      1: 'Snö',
+      2: 'Snö och regn', 
+      3: 'Regn',
+      4: 'Duggregn',
+      5: 'Underkylt regn',
+      6: 'Underkylt duggregn'
+    };
+    return categories[category] || 'Okänd';
+  }
+
+  // Get precipitation intensity description
+  getPrecipitationIntensity(amount) {
+    if (amount === 0) return 'Ingen';
+    if (amount < 0.5) return 'Mycket lätt';
+    if (amount < 2) return 'Lätt';
+    if (amount < 10) return 'Måttlig';
+    if (amount < 20) return 'Kraftig';
+    return 'Mycket kraftig';
   }
 
   // Calculate fishing score based on weather conditions
@@ -178,9 +233,21 @@ class SMHIClient {
       score += 5; // Partial overcast
     }
 
-    // Precipitation penalty
-    if (dayData.some(h => h.precipitation > 0)) {
-      score -= 10;
+    // Precipitation scoring (more nuanced)
+    const precipData = this.processPrecipitationData(dayData);
+    if (precipData.hasAny) {
+      if (precipData.total > 10) {
+        score -= 20; // Heavy rain
+      } else if (precipData.total > 2) {
+        score -= 10; // Moderate rain
+      } else {
+        score -= 5; // Light rain
+      }
+      
+      // Light drizzle can actually be good for fishing
+      if (precipData.category === 4 && precipData.total < 1) {
+        score += 5; // Light drizzle bonus
+      }
     }
 
     return Math.max(0, Math.min(100, Math.round(score)));

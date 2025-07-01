@@ -4,19 +4,16 @@
 
 class METNorwayClient {
   constructor() {
-    this.baseUrl = 'https://api.met.no/weatherapi';
+    // Use Firebase Functions as proxy to avoid CORS issues
+    this.baseUrl = 'https://us-central1-b8shield-reseller-app.cloudfunctions.net';
     
-    // CRITICAL: Proper User-Agent header required by MET Norway
-    // Based on FAQ: https://api.met.no/doc/FAQ
-    this.userAgent = 'B8Shield-FishTrip-Wagon/1.0 (https://b8shield-reseller-app.web.app; info@b8shield.com)';
-    
-    // API endpoints for different data types
+    // Firebase Function endpoints for MET Norway APIs
     this.endpoints = {
-      locationforecast: `${this.baseUrl}/locationforecast/2.0`,
-      oceanforecast: `${this.baseUrl}/oceanforecast/2.0`, 
-      tidalwater: `${this.baseUrl}/tidalwater/1.1`,
-      sunrise: `${this.baseUrl}/sunrise/3.0`,
-      nowcast: `${this.baseUrl}/nowcast/2.0`
+      weather: `${this.baseUrl}/getFishTripWeatherData`,
+      ocean: `${this.baseUrl}/getFishTripOceanData`,
+      tidal: `${this.baseUrl}/getFishTripTidalData`,
+      solar: `${this.baseUrl}/getFishTripSolarData`,
+      nowcast: `${this.baseUrl}/getFishTripNowcastData`
     };
 
     // Norwegian harbors with tidal data (30+ available)
@@ -37,72 +34,93 @@ class METNorwayClient {
       { code: 'rørvik', name: 'Rørvik', lat: 64.8616, lon: 11.2364 }
     ];
 
-    // Request defaults with proper headers
+    // Request headers for Firebase Functions
     this.defaultHeaders = {
-      'User-Agent': this.userAgent,
-      'Accept': 'application/json',
-      'Cache-Control': 'no-cache'
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
     };
   }
 
-  // Get comprehensive weather forecast (9-day global coverage)
+  // Get comprehensive weather forecast (9-day global coverage) via Firebase Function
   async getWeatherForecast(lat, lon, altitude = null) {
     try {
       console.log(`🌤️ MET Norway: Fetching weather forecast for ${lat}, ${lon}`);
       
-      let url = `${this.endpoints.locationforecast}/compact?lat=${lat}&lon=${lon}`;
-      if (altitude !== null) {
-        url += `&altitude=${Math.round(altitude)}`;
-      }
-
-      const response = await fetch(url, {
-        headers: this.defaultHeaders
+      const response = await fetch(this.endpoints.weather, {
+        method: 'POST',
+        headers: this.defaultHeaders,
+        body: JSON.stringify({
+          lat: lat,
+          lon: lon,
+          altitude: altitude
+        })
       });
 
       if (!response.ok) {
         throw new Error(`MET Norway Weather API error: ${response.status}`);
       }
 
-      const data = await response.json();
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Weather data fetch failed');
+      }
+
       console.log('✅ MET Norway: Weather forecast fetched successfully');
       
-      return this.processWeatherData(data);
+      return this.processWeatherData(result.data);
     } catch (error) {
       console.error('MET Norway Weather API error:', error);
       throw error;
     }
   }
 
-  // Get ocean/marine conditions (waves, currents, sea temperature)
+  // Get ocean/marine conditions (waves, currents, sea temperature) via Firebase Function
   async getOceanForecast(lat, lon) {
     try {
       console.log(`🌊 MET Norway: Fetching ocean forecast for ${lat}, ${lon}`);
       
-      const url = `${this.endpoints.oceanforecast}/complete?lat=${lat}&lon=${lon}`;
-      
-      const response = await fetch(url, {
-        headers: this.defaultHeaders
+      const response = await fetch(this.endpoints.ocean, {
+        method: 'POST',
+        headers: this.defaultHeaders,
+        body: JSON.stringify({
+          lat: lat,
+          lon: lon
+        })
       });
 
       if (!response.ok) {
-        if (response.status === 422) {
+        console.error(`Ocean forecast request failed: ${response.status}`);
+        return null;
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        if (result.message && result.message.includes('inland')) {
           console.warn('⚠️ Location outside ocean forecast coverage');
           return null;
         }
-        throw new Error(`MET Norway Ocean API error: ${response.status}`);
+        console.error('Ocean forecast error:', result.error);
+        return null;
       }
 
-      const data = await response.json();
+      // Handle case where data is null (inland location)
+      if (result.data === null) {
+        console.warn('⚠️ Location outside ocean forecast coverage');
+        return null;
+      }
+
       console.log('✅ MET Norway: Ocean forecast fetched successfully');
       
-      return this.processOceanData(data);
+      return this.processOceanData(result.data);
     } catch (error) {
       console.error('MET Norway Ocean API error:', error);
       return null; // Ocean data is optional for inland locations
     }
   }
 
-  // Get tidal water information for Norwegian harbors
+  // Get tidal water information for Norwegian harbors via Firebase Function
   async getTidalData(lat, lon) {
     try {
       const nearestHarbor = this.findNearestTidalHarbor(lat, lon);
@@ -114,75 +132,120 @@ class METNorwayClient {
 
       console.log(`🌊 MET Norway: Fetching tidal data for ${nearestHarbor.harbor.name}`);
       
-      const url = `${this.endpoints.tidalwater}?harbor=${nearestHarbor.harbor.code}`;
-      
-      const response = await fetch(url, {
-        headers: this.defaultHeaders
+      const response = await fetch(this.endpoints.tidal, {
+        method: 'POST',
+        headers: this.defaultHeaders,
+        body: JSON.stringify({
+          harbor: nearestHarbor.harbor.code
+        })
       });
 
       if (!response.ok) {
-        throw new Error(`MET Norway Tidal API error: ${response.status}`);
+        console.error(`Tidal data request failed: ${response.status}`);
+        return null;
       }
 
-      const rawData = await response.text();
+      const result = await response.json();
+
+      if (!result.success) {
+        console.error('Tidal data error:', result.error);
+        return null;
+      }
+
       console.log('✅ MET Norway: Tidal data fetched successfully');
       
-      return this.parseTidalData(rawData, nearestHarbor.harbor);
+      return this.parseTidalData(result.data, nearestHarbor.harbor);
     } catch (error) {
       console.error('MET Norway Tidal API error:', error);
       return null;
     }
   }
 
-  // Get solar and lunar data (sunrise, sunset, moon phases)
+  // Get solar and lunar data (sunrise, sunset, moon phases) via Firebase Function
   async getSolarLunarData(lat, lon, date = null) {
     try {
       const targetDate = date || new Date().toISOString().split('T')[0];
       console.log(`🌅 MET Norway: Fetching solar/lunar data for ${lat}, ${lon} on ${targetDate}`);
       
-      const url = `${this.endpoints.sunrise}?lat=${lat}&lon=${lon}&date=${targetDate}`;
-      
-      const response = await fetch(url, {
-        headers: this.defaultHeaders
+      const response = await fetch(this.endpoints.solar, {
+        method: 'POST',
+        headers: this.defaultHeaders,
+        body: JSON.stringify({
+          lat: lat,
+          lon: lon,
+          date: targetDate
+        })
       });
 
       if (!response.ok) {
-        throw new Error(`MET Norway Sunrise API error: ${response.status}`);
+        // Handle different error cases more gracefully
+        if (response.status === 400) {
+          console.warn('⚠️ Solar/lunar data: Invalid location parameters');
+          return null;
+        }
+        if (response.status === 500) {
+          console.warn('⚠️ Solar/lunar data: Service temporarily unavailable');
+          return null;
+        }
+        console.warn(`⚠️ Solar/lunar data: API error ${response.status}`);
+        return null;
       }
 
-      const data = await response.json();
+      const result = await response.json();
+
+      if (!result.success) {
+        console.warn('⚠️ Solar/lunar data: Service returned error:', result.error);
+        return null;
+      }
+
       console.log('✅ MET Norway: Solar/lunar data fetched successfully');
       
-      return this.processSolarLunarData(data);
+      return this.processSolarLunarData(result.data);
     } catch (error) {
-      console.error('MET Norway Solar/Lunar API error:', error);
-      throw error;
+      console.warn('MET Norway Solar/Lunar API error (non-critical):', error.message);
+      return null; // Return null instead of throwing error
     }
   }
 
-  // Get real-time weather conditions (updated every 5 minutes)
+  // Get real-time weather conditions (updated every 5 minutes) via Firebase Function
   async getNowcast(lat, lon) {
     try {
       console.log(`⚡ MET Norway: Fetching nowcast for ${lat}, ${lon}`);
       
-      const url = `${this.endpoints.nowcast}/complete?lat=${lat}&lon=${lon}`;
-      
-      const response = await fetch(url, {
-        headers: this.defaultHeaders
+      const response = await fetch(this.endpoints.nowcast, {
+        method: 'POST',
+        headers: this.defaultHeaders,
+        body: JSON.stringify({
+          lat: lat,
+          lon: lon
+        })
       });
 
       if (!response.ok) {
-        if (response.status === 422) {
+        console.error(`Nowcast request failed: ${response.status}`);
+        return null;
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        if (result.message && result.message.includes('Nordic')) {
           console.warn('⚠️ Location outside nowcast coverage (Nordic region only)');
           return null;
         }
-        throw new Error(`MET Norway Nowcast API error: ${response.status}`);
+        console.error('Nowcast error:', result.error);
+        return null;
       }
 
-      const data = await response.json();
+      // Handle case where data is null (outside Nordic coverage)
+      if (result.data === null) {
+        console.warn('⚠️ Location outside nowcast coverage (Nordic region only)');
+        return null;
+      }
+
       console.log('✅ MET Norway: Nowcast fetched successfully');
       
-      return this.processNowcastData(data);
+      return this.processNowcastData(result.data);
     } catch (error) {
       console.error('MET Norway Nowcast API error:', error);
       return null;
@@ -282,6 +345,12 @@ class METNorwayClient {
   processOceanData(data) {
     const timeseries = data.properties.timeseries;
     
+    // Add safety check for timeseries
+    if (!timeseries || !Array.isArray(timeseries) || timeseries.length === 0) {
+      console.warn('⚠️ Ocean data: No valid timeseries data available');
+      return null;
+    }
+    
     return {
       location: {
         lat: data.geometry.coordinates[1],
@@ -292,12 +361,25 @@ class METNorwayClient {
       forecast: timeseries.slice(0, 24).map(entry => ({
         time: entry.time,
         ...this.extractOceanConditions(entry)
-      }))
+      })).filter(entry => entry.time) // Filter out any invalid entries
     };
   }
 
   extractOceanConditions(entry) {
-    const details = entry.data.instant?.details || {};
+    // Add safety checks for undefined entry or missing data structure
+    if (!entry || !entry.data || !entry.data.instant) {
+      console.warn('⚠️ Ocean data: Invalid entry structure');
+      return {
+        waveHeight: null,
+        waveDirection: null,
+        wavePeriod: null,
+        seaTemperature: null,
+        currentSpeed: null,
+        currentDirection: null
+      };
+    }
+    
+    const details = entry.data.instant.details || {};
     
     return {
       waveHeight: details.sea_surface_wave_height,

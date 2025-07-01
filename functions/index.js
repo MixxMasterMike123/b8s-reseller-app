@@ -2658,9 +2658,92 @@ exports.generateContentWithClaude = functions
   });
 
 /**
- * FishTrip Wagon API Proxy - SMHI Weather Data
+ * FishTrip Wagon API Proxy - MET Norway Weather Forecast
  */
 exports.getFishTripWeatherData = functions
+  .region('us-central1')
+  .https.onRequest(async (req, res) => {
+    // Enable CORS for B8Shield domains
+    const allowedOrigins = [
+      'https://b8shield-reseller-app.web.app',
+      'https://shop.b8shield.com',
+      'http://localhost:5173',
+      'http://localhost:3000'
+    ];
+    
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.set('Access-Control-Allow-Origin', origin);
+    }
+    
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.set('Access-Control-Max-Age', '3600');
+
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    try {
+      const { lat, lon, altitude } = req.method === 'GET' ? req.query : req.body;
+
+      if (!lat || !lon) {
+        res.status(400).json({ error: 'Latitude and longitude are required' });
+        return;
+      }
+
+      console.log(`🌤️ FishTrip: Fetching MET Norway weather data for ${lat}, ${lon}`);
+
+      // Construct MET Norway API URL
+      let weatherUrl = `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat}&lon=${lon}`;
+      if (altitude !== null && altitude !== undefined) {
+        weatherUrl += `&altitude=${Math.round(altitude)}`;
+      }
+
+      // Fetch weather data from MET Norway
+      const weatherResponse = await fetch(weatherUrl, {
+        headers: {
+          'User-Agent': 'B8Shield-FishTrip-Wagon/1.0 (https://b8shield-reseller-app.web.app; info@b8shield.com)',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (!weatherResponse.ok) {
+        console.error(`MET Norway Weather API error: ${weatherResponse.status}`);
+        res.status(weatherResponse.status).json({ 
+          error: `MET Norway Weather API error: ${weatherResponse.status}`,
+          details: 'Weather data not available for this location'
+        });
+        return;
+      }
+
+      const weatherData = await weatherResponse.json();
+      
+      console.log(`✅ FishTrip: MET Norway weather data fetched successfully`);
+
+      res.status(200).json({
+        success: true,
+        data: weatherData,
+        source: 'MET Norway',
+        location: { lat: parseFloat(lat), lon: parseFloat(lon), altitude: altitude ? parseFloat(altitude) : null }
+      });
+
+    } catch (error) {
+      console.error('Error fetching MET Norway weather data:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch weather data',
+        details: error.message
+      });
+    }
+  });
+
+/**
+ * FishTrip Wagon API Proxy - MET Norway Ocean Forecast
+ */
+exports.getFishTripOceanData = functions
   .region('us-central1')
   .https.onRequest(async (req, res) => {
     // Enable CORS for B8Shield domains
@@ -2693,46 +2776,63 @@ exports.getFishTripWeatherData = functions
         return;
       }
 
-      console.log(`🎣 FishTrip: Fetching weather data for ${lat}, ${lon}`);
+      console.log(`🌊 FishTrip: Fetching MET Norway ocean data for ${lat}, ${lon}`);
 
-      // Fetch weather data from SMHI
-      const weatherUrl = `https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geotype/point/lon/${lon}/lat/${lat}/data.json`;
-      const weatherResponse = await fetch(weatherUrl);
+      // Fetch ocean data from MET Norway
+      const oceanUrl = `https://api.met.no/weatherapi/oceanforecast/2.0/complete?lat=${lat}&lon=${lon}`;
+      const oceanResponse = await fetch(oceanUrl, {
+        headers: {
+          'User-Agent': 'B8Shield-FishTrip-Wagon/1.0 (https://b8shield-reseller-app.web.app; info@b8shield.com)',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
 
-      if (!weatherResponse.ok) {
-        console.error(`SMHI Weather API error: ${weatherResponse.status}`);
-        res.status(weatherResponse.status).json({ 
-          error: `SMHI Weather API error: ${weatherResponse.status}`,
-          details: 'Weather data not available for this location'
+      if (!oceanResponse.ok) {
+        if (oceanResponse.status === 422) {
+          console.warn('⚠️ Location outside ocean forecast coverage');
+          res.status(200).json({
+            success: true,
+            data: null,
+            source: 'MET Norway',
+            location: { lat: parseFloat(lat), lon: parseFloat(lon) },
+            message: 'Ocean data not available for inland locations'
+          });
+          return;
+        }
+        console.error(`MET Norway Ocean API error: ${oceanResponse.status}`);
+        res.status(oceanResponse.status).json({ 
+          error: `MET Norway Ocean API error: ${oceanResponse.status}`,
+          details: 'Ocean data not available for this location'
         });
         return;
       }
 
-      const weatherData = await weatherResponse.json();
+      const oceanData = await oceanResponse.json();
       
-      console.log(`✅ FishTrip: Weather data fetched successfully`);
+      console.log(`✅ FishTrip: MET Norway ocean data fetched successfully`);
 
       res.status(200).json({
         success: true,
-        data: weatherData,
-        source: 'SMHI',
+        data: oceanData,
+        source: 'MET Norway',
         location: { lat: parseFloat(lat), lon: parseFloat(lon) }
       });
 
     } catch (error) {
-      console.error('Error fetching weather data:', error);
+      console.error('Error fetching MET Norway ocean data:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to fetch weather data',
+        error: 'Failed to fetch ocean data',
         details: error.message
       });
     }
   });
 
 /**
- * FishTrip Wagon API Proxy - SMHI Water Data
+ * FishTrip Wagon API Proxy - MET Norway Tidal Water Data
  */
-exports.getFishTripWaterData = functions
+exports.getFishTripTidalData = functions
   .region('us-central1')
   .https.onRequest(async (req, res) => {
     // Enable CORS for B8Shield domains
@@ -2758,45 +2858,220 @@ exports.getFishTripWaterData = functions
     }
 
     try {
-      const { parameter, stationId } = req.method === 'GET' ? req.query : req.body;
+      const { harbor } = req.method === 'GET' ? req.query : req.body;
 
-      if (!parameter || !stationId) {
-        res.status(400).json({ error: 'Parameter and stationId are required' });
+      if (!harbor) {
+        res.status(400).json({ error: 'Harbor code is required' });
         return;
       }
 
-      console.log(`🎣 FishTrip: Fetching water data for parameter ${parameter}, station ${stationId}`);
+      console.log(`🌊 FishTrip: Fetching MET Norway tidal data for harbor ${harbor}`);
 
-      // Fetch water data from SMHI
-      const waterUrl = `https://opendata-download-hydroobs.smhi.se/api/version/latest/parameter/${parameter}/station/${stationId}/period/latest-months/data.json`;
-      const waterResponse = await fetch(waterUrl);
+      // Fetch tidal data from MET Norway
+      const tidalUrl = `https://api.met.no/weatherapi/tidalwater/1.1?harbor=${harbor}`;
+      const tidalResponse = await fetch(tidalUrl, {
+        headers: {
+          'User-Agent': 'B8Shield-FishTrip-Wagon/1.0 (https://b8shield-reseller-app.web.app; info@b8shield.com)',
+          'Accept': 'text/plain',
+          'Cache-Control': 'no-cache'
+        }
+      });
 
-      if (!waterResponse.ok) {
-        console.error(`SMHI Water API error: ${waterResponse.status}`);
-        res.status(waterResponse.status).json({ 
-          error: `SMHI Water API error: ${waterResponse.status}`,
-          details: 'Water data not available for this station/parameter'
+      if (!tidalResponse.ok) {
+        console.error(`MET Norway Tidal API error: ${tidalResponse.status}`);
+        res.status(tidalResponse.status).json({ 
+          error: `MET Norway Tidal API error: ${tidalResponse.status}`,
+          details: 'Tidal data not available for this harbor'
         });
         return;
       }
 
-      const waterData = await waterResponse.json();
+      const tidalData = await tidalResponse.text();
       
-      console.log(`✅ FishTrip: Water data fetched successfully`);
+      console.log(`✅ FishTrip: MET Norway tidal data fetched successfully`);
 
       res.status(200).json({
         success: true,
-        data: waterData,
-        source: 'SMHI',
-        parameter: parameter,
-        station: stationId
+        data: tidalData,
+        source: 'MET Norway',
+        harbor: harbor,
+        dataType: 'text/plain'
       });
 
     } catch (error) {
-      console.error('Error fetching water data:', error);
+      console.error('Error fetching MET Norway tidal data:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to fetch water data',
+        error: 'Failed to fetch tidal data',
+        details: error.message
+      });
+    }
+  });
+
+/**
+ * FishTrip Wagon API Proxy - MET Norway Solar/Lunar Data
+ */
+exports.getFishTripSolarData = functions
+  .region('us-central1')
+  .https.onRequest(async (req, res) => {
+    // Enable CORS for B8Shield domains
+    const allowedOrigins = [
+      'https://b8shield-reseller-app.web.app',
+      'https://shop.b8shield.com',
+      'http://localhost:5173',
+      'http://localhost:3000'
+    ];
+    
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.set('Access-Control-Allow-Origin', origin);
+    }
+    
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.set('Access-Control-Max-Age', '3600');
+
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    try {
+      const { lat, lon, date } = req.method === 'GET' ? req.query : req.body;
+
+      if (!lat || !lon) {
+        res.status(400).json({ error: 'Latitude and longitude are required' });
+        return;
+      }
+
+      const targetDate = date || new Date().toISOString().split('T')[0];
+      console.log(`🌅 FishTrip: Fetching MET Norway solar/lunar data for ${lat}, ${lon} on ${targetDate}`);
+
+      // Fetch solar/lunar data from MET Norway
+      const solarUrl = `https://api.met.no/weatherapi/sunrise/3.0?lat=${lat}&lon=${lon}&date=${targetDate}`;
+      const solarResponse = await fetch(solarUrl, {
+        headers: {
+          'User-Agent': 'B8Shield-FishTrip-Wagon/1.0 (https://b8shield-reseller-app.web.app; info@b8shield.com)',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (!solarResponse.ok) {
+        console.error(`MET Norway Solar API error: ${solarResponse.status}`);
+        res.status(solarResponse.status).json({ 
+          error: `MET Norway Solar API error: ${solarResponse.status}`,
+          details: 'Solar/lunar data not available for this location'
+        });
+        return;
+      }
+
+      const solarData = await solarResponse.json();
+      
+      console.log(`✅ FishTrip: MET Norway solar/lunar data fetched successfully`);
+
+      res.status(200).json({
+        success: true,
+        data: solarData,
+        source: 'MET Norway',
+        location: { lat: parseFloat(lat), lon: parseFloat(lon) },
+        date: targetDate
+      });
+
+    } catch (error) {
+      console.error('Error fetching MET Norway solar/lunar data:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch solar/lunar data',
+        details: error.message
+      });
+    }
+  });
+
+/**
+ * FishTrip Wagon API Proxy - MET Norway Nowcast Data
+ */
+exports.getFishTripNowcastData = functions
+  .region('us-central1')
+  .https.onRequest(async (req, res) => {
+    // Enable CORS for B8Shield domains
+    const allowedOrigins = [
+      'https://b8shield-reseller-app.web.app',
+      'https://shop.b8shield.com',
+      'http://localhost:5173',
+      'http://localhost:3000'
+    ];
+    
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.set('Access-Control-Allow-Origin', origin);
+    }
+    
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.set('Access-Control-Max-Age', '3600');
+
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    try {
+      const { lat, lon } = req.method === 'GET' ? req.query : req.body;
+
+      if (!lat || !lon) {
+        res.status(400).json({ error: 'Latitude and longitude are required' });
+        return;
+      }
+
+      console.log(`⚡ FishTrip: Fetching MET Norway nowcast data for ${lat}, ${lon}`);
+
+      // Fetch nowcast data from MET Norway
+      const nowcastUrl = `https://api.met.no/weatherapi/nowcast/2.0/complete?lat=${lat}&lon=${lon}`;
+      const nowcastResponse = await fetch(nowcastUrl, {
+        headers: {
+          'User-Agent': 'B8Shield-FishTrip-Wagon/1.0 (https://b8shield-reseller-app.web.app; info@b8shield.com)',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (!nowcastResponse.ok) {
+        if (nowcastResponse.status === 422) {
+          console.warn('⚠️ Location outside nowcast coverage (Nordic region only)');
+          res.status(200).json({
+            success: true,
+            data: null,
+            source: 'MET Norway',
+            location: { lat: parseFloat(lat), lon: parseFloat(lon) },
+            message: 'Nowcast data only available for Nordic regions'
+          });
+          return;
+        }
+        console.error(`MET Norway Nowcast API error: ${nowcastResponse.status}`);
+        res.status(nowcastResponse.status).json({ 
+          error: `MET Norway Nowcast API error: ${nowcastResponse.status}`,
+          details: 'Nowcast data not available for this location'
+        });
+        return;
+      }
+
+      const nowcastData = await nowcastResponse.json();
+      
+      console.log(`✅ FishTrip: MET Norway nowcast data fetched successfully`);
+
+      res.status(200).json({
+        success: true,
+        data: nowcastData,
+        source: 'MET Norway',
+        location: { lat: parseFloat(lat), lon: parseFloat(lon) }
+      });
+
+    } catch (error) {
+      console.error('Error fetching MET Norway nowcast data:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch nowcast data',
         details: error.message
       });
     }

@@ -18,7 +18,7 @@ const TripPlannerCard = ({ location, fishTripService, onLocationChange, classNam
       if (lastLocationKey && lastLocationKey !== locationKey) {
         console.log('🗺️ Location changed, resetting trip plan');
         setTripPlan(null);
-        toast.info('Ny plats vald - skapa en ny fiskeplan');
+        toast('Ny plats vald - skapa en ny fiskeplan');
       }
       setLastLocationKey(locationKey);
     }
@@ -181,13 +181,21 @@ const TripPlannerCard = ({ location, fishTripService, onLocationChange, classNam
                     <div>
                       <span className="text-gray-600">Temperatur:</span>
                       <span className="ml-1 font-medium">
-                        {Math.round(day.weather.temperature.min)}° - {Math.round(day.weather.temperature.max)}°C
+                        {day.weather?.temperature ? (
+                          `${Math.round(day.weather.temperature.min)}° - ${Math.round(day.weather.temperature.max)}°C`
+                        ) : (
+                          'N/A'
+                        )}
                       </span>
                     </div>
                     <div>
                       <span className="text-gray-600">Vind:</span>
                       <span className="ml-1 font-medium">
-                        {Math.round(day.weather.wind.avgSpeed)} m/s
+                        {day.weather?.wind?.avgSpeed ? (
+                          `${Math.round(day.weather.wind.avgSpeed)} m/s`
+                        ) : (
+                          'N/A'
+                        )}
                       </span>
                     </div>
                   </div>

@@ -55,7 +55,7 @@ const WaterConditionsCard = ({ water, detailed = false, className = '' }) => {
 
       <div className="space-y-6">
         {/* Water Temperature */}
-        {water.temperature && (
+        {water.temperature && water.temperature.temperature && (
           <div className="bg-blue-50 rounded-lg p-4">
             <div className="flex items-center space-x-3 mb-3">
               <FireIcon className="h-5 w-5 text-blue-600" />
@@ -68,10 +68,10 @@ const WaterConditionsCard = ({ water, detailed = false, className = '' }) => {
                   {Math.round(water.temperature.temperature)}°C
                 </p>
                 <p className="text-sm text-gray-600">
-                  Station: {water.temperature.station.name}
+                  Station: {water.temperature.station?.name || 'Okänd station'}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Avstånd: {formatDistance(water.temperature.distance)}
+                  Avstånd: {water.temperature.distance ? formatDistance(water.temperature.distance) : 'N/A'}
                 </p>
               </div>
               
@@ -97,7 +97,7 @@ const WaterConditionsCard = ({ water, detailed = false, className = '' }) => {
               </div>
             </div>
             
-            {detailed && (
+            {detailed && water.temperature.updated && (
               <div className="mt-4 pt-4 border-t border-blue-200">
                 <p className="text-xs text-gray-500">
                   Uppdaterad: {new Date(water.temperature.updated).toLocaleString('sv-SE')}
@@ -108,7 +108,7 @@ const WaterConditionsCard = ({ water, detailed = false, className = '' }) => {
         )}
 
         {/* Water Level */}
-        {water.level && (
+        {water.level && water.level.level !== undefined && (
           <div className="bg-green-50 rounded-lg p-4">
             <div className="flex items-center space-x-3 mb-3">
               <div className="flex items-center space-x-1">
@@ -127,13 +127,13 @@ const WaterConditionsCard = ({ water, detailed = false, className = '' }) => {
                   {water.level.level > 0 ? '+' : ''}{water.level.level} cm
                 </p>
                 <p className="text-sm text-gray-600">
-                  {water.level.unit}
+                  {water.level.unit || 'cm'}
                 </p>
                 <p className="text-sm text-gray-600">
-                  Station: {water.level.station.name}
+                  Station: {water.level.station?.name || 'Okänd station'}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Avstånd: {formatDistance(water.level.distance)}
+                  Avstånd: {water.level.distance ? formatDistance(water.level.distance) : 'N/A'}
                 </p>
               </div>
               
@@ -158,7 +158,7 @@ const WaterConditionsCard = ({ water, detailed = false, className = '' }) => {
               </div>
             </div>
             
-            {detailed && (
+            {detailed && water.level.updated && (
               <div className="mt-4 pt-4 border-t border-green-200">
                 <p className="text-xs text-gray-500">
                   Uppdaterad: {new Date(water.level.updated).toLocaleString('sv-SE')}

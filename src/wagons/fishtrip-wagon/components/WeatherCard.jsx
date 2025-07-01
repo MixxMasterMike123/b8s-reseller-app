@@ -84,25 +84,29 @@ const WeatherCard = ({ weather, detailed = false, className = '' }) => {
           <div>
             <p className="text-sm text-gray-600">Temperatur</p>
             <p className="text-lg font-semibold">
-              {Math.round(today.temperature.min)}° - {Math.round(today.temperature.max)}°C
+              {today.temperature ? (
+                `${Math.round(today.temperature.min)}° - ${Math.round(today.temperature.max)}°C`
+              ) : (
+                'N/A'
+              )}
             </p>
           </div>
           <div>
             <p className="text-sm text-gray-600">Vind</p>
             <p className="text-lg font-semibold">
-              {Math.round(today.wind.avgSpeed)} m/s
+              {today.wind ? `${Math.round(today.wind.avgSpeed)} m/s` : 'N/A'}
             </p>
           </div>
           <div>
             <p className="text-sm text-gray-600">Lufttryck</p>
             <p className="text-lg font-semibold">
-              {Math.round(today.pressure.avg)} hPa
+              {today.pressure ? `${Math.round(today.pressure.avg)} hPa` : 'N/A'}
             </p>
           </div>
           <div>
             <p className="text-sm text-gray-600">Molnighet</p>
             <p className="text-lg font-semibold">
-              {Math.round(today.cloudCover)}%
+              {typeof today.cloudCover === 'number' ? `${Math.round(today.cloudCover)}%` : 'N/A'}
             </p>
           </div>
         </div>
@@ -129,10 +133,14 @@ const WeatherCard = ({ weather, detailed = false, className = '' }) => {
                 
                 <div className="flex items-center space-x-4 text-sm">
                   <span className="text-gray-600">
-                    {Math.round(day.temperature.min)}° - {Math.round(day.temperature.max)}°C
+                    {day.temperature ? (
+                      `${Math.round(day.temperature.min)}° - ${Math.round(day.temperature.max)}°C`
+                    ) : (
+                      'N/A'
+                    )}
                   </span>
                   <span className="text-gray-600">
-                    {Math.round(day.wind.avgSpeed)} m/s
+                    {day.wind ? `${Math.round(day.wind.avgSpeed)} m/s` : 'N/A'}
                   </span>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                     day.fishingScore >= 70 
@@ -141,7 +149,7 @@ const WeatherCard = ({ weather, detailed = false, className = '' }) => {
                       ? 'bg-yellow-100 text-yellow-800'
                       : 'bg-red-100 text-red-800'
                   }`}>
-                    {day.fishingScore}
+                    {day.fishingScore || 0}
                   </span>
                 </div>
               </div>
@@ -174,10 +182,10 @@ const WeatherCard = ({ weather, detailed = false, className = '' }) => {
                       })}
                     </div>
                     <p className="text-sm font-medium">
-                      {Math.round(hour.temperature)}°
+                      {typeof hour.temperature === 'number' ? `${Math.round(hour.temperature)}°` : 'N/A'}
                     </p>
                     <p className="text-xs text-gray-600">
-                      {Math.round(hour.windSpeed)} m/s
+                      {typeof hour.windSpeed === 'number' ? `${Math.round(hour.windSpeed)} m/s` : 'N/A'}
                     </p>
                   </div>
                 );

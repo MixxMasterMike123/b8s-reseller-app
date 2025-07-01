@@ -272,7 +272,7 @@ const FishTripDashboard = () => {
                 </h3>
                 
                 <div className="space-y-3">
-                  {analysis.weather.daily && analysis.weather.daily.length > 0 && (
+                  {analysis.weather.daily && analysis.weather.daily.length > 0 && analysis.weather.daily[0].temperature && (
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Temperatur idag</span>
                       <span className="text-sm font-medium">
@@ -281,7 +281,7 @@ const FishTripDashboard = () => {
                     </div>
                   )}
                   
-                  {analysis.water.temperature && (
+                  {analysis.water && analysis.water.temperature && (
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Vattentemperatur</span>
                       <span className="text-sm font-medium">
@@ -290,7 +290,7 @@ const FishTripDashboard = () => {
                     </div>
                   )}
                   
-                  {analysis.weather.daily && analysis.weather.daily.length > 0 && (
+                  {analysis.weather.daily && analysis.weather.daily.length > 0 && analysis.weather.daily[0].wind && (
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Vindstyrka</span>
                       <span className="text-sm font-medium">
@@ -302,7 +302,7 @@ const FishTripDashboard = () => {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Månskede</span>
                     <span className="text-sm font-medium">
-                      {fishTripService.calculateMoonPhase().phase}
+                      {fishTripService?.calculateMoonPhase ? fishTripService.calculateMoonPhase().phase : 'N/A'}
                     </span>
                   </div>
                 </div>
