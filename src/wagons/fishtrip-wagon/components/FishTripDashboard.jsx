@@ -33,6 +33,10 @@ const FishTripDashboard = () => {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  
+  // Shared trip planning state for both mobile and desktop
+  const [tripPlan, setTripPlan] = useState(null);
+  const [tripLoading, setTripLoading] = useState(false);
 
   // No auto-loading on mount - user must explicitly search
 
@@ -242,25 +246,12 @@ const FishTripDashboard = () => {
                 {activeTab === 'water' && (
                   <WaterConditionsCard water={analysis.water} detailed={true} />
                 )}
-
-                {activeTab === 'planner' && (
-                  <TripPlannerCard 
-                    location={analysis.location}
-                    fishTripService={fishTripService}
-                    onLocationChange={handleLocationSearch}
-                  />
-                )}
               </div>
 
               {/* Desktop: Always show all content */}
               <div className="hidden lg:block space-y-6">
                 <WeatherCard weather={analysis.weather} detailed={false} />
                 <WaterConditionsCard water={analysis.water} detailed={false} />
-                <TripPlannerCard 
-                  location={analysis.location}
-                  fishTripService={fishTripService}
-                  onLocationChange={handleLocationSearch}
-                />
               </div>
             </div>
 
@@ -316,6 +307,18 @@ const FishTripDashboard = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Unified Trip Planner - Full width below main content */}
+          <div className="mt-6">
+            {/* Show on mobile only when planner tab is active, always show on desktop */}
+            <div className={`${activeTab === 'planner' ? 'block lg:block' : 'hidden lg:block'}`}>
+              <TripPlannerCard 
+                location={analysis.location}
+                fishTripService={fishTripService}
+                onLocationChange={handleLocationSearch}
+              />
             </div>
           </div>
         </div>

@@ -147,107 +147,112 @@ const TripPlannerCard = ({ location, fishTripService, onLocationChange, classNam
             </div>
           </div>
 
-          {/* Daily Plan */}
-          <div className="space-y-4 mb-6">
-            <h4 className="font-medium text-gray-900">Daglig plan</h4>
-            {tripPlan.days.map((day, index) => (
-              <div 
-                key={day.date} 
-                className={`border rounded-lg p-4 ${
-                  index === tripPlan.bestDay ? 'border-green-300 bg-green-50' : 'border-gray-200'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h5 className="font-medium text-gray-900">
-                      Dag {index + 1} - {formatDate(day.date)}
-                    </h5>
-                    <div className="flex items-center space-x-2 text-xs text-gray-600 mt-1">
-                      <MapPinIcon className="h-3 w-3" />
-                      <span>{tripPlan.location.name}</span>
-                      {index === tripPlan.bestDay && (
-                        <span className="text-green-600 font-medium">• Bästa dagen</span>
-                      )}
+          {/* Desktop: Side-by-side layout, Mobile: Stacked */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Daily Plan */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">Daglig plan</h4>
+              {tripPlan.days.map((day, index) => (
+                <div 
+                  key={day.date} 
+                  className={`border rounded-lg p-4 ${
+                    index === tripPlan.bestDay ? 'border-green-300 bg-green-50' : 'border-gray-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h5 className="font-medium text-gray-900">
+                        Dag {index + 1} - {formatDate(day.date)}
+                      </h5>
+                      <div className="flex items-center space-x-2 text-xs text-gray-600 mt-1">
+                        <MapPinIcon className="h-3 w-3" />
+                        <span>{tripPlan.location.name}</span>
+                        {index === tripPlan.bestDay && (
+                          <span className="text-green-600 font-medium">• Bästa dagen</span>
+                        )}
+                      </div>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getScoreColor(day.fishingScore)}`}>
+                      {day.fishingScore}/100
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                    <div>
+                      <span className="text-gray-600">Temperatur:</span>
+                      <span className="ml-1 font-medium">
+                        {Math.round(day.weather.temperature.min)}° - {Math.round(day.weather.temperature.max)}°C
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Vind:</span>
+                      <span className="ml-1 font-medium">
+                        {Math.round(day.weather.wind.avgSpeed)} m/s
+                      </span>
                     </div>
                   </div>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getScoreColor(day.fishingScore)}`}>
-                    {day.fishingScore}/100
-                  </span>
-                </div>
 
-                <div className="grid grid-cols-2 gap-4 text-sm mb-3">
-                  <div>
-                    <span className="text-gray-600">Temperatur:</span>
-                    <span className="ml-1 font-medium">
-                      {Math.round(day.weather.temperature.min)}° - {Math.round(day.weather.temperature.max)}°C
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Vind:</span>
-                    <span className="ml-1 font-medium">
-                      {Math.round(day.weather.wind.avgSpeed)} m/s
-                    </span>
-                  </div>
-                </div>
-
-                {/* Best times */}
-                <div className="mb-3">
-                  <h6 className="text-xs font-medium text-gray-700 mb-2">Bästa fisketider:</h6>
-                  <div className="flex flex-wrap gap-2">
-                    {day.bestTimes.map((time, timeIndex) => (
-                      <span 
-                        key={timeIndex}
-                        className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800"
-                      >
-                        <ClockIcon className="h-3 w-3 mr-1" />
-                        {time.period}: {time.time}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Recommendations */}
-                {day.recommendations.length > 0 && (
-                  <div className="text-xs text-gray-600">
-                    <span className="font-medium">Tips:</span>
-                    <ul className="ml-2 mt-1">
-                      {day.recommendations.slice(0, 2).map((rec, recIndex) => (
-                        <li key={recIndex}>• {rec}</li>
+                  {/* Best times */}
+                  <div className="mb-3">
+                    <h6 className="text-xs font-medium text-gray-700 mb-2">Bästa fisketider:</h6>
+                    <div className="flex flex-wrap gap-2">
+                      {day.bestTimes.map((time, timeIndex) => (
+                        <span 
+                          key={timeIndex}
+                          className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800"
+                        >
+                          <ClockIcon className="h-3 w-3 mr-1" />
+                          {time.period}: {time.time}
+                        </span>
                       ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Location suggestion for poor conditions */}
-                {day.fishingScore < 50 && onLocationChange && (
-                  <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-yellow-800">
-                        Svåra förhållanden. Överväg att byta plats?
-                      </span>
-                      <button
-                        onClick={() => handleLocationSuggestion(getSuggestedLocation(tripPlan.location, index))}
-                        className="flex items-center space-x-1 text-yellow-700 hover:text-yellow-900 font-medium"
-                      >
-                        <span>Prova {getSuggestedLocation(tripPlan.location, index)}</span>
-                        <ArrowRightIcon className="h-3 w-3" />
-                      </button>
                     </div>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
 
-          {/* AI Enhancement */}
-          {tripPlan.aiEnhancement && (
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
-              <h4 className="font-medium text-purple-900 mb-2">AI-förbättrad plan</h4>
-              <div className="text-sm text-purple-800 whitespace-pre-wrap">
-                {tripPlan.aiEnhancement}
-              </div>
+                  {/* Recommendations */}
+                  {day.recommendations.length > 0 && (
+                    <div className="text-xs text-gray-600">
+                      <span className="font-medium">Tips:</span>
+                      <ul className="ml-2 mt-1">
+                        {day.recommendations.slice(0, 2).map((rec, recIndex) => (
+                          <li key={recIndex}>• {rec}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Location suggestion for poor conditions */}
+                  {day.fishingScore < 50 && onLocationChange && (
+                    <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-yellow-800">
+                          Svåra förhållanden. Överväg att byta plats?
+                        </span>
+                        <button
+                          onClick={() => handleLocationSuggestion(getSuggestedLocation(tripPlan.location, index))}
+                          className="flex items-center space-x-1 text-yellow-700 hover:text-yellow-900 font-medium"
+                        >
+                          <span>Prova {getSuggestedLocation(tripPlan.location, index)}</span>
+                          <ArrowRightIcon className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-          )}
+
+            {/* AI Enhancement */}
+            {tripPlan.aiEnhancement && (
+              <div className="space-y-4">
+                <h4 className="font-medium text-gray-900">AI-förbättrad plan</h4>
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 h-fit">
+                  <div className="text-sm text-purple-800 whitespace-pre-wrap">
+                    {tripPlan.aiEnhancement}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Actions */}
           <div className="flex space-x-3">
