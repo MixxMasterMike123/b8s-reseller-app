@@ -107,6 +107,8 @@ const OrderPage = () => {
               // Map specific color names to match hardcoded checkbox IDs
               if (colorId === 'fluorescent' || colorId === 'fluorescerande') {
                 colorId = 'fluorescerande';
+              } else if (colorId === 'röd' || colorId === 'red') {
+                colorId = 'rod';
               }
               
               if (!colorMap.has(colorId)) {
@@ -134,6 +136,8 @@ const OrderPage = () => {
                     // Map variant color IDs to match hardcoded checkbox IDs
                     if (variantColorId === 'fluorescent' || variantColorId === 'fluorescerande') {
                       variantColorId = 'fluorescerande';
+                    } else if (variantColorId === 'röd' || variantColorId === 'red') {
+                      variantColorId = 'rod';
                     }
                     
                     if (!colorMap.has(variantColorId)) {
@@ -162,7 +166,7 @@ const OrderPage = () => {
         console.log('📊 B2B products loaded:', productsData.length);
         console.log('🎨 Available colors for B2B:', uniqueColors);
         console.log('📏 Available sizes for B2B:', uniqueSizes);
-        console.log('🔧 Color ID mapping completed - "fluorescent" → "fluorescerande"');
+        console.log('🔧 Color ID mapping completed - "fluorescent" → "fluorescerande", "röd" → "rod"');
         
         setProducts(productsData);
         setProductColors(uniqueColors);
@@ -672,9 +676,9 @@ const OrderPage = () => {
                     if (name.includes('transparent')) {
                       newFarger.transparent = true;
                     } else if (name.includes('röd') || name.includes('red') || name.includes('rod')) {
-                      newFarger.rod = true;
+                      newFarger.rod = true;  // Always use mapped ID 'rod'
                     } else if (name.includes('fluor')) {
-                      newFarger.fluorescerande = true;
+                      newFarger.fluorescerande = true;  // Always use mapped ID 'fluorescerande'
                     } else if (name.includes('glitter')) {
                       newFarger.glitter = true;
                     }
