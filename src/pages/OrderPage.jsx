@@ -353,16 +353,11 @@ const OrderPage = () => {
                       <div className="flex-shrink-0">
                         <div className="text-center">
                           {colorProduct ? (
-                            <div className="relative">
-                              <img 
-                                src={colorProduct.b2bImageUrl || colorProduct.imageUrl || colorProduct.imageData} 
-                                alt={`${getColorDisplayName(colorId)} - B2B Förpackning`} 
-                                className="w-32 h-32 object-contain rounded-lg border-2 border-gray-200"
-                              />
-                              <div className="absolute top-1 right-1 bg-blue-600 text-white px-2 py-1 text-xs font-semibold rounded">
-                                Storlek {colorProduct.size || '4'}
-                              </div>
-                            </div>
+                            <img 
+                              src={colorProduct.b2bImageUrl || colorProduct.imageUrl || colorProduct.imageData} 
+                              alt={`${getColorDisplayName(colorId)} - B2B Förpackning`} 
+                              className="w-32 h-32 object-contain rounded-lg border-2 border-gray-200"
+                            />
                           ) : (
                             <div className="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center">
                               <span className="text-gray-500 text-sm">Ingen bild</span>
