@@ -8,6 +8,7 @@ const cors = require('cors')({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true
 });
+const APP_URLS = require('./config');
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -50,7 +51,7 @@ const getEmailTemplate = (status, orderData, userData) => {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+            <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
           </div>
           <h2>Hej ${contactPerson},</h2>
           <p>Tack för din beställning! Vi har mottagit din order och kommer att behandla den snarast.</p>
@@ -79,7 +80,7 @@ const getEmailTemplate = (status, orderData, userData) => {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+            <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
           </div>
           <h2>Hej ${contactPerson},</h2>
           <p>Din order är nu under behandling och förbereds för leverans.</p>
@@ -110,7 +111,7 @@ const getEmailTemplate = (status, orderData, userData) => {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+            <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
           </div>
           <h2>Hej ${contactPerson},</h2>
           <p>Goda nyheter! Din order har skickats och är nu på väg till dig.</p>
@@ -143,7 +144,7 @@ const getEmailTemplate = (status, orderData, userData) => {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+            <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
           </div>
           <h2>Hej ${contactPerson},</h2>
           <p>Din order har levererats framgångsrikt!</p>
@@ -174,7 +175,7 @@ const getEmailTemplate = (status, orderData, userData) => {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+            <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
           </div>
           <h2>Hej ${contactPerson},</h2>
           <p>Din order har tyvärr avbrutits.</p>
@@ -217,7 +218,7 @@ const getB2CEmailTemplate = (status, orderData, customerInfo) => {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+            <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
           </div>
           <h2>Hej ${customerName},</h2>
           <p>Tack för din beställning! Vi har mottagit din order och kommer att behandla den snarast.</p>
@@ -728,7 +729,7 @@ exports.sendUserActivationEmail = functions.firestore
             Ditt B8Shield-konto för ${afterData.companyName} har aktiverats!
             
             Du kan nu logga in med ditt användarnamn och lösenord på:
-            https://b8shield-reseller-app.web.app
+            ${APP_URLS.B2B_PORTAL}
             
             Om du har några frågor, kontakta vår support.
             
@@ -738,14 +739,14 @@ exports.sendUserActivationEmail = functions.firestore
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <div style="text-align: center; margin-bottom: 30px;">
-                <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+                <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
               </div>
               <h2>Hej ${afterData.contactPerson},</h2>
               
               <p>Ditt B8Shield-konto för <strong>${afterData.companyName}</strong> har aktiverats!</p>
               
               <p>Du kan nu logga in med ditt användarnamn och lösenord på:<br>
-              <a href="https://b8shield-reseller-app.web.app">B8Shield Portal</a></p>
+              <a href="${APP_URLS.B2B_PORTAL}">B8Shield Portal</a></p>
               
               <p>Om du har några frågor, kontakta vår support.</p>
               
@@ -822,7 +823,7 @@ exports.sendOrderStatusUpdateEmail = functions.firestore
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="text-align: center; margin-bottom: 30px;">
-                  <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+                  <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
                 </div>
                 <h2>Order Status Update</h2>
                 <p><strong>Order:</strong> ${afterData.orderNumber}</p>
@@ -1723,7 +1724,7 @@ exports.sendOrderConfirmationHttp = functions.https.onRequest(async (req, res) =
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+            <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
           </div>
           <h2>Orderbekräftelse</h2>
           <p>Hej ${userData.contactPerson || userData.companyName},</p>
@@ -1765,7 +1766,7 @@ exports.sendOrderConfirmationHttp = functions.https.onRequest(async (req, res) =
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+            <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
           </div>
           <h2>Ny order mottagen</h2>
           <p><strong>Ordernummer:</strong> ${orderData.orderNumber}</p>
@@ -1868,7 +1869,7 @@ exports.sendStatusUpdateHttp = functions.https.onRequest(async (req, res) => {
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="text-align: center; margin-bottom: 30px;">
-              <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+              <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
             </div>
             <h2>Order Status Update</h2>
             <p><strong>Order:</strong> ${orderData.orderNumber}</p>
@@ -2087,7 +2088,7 @@ exports.processB2COrderCompletion = functions
     // Validate request origin
     const allowedOrigins = [
       'https://shop.b8shield.com',
-      'https://b8shield-reseller-app.web.app',
+      '${APP_URLS.B2B_PORTAL}',
       'http://localhost:5173' // For local development
     ];
     
@@ -2335,7 +2336,7 @@ exports.generateContentWithClaude = functions
   .https.onRequest(async (req, res) => {
     // Enable CORS for B8Shield domains
     const allowedOrigins = [
-      'https://b8shield-reseller-app.web.app',
+      '${APP_URLS.B2B_PORTAL}',
       'https://shop.b8shield.com',
       'http://localhost:5173', // Local development
       'http://localhost:3000'  // Alternative local port
@@ -2450,7 +2451,7 @@ exports.setupWritersWagon = functions
   .https.onRequest(async (req, res) => {
     // Enable CORS for B8Shield domains
     const allowedOrigins = [
-      'https://b8shield-reseller-app.web.app',
+      '${APP_URLS.B2B_PORTAL}',
       'https://shop.b8shield.com',
       'http://localhost:5173',
       'http://localhost:3000'
@@ -2535,7 +2536,7 @@ exports.generateContentWithClaude = functions
   .https.onRequest(async (req, res) => {
     // Enable CORS for B8Shield domains
     const allowedOrigins = [
-      'https://b8shield-reseller-app.web.app',
+      '${APP_URLS.B2B_PORTAL}',
       'https://shop.b8shield.com',
       'http://localhost:5173',
       'http://localhost:3000'
@@ -2665,7 +2666,7 @@ exports.getFishTripWeatherData = functions
   .https.onRequest(async (req, res) => {
     // Enable CORS for B8Shield domains
     const allowedOrigins = [
-      'https://b8shield-reseller-app.web.app',
+      '${APP_URLS.B2B_PORTAL}',
       'https://shop.b8shield.com',
       'http://localhost:5173',
       'http://localhost:3000'
@@ -2704,7 +2705,7 @@ exports.getFishTripWeatherData = functions
       // Fetch weather data from MET Norway
       const weatherResponse = await fetch(weatherUrl, {
         headers: {
-          'User-Agent': 'B8Shield-FishTrip-Wagon/1.0 (https://b8shield-reseller-app.web.app; info@b8shield.com)',
+          'User-Agent': 'B8Shield-FishTrip-Wagon/1.0 (${APP_URLS.B2B_PORTAL}; info@b8shield.com)',
           'Accept': 'application/json',
           'Cache-Control': 'no-cache'
         }
@@ -2748,7 +2749,7 @@ exports.getFishTripOceanData = functions
   .https.onRequest(async (req, res) => {
     // Enable CORS for B8Shield domains
     const allowedOrigins = [
-      'https://b8shield-reseller-app.web.app',
+      '${APP_URLS.B2B_PORTAL}',
       'https://shop.b8shield.com',
       'http://localhost:5173',
       'http://localhost:3000'
@@ -2782,7 +2783,7 @@ exports.getFishTripOceanData = functions
       const oceanUrl = `https://api.met.no/weatherapi/oceanforecast/2.0/complete?lat=${lat}&lon=${lon}`;
       const oceanResponse = await fetch(oceanUrl, {
         headers: {
-          'User-Agent': 'B8Shield-FishTrip-Wagon/1.0 (https://b8shield-reseller-app.web.app; info@b8shield.com)',
+          'User-Agent': 'B8Shield-FishTrip-Wagon/1.0 (${APP_URLS.B2B_PORTAL}; info@b8shield.com)',
           'Accept': 'application/json',
           'Cache-Control': 'no-cache'
         }
@@ -2837,7 +2838,7 @@ exports.getFishTripTidalData = functions
   .https.onRequest(async (req, res) => {
     // Enable CORS for B8Shield domains
     const allowedOrigins = [
-      'https://b8shield-reseller-app.web.app',
+      '${APP_URLS.B2B_PORTAL}',
       'https://shop.b8shield.com',
       'http://localhost:5173',
       'http://localhost:3000'
@@ -2871,7 +2872,7 @@ exports.getFishTripTidalData = functions
       const tidalUrl = `https://api.met.no/weatherapi/tidalwater/1.1?harbor=${harbor}`;
       const tidalResponse = await fetch(tidalUrl, {
         headers: {
-          'User-Agent': 'B8Shield-FishTrip-Wagon/1.0 (https://b8shield-reseller-app.web.app; info@b8shield.com)',
+          'User-Agent': 'B8Shield-FishTrip-Wagon/1.0 (${APP_URLS.B2B_PORTAL}; info@b8shield.com)',
           'Accept': 'text/plain',
           'Cache-Control': 'no-cache'
         }
@@ -2916,7 +2917,7 @@ exports.getFishTripSolarData = functions
   .https.onRequest(async (req, res) => {
     // Enable CORS for B8Shield domains
     const allowedOrigins = [
-      'https://b8shield-reseller-app.web.app',
+      '${APP_URLS.B2B_PORTAL}',
       'https://shop.b8shield.com',
       'http://localhost:5173',
       'http://localhost:3000'
@@ -2951,7 +2952,7 @@ exports.getFishTripSolarData = functions
       const solarUrl = `https://api.met.no/weatherapi/sunrise/3.0?lat=${lat}&lon=${lon}&date=${targetDate}`;
       const solarResponse = await fetch(solarUrl, {
         headers: {
-          'User-Agent': 'B8Shield-FishTrip-Wagon/1.0 (https://b8shield-reseller-app.web.app; info@b8shield.com)',
+          'User-Agent': 'B8Shield-FishTrip-Wagon/1.0 (${APP_URLS.B2B_PORTAL}; info@b8shield.com)',
           'Accept': 'application/json',
           'Cache-Control': 'no-cache'
         }
@@ -2996,7 +2997,7 @@ exports.getFishTripNowcastData = functions
   .https.onRequest(async (req, res) => {
     // Enable CORS for B8Shield domains
     const allowedOrigins = [
-      'https://b8shield-reseller-app.web.app',
+      '${APP_URLS.B2B_PORTAL}',
       'https://shop.b8shield.com',
       'http://localhost:5173',
       'http://localhost:3000'
@@ -3030,7 +3031,7 @@ exports.getFishTripNowcastData = functions
       const nowcastUrl = `https://api.met.no/weatherapi/nowcast/2.0/complete?lat=${lat}&lon=${lon}`;
       const nowcastResponse = await fetch(nowcastUrl, {
         headers: {
-          'User-Agent': 'B8Shield-FishTrip-Wagon/1.0 (https://b8shield-reseller-app.web.app; info@b8shield.com)',
+          'User-Agent': 'B8Shield-FishTrip-Wagon/1.0 (${APP_URLS.B2B_PORTAL}; info@b8shield.com)',
           'Accept': 'application/json',
           'Cache-Control': 'no-cache'
         }
@@ -3085,7 +3086,7 @@ exports.getFishTripAIAnalysis = functions
   .https.onRequest(async (req, res) => {
     // Enable CORS for B8Shield domains
     const allowedOrigins = [
-      'https://b8shield-reseller-app.web.app',
+      '${APP_URLS.B2B_PORTAL}',
       'https://shop.b8shield.com',
       'http://localhost:5173',
       'http://localhost:3000'
@@ -3237,7 +3238,7 @@ const getWelcomeEmailTemplate = (customerData, temporaryPassword) => {
       
       VIKTIG INFORMATION:
       - Du måste ändra ditt lösenord vid första inloggningen
-      - Portalen finns på: https://b8shield-reseller-app.web.app
+      - Portalen finns på: ${APP_URLS.B2B_PORTAL}
       - Ditt konto har aktiverats och du har nu tillgång till alla återförsäljarfunktioner
       
       VAD KAN DU GÖRA I PORTALEN:
@@ -3258,7 +3259,7 @@ const getWelcomeEmailTemplate = (customerData, temporaryPassword) => {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px;">
         <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <div style="text-align: center; margin-bottom: 30px;">
-            <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+            <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
           </div>
           
           <h2 style="color: #1f2937; margin-bottom: 20px;">Hej ${contactPerson},</h2>
@@ -3281,7 +3282,7 @@ const getWelcomeEmailTemplate = (customerData, temporaryPassword) => {
             <h4 style="color: #92400e; margin-top: 0; margin-bottom: 10px;">[VIKTIGT] VIKTIG INFORMATION:</h4>
             <ul style="color: #92400e; margin: 0; padding-left: 20px;">
               <li>Du måste ändra ditt lösenord vid första inloggningen</li>
-              <li>Portalen finns på: <a href="https://b8shield-reseller-app.web.app" style="color: #2563eb;">https://b8shield-reseller-app.web.app</a></li>
+              <li>Portalen finns på: <a href="${APP_URLS.B2B_PORTAL}" style="color: #2563eb;">${APP_URLS.B2B_PORTAL}</a></li>
               <li>Ditt konto har aktiverats och du har nu tillgång till alla återförsäljarfunktioner</li>
             </ul>
           </div>
@@ -3297,7 +3298,7 @@ const getWelcomeEmailTemplate = (customerData, temporaryPassword) => {
           </div>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://b8shield-reseller-app.web.app" 
+            <a href="${APP_URLS.B2B_PORTAL}" 
                style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
               Logga in på portalen
             </a>

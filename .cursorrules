@@ -15,7 +15,7 @@ B8Shield is a Swedish reseller portal for JPH Innovation AB's fishing lure prote
 - **Rich Text Editor**: react-quill for B2C product descriptions
 
 ## Dual Platform Architecture (Latest)
-- **B2B Portal**: `b8shield-reseller-app.web.app` - Reseller management system
+- **B2B Portal**: `partner.b8shield.com` - Reseller management system
 - **B2C Shop**: `shop.b8shield.com` - Consumer e-commerce storefront
 - **Shared Backend**: Same Firebase project, unified product database
 - **Subdomain Routing**: Automatic detection and routing based on subdomain
@@ -363,7 +363,7 @@ src/
 4. Firebase console: https://console.firebase.google.com/project/b8shield-reseller-app
 
 ## Live URLs
-- **B2B Portal**: https://b8shield-reseller-app.web.app
+- **B2B Portal**: https://partner.b8shield.com
 - **B2C Shop**: https://shop.b8shield.com
 - **Admin Login**: micke.ohlen@gmail.com / temporaryPassword123
 

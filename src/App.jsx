@@ -75,7 +75,7 @@ function App() {
   
   // Determine app mode based on subdomain
   const isShopSubdomain = subdomain === 'shop';
-  const isResellerSubdomain = subdomain === 'reseller' || hostname.includes('b8shield-reseller-app');
+  const isResellerSubdomain = subdomain === 'partner' || subdomain === 'reseller' || hostname.includes('b8shield-reseller-app');
   
   // Default to reseller for now (existing behavior)
   const appMode = isShopSubdomain ? 'shop' : 'reseller';
