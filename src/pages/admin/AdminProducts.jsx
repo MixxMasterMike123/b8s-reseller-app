@@ -45,6 +45,7 @@ function AdminProducts() {
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
+    sku: '', // Added SKU field
     description: '',
     basePrice: 0,
     manufacturingCost: 0,
@@ -124,6 +125,7 @@ function AdminProducts() {
     setSelectedProduct(null);
     setFormData({
       name: '',
+      sku: '', // Added SKU field
       description: '',
       basePrice: 0,
       manufacturingCost: 0,
@@ -177,6 +179,7 @@ function AdminProducts() {
     setSelectedProduct(product);
     setFormData({
       name: product.name || '',
+      sku: product.sku || '', // Added SKU field
       description: product.description || '',
       basePrice: product.basePrice || 0,
       manufacturingCost: product.manufacturingCost || 0,
@@ -600,11 +603,12 @@ function AdminProducts() {
                   setSelectedProduct(null);
                   setFormData({
                     name: 'B8Shield Röd',
+                    sku: 'B8S-4-re', // Sample SKU for red product
                     description: 'B8Shield Röd skydd för smartphones',
                     basePrice: 71.2,
                     manufacturingCost: 10,
                     isActive: true,
-                    size: '',
+                    size: '4',
                     imageUrl: '',
                   });
                   setB2bImageFile(null);
@@ -703,6 +707,23 @@ function AdminProducts() {
                       value={formData.name}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                  
+                  {/* SKU */}
+                  <div>
+                    <label htmlFor="sku" className="block text-sm font-medium text-gray-700 mb-2">
+                      SKU (Artikelnummer) *
+                    </label>
+                    <input
+                      type="text"
+                      id="sku"
+                      name="sku"
+                      value={formData.sku}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="t.ex. B8S-4-re, B8S-2-tr"
                       required
                     />
                   </div>
@@ -1226,9 +1247,12 @@ function AdminProducts() {
                       Produkt
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      SKU
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Storlek
                     </th>
-                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Pris
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1245,7 +1269,7 @@ function AdminProducts() {
               <tbody className="bg-white divide-y divide-gray-200">
                                      {products.length === 0 ? (
                      <tr>
-                       <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                       <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
                          Inga produkter hittades
                        </td>
                      </tr>
@@ -1270,6 +1294,9 @@ function AdminProducts() {
                               <div className="text-sm text-gray-500 max-w-xs truncate">{product.description}</div>
                             </div>
                           </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-mono text-gray-900">{product.sku || 'Ej angivet'}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">{product.size || 'Ej angivet'}</div>

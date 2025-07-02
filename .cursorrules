@@ -171,6 +171,7 @@ src/
 {
   id: string,
   name: string,
+  sku: string, // Product SKU (e.g., B8S-4-re, B8S-2-tr, B8S-3p-fl)
   description: string,
   size: string,
   basePrice: number,
