@@ -10,11 +10,18 @@ import {
   getFileIcon,
   downloadFile
 } from '../../utils/marketingMaterials';
+import {
+  getAdminDocuments,
+  uploadAdminDocument,
+  deleteAdminDocument,
+  downloadFile as downloadAdminFile,
+  formatFileSize as formatAdminFileSize
+} from '../../utils/adminDocuments';
 
 const AdminUserEdit = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
-  const { getAllUsers, updateAnyUserProfile, updateUserMarginal, updateUserRole, toggleUserActive, isAdmin } = useAuth();
+  const { getAllUsers, updateAnyUserProfile, updateUserMarginal, updateUserRole, toggleUserActive, isAdmin, currentUser } = useAuth();
   
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -29,6 +36,19 @@ const AdminUserEdit = () => {
     name: '',
     description: '',
     category: 'kundspecifikt',
+    file: null
+  });
+
+  // Admin documents state
+  const [adminDocuments, setAdminDocuments] = useState([]);
+  const [adminDocsLoading, setAdminDocsLoading] = useState(false);
+  const [showAdminUploadForm, setShowAdminUploadForm] = useState(false);
+  const [adminUploading, setAdminUploading] = useState(false);
+  const [adminDocFormData, setAdminDocFormData] = useState({
+    title: '',
+    description: '',
+    notes: '',
+    category: 'dokument',
     file: null
   });
   
@@ -79,6 +99,21 @@ const AdminUserEdit = () => {
     }
   };
 
+  const loadAdminDocuments = async () => {
+    if (!userId) return;
+    
+    try {
+      setAdminDocsLoading(true);
+      const documents = await getAdminDocuments(userId);
+      setAdminDocuments(documents);
+    } catch (error) {
+      console.log('No admin documents found or error loading:', error);
+      setAdminDocuments([]);
+    } finally {
+      setAdminDocsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -115,8 +150,9 @@ const AdminUserEdit = () => {
           notes: foundUser.notes || ''
         });
         
-        // Load customer materials
+        // Load customer materials and admin documents
         await loadCustomerMaterials();
+        await loadAdminDocuments();
       } catch (error) {
         console.error('Error fetching user:', error);
         toast.error('Kunde inte hämta kunddata');
@@ -224,6 +260,73 @@ const AdminUserEdit = () => {
   const getCategoryLabel = (category) => {
     const cat = categories.find(c => c.value === category);
     return cat ? cat.label : category;
+  };
+
+  // Admin documents functions
+  const handleAdminDocFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAdminDocFormData(prev => ({
+        ...prev,
+        file: file,
+        title: prev.title || file.name.split('.')[0]
+      }));
+    }
+  };
+
+  const handleAdminDocSubmit = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!adminDocFormData.file) {
+      toast.error('Välj en fil att ladda upp');
+      return;
+    }
+
+    try {
+      setAdminUploading(true);
+      await uploadAdminDocument(userId, adminDocFormData.file, {
+        title: adminDocFormData.title,
+        description: adminDocFormData.description,
+        notes: adminDocFormData.notes,
+        category: adminDocFormData.category
+      }, currentUser?.uid);
+      
+      toast.success('Admin-dokument uppladdat');
+      setAdminDocFormData({ title: '', description: '', notes: '', category: 'dokument', file: null });
+      setShowAdminUploadForm(false);
+      await loadAdminDocuments();
+    } catch (error) {
+      console.error('Error uploading admin document:', error);
+      toast.error('Kunde inte ladda upp admin-dokument');
+    } finally {
+      setAdminUploading(false);
+    }
+  };
+
+  const handleAdminDocDelete = async (documentId) => {
+    if (!confirm('Är du säker på att du vill ta bort detta admin-dokument?')) {
+      return;
+    }
+
+    try {
+      await deleteAdminDocument(documentId);
+      toast.success('Admin-dokument borttaget');
+      await loadAdminDocuments();
+    } catch (error) {
+      console.error('Error deleting admin document:', error);
+      toast.error('Kunde inte ta bort admin-dokument');
+    }
+  };
+
+  const handleAdminDocDownload = async (document) => {
+    try {
+      await downloadAdminFile(document.downloadUrl, document.fileName);
+      toast.success('Nedladdning startad');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Kunde inte ladda ner filen');
+    }
   };
 
   const validateForm = () => {
@@ -873,6 +976,205 @@ const AdminUserEdit = () => {
                       <button
                         onClick={() => handleMaterialDownload(material)}
                         className="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent text-xs font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
+                      >
+                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Ladda ner
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Admin Documents - Admin Only, NOT visible to customers */}
+        {isAdmin && (
+          <div className="max-w-4xl mx-auto mt-6 bg-white rounded-lg shadow-md">
+            <div className="bg-orange-50 rounded-lg p-6 border border-orange-200">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900 flex items-center">
+                  <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded mr-2">
+                    ADMIN ENDAST
+                  </span>
+                  Admin-dokument ({adminDocuments.length})
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowAdminUploadForm(true);
+                    setAdminDocFormData({ title: '', description: '', notes: '', category: 'dokument', file: null });
+                  }}
+                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700"
+                >
+                  Ladda upp Admin-dokument
+                </button>
+              </div>
+
+              <div className="mb-4 p-3 bg-orange-100 border border-orange-200 rounded-md">
+                <p className="text-sm text-orange-800">
+                  <strong>⚠️ Viktigt:</strong> Dessa dokument är ENDAST synliga för administratörer och kommer aldrig visas för kunden.
+                </p>
+              </div>
+
+              {/* Admin Upload Form */}
+              {showAdminUploadForm && (
+                <div className="mb-6 bg-white rounded-lg p-4 border border-orange-200">
+                  <h4 className="text-md font-medium text-gray-900 mb-3">Ladda upp Nytt Admin-dokument</h4>
+                  <form onSubmit={handleAdminDocSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Titel *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={adminDocFormData.title}
+                          onChange={(e) => setAdminDocFormData(prev => ({ ...prev, title: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          placeholder="Dokumenttitel"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Kategori
+                        </label>
+                        <select
+                          value={adminDocFormData.category}
+                          onChange={(e) => setAdminDocFormData(prev => ({ ...prev, category: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        >
+                          <option value="dokument">Dokument</option>
+                          <option value="kontrakt">Kontrakt</option>
+                          <option value="korrespondens">Korrespondens</option>
+                          <option value="finansiellt">Finansiellt</option>
+                          <option value="juridiskt">Juridiskt</option>
+                          <option value="övrigt">Övrigt</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Beskrivning
+                      </label>
+                      <textarea
+                        value={adminDocFormData.description}
+                        onChange={(e) => setAdminDocFormData(prev => ({ ...prev, description: e.target.value }))}
+                        rows={2}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholder="Beskrivning av dokumentet"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Interna anteckningar
+                      </label>
+                      <textarea
+                        value={adminDocFormData.notes}
+                        onChange={(e) => setAdminDocFormData(prev => ({ ...prev, notes: e.target.value }))}
+                        rows={2}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholder="Interna anteckningar (endast synliga för admins)"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Fil * (PDF, Word, bilder, etc.)
+                      </label>
+                      <input
+                        type="file"
+                        required
+                        onChange={handleAdminDocFileChange}
+                        accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.mp4,.mov,.avi,.webm,.mkv,.pdf,.doc,.docx,.txt,.rtf,.zip,.rar"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                      {adminDocFormData.file && (
+                        <p className="mt-1 text-sm text-gray-600">
+                          Vald fil: {adminDocFormData.file.name} ({formatAdminFileSize(adminDocFormData.file.size)})
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button
+                        type="submit"
+                        disabled={adminUploading}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 disabled:opacity-50"
+                      >
+                        {adminUploading ? 'Laddar upp...' : 'Ladda upp'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowAdminUploadForm(false)}
+                        className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                      >
+                        Avbryt
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Admin Documents List */}
+              {adminDocsLoading ? (
+                <div className="flex justify-center items-center h-32">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+                </div>
+              ) : adminDocuments.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <span className="text-4xl block mb-2">🔒</span>
+                  <p>Inga admin-dokument uppladdade ännu</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {adminDocuments.map((document) => (
+                    <div key={document.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center">
+                          <span className="text-xl mr-2">🔒</span>
+                          <span className="text-xs px-2 py-1 bg-orange-100 text-orange-600 rounded-full">
+                            {document.category}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => handleAdminDocDelete(document.id)}
+                          className="p-1 text-gray-400 hover:text-red-600"
+                          title="Ta bort"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+
+                      <h4 className="font-medium text-gray-900 mb-2 text-sm line-clamp-2">{document.title}</h4>
+                      
+                      {document.description && (
+                        <p className="text-xs text-gray-600 mb-2 line-clamp-2">{document.description}</p>
+                      )}
+
+                      {document.notes && (
+                        <p className="text-xs text-orange-600 mb-3 line-clamp-1 font-medium">
+                          Anteckning: {document.notes}
+                        </p>
+                      )}
+
+                      <div className="text-xs text-gray-500 mb-3">
+                        <p className="truncate">{document.fileName}</p>
+                        {document.fileSize && <p>{formatAdminFileSize(document.fileSize)}</p>}
+                        {document.uploadedAt && (
+                          <p>Uppladdat: {new Date(document.uploadedAt.seconds * 1000).toLocaleDateString('sv-SE')}</p>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => handleAdminDocDownload(document)}
+                        className="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent text-xs font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700"
                       >
                         <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

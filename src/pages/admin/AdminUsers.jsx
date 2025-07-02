@@ -136,12 +136,20 @@ const AdminUsers = () => {
           <h1 className="text-lg leading-6 font-medium text-gray-900">
             Kundhantering
           </h1>
-          <Link
-            to="/admin"
-            className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-          >
-            Back to Admin Dashboard
-          </Link>
+          <div className="flex gap-3">
+            <Link
+              to="/admin/users/create"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            >
+              Skapa Ny Kund
+            </Link>
+            <Link
+              to="/admin"
+              className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Back to Admin Dashboard
+            </Link>
+          </div>
         </div>
 
         {/* Filter and search */}

@@ -26,6 +26,7 @@ import ProfilePage from './pages/ProfilePage';
 import ContactPage from './pages/ContactPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsers from './pages/admin/AdminUsers';
+import AdminUserCreate from './pages/admin/AdminUserCreate';
 import AdminUserEdit from './pages/admin/AdminUserEdit';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminOrderDetail from './pages/admin/AdminOrderDetail';
@@ -213,6 +214,12 @@ function App() {
               <Route path="/admin/users" element={
                 <AdminRoute>
                   <AdminUsers />
+                </AdminRoute>
+              } />
+              
+              <Route path="/admin/users/create" element={
+                <AdminRoute>
+                  <AdminUserCreate />
                 </AdminRoute>
               } />
               
