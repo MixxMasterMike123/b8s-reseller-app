@@ -46,6 +46,7 @@ const ContactDetail = () => {
   // Tag system state
   const [suggestedTags, setSuggestedTags] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
+  const [manualTagInput, setManualTagInput] = useState('');
 
   // Activity type options with Swedish labels and icons
   const activityTypes = [
@@ -105,6 +106,36 @@ const ContactDetail = () => {
 
   const ignoreSuggestion = (tag) => {
     setSuggestedTags(suggestedTags.filter(t => t !== tag));
+  };
+
+  // Manual tag input functions
+  const processManualTags = (input) => {
+    if (!input.trim()) return;
+    
+    // Split by comma, space, or newline, clean and filter
+    const newTags = input
+      .split(/[,\s\n]+/)
+      .map(tag => tag.replace('#', '').trim().toLowerCase())
+      .filter(tag => tag.length > 0 && !selectedTags.includes(tag));
+    
+    if (newTags.length > 0) {
+      setSelectedTags([...selectedTags, ...newTags]);
+      setManualTagInput('');
+    }
+  };
+
+  const handleManualTagKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      processManualTags(manualTagInput);
+    } else if (e.key === ',' || e.key === ' ') {
+      e.preventDefault();
+      processManualTags(manualTagInput);
+    }
+  };
+
+  const handleManualTagChange = (e) => {
+    setManualTagInput(e.target.value);
   };
 
   // Load contact data
@@ -169,6 +200,7 @@ const ContactDetail = () => {
       });
       setSelectedTags([]);
       setSuggestedTags([]);
+      setManualTagInput('');
       
       const selectedType = activityTypes.find(t => t.value === newActivity.type);
       toast.success(`${selectedType.label} registrerat`);
@@ -553,6 +585,24 @@ const ContactDetail = () => {
               )}
             </div>
           )}
+
+          {/* Manual Tag Input - TAGlist2 for Power Users */}
+          <div className="mb-4">
+            <label className="block text-xs text-gray-500 font-medium mb-1">
+              Lägg till egna taggar (valfritt)
+            </label>
+            <input
+              type="text"
+              value={manualTagInput}
+              onChange={handleManualTagChange}
+              onKeyPress={handleManualTagKeyPress}
+              placeholder="Skriv egna taggar... (tryck Enter, komma eller mellanslag för att lägga till)"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              T.ex. "budget", "chef", "presentation" - separera med komma eller mellanslag
+            </p>
+          </div>
 
           {/* Description (Optional) */}
           <div className="mb-4">
