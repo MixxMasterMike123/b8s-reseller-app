@@ -176,8 +176,10 @@ const OrderPage = () => {
   const totalPris = totalPackages * inkopspris;
   const vinst = totalPackages * (inkopspris - PRODUCT_SETTINGS.TILLVERKNINGSKOSTNAD);
 
-  // Check if form is complete
-  const isFormComplete = totalPackages > 0;
+  // Check if form is complete with minimum order validation
+  const MINIMUM_ORDER_QUANTITY = 10;
+  const isFormComplete = totalPackages >= MINIMUM_ORDER_QUANTITY;
+  const remainingQuantity = Math.max(0, MINIMUM_ORDER_QUANTITY - totalPackages);
 
   // Fetch products from Firestore
   useEffect(() => {
@@ -212,8 +214,10 @@ const OrderPage = () => {
 
   // Handle order submission
   const handleSubmitOrder = async () => {
-    if (!isFormComplete) {
-      toast.error('Vänligen lägg till produkter innan du bekräftar ordern');
+    if (totalPackages < MINIMUM_ORDER_QUANTITY) {
+      toast.error(
+        `Du har beställt för få produkter (${totalPackages}), beställ minst ${remainingQuantity} st till för att nå minst ${MINIMUM_ORDER_QUANTITY} produkter`
+      );
       return;
     }
     
@@ -369,7 +373,7 @@ const OrderPage = () => {
                               
                                                                {/* Quick quantity buttons */}
                                  <div className="flex items-center gap-2">
-                                   {[5, 10, 20, 30].map(qty => (
+                                   {[10, 25, 50, 100].map(qty => (
                                      <button
                                        key={qty}
                                        onClick={() => handleQuantityButton(colorId, size, qty)}
@@ -395,12 +399,12 @@ const OrderPage = () => {
                                      value={colorData.sizes[size] === 0 ? '' : colorData.sizes[size]}
                                      onChange={(e) => handleCustomQuantity(colorId, size, e.target.value)}
                                      className={`w-16 px-2 py-1 text-sm border-2 rounded-lg transition-all duration-200 ${
-                                       colorData.sizes[size] > 0 && ![5, 10, 20, 30].includes(colorData.sizes[size])
+                                       colorData.sizes[size] > 0 && ![10, 25, 50, 100].includes(colorData.sizes[size])
                                          ? 'border-blue-500 bg-blue-50 text-blue-900 font-semibold shadow-sm'
                                          : 'border-gray-300 bg-white text-gray-700'
                                      }`}
                                    />
-                                   {colorData.sizes[size] > 0 && ![5, 10, 20, 30].includes(colorData.sizes[size]) && (
+                                   {colorData.sizes[size] > 0 && ![10, 25, 50, 100].includes(colorData.sizes[size]) && (
                                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                                    )}
                                  </div>
@@ -495,20 +499,41 @@ const OrderPage = () => {
                   </div>
                   
                   <div className="mt-4">
+                    {/* Minimum order warning */}
+                    {totalPackages > 0 && totalPackages < MINIMUM_ORDER_QUANTITY && (
+                      <div className="mb-3 p-3 bg-orange-100 border border-orange-300 rounded-lg">
+                        <p className="text-orange-800 text-sm font-medium">
+                          ⚠️ Minsta beställning: {MINIMUM_ORDER_QUANTITY} produkter
+                        </p>
+                        <p className="text-orange-700 text-xs mt-1">
+                          Du behöver beställa {remainingQuantity} produkter till
+                        </p>
+                      </div>
+                    )}
+                    
                     <button 
                       onClick={handleSubmitOrder}
-                      disabled={loading}
-                      className="bg-blue-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full"
+                      disabled={loading || !isFormComplete}
+                      className={`px-4 py-3 rounded-lg font-medium transition-colors w-full ${
+                        isFormComplete
+                          ? 'bg-blue-600 text-white hover:bg-blue-700'
+                          : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                      } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                      {loading ? 'Bearbetar...' : 'Bekräfta beställning'}
+                      {loading ? 'Bearbetar...' : 
+                       !isFormComplete ? `Minst ${MINIMUM_ORDER_QUANTITY} produkter krävs` :
+                       'Bekräfta beställning'}
                     </button>
                   </div>
                 </div>
               ) : (
                 <div className="bg-gray-100 p-6 rounded-lg border border-gray-200 text-center">
                   <h3 className="text-lg font-medium text-gray-600 mb-2">Orderöversikt</h3>
-                  <p className="text-sm text-gray-500 mb-4">
+                  <p className="text-sm text-gray-500 mb-2">
                     Välj produkter och kvantiteter för att se din orderöversikt
+                  </p>
+                  <p className="text-sm font-medium text-orange-600 mb-4">
+                    Minsta beställning: {MINIMUM_ORDER_QUANTITY} produkter
                   </p>
                   <div className="text-4xl text-gray-300 mb-2">
                     <svg className="w-16 h-16 mx-auto" fill="currentColor" viewBox="0 0 24 24">
