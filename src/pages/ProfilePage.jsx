@@ -235,7 +235,7 @@ const ProfilePage = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md">
+      <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-md">
         {/* Header */}
         <div className="px-4 md:px-6 py-4 md:py-5 border-b border-gray-200">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

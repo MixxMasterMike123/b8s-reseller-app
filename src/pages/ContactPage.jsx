@@ -1,10 +1,17 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import AppLayout from '../components/layout/AppLayout';
+import { 
+  ShoppingCartIcon, 
+  ClipboardDocumentListIcon,
+  CubeIcon,
+  PresentationChartBarIcon
+} from '@heroicons/react/24/outline';
 
 const ContactPage = () => {
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header Section */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg shadow-lg p-8 mb-8 text-white">
           <div className="text-center">
@@ -145,45 +152,64 @@ const ContactPage = () => {
           </div>
         </div>
 
-        {/* Quick Links Section */}
-        <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg shadow-lg p-8">
+        {/* Quick Navigation - Same as Dashboard */}
+        <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
             🔗 Snabblänkar
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a 
-              href="/order" 
-              className="bg-white p-4 rounded-lg shadow hover:shadow-md transition duration-200 text-center border border-gray-200 hover:border-blue-300"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <Link
+              to="/order"
+              className="bg-white border border-gray-200 rounded-lg p-4 md:p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group min-h-[88px] md:min-h-0"
             >
-              <svg className="w-8 h-8 mx-auto mb-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              <h3 className="font-semibold text-gray-800">Lägg beställning</h3>
-              <p className="text-sm text-gray-600">Skapa ny order</p>
-            </a>
+              <div className="flex items-center mb-3">
+                <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
+                  <ShoppingCartIcon className="h-6 w-6 text-blue-600" />
+                </div>
+                <h3 className="ml-3 text-base font-medium text-gray-900">Lägg en beställning</h3>
+              </div>
+              <p className="text-sm text-gray-600">Skapa en ny beställning för dina kunder</p>
+            </Link>
             
-            <a 
-              href="/orders" 
-              className="bg-white p-4 rounded-lg shadow hover:shadow-md transition duration-200 text-center border border-gray-200 hover:border-blue-300"
+            <Link
+              to="/orders"
+              className="bg-white border border-gray-200 rounded-lg p-4 md:p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group min-h-[88px] md:min-h-0"
             >
-              <svg className="w-8 h-8 mx-auto mb-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <h3 className="font-semibold text-gray-800">Orderhistorik</h3>
-              <p className="text-sm text-gray-600">Se tidigare beställningar</p>
-            </a>
-            
-            <a 
-              href="/profile" 
-              className="bg-white p-4 rounded-lg shadow hover:shadow-md transition duration-200 text-center border border-gray-200 hover:border-blue-300"
+              <div className="flex items-center mb-3">
+                <div className="p-2 bg-green-50 rounded-lg group-hover:bg-green-100 transition-colors">
+                  <ClipboardDocumentListIcon className="h-6 w-6 text-green-600" />
+                </div>
+                <h3 className="ml-3 text-base font-medium text-gray-900">Orderhistorik</h3>
+              </div>
+              <p className="text-sm text-gray-600">Visa och spåra dina tidigare beställningar</p>
+            </Link>
+
+            <Link
+              to="/products"
+              className="bg-white border border-gray-200 rounded-lg p-4 md:p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group min-h-[88px] md:min-h-0"
             >
-              <svg className="w-8 h-8 mx-auto mb-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <h3 className="font-semibold text-gray-800">Profil</h3>
-              <p className="text-sm text-gray-600">Uppdatera uppgifter</p>
-            </a>
+              <div className="flex items-center mb-3">
+                <div className="p-2 bg-purple-50 rounded-lg group-hover:bg-purple-100 transition-colors">
+                  <CubeIcon className="h-6 w-6 text-purple-600" />
+                </div>
+                <h3 className="ml-3 text-base font-medium text-gray-900">Produktkatalog</h3>
+              </div>
+              <p className="text-sm text-gray-600">Bläddra och ladda ner produktinformation</p>
+            </Link>
+
+            <Link
+              to="/marketing"
+              className="bg-white border border-gray-200 rounded-lg p-4 md:p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group min-h-[88px] md:min-h-0"
+            >
+              <div className="flex items-center mb-3">
+                <div className="p-2 bg-orange-50 rounded-lg group-hover:bg-orange-100 transition-colors">
+                  <PresentationChartBarIcon className="h-6 w-6 text-orange-600" />
+                </div>
+                <h3 className="ml-3 text-base font-medium text-gray-900">Marknadsföringsmaterial</h3>
+              </div>
+              <p className="text-sm text-gray-600">Ladda ner broschyrer och marknadsföringsmaterial</p>
+            </Link>
           </div>
         </div>
       </div>

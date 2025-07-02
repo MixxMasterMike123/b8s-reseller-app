@@ -1,11 +1,22 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { db, functions } from '../../firebase/config';
-import { collection, getDocs, doc, deleteDoc, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc, updateDoc, query, where, orderBy } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
-import { UsersIcon, CheckCircleIcon, ClockIcon, ChartBarIcon, CursorArrowRaysIcon, TrashIcon, PencilIcon, BanknotesIcon } from '@heroicons/react/24/outline';
+import { 
+  UsersIcon, 
+  CheckCircleIcon, 
+  ClockIcon, 
+  ChartBarIcon, 
+  CursorArrowRaysIcon, 
+  TrashIcon, 
+  PencilIcon, 
+  BanknotesIcon,
+  StopIcon,
+  PlayIcon
+} from '@heroicons/react/24/outline';
 
 const StatCard = ({ icon, title, value, color }) => (
   <div className="bg-white p-6 rounded-2xl shadow-lg flex items-center space-x-4">
@@ -95,6 +106,48 @@ const AdminAffiliates = () => {
     } catch (error) {
       console.error("Error denying affiliate: ", error);
       toast.error('Kunde inte neka ansökan.', { id: toastId });
+    }
+  };
+
+  const handleDeleteAffiliate = async (affiliateId, affiliateName) => {
+    if (!window.confirm(`Är du säker på att du vill radera affiliate "${affiliateName}"? Detta kan inte ångras.`)) {
+      return;
+    }
+    
+    const toastId = toast.loading('Raderar affiliate...');
+    try {
+      // Delete the affiliate document
+      await deleteDoc(doc(db, 'affiliates', affiliateId));
+      
+      toast.success(`Affiliate "${affiliateName}" har raderats.`, { id: toastId });
+      fetchData(); // Refresh the list
+    } catch (error) {
+      console.error("Error deleting affiliate: ", error);
+      toast.error(`Kunde inte radera affiliate: ${error.message}`, { id: toastId });
+    }
+  };
+
+  const handleToggleAffiliateStatus = async (affiliateId, currentStatus, affiliateName) => {
+    const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
+    const actionText = newStatus === 'active' ? 'aktivera' : 'suspendra';
+    
+    if (!window.confirm(`Är du säker på att du vill ${actionText} affiliate "${affiliateName}"?`)) {
+      return;
+    }
+    
+    const toastId = toast.loading(`${actionText === 'aktivera' ? 'Aktiverar' : 'Suspenderar'} affiliate...`);
+    try {
+      // Update the affiliate status
+      await updateDoc(doc(db, 'affiliates', affiliateId), {
+        status: newStatus,
+        updatedAt: new Date().toISOString()
+      });
+      
+      toast.success(`Affiliate "${affiliateName}" har ${newStatus === 'active' ? 'aktiverats' : 'suspenderats'}.`, { id: toastId });
+      fetchData(); // Refresh the list
+    } catch (error) {
+      console.error("Error updating affiliate status: ", error);
+      toast.error(`Kunde inte uppdatera affiliate-status: ${error.message}`, { id: toastId });
     }
   };
 
@@ -261,24 +314,61 @@ const AdminAffiliates = () => {
                       </dl>
                     </div>
                   </div>
-                  <div className="mt-6 flex justify-end space-x-2">
-                    <button
-                      onClick={() => navigate(`/admin/affiliates/manage/${affiliate.id}`)}
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      <PencilIcon className="h-5 w-5 mr-2" />
-                      Hantera
-                    </button>
-                    
-                    {affiliate.stats?.balance > 0 && (
+                  
+                  {/* Action Buttons */}
+                  <div className="mt-6 space-y-3">
+                    {/* Primary Actions Row */}
+                    <div className="flex justify-between space-x-2">
                       <button
-                        onClick={() => navigate(`/admin/affiliates/payout/${affiliate.id}`)}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                        onClick={() => navigate(`/admin/affiliates/manage/${affiliate.id}`)}
+                        className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                       >
-                        <BanknotesIcon className="h-5 w-5 mr-2" />
-                        Betala
+                        <PencilIcon className="h-4 w-4 mr-1" />
+                        Hantera
                       </button>
-                    )}
+                      
+                      {affiliate.stats?.balance > 0 && (
+                        <button
+                          onClick={() => navigate(`/admin/affiliates/payout/${affiliate.id}`)}
+                          className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                        >
+                          <BanknotesIcon className="h-4 w-4 mr-1" />
+                          Betala
+                        </button>
+                      )}
+                    </div>
+                    
+                    {/* Secondary Actions Row */}
+                    <div className="flex justify-between space-x-2">
+                      <button
+                        onClick={() => handleToggleAffiliateStatus(affiliate.id, affiliate.status, affiliate.name)}
+                        className={`flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                          affiliate.status === 'active' 
+                            ? 'bg-orange-600 hover:bg-orange-700 focus:ring-orange-500' 
+                            : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
+                        }`}
+                      >
+                        {affiliate.status === 'active' ? (
+                          <>
+                            <StopIcon className="h-4 w-4 mr-1" />
+                            Suspendra
+                          </>
+                        ) : (
+                          <>
+                            <PlayIcon className="h-4 w-4 mr-1" />
+                            Aktivera
+                          </>
+                        )}
+                      </button>
+                      
+                      <button
+                        onClick={() => handleDeleteAffiliate(affiliate.id, affiliate.name)}
+                        className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      >
+                        <TrashIcon className="h-4 w-4 mr-1" />
+                        Radera
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
