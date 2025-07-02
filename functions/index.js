@@ -10,15 +10,39 @@ const cors = require('cors')({
 });
 const APP_URLS = require('./config');
 
-// 🛡️ CRITICAL: Import rate limiting protection to prevent massive billing
-const { 
-  strictRateLimit, 
-  standardRateLimit, 
-  publicRateLimit, 
-  validateOrigin, 
-  trackUsage,
-  getUsageStats 
-} = require('./rateLimiting');
+// 🛡️ RATE LIMITING CONFIGURATION
+// Adjust these based on your business needs and customer growth
+const RATE_LIMITS = {
+  // AI/Content Generation (expensive operations)
+  AI_REQUESTS: {
+    perMinute: 30,      // 30 requests/minute per IP (good for 10-20 active users per IP)
+    windowMs: 60000     // 1 minute window
+  },
+  
+  // Order Processing (business critical)
+  ORDER_PROCESSING: {
+    perWindow: 15,      // 15 orders per 5 minutes per IP (handles bulk customers)
+    windowMs: 300000    // 5 minute window
+  },
+  
+  // Email Sending (spam prevention)
+  EMAIL_SENDING: {
+    perMinute: 20,      // 20 emails/minute per IP (handles status updates)
+    windowMs: 60000     // 1 minute window
+  },
+  
+  // Weather/Data API calls (moderate cost)
+  API_CALLS: {
+    perMinute: 100,     // 100 calls/minute per IP (generous for legitimate use)
+    windowMs: 60000     // 1 minute window
+  }
+};
+
+// Business Scale Recommendations:
+// SMALL (1-50 customers):     Current limits are perfect
+// MEDIUM (50-200 customers):  Increase AI_REQUESTS to 50, ORDER_PROCESSING to 25  
+// LARGE (200+ customers):     Increase AI_REQUESTS to 100, ORDER_PROCESSING to 50
+// Consider moving to per-user limits instead of per-IP for large scale
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -1817,113 +1841,132 @@ exports.sendOrderConfirmationHttp = functions.https.onRequest(async (req, res) =
 });
 
 // HTTP-triggered email function for status updates (called from frontend)
-// 🛡️ PROTECTED: Email functions need rate limiting to prevent spam
 exports.sendStatusUpdateHttp = functions.https.onRequest(async (req, res) => {
-  // 🛡️ PROTECTION: Apply standard rate limiting for email operations
-  standardRateLimit(req, res, () => {
-    validateOrigin(req, res, () => {
-      trackUsage(req, res, async () => {
-        
-        try {
-          // Enable CORS
-          res.set('Access-Control-Allow-Origin', '*');
-          res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-          res.set('Access-Control-Allow-Headers', 'Content-Type');
-          
-          if (req.method === 'OPTIONS') {
-            res.status(200).send();
-            return;
-          }
-          
-          if (req.method !== 'POST') {
-            res.status(405).json({ success: false, error: 'Method not allowed' });
-            return;
-          }
-
-          const { orderId, orderData, userData, oldStatus, newStatus } = req.body;
-          
-          if (!orderId || !orderData || !userData || !newStatus) {
-            res.status(400).json({ 
-              success: false, 
-              error: 'Missing required data: orderId, orderData, userData, newStatus' 
-            });
-            return;
-          }
-          
-          console.log(`Sending status update emails for order ${orderId}: ${oldStatus} -> ${newStatus}`);
-          
-          // Get email template for the new status
-          const template = getEmailTemplate(newStatus, orderData, userData);
-          
-          // Customer status update email
-          const customerEmail = {
-            from: `"B8Shield" <info@b8shield.com>`,
-            to: userData.email,
-            subject: template.subject,
-            text: template.text,
-            html: template.html,
-          };
-          
-          // Send customer email
-          await transporter.sendMail(customerEmail);
-          
-          // Also notify admin for important status changes
-          if (['shipped', 'delivered', 'cancelled'].includes(newStatus)) {
-            const adminEmail = {
-              from: `"B8Shield System" <info@b8shield.com>`,
-              to: "micke.ohlen@gmail.com",
-              subject: `Order Status Update: ${orderData.orderNumber}`,
-              text: `
-                Order ${orderData.orderNumber} status has been updated to: ${newStatus}
-                
-                Customer: ${userData.companyName} (${userData.email})
-                Contact: ${userData.contactPerson}
-                
-                ${orderData.trackingNumber ? `Tracking: ${orderData.trackingNumber}` : ''}
-                ${orderData.carrier ? `Carrier: ${orderData.carrier}` : ''}
-              `,
-              html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                  <div style="text-align: center; margin-bottom: 30px;">
-                    <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
-                  </div>
-                  <h2>Order Status Update</h2>
-                  <p><strong>Order:</strong> ${orderData.orderNumber}</p>
-                  <p><strong>New Status:</strong> ${newStatus}</p>
-                  
-                  <h3>Customer:</h3>
-                  <p>${userData.companyName} (${userData.email})<br>
-                  Contact: ${userData.contactPerson}</p>
-                  
-                  ${orderData.trackingNumber ? `<p><strong>Tracking:</strong> ${orderData.trackingNumber}</p>` : ''}
-                  ${orderData.carrier ? `<p><strong>Carrier:</strong> ${orderData.carrier}</p>` : ''}
-                </div>
-              `,
-            };
-            
-            await transporter.sendMail(adminEmail);
-          }
-          
-          console.log(`Status update emails sent for order ${orderId}: ${oldStatus} -> ${newStatus}`);
-          
-          res.status(200).json({
-            success: true,
-            message: 'Status update emails sent successfully',
-            orderId: orderId,
-            orderNumber: orderData.orderNumber,
-            status: newStatus
-          });
-          
-        } catch (error) {
-          console.error('Error sending status update emails:', error);
-          res.status(500).json({ 
-            success: false, 
-            error: error.message 
-          });
-        }
-      });
+  // 🛡️ EMAIL SPAM PROTECTION: Limit email sending per IP
+  const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+  const now = Date.now();
+  const windowMs = 60000; // 1 minute window
+  const maxEmails = 10; // Max 10 emails per minute per IP
+  
+  if (!global.emailRateLimit) global.emailRateLimit = new Map();
+  
+  const ipEmails = global.emailRateLimit.get(clientIP) || [];
+  const recentEmails = ipEmails.filter(time => now - time < windowMs);
+  
+  if (recentEmails.length >= maxEmails) {
+    console.warn(`🚫 Email spam detected from IP: ${clientIP}`);
+    res.status(429).json({ 
+      success: false,
+      error: 'Too many email requests. Please wait before trying again.',
+      retryAfter: 60 
     });
-  });
+    return;
+  }
+  
+  // Track this email request
+  recentEmails.push(now);
+  global.emailRateLimit.set(clientIP, recentEmails);
+  
+  console.log(`📧 Email request from IP: ${clientIP} (${recentEmails.length}/${maxEmails} this minute)`);
+
+  try {
+    // Enable CORS
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+    
+    if (req.method === 'OPTIONS') {
+      res.status(200).send();
+      return;
+    }
+    
+    if (req.method !== 'POST') {
+      res.status(405).json({ success: false, error: 'Method not allowed' });
+      return;
+    }
+    
+    const { orderId, orderData, userData, oldStatus, newStatus } = req.body;
+    
+    if (!orderId || !orderData || !userData || !newStatus) {
+      res.status(400).json({ 
+        success: false, 
+        error: 'Missing required data: orderId, orderData, userData, newStatus' 
+      });
+      return;
+    }
+    
+    console.log(`Sending status update emails for order ${orderId}: ${oldStatus} -> ${newStatus}`);
+    
+    // Get email template for the new status
+    const template = getEmailTemplate(newStatus, orderData, userData);
+    
+    // Customer status update email
+    const customerEmail = {
+      from: `"B8Shield" <info@b8shield.com>`,
+      to: userData.email,
+      subject: template.subject,
+      text: template.text,
+      html: template.html,
+    };
+    
+    // Send customer email
+    await transporter.sendMail(customerEmail);
+    
+    // Also notify admin for important status changes
+    if (['shipped', 'delivered', 'cancelled'].includes(newStatus)) {
+      const adminEmail = {
+        from: `"B8Shield System" <info@b8shield.com>`,
+        to: "micke.ohlen@gmail.com",
+        subject: `Order Status Update: ${orderData.orderNumber}`,
+        text: `
+          Order ${orderData.orderNumber} status has been updated to: ${newStatus}
+          
+          Customer: ${userData.companyName} (${userData.email})
+          Contact: ${userData.contactPerson}
+          
+          ${orderData.trackingNumber ? `Tracking: ${orderData.trackingNumber}` : ''}
+          ${orderData.carrier ? `Carrier: ${orderData.carrier}` : ''}
+        `,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
+            </div>
+            <h2>Order Status Update</h2>
+            <p><strong>Order:</strong> ${orderData.orderNumber}</p>
+            <p><strong>New Status:</strong> ${newStatus}</p>
+            
+            <h3>Customer:</h3>
+            <p>${userData.companyName} (${userData.email})<br>
+            Contact: ${userData.contactPerson}</p>
+            
+            ${orderData.trackingNumber ? `<p><strong>Tracking:</strong> ${orderData.trackingNumber}</p>` : ''}
+            ${orderData.carrier ? `<p><strong>Carrier:</strong> ${orderData.carrier}</p>` : ''}
+          </div>
+        `,
+      };
+      
+      await transporter.sendMail(adminEmail);
+    }
+    
+    console.log(`Status update emails sent for order ${orderId}: ${oldStatus} -> ${newStatus}`);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Status update emails sent successfully',
+      orderId: orderId,
+      orderNumber: orderData.orderNumber,
+      status: newStatus
+    });
+    
+  } catch (error) {
+    console.error('Error sending status update emails:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
 
 // Add this new endpoint
 exports.productFeed = functions.https.onRequest(async (req, res) => {
@@ -1976,7 +2019,6 @@ exports.productFeed = functions.https.onRequest(async (req, res) => {
 
 /**
  * [NEW] HTTP endpoint for B2C order processing
- * 🛡️ PROTECTED: Order processing needs strict rate limiting to prevent spam orders
  */
 exports.processB2COrderCompletionHttp = functions
   .runWith({
@@ -1985,123 +2027,144 @@ exports.processB2COrderCompletionHttp = functions
   })
   .region('us-central1')
   .https.onRequest(async (req, res) => {
-    // 🛡️ CRITICAL PROTECTION: Apply strict rate limiting for expensive order operations
-    strictRateLimit(req, res, () => {
-      validateOrigin(req, res, () => {
-        trackUsage(req, res, async () => {
-          
-          // Enable CORS with more permissive settings for testing
-          res.set('Access-Control-Allow-Origin', '*');
-          res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-          res.set('Access-Control-Allow-Headers', '*');
-          res.set('Access-Control-Max-Age', '3600');
-
-          // Handle preflight requests
-          if (req.method === 'OPTIONS') {
-            res.status(204).send('');
-            return;
-          }
-
-          // Only allow POST
-          if (req.method !== 'POST') {
-            res.status(405).send('Method Not Allowed');
-            return;
-          }
-
-          try {
-            const { orderId } = req.body;
-
-            if (!orderId) {
-              res.status(400).json({ 
-                success: false, 
-                error: 'The function must be called with an "orderId".' 
-              });
-              return;
-            }
-
-            console.log(`Processing B2C order completion for orderId: ${orderId}`);
-            const localDb = db; // Use the correct named database
-
-            // --- Start of Affiliate Conversion Logic ---
-            const orderRef = localDb.collection('orders').doc(orderId);
-            const orderSnap = await orderRef.get();
-
-            if (!orderSnap.exists) {
-              console.error(`Order ${orderId} not found in b8s-reseller-db.`);
-              res.status(404).json({ 
-                success: false, 
-                error: `Order ${orderId} not found in database` 
-              });
-              return;
-            }
-
-            const orderData = orderSnap.data();
-            const { affiliateCode } = orderData;
-
-            if (!affiliateCode) {
-              console.log('No affiliate code found for order, skipping commission.');
-              res.json({ success: true, message: 'Order processed (no affiliate)' });
-              return;
-            }
-
-            // Get affiliate details
-            const affiliateSnap = await localDb
-              .collection('affiliates')
-              .where('affiliateCode', '==', affiliateCode)
-              .where('status', '==', 'active')
-              .limit(1)
-              .get();
-
-            if (affiliateSnap.empty) {
-              console.error(`No active affiliate found for code: ${affiliateCode}`);
-              res.json({ success: true, message: 'Order processed (invalid affiliate)' });
-              return;
-            }
-
-            const affiliateDoc = affiliateSnap.docs[0];
-            const affiliate = affiliateDoc.data();
-
-            // Calculate commission
-            const orderTotal = orderData.total || 0;
-            const commissionRate = affiliate.commissionRate || 15; // Default 15%
-            const commissionAmount = (orderTotal * (commissionRate / 100));
-
-            // Update affiliate stats
-            await affiliateDoc.ref.update({
-              'stats.conversions': FieldValue.increment(1),
-              'stats.totalEarnings': FieldValue.increment(commissionAmount),
-              'stats.balance': FieldValue.increment(commissionAmount)
-            });
-
-            // Update the click to mark conversion
-            if (orderData.affiliateClickId) {
-              await localDb
-                .collection('affiliateClicks')
-                .doc(orderData.affiliateClickId)
-                .update({
-                  converted: true,
-                  orderId: orderId,
-                  commissionAmount: commissionAmount
-                });
-            }
-
-            console.log(`Successfully processed affiliate commission for order ${orderId}`);
-            res.json({ 
-              success: true, 
-              message: 'Order processed with affiliate commission',
-              commission: commissionAmount 
-            });
-
-          } catch (error) {
-            console.error('Error processing B2C order completion:', error);
-            res.status(500).json({ 
-              success: false, 
-              error: 'Internal server error processing order' 
-            });
-          }
-        });
+    // 🛡️ ORDER SPAM PROTECTION: Limit order processing per IP
+    const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    const windowMs = RATE_LIMITS.ORDER_PROCESSING.windowMs;
+    const maxOrders = RATE_LIMITS.ORDER_PROCESSING.perWindow;
+    
+    if (!global.orderRateLimit) global.orderRateLimit = new Map();
+    
+    const ipOrders = global.orderRateLimit.get(clientIP) || [];
+    const recentOrders = ipOrders.filter(time => now - time < windowMs);
+    
+    if (recentOrders.length >= maxOrders) {
+      console.warn(`🚫 Order spam detected from IP: ${clientIP}`);
+      res.status(429).json({ 
+        success: false,
+        error: 'Order processing limit reached. Please wait 5 minutes before placing more orders.',
+        retryAfter: Math.ceil(windowMs / 1000),
+        limit: maxOrders,
+        window: '5 minutes'
       });
-    });
+      return;
+    }
+    
+    // Track this order request
+    recentOrders.push(now);
+    global.orderRateLimit.set(clientIP, recentOrders);
+    
+    console.log(`📦 Order processing request from IP: ${clientIP} (${recentOrders.length}/${maxOrders} in ${Math.ceil(windowMs/60000)} min)`);
+
+    // Enable CORS with more permissive settings for testing
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', '*');
+    res.set('Access-Control-Max-Age', '3600');
+
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    // Only allow POST
+    if (req.method !== 'POST') {
+      res.status(405).send('Method Not Allowed');
+      return;
+    }
+
+    try {
+      const { orderId } = req.body;
+
+      if (!orderId) {
+        res.status(400).json({ 
+          success: false, 
+          error: 'The function must be called with an "orderId".' 
+        });
+        return;
+      }
+
+      console.log(`Processing B2C order completion for orderId: ${orderId}`);
+      const localDb = db; // Use the correct named database
+
+      // --- Start of Affiliate Conversion Logic ---
+      const orderRef = localDb.collection('orders').doc(orderId);
+      const orderSnap = await orderRef.get();
+
+      if (!orderSnap.exists) {
+        console.error(`Order ${orderId} not found in b8s-reseller-db.`);
+        res.status(404).json({ 
+          success: false, 
+          error: `Order ${orderId} not found in database` 
+        });
+        return;
+      }
+
+      const orderData = orderSnap.data();
+      const { affiliateCode } = orderData;
+
+      if (!affiliateCode) {
+        console.log('No affiliate code found for order, skipping commission.');
+        res.json({ success: true, message: 'Order processed (no affiliate)' });
+        return;
+      }
+
+      // Get affiliate details
+      const affiliateSnap = await localDb
+        .collection('affiliates')
+        .where('affiliateCode', '==', affiliateCode)
+        .where('status', '==', 'active')
+        .limit(1)
+        .get();
+
+      if (affiliateSnap.empty) {
+        console.error(`No active affiliate found for code: ${affiliateCode}`);
+        res.json({ success: true, message: 'Order processed (invalid affiliate)' });
+        return;
+      }
+
+      const affiliateDoc = affiliateSnap.docs[0];
+      const affiliate = affiliateDoc.data();
+
+      // Calculate commission
+      const orderTotal = orderData.total || 0;
+      const commissionRate = affiliate.commissionRate || 15; // Default 15%
+      const commissionAmount = (orderTotal * (commissionRate / 100));
+
+      // Update affiliate stats
+      await affiliateDoc.ref.update({
+        'stats.conversions': FieldValue.increment(1),
+        'stats.totalEarnings': FieldValue.increment(commissionAmount),
+        'stats.balance': FieldValue.increment(commissionAmount)
+      });
+
+      // Update the click to mark conversion
+      if (orderData.affiliateClickId) {
+        await localDb
+          .collection('affiliateClicks')
+          .doc(orderData.affiliateClickId)
+          .update({
+            converted: true,
+            orderId: orderId,
+            commissionAmount: commissionAmount
+          });
+      }
+
+      console.log(`Successfully processed affiliate commission for order ${orderId}`);
+      res.json({ 
+        success: true, 
+        message: 'Order processed with affiliate commission',
+        commission: commissionAmount 
+      });
+
+    } catch (error) {
+      console.error('Error processing B2C order completion:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Internal server error processing order' 
+      });
+    }
   });
 
 // Keep the original callable function unchanged
@@ -2357,75 +2420,146 @@ exports.logAffiliateClickHttp = functions
 /**
  * [NEW] Claude API Proxy for Writer's Wagon™
  * Handles AI content generation requests to avoid CORS issues
- * 🛡️ PROTECTED: Rate limited to prevent massive AI costs from bot attacks
  */
 exports.generateContentWithClaude = functions
   .region('us-central1')
   .https.onRequest(async (req, res) => {
-    // 🛡️ CRITICAL PROTECTION: Apply strict rate limiting for expensive AI operations
-    strictRateLimit(req, res, () => {
-      validateOrigin(req, res, () => {
-        trackUsage(req, res, async () => {
-          
-          // Enable CORS for B8Shield domains
-          const allowedOrigins = [
-            '${APP_URLS.B2B_PORTAL}',
-            'https://shop.b8shield.com',
-            'http://localhost:5173', // Local development
-            'http://localhost:3000'  // Alternative local port
-          ];
-          
-          const origin = req.headers.origin;
-          if (allowedOrigins.includes(origin)) {
-            res.set('Access-Control-Allow-Origin', origin);
-          }
-          
-          res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-          res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-          res.set('Access-Control-Max-Age', '3600');
-
-          // Handle preflight requests
-          if (req.method === 'OPTIONS') {
-            res.status(204).send('');
-            return;
-          }
-
-          // Only allow POST
-          if (req.method !== 'POST') {
-            res.status(405).json({ error: 'Method Not Allowed' });
-            return;
-          }
-
-          try {
-            const { prompt, model, maxTokens, temperature } = req.body;
-
-            if (!prompt) {
-              res.status(400).json({ error: 'Prompt is required' });
-              return;
-            }
-
-            // Log usage for monitoring
-            console.log(`🤖 AI Generation request from IP: ${req.ip || 'unknown'}`);
-            console.log(`📊 Current usage stats:`, getUsageStats());
-
-            // Your existing Claude API logic here...
-            res.status(200).json({ 
-              success: true, 
-              message: 'AI generation completed',
-              usage: getUsageStats()
-            });
-
-          } catch (error) {
-            console.error('Error generating content with Claude:', error);
-            res.status(500).json({
-              success: false,
-              error: 'Failed to generate content',
-              details: error.message
-            });
-          }
-        });
+    // 🛡️ SIMPLE RATE LIMITING: Track requests per IP
+    const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    const windowMs = RATE_LIMITS.AI_REQUESTS.windowMs;
+    const maxRequests = RATE_LIMITS.AI_REQUESTS.perMinute;
+    
+    // Simple in-memory rate limiting (resets on function cold start)
+    if (!global.aiRateLimit) global.aiRateLimit = new Map();
+    
+    const ipRequests = global.aiRateLimit.get(clientIP) || [];
+    const recentRequests = ipRequests.filter(time => now - time < windowMs);
+    
+    if (recentRequests.length >= maxRequests) {
+      console.warn(`🚫 AI Rate limit exceeded for IP: ${clientIP}`);
+      res.status(429).json({ 
+        error: 'AI usage limit reached. Please wait 1 minute before trying again.',
+        retryAfter: Math.ceil(windowMs / 1000),
+        limit: maxRequests,
+        window: '1 minute'
       });
-    });
+      return;
+    }
+    
+    // Track this request
+    recentRequests.push(now);
+    global.aiRateLimit.set(clientIP, recentRequests);
+    
+    // 🛡️ COST PROTECTION: Log expensive operations
+    console.log(`🤖 AI Request from IP: ${clientIP} (${recentRequests.length}/${maxRequests} this minute)`);
+
+    // Enable CORS for B8Shield domains
+    const allowedOrigins = [
+      '${APP_URLS.B2B_PORTAL}',
+      'https://shop.b8shield.com',
+      'http://localhost:5173',
+      'http://localhost:3000'
+    ];
+    
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.set('Access-Control-Allow-Origin', origin);
+    }
+    
+    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.set('Access-Control-Max-Age', '3600');
+
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    // Only allow POST
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'Method Not Allowed' });
+      return;
+    }
+
+    try {
+      const { 
+        prompt, 
+        model = 'claude-3-5-sonnet-20241022', 
+        maxTokens = 1000,
+        temperature = 0.7 
+      } = req.body;
+
+      if (!prompt) {
+        res.status(400).json({ error: 'Prompt is required' });
+        return;
+      }
+
+      // Claude API key from environment variables
+      const claudeApiKey = functions.config().claude?.api_key;
+      if (!claudeApiKey) {
+        console.error('Claude API key not configured');
+        res.status(500).json({ error: 'API key not configured' });
+        return;
+      }
+
+      console.log(`🎯 Writer's Wagon: Generating content with ${model}`);
+
+      // Make request to Claude API
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': claudeApiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: model,
+          max_tokens: maxTokens,
+          temperature: temperature,
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Claude API error: ${response.status} - ${errorText}`);
+        res.status(response.status).json({ 
+          error: `Claude API error: ${response.status}`,
+          details: errorText
+        });
+        return;
+      }
+
+      const data = await response.json();
+      
+      // Extract the generated content
+      const generatedContent = data.content?.[0]?.text || 'No content generated';
+      
+      console.log(`✅ Writer's Wagon: Content generated successfully (${generatedContent.length} chars)`);
+
+      // Return the generated content
+      res.status(200).json({
+        success: true,
+        content: generatedContent,
+        model: model,
+        usage: data.usage || {}
+      });
+
+    } catch (error) {
+      console.error('Error generating content with Claude:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to generate content',
+        details: error.message
+      });
+    }
   });
 
 /**
@@ -3066,42 +3200,36 @@ exports.getFishTripNowcastData = functions
 
 /**
  * FishTrip Wagon API Proxy - Claude AI Analysis
- * 🛡️ PROTECTED: AI operations are expensive and need strict rate limiting
  */
 exports.getFishTripAIAnalysis = functions
   .region('us-central1')
   .https.onRequest(async (req, res) => {
-    // 🛡️ CRITICAL PROTECTION: Apply strict rate limiting for expensive AI operations
-    strictRateLimit(req, res, () => {
-      validateOrigin(req, res, () => {
-        trackUsage(req, res, async () => {
-          
-          // Enable CORS for B8Shield domains
-          const allowedOrigins = [
-            '${APP_URLS.B2B_PORTAL}',
-            'https://shop.b8shield.com',
-            'http://localhost:5173',
-            'http://localhost:3000'
-          ];
-          
-          const origin = req.headers.origin;
-          if (allowedOrigins.includes(origin)) {
-            res.set('Access-Control-Allow-Origin', origin);
-          }
-          
-          res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-          res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-          res.set('Access-Control-Max-Age', '3600');
+    // Enable CORS for B8Shield domains
+    const allowedOrigins = [
+      '${APP_URLS.B2B_PORTAL}',
+      'https://shop.b8shield.com',
+      'http://localhost:5173',
+      'http://localhost:3000'
+    ];
+    
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.set('Access-Control-Allow-Origin', origin);
+    }
+    
+    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.set('Access-Control-Max-Age', '3600');
 
-          if (req.method === 'OPTIONS') {
-            res.status(204).send('');
-            return;
-          }
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
 
-          if (req.method !== 'POST') {
-            res.status(405).json({ error: 'Method Not Allowed' });
-            return;
-          }
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'Method Not Allowed' });
+      return;
+    }
 
     try {
       const { 
