@@ -5,14 +5,14 @@ import { MapIcon, CloudIcon } from '@heroicons/react/24/outline';
 import WeatherSearch from './components/WeatherSearch.jsx';
 import WeatherResults from './components/WeatherResults.jsx';
 
-const WeatherWagonManifest = {
-  // Wagon Identity
-  id: 'weather-wagon',
-  name: 'The Weather Wagon',
-  description: 'Fishing weather conditions and location analysis',
+export const WeatherWagonManifest = {
+  // Basic wagon identity
+  id: 'weather-wagon', 
+  name: 'The Weather Wagon™',
   version: '1.0.0',
-  type: 'weather', // Category of functionality
-  enabled: true,
+  description: 'Sophisticated fishing conditions forecasting with Swedish government data',
+  type: 'weather-analytics',
+  enabled: true, // Re-enabled - wasn't causing bundle size issue
 
   // Swedish Terminology
   displayName: 'Väder Vagnen',

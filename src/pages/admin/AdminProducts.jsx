@@ -41,48 +41,38 @@ function AdminProducts() {
   
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
+    id: '',
     name: '',
-    sku: '', // Added SKU field
+    sku: '',
     description: '',
+    size: '',
+    color: '',
     basePrice: 0,
     manufacturingCost: 0,
     isActive: true,
-    size: '',
-    
-    // Legacy fields (backward compatibility)
-    imageUrl: '',
     eanCode: '',
+    imageUrl: '',
     eanImagePngUrl: '',
     eanImageSvgUrl: '',
-    
-    // Enhanced B2B/B2C fields
     b2bImageUrl: '',
-    b2bImageGallery: [],
     b2cImageUrl: '',
-    b2cImageGallery: [],
-    b2cPrice: 0, // B2C price including VAT (moms)
-    
-    // Market availability
+    b2cPrice: 0,
     availability: {
       b2b: true,
       b2c: true,
       b2bMinQuantity: 1,
       b2cMaxQuantity: 10
     },
-    
-    // Market-specific descriptions
     descriptions: {
       b2b: '',
       b2c: ''
     },
-    
-    // Google Merchant Center fields
     weight: {
       value: 0,
-      unit: 'g' // g, kg, oz, lb
+      unit: 'g'
     },
     dimensions: {
-      length: { value: 0, unit: 'mm' }, // mm, cm, in
+      length: { value: 0, unit: 'mm' },
       width: { value: 0, unit: 'mm' },
       height: { value: 0, unit: 'mm' }
     },
@@ -138,52 +128,41 @@ function AdminProducts() {
   const handleAddNewClick = () => {
     setSelectedProduct(null);
     setFormData({
+      id: '',
       name: '',
-      sku: '', // Added SKU field
+      sku: '',
       description: '',
+      size: '',
+      color: '',
       basePrice: 0,
       manufacturingCost: 0,
       isActive: true,
-      size: '',
-      color: '',
-      
-      // Legacy fields (backward compatibility)
-      imageUrl: '',
       eanCode: '',
+      imageUrl: '',
       eanImagePngUrl: '',
       eanImageSvgUrl: '',
-      
-      // Enhanced B2B/B2C fields
       b2bImageUrl: '',
-      b2bImageGallery: [],
       b2cImageUrl: '',
-      b2cImageGallery: [],
-      b2cPrice: 0, // B2C price including VAT (moms)
-      
-      // Market availability
+      b2cPrice: 0,
       availability: {
         b2b: true,
         b2c: true,
         b2bMinQuantity: 1,
         b2cMaxQuantity: 10
       },
-      
-      // Market-specific descriptions
       descriptions: {
         b2b: '',
         b2c: ''
       },
-      
-      // Google Merchant Center fields
       weight: {
         value: 0,
-        unit: 'g' // g, kg, oz, lb
+        unit: 'g'
       },
-              dimensions: {
-          length: { value: 0, unit: 'mm' }, // mm, cm, in
-          width: { value: 0, unit: 'mm' },
-          height: { value: 0, unit: 'mm' }
-        },
+      dimensions: {
+        length: { value: 0, unit: 'mm' },
+        width: { value: 0, unit: 'mm' },
+        height: { value: 0, unit: 'mm' }
+      },
       shipping: {
         sweden: { cost: 0, service: 'Standard' },
         nordic: { cost: 0, service: 'Nordic' },
@@ -210,43 +189,32 @@ function AdminProducts() {
   const handleEditClick = (product) => {
     setSelectedProduct(product);
     setFormData({
+      id: product.id || '',
       name: product.name || '',
-      sku: product.sku || '', // Added SKU field
+      sku: product.sku || '',
       description: product.description || '',
-      basePrice: product.basePrice || 0,
-      manufacturingCost: product.manufacturingCost || 0,
-      isActive: product.isActive !== false,
       size: product.size || '',
       color: product.color || '',
-      
-      // Legacy fields (backward compatibility)
-      imageUrl: product.imageUrl || product.imageData || '',
+      basePrice: product.basePrice || 0,
+      manufacturingCost: product.manufacturingCost || 0,
+      isActive: product.isActive ?? true,
       eanCode: product.eanCode || '',
-      eanImagePngUrl: product.eanImagePngUrl || product.eanImagePng || '',
-      eanImageSvgUrl: product.eanImageSvgUrl || product.eanImageSvg || '',
-      
-      // Enhanced B2B/B2C fields
+      imageUrl: product.imageUrl || '',
+      eanImagePngUrl: product.eanImagePngUrl || '',
+      eanImageSvgUrl: product.eanImageSvgUrl || '',
       b2bImageUrl: product.b2bImageUrl || '',
-      b2bImageGallery: product.b2bImageGallery || [],
       b2cImageUrl: product.b2cImageUrl || '',
-      b2cImageGallery: product.b2cImageGallery || [],
-      b2cPrice: product.b2cPrice || 0, // B2C price including VAT (moms)
-      
-      // Market availability
+      b2cPrice: product.b2cPrice || 0,
       availability: {
         b2b: product.availability?.b2b !== false,
         b2c: product.availability?.b2c !== false,
         b2bMinQuantity: product.availability?.b2bMinQuantity || 1,
         b2cMaxQuantity: product.availability?.b2cMaxQuantity || 10
       },
-      
-      // Market-specific descriptions
       descriptions: {
         b2b: product.descriptions?.b2b || '',
         b2c: product.descriptions?.b2c || ''
       },
-      
-      // Google Merchant Center fields
       weight: {
         value: product.weight?.value || 0,
         unit: product.weight?.unit || 'g'
@@ -287,11 +255,11 @@ function AdminProducts() {
     
     // Reset all image states
     setB2bImageFile(null);
-    setB2bImagePreview(product.b2bImageUrl || product.imageUrl || product.imageData || null);
+    setB2bImagePreview(product.b2bImageUrl || product.imageUrl || null);
     setEanPngFile(null);
-    setEanPngPreview(product.eanImagePngUrl || product.eanImagePng || null);
+    setEanPngPreview(product.eanImagePngUrl || null);
     setEanSvgFile(null);
-    setEanSvgPreview(product.eanImageSvgUrl || product.eanImageSvg || null);
+    setEanSvgPreview(product.eanImageSvgUrl || null);
     setB2cImageFile(null);
     setB2cImagePreview(product.b2cImageUrl || null);
     setB2cGalleryFiles([]);
@@ -464,59 +432,39 @@ function AdminProducts() {
         console.log('📤 Uploading B2B image...');
         const b2bImageUrl = await uploadImageToStorage(b2bImageFile, productId, 'b2b');
         finalProductData.b2bImageUrl = b2bImageUrl;
-        
-        // Remove legacy b2bImageData field if it exists
-        if (finalProductData.b2bImageData) {
-          delete finalProductData.b2bImageData;
-        }
       }
       
       if (eanPngFile) {
         console.log('📤 Uploading EAN PNG image...');
         const eanPngUrl = await uploadImageToStorage(eanPngFile, productId, 'ean_png');
         finalProductData.eanImagePngUrl = eanPngUrl;
-        
-        // Remove legacy eanImagePng field if it exists
-        if (finalProductData.eanImagePng) {
-          delete finalProductData.eanImagePng;
-        }
       }
       
       if (eanSvgFile) {
         console.log('📤 Uploading EAN SVG image...');
         const eanSvgUrl = await uploadImageToStorage(eanSvgFile, productId, 'ean_svg');
         finalProductData.eanImageSvgUrl = eanSvgUrl;
-        
-        // Remove legacy eanImageSvg field if it exists
-        if (finalProductData.eanImageSvg) {
-          delete finalProductData.eanImageSvg;
-        }
       }
       
-             if (b2cImageFile) {
-         console.log('📤 Uploading B2C image...');
-         const b2cImageUrl = await uploadImageToStorage(b2cImageFile, productId, 'b2c_main');
-         finalProductData.b2cImageUrl = b2cImageUrl;
-         
-         // Remove legacy b2cImageData field if it exists
-         if (finalProductData.b2cImageData) {
-           delete finalProductData.b2cImageData;
-         }
-       }
-       
-       // Upload B2C gallery images
-       if (b2cGalleryFiles.length > 0) {
-         console.log(`📤 Uploading ${b2cGalleryFiles.length} B2C gallery images...`);
-         const galleryUrls = [];
-         
-         for (let i = 0; i < b2cGalleryFiles.length; i++) {
-           const file = b2cGalleryFiles[i];
-           const galleryUrl = await uploadImageToStorage(file, productId, `b2c_gallery_${i}`);
-           galleryUrls.push(galleryUrl);
-         }
-         
-         finalProductData.b2cImageGallery = galleryUrls;
-       }
+      if (b2cImageFile) {
+        console.log('📤 Uploading B2C image...');
+        const b2cImageUrl = await uploadImageToStorage(b2cImageFile, productId, 'b2c_main');
+        finalProductData.b2cImageUrl = b2cImageUrl;
+      }
+      
+      // Upload B2C gallery images
+      if (b2cGalleryFiles.length > 0) {
+        console.log(`📤 Uploading ${b2cGalleryFiles.length} B2C gallery images...`);
+        const galleryUrls = [];
+        
+        for (let i = 0; i < b2cGalleryFiles.length; i++) {
+          const file = b2cGalleryFiles[i];
+          const galleryUrl = await uploadImageToStorage(file, productId, `b2c_gallery_${i}`);
+          galleryUrls.push(galleryUrl);
+        }
+        
+        finalProductData.b2cImageGallery = galleryUrls;
+      }
       
       if (!selectedProduct) {
         // Adding new product
