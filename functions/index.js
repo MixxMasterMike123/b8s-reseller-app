@@ -210,7 +210,7 @@ const getB2CEmailTemplate = (status, orderData, customerInfo) => {
         Ordernummer: ${orderNumber}
         Status: Mottagen
         
-        Du kommer att få ytterligare uppdateringar när din order behandlas och skickas. Du kan se din orderstatus här: ${`https://shop.b8shield.com/order-confirmation/${orderData.id || ''}`}
+        Du kommer att få ytterligare uppdateringar när din order behandlas och skickas. Du kan se din orderstatus här: ${`${APP_URLS.B2C_SHOP}/order-confirmation/${orderData.id || ''}`}
         
         Med vänliga hälsningar,
         B8Shield Team
@@ -226,7 +226,7 @@ const getB2CEmailTemplate = (status, orderData, customerInfo) => {
           <p><strong>Status:</strong> Mottagen</p>
           <p>Du kommer att få ett nytt mail när din order har skickats. Du kan se din orderinformation på vår hemsida:</p>
           <div style="text-align: center; margin: 20px 0;">
-             <a href="https://shop.b8shield.com/order-confirmation/${orderData.id || ''}" style="background-color: #459CA8; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Visa din beställning</a>
+             <a href="${APP_URLS.B2C_SHOP}/order-confirmation/${orderData.id || ''}" style="background-color: #459CA8; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Visa din beställning</a>
           </div>
           <p>Med vänliga hälsningar,<br>B8Shield Team</p>
         </div>
@@ -357,12 +357,12 @@ exports.approveAffiliate = functions.https.onCall(async (data, context) => {
         <div style="font-family: Arial, sans-serif; max-width: 600px;">
           <h2>Grattis, ${appData.name}!</h2>
           <p>Din ansökan till B8Shields affiliate-program har blivit godkänd.</p>
-          <p>Här är dina inloggningsuppgifter för <a href="https://shop.b8shield.com/affiliate-portal">Affiliate-portalen</a>:</p>
+          <p>Här är dina inloggningsuppgifter för <a href="${APP_URLS.B2C_SHOP}/affiliate-portal">Affiliate-portalen</a>:</p>
           ${loginInstructions}
           <hr>
           <h3>Din unika affiliatelänk:</h3>
           <p>Använd denna länk för att tjäna provision på alla köp:</p>
-          <p><strong><a href="https://shop.b8shield.com/?ref=${affiliateCode}">https://shop.b8shield.com/?ref=${affiliateCode}</a></strong></p>
+          <p><strong><a href="${APP_URLS.B2C_SHOP}/?ref=${affiliateCode}">${APP_URLS.B2C_SHOP}/?ref=${affiliateCode}</a></strong></p>
           <br>
           <p>Lycka till med försäljningen!</p>
           <p>Med vänliga hälsningar,<br>B8Shield Team</p>
@@ -457,7 +457,7 @@ exports.processB2COrderCompletion = functions
   .region('us-central1')
   .https.onRequest(async (req, res) => {
     // Enable CORS
-    res.set('Access-Control-Allow-Origin', 'https://shop.b8shield.com');
+    res.set('Access-Control-Allow-Origin', APP_URLS.B2C_SHOP);
     res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.set('Access-Control-Max-Age', '3600');
