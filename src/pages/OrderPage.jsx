@@ -469,7 +469,10 @@ const OrderPage = () => {
           <div className="lg:col-span-2 space-y-6">
         
             <div className="p-4 border border-gray-200 rounded">
-              <h2 className="text-xl font-semibold mb-4">Välj antal färger:</h2>
+              <h2 className="text-xl font-semibold mb-2">Välj antal färger:</h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Förpackningsbilder visas för Storlek 4 som standardrepresentation. Alla storlekar finns tillgängliga för beställning.
+              </p>
           
           {/* Display product images for colors */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -494,8 +497,17 @@ const OrderPage = () => {
                 'glitter': null
               };
               
-              // Find one product for each color
-              products.filter(p => p.imageData).forEach(product => {
+              // Find SIZE 4 product for each color (standard representation)
+              // Use Firebase Storage images with fallback to base64
+              let size4Products = products.filter(p => (p.imageUrl || p.imageData) && p.size === '4');
+              
+              // Fallback: if no SIZE 4 products available, use any products with images
+              if (size4Products.length === 0) {
+                console.log('No SIZE 4 products found, using fallback to any products with images');
+                size4Products = products.filter(p => (p.imageUrl || p.imageData));
+              }
+              
+              size4Products.forEach(product => {
                 // Skip if no name
                 if (!product.name) return;
                 
@@ -533,20 +545,33 @@ const OrderPage = () => {
               });
               
               // Check if we have all expected colors and log the collected info
-              console.log("Collected color products:", Object.entries(colorProducts)
-                .map(([id, p]) => `${id}: ${p ? p.name : 'missing'}`));
+              console.log("Collected SIZE 4 color products:", Object.entries(colorProducts)
+                .map(([id, p]) => `${id}: ${p ? `${p.name} (Size: ${p.size})` : 'missing'}`));
               
               // Render one product per color (only if we have a product for that color)
               return Object.entries(colorProducts)
                 .filter(([_, product]) => product !== null)
                 .map(([colorId, product]) => (
                   <div key={product.id} className="text-center">
-                    <img 
-                      src={product.imageData} 
-                      alt={product.name} 
-                      className={`w-full h-40 object-cover rounded mb-2 border-2 ${farger[colorId] ? 'border-blue-500' : 'border-transparent'}`} 
-                    />
-                    <p className="text-sm font-medium">{product.name}</p>
+                    <div className="relative">
+                      <img 
+                        src={product.imageUrl || product.imageData} 
+                        alt={`${product.name} - Förpackning`} 
+                        className={`w-full h-48 object-cover rounded-lg mb-3 border-3 transition-all duration-200 ${farger[colorId] ? 'border-blue-500 shadow-lg' : 'border-gray-200 hover:border-gray-300'}`} 
+                      />
+                      {/* Package representation badge */}
+                      <div className="absolute top-2 right-2 bg-blue-600 text-white px-2 py-1 text-xs font-semibold rounded">
+                        {product.size ? `Storlek ${product.size}` : 'Standard'}
+                      </div>
+                      {/* Package representation indicator */}
+                      <div className="absolute bottom-2 left-2 bg-black bg-opacity-75 text-white px-2 py-1 text-xs rounded">
+                        Förpackning
+                      </div>
+                    </div>
+                    <p className="text-sm font-semibold text-gray-800">{product.name}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {product.size === '4' ? 'Standardrepresentation - Storlek 4' : `Representation - Storlek ${product.size}`}
+                    </p>
                   </div>
                 ));
             })()}
