@@ -47,6 +47,8 @@ const ContactDetail = () => {
   const [suggestedTags, setSuggestedTags] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
   const [manualTagInput, setManualTagInput] = useState('');
+  const [autocompleteOptions, setAutocompleteOptions] = useState([]);
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
 
   // Activity type options with Swedish labels and icons
   const activityTypes = [
@@ -62,11 +64,11 @@ const ContactDetail = () => {
     if (!text.trim()) return [];
     
     const keywordMap = {
-      'hett': ['intresserad', 'vill köpa', 'bestämma', 'offert', 'pris', 'priser', 'köpa', 'beställa'],
-      'ringabak': ['ring tillbaka', 'ringa tillbaka', 'höra av sig', 'kontakta', 'återkomma', 'återkoppla'],
-      'problem': ['problem', 'fungerar inte', 'missnöjd', 'fel', 'klagar', 'trasig', 'dålig'],
-      'nöjd': ['nöjd', 'bra', 'funkar', 'rekommenderar', 'tack', 'fantastisk', 'perfekt', 'glad'],
-      'akut': ['akut', 'bråttom', 'snabbt', 'idag', 'direkt', 'asap', 'nu']
+      'hett': ['intresserad', 'vill köpa', 'bestämma', 'offert', 'pris', 'priser', 'köpa', 'beställa', 'hot', 'het', 'möjlighet', 'affär'],
+      'ringabak': ['ring tillbaka', 'ringa tillbaka', 'höra av sig', 'kontakta', 'återkomma', 'återkoppla', 'ring', 'ringa', 'hör av', 'kontakt'],
+      'problem': ['problem', 'fungerar inte', 'missnöjd', 'fel', 'klagar', 'trasig', 'dålig', 'issue', 'trouble', 'svårt', 'hjälp'],
+      'nöjd': ['nöjd', 'bra', 'funkar', 'rekommenderar', 'tack', 'fantastisk', 'perfekt', 'glad', 'bäst', 'toppen', 'excellent'],
+      'akut': ['akut', 'bråttom', 'snabbt', 'idag', 'direkt', 'asap', 'nu', 'omgående', 'urgent', 'rush']
     };
     
     const lowerText = text.toLowerCase();
@@ -88,6 +90,17 @@ const ContactDetail = () => {
     const allSuggestions = analyzeTextForTags(combinedText);
     // Filter out tags that are already selected
     const filteredSuggestions = allSuggestions.filter(tag => !selectedTags.includes(tag));
+    
+    // Debug logging (temporary)
+    if (combinedText) {
+      console.log('Tag Analysis:', {
+        text: combinedText,
+        allSuggestions,
+        selectedTags,
+        filteredSuggestions
+      });
+    }
+    
     setSuggestedTags(filteredSuggestions);
   }, [newActivity.subject, newActivity.description, selectedTags]);
 
@@ -135,7 +148,27 @@ const ContactDetail = () => {
   };
 
   const handleManualTagChange = (e) => {
-    setManualTagInput(e.target.value);
+    const value = e.target.value;
+    setManualTagInput(value);
+    
+    // Show autocomplete suggestions
+    if (value.trim().length > 0) {
+      const commonTags = ['hett', 'ringabak', 'problem', 'nöjd', 'akut', 'budget', 'chef', 'vd', 'presentation', 'uppföljning', 'möte', 'demo', 'förhandling', 'kontrakt', 'leverans', 'support', 'reklamation', 'expansion', 'ny-kund', 'återkommande'];
+      const inputText = value.replace('#', '').toLowerCase();
+      const matches = commonTags.filter(tag => 
+        tag.includes(inputText) && !selectedTags.includes(tag)
+      );
+      setAutocompleteOptions(matches.slice(0, 5)); // Max 5 suggestions
+      setShowAutocomplete(matches.length > 0);
+    } else {
+      setShowAutocomplete(false);
+    }
+  };
+
+  const selectAutocompleteOption = (tag) => {
+    setSelectedTags([...selectedTags, tag]);
+    setManualTagInput('');
+    setShowAutocomplete(false);
   };
 
   // Load contact data
@@ -201,6 +234,7 @@ const ContactDetail = () => {
       setSelectedTags([]);
       setSuggestedTags([]);
       setManualTagInput('');
+      setShowAutocomplete(false);
       
       const selectedType = activityTypes.find(t => t.value === newActivity.type);
       toast.success(`${selectedType.label} registrerat`);
@@ -587,7 +621,7 @@ const ContactDetail = () => {
           )}
 
           {/* Manual Tag Input - TAGlist2 for Power Users */}
-          <div className="mb-4">
+          <div className="mb-4 relative">
             <label className="block text-xs text-gray-500 font-medium mb-1">
               Lägg till egna taggar (valfritt)
             </label>
@@ -596,9 +630,35 @@ const ContactDetail = () => {
               value={manualTagInput}
               onChange={handleManualTagChange}
               onKeyPress={handleManualTagKeyPress}
+              onFocus={() => {
+                if (manualTagInput.trim().length > 0 && autocompleteOptions.length > 0) {
+                  setShowAutocomplete(true);
+                }
+              }}
+              onBlur={() => {
+                // Delay hiding to allow clicking on options
+                setTimeout(() => setShowAutocomplete(false), 200);
+              }}
               placeholder="Skriv egna taggar... (tryck Enter, komma eller mellanslag för att lägga till)"
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
             />
+            
+            {/* Autocomplete Dropdown */}
+            {showAutocomplete && autocompleteOptions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-32 overflow-y-auto">
+                {autocompleteOptions.map(tag => (
+                  <button
+                    key={tag}
+                    onClick={() => selectAutocompleteOption(tag)}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center border-b border-gray-100 last:border-b-0"
+                  >
+                    <span className="text-gray-400 mr-1">#</span>
+                    <span className="text-gray-700">{tag}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            
             <p className="text-xs text-gray-400 mt-1">
               T.ex. "budget", "chef", "presentation" - separera med komma eller mellanslag
             </p>
