@@ -40,7 +40,7 @@ const OrderPage = () => {
 
   // Sort functions to ensure correct display order
   const sortColorOptions = (colors) => {
-    // Define the preferred order - Transparent, Röd, Florerande, Glitter
+    // Define the preferred order to match hardcoded checkboxes - Transparent, Röd, Florerande, Glitter
     const colorOrder = ['transparent', 'rod', 'florerande', 'glitter'];
     
     // Sort the colors based on the preferred order
@@ -81,11 +81,8 @@ const OrderPage = () => {
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
-        const productsQuery = query(
-          collection(db, 'products'),
-          where('isActive', '==', true)
-        );
-        const querySnapshot = await getDocs(productsQuery);
+        // Get all products, then filter for B2B availability (like ProductViewPage does)
+        const querySnapshot = await getDocs(collection(db, 'products'));
         
         const productsData = [];
         const colors = new Set();
@@ -94,51 +91,67 @@ const OrderPage = () => {
         const sizeMap = new Map();
         
         querySnapshot.forEach((doc) => {
-          const product = { id: doc.id, ...doc.data() };
-          productsData.push(product);
+          const productData = doc.data();
+          // Only show active products that are available for B2B
+          if (productData.isActive !== false && productData.availability?.b2b !== false) {
+            const product = { id: doc.id, ...productData };
+            productsData.push(product);
           
-          // Extract color from name (assuming format like "B8Shield Transparent")
-          const nameParts = product.name.split(' ');
-          if (nameParts.length > 1) {
-            const colorName = nameParts[1];
-            // Convert to lowercase and remove special chars for ID
-            const colorId = colorName.toLowerCase().replace(/[^a-z0-9]/g, '');
+            // Extract color from name (assuming format like "B8Shield Transparent")
+            const nameParts = product.name.split(' ');
+            if (nameParts.length > 1) {
+              const colorName = nameParts[1];
+              // Convert to lowercase and remove special chars for ID
+              let colorId = colorName.toLowerCase().replace(/[^a-z0-9]/g, '');
+              
+              // Map specific color names to match hardcoded checkbox IDs
+              if (colorId === 'fluorescent' || colorId === 'fluorescerande') {
+                colorId = 'florerande';
+              }
+              
+              if (!colorMap.has(colorId)) {
+                colorMap.set(colorId, { id: colorId, name: colorName });
+                colors.add(colorId);
+              }
+            }
             
-            if (!colorMap.has(colorId)) {
-              colorMap.set(colorId, { id: colorId, name: colorName });
-              colors.add(colorId);
+            // Extract size (assuming it's stored in the size field)
+            if (product.size) {
+              const sizeId = `storlek${product.size}`;
+              if (!sizeMap.has(sizeId)) {
+                sizeMap.set(sizeId, { id: sizeId, name: `Storlek ${product.size}` });
+                sizes.add(sizeId);
+              }
             }
-          }
-          
-          // Extract size (assuming it's stored in the size field)
-          if (product.size) {
-            const sizeId = `storlek${product.size}`;
-            if (!sizeMap.has(sizeId)) {
-              sizeMap.set(sizeId, { id: sizeId, name: `Storlek ${product.size}` });
-              sizes.add(sizeId);
-            }
-          }
 
-          // If product has variants structure (backward compatibility)
-          if (product.variants) {
-            product.variants.forEach(variant => {
-              if (variant.type === 'color' && variant.options) {
-                variant.options.forEach(option => {
-                  if (!colorMap.has(option.id)) {
-                    colorMap.set(option.id, option);
-                    colors.add(option.id);
-                  }
-                });
-              }
-              if (variant.type === 'size' && variant.options) {
-                variant.options.forEach(option => {
-                  if (!sizeMap.has(option.id)) {
-                    sizeMap.set(option.id, option);
-                    sizes.add(option.id);
-                  }
-                });
-              }
-            });
+            // If product has variants structure (backward compatibility)
+            if (product.variants) {
+              product.variants.forEach(variant => {
+                if (variant.type === 'color' && variant.options) {
+                  variant.options.forEach(option => {
+                    let variantColorId = option.id;
+                    
+                    // Map variant color IDs to match hardcoded checkbox IDs
+                    if (variantColorId === 'fluorescent' || variantColorId === 'fluorescerande') {
+                      variantColorId = 'florerande';
+                    }
+                    
+                    if (!colorMap.has(variantColorId)) {
+                      colorMap.set(variantColorId, { ...option, id: variantColorId });
+                      colors.add(variantColorId);
+                    }
+                  });
+                }
+                if (variant.type === 'size' && variant.options) {
+                  variant.options.forEach(option => {
+                    if (!sizeMap.has(option.id)) {
+                      sizeMap.set(option.id, option);
+                      sizes.add(option.id);
+                    }
+                  });
+                }
+              });
+            }
           }
         });
         
@@ -146,8 +159,10 @@ const OrderPage = () => {
         const uniqueColors = sortColorOptions(Array.from(colorMap.values()));
         const uniqueSizes = sortSizeOptions(Array.from(sizeMap.values()));
         
-        console.log('Found colors:', uniqueColors);
-        console.log('Found sizes:', uniqueSizes);
+        console.log('📊 B2B products loaded:', productsData.length);
+        console.log('🎨 Available colors for B2B:', uniqueColors);
+        console.log('📏 Available sizes for B2B:', uniqueSizes);
+        console.log('🔧 Color ID mapping completed - "fluorescent" → "florerande"');
         
         setProducts(productsData);
         setProductColors(uniqueColors);
