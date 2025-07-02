@@ -162,9 +162,12 @@ const OrderPage = () => {
 
   // Calculate purchase price based on margin
   const calculateInkopspris = () => {
-    if (!marginal) return PRODUCT_SETTINGS.FORSALJNINGSPRIS * 0.6; // Default 40% margin
+    // Calculate selling price excluding VAT from the inclusive price
+    const FORSALJNINGSPRIS = PRODUCT_SETTINGS.FORSALJNINGSPRIS_INKL_MOMS / 1.25;
+    
+    if (!marginal) return FORSALJNINGSPRIS * 0.6; // Default 40% margin
     const marginDecimal = marginal / 100;
-    return PRODUCT_SETTINGS.FORSALJNINGSPRIS * (1 - marginDecimal);
+    return FORSALJNINGSPRIS * (1 - marginDecimal);
   };
 
   // Get order totals
@@ -268,7 +271,7 @@ const OrderPage = () => {
           margin: marginal,
           pricePerPackage: inkopspris,
           profit: vinst,
-          sellingPrice: PRODUCT_SETTINGS.FORSALJNINGSPRIS,
+          sellingPrice: PRODUCT_SETTINGS.FORSALJNINGSPRIS_INKL_MOMS / 1.25,
           manufacturingCost: PRODUCT_SETTINGS.TILLVERKNINGSKOSTNAD
         }
       };
@@ -380,15 +383,15 @@ const OrderPage = () => {
                                   </button>
                                 ))}
                                 
-                                {/* Custom input */}
-                                <input
-                                  type="number"
-                                  min="0"
-                                  placeholder="Annat"
-                                  value={colorData.sizes[size] > 30 ? colorData.sizes[size] : ''}
-                                  onChange={(e) => handleCustomQuantity(colorId, size, e.target.value)}
-                                  className="w-16 px-2 py-1 text-sm border border-gray-300 rounded"
-                                />
+                                                                 {/* Custom input */}
+                                 <input
+                                   type="number"
+                                   min="0"
+                                   placeholder="Annat"
+                                   value={colorData.sizes[size] === 0 ? '' : colorData.sizes[size]}
+                                   onChange={(e) => handleCustomQuantity(colorId, size, e.target.value)}
+                                   className="w-16 px-2 py-1 text-sm border border-gray-300 rounded"
+                                 />
                                 
                                 {/* Clear button */}
                                 {colorData.sizes[size] > 0 && (
