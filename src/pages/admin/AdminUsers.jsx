@@ -195,22 +195,13 @@ const AdminUsers = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Företag
+                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Företag & Kontakt
                     </th>
-                    <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Kontakt
+                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Roll & Status
                     </th>
-                    <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Roll
-                    </th>
-                    <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Marginal
-                    </th>
-                    <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Åtgärder
                     </th>
                   </tr>
@@ -218,41 +209,65 @@ const AdminUsers = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="px-3 py-3 text-sm font-medium text-gray-900">
-                        <div>
-                          <div className="font-medium">{user.companyName || 'N/A'}</div>
-                          <div className="text-xs text-gray-500">{user.email}</div>
+                      {/* Column 1: Company & Contact */}
+                      <td className="px-4 md:px-6 py-4">
+                        <div className="flex items-start">
+                          <div className="flex-shrink-0 h-12 w-12 mr-4">
+                            <div className="h-12 w-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
+                              <span className="text-sm font-medium text-blue-800">
+                                {(user.companyName || user.contactPerson || 'U').charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium text-gray-900 mb-1">
+                              {user.companyName || 'Ej angivet'}
+                            </div>
+                            <div className="text-xs text-gray-500 mb-1">
+                              {user.email}
+                            </div>
+                            {user.contactPerson && (
+                              <div className="text-xs text-gray-600 mb-1">
+                                Kontakt: {user.contactPerson}
+                              </div>
+                            )}
+                            {user.phone && (
+                              <div className="text-xs text-gray-500">
+                                Tel: {user.phone}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </td>
-                      <td className="px-3 py-3 text-sm text-gray-500">
-                        <div>
-                          <div>{user.contactPerson || 'N/A'}</div>
-                          <div className="text-xs text-gray-400">{user.phone || ''}</div>
-                        </div>
-                      </td>
-                      <td className="px-2 py-3 text-sm text-gray-500">
-                        <div className="flex flex-col space-y-1">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
-                          }`}>
-                            {user.role === 'admin' ? 'Admin' : 'Kund'}
-                          </span>
-                          <select
-                            value={user.role}
-                            onChange={(e) => handleRoleChange(user.id, user.role, e.target.value)}
-                            disabled={roleUpdateLoading}
-                            className="text-xs border border-gray-300 rounded py-0.5 px-1 w-full"
-                          >
-                            <option value="user">Kund</option>
-                            <option value="admin">Admin</option>
-                          </select>
-                        </div>
-                      </td>
-                      <td className="px-2 py-3 text-sm text-gray-500">
-                        <div className="flex flex-col items-center">
-                          {editingMarginals[user.id] !== undefined ? (
-                            <div className="flex flex-col space-y-1 w-full">
-                              <div className="flex items-center space-x-1">
+
+                      {/* Column 2: Role & Status */}
+                      <td className="px-4 md:px-6 py-4">
+                        <div className="space-y-3">
+                          {/* Role Section */}
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                              }`}>
+                                {user.role === 'admin' ? 'Admin' : 'Kund'}
+                              </span>
+                              <select
+                                value={user.role}
+                                onChange={(e) => handleRoleChange(user.id, user.role, e.target.value)}
+                                disabled={roleUpdateLoading}
+                                className="text-xs border border-gray-300 rounded py-1 px-2 min-h-[28px] focus:ring-blue-500 focus:border-blue-500"
+                              >
+                                <option value="user">Kund</option>
+                                <option value="admin">Admin</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          {/* Margin Section */}
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">Marginal:</div>
+                            {editingMarginals[user.id] !== undefined ? (
+                              <div className="flex items-center gap-2">
                                 <input
                                   type="number"
                                   min="0"
@@ -263,54 +278,56 @@ const AdminUsers = () => {
                                     ...prev,
                                     [user.id]: e.target.value
                                   }))}
-                                  className="w-12 text-xs border border-gray-300 rounded px-1 py-0.5"
+                                  className="w-16 text-xs border border-gray-300 rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500"
                                   disabled={marginalUpdateLoading}
                                 />
                                 <span className="text-xs text-gray-400">%</span>
-                              </div>
-                              <div className="flex justify-center space-x-1">
                                 <button
                                   onClick={() => handleMarginalChange(user.id, editingMarginals[user.id])}
                                   disabled={marginalUpdateLoading}
-                                  className="text-xs text-green-600 hover:text-green-700 disabled:opacity-50"
+                                  className="min-h-[24px] px-2 py-1 text-xs font-medium text-green-600 hover:text-green-900 hover:bg-green-50 rounded transition-colors"
                                 >
                                   ✓
                                 </button>
                                 <button
                                   onClick={() => cancelEditingMarginal(user.id)}
                                   disabled={marginalUpdateLoading}
-                                  className="text-xs text-red-600 hover:text-red-700 disabled:opacity-50"
+                                  className="min-h-[24px] px-2 py-1 text-xs font-medium text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors"
                                 >
                                   ✕
                                 </button>
                               </div>
-                            </div>
-                          ) : (
-                            <div className="flex flex-col items-center space-y-1">
-                              <span className="text-sm font-medium">
-                                {user.marginal || 35}%
-                              </span>
-                              <button
-                                onClick={() => startEditingMarginal(user.id, user.marginal || 35)}
-                                className="text-xs text-blue-600 hover:text-blue-700"
-                              >
-                                ✏️
-                              </button>
-                            </div>
-                          )}
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-900">
+                                  {user.marginal || 35}%
+                                </span>
+                                <button
+                                  onClick={() => startEditingMarginal(user.id, user.marginal || 35)}
+                                  className="min-h-[24px] px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded transition-colors"
+                                >
+                                  Ändra
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Status Section */}
+                          <div>
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {user.active ? 'Aktiv' : 'Inaktiv'}
+                            </span>
+                          </div>
                         </div>
                       </td>
-                      <td className="px-2 py-3 text-sm text-gray-500">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                          {user.active ? 'Aktiv' : 'Inaktiv'}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-right text-sm font-medium">
+
+                      {/* Column 3: Actions */}
+                      <td className="px-4 md:px-6 py-4 text-right">
                         <Link
                           to={`/admin/users/${user.id}/edit`}
-                          className="inline-flex items-center px-3 py-1 border border-blue-300 text-sm leading-4 font-medium rounded text-blue-700 bg-blue-50 hover:bg-blue-100"
+                          className="min-h-[32px] inline-flex items-center px-4 py-2 text-xs font-medium text-blue-600 hover:text-blue-900 hover:bg-blue-50 border border-blue-300 rounded transition-colors"
                         >
                           Redigera
                         </Link>

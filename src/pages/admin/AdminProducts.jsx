@@ -10,11 +10,8 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import AppLayout from '../../components/layout/AppLayout';
 
-// 🚂 SINGLE CONNECTION - Direct import (if wagon exists)
-import ProductIntegrationButton from '../../wagons/writers-wagon/components/ProductIntegrationButton.jsx';
-
 // Maximum size for image files (5MB)
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; 
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
 // Flag to disable default database operations
 const USE_DEFAULT_DB = false;
@@ -673,27 +670,6 @@ function AdminProducts() {
                 Tillbaka till Admin
               </Link>
               <button 
-                onClick={() => {
-                  setSelectedProduct(null);
-                  setFormData({
-                    name: 'B8Shield Röd',
-                    sku: 'B8S-4-re', // Sample SKU for red product
-                    description: 'B8Shield Röd skydd för smartphones',
-                    basePrice: 71.2,
-                    manufacturingCost: 10,
-                    isActive: true,
-                    size: '4',
-                    imageUrl: '',
-                  });
-                  setB2bImageFile(null);
-                  setB2bImagePreview(null);
-                  setIsAddingProduct(true);
-                }}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-              >
-                Lägg till Röd Produkt
-              </button>
-              <button 
                 onClick={handleAddNewClick}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
@@ -1253,26 +1229,6 @@ function AdminProducts() {
                       <label className="block text-sm font-medium text-gray-700">
                         B2B Beskrivning (Teknisk information för återförsäljare)
                       </label>
-                      <ProductIntegrationButton 
-                        product={formData}
-                        variant="button"
-                        className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1 text-xs"
-                        onContentGenerated={(content) => {
-                          if (content.contentType === 'b2b-technical' || content.contentType === 'dual-content') {
-                            const b2bContent = content.contentType === 'dual-content' ? 
-                              content.content.split('**B2C BESKRIVNING:**')[0].replace('**B2B BESKRIVNING:**', '').trim() :
-                              content.content;
-                            setFormData({
-                              ...formData,
-                              descriptions: {
-                                ...formData.descriptions,
-                                b2b: b2bContent
-                              }
-                            });
-                            toast.success('B2B-innehåll genererat och infört!');
-                          }
-                        }}
-                      />
                     </div>
                     <textarea
                       value={formData.descriptions?.b2b || ''}
@@ -1409,26 +1365,6 @@ function AdminProducts() {
                       <label className="block text-sm font-medium text-gray-700">
                         B2C Beskrivning (Konsumentvänlig beskrivning)
                       </label>
-                      <ProductIntegrationButton 
-                        product={formData}
-                        variant="button"
-                        className="bg-gradient-to-r from-green-500 to-blue-600 text-white px-3 py-1 text-xs"
-                        onContentGenerated={(content) => {
-                          if (content.contentType === 'b2c-marketing' || content.contentType === 'dual-content') {
-                            const b2cContent = content.contentType === 'dual-content' ? 
-                              content.content.split('**B2C BESKRIVNING:**')[1]?.trim() || content.content :
-                              content.content;
-                            setFormData({
-                              ...formData,
-                              descriptions: {
-                                ...formData.descriptions,
-                                b2c: b2cContent
-                              }
-                            });
-                            toast.success('B2C-innehåll genererat och infört!');
-                          }
-                        }}
-                      />
                     </div>
                     <textarea
                       value={formData.descriptions?.b2c || ''}
@@ -1600,115 +1536,137 @@ function AdminProducts() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Produkt
+                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Produkt & Detaljer
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      SKU
+                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Pris & Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Storlek
+                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      EAN & Bilder
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Färg
+                    <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Åtgärder
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Pris
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      EAN-kod
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Åtgärder
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                                     {products.length === 0 ? (
-                     <tr>
-                       <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
-                         Inga produkter hittades
-                       </td>
-                     </tr>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {products.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="px-4 md:px-6 py-8 text-center text-gray-500">
+                        Inga produkter hittades
+                      </td>
+                    </tr>
                   ) : (
                     (filteredProduct ? [filteredProduct] : products).map((product) => (
                       <tr key={product.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center">
+                        {/* Column 1: Product & Details */}
+                        <td className="px-4 md:px-6 py-4">
+                          <div className="flex items-start">
                             {product.imageUrl ? (
                               <img 
                                 src={product.imageUrl} 
                                 alt={product.name} 
-                                className="w-12 h-12 mr-4 object-cover rounded-md border border-gray-200"
+                                className="w-16 h-16 mr-4 object-cover rounded-md border border-gray-200 flex-shrink-0"
                               />
                             ) : (
-                              <div className="w-12 h-12 mr-4 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
+                              <div className="w-16 h-16 mr-4 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200 flex-shrink-0">
                                 <span className="text-xs text-gray-500">Ingen bild</span>
                               </div>
                             )}
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                              <div className="text-sm text-gray-500 max-w-xs truncate">{product.description}</div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium text-gray-900 mb-1">{product.name}</div>
+                              <div className="text-xs text-gray-500 mb-1">SKU: <span className="font-mono">{product.sku || 'Ej angivet'}</span></div>
+                              <div className="flex flex-wrap gap-2 text-xs">
+                                {product.size && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                    {product.size}
+                                  </span>
+                                )}
+                                {product.color && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                    {product.color}
+                                  </span>
+                                )}
+                              </div>
+                              {product.description && (
+                                <div className="text-xs text-gray-500 mt-1 line-clamp-2">{product.description}</div>
+                              )}
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-mono text-gray-900">{product.sku || 'Ej angivet'}</div>
+
+                        {/* Column 2: Price & Status */}
+                        <td className="px-4 md:px-6 py-4">
+                          <div className="text-sm">
+                            <div className="font-medium text-gray-900 mb-1">
+                              {product.basePrice?.toFixed(2)} SEK
+                            </div>
+                            <div className="text-xs text-gray-500 mb-2">
+                              Kostnad: {product.manufacturingCost?.toFixed(2)} SEK
+                            </div>
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              product.isActive 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {product.isActive ? 'Aktiv' : 'Inaktiv'}
+                            </span>
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{product.size || 'Ej angivet'}</div>
+
+                        {/* Column 3: EAN & Images */}
+                        <td className="px-4 md:px-6 py-4">
+                          <div className="text-sm">
+                            {product.eanCode ? (
+                              <div className="font-mono text-xs text-gray-900 mb-1">{product.eanCode}</div>
+                            ) : (
+                              <div className="text-xs text-gray-500 mb-1">Ingen EAN-kod</div>
+                            )}
+                            {(product.eanImagePngUrl || product.eanImageSvgUrl) && (
+                              <div className="flex gap-1 mt-1">
+                                {product.eanImagePngUrl && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                    PNG
+                                  </span>
+                                )}
+                                {product.eanImageSvgUrl && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                    SVG
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            {/* B2B/B2C Image indicators */}
+                            <div className="flex gap-1 mt-2">
+                              {product.b2bImageUrl && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                  B2B
+                                </span>
+                              )}
+                              {product.b2cImageUrl && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                  B2C
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{product.color || 'Ej angivet'}</div>
-                        </td>
-                                           <td className="px-6 py-4 whitespace-nowrap">
-                           <div className="text-sm text-gray-900">{product.basePrice?.toFixed(2)} SEK</div>
-                           <div className="text-sm text-gray-500">Kostnad: {product.manufacturingCost?.toFixed(2)} SEK</div>
-                         </td>
-                         <td className="px-6 py-4 whitespace-nowrap">
-                           <div className="text-sm text-gray-900">{product.eanCode || 'Ej angivet'}</div>
-                           {(product.eanImagePngUrl || product.eanImageSvgUrl) && (
-                             <div className="text-xs text-gray-500 mt-1">
-                               {product.eanImagePngUrl && 'PNG '}
-                               {product.eanImageSvgUrl && 'SVG'}
-                             </div>
-                           )}
-                         </td>
-                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            product.isActive 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {product.isActive ? 'Aktiv' : 'Inaktiv'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex items-center justify-end space-x-2">
-                            <ProductIntegrationButton 
-                              product={product}
-                              variant="icon-button"
-                              className="mr-1"
-                              onContentGenerated={(content, productData) => {
-                                // Show a success message
-                                toast.success(`AI-innehåll genererat för ${productData.name}`);
-                                console.log('Generated content:', content);
-                              }}
-                            />
+
+                        {/* Column 4: Actions */}
+                        <td className="px-4 md:px-6 py-4 text-right">
+                          <div className="flex flex-col gap-2">
                             <button 
                               onClick={() => handleEditClick(product)} 
                               disabled={loading}
-                              className="text-blue-600 hover:text-blue-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="min-h-[32px] inline-flex items-center px-4 py-2 text-xs font-medium text-blue-600 hover:text-blue-900 hover:bg-blue-50 border border-blue-300 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               Redigera
                             </button>
                             <button 
                               onClick={() => handleDeleteProduct(product.id)} 
                               disabled={loading}
-                              className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="min-h-[32px] inline-flex items-center px-4 py-2 text-xs font-medium text-red-600 hover:text-red-900 hover:bg-red-50 border border-red-300 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               {loading ? 'Tar bort...' : 'Ta bort'}
                             </button>
