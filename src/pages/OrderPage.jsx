@@ -96,19 +96,26 @@ const OrderPage = () => {
           if (productData.isActive !== false && productData.availability?.b2b !== false) {
             const product = { id: doc.id, ...productData };
             productsData.push(product);
-          
+            
             // Extract color from name (assuming format like "B8Shield Transparent")
             const nameParts = product.name.split(' ');
             if (nameParts.length > 1) {
               const colorName = nameParts[1];
-              // Convert to lowercase and remove special chars for ID
-              let colorId = colorName.toLowerCase().replace(/[^a-z0-9]/g, '');
+              // Handle Swedish characters properly and convert to lowercase
+              let colorId = colorName.toLowerCase();
               
               // Map specific color names to match hardcoded checkbox IDs
               if (colorId === 'fluorescent' || colorId === 'fluorescerande') {
                 colorId = 'fluorescerande';
               } else if (colorId === 'röd' || colorId === 'red') {
                 colorId = 'rod';
+              } else if (colorId === 'transparent') {
+                colorId = 'transparent';
+              } else if (colorId === 'glitter') {
+                colorId = 'glitter';
+              } else {
+                // For any other colors, remove non-alphanumeric but preserve basic Swedish chars
+                colorId = colorId.replace(/[^a-z0-9öäåé]/g, '');
               }
               
               if (!colorMap.has(colorId)) {
@@ -131,13 +138,17 @@ const OrderPage = () => {
               product.variants.forEach(variant => {
                 if (variant.type === 'color' && variant.options) {
                   variant.options.forEach(option => {
-                    let variantColorId = option.id;
+                    let variantColorId = option.id.toLowerCase();
                     
                     // Map variant color IDs to match hardcoded checkbox IDs
                     if (variantColorId === 'fluorescent' || variantColorId === 'fluorescerande') {
                       variantColorId = 'fluorescerande';
                     } else if (variantColorId === 'röd' || variantColorId === 'red') {
                       variantColorId = 'rod';
+                    } else if (variantColorId === 'transparent') {
+                      variantColorId = 'transparent';
+                    } else if (variantColorId === 'glitter') {
+                      variantColorId = 'glitter';
                     }
                     
                     if (!colorMap.has(variantColorId)) {
@@ -166,7 +177,6 @@ const OrderPage = () => {
         console.log('📊 B2B products loaded:', productsData.length);
         console.log('🎨 Available colors for B2B:', uniqueColors);
         console.log('📏 Available sizes for B2B:', uniqueSizes);
-        console.log('🔧 Color ID mapping completed - "fluorescent" → "fluorescerande", "röd" → "rod"');
         
         setProducts(productsData);
         setProductColors(uniqueColors);
