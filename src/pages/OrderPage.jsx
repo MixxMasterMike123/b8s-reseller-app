@@ -302,25 +302,26 @@ const OrderPage = () => {
           <div className="lg:col-span-2 space-y-6">
           
             <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-4">Välj produkter och kvantiteter</h2>
-              <p className="text-sm text-gray-600 mb-4">
+              <h2 className="md:text-xl text-2xl font-semibold mb-4">Välj produkter och kvantiteter</h2>
+              <p className="md:text-sm text-base text-gray-600 mb-4 leading-relaxed">
                 Välj exakt hur många förpackningar du vill ha av varje färg och storlek. Bilder visar Storlek 4 som standardrepresentation.
               </p>
               
               {/* Friendly information box */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 mt-0.5">
-                    <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg md:p-4 p-5 mb-4">
+                <div className="flex items-start md:gap-3 gap-4">
+                  <div className="flex-shrink-0 md:mt-0.5 mt-1">
+                    <svg className="md:w-5 md:h-5 w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-sm font-medium text-blue-900 mb-1">Så här fungerar beställningen</h3>
-                    <ul className="text-sm text-blue-800 space-y-1">
+                    <h3 className="md:text-sm text-base font-medium text-blue-900 mb-2">Så här fungerar beställningen</h3>
+                    <ul className="md:text-sm text-base text-blue-800 md:space-y-1 space-y-2">
                       <li>• <strong>Minsta beställningsvolym:</strong> 10 förpackningar totalt</li>
                       <li>• <strong>Mix & match:</strong> Kombinera färger och storlekar precis som du vill</li>
-                      <li>• <strong>Exempel:</strong> 5 st Röd Storlek 4 + 3 st Transparent Storlek 2 + 2 st Glitter Storlek 6 = 10 förpackningar ✓</li>
+                      <li className="md:block hidden">• <strong>Exempel:</strong> 5 st Röd Storlek 4 + 3 st Transparent Storlek 2 + 2 st Glitter Storlek 6 = 10 förpackningar ✓</li>
+                      <li className="md:hidden block">• <strong>Exempel:</strong> 5 st Röd Storlek 4 + 3 st Transparent Storlek 2 + 2 st Glitter Storlek 6 = 10 förpackningar ✓</li>
                     </ul>
                   </div>
                 </div>
@@ -335,110 +336,111 @@ const OrderPage = () => {
                 const colorSubtotal = Object.values(colorData.sizes).reduce((sum, qty) => sum + qty, 0);
                 
                 return (
-                  <div key={colorId} className={`border rounded-lg p-6 ${colorData.active ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
-                    <div className="flex flex-col md:flex-row gap-6">
+                                    <div key={colorId} className={`border rounded-lg md:p-6 p-4 ${colorData.active ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+                    <div className="flex flex-col md:flex-row md:gap-6 gap-4">
                       
                       {/* Product Image */}
-                      <div className="flex-shrink-0">
+                      <div className="flex-shrink-0 md:w-auto w-full">
                         <div className="text-center">
                           {colorProduct ? (
                             <img 
                               src={colorProduct.b2bImageUrl || colorProduct.imageUrl || colorProduct.imageData} 
                               alt={`${getColorDisplayName(colorId)} - B2B Förpackning`} 
-                              className="w-32 h-32 object-contain rounded-lg border-2 border-gray-200"
+                              className="md:w-32 md:h-32 w-40 h-40 mx-auto object-contain rounded-lg border-2 border-gray-200"
                             />
                           ) : (
-                            <div className="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center">
-                              <span className="text-gray-500 text-sm">Ingen bild</span>
+                            <div className="md:w-32 md:h-32 w-40 h-40 mx-auto bg-gray-200 rounded-lg flex items-center justify-center">
+                              <span className="text-gray-500 md:text-sm text-base">Ingen bild</span>
                             </div>
                           )}
-                          <h3 className="text-lg font-semibold mt-3 text-gray-800">
+                          <h3 className="md:text-lg text-xl font-semibold mt-3 text-gray-800">
                             {getColorDisplayName(colorId)}
                           </h3>
                           {colorSubtotal > 0 && (
-                            <div className="mt-2 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                            <div className="mt-2 bg-blue-600 text-white md:px-3 md:py-1 px-4 py-2 rounded-full md:text-sm text-base font-medium inline-block">
                               Totalt: {colorSubtotal} st
                             </div>
                           )}
-          </div>
-        </div>
+                        </div>
+                      </div>
         
-                      {/* Size Quantity Selectors */}
+                                            {/* Size Quantity Selectors */}
                       <div className="flex-1">
-                        <div className="space-y-4">
+                        <div className="space-y-4 md:space-y-4 space-y-6">
                           {[2, 4, 6].map(size => (
-                            <div key={size} className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
+                            <div key={size} className="md:flex md:items-center md:justify-between md:p-3 p-4 bg-white rounded border border-gray-200 md:space-y-0 space-y-4">
                               <div className="flex-1">
-                                <label className="font-medium text-gray-700">
+                                <label className="font-medium text-gray-700 md:text-base text-lg">
                                   Storlek {size}
-            </label>
-          </div>
-          
-                                                               {/* Quick quantity buttons */}
-                                 <div className="flex items-center gap-2">
-                                   {[10, 25, 50, 100].map(qty => (
-              <button 
-                                       key={qty}
-                                       onClick={() => handleQuantityButton(colorId, size, qty)}
-                                       className={`relative px-3 py-1 text-sm rounded-lg border-2 transition-all duration-200 ${
-                                         colorData.sizes[size] === qty 
-                                           ? 'bg-blue-600 text-white border-blue-600 shadow-lg transform scale-105 font-semibold'
-                                           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                                       }`}
-                                     >
-                                       {qty}
-                                       {colorData.sizes[size] === qty && (
-                                         <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-                                       )}
-              </button>
-                                   ))}
-                                
-                                                                 {/* Custom input */}
-                                 <div className="relative">
-                                   <input
-                                     type="number"
-                                     min="0"
-                                     placeholder="Annat"
-                                     value={colorData.sizes[size] === 0 ? '' : colorData.sizes[size]}
-                                     onChange={(e) => handleCustomQuantity(colorId, size, e.target.value)}
-                                     className={`w-16 px-2 py-1 text-sm border-2 rounded-lg transition-all duration-200 ${
-                                       colorData.sizes[size] > 0 && ![10, 25, 50, 100].includes(colorData.sizes[size])
-                                         ? 'border-blue-500 bg-blue-50 text-blue-900 font-semibold shadow-sm'
-                                         : 'border-gray-300 bg-white text-gray-700'
-                                     }`}
-                                   />
-                                   {colorData.sizes[size] > 0 && ![10, 25, 50, 100].includes(colorData.sizes[size]) && (
-                                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-          )}
-        </div>
-        
-                                {/* Clear button */}
-                                {colorData.sizes[size] > 0 && (
-              <button
-                                    onClick={() => updateItemQuantity(colorId, size, 0)}
-                                    className="px-2 py-1 text-sm text-red-600 hover:text-red-800"
+                                </label>
+                              </div>
+                              
+                              {/* Quick quantity buttons - Mobile: 2x2 grid, Desktop: horizontal row */}
+                              <div className="md:flex md:items-center md:gap-2 grid grid-cols-2 gap-3 md:grid-cols-none">
+                                {[10, 25, 50, 100].map(qty => (
+                                  <button 
+                                    key={qty}
+                                    onClick={() => handleQuantityButton(colorId, size, qty)}
+                                    className={`relative md:px-3 md:py-1 px-6 py-3 md:text-sm text-base rounded-lg border-2 transition-all duration-200 font-medium md:min-h-0 min-h-[48px] ${
+                                      colorData.sizes[size] === qty 
+                                        ? 'bg-blue-600 text-white border-blue-600 shadow-lg transform scale-105 font-semibold'
+                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                                    }`}
                                   >
-                                    ✕
-              </button>
+                                    {qty}
+                                    {colorData.sizes[size] === qty && (
+                                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                                
+                              {/* Custom input - Mobile: full width, Desktop: small */}
+                              <div className="relative md:w-auto w-full md:mt-0 mt-3">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  placeholder="Annat antal"
+                                  value={colorData.sizes[size] === 0 ? '' : colorData.sizes[size]}
+                                  onChange={(e) => handleCustomQuantity(colorId, size, e.target.value)}
+                                  className={`md:w-16 w-full md:px-2 md:py-1 px-4 py-3 md:text-sm text-base border-2 rounded-lg transition-all duration-200 md:min-h-0 min-h-[48px] ${
+                                    colorData.sizes[size] > 0 && ![10, 25, 50, 100].includes(colorData.sizes[size])
+                                      ? 'border-blue-500 bg-blue-50 text-blue-900 font-semibold shadow-sm'
+                                      : 'border-gray-300 bg-white text-gray-700'
+                                  }`}
+                                />
+                                {colorData.sizes[size] > 0 && ![10, 25, 50, 100].includes(colorData.sizes[size]) && (
+                                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                                 )}
                               </div>
+                                
+                              {/* Clear button - Mobile: positioned better */}
+                              {colorData.sizes[size] > 0 && (
+                                <button
+                                  onClick={() => updateItemQuantity(colorId, size, 0)}
+                                  className="md:px-2 md:py-1 px-4 py-2 md:text-sm text-base text-red-600 hover:text-red-800 md:min-h-0 min-h-[40px] md:w-auto w-full md:mt-0 mt-2 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 hover:border-red-300 transition-colors"
+                                >
+                                  <span className="md:inline hidden">✕</span>
+                                  <span className="md:hidden inline">Rensa {size}</span>
+                                </button>
+                              )}
                             </div>
-            ))}
-          </div>
-            </div>
+                          ))}
+                        </div>
+                      </div>
           </div>
                   </div>
                 );
               })}
         </div>
         
-            {/* Information Section */}
-            <div className="p-4 border border-gray-200 rounded bg-blue-50">
-          <h2 className="text-xl font-semibold mb-2">Information om prissättning</h2>
-              <p>Alla priser är exklusive moms och beräknas med din personliga marginal på {marginal || 40}%.</p>
+                        {/* Information Section */}
+            <div className="md:p-4 p-5 border border-gray-200 rounded bg-blue-50">
+              <h2 className="md:text-xl text-2xl font-semibold mb-3">Information om prissättning</h2>
+              <p className="md:text-base text-lg leading-relaxed">Alla priser är exklusive moms och beräknas med din personliga marginal på {marginal || 40}%.</p>
               {(marginal || 40) === 40 && (
-                <div className="mt-3 p-3 bg-orange-100 border border-orange-300 rounded-lg">
-                  <p className="text-orange-800 font-semibold">
+                <div className="mt-4 md:p-3 p-4 bg-orange-100 border border-orange-300 rounded-lg">
+                  <p className="text-orange-800 font-semibold md:text-base text-lg">
                     🎉 Just nu introduktionspris, endast under en kortare period, under fiskesäsong 2025
                   </p>
                 </div>
@@ -447,12 +449,12 @@ const OrderPage = () => {
             
         </div>
         
-          {/* Order Summary Section - Takes 1 column, sticky */}
+          {/* Order Summary Section - Takes 1 column, sticky on desktop */}
           <div className="lg:col-span-1">
-            <div className="sticky top-6">
+            <div className="lg:sticky lg:top-6">
               {isFormComplete ? (
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <h2 className="text-lg font-semibold mb-4">Orderöversikt</h2>
+                <div className="bg-gray-50 md:p-4 p-6 rounded-lg border border-gray-200">
+                  <h2 className="md:text-lg text-xl font-semibold mb-4">Orderöversikt</h2>
             
                   {/* Order Lines */}
                   <div className="mb-4">
@@ -504,26 +506,26 @@ const OrderPage = () => {
                   <div className="mt-4">
                     {/* Minimum order warning */}
                     {totalPackages > 0 && totalPackages < MINIMUM_ORDER_QUANTITY && (
-                      <div className="mb-3 p-3 bg-orange-100 border border-orange-300 rounded-lg">
-                        <p className="text-orange-800 text-sm font-medium">
+                      <div className="mb-3 md:p-3 p-4 bg-orange-100 border border-orange-300 rounded-lg">
+                        <p className="text-orange-800 md:text-sm text-base font-medium">
                           ⚠️ Minsta beställning: {MINIMUM_ORDER_QUANTITY} förpackningar
                         </p>
-                        <p className="text-orange-700 text-xs mt-1">
+                        <p className="text-orange-700 md:text-xs text-sm mt-1">
                           Du behöver beställa {remainingQuantity} förpackningar till
                         </p>
                       </div>
                     )}
                     
-                    <button 
+                                        <button 
                       onClick={handleSubmitOrder}
                       disabled={loading || !isFormComplete}
-                      className={`px-4 py-3 rounded-lg font-medium transition-colors w-full ${
+                      className={`md:px-4 md:py-3 px-6 py-4 rounded-lg font-medium transition-colors w-full md:text-base text-lg md:min-h-0 min-h-[56px] ${
                         isFormComplete
                           ? 'bg-blue-600 text-white hover:bg-blue-700'
                           : 'bg-gray-400 text-gray-200 cursor-not-allowed'
                       } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                                             {loading ? 'Bearbetar...' : 
+                      {loading ? 'Bearbetar...' : 
                         !isFormComplete ? `Minst ${MINIMUM_ORDER_QUANTITY} förpackningar krävs` :
                         'Bekräfta beställning'}
                     </button>
