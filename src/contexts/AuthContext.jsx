@@ -565,6 +565,61 @@ export function AuthProvider({ children }) {
     }
   }
 
+  // Create user profile (Admin only) - For direct customer creation without Firebase Auth
+  async function createUserProfile(userData, email) {
+    try {
+      if (!isAdmin) throw new Error('Unauthorized - Admin access required');
+
+      if (isDemoMode) {
+        // Demo mode: mock user creation
+        const newUserId = `user-${Date.now()}`;
+        const newUser = {
+          id: newUserId,
+          uid: newUserId,
+          email,
+          ...userData,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        
+        setDemoUsers(prev => [...prev, newUser]);
+        toast.success('Customer created successfully (Demo Mode)');
+        return { uid: newUserId, email };
+      } else {
+        // Real Firebase: Create user document directly without authentication
+        // Generate a unique ID for the customer
+        const newUserId = doc(collection(db, 'users')).id;
+        
+        const userProfile = {
+          ...userData,
+          email,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        // Create user document in Firestore
+        await setDoc(doc(db, 'users', newUserId), userProfile);
+
+        // 🚂🍽️ Auto-import to The Dining Wagon™ CRM
+        try {
+          const { autoImportNewB2BUser } = await import('../wagons/dining-wagon/utils/b2bIntegration');
+          await autoImportNewB2BUser({
+            id: newUserId,
+            uid: newUserId,
+            ...userProfile
+          });
+        } catch (error) {
+          console.error('CRM auto-import failed (user creation still successful):', error);
+        }
+
+        return { uid: newUserId, email };
+      }
+    } catch (error) {
+      console.error('Error creating user profile:', error);
+      throw error;
+    }
+  }
+
   // Context value
   const value = {
     currentUser,
@@ -585,7 +640,8 @@ export function AuthProvider({ children }) {
     getAllUsers,
     toggleUserActive,
     updateUserRole,
-    updateUserMarginal
+    updateUserMarginal,
+    createUserProfile
   };
 
   return (
