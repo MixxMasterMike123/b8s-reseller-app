@@ -59,6 +59,79 @@ const ContactDetail = () => {
     { value: 'note', label: 'Anteckning', icon: DocumentTextSolid, color: 'text-gray-600' }
   ];
 
+  // Advanced Swedish weekday and date parsing
+  const parseSwedishWeekdays = (text) => {
+    const weekdays = {
+      'måndag': 1, 'tisdag': 2, 'onsdag': 3, 'torsdag': 4, 
+      'fredag': 5, 'lördag': 6, 'söndag': 0
+    };
+    
+    const lowerText = text.toLowerCase();
+    const today = new Date();
+    const currentDay = today.getDay();
+    const dateTags = [];
+    
+    // Special case: "nästa vecka" defaults to next Tuesday
+    if (lowerText.includes('nästa vecka') || lowerText.includes('nästa veck')) {
+      const nextTuesday = new Date(today);
+      const currentDayAdjusted = currentDay === 0 ? 7 : currentDay;
+      const daysUntilNextTuesday = (7 - currentDayAdjusted) + 2; // 2 = Tuesday
+      
+      nextTuesday.setDate(today.getDate() + daysUntilNextTuesday);
+      const dateStr = nextTuesday.toISOString().split('T')[0];
+      const tagName = `tisdag-${dateStr}`;
+      
+      if (!dateTags.includes(tagName)) {
+        dateTags.push(tagName);
+      }
+    }
+
+    // Check for weekday mentions with context
+    Object.entries(weekdays).forEach(([weekdayName, weekdayNum]) => {
+      const patterns = [
+        `på ${weekdayName}`,
+        `i ${weekdayName}`,
+        `${weekdayName}`,
+        `nästa ${weekdayName}`,
+        `kommande ${weekdayName}`
+      ];
+      
+      patterns.forEach(pattern => {
+        if (lowerText.includes(pattern)) {
+          let targetDate = new Date(today);
+          let daysUntilTarget;
+          
+          // Calculate days until target weekday
+          if (weekdayNum === 0) weekdayNum = 7; // Convert Sunday to 7 for easier calculation
+          const currentDayAdjusted = currentDay === 0 ? 7 : currentDay;
+          
+          if (pattern.includes('nästa') || pattern.includes('kommande')) {
+            // Explicitly next week
+            daysUntilTarget = (7 - currentDayAdjusted) + weekdayNum;
+          } else {
+            // This week or next week logic
+            daysUntilTarget = weekdayNum - currentDayAdjusted;
+            if (daysUntilTarget <= 0) {
+              daysUntilTarget += 7; // Move to next week if day has passed
+            }
+          }
+          
+          targetDate.setDate(today.getDate() + daysUntilTarget);
+          
+          // Format as Swedish date tag
+          const dateStr = targetDate.toISOString().split('T')[0]; // YYYY-MM-DD
+          const tagName = `${weekdayName}-${dateStr}`;
+          
+          if (!dateTags.includes(tagName)) {
+            dateTags.push(tagName);
+          }
+        }
+      });
+    });
+    
+    return dateTags;
+  };
+
   // Core Swedish business tag analysis
   const analyzeTextForTags = (text) => {
     if (!text.trim()) return [];
@@ -74,14 +147,19 @@ const ContactDetail = () => {
     const lowerText = text.toLowerCase();
     const detected = [];
     
+    // Standard keyword detection
     Object.entries(keywordMap).forEach(([tag, keywords]) => {
       if (keywords.some(keyword => lowerText.includes(keyword))) {
         detected.push(tag);
       }
     });
     
-    // Max 3 suggested tags to avoid overwhelming
-    return detected.slice(0, 3);
+    // Advanced: Swedish weekday date parsing
+    const dateTags = parseSwedishWeekdays(text);
+    detected.push(...dateTags);
+    
+    // Max 5 suggested tags to accommodate date tags
+    return detected.slice(0, 5);
   };
 
   // Auto-analyze when subject or description changes
