@@ -459,11 +459,17 @@ const OrderPage = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-6">
+      <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-md p-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-6">Återförsäljarportal</h1>
         
-        <div className="mb-8 p-4 border border-gray-200 rounded">
-          <h2 className="text-xl font-semibold mb-4">Välj antal färger:</h2>
+        {/* Main Grid Layout: Products (2 cols) | Order Summary (1 col) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Products Section - Takes 2 columns */}
+          <div className="lg:col-span-2 space-y-6">
+        
+            <div className="p-4 border border-gray-200 rounded">
+              <h2 className="text-xl font-semibold mb-4">Välj antal färger:</h2>
           
           {/* Display product images for colors */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -603,10 +609,10 @@ const OrderPage = () => {
               <span>Alla</span>
             </label>
           </div>
-        </div>
+            </div>
         
-        <div className="mb-8 p-4 border border-gray-200 rounded">
-          <h2 className="text-xl font-semibold mb-4">Välj storlekar:</h2>
+            <div className="p-4 border border-gray-200 rounded">
+              <h2 className="text-xl font-semibold mb-4">Välj storlekar:</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {/* Manually define the order to ensure correct display */}
             <label className="flex items-center space-x-2">
@@ -657,10 +663,10 @@ const OrderPage = () => {
           <div className="mt-4 bg-blue-50 p-3 rounded text-sm">
             <p>Vi rekommenderar att man beställer alla 3 storlekar (2, 4 och 6) för att tillmötesgå kundernas olika behov.</p>
           </div>
-        </div>
+            </div>
         
-        <div className="mb-8 p-4 border border-gray-200 rounded">
-          <h2 className="text-xl font-semibold mb-4">Välj specifik produkt (valfritt):</h2>
+            <div className="p-4 border border-gray-200 rounded">
+              <h2 className="text-xl font-semibold mb-4">Välj specifik produkt (valfritt):</h2>
           <div className="mb-4">
             <ProductMenu 
               products={products} 
@@ -721,10 +727,10 @@ const OrderPage = () => {
               </button>
             </div>
           )}
-        </div>
+            </div>
         
-        <div className="mb-8 p-4 border border-gray-200 rounded">
-          <h2 className="text-xl font-semibold mb-4">Välj antal förpackningar:</h2>
+            <div className="p-4 border border-gray-200 rounded">
+              <h2 className="text-xl font-semibold mb-4">Välj antal förpackningar:</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             {[100, 300, 600, 1000].map((antal) => (
               <button
@@ -754,10 +760,10 @@ const OrderPage = () => {
               />
             </div>
           </div>
-        </div>
+            </div>
         
-        <div className="mb-8 p-4 border border-gray-200 rounded bg-blue-50">
-          <h2 className="text-xl font-semibold mb-2">Information om prissättning</h2>
+            <div className="p-4 border border-gray-200 rounded bg-blue-50">
+              <h2 className="text-xl font-semibold mb-2">Information om prissättning</h2>
           <p>Alla priser är exklusive moms och beräknas med din personliga marginal på {marginal || 40}%.</p>
           {(marginal || 40) === 40 && (
             <div className="mt-3 p-3 bg-orange-100 border border-orange-300 rounded-lg">
@@ -766,11 +772,16 @@ const OrderPage = () => {
               </p>
             </div>
           )}
-        </div>
-        
-        {isFormComplete && (
-          <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-            <h2 className="text-xl font-semibold mb-4">Resultat</h2>
+            </div>
+            
+          </div>
+          
+          {/* Order Summary Section - Takes 1 column, sticky */}
+          <div className="lg:col-span-1">
+            <div className="lg:sticky lg:top-6">
+              {isFormComplete ? (
+                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                  <h2 className="text-xl font-semibold mb-4">Orderöversikt</h2>
             
             <div className="mb-6">
               <h3 className="font-medium text-lg">Din order:</h3>
@@ -986,17 +997,26 @@ const OrderPage = () => {
               </div>
             </div>
             
-            <div className="mt-6 text-center">
-              <button 
-                onClick={handleSubmitOrder}
-                disabled={loading}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Bearbetar...' : 'Bekräfta beställning'}
-              </button>
+                <div className="mt-6 text-center">
+                  <button 
+                    onClick={handleSubmitOrder}
+                    disabled={loading}
+                    className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'Bearbetar...' : 'Bekräfta beställning'}
+                  </button>
+                </div>
+                </div>
+              ) : (
+                <div className="bg-gray-100 p-6 rounded-lg border border-gray-200 text-center">
+                  <h3 className="text-lg font-medium text-gray-600 mb-2">Orderöversikt</h3>
+                  <p className="text-gray-500">Välj färger, storlekar och antal för att se din orderöversikt</p>
+                </div>
+              )}
             </div>
           </div>
-        )}
+          
+        </div>
       </div>
     </AppLayout>
   );
