@@ -84,9 +84,11 @@ const ContactDetail = () => {
   // Auto-analyze when subject or description changes
   useEffect(() => {
     const combinedText = `${newActivity.subject} ${newActivity.description}`.trim();
-    const suggestions = analyzeTextForTags(combinedText);
-    setSuggestedTags(suggestions);
-  }, [newActivity.subject, newActivity.description]);
+    const allSuggestions = analyzeTextForTags(combinedText);
+    // Filter out tags that are already selected
+    const filteredSuggestions = allSuggestions.filter(tag => !selectedTags.includes(tag));
+    setSuggestedTags(filteredSuggestions);
+  }, [newActivity.subject, newActivity.description, selectedTags]);
 
   // Tag management functions
   const addTag = (tag) => {
@@ -483,66 +485,6 @@ const ContactDetail = () => {
               Vad hände? (sammanfattning)
             </label>
             
-            {/* Tag System - Subtle Swedish Style */}
-            {(suggestedTags.length > 0 || selectedTags.length > 0) && (
-              <div className="mb-3">
-                
-                {/* Suggested Tags - Elegant and Subtle */}
-                {suggestedTags.length > 0 && (
-                  <div className="mb-2">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-gray-500 font-medium">
-                        Föreslås:
-                      </span>
-                      <button
-                        onClick={() => setSuggestedTags([])}
-                        className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-                      >
-                        ignorera
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {suggestedTags.map(tag => (
-                        <button
-                          key={tag}
-                          onClick={() => addTag(tag)}
-                          className="inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-sm hover:bg-blue-200 transition-colors"
-                        >
-                          <span className="text-blue-600 mr-1">+</span>
-                          #{tag}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Selected Tags - Clean and Minimal */}
-                {selectedTags.length > 0 && (
-                  <div className="mb-2">
-                    <span className="text-xs text-gray-500 font-medium mb-1 block">
-                      Taggar:
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {selectedTags.map(tag => (
-                        <span
-                          key={tag}
-                          className="inline-flex items-center bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-sm"
-                        >
-                          #{tag}
-                          <button
-                            onClick={() => removeTag(tag)}
-                            className="ml-1.5 text-gray-600 hover:text-gray-800 transition-colors"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-            
             <input
               type="text"
               value={newActivity.subject}
@@ -551,6 +493,66 @@ const ContactDetail = () => {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
+
+          {/* Tag System - Between Subject and Description */}
+          {(suggestedTags.length > 0 || selectedTags.length > 0) && (
+            <div className="mb-4">
+              
+              {/* Suggested Tags - Elegant and Subtle */}
+              {suggestedTags.length > 0 && (
+                <div className="mb-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-gray-500 font-medium">
+                      Föreslås:
+                    </span>
+                    <button
+                      onClick={() => setSuggestedTags([])}
+                      className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      ignorera
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {suggestedTags.map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => addTag(tag)}
+                        className="inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-sm hover:bg-blue-200 transition-colors"
+                      >
+                        <span className="text-blue-600 mr-1">+</span>
+                        #{tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Selected Tags - Clean and Minimal */}
+              {selectedTags.length > 0 && (
+                <div className="mb-2">
+                  <span className="text-xs text-gray-500 font-medium mb-1 block">
+                    Taggar:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedTags.map(tag => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-sm"
+                      >
+                        #{tag}
+                        <button
+                          onClick={() => removeTag(tag)}
+                          className="ml-1.5 text-gray-600 hover:text-gray-800 transition-colors"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Description (Optional) */}
           <div className="mb-4">
