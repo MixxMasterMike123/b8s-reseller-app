@@ -492,8 +492,8 @@ const AdminOrderDetail = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {order.source === 'b2c' ? (
-                  // B2C order items
+                {order.items && order.items.length > 0 ? (
+                  // Modern order items (both B2B and B2C with individual line items)
                   order.items.map((item, index) => (
                     <tr key={index}>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.name}</td>
@@ -509,7 +509,7 @@ const AdminOrderDetail = () => {
                     </tr>
                   ))
                 ) : (
-                  // B2B order items
+                  // Legacy B2B order items (fallback for old orders)
                   getOrderDistribution(order).map((item, index) => (
                     <tr key={index}>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">B8 Shield</td>

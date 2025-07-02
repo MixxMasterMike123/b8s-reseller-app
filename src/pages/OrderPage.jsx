@@ -367,31 +367,43 @@ const OrderPage = () => {
                                 </label>
                               </div>
                               
-                              {/* Quick quantity buttons */}
-                              <div className="flex items-center gap-2">
-                                {[5, 10, 20, 30].map(qty => (
-                                  <button
-                                    key={qty}
-                                    onClick={() => handleQuantityButton(colorId, size, qty)}
-                                    className={`px-3 py-1 text-sm rounded border ${
-                                      colorData.sizes[size] === qty 
-                                        ? 'bg-blue-600 text-white border-blue-600'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                    }`}
-                                  >
-                                    {qty}
-                                  </button>
-                                ))}
+                                                               {/* Quick quantity buttons */}
+                                 <div className="flex items-center gap-2">
+                                   {[5, 10, 20, 30].map(qty => (
+                                     <button
+                                       key={qty}
+                                       onClick={() => handleQuantityButton(colorId, size, qty)}
+                                       className={`relative px-3 py-1 text-sm rounded-lg border-2 transition-all duration-200 ${
+                                         colorData.sizes[size] === qty 
+                                           ? 'bg-blue-600 text-white border-blue-600 shadow-lg transform scale-105 font-semibold'
+                                           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                                       }`}
+                                     >
+                                       {qty}
+                                       {colorData.sizes[size] === qty && (
+                                         <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                                       )}
+                                     </button>
+                                   ))}
                                 
                                                                  {/* Custom input */}
-                                 <input
-                                   type="number"
-                                   min="0"
-                                   placeholder="Annat"
-                                   value={colorData.sizes[size] === 0 ? '' : colorData.sizes[size]}
-                                   onChange={(e) => handleCustomQuantity(colorId, size, e.target.value)}
-                                   className="w-16 px-2 py-1 text-sm border border-gray-300 rounded"
-                                 />
+                                 <div className="relative">
+                                   <input
+                                     type="number"
+                                     min="0"
+                                     placeholder="Annat"
+                                     value={colorData.sizes[size] === 0 ? '' : colorData.sizes[size]}
+                                     onChange={(e) => handleCustomQuantity(colorId, size, e.target.value)}
+                                     className={`w-16 px-2 py-1 text-sm border-2 rounded-lg transition-all duration-200 ${
+                                       colorData.sizes[size] > 0 && ![5, 10, 20, 30].includes(colorData.sizes[size])
+                                         ? 'border-blue-500 bg-blue-50 text-blue-900 font-semibold shadow-sm'
+                                         : 'border-gray-300 bg-white text-gray-700'
+                                     }`}
+                                   />
+                                   {colorData.sizes[size] > 0 && ![5, 10, 20, 30].includes(colorData.sizes[size]) && (
+                                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                                   )}
+                                 </div>
                                 
                                 {/* Clear button */}
                                 {colorData.sizes[size] > 0 && (
