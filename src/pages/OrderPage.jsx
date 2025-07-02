@@ -40,8 +40,8 @@ const OrderPage = () => {
 
   // Sort functions to ensure correct display order
   const sortColorOptions = (colors) => {
-    // Define the preferred order to match hardcoded checkboxes - Transparent, Röd, Florerande, Glitter
-    const colorOrder = ['transparent', 'rod', 'florerande', 'glitter'];
+    // Define the preferred order to match hardcoded checkboxes - Transparent, Röd, Fluorescerande, Glitter
+    const colorOrder = ['transparent', 'rod', 'fluorescerande', 'glitter'];
     
     // Sort the colors based on the preferred order
     return [...colors].sort((a, b) => {
@@ -106,7 +106,7 @@ const OrderPage = () => {
               
               // Map specific color names to match hardcoded checkbox IDs
               if (colorId === 'fluorescent' || colorId === 'fluorescerande') {
-                colorId = 'florerande';
+                colorId = 'fluorescerande';
               }
               
               if (!colorMap.has(colorId)) {
@@ -133,7 +133,7 @@ const OrderPage = () => {
                     
                     // Map variant color IDs to match hardcoded checkbox IDs
                     if (variantColorId === 'fluorescent' || variantColorId === 'fluorescerande') {
-                      variantColorId = 'florerande';
+                      variantColorId = 'fluorescerande';
                     }
                     
                     if (!colorMap.has(variantColorId)) {
@@ -162,7 +162,7 @@ const OrderPage = () => {
         console.log('📊 B2B products loaded:', productsData.length);
         console.log('🎨 Available colors for B2B:', uniqueColors);
         console.log('📏 Available sizes for B2B:', uniqueSizes);
-        console.log('🔧 Color ID mapping completed - "fluorescent" → "florerande"');
+        console.log('🔧 Color ID mapping completed - "fluorescent" → "fluorescerande"');
         
         setProducts(productsData);
         setProductColors(uniqueColors);
@@ -559,8 +559,8 @@ const OrderPage = () => {
             <label className="flex items-center space-x-2">
               <input
                 type="checkbox"
-                name="florerande"
-                checked={farger["florerande"] || false}
+                name="fluorescerande"
+                checked={farger["fluorescerande"] || false}
                 onChange={handleFargerChange}
                 className="h-5 w-5"
               />
@@ -674,7 +674,7 @@ const OrderPage = () => {
                     } else if (name.includes('röd') || name.includes('red') || name.includes('rod')) {
                       newFarger.rod = true;
                     } else if (name.includes('fluor')) {
-                      newFarger.florerande = true;
+                      newFarger.fluorescerande = true;
                     } else if (name.includes('glitter')) {
                       newFarger.glitter = true;
                     }
