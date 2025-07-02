@@ -257,9 +257,110 @@ const AdminOrderDetail = () => {
     }
   };
 
-  // Add print functionality
+  // Simple print functionality that actually works
   const handlePrint = () => {
-    window.print();
+    // Create a simple print window with order data
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    
+    // Basic HTML template
+    const printHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Order_${order.orderNumber || order.id}_B8Shield</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
+          .header { border-bottom: 2px solid #333; margin-bottom: 20px; padding-bottom: 10px; }
+          .title { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
+          .section { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; }
+          .section-title { font-size: 14px; font-weight: bold; margin-bottom: 8px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+          th { background-color: #f8f9fa; font-weight: bold; }
+          .text-right { text-align: right; }
+          .font-bold { font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="title">B8Shield Order Details</div>
+          <div>Order Number: <strong>${order.orderNumber || order.id}</strong></div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Customer Information</div>
+          <p><strong>Company:</strong> ${displayUser.companyName}</p>
+          <p><strong>Contact:</strong> ${displayUser.contactPerson}</p>
+          <p><strong>Email:</strong> ${displayUser.email}</p>
+          <p><strong>Role:</strong> ${displayUser.role}</p>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Order Information</div>
+          <p><strong>Date:</strong> ${formatDate(order.createdAt)}</p>
+          <p><strong>Status:</strong> ${statusText}</p>
+          <p><strong>Payment Method:</strong> ${order.paymentMethod || 'Invoice'}</p>
+          ${order.source ? `<p><strong>Source:</strong> ${order.source === 'b2c' ? 'B2C Shop' : 'B2B Portal'}</p>` : ''}
+        </div>
+
+        <div class="section">
+          <div class="section-title">Delivery Address</div>
+          <p><strong>Company:</strong> ${displayAddress.company}</p>
+          <p><strong>Contact:</strong> ${displayAddress.contactPerson}</p>
+          <p><strong>Address:</strong> ${displayAddress.address}</p>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Order Items</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Color</th>
+                <th>Size</th>
+                <th>Quantity</th>
+                <th class="text-right">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(order.items && order.items.length > 0 ? order.items : getOrderDistribution(order)).map(item => `
+                <tr>
+                  <td>${item.name || 'B8 Shield'}</td>
+                  <td>${item.color || '-'}</td>
+                  <td>${item.size || '-'}</td>
+                  <td>${item.quantity} st</td>
+                  <td class="text-right">${item.price ? item.price.toLocaleString('sv-SE', { minimumFractionDigits: 2 }) + ' kr' : (order.prisInfo?.produktPris ? order.prisInfo.produktPris.toLocaleString('sv-SE', { minimumFractionDigits: 2 }) + ' kr' : '')}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4" class="text-right font-bold">Total:</td>
+                <td class="text-right font-bold">${(order.total || order.prisInfo?.totalPris || 0).toLocaleString('sv-SE', { minimumFractionDigits: 2 })} kr</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        ${order.note ? `
+          <div class="section">
+            <div class="section-title">Notes</div>
+            <p>${order.note}</p>
+          </div>
+        ` : ''}
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(printHTML);
+    printWindow.document.close();
+    
+    // Wait for window to load then print
+    setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    }, 500);
   };
 
   if (loading) {
@@ -330,48 +431,44 @@ const AdminOrderDetail = () => {
   return (
     <AppLayout>
       <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <div>
-            <div className="flex items-center mb-2">
-              <Link to="/admin/orders" className="text-blue-600 hover:text-blue-800 mr-2">
+        {/* Header Section */}
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <Link to="/admin/orders" className="text-blue-600 hover:text-blue-800 mr-2 inline-flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
                 </svg>
               </Link>
-              <h1 className="text-2xl font-bold text-gray-800">Admin Order Details</h1>
+              <h1 className="text-2xl font-bold text-gray-800">B8Shield Order Details</h1>
+              <p className="text-gray-600 mt-2">Order Number: <span className="font-semibold">{order.orderNumber}</span></p>
             </div>
-            <p className="text-gray-600">Order Number: <span className="font-semibold">{order.orderNumber}</span></p>
-          </div>
-          <div className="mt-4 md:mt-0 flex items-center flex-wrap gap-2">
-            <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${statusColor} mr-2`}>
-              {statusText}
-            </span>
-            
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColor}`}>
+                {statusText}
+              </span>
               {updateStatusLoading ? (
-                <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-blue-600 border-r-transparent mr-2"></div>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-r-transparent"></div>
               ) : (
                 <OrderStatusMenu 
                   currentStatus={order.status} 
                   onStatusChange={handleStatusUpdate} 
                 />
               )}
+              <button
+                onClick={handlePrint}
+                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                Print
+              </button>
+              <button
+                onClick={handleDeleteOrder}
+                disabled={deleteLoading}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {deleteLoading ? 'Deleting...' : 'Delete Order'}
+              </button>
             </div>
-            
-            <button
-              onClick={handlePrint}
-              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors mr-2"
-            >
-              Print
-            </button>
-            
-            <button
-              onClick={handleDeleteOrder}
-              disabled={deleteLoading}
-              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {deleteLoading ? 'Deleting...' : 'Delete Order'}
-            </button>
           </div>
         </div>
 
