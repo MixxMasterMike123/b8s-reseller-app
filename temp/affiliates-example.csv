@@ -1,0 +1,6 @@
+name,email,phone,address,postalCode,city,country,commissionRate,checkoutDiscount,website,instagram,youtube,facebook,tiktok,promotionMethod,message
+Erik Andersson,erik@example.com,08-123456,Storgatan 15,11523,Stockholm,SE,20,15,https://eriksfish.com,@eriksfish,@eriksfish,,@eriksfish,Instagram & YouTube,Experienced fishing influencer with 50k followers
+Anna Johansson,anna@example.com,031-987654,Fiskehamn 23,41124,Göteborg,SE,15,10,https://annasangling.se,@annasangling,,,@annas_angling,Instagram,Passionate angler sharing daily fishing tips
+Magnus Lindgren,magnus@example.com,08-555123,Sjöutsikt 8,17148,Solna,SE,25,20,,,@magnusfish,@magnusfish,,YouTube & TikTok,Popular fishing YouTuber with weekly tutorials
+Sofia Karlsson,sofia@example.com,040-333777,Hamnplan 12,21119,Malmö,SE,18,12,https://sofiafish.blog,@sofiafish,@sofiafish,@sofiafish,@sofia_fishing,Multi-platform,Full-time fishing content creator across all platforms
+Johan Nilsson,johan@example.com,08-999444,Fiskaregatan 45,11223,Stockholm,SE,,,,,,,,,,Local fishing guide and shop owner 

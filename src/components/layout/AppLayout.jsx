@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import AdminPresenceIndicator from '../AdminPresenceIndicator';
 
 // 🚂 WAGON SYSTEM: Import wagon registry for menu items
 import wagonRegistry from '../../wagons/WagonRegistry.js';
@@ -365,6 +366,13 @@ const AppLayout = ({ children }) => {
           
           {/* User Profile Section */}
           <div className="border-t border-gray-200 p-4">
+            {/* Admin Presence Indicator for admins */}
+            {isAdmin && (
+              <div className="mb-3">
+                <AdminPresenceIndicator />
+              </div>
+            )}
+            
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
@@ -414,7 +422,10 @@ const AppLayout = ({ children }) => {
                 </Link>
               </div>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center space-x-2">
+              {/* Admin Presence Indicator for mobile */}
+              {isAdmin && <AdminPresenceIndicator />}
+              
               <div className="flex-shrink-0">
                 <button
                   onClick={handleLogout}

@@ -6,6 +6,7 @@ import { collection, getDocs, query, where, orderBy, limit } from 'firebase/fire
 import { db } from '../../firebase/config';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
+import AdminPresence from '../../components/AdminPresence';
 
 const AdminDashboard = () => {
   const { currentUser } = useAuth();
@@ -255,6 +256,11 @@ const AdminDashboard = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Admin Presence */}
+        <div className="mb-8">
+          <AdminPresence />
         </div>
 
         {/* Recent Orders */}
