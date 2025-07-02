@@ -314,38 +314,7 @@ export const populateFromProducts = async () => {
         });
       }
       
-      // Add EAN images if they exist
-      if (product.eanImagePng) {
-        materialsToAdd.push({
-          name: `${product.name} - EAN-kod PNG`,
-          description: `EAN-kod i PNG-format för ${product.name}`,
-          fileName: `${product.name}_ean.png`,
-          fileType: 'image',
-          downloadURL: product.eanImagePng,
-          category: 'ean-koder',
-          isActive: true,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-          sourceType: 'product',
-          sourceId: doc.id
-        });
-      }
-      
-      if (product.eanImageSvg) {
-        materialsToAdd.push({
-          name: `${product.name} - EAN-kod SVG`,
-          description: `EAN-kod i SVG-format för ${product.name}`,
-          fileName: `${product.name}_ean.svg`,
-          fileType: 'image',
-          downloadURL: product.eanImageSvg,
-          category: 'ean-koder',
-          isActive: true,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-          sourceType: 'product',
-          sourceId: doc.id
-        });
-      }
+
     });
     
     // Add all materials to Firestore

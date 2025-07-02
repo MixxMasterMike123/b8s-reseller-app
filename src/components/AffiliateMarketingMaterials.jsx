@@ -64,7 +64,6 @@ const AffiliateMarketingMaterials = ({ affiliateCode }) => {
     const labels = {
       'allmänt': 'Allmänt',
       'produktbilder': 'Produktbilder',
-      'ean-koder': 'EAN-koder',
       'annonser': 'Annonser',
       'broschyrer': 'Broschyrer',
       'videos': 'Videos',

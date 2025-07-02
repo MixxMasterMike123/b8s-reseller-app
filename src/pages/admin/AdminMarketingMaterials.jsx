@@ -33,7 +33,6 @@ function AdminMarketingMaterials() {
   const categories = [
     { value: 'allmänt', label: 'Allmänt' },
     { value: 'produktbilder', label: 'Produktbilder' },
-    { value: 'ean-koder', label: 'EAN-koder' },
     { value: 'annonser', label: 'Annonser' },
     { value: 'broschyrer', label: 'Broschyrer' },
     { value: 'videos', label: 'Videos' },
@@ -125,7 +124,7 @@ function AdminMarketingMaterials() {
   };
 
   const handlePopulateFromProducts = async () => {
-    if (!confirm('Detta kommer att lägga till alla produktbilder och EAN-koder som marknadsföringsmaterial. Fortsätt?')) {
+    if (!confirm('Detta kommer att lägga till alla produktbilder som marknadsföringsmaterial. Fortsätt?')) {
       return;
     }
 

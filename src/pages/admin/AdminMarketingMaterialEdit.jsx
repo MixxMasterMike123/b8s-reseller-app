@@ -32,7 +32,6 @@ function AdminMarketingMaterialEdit() {
   const categories = [
     { value: 'allmänt', label: 'Allmänt' },
     { value: 'produktbilder', label: 'Produktbilder' },
-    { value: 'ean-koder', label: 'EAN-koder' },
     { value: 'annonser', label: 'Annonser' },
     { value: 'broschyrer', label: 'Broschyrer' },
     { value: 'videos', label: 'Videos' },

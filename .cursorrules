@@ -457,7 +457,6 @@ src/
 - **Categories Available**:
   - **Allmänt**: General marketing materials
   - **Produktbilder**: Product images and photos
-  - **EAN-koder**: EAN barcode images and files
   - **Annonser**: Ready-to-print PDF advertisements, brochures, flyers
   - **Broschyrer**: Marketing brochures and pamphlets
   - **Videos**: Video marketing materials
@@ -474,7 +473,7 @@ src/
 {
   id: string,
   name: string,
-  category: string, // 'allmänt', 'produktbilder', 'ean-koder', 'annonser', 'broschyrer', 'videos', 'prislista', 'instruktioner', 'dokument', 'övrigt'
+  category: string, // 'allmänt', 'produktbilder', 'annonser', 'broschyrer', 'videos', 'prislista', 'instruktioner', 'dokument', 'övrigt'
   fileType: string,
   fileSize: number,
   downloadUrl: string,
