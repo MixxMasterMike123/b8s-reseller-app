@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { db, functions } from '../../firebase/config';
-import { collection, getDocs, doc, deleteDoc, updateDoc, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc, query, where, orderBy } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
@@ -11,11 +11,10 @@ import {
   ClockIcon, 
   ChartBarIcon, 
   CursorArrowRaysIcon, 
-  TrashIcon, 
   PencilIcon, 
   BanknotesIcon,
-  StopIcon,
-  PlayIcon
+  LinkIcon,
+  EyeIcon
 } from '@heroicons/react/24/outline';
 
 const StatCard = ({ icon, title, value, color }) => (
@@ -81,8 +80,6 @@ const AdminAffiliates = () => {
       if (result.data.success) {
         toast.success(`Affiliate godkänd! Kod: ${result.data.affiliateCode}`, { id: toastId, duration: 5000 });
         fetchData(); // Refresh both lists
-        // Optional: navigate to the new affiliate's edit page
-        // navigate(`/admin/affiliates/manage/${result.data.newAffiliateId}`);
       } else {
         throw new Error(result.data.error || 'Okänt fel vid godkännande.');
       }
@@ -98,56 +95,12 @@ const AdminAffiliates = () => {
     }
     const toastId = toast.loading('Nekar ansökan...');
     try {
-      // For now, we just delete the application.
       await deleteDoc(doc(db, 'affiliateApplications', appId));
-      
       toast.success('Ansökan har nekats och raderats.', { id: toastId });
       fetchData(); // Refresh both lists
     } catch (error) {
       console.error("Error denying affiliate: ", error);
       toast.error('Kunde inte neka ansökan.', { id: toastId });
-    }
-  };
-
-  const handleDeleteAffiliate = async (affiliateId, affiliateName) => {
-    if (!window.confirm(`Är du säker på att du vill radera affiliate "${affiliateName}"? Detta kan inte ångras.`)) {
-      return;
-    }
-    
-    const toastId = toast.loading('Raderar affiliate...');
-    try {
-      // Delete the affiliate document
-      await deleteDoc(doc(db, 'affiliates', affiliateId));
-      
-      toast.success(`Affiliate "${affiliateName}" har raderats.`, { id: toastId });
-      fetchData(); // Refresh the list
-    } catch (error) {
-      console.error("Error deleting affiliate: ", error);
-      toast.error(`Kunde inte radera affiliate: ${error.message}`, { id: toastId });
-    }
-  };
-
-  const handleToggleAffiliateStatus = async (affiliateId, currentStatus, affiliateName) => {
-    const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
-    const actionText = newStatus === 'active' ? 'aktivera' : 'suspendra';
-    
-    if (!window.confirm(`Är du säker på att du vill ${actionText} affiliate "${affiliateName}"?`)) {
-      return;
-    }
-    
-    const toastId = toast.loading(`${actionText === 'aktivera' ? 'Aktiverar' : 'Suspenderar'} affiliate...`);
-    try {
-      // Update the affiliate status
-      await updateDoc(doc(db, 'affiliates', affiliateId), {
-        status: newStatus,
-        updatedAt: new Date().toISOString()
-      });
-      
-      toast.success(`Affiliate "${affiliateName}" har ${newStatus === 'active' ? 'aktiverats' : 'suspenderats'}.`, { id: toastId });
-      fetchData(); // Refresh the list
-    } catch (error) {
-      console.error("Error updating affiliate status: ", error);
-      toast.error(`Kunde inte uppdatera affiliate-status: ${error.message}`, { id: toastId });
     }
   };
 
@@ -176,7 +129,7 @@ const AdminAffiliates = () => {
 
   return (
     <AppLayout>
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <div className="flex justify-between items-center">
             <div>
@@ -244,12 +197,13 @@ const AdminAffiliates = () => {
           </div>
         </div>
 
-        {/* Active Affiliates */}
+        {/* Active Affiliates Table */}
         <div>
           <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
             <ChartBarIcon className="h-6 w-6 mr-3 text-green-600" />
             Aktiva Affiliates ({affiliates.length})
           </h2>
+          
           {loading ? (
             <p>Laddar affiliates...</p>
           ) : affiliates.length === 0 ? (
@@ -257,121 +211,170 @@ const AdminAffiliates = () => {
               <p className="text-gray-500">Inga aktiva affiliates hittades.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {affiliates.map((affiliate) => (
-                <div key={affiliate.id} className="bg-white rounded-2xl shadow-lg p-6 flex flex-col justify-between hover:shadow-xl transition-all duration-200">
-                  <div>
-                    <div className="flex justify-between items-start mb-3">
-                      <h3 className="text-lg font-bold text-gray-900 truncate">{affiliate.name}</h3>
-                      <StatusBadge status={affiliate.status} />
-                    </div>
-                    <p className="text-sm text-gray-500 mb-2">{affiliate.email}</p>
-                    
-                    {/* Affiliate Code Section */}
-                    <div className="bg-blue-50 rounded-lg p-3 mb-4">
-                      <p className="text-xs text-blue-600 font-medium mb-1">Affiliate Kod</p>
-                      <div className="font-mono text-sm bg-white px-3 py-2 rounded border border-blue-100">
-                        {affiliate.affiliateCode}
-                      </div>
-                    </div>
+            <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Affiliate & Kontakt
+                      </th>
+                      <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Kod & Status
+                      </th>
+                      <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Prestanda
+                      </th>
+                      <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Intjäning
+                      </th>
+                      <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Åtgärder
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {affiliates.map((affiliate) => (
+                      <tr key={affiliate.id} className="hover:bg-gray-50">
+                        {/* Column 1: Affiliate & Contact */}
+                        <td className="px-4 md:px-6 py-4">
+                          <div className="flex items-start">
+                            <div className="flex-shrink-0 h-12 w-12 mr-4">
+                              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                                <span className="text-sm font-medium text-blue-800">
+                                  {affiliate.name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium text-gray-900 mb-1">{affiliate.name}</div>
+                              <div className="text-sm text-gray-500 mb-1">{affiliate.email}</div>
+                              {affiliate.website && (
+                                <div className="flex items-center text-xs text-blue-600">
+                                  <LinkIcon className="h-3 w-3 mr-1" />
+                                  <a 
+                                    href={affiliate.website} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="hover:underline truncate max-w-[200px]"
+                                  >
+                                    {affiliate.website.replace(/^https?:\/\//, '')}
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
 
-                    {/* Website Link */}
-                    {affiliate.website && (
-                      <a 
-                        href={affiliate.website} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="text-sm text-blue-600 hover:text-blue-800 hover:underline truncate block mb-4"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {affiliate.website}
-                      </a>
-                    )}
-                    
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
-                        <dt className="text-sm font-medium text-gray-500">Provision</dt>
-                        <dd className="text-sm text-gray-900 font-semibold">{affiliate.commissionRate}%</dd>
-                        
-                        <dt className="text-sm font-medium text-gray-500">Rabatt</dt>
-                        <dd className="text-sm text-gray-900 font-semibold">{affiliate.checkoutDiscount || 0}%</dd>
-                        
-                        <dt className="text-sm font-medium text-gray-500">Besök</dt>
-                        <dd className="text-sm text-gray-900 font-semibold">{(affiliate.stats?.clicks || 0).toLocaleString('sv-SE')}</dd>
-                        
-                        <dt className="text-sm font-medium text-gray-500">Konverteringar</dt>
-                        <dd className="text-sm text-gray-900 font-semibold">{(affiliate.stats?.conversions || 0).toLocaleString('sv-SE')}</dd>
-                        
-                        <dt className="text-sm font-medium text-gray-500">Konv.grad</dt>
-                        <dd className="text-sm text-gray-900 font-semibold">
-                          {affiliate.stats?.clicks ? 
-                            ((affiliate.stats.conversions / affiliate.stats.clicks) * 100).toFixed(1) : 
-                            0}%
-                        </dd>
-                        
-                        <dt className="text-sm font-medium text-gray-500">Intjänat</dt>
-                        <dd className="text-sm text-gray-900 font-bold text-green-600">{formatCurrency(affiliate.stats?.totalEarnings)}</dd>
-                      </dl>
-                    </div>
-                  </div>
-                  
-                  {/* Action Buttons */}
-                  <div className="mt-6 space-y-3">
-                    {/* Primary Actions Row */}
-                    <div className="flex justify-between space-x-2">
-                      <button
-                        onClick={() => navigate(`/admin/affiliates/manage/${affiliate.id}`)}
-                        className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      >
-                        <PencilIcon className="h-4 w-4 mr-1" />
-                        Hantera
-                      </button>
-                      
-                      {affiliate.stats?.balance > 0 && (
-                        <button
-                          onClick={() => navigate(`/admin/affiliates/payout/${affiliate.id}`)}
-                          className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                        >
-                          <BanknotesIcon className="h-4 w-4 mr-1" />
-                          Betala
-                        </button>
-                      )}
-                    </div>
-                    
-                    {/* Secondary Actions Row */}
-                    <div className="flex justify-between space-x-2">
-                      <button
-                        onClick={() => handleToggleAffiliateStatus(affiliate.id, affiliate.status, affiliate.name)}
-                        className={`flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                          affiliate.status === 'active' 
-                            ? 'bg-orange-600 hover:bg-orange-700 focus:ring-orange-500' 
-                            : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
-                        }`}
-                      >
-                        {affiliate.status === 'active' ? (
-                          <>
-                            <StopIcon className="h-4 w-4 mr-1" />
-                            Suspendra
-                          </>
-                        ) : (
-                          <>
-                            <PlayIcon className="h-4 w-4 mr-1" />
-                            Aktivera
-                          </>
-                        )}
-                      </button>
-                      
-                      <button
-                        onClick={() => handleDeleteAffiliate(affiliate.id, affiliate.name)}
-                        className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                      >
-                        <TrashIcon className="h-4 w-4 mr-1" />
-                        Radera
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                        {/* Column 2: Code & Status */}
+                        <td className="px-4 md:px-6 py-4">
+                          <div className="space-y-2">
+                            <div className="bg-blue-50 rounded-lg p-2">
+                              <div className="text-xs text-blue-600 font-medium mb-1">Affiliate Kod</div>
+                              <div className="font-mono text-sm bg-white px-2 py-1 rounded border border-blue-100">
+                                {affiliate.affiliateCode}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <StatusBadge status={affiliate.status} />
+                              <div className="text-xs text-gray-500">
+                                {affiliate.commissionRate}% provision
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Column 3: Performance */}
+                        <td className="px-4 md:px-6 py-4">
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-gray-500">Besök:</span>
+                              <span className="text-sm font-medium text-gray-900">
+                                {(affiliate.stats?.clicks || 0).toLocaleString('sv-SE')}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-gray-500">Konverteringar:</span>
+                              <span className="text-sm font-medium text-gray-900">
+                                {(affiliate.stats?.conversions || 0).toLocaleString('sv-SE')}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-gray-500">Konv.grad:</span>
+                              <span className="text-sm font-medium text-gray-900">
+                                {affiliate.stats?.clicks ? 
+                                  ((affiliate.stats.conversions / affiliate.stats.clicks) * 100).toFixed(1) : 
+                                  0}%
+                              </span>
+                            </div>
+                            {affiliate.checkoutDiscount > 0 && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs text-gray-500">Rabatt:</span>
+                                <span className="text-sm font-medium text-green-600">
+                                  {affiliate.checkoutDiscount}%
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Column 4: Earnings */}
+                        <td className="px-4 md:px-6 py-4">
+                          <div className="space-y-2">
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Totalt intjänat:</div>
+                              <div className="text-sm font-bold text-green-600">
+                                {formatCurrency(affiliate.stats?.totalEarnings)}
+                              </div>
+                            </div>
+                            {affiliate.stats?.balance > 0 && (
+                              <div>
+                                <div className="text-xs text-gray-500 mb-1">Obetalt saldo:</div>
+                                <div className="text-sm font-medium text-orange-600">
+                                  {formatCurrency(affiliate.stats?.balance)}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Column 5: Actions */}
+                        <td className="px-4 md:px-6 py-4 text-right">
+                          <div className="flex flex-col gap-2">
+                            <button
+                              onClick={() => navigate(`/admin/affiliates/manage/${affiliate.id}`)}
+                              className="inline-flex items-center px-3 py-2 text-xs font-medium text-blue-600 hover:text-blue-900 hover:bg-blue-50 border border-blue-300 rounded transition-colors"
+                            >
+                              <PencilIcon className="h-4 w-4 mr-1" />
+                              Hantera
+                            </button>
+                            
+                            {affiliate.stats?.balance > 0 && (
+                              <button
+                                onClick={() => navigate(`/admin/affiliates/payout/${affiliate.id}`)}
+                                className="inline-flex items-center px-3 py-2 text-xs font-medium text-green-600 hover:text-green-900 hover:bg-green-50 border border-green-300 rounded transition-colors"
+                              >
+                                <BanknotesIcon className="h-4 w-4 mr-1" />
+                                Betala
+                              </button>
+                            )}
+                            
+                            <a
+                              href={`https://shop.b8shield.com/?ref=${affiliate.affiliateCode}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-2 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-gray-300 rounded transition-colors"
+                            >
+                              <EyeIcon className="h-4 w-4 mr-1" />
+                              Testa länk
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>

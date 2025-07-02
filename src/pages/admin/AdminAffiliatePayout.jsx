@@ -139,7 +139,7 @@ const AdminAffiliatePayout = () => {
       const result = await processAffiliatePayout(affiliateId, payoutData);
       
       toast.success(`Betalning på ${formatCurrency(payoutData.payoutAmount)} har behandlats!`);
-      navigate(`/admin/affiliates/edit/${affiliateId}`);
+      navigate('/admin/affiliates');
       
     } catch (error) {
       console.error('Error processing payout:', error);
