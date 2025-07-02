@@ -61,9 +61,8 @@ const PublicStorefront = () => {
     const colorGroups = {};
     
     products.forEach(product => {
-      // Extract color from product name (assuming format like "B8Shield Röd", "B8Shield Transparent", etc.)
-      const colorMatch = product.name.match(/B8Shield\s+(.+?)(?:\s+\d|$)/i);
-      const color = colorMatch ? colorMatch[1].trim() : 'Standard';
+      // Use the new color field, fallback to 'Standard' if not set
+      const color = product.color || 'Standard';
       
       if (!colorGroups[color]) {
         colorGroups[color] = {
@@ -110,7 +109,7 @@ const PublicStorefront = () => {
     if (product.b2bImageUrl) return product.b2bImageUrl;
     if (product.imageUrl) return product.imageUrl;
     if (product.imageData) return product.imageData;
-    return getProductImage(product.name);
+    return getProductImage(product); // Pass the product object to use color field
   };
 
   // Get product description - prefer B2C description

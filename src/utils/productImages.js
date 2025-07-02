@@ -1,7 +1,7 @@
 // Product images for B8Shield products
 // These are placeholder images that can be replaced with actual product photos
 
-export const generateProductImage = (productName, color = 'blue') => {
+export const generateProductImage = (productName, color = 'blue', productColorField = null) => {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   
@@ -9,25 +9,44 @@ export const generateProductImage = (productName, color = 'blue') => {
   canvas.width = 400;
   canvas.height = 400;
   
-  // Color mappings for different B8Shield variants
+  // Color mappings for different B8Shield variants - using standardized color field values
   const colorMap = {
-    'red': '#DC2626',
-    'röd': '#DC2626',
-    'transparent': '#64748B',
-    'fluorescent': '#10B981',
-    'fluorescerande': '#10B981',
-    'glitter': '#F59E0B',
+    'Transparent': '#64748B',
+    'Röd': '#DC2626',
+    'Fluorescerande': '#10B981',
+    'Glitter': '#F59E0B',
     'blue': '#2563EB',
     'default': '#2563EB'
   };
   
-  // Detect color from product name
+  // Use productColorField if provided, otherwise fallback to legacy name parsing
   let productColor = colorMap.default;
-  Object.keys(colorMap).forEach(key => {
-    if (productName.toLowerCase().includes(key)) {
-      productColor = colorMap[key];
+  
+  if (productColorField && colorMap[productColorField]) {
+    productColor = colorMap[productColorField];
+  } else {
+    // Legacy fallback for old color parameter or name parsing
+    const legacyColorMap = {
+      'red': '#DC2626',
+      'röd': '#DC2626',
+      'transparent': '#64748B',
+      'fluorescent': '#10B981',
+      'fluorescerande': '#10B981',
+      'glitter': '#F59E0B',
+      'blue': '#2563EB'
+    };
+    
+    if (typeof color === 'string' && legacyColorMap[color.toLowerCase()]) {
+      productColor = legacyColorMap[color.toLowerCase()];
+    } else {
+      // Fallback to name parsing for backward compatibility
+      Object.keys(legacyColorMap).forEach(key => {
+        if (productName.toLowerCase().includes(key)) {
+          productColor = legacyColorMap[key];
+        }
+      });
     }
-  });
+  }
   
   // Create gradient background
   const gradient = ctx.createRadialGradient(200, 200, 0, 200, 200, 200);
@@ -87,29 +106,50 @@ export const generateProductImage = (productName, color = 'blue') => {
   return canvas.toDataURL('image/png');
 };
 
-// Pre-generated product images for B8Shield variants
+// Pre-generated product images for B8Shield variants - using new color field approach
 export const productImages = {
-  'B8Shield Röd': generateProductImage('B8Shield Röd', 'red'),
-  'B8Shield Transparent': generateProductImage('B8Shield Transparent', 'transparent'),
-  'B8Shield Fluorescerande': generateProductImage('B8Shield Fluorescerande', 'fluorescent'),
-  'B8Shield Glitter': generateProductImage('B8Shield Glitter', 'glitter'),
+  'B8Shield Röd': generateProductImage('B8Shield Röd', 'red', 'Röd'),
+  'B8Shield Transparent': generateProductImage('B8Shield Transparent', 'transparent', 'Transparent'),
+  'B8Shield Fluorescerande': generateProductImage('B8Shield Fluorescerande', 'fluorescent', 'Fluorescerande'),
+  'B8Shield Glitter': generateProductImage('B8Shield Glitter', 'glitter', 'Glitter'),
   'B8Shield 3-pack': generateProductImage('B8Shield 3-pack', 'blue'),
 };
 
-// Function to get product image by name
-export const getProductImage = (productName) => {
-  // Try exact match first
-  if (productImages[productName]) {
-    return productImages[productName];
-  }
-  
-  // Try partial match
-  for (const [key, image] of Object.entries(productImages)) {
-    if (productName.toLowerCase().includes(key.toLowerCase().split(' ')[1])) {
-      return image;
+// Function to get product image by name or product object
+export const getProductImage = (productData) => {
+  // If productData is a string (legacy usage), use name-based lookup
+  if (typeof productData === 'string') {
+    const productName = productData;
+    
+    // Try exact match first
+    if (productImages[productName]) {
+      return productImages[productName];
     }
+    
+    // Try partial match
+    for (const [key, image] of Object.entries(productImages)) {
+      if (productName.toLowerCase().includes(key.toLowerCase().split(' ')[1])) {
+        return image;
+      }
+    }
+    
+    // Generate new image if no match found
+    return generateProductImage(productName);
   }
   
-  // Generate new image if no match found
-  return generateProductImage(productName);
+  // If productData is an object (preferred usage), use color field
+  if (productData && typeof productData === 'object') {
+    const { name, color } = productData;
+    
+    // Generate image using the color field for accurate color matching
+    if (color) {
+      return generateProductImage(name || 'B8Shield', null, color);
+    }
+    
+    // Fallback to name-based generation if no color field
+    return generateProductImage(name || 'B8Shield');
+  }
+  
+  // Final fallback
+  return generateProductImage('B8Shield');
 }; 

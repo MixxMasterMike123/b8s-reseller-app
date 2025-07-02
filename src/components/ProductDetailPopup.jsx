@@ -8,12 +8,12 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Variant type mapping for database search
-  const variantMapping = {
-    'TRANSPARENT': ['transparent', 'Transparent'],
-    'RÖD': ['röd', 'Röd', 'red', 'Red'],
-    'FLUORESCERANDE': ['fluorescerande', 'Fluorescerande', 'fluorescent', 'Fluorescent', 'fluor', 'Fluor'],
-    'GLITTER': ['glitter', 'Glitter']
+  // Variant type mapping to standardized color field values
+  const variantToColorMapping = {
+    'TRANSPARENT': 'Transparent',
+    'RÖD': 'Röd',
+    'FLUORESCERANDE': 'Fluorescerande',
+    'GLITTER': 'Glitter'
   };
 
   useEffect(() => {
@@ -43,25 +43,19 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
 
       console.log(`📊 Found ${products.length} active products`);
 
-      // Find product that matches the variant type
-      const searchTerms = variantMapping[variantType] || [variantType.toLowerCase()];
+      // Find product that matches the variant type using the color field
+      const targetColor = variantToColorMapping[variantType];
       let matchingProduct = null;
 
-      for (const product of products) {
-        if (!product.name) continue;
+      if (targetColor) {
+        // Look for a product with the exact color field match
+        matchingProduct = products.find(product => product.color === targetColor);
         
-        const productName = product.name.toLowerCase();
-        
-        // Check if any search term matches the product name
-        for (const term of searchTerms) {
-          if (productName.includes(term.toLowerCase())) {
-            matchingProduct = product;
-            console.log(`✅ Found matching product: ${product.name}`);
-            break;
-          }
+        if (matchingProduct) {
+          console.log(`✅ Found matching product with color field: ${matchingProduct.name} (${matchingProduct.color})`);
+        } else {
+          console.log(`⚠️ No product found with color: ${targetColor}`);
         }
-        
-        if (matchingProduct) break;
       }
 
       // If no specific variant found, use a generic B8Shield product
@@ -142,8 +136,9 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
     if (product.b2bImageUrl) return product.b2bImageUrl;
     if (product.imageData) return product.imageData;
     
-    // Generate image based on variant type
-    return generateProductImage(`B8Shield ${variantType}`, variantType.toLowerCase());
+    // Generate image based on product color field or variant type
+    const colorForGeneration = product.color || variantToColorMapping[variantType];
+    return generateProductImage(`B8Shield ${variantType}`, variantType.toLowerCase(), colorForGeneration);
   };
 
   const formatPrice = (price) => {
@@ -189,7 +184,8 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
                     alt={product.name}
                     className="w-48 h-48 object-contain"
                     onError={(e) => {
-                      e.target.src = generateProductImage(`B8Shield ${variantType}`, variantType.toLowerCase());
+                      const colorForGeneration = product.color || variantToColorMapping[variantType];
+                      e.target.src = generateProductImage(`B8Shield ${variantType}`, variantType.toLowerCase(), colorForGeneration);
                     }}
                   />
                 </div>

@@ -148,6 +148,7 @@ function AdminProducts() {
       manufacturingCost: 0,
       isActive: true,
       size: '',
+      color: '',
       
       // Legacy fields (backward compatibility)
       imageUrl: '',
@@ -219,6 +220,7 @@ function AdminProducts() {
       manufacturingCost: product.manufacturingCost || 0,
       isActive: product.isActive !== false,
       size: product.size || '',
+      color: product.color || '',
       
       // Legacy fields (backward compatibility)
       imageUrl: product.imageUrl || product.imageData || '',
@@ -814,6 +816,26 @@ function AdminProducts() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                       placeholder="t.ex. Liten, Medium, Stor eller specifika mått"
                     />
+                  </div>
+                  
+                  {/* Color */}
+                  <div>
+                    <label htmlFor="color" className="block text-sm font-medium text-gray-700 mb-2">
+                      Färg
+                    </label>
+                    <select
+                      id="color"
+                      name="color"
+                      value={formData.color}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Välj färg...</option>
+                      <option value="Transparent">Transparent</option>
+                      <option value="Röd">Röd</option>
+                      <option value="Fluorescerande">Fluorescerande</option>
+                      <option value="Glitter">Glitter</option>
+                    </select>
                   </div>
                   
                   {/* Base Price */}
@@ -1588,6 +1610,9 @@ function AdminProducts() {
                       Storlek
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Färg
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Pris
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1604,7 +1629,7 @@ function AdminProducts() {
               <tbody className="bg-white divide-y divide-gray-200">
                                      {products.length === 0 ? (
                      <tr>
-                       <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                       <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
                          Inga produkter hittades
                        </td>
                      </tr>
@@ -1635,6 +1660,9 @@ function AdminProducts() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">{product.size || 'Ej angivet'}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{product.color || 'Ej angivet'}</div>
                         </td>
                                            <td className="px-6 py-4 whitespace-nowrap">
                            <div className="text-sm text-gray-900">{product.basePrice?.toFixed(2)} SEK</div>

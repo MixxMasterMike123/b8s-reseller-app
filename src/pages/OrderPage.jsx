@@ -16,7 +16,7 @@ const OrderPage = () => {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loading, setLoading] = useState(false);
-  
+
   // Individual ordering state - each color has its own quantity per size
   const [orderItems, setOrderItems] = useState({
     transparent: {
@@ -51,7 +51,7 @@ const OrderPage = () => {
     const colorNames = {
       transparent: 'Transparent',
       rod: 'Röd', 
-      fluorescerande: 'Fluorescent',
+      fluorescerande: 'Fluorescerande',
       glitter: 'Glitter'
     };
     return colorNames[colorId] || colorId;
@@ -59,44 +59,33 @@ const OrderPage = () => {
 
   // Helper function to get product image for color representation
   const getColorProduct = (colorId) => {
-    // Find SIZE 4 product for the color as standard representation
-    const size4Product = products.find(p => {
-      if (!p.name || p.size !== '4') return false;
-      
-      const name = p.name.toLowerCase();
+    // Map colorId to actual database color field values
+    const getColorFieldValue = (colorId) => {
       switch(colorId) {
         case 'transparent':
-          return name.includes('transparent');
+          return 'Transparent';
         case 'rod':
-          return name.includes('röd') || name.includes('red');
+          return 'Röd';
         case 'fluorescerande':
-          return name.includes('fluorescent') || name.includes('fluor');
+          return 'Fluorescerande';
         case 'glitter':
-          return name.includes('glitter');
+          return 'Glitter';
         default:
-          return false;
+          return '';
       }
+    };
+    
+    const targetColor = getColorFieldValue(colorId);
+    if (!targetColor) return null;
+    
+    // Find SIZE 4 product for the color as standard representation
+    const size4Product = products.find(p => {
+      return p.size === '4' && p.color === targetColor;
     });
     
     // Fallback: any product with the color if no SIZE 4 found
     if (!size4Product) {
-      return products.find(p => {
-        if (!p.name) return false;
-        
-        const name = p.name.toLowerCase();
-        switch(colorId) {
-          case 'transparent':
-            return name.includes('transparent');
-          case 'rod':
-            return name.includes('röd') || name.includes('red');
-          case 'fluorescerande':
-            return name.includes('fluorescent') || name.includes('fluor');
-          case 'glitter':
-            return name.includes('glitter');
-          default:
-            return false;
-        }
-      });
+      return products.find(p => p.color === targetColor);
     }
     
     return size4Product;
@@ -194,7 +183,7 @@ const OrderPage = () => {
           // Only show active products that are available for B2B
           if (productData.isActive !== false && productData.availability?.b2b !== false) {
             const product = { id: doc.id, ...productData };
-            productsData.push(product);
+          productsData.push(product);
           }
         });
         
@@ -329,15 +318,15 @@ const OrderPage = () => {
                   <div className="flex-1">
                     <h3 className="text-sm font-medium text-blue-900 mb-1">Så här fungerar beställningen</h3>
                     <ul className="text-sm text-blue-800 space-y-1">
-                      <li>• <strong>Minsta beställning:</strong> 10 förpackningar totalt</li>
+                      <li>• <strong>Minsta beställningsvolym:</strong> 10 förpackningar totalt</li>
                       <li>• <strong>Mix & match:</strong> Kombinera färger och storlekar precis som du vill</li>
                       <li>• <strong>Exempel:</strong> 5 st Röd Storlek 4 + 3 st Transparent Storlek 2 + 2 st Glitter Storlek 6 = 10 förpackningar ✓</li>
                     </ul>
                   </div>
                 </div>
               </div>
-            </div>
-
+          </div>
+          
             {/* Individual Color Cards */}
             <div className="space-y-6">
               {Object.keys(orderItems).map((colorId) => {
@@ -371,9 +360,9 @@ const OrderPage = () => {
                               Totalt: {colorSubtotal} st
                             </div>
                           )}
-                        </div>
-                      </div>
-                      
+          </div>
+        </div>
+        
                       {/* Size Quantity Selectors */}
                       <div className="flex-1">
                         <div className="space-y-4">
@@ -382,13 +371,13 @@ const OrderPage = () => {
                               <div className="flex-1">
                                 <label className="font-medium text-gray-700">
                                   Storlek {size}
-                                </label>
-                              </div>
-                              
+            </label>
+          </div>
+          
                                                                {/* Quick quantity buttons */}
                                  <div className="flex items-center gap-2">
                                    {[10, 25, 50, 100].map(qty => (
-                                     <button
+              <button 
                                        key={qty}
                                        onClick={() => handleQuantityButton(colorId, size, qty)}
                                        className={`relative px-3 py-1 text-sm rounded-lg border-2 transition-all duration-200 ${
@@ -401,7 +390,7 @@ const OrderPage = () => {
                                        {colorData.sizes[size] === qty && (
                                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                                        )}
-                                     </button>
+              </button>
                                    ))}
                                 
                                                                  {/* Custom input */}
@@ -420,32 +409,32 @@ const OrderPage = () => {
                                    />
                                    {colorData.sizes[size] > 0 && ![10, 25, 50, 100].includes(colorData.sizes[size]) && (
                                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-                                   )}
-                                 </div>
-                                
+          )}
+        </div>
+        
                                 {/* Clear button */}
                                 {colorData.sizes[size] > 0 && (
-                                  <button
+              <button
                                     onClick={() => updateItemQuantity(colorId, size, 0)}
                                     className="px-2 py-1 text-sm text-red-600 hover:text-red-800"
                                   >
                                     ✕
-                                  </button>
+              </button>
                                 )}
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
+            ))}
+          </div>
+            </div>
+          </div>
                   </div>
                 );
               })}
-            </div>
-
+        </div>
+        
             {/* Information Section */}
             <div className="p-4 border border-gray-200 rounded bg-blue-50">
-              <h2 className="text-xl font-semibold mb-2">Information om prissättning</h2>
+          <h2 className="text-xl font-semibold mb-2">Information om prissättning</h2>
               <p>Alla priser är exklusive moms och beräknas med din personliga marginal på {marginal || 40}%.</p>
               {(marginal || 40) === 40 && (
                 <div className="mt-3 p-3 bg-orange-100 border border-orange-300 rounded-lg">
@@ -456,7 +445,7 @@ const OrderPage = () => {
               )}
             </div>
             
-          </div>
+        </div>
         
           {/* Order Summary Section - Takes 1 column, sticky */}
           <div className="lg:col-span-1">
@@ -476,8 +465,8 @@ const OrderPage = () => {
                         </div>
                       ))}
                     </div>
-                  </div>
-                  
+            </div>
+            
                   {/* Total Summary */}
                   <div className="mb-4 p-3 bg-white rounded border">
                     <div className="flex justify-between text-sm mb-1">
@@ -509,9 +498,9 @@ const OrderPage = () => {
                         <span>Totalt inköpspris (exkl. moms):</span>
                         <span>{totalPris.toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr</span>
                       </div>
-                    </div>
-                  </div>
-                  
+              </div>
+            </div>
+            
                   <div className="mt-4">
                     {/* Minimum order warning */}
                     {totalPackages > 0 && totalPackages < MINIMUM_ORDER_QUANTITY && (
@@ -559,10 +548,10 @@ const OrderPage = () => {
                   </p>
                 </div>
               )}
+              </div>
             </div>
+            
           </div>
-          
-        </div>
       </div>
     </AppLayout>
   );

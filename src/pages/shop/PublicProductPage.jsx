@@ -45,9 +45,8 @@ const PublicProductPage = () => {
       const productData = { id: productDoc.id, ...productDoc.data() };
       setProduct(productData);
       
-      // Extract color from product name to find variants
-      const colorMatch = productData.name.match(/B8Shield\s+(.+?)(?:\s+\d|$)/i);
-      const baseColor = colorMatch ? colorMatch[1].trim() : 'Standard';
+      // Use the color field to find variants
+      const baseColor = productData.color || 'Standard';
       
       // Load all variants of this product (same color, different sizes)
       const variantsQuery = query(
@@ -64,10 +63,9 @@ const PublicProductPage = () => {
         allProducts.push(data);
       });
       
-      // Filter products that match the same color
+      // Filter products that match the same color using the color field
       const sameColorProducts = allProducts.filter(p => {
-        const pColorMatch = p.name.match(/B8Shield\s+(.+?)(?:\s+\d|$)/i);
-        const pColor = pColorMatch ? pColorMatch[1].trim() : 'Standard';
+        const pColor = p.color || 'Standard';
         return pColor.toLowerCase() === baseColor.toLowerCase();
       });
       
@@ -143,7 +141,7 @@ const PublicProductPage = () => {
     
     // If no images, use generated image
     if (images.length === 0) {
-      images.push(getProductImage(product.name));
+      images.push(getProductImage(product));
     }
     
     return images;
@@ -156,10 +154,9 @@ const PublicProductPage = () => {
     return '';
   };
 
-  // Get color from product name
+  // Get color from product color field
   const getProductColor = (product) => {
-    const colorMatch = product.name.match(/B8Shield\s+(.+?)(?:\s+\d|$)/i);
-    return colorMatch ? colorMatch[1].trim() : 'Standard';
+    return product.color || 'Standard';
   };
 
   if (loading) {

@@ -15,7 +15,9 @@ import {
   CheckCircleIcon,
   UserGroupIcon,
   ClipboardDocumentListIcon,
-  AcademicCapIcon
+  AcademicCapIcon,
+  CubeIcon,
+  PresentationChartBarIcon
 } from '@heroicons/react/24/outline';
 
 const DashboardPage = () => {
@@ -94,6 +96,10 @@ const DashboardPage = () => {
                   </li>
                   <li className="flex items-start">
                     <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <span>Bläddra i produktkatalog</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
                     <span>Ladda ner marknadsföringsmaterial</span>
                   </li>
                 </ul>
@@ -103,7 +109,7 @@ const DashboardPage = () => {
         </div>
 
         {/* Navigation Cards - Dashboard Style */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Link
             to="/order"
             className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group"
@@ -112,7 +118,7 @@ const DashboardPage = () => {
               <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
                 <ShoppingCartIcon className="h-6 w-6 text-blue-600" />
               </div>
-              <h3 className="ml-3 text-base font-medium text-gray-900">Lägg beställning</h3>
+              <h3 className="ml-3 text-base font-medium text-gray-900">Lägg en beställning</h3>
             </div>
             <p className="text-sm text-gray-600">Skapa en ny beställning för dina kunder</p>
           </Link>
@@ -122,28 +128,39 @@ const DashboardPage = () => {
             className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group"
           >
             <div className="flex items-center mb-3">
-              <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-gray-100 transition-colors">
-                <ClipboardDocumentListIcon className="h-6 w-6 text-gray-600" />
+              <div className="p-2 bg-green-50 rounded-lg group-hover:bg-green-100 transition-colors">
+                <ClipboardDocumentListIcon className="h-6 w-6 text-green-600" />
               </div>
               <h3 className="ml-3 text-base font-medium text-gray-900">Orderhistorik</h3>
             </div>
             <p className="text-sm text-gray-600">Visa och spåra dina tidigare beställningar</p>
           </Link>
 
-          {userData?.role === 'admin' && (
-            <Link
-              to="/admin"
-              className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group"
-            >
-              <div className="flex items-center mb-3">
-                <div className="p-2 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
-                  <CogIcon className="h-6 w-6 text-indigo-600" />
-                </div>
-                <h3 className="ml-3 text-base font-medium text-gray-900">Administration</h3>
+          <Link
+            to="/products"
+            className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group"
+          >
+            <div className="flex items-center mb-3">
+              <div className="p-2 bg-purple-50 rounded-lg group-hover:bg-purple-100 transition-colors">
+                <CubeIcon className="h-6 w-6 text-purple-600" />
               </div>
-              <p className="text-sm text-gray-600">Åtkomst till adminkontroller och inställningar</p>
-            </Link>
-          )}
+              <h3 className="ml-3 text-base font-medium text-gray-900">Produktkatalog</h3>
+            </div>
+            <p className="text-sm text-gray-600">Bläddra och ladda ner produktinformation</p>
+          </Link>
+
+          <Link
+            to="/marketing"
+            className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group"
+          >
+            <div className="flex items-center mb-3">
+              <div className="p-2 bg-orange-50 rounded-lg group-hover:bg-orange-100 transition-colors">
+                <PresentationChartBarIcon className="h-6 w-6 text-orange-600" />
+              </div>
+              <h3 className="ml-3 text-base font-medium text-gray-900">Marknadsföringsmaterial</h3>
+            </div>
+            <p className="text-sm text-gray-600">Ladda ner broschyrer och marknadsföringsmaterial</p>
+          </Link>
         </div>
 
         {/* Store Staff Information - Dashboard Cards */}
