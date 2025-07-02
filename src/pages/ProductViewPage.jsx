@@ -188,7 +188,14 @@ function ProductViewPage() {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">{selectedProduct.name}</h2>
-                    {selectedProduct.description && (
+                    {/* B2B Technical Description */}
+                    {selectedProduct.descriptions?.b2b && (
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <p className="text-gray-800 whitespace-pre-line">{selectedProduct.descriptions.b2b}</p>
+                      </div>
+                    )}
+                    {/* Fallback to general description if no B2B description */}
+                    {!selectedProduct.descriptions?.b2b && selectedProduct.description && (
                       <p className="text-gray-600">{selectedProduct.description}</p>
                     )}
                   </div>
@@ -208,6 +215,32 @@ function ProductViewPage() {
                         {selectedProduct.size || 'Ej angivet'}
                       </p>
                     </div>
+
+                    {/* Weight */}
+                    {selectedProduct.weight?.value > 0 && (
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h3 className="text-sm font-medium text-gray-500 mb-1">Vikt</h3>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {selectedProduct.weight.value} {selectedProduct.weight.unit}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Dimensions */}
+                    {(selectedProduct.dimensions?.length?.value > 0 || 
+                      selectedProduct.dimensions?.width?.value > 0 || 
+                      selectedProduct.dimensions?.height?.value > 0) && (
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h3 className="text-sm font-medium text-gray-500 mb-1">Mått</h3>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {selectedProduct.dimensions?.length?.value || 0} × {' '}
+                          {selectedProduct.dimensions?.width?.value || 0} × {' '}
+                          {selectedProduct.dimensions?.height?.value || 0} {' '}
+                          {selectedProduct.dimensions?.length?.unit || 'mm'}
+                        </p>
+                        <p className="text-xs text-gray-500">L × B × H</p>
+                      </div>
+                    )}
 
                     {selectedProduct.eanCode && (
                       <div className="bg-gray-50 p-4 rounded-lg sm:col-span-2">
@@ -364,7 +397,9 @@ function ProductViewPage() {
                             })()}
                             <div>
                               <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                              <div className="text-sm text-gray-500 max-w-xs truncate">{product.description}</div>
+                              <div className="text-sm text-gray-500 max-w-xs truncate">
+                                {product.descriptions?.b2b || product.description || 'Ingen beskrivning'}
+                              </div>
                             </div>
                           </div>
                         </td>

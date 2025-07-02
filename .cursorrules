@@ -189,18 +189,35 @@ src/
   eanImagePng: string, // Base64 PNG/JPG EAN barcode (deprecated)
   eanImageSvg: string, // Base64 SVG EAN barcode (deprecated)
   
-  // PLANNED: Enhanced B2B/B2C fields
-  // b2bImageUrl: string,         // B2B technical images (Firebase Storage)
-  // b2cImageUrl: string,         // B2C lifestyle images (Firebase Storage)
-  // b2cImageGallery: [string],   // Additional B2C images (Firebase Storage URLs)
-  // availability: {
-  //   b2b: boolean,
-  //   b2c: boolean,
-  //   b2bMinQuantity: number,
-  //   b2cMaxQuantity: number
-  // },
-  // variants: { b2b: {}, b2c: {} },
-  // descriptions: { b2b: string, b2c: string },
+  // Enhanced B2B/B2C fields
+  b2bImageUrl: string,         // B2B technical images (Firebase Storage)
+  b2cImageUrl: string,         // B2C lifestyle images (Firebase Storage)
+  b2cImageGallery: [string],   // Additional B2C images (Firebase Storage URLs)
+  b2cPrice: number,            // B2C price including VAT
+  availability: {
+    b2b: boolean,
+    b2c: boolean,
+    b2bMinQuantity: number,
+    b2cMaxQuantity: number
+  },
+  descriptions: { b2b: string, b2c: string },
+  
+  // Google Merchant Center fields
+  weight: {
+    value: number,
+    unit: string // 'g', 'kg', 'oz', 'lb'
+  },
+  dimensions: {
+    length: { value: number, unit: string }, // 'mm', 'cm', 'in'
+    width: { value: number, unit: string },
+    height: { value: number, unit: string }
+  },
+  shipping: {
+    sweden: { cost: number, service: string },
+    nordic: { cost: number, service: string },
+    eu: { cost: number, service: string },
+    worldwide: { cost: number, service: string }
+  },
   
   createdAt: string,
   updatedAt: string

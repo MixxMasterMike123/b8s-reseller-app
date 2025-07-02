@@ -77,6 +77,23 @@ function AdminProducts() {
     descriptions: {
       b2b: '',
       b2c: ''
+    },
+    
+    // Google Merchant Center fields
+    weight: {
+      value: 0,
+      unit: 'g' // g, kg, oz, lb
+    },
+    dimensions: {
+      length: { value: 0, unit: 'mm' }, // mm, cm, in
+      width: { value: 0, unit: 'mm' },
+      height: { value: 0, unit: 'mm' }
+    },
+    shipping: {
+      sweden: { cost: 0, service: 'Standard' },
+      nordic: { cost: 0, service: 'Nordic' },
+      eu: { cost: 0, service: 'EU' },
+      worldwide: { cost: 0, service: 'International' }
     }
   });
   const [filteredProduct, setFilteredProduct] = useState(null);
@@ -157,6 +174,23 @@ function AdminProducts() {
       descriptions: {
         b2b: '',
         b2c: ''
+      },
+      
+      // Google Merchant Center fields
+      weight: {
+        value: 0,
+        unit: 'g' // g, kg, oz, lb
+      },
+              dimensions: {
+          length: { value: 0, unit: 'mm' }, // mm, cm, in
+          width: { value: 0, unit: 'mm' },
+          height: { value: 0, unit: 'mm' }
+        },
+      shipping: {
+        sweden: { cost: 0, service: 'Standard' },
+        nordic: { cost: 0, service: 'Nordic' },
+        eu: { cost: 0, service: 'EU' },
+        worldwide: { cost: 0, service: 'International' }
       }
     });
     
@@ -211,6 +245,44 @@ function AdminProducts() {
       descriptions: {
         b2b: product.descriptions?.b2b || '',
         b2c: product.descriptions?.b2c || ''
+      },
+      
+      // Google Merchant Center fields
+      weight: {
+        value: product.weight?.value || 0,
+        unit: product.weight?.unit || 'g'
+      },
+      dimensions: {
+        length: { 
+          value: product.dimensions?.length?.value || 0, 
+          unit: product.dimensions?.length?.unit || 'mm' 
+        },
+        width: { 
+          value: product.dimensions?.width?.value || 0, 
+          unit: product.dimensions?.width?.unit || 'mm' 
+        },
+        height: { 
+          value: product.dimensions?.height?.value || 0, 
+          unit: product.dimensions?.height?.unit || 'mm' 
+        }
+      },
+      shipping: {
+        sweden: { 
+          cost: product.shipping?.sweden?.cost || 0, 
+          service: product.shipping?.sweden?.service || 'Standard' 
+        },
+        nordic: { 
+          cost: product.shipping?.nordic?.cost || 0, 
+          service: product.shipping?.nordic?.service || 'Nordic' 
+        },
+        eu: { 
+          cost: product.shipping?.eu?.cost || 0, 
+          service: product.shipping?.eu?.service || 'EU' 
+        },
+        worldwide: { 
+          cost: product.shipping?.worldwide?.cost || 0, 
+          service: product.shipping?.worldwide?.service || 'International' 
+        }
       }
     });
     
@@ -793,6 +865,269 @@ function AdminProducts() {
                       <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
                         Aktiv
                       </label>
+                    </div>
+                  </div>
+                  
+                  {/* Google Merchant Center Fields */}
+                  <div className="sm:col-span-2">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Google Merchant Center Data</h3>
+                    
+                    {/* Weight */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Vikt
+                        </label>
+                        <input
+                          type="number"
+                          value={formData.weight?.value || 0}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            weight: {
+                              ...formData.weight,
+                              value: parseFloat(e.target.value) || 0
+                            }
+                          })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          min="0"
+                          step="0.1"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Enhet
+                        </label>
+                        <select
+                          value={formData.weight?.unit || 'g'}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            weight: {
+                              ...formData.weight,
+                              unit: e.target.value
+                            }
+                          })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="g">gram (g)</option>
+                          <option value="kg">kilogram (kg)</option>
+                          <option value="oz">ounce (oz)</option>
+                          <option value="lb">pound (lb)</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    {/* Dimensions */}
+                    <div className="mb-6">
+                      <h4 className="text-md font-medium text-gray-800 mb-3">Mått</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        {/* Length */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Längd
+                          </label>
+                          <input
+                            type="number"
+                            value={formData.dimensions?.length?.value || 0}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              dimensions: {
+                                ...formData.dimensions,
+                                length: {
+                                  ...formData.dimensions?.length,
+                                  value: parseFloat(e.target.value) || 0
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            min="0"
+                            step="0.1"
+                            placeholder="0"
+                          />
+                        </div>
+                        
+                        {/* Width */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Bredd
+                          </label>
+                          <input
+                            type="number"
+                            value={formData.dimensions?.width?.value || 0}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              dimensions: {
+                                ...formData.dimensions,
+                                width: {
+                                  ...formData.dimensions?.width,
+                                  value: parseFloat(e.target.value) || 0
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            min="0"
+                            step="0.1"
+                            placeholder="0"
+                          />
+                        </div>
+                        
+                        {/* Height */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Höjd
+                          </label>
+                          <input
+                            type="number"
+                            value={formData.dimensions?.height?.value || 0}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              dimensions: {
+                                ...formData.dimensions,
+                                height: {
+                                  ...formData.dimensions?.height,
+                                  value: parseFloat(e.target.value) || 0
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            min="0"
+                            step="0.1"
+                            placeholder="0"
+                          />
+                        </div>
+                        
+                        {/* Unit */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Enhet
+                          </label>
+                          <select
+                            value={formData.dimensions?.length?.unit || 'mm'}
+                            onChange={(e) => {
+                              const newUnit = e.target.value;
+                              setFormData({
+                                ...formData,
+                                dimensions: {
+                                  length: { ...formData.dimensions?.length, unit: newUnit },
+                                  width: { ...formData.dimensions?.width, unit: newUnit },
+                                  height: { ...formData.dimensions?.height, unit: newUnit }
+                                }
+                              });
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            <option value="mm">millimeter (mm)</option>
+                            <option value="cm">centimeter (cm)</option>
+                            <option value="in">tum (in)</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Shipping Costs */}
+                    <div className="mb-6">
+                      <h4 className="text-md font-medium text-gray-800 mb-3">Fraktkostnader (SEK)</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {/* Sweden */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Sverige
+                          </label>
+                          <input
+                            type="number"
+                            value={formData.shipping?.sweden?.cost || 0}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              shipping: {
+                                ...formData.shipping,
+                                sweden: {
+                                  ...formData.shipping?.sweden,
+                                  cost: parseFloat(e.target.value) || 0
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                          />
+                        </div>
+                        
+                        {/* Nordic */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Norden
+                          </label>
+                          <input
+                            type="number"
+                            value={formData.shipping?.nordic?.cost || 0}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              shipping: {
+                                ...formData.shipping,
+                                nordic: {
+                                  ...formData.shipping?.nordic,
+                                  cost: parseFloat(e.target.value) || 0
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                          />
+                        </div>
+                        
+                        {/* EU */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            EU
+                          </label>
+                          <input
+                            type="number"
+                            value={formData.shipping?.eu?.cost || 0}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              shipping: {
+                                ...formData.shipping,
+                                eu: {
+                                  ...formData.shipping?.eu,
+                                  cost: parseFloat(e.target.value) || 0
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                          />
+                        </div>
+                        
+                        {/* Worldwide */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Världen
+                          </label>
+                          <input
+                            type="number"
+                            value={formData.shipping?.worldwide?.cost || 0}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              shipping: {
+                                ...formData.shipping,
+                                worldwide: {
+                                  ...formData.shipping?.worldwide,
+                                  cost: parseFloat(e.target.value) || 0
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                   
