@@ -4,7 +4,14 @@ import { useAuth } from '../contexts/AuthContext';
 import AppLayout from '../components/layout/AppLayout';
 import ImagePreviewModal from '../components/ImagePreviewModal';
 import { useImagePreview } from '../hooks/useImagePreview';
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { 
+  MagnifyingGlassIcon, 
+  ChartBarIcon, 
+  GlobeAltIcon, 
+  UserIcon,
+  FunnelIcon,
+  ArrowDownTrayIcon
+} from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import {
   getGenericMaterials,
@@ -155,27 +162,27 @@ function MarketingMaterialsPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6 md:mb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Marknadsföringsmaterial</h1>
-              <p className="mt-2 text-lg text-gray-600">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Marknadsföringsmaterial</h1>
+              <p className="mt-2 text-base md:text-lg text-gray-600">
                 Ladda ner bilder, broschyrer, videos och annat material för marknadsföring
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-3">
               <Link 
                 to="/" 
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-3 md:py-2 border border-gray-300 text-base md:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 min-h-[48px] md:min-h-0"
               >
                 Tillbaka till Dashboard
               </Link>
               {isAdmin && (
                 <Link 
                   to="/admin/marketing" 
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                  className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-3 md:py-2 border border-transparent text-base md:text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 min-h-[48px] md:min-h-0"
                 >
                   Hantera Material
                 </Link>
@@ -185,10 +192,14 @@ function MarketingMaterialsPage() {
         </div>
 
         {/* Filters */}
-        <div className="mb-8 bg-white shadow-sm rounded-lg p-6">
+        <div className="mb-6 md:mb-8 bg-white shadow-sm rounded-lg p-4 md:p-6">
+          <div className="flex items-center mb-4">
+            <FunnelIcon className="h-5 w-5 text-gray-400 mr-2" />
+            <h2 className="text-base md:text-lg font-medium text-gray-900">Filter och sök</h2>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-base md:text-sm font-medium text-gray-700 mb-2">
                 Sök material
               </label>
               <input
@@ -196,17 +207,17 @@ function MarketingMaterialsPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Sök efter namn eller beskrivning..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 md:px-3 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base min-h-[48px] md:min-h-0"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-base md:text-sm font-medium text-gray-700 mb-2">
                 Kategori
               </label>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 md:px-3 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base min-h-[48px] md:min-h-0"
               >
                 {categories.map(cat => (
                   <option key={cat.value} value={cat.value}>{cat.label}</option>
@@ -214,13 +225,13 @@ function MarketingMaterialsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-base md:text-sm font-medium text-gray-700 mb-2">
                 Filtyp
               </label>
               <select
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 md:px-3 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base min-h-[48px] md:min-h-0"
               >
                 {fileTypes.map(type => (
                   <option key={type.value} value={type.value}>{type.label}</option>
@@ -234,7 +245,7 @@ function MarketingMaterialsPage() {
                   setSelectedCategory('alla');
                   setSelectedType('alla');
                 }}
-                className="w-full px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                className="w-full px-4 py-3 md:py-2 border border-gray-300 text-base md:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 min-h-[48px] md:min-h-0"
               >
                 Rensa filter
               </button>
@@ -243,16 +254,14 @@ function MarketingMaterialsPage() {
         </div>
 
         {/* Stats */}
-        <div className="mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="mb-6 md:mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white overflow-hidden shadow-sm rounded-lg">
-            <div className="p-5">
+            <div className="p-4 md:p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M3 3v18h18v-2H5V3H3zm4 12h2v4H7v-4zm4-6h2v10h-2V9zm4-2h2v12h-2V7z"/>
-                </svg>
+                  <ChartBarIcon className="w-8 h-8 text-blue-600" />
                 </div>
-                <div className="ml-5 w-0 flex-1">
+                <div className="ml-4 md:ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">Totalt material</dt>
                     <dd className="text-lg font-medium text-gray-900">{allMaterials.length}</dd>
@@ -262,12 +271,12 @@ function MarketingMaterialsPage() {
             </div>
           </div>
           <div className="bg-white overflow-hidden shadow-sm rounded-lg">
-            <div className="p-5">
+            <div className="p-4 md:p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <span className="text-2xl">🌐</span>
+                  <GlobeAltIcon className="w-8 h-8 text-green-600" />
                 </div>
-                <div className="ml-5 w-0 flex-1">
+                <div className="ml-4 md:ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">Allmänt material</dt>
                     <dd className="text-lg font-medium text-gray-900">{genericMaterials.length}</dd>
@@ -277,12 +286,12 @@ function MarketingMaterialsPage() {
             </div>
           </div>
           <div className="bg-white overflow-hidden shadow-sm rounded-lg">
-            <div className="p-5">
+            <div className="p-4 md:p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <span className="text-2xl">👤</span>
+                  <UserIcon className="w-8 h-8 text-purple-600" />
                 </div>
-                <div className="ml-5 w-0 flex-1">
+                <div className="ml-4 md:ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">Ditt material</dt>
                     <dd className="text-lg font-medium text-gray-900">{customerMaterials.length}</dd>
@@ -292,12 +301,12 @@ function MarketingMaterialsPage() {
             </div>
           </div>
           <div className="bg-white overflow-hidden shadow-sm rounded-lg">
-            <div className="p-5">
+            <div className="p-4 md:p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <span className="text-2xl">🔍</span>
+                  <MagnifyingGlassIcon className="w-8 h-8 text-orange-600" />
                 </div>
-                <div className="ml-5 w-0 flex-1">
+                <div className="ml-4 md:ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">Filtrerat</dt>
                     <dd className="text-lg font-medium text-gray-900">{filteredMaterials.length}</dd>
@@ -315,7 +324,11 @@ function MarketingMaterialsPage() {
           </div>
         ) : filteredMaterials.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-            <span className="text-6xl mb-4 block">📂</span>
+            <div className="mx-auto mb-4 w-16 h-16 text-gray-400">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-full h-full">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2z M3 7l9-4 9 4" />
+              </svg>
+            </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">Inget material hittades</h3>
             <p className="text-gray-500 mb-4">
               {allMaterials.length === 0 
@@ -329,7 +342,7 @@ function MarketingMaterialsPage() {
                   setSelectedCategory('alla');
                   setSelectedType('alla');
                 }}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                className="inline-flex items-center justify-center px-6 py-3 md:px-4 md:py-2 border border-transparent text-base md:text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 min-h-[48px] md:min-h-0"
               >
                 Visa allt material
               </button>
@@ -417,11 +430,9 @@ function MarketingMaterialsPage() {
                         <div className="mt-6 pt-4 border-t border-gray-100">
                           <button
                             onClick={() => handleDownload(material)}
-                            className="w-full inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-sm hover:shadow-md"
+                            className="w-full inline-flex items-center justify-center px-4 py-3 md:py-3 border border-transparent text-base md:text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-sm hover:shadow-md min-h-[48px] md:min-h-0"
                           >
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
+                            <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
                             Ladda ner
                           </button>
                         </div>

@@ -274,28 +274,31 @@ const OrderDetailPage = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <div>
+      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-4 md:p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">
+          <div className="flex-1 min-w-0">
             <div className="flex items-center mb-2">
-              <Link to="/orders" className="text-blue-600 hover:text-blue-800 mr-2">
+              <Link to="/orders" className="text-blue-600 hover:text-blue-800 mr-2 flex-shrink-0">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
                 </svg>
               </Link>
-              <h1 className="text-2xl font-bold text-gray-800">Orderdetaljer</h1>
+              <h1 className="text-xl md:text-2xl font-bold text-gray-800 truncate">Orderdetaljer</h1>
             </div>
-            <p className="text-gray-600">Ordernummer: <span className="font-semibold">{order.orderNumber}</span></p>
+            <p className="text-sm md:text-base text-gray-600">
+              Ordernummer: <span className="font-semibold">{order.orderNumber}</span>
+            </p>
           </div>
-          <div className="mt-4 md:mt-0 flex items-center flex-wrap gap-2">
-            <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${statusColor} mr-2`}>
+          
+          <div className="w-full md:w-auto flex flex-col md:flex-row items-stretch md:items-center gap-3">
+            <span className={`inline-flex items-center justify-center px-3 py-2 rounded-full text-sm font-medium ${statusColor}`}>
               {statusText}
             </span>
             
             {isAdmin && order.status !== 'cancelled' && (
-              <div className="flex items-center">
+              <div className="flex items-center justify-center">
                 {updateStatusLoading ? (
-                  <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-blue-600 border-r-transparent mr-2"></div>
+                  <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-blue-600 border-r-transparent"></div>
                 ) : (
                   <OrderStatusMenu 
                     currentStatus={order.status} 
@@ -309,7 +312,7 @@ const OrderDetailPage = () => {
               <button
                 onClick={handleCancelOrder}
                 disabled={cancelLoading}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full md:w-auto bg-red-600 text-white px-4 py-3 md:py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px] md:min-h-0 text-base md:text-sm font-medium"
               >
                 {cancelLoading ? 'Avbryter...' : 'Avbryt beställning'}
               </button>
@@ -317,41 +320,41 @@ const OrderDetailPage = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold mb-3 text-gray-800">Orderinformation</h2>
-            <div className="space-y-2">
-              <p className="text-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
+          <div className="bg-gray-50 p-4 md:p-4 rounded-lg">
+            <h2 className="text-base md:text-lg font-semibold mb-3 text-gray-800">Orderinformation</h2>
+            <div className="space-y-2 md:space-y-2">
+              <p className="text-sm md:text-base text-gray-700">
                 <span className="font-medium">Datum:</span> {formatDate(order.createdAt)}
               </p>
-              <p className="text-gray-700">
+              <p className="text-sm md:text-base text-gray-700">
                 <span className="font-medium">Status:</span> {statusText}
               </p>
-              <p className="text-gray-700">
+              <p className="text-sm md:text-base text-gray-700">
                 <span className="font-medium">Betalningssätt:</span> {order.paymentMethod || 'Faktura'}
               </p>
               {order.deliveryMethod && (
-                <p className="text-gray-700">
+                <p className="text-sm md:text-base text-gray-700">
                   <span className="font-medium">Leveranssätt:</span> {order.deliveryMethod}
                 </p>
               )}
             </div>
           </div>
 
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold mb-3 text-gray-800">Leveransadress</h2>
-            <div className="space-y-2">
-              <p className="text-gray-700">
+          <div className="bg-gray-50 p-4 md:p-4 rounded-lg">
+            <h2 className="text-base md:text-lg font-semibold mb-3 text-gray-800">Leveransadress</h2>
+            <div className="space-y-2 md:space-y-2">
+              <p className="text-sm md:text-base text-gray-700">
                 <span className="font-medium">Företag:</span> {order.companyName || 'Ej angett'}
               </p>
-              <p className="text-gray-700">
+              <p className="text-sm md:text-base text-gray-700">
                 <span className="font-medium">Kontaktperson:</span> {order.contactName || 'Ej angett'}
               </p>
-              <p className="text-gray-700">
+              <p className="text-sm md:text-base text-gray-700">
                 <span className="font-medium">Adress:</span> {order.address || 'Ej angett'}
               </p>
               {order.postalCode && order.city && (
-                <p className="text-gray-700">
+                <p className="text-sm md:text-base text-gray-700">
                   <span className="font-medium">Postnummer & Ort:</span> {order.postalCode}, {order.city}
                 </p>
               )}
@@ -359,17 +362,120 @@ const OrderDetailPage = () => {
           </div>
         </div>
 
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800">Orderdetaljer</h2>
-          <div className="bg-gray-50 p-4 rounded-lg overflow-x-auto">
+        <div className="mb-6 md:mb-8">
+          <h2 className="text-base md:text-lg font-semibold mb-4 text-gray-800">Orderdetaljer</h2>
+          
+          {/* Mobile Card Layout */}
+          <div className="md:hidden space-y-3">
+            {order.items && order.items.length > 0 ? (
+              // Modern order items (individual line items)
+              order.items.map((item, index) => (
+                <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div className="flex justify-between items-start mb-3">
+                    <h3 className="font-semibold text-gray-900 text-base">{item.name}</h3>
+                    <span className="text-base font-bold text-gray-900">
+                      {item.price?.toLocaleString('sv-SE', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })} kr
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">Färg</p>
+                      <p className="text-sm font-medium text-gray-900">{item.color || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">Storlek</p>
+                      <p className="text-sm font-medium text-gray-900">{item.size || '-'}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-gray-300">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Antal</span>
+                      <span className="text-base font-semibold text-gray-900">{item.quantity} st</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              // Legacy order items (fallback for old orders)
+              getOrderDistribution(order).map((item, index) => (
+                <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div className="flex justify-between items-start mb-3">
+                    <h3 className="font-semibold text-gray-900 text-base">B8 Shield</h3>
+                    {index === 0 && order.prisInfo?.produktPris && (
+                      <span className="text-base font-bold text-gray-900">
+                        {order.prisInfo.produktPris.toLocaleString('sv-SE', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        })} kr
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">Färg</p>
+                      <p className="text-sm font-medium text-gray-900">{item.color}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">Storlek</p>
+                      <p className="text-sm font-medium text-gray-900">{item.size}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-gray-300">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Antal</span>
+                      <span className="text-base font-semibold text-gray-900">{item.quantity} st</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+            
+            {/* Mobile Pricing Summary */}
+            <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200 mt-4">
+              <h3 className="font-semibold text-gray-900 mb-3">Prissummering</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Delsumma:</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {order.prisInfo?.produktPris?.toLocaleString('sv-SE', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })} kr
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Moms (25%):</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {order.prisInfo?.moms?.toLocaleString('sv-SE', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })} kr
+                  </span>
+                </div>
+                <div className="flex justify-between pt-2 border-t border-blue-300">
+                  <span className="text-base font-bold text-gray-900">Totalt:</span>
+                  <span className="text-base font-bold text-gray-900">
+                    {order.prisInfo?.totalPris?.toLocaleString('sv-SE', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })} kr
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Desktop Optimized Table */}
+          <div className="hidden md:block bg-gray-50 p-4 rounded-lg overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produkt</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Färg</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Storlek</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Antal</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Pris</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/5">Produkt & Detaljer</th>
+                  <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">Antal</th>
+                  <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">Pris</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -377,15 +483,26 @@ const OrderDetailPage = () => {
                   // Modern order items (individual line items)
                   order.items.map((item, index) => (
                     <tr key={index}>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.name}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.color || '-'}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.size || '-'}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.quantity} st</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
-                        {item.price?.toLocaleString('sv-SE', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
-                        })} kr
+                      <td className="px-3 py-4">
+                        <div className="space-y-1">
+                          <div className="text-sm font-semibold text-gray-900">{item.name}</div>
+                          <div className="text-xs text-gray-600">
+                            {item.color && <span>Färg: {item.color}</span>}
+                            {item.color && item.size && <span> • </span>}
+                            {item.size && <span>Storlek: {item.size}</span>}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-4 text-center">
+                        <span className="text-sm font-medium text-gray-900">{item.quantity} st</span>
+                      </td>
+                      <td className="px-3 py-4 text-right">
+                        <span className="text-sm font-semibold text-gray-900">
+                          {item.price?.toLocaleString('sv-SE', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                          })} kr
+                        </span>
                       </td>
                     </tr>
                   ))
@@ -393,25 +510,35 @@ const OrderDetailPage = () => {
                   // Legacy order items (fallback for old orders)
                   getOrderDistribution(order).map((item, index) => (
                     <tr key={index}>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">B8 Shield</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.color}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.size}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.quantity} st</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
-                        {index === 0 && order.prisInfo?.produktPris ? 
-                          `${order.prisInfo.produktPris.toLocaleString('sv-SE', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                          })} kr` : ''}
+                      <td className="px-3 py-4">
+                        <div className="space-y-1">
+                          <div className="text-sm font-semibold text-gray-900">B8 Shield</div>
+                          <div className="text-xs text-gray-600">
+                            Färg: {item.color} • Storlek: {item.size}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-4 text-center">
+                        <span className="text-sm font-medium text-gray-900">{item.quantity} st</span>
+                      </td>
+                      <td className="px-3 py-4 text-right">
+                        {index === 0 && order.prisInfo?.produktPris && (
+                          <span className="text-sm font-semibold text-gray-900">
+                            {order.prisInfo.produktPris.toLocaleString('sv-SE', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2
+                            })} kr
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))
                 )}
               </tbody>
-              <tfoot>
+              <tfoot className="bg-gray-100">
                 <tr>
-                  <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium">Delsumma:</td>
-                  <td className="px-4 py-4 text-sm text-gray-700 text-right">
+                  <td colSpan="2" className="px-3 py-3 text-sm text-right font-medium">Delsumma:</td>
+                  <td className="px-3 py-3 text-sm text-gray-700 text-right">
                     {order.prisInfo?.produktPris?.toLocaleString('sv-SE', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2
@@ -419,17 +546,17 @@ const OrderDetailPage = () => {
                   </td>
                 </tr>
                 <tr>
-                  <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium">Moms (25%):</td>
-                  <td className="px-4 py-4 text-sm text-gray-700 text-right">
+                  <td colSpan="2" className="px-3 py-3 text-sm text-right font-medium">Moms (25%):</td>
+                  <td className="px-3 py-3 text-sm text-gray-700 text-right">
                     {order.prisInfo?.moms?.toLocaleString('sv-SE', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2
                     })} kr
                   </td>
                 </tr>
-                <tr>
-                  <td colSpan="4" className="px-4 py-4 text-sm text-right font-bold">Totalt:</td>
-                  <td className="px-4 py-4 text-sm font-bold text-gray-800 text-right">
+                <tr className="bg-gray-200">
+                  <td colSpan="2" className="px-3 py-3 text-sm text-right font-bold">Totalt:</td>
+                  <td className="px-3 py-3 text-sm font-bold text-gray-800 text-right">
                     {order.prisInfo?.totalPris?.toLocaleString('sv-SE', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2
@@ -517,17 +644,17 @@ const OrderDetailPage = () => {
           </div>
         </div>
 
-        <div className="flex justify-between mt-8">
+        <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mt-8">
           <Link
             to="/orders"
-            className="text-blue-600 hover:text-blue-800 font-medium"
+            className="w-full md:w-auto inline-flex items-center justify-center px-4 py-3 md:py-2 border border-gray-300 rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 font-medium min-h-[48px] md:min-h-0 text-base md:text-sm transition-colors"
           >
             Tillbaka till orderlistan
           </Link>
           {order.status === 'pending' && (
             <Link
               to={`/orders/${orderId}/edit`}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="w-full md:w-auto inline-flex items-center justify-center bg-blue-600 text-white px-4 py-3 md:py-2 rounded-lg hover:bg-blue-700 transition-colors min-h-[48px] md:min-h-0 text-base md:text-sm font-medium"
             >
               Redigera beställning
             </Link>

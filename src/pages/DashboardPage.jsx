@@ -35,10 +35,10 @@ const DashboardPage = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
         {/* Debug Info - Subtle */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-          <div className="flex items-center justify-between">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 md:p-3">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
             <div className="flex items-center">
               <InformationCircleIcon className="h-4 w-4 text-gray-400 mr-2" />
               <span className="text-xs text-gray-600">
@@ -49,7 +49,7 @@ const DashboardPage = () => {
             {/* TEST BUTTON for stakeholders */}
             <button
               onClick={() => setIsTrainingModalOpen(true)}
-              className="flex items-center px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+              className="w-full sm:w-auto flex items-center justify-center px-4 py-2 md:px-3 md:py-1 bg-blue-600 text-white text-sm md:text-xs rounded-lg hover:bg-blue-700 transition-colors min-h-[44px] md:min-h-0"
             >
               <AcademicCapIcon className="h-4 w-4 mr-1" />
               Testa Säljutbildning
@@ -62,44 +62,44 @@ const DashboardPage = () => {
           <img 
             src="/images/b8s_top.webp" 
             alt="B8Shield Banner" 
-            className="w-full h-48 md:h-64 object-cover"
+            className="w-full h-32 md:h-48 lg:h-64 object-cover"
           />
         </div>
 
         {/* Welcome Section - Dashboard Style */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-6 py-5 border-b border-gray-200">
-            <h1 className="text-xl font-semibold text-gray-900">
+          <div className="px-4 md:px-6 py-4 md:py-5 border-b border-gray-200">
+            <h1 className="text-lg md:text-xl font-semibold text-gray-900">
               Återförsäljarportal
             </h1>
-            <p className="mt-1 text-sm text-gray-600">
+            <p className="mt-1 text-sm md:text-sm text-gray-600">
               JPH Innovation AB - B8Shield
             </p>
           </div>
           
-          <div className="px-6 py-5">
+          <div className="px-4 md:px-6 py-4 md:py-5">
             <div className="prose prose-sm max-w-none text-gray-700">
-              <p className="mb-4">
+              <p className="mb-4 text-base md:text-sm">
                 Välkommen till vår återförsäljarportal – ett verktyg för att göra ert samarbete med oss så smidigt som möjligt.
               </p>
               
               <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                <h3 className="text-sm font-medium text-gray-900 mb-3">Funktioner:</h3>
-                <ul className="space-y-2 text-sm">
+                <h3 className="text-base md:text-sm font-medium text-gray-900 mb-3">Funktioner:</h3>
+                <ul className="space-y-3 md:space-y-2 text-sm md:text-sm">
                   <li className="flex items-start">
-                    <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <CheckCircleIcon className="h-5 w-5 md:h-4 md:w-4 text-green-600 mr-3 md:mr-2 mt-0.5 flex-shrink-0" />
                     <span>Lägga beställningar direkt</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <CheckCircleIcon className="h-5 w-5 md:h-4 md:w-4 text-green-600 mr-3 md:mr-2 mt-0.5 flex-shrink-0" />
                     <span>Överblick över orderhistorik</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <CheckCircleIcon className="h-5 w-5 md:h-4 md:w-4 text-green-600 mr-3 md:mr-2 mt-0.5 flex-shrink-0" />
                     <span>Bläddra i produktkatalog</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <CheckCircleIcon className="h-5 w-5 md:h-4 md:w-4 text-green-600 mr-3 md:mr-2 mt-0.5 flex-shrink-0" />
                     <span>Ladda ner marknadsföringsmaterial</span>
                   </li>
                 </ul>
@@ -109,10 +109,10 @@ const DashboardPage = () => {
         </div>
 
         {/* Navigation Cards - Dashboard Style */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           <Link
             to="/order"
-            className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group"
+            className="bg-white border border-gray-200 rounded-lg p-4 md:p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group min-h-[88px] md:min-h-0"
           >
             <div className="flex items-center mb-3">
               <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
@@ -125,7 +125,7 @@ const DashboardPage = () => {
           
           <Link
             to="/orders"
-            className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group"
+            className="bg-white border border-gray-200 rounded-lg p-4 md:p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group min-h-[88px] md:min-h-0"
           >
             <div className="flex items-center mb-3">
               <div className="p-2 bg-green-50 rounded-lg group-hover:bg-green-100 transition-colors">
@@ -138,7 +138,7 @@ const DashboardPage = () => {
 
           <Link
             to="/products"
-            className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group"
+            className="bg-white border border-gray-200 rounded-lg p-4 md:p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group min-h-[88px] md:min-h-0"
           >
             <div className="flex items-center mb-3">
               <div className="p-2 bg-purple-50 rounded-lg group-hover:bg-purple-100 transition-colors">
@@ -151,7 +151,7 @@ const DashboardPage = () => {
 
           <Link
             to="/marketing"
-            className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group"
+            className="bg-white border border-gray-200 rounded-lg p-4 md:p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group min-h-[88px] md:min-h-0"
           >
             <div className="flex items-center mb-3">
               <div className="p-2 bg-orange-50 rounded-lg group-hover:bg-orange-100 transition-colors">
@@ -165,26 +165,26 @@ const DashboardPage = () => {
 
         {/* Store Staff Information - Dashboard Cards */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-4 md:px-6 py-4 border-b border-gray-200">
             <div className="flex items-center">
               <MegaphoneIcon className="h-5 w-5 text-amber-600 mr-2" />
-              <h2 className="text-lg font-medium text-gray-900">
+              <h2 className="text-base md:text-lg font-medium text-gray-900">
                 Information för butikspersonal
               </h2>
             </div>
           </div>
 
-          <div className="p-6 space-y-6">
+          <div className="p-4 md:p-6 space-y-4 md:space-y-6">
             {/* Introduction Card */}
             <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-700 mb-3">
+              <p className="text-sm md:text-sm text-gray-700 mb-3">
                 B8Shield är en ny och unik produkt som löser ett vanligt problem för fiskare - att fastna i undervattensvegetation och andra undervattenshinder.
               </p>
-              <p className="text-sm text-gray-700 mb-3">
+              <p className="text-sm md:text-sm text-gray-700 mb-3">
                 B8Shield är samtidigt en helt ny typ av både produkt och produktkategori.
               </p>
               <div className="bg-amber-50 border-l-4 border-amber-400 p-3 rounded-r">
-                <p className="text-sm text-amber-800 italic">
+                <p className="text-sm md:text-sm text-amber-800 italic">
                   "Kunderna vet därför inte ännu vad B8Shield är eller vilket problem den löser, och därför söker man således inte aktivt efter B8Shield trots att man har problemet med att fastna"
                 </p>
               </div>
@@ -201,21 +201,21 @@ const DashboardPage = () => {
               
               <div className="space-y-4">
                 <div className="flex items-start">
-                  <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                  <span className="flex-shrink-0 w-7 h-7 md:w-6 md:h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm md:text-xs font-bold">1</span>
                   <p className="ml-3 text-sm text-gray-700">
                     Ge butiksstället en synlig och central plats i butiken, gärna nära kassan.
                   </p>
                 </div>
                 
                 <div className="flex items-start">
-                  <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                  <span className="flex-shrink-0 w-7 h-7 md:w-6 md:h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm md:text-xs font-bold">2</span>
                   <p className="ml-3 text-sm text-gray-700">
                     Aktivt säljer och förklarar produkten för kunderna. Gör man inte det är sannolikheten stor att kunderna inte uppmärksammar produkten och därmed inte köper produkten vilket vare sig vi eller ni vinner på.
                   </p>
                 </div>
                 
                 <div className="flex items-start">
-                  <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                  <span className="flex-shrink-0 w-7 h-7 md:w-6 md:h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm md:text-xs font-bold">3</span>
                   <p className="ml-3 text-sm text-gray-700">
                     För att försäkra säljprocessen ytterligare skickar vi också med ett antal lösa B8Shields. Med fördel kan dessa läggas i en skål vid stället så att kund kan få klämma och känna på produkten.
                   </p>

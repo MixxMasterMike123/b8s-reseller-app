@@ -335,9 +335,9 @@ function ProductViewPage() {
         ) : (
           /* Product List */
           <div className="bg-white shadow rounded-lg overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
+            <div className="px-4 md:px-6 py-4 border-b border-gray-200">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h2 className="text-lg font-medium text-gray-900">Tillgängliga Produkter</h2>
+                <h2 className="text-lg md:text-lg font-medium text-gray-900">Tillgängliga Produkter</h2>
                 <div className="w-full sm:w-64">
                   <ProductMenu 
                     products={products} 
@@ -348,23 +348,124 @@ function ProductViewPage() {
               </div>
             </div>
             
-            <div className="overflow-x-auto">
+            {/* Mobile Card Layout */}
+            <div className="md:hidden">
+              {products.length === 0 ? (
+                <div className="px-4 py-8 text-center text-gray-500">
+                  <div className="text-gray-400 mb-4">
+                    <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                  </div>
+                  <p className="text-base text-gray-500">Inga produkter tillgängliga</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-200">
+                  {(filteredProduct ? [filteredProduct] : products).map((product) => (
+                    <div 
+                      key={product.id} 
+                      className="px-4 py-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => handleProductSelect(product)}
+                    >
+                      <div className="flex items-start space-x-4">
+                        {/* Product Image */}
+                        <div className="flex-shrink-0">
+                          {(() => {
+                            const imageUrl = getProductImage(product);
+                            return imageUrl ? (
+                              <img 
+                                src={imageUrl} 
+                                alt={product.name} 
+                                className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                              />
+                            ) : (
+                              <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                                <span className="text-sm text-gray-500">Ingen bild</span>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                        
+                        {/* Product Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-base font-semibold text-gray-900 truncate">
+                                {product.name}
+                              </h3>
+                              {(product.descriptions?.b2b || product.description) && (
+                                <p className="mt-1 text-sm text-gray-600 line-clamp-2">
+                                  {product.descriptions?.b2b || product.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Product Details */}
+                          <div className="mt-3 space-y-2">
+                            <div className="flex flex-wrap gap-4 text-sm">
+                              <div className="flex items-center space-x-2">
+                                <span className="text-gray-500">Storlek:</span>
+                                <span className="font-medium text-gray-900">{product.size || 'Ej angivet'}</span>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-gray-500">Pris:</span>
+                                <span className="font-semibold text-gray-900">{product.basePrice?.toFixed(2)} SEK</span>
+                              </div>
+                            </div>
+                            
+                            {product.eanCode && (
+                              <div className="flex items-center space-x-2 text-sm">
+                                <span className="text-gray-500">EAN:</span>
+                                <span className="font-mono text-gray-900">{product.eanCode}</span>
+                                {(product.eanImagePngUrl || product.eanImagePng || product.eanImageSvgUrl || product.eanImageSvg) && (
+                                  <span className="text-xs text-gray-500 ml-2">
+                                    {(product.eanImagePngUrl || product.eanImagePng) && 'PNG '}
+                                    {(product.eanImageSvgUrl || product.eanImageSvg) && 'SVG'}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            
+                            {/* Price note */}
+                            <p className="text-xs text-gray-500">Exkl. moms</p>
+                          </div>
+                          
+                          {/* Action Button */}
+                          <div className="mt-4">
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleProductSelect(product);
+                              }}
+                              className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors text-base font-medium min-h-[48px] flex items-center justify-center"
+                            >
+                              Visa detaljer och ladda ner
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Desktop Table Layout */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/5">
                       Produkt
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Storlek
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                      Storlek & Pris
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Pris
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                       EAN-kod
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                       Åtgärder
                     </th>
                   </tr>
@@ -372,60 +473,70 @@ function ProductViewPage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {products.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
                         Inga produkter tillgängliga
                       </td>
                     </tr>
                   ) : (
                     (filteredProduct ? [filteredProduct] : products).map((product) => (
                       <tr key={product.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => handleProductSelect(product)}>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center">
+                        <td className="px-4 py-4">
+                          <div className="flex items-center space-x-3">
                             {(() => {
                               const imageUrl = getProductImage(product);
                               return imageUrl ? (
                                 <img 
                                   src={imageUrl} 
                                   alt={product.name} 
-                                  className="w-12 h-12 mr-4 object-cover rounded-md border border-gray-200"
+                                  className="w-10 h-10 object-cover rounded-md border border-gray-200 flex-shrink-0"
                                 />
                               ) : (
-                                <div className="w-12 h-12 mr-4 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
-                                  <span className="text-xs text-gray-500">Ingen bild</span>
+                                <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200 flex-shrink-0">
+                                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
                                 </div>
                               );
                             })()}
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                              <div className="text-sm text-gray-500 max-w-xs truncate">
-                                {product.descriptions?.b2b || product.description || 'Ingen beskrivning'}
-                              </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-semibold text-gray-900 truncate">{product.name}</div>
+                              {(product.descriptions?.b2b || product.description) && (
+                                <div className="text-xs text-gray-600 truncate max-w-xs">
+                                  {product.descriptions?.b2b || product.description}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{product.size || 'Ej angivet'}</div>
+                        <td className="px-3 py-4">
+                          <div className="space-y-1">
+                            <div className="text-sm text-gray-900">{product.size || 'Ej angivet'}</div>
+                            <div className="text-sm font-semibold text-gray-900">{product.basePrice?.toFixed(2)} SEK</div>
+                            <div className="text-xs text-gray-500">Exkl. moms</div>
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{product.basePrice?.toFixed(2)} SEK</div>
-                          <div className="text-sm text-gray-500">Exkl. moms</div>
+                        <td className="px-3 py-4">
+                          <div className="space-y-1">
+                            <div className="text-sm font-mono text-gray-900">{product.eanCode || 'Ej angivet'}</div>
+                            {(product.eanImagePngUrl || product.eanImagePng || product.eanImageSvgUrl || product.eanImageSvg) && (
+                              <div className="flex space-x-1">
+                                {(product.eanImagePngUrl || product.eanImagePng) && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">PNG</span>
+                                )}
+                                {(product.eanImageSvgUrl || product.eanImageSvg) && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">SVG</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{product.eanCode || 'Ej angivet'}</div>
-                          {(product.eanImagePngUrl || product.eanImagePng || product.eanImageSvgUrl || product.eanImageSvg) && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              {(product.eanImagePngUrl || product.eanImagePng) && 'PNG '}
-                              {(product.eanImageSvgUrl || product.eanImageSvg) && 'SVG'}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <td className="px-4 py-4 text-center">
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
                               handleProductSelect(product);
                             }}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                           >
                             Visa detaljer
                           </button>

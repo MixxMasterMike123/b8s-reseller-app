@@ -116,12 +116,12 @@ const OrderHistoryPage = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Orderhistorik</h1>
+      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-4 md:p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-800">Orderhistorik</h1>
           <Link
             to="/order"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="w-full sm:w-auto bg-blue-600 text-white px-4 py-3 md:py-2 rounded-lg hover:bg-blue-700 transition-colors text-center font-medium min-h-[48px] md:min-h-0 flex items-center justify-center"
           >
             Lägg ny beställning
           </Link>
@@ -149,52 +149,114 @@ const OrderHistoryPage = () => {
             </button>
           </div>
         ) : orders.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-50 border-b">
-                  <th className="py-3 px-4 text-left font-semibold text-gray-700">Ordernummer</th>
-                  <th className="py-3 px-4 text-left font-semibold text-gray-700">Datum</th>
-                  <th className="py-3 px-4 text-left font-semibold text-gray-700">Antal förp.</th>
-                  <th className="py-3 px-4 text-left font-semibold text-gray-700">Summa</th>
-                  <th className="py-3 px-4 text-left font-semibold text-gray-700">Status</th>
-                  <th className="py-3 px-4 text-right font-semibold text-gray-700">Åtgärder</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((order) => {
-                  const { text: statusText, color: statusColor } = getStatusInfo(order.status);
-                  
-                  return (
-                    <tr key={order.id} className="border-b hover:bg-gray-50">
-                      <td className="py-4 px-4 font-medium">{order.orderNumber}</td>
-                      <td className="py-4 px-4">{formatDate(order.createdAt)}</td>
-                      <td className="py-4 px-4">{order.antalForpackningar}</td>
-                      <td className="py-4 px-4">
-                        {order.prisInfo?.totalPris?.toLocaleString('sv-SE', { 
-                          minimumFractionDigits: 2, 
-                          maximumFractionDigits: 2 
-                        })} kr
-                      </td>
-                      <td className="py-4 px-4">
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${statusColor}`}>
-                          {statusText}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-right">
-                        <Link
-                          to={`/orders/${order.id}`}
-                          className="text-blue-600 hover:text-blue-800 font-medium"
-                        >
-                          Visa detaljer
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {/* Mobile Card Layout */}
+            <div className="md:hidden space-y-4">
+              {orders.map((order) => {
+                const { text: statusText, color: statusColor } = getStatusInfo(order.status);
+                
+                return (
+                  <div key={order.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
+                    {/* Order Header */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-semibold text-gray-900 truncate">
+                          Order #{order.orderNumber}
+                        </h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {formatDate(order.createdAt)}
+                        </p>
+                      </div>
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusColor} flex-shrink-0 ml-3`}>
+                        {statusText}
+                      </span>
+                    </div>
+                    
+                    {/* Order Details */}
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wider">Antal förpackningar</p>
+                        <p className="text-base font-semibold text-gray-900 mt-1">{order.antalForpackningar}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wider">Totalsumma</p>
+                        <p className="text-base font-semibold text-gray-900 mt-1">
+                          {order.prisInfo?.totalPris?.toLocaleString('sv-SE', { 
+                            minimumFractionDigits: 2, 
+                            maximumFractionDigits: 2 
+                          })} kr
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Action Button */}
+                    <div className="mt-4">
+                      <Link
+                        to={`/orders/${order.id}`}
+                        className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors text-base font-medium min-h-[48px] flex items-center justify-center"
+                      >
+                        Visa orderdetaljer
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Desktop Optimized Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 border-b">
+                    <th className="py-3 px-3 text-left font-semibold text-gray-700 w-2/5">Order & Datum</th>
+                    <th className="py-3 px-3 text-left font-semibold text-gray-700 w-1/6">Antal & Summa</th>
+                    <th className="py-3 px-3 text-left font-semibold text-gray-700 w-1/4">Status</th>
+                    <th className="py-3 px-3 text-center font-semibold text-gray-700 w-1/6">Åtgärder</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((order) => {
+                    const { text: statusText, color: statusColor } = getStatusInfo(order.status);
+                    
+                    return (
+                      <tr key={order.id} className="border-b hover:bg-gray-50">
+                        <td className="py-4 px-3">
+                          <div className="space-y-1">
+                            <div className="text-sm font-semibold text-gray-900">Order #{order.orderNumber}</div>
+                            <div className="text-xs text-gray-600">{formatDate(order.createdAt)}</div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-3">
+                          <div className="space-y-1">
+                            <div className="text-sm text-gray-900">{order.antalForpackningar} förp.</div>
+                            <div className="text-sm font-semibold text-gray-900">
+                              {order.prisInfo?.totalPris?.toLocaleString('sv-SE', { 
+                                minimumFractionDigits: 2, 
+                                maximumFractionDigits: 2 
+                              })} kr
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-3">
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusColor}`}>
+                            {statusText}
+                          </span>
+                        </td>
+                        <td className="py-4 px-3 text-center">
+                          <Link
+                            to={`/orders/${order.id}`}
+                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                          >
+                            Visa detaljer
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : (
           <div className="py-12 text-center border rounded-lg">
             <div className="text-gray-400 mb-4">

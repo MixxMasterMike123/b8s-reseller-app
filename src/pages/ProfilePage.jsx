@@ -235,255 +235,338 @@ const ProfilePage = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white shadow rounded-lg">
-          {/* Header */}
-          <div className="px-4 py-5 border-b border-gray-200 sm:px-6 flex justify-between items-center">
-            <h1 className="text-lg leading-6 font-medium text-gray-900">
-              Din Profil
-            </h1>
+      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md">
+        {/* Header */}
+        <div className="px-4 md:px-6 py-4 md:py-5 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900">Profil</h1>
             <Link
               to="/"
-              className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-3 md:py-2 border border-gray-300 text-base md:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 min-h-[48px] md:min-h-0"
             >
               Tillbaka till Dashboard
             </Link>
           </div>
+        </div>
 
-          {/* Profile content */}
-          <div className="p-6">
-            {error && (
-              <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
-                <p className="text-red-700">{error}</p>
-              </div>
-            )}
+        {/* Profile content */}
+        <div className="p-4 md:p-6">
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+              <p className="text-red-700">{error}</p>
+            </div>
+          )}
+          
+          {success && (
+            <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
+              <p className="text-green-700">{success}</p>
+            </div>
+          )}
+
+          <div className="mb-6 md:mb-8">
+            <h2 className="text-lg md:text-xl font-medium text-gray-900 mb-4 md:mb-6">Profilinformation</h2>
             
-            {success && (
-              <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
-                <p className="text-green-700">{success}</p>
-              </div>
-            )}
-
-            <div className="mb-6">
-              <h2 className="text-xl font-medium text-gray-900 mb-4">Profilinformation</h2>
-              
-              {!isEditing ? (
-                <div className="bg-gray-50 p-6 rounded-lg space-y-6">
-                  {/* Company Information */}
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-3 pb-2 border-b border-gray-200">
-                      Företagsinformation
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-500">E-post</p>
-                        <p className="font-medium">{currentUser?.email}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Företagsnamn</p>
-                        <p className="font-medium">{userData?.companyName || 'Ej angivet'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Kontaktperson</p>
-                        <p className="font-medium">{userData?.contactPerson || 'Ej angivet'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Telefon</p>
-                        <p className="font-medium">{userData?.phone || 'Ej angivet'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Organisationsnummer</p>
-                        <p className="font-medium">{userData?.orgNumber || 'Ej angivet'}</p>
-                      </div>
+            {!isEditing ? (
+              <div className="bg-gray-50 p-4 md:p-6 rounded-lg space-y-6 md:space-y-8">
+                {/* Company Information */}
+                <div>
+                  <h3 className="text-base md:text-lg font-medium text-gray-900 mb-3 md:mb-4 pb-2 border-b border-gray-200">
+                    Företagsinformation
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div>
+                      <p className="text-sm md:text-sm text-gray-500 mb-1">E-post</p>
+                      <p className="font-medium text-base">{currentUser?.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm md:text-sm text-gray-500 mb-1">Företagsnamn</p>
+                      <p className="font-medium text-base">{userData?.companyName || 'Ej angivet'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm md:text-sm text-gray-500 mb-1">Kontaktperson</p>
+                      <p className="font-medium text-base">{userData?.contactPerson || 'Ej angivet'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm md:text-sm text-gray-500 mb-1">Telefon</p>
+                      <p className="font-medium text-base">{userData?.phone || 'Ej angivet'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm md:text-sm text-gray-500 mb-1">Organisationsnummer</p>
+                      <p className="font-medium text-base">{userData?.orgNumber || 'Ej angivet'}</p>
                     </div>
                   </div>
-
-                  {/* Company Address */}
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-3 pb-2 border-b border-gray-200">
-                      Företagsadress
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="md:col-span-2">
-                        <p className="text-sm text-gray-500">Gatuadress</p>
-                        <p className="font-medium">{userData?.address || 'Ej angivet'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Postnummer</p>
-                        <p className="font-medium">{userData?.postalCode || 'Ej angivet'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Stad</p>
-                        <p className="font-medium">{userData?.city || 'Ej angivet'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Land</p>
-                        <p className="font-medium">{userData?.country || 'Sverige'}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Delivery Address */}
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-3 pb-2 border-b border-gray-200">
-                      Leveransadress
-                    </h3>
-                    {userData?.sameAsCompanyAddress !== false ? (
-                      <p className="text-sm text-gray-600 italic">Samma som företagsadress</p>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="md:col-span-2">
-                          <p className="text-sm text-gray-500">Leveransadress</p>
-                          <p className="font-medium">{userData?.deliveryAddress || 'Ej angivet'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Postnummer</p>
-                          <p className="font-medium">{userData?.deliveryPostalCode || 'Ej angivet'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Stad</p>
-                          <p className="font-medium">{userData?.deliveryCity || 'Ej angivet'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Land</p>
-                          <p className="font-medium">{userData?.deliveryCountry || 'Sverige'}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-                  >
-                    Redigera Profil
-                  </button>
                 </div>
-              ) : (
-                <form onSubmit={handleProfileUpdate} className="space-y-8">
-                  {/* Company Information Section */}
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">
-                      Företagsinformation
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="companyName" className="block text-sm font-medium text-gray-700">
-                          Företagsnamn *
-                        </label>
-                        <input
-                          type="text"
-                          name="companyName"
-                          id="companyName"
-                          value={formData.companyName}
-                          onChange={handleChange}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="contactPerson" className="block text-sm font-medium text-gray-700">
-                          Kontaktperson *
-                        </label>
-                        <input
-                          type="text"
-                          name="contactPerson"
-                          id="contactPerson"
-                          value={formData.contactPerson}
-                          onChange={handleChange}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                          Telefon
-                        </label>
-                        <input
-                          type="tel"
-                          name="phone"
-                          id="phone"
-                          value={formData.phone}
-                          onChange={handleChange}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="08-123 456 78"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="orgNumber" className="block text-sm font-medium text-gray-700">
-                          Organisationsnummer
-                        </label>
-                        <input
-                          type="text"
-                          name="orgNumber"
-                          id="orgNumber"
-                          value={formData.orgNumber}
-                          onChange={handleChange}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="556123-4567"
-                        />
-                      </div>
+
+                {/* Company Address */}
+                <div>
+                  <h3 className="text-base md:text-lg font-medium text-gray-900 mb-3 md:mb-4 pb-2 border-b border-gray-200">
+                    Företagsadress
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div className="md:col-span-2">
+                      <p className="text-sm md:text-sm text-gray-500 mb-1">Gatuadress</p>
+                      <p className="font-medium text-base">{userData?.address || 'Ej angivet'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm md:text-sm text-gray-500 mb-1">Postnummer</p>
+                      <p className="font-medium text-base">{userData?.postalCode || 'Ej angivet'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm md:text-sm text-gray-500 mb-1">Stad</p>
+                      <p className="font-medium text-base">{userData?.city || 'Ej angivet'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm md:text-sm text-gray-500 mb-1">Land</p>
+                      <p className="font-medium text-base">{userData?.country || 'Sverige'}</p>
                     </div>
                   </div>
+                </div>
 
-                  {/* Company Address Section */}
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">
-                      Företagsadress
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Delivery Address */}
+                <div>
+                  <h3 className="text-base md:text-lg font-medium text-gray-900 mb-3 md:mb-4 pb-2 border-b border-gray-200">
+                    Leveransadress
+                  </h3>
+                  {userData?.sameAsCompanyAddress !== false ? (
+                    <p className="text-sm md:text-sm text-gray-600 italic">Samma som företagsadress</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                       <div className="md:col-span-2">
-                        <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-                          Gatuadress
+                        <p className="text-sm md:text-sm text-gray-500 mb-1">Leveransadress</p>
+                        <p className="font-medium text-base">{userData?.deliveryAddress || 'Ej angivet'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm md:text-sm text-gray-500 mb-1">Postnummer</p>
+                        <p className="font-medium text-base">{userData?.deliveryPostalCode || 'Ej angivet'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm md:text-sm text-gray-500 mb-1">Stad</p>
+                        <p className="font-medium text-base">{userData?.deliveryCity || 'Ej angivet'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm md:text-sm text-gray-500 mb-1">Land</p>
+                        <p className="font-medium text-base">{userData?.deliveryCountry || 'Sverige'}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="w-full md:w-auto inline-flex items-center justify-center px-6 py-3 md:px-4 md:py-2 border border-transparent text-base md:text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 min-h-[48px] md:min-h-0"
+                >
+                  Redigera Profil
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleProfileUpdate} className="space-y-6 md:space-y-8">
+                {/* Company Information Section */}
+                <div>
+                  <h3 className="text-base md:text-lg font-medium text-gray-900 mb-4 md:mb-6 pb-2 border-b border-gray-200">
+                    Företagsinformation
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div>
+                      <label htmlFor="companyName" className="block text-base md:text-sm font-medium text-gray-700 mb-2 md:mb-1">
+                        Företagsnamn *
+                      </label>
+                      <input
+                        type="text"
+                        name="companyName"
+                        id="companyName"
+                        value={formData.companyName}
+                        onChange={handleChange}
+                        className="block w-full border border-gray-300 rounded-md shadow-sm py-3 md:py-2 px-4 md:px-3 text-base focus:outline-none focus:ring-blue-500 focus:border-blue-500 min-h-[48px] md:min-h-0"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="contactPerson" className="block text-base md:text-sm font-medium text-gray-700 mb-2 md:mb-1">
+                        Kontaktperson *
+                      </label>
+                      <input
+                        type="text"
+                        name="contactPerson"
+                        id="contactPerson"
+                        value={formData.contactPerson}
+                        onChange={handleChange}
+                        className="block w-full border border-gray-300 rounded-md shadow-sm py-3 md:py-2 px-4 md:px-3 text-base focus:outline-none focus:ring-blue-500 focus:border-blue-500 min-h-[48px] md:min-h-0"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="phone" className="block text-base md:text-sm font-medium text-gray-700 mb-2 md:mb-1">
+                        Telefon
+                      </label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        id="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        className="block w-full border border-gray-300 rounded-md shadow-sm py-3 md:py-2 px-4 md:px-3 text-base focus:outline-none focus:ring-blue-500 focus:border-blue-500 min-h-[48px] md:min-h-0"
+                        placeholder="08-123 456 78"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="orgNumber" className="block text-base md:text-sm font-medium text-gray-700 mb-2 md:mb-1">
+                        Organisationsnummer
+                      </label>
+                      <input
+                        type="text"
+                        name="orgNumber"
+                        id="orgNumber"
+                        value={formData.orgNumber}
+                        onChange={handleChange}
+                        className="block w-full border border-gray-300 rounded-md shadow-sm py-3 md:py-2 px-4 md:px-3 text-base focus:outline-none focus:ring-blue-500 focus:border-blue-500 min-h-[48px] md:min-h-0"
+                        placeholder="556123-4567"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Company Address Section */}
+                <div>
+                  <h3 className="text-base md:text-lg font-medium text-gray-900 mb-4 md:mb-6 pb-2 border-b border-gray-200">
+                    Företagsadress
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div className="md:col-span-2">
+                      <label htmlFor="address" className="block text-base md:text-sm font-medium text-gray-700 mb-2 md:mb-1">
+                        Gatuadress
+                      </label>
+                      <input
+                        type="text"
+                        name="address"
+                        id="address"
+                        value={formData.address}
+                        onChange={handleChange}
+                        className="block w-full border border-gray-300 rounded-md shadow-sm py-3 md:py-2 px-4 md:px-3 text-base focus:outline-none focus:ring-blue-500 focus:border-blue-500 min-h-[48px] md:min-h-0"
+                        placeholder="Gatuadress 123"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="postalCode" className="block text-base md:text-sm font-medium text-gray-700 mb-2 md:mb-1">
+                        Postnummer
+                      </label>
+                      <input
+                        type="text"
+                        name="postalCode"
+                        id="postalCode"
+                        value={formData.postalCode}
+                        onChange={handleChange}
+                        className="block w-full border border-gray-300 rounded-md shadow-sm py-3 md:py-2 px-4 md:px-3 text-base focus:outline-none focus:ring-blue-500 focus:border-blue-500 min-h-[48px] md:min-h-0"
+                        placeholder="123 45"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="city" className="block text-base md:text-sm font-medium text-gray-700 mb-2 md:mb-1">
+                        Stad
+                      </label>
+                      <input
+                        type="text"
+                        name="city"
+                        id="city"
+                        value={formData.city}
+                        onChange={handleChange}
+                        className="block w-full border border-gray-300 rounded-md shadow-sm py-3 md:py-2 px-4 md:px-3 text-base focus:outline-none focus:ring-blue-500 focus:border-blue-500 min-h-[48px] md:min-h-0"
+                        placeholder="Stockholm"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="country" className="block text-base md:text-sm font-medium text-gray-700 mb-2 md:mb-1">
+                        Land
+                      </label>
+                      <select
+                        name="country"
+                        id="country"
+                        value={formData.country}
+                        onChange={handleChange}
+                        className="block w-full border border-gray-300 rounded-md shadow-sm py-3 md:py-2 px-4 md:px-3 text-base focus:outline-none focus:ring-blue-500 focus:border-blue-500 min-h-[48px] md:min-h-0"
+                      >
+                        <option value="Sverige">Sverige</option>
+                        <option value="Norge">Norge</option>
+                        <option value="Danmark">Danmark</option>
+                        <option value="Finland">Finland</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Delivery Address Section */}
+                <div>
+                  <h3 className="text-base md:text-lg font-medium text-gray-900 mb-4 md:mb-6 pb-2 border-b border-gray-200">
+                    Leveransadress
+                  </h3>
+                  
+                  <div className="mb-6">
+                    <label className="flex items-center p-3 md:p-0 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={sameAsCompanyAddress}
+                        onChange={handleCheckboxChange}
+                        className="h-5 w-5 md:h-4 md:w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <span className="ml-3 md:ml-2 text-base md:text-sm text-gray-700">
+                        Samma som företagsadress
+                      </span>
+                    </label>
+                  </div>
+                  
+                  {!sameAsCompanyAddress && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                      <div className="md:col-span-2">
+                        <label htmlFor="deliveryAddress" className="block text-base md:text-sm font-medium text-gray-700 mb-2 md:mb-1">
+                          Leveransadress
                         </label>
                         <input
                           type="text"
-                          name="address"
-                          id="address"
-                          value={formData.address}
+                          name="deliveryAddress"
+                          id="deliveryAddress"
+                          value={formData.deliveryAddress}
                           onChange={handleChange}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Gatuadress 123"
+                          className="block w-full border border-gray-300 rounded-md shadow-sm py-3 md:py-2 px-4 md:px-3 text-base focus:outline-none focus:ring-blue-500 focus:border-blue-500 min-h-[48px] md:min-h-0"
+                          placeholder="Leveransadress 123"
                         />
                       </div>
                       <div>
-                        <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="deliveryPostalCode" className="block text-base md:text-sm font-medium text-gray-700 mb-2 md:mb-1">
                           Postnummer
                         </label>
                         <input
                           type="text"
-                          name="postalCode"
-                          id="postalCode"
-                          value={formData.postalCode}
+                          name="deliveryPostalCode"
+                          id="deliveryPostalCode"
+                          value={formData.deliveryPostalCode}
                           onChange={handleChange}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          className="block w-full border border-gray-300 rounded-md shadow-sm py-3 md:py-2 px-4 md:px-3 text-base focus:outline-none focus:ring-blue-500 focus:border-blue-500 min-h-[48px] md:min-h-0"
                           placeholder="123 45"
                         />
                       </div>
                       <div>
-                        <label htmlFor="city" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="deliveryCity" className="block text-base md:text-sm font-medium text-gray-700 mb-2 md:mb-1">
                           Stad
                         </label>
                         <input
                           type="text"
-                          name="city"
-                          id="city"
-                          value={formData.city}
+                          name="deliveryCity"
+                          id="deliveryCity"
+                          value={formData.deliveryCity}
                           onChange={handleChange}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          className="block w-full border border-gray-300 rounded-md shadow-sm py-3 md:py-2 px-4 md:px-3 text-base focus:outline-none focus:ring-blue-500 focus:border-blue-500 min-h-[48px] md:min-h-0"
                           placeholder="Stockholm"
                         />
                       </div>
                       <div>
-                        <label htmlFor="country" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="deliveryCountry" className="block text-base md:text-sm font-medium text-gray-700 mb-2 md:mb-1">
                           Land
                         </label>
                         <select
-                          name="country"
-                          id="country"
-                          value={formData.country}
+                          name="deliveryCountry"
+                          id="deliveryCountry"
+                          value={formData.deliveryCountry}
                           onChange={handleChange}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          className="block w-full border border-gray-300 rounded-md shadow-sm py-3 md:py-2 px-4 md:px-3 text-base focus:outline-none focus:ring-blue-500 focus:border-blue-500 min-h-[48px] md:min-h-0"
                         >
                           <option value="Sverige">Sverige</option>
                           <option value="Norge">Norge</option>
@@ -492,156 +575,71 @@ const ProfilePage = () => {
                         </select>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Delivery Address Section */}
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">
-                      Leveransadress
-                    </h3>
-                    
-                    <div className="mb-4">
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={sameAsCompanyAddress}
-                          onChange={handleCheckboxChange}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <span className="ml-2 text-sm text-gray-700">
-                          Samma som företagsadress
-                        </span>
-                      </label>
-                    </div>
-                    
-                    {!sameAsCompanyAddress && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="md:col-span-2">
-                          <label htmlFor="deliveryAddress" className="block text-sm font-medium text-gray-700">
-                            Leveransadress
-                          </label>
-                          <input
-                            type="text"
-                            name="deliveryAddress"
-                            id="deliveryAddress"
-                            value={formData.deliveryAddress}
-                            onChange={handleChange}
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Leveransadress 123"
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="deliveryPostalCode" className="block text-sm font-medium text-gray-700">
-                            Postnummer
-                          </label>
-                          <input
-                            type="text"
-                            name="deliveryPostalCode"
-                            id="deliveryPostalCode"
-                            value={formData.deliveryPostalCode}
-                            onChange={handleChange}
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="123 45"
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="deliveryCity" className="block text-sm font-medium text-gray-700">
-                            Stad
-                          </label>
-                          <input
-                            type="text"
-                            name="deliveryCity"
-                            id="deliveryCity"
-                            value={formData.deliveryCity}
-                            onChange={handleChange}
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Stockholm"
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="deliveryCountry" className="block text-sm font-medium text-gray-700">
-                            Land
-                          </label>
-                          <select
-                            name="deliveryCountry"
-                            id="deliveryCountry"
-                            value={formData.deliveryCountry}
-                            onChange={handleChange}
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                          >
-                            <option value="Sverige">Sverige</option>
-                            <option value="Norge">Norge</option>
-                            <option value="Danmark">Danmark</option>
-                            <option value="Finland">Finland</option>
-                          </select>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-                    <button
-                      type="button"
-                      onClick={() => setIsEditing(false)}
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                      disabled={loading}
-                    >
-                      Avbryt
-                    </button>
-                    <button
-                      type="submit"
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-                      disabled={loading}
-                    >
-                      {loading ? 'Sparar...' : 'Spara Ändringar'}
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-
-            <div className="border-t border-gray-200 pt-6">
-              <h2 className="text-xl font-medium text-gray-900 mb-4">Ändra Lösenord</h2>
-              <form onSubmit={handlePasswordUpdate} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
-                      Nytt Lösenord
-                    </label>
-                    <input
-                      type="password"
-                      name="newPassword"
-                      id="newPassword"
-                      value={formData.newPassword}
-                      onChange={handleChange}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                      Bekräfta Nytt Lösenord
-                    </label>
-                    <input
-                      type="password"
-                      name="confirmPassword"
-                      id="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
+                  )}
                 </div>
-                <div className="flex justify-end">
+
+                <div className="flex flex-col md:flex-row justify-end space-y-3 md:space-y-0 md:space-x-3 pt-6 border-t border-gray-200">
                   <button
-                    type="submit"
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+                    type="button"
+                    onClick={() => setIsEditing(false)}
+                    className="w-full md:w-auto inline-flex items-center justify-center px-6 py-3 md:px-4 md:py-2 border border-gray-300 text-base md:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 min-h-[48px] md:min-h-0"
                     disabled={loading}
                   >
-                    {loading ? 'Uppdaterar...' : 'Uppdatera Lösenord'}
+                    Avbryt
+                  </button>
+                  <button
+                    type="submit"
+                    className="w-full md:w-auto inline-flex items-center justify-center px-6 py-3 md:px-4 md:py-2 border border-transparent text-base md:text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 min-h-[48px] md:min-h-0"
+                    disabled={loading}
+                  >
+                    {loading ? 'Sparar...' : 'Spara Ändringar'}
                   </button>
                 </div>
               </form>
-            </div>
+            )}
+          </div>
+
+          <div className="border-t border-gray-200 pt-6 md:pt-8">
+            <h2 className="text-lg md:text-xl font-medium text-gray-900 mb-4 md:mb-6">Ändra Lösenord</h2>
+            <form onSubmit={handlePasswordUpdate} className="space-y-4 md:space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <div>
+                  <label htmlFor="newPassword" className="block text-base md:text-sm font-medium text-gray-700 mb-2 md:mb-1">
+                    Nytt Lösenord
+                  </label>
+                  <input
+                    type="password"
+                    name="newPassword"
+                    id="newPassword"
+                    value={formData.newPassword}
+                    onChange={handleChange}
+                    className="block w-full border border-gray-300 rounded-md shadow-sm py-3 md:py-2 px-4 md:px-3 text-base focus:outline-none focus:ring-blue-500 focus:border-blue-500 min-h-[48px] md:min-h-0"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="confirmPassword" className="block text-base md:text-sm font-medium text-gray-700 mb-2 md:mb-1">
+                    Bekräfta Nytt Lösenord
+                  </label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    id="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className="block w-full border border-gray-300 rounded-md shadow-sm py-3 md:py-2 px-4 md:px-3 text-base focus:outline-none focus:ring-blue-500 focus:border-blue-500 min-h-[48px] md:min-h-0"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  className="w-full md:w-auto inline-flex items-center justify-center px-6 py-3 md:px-4 md:py-2 border border-transparent text-base md:text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 min-h-[48px] md:min-h-0"
+                  disabled={loading}
+                >
+                  {loading ? 'Uppdaterar...' : 'Uppdatera Lösenord'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
