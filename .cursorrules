@@ -108,7 +108,7 @@ src/
 - **Debug Mode**: Visual indicators for testing subdomain detection
 
 ### Customer Management System
-- Individual customer margins (default: 35%)
+- Individual customer margins (default: 40%)
 - Admin can edit customer margins inline
 - Customer activation/deactivation
 - Role management (user/admin)
@@ -159,7 +159,7 @@ src/
   sameAsCompanyAddress: boolean,
   role: 'user' | 'admin',
   active: boolean,
-  marginal: number, // Customer margin percentage (default: 35)
+  marginal: number, // Customer margin percentage (default: 40)
   notes: string,
   createdAt: string,
   updatedAt: string
@@ -420,7 +420,7 @@ src/
 - **Admin Profile Management**: Full customer profile editing capabilities
 
 ### Customer Management System
-- **Individual Customer Margins**: Each customer has custom percentage (default 35%)
+- **Individual Customer Margins**: Each customer has custom percentage (default 40%)
 - **Role-Based Access Control**: Admins can edit margins, customers cannot
 - **Terminology Update**: Changed from "Users" to "Kunder" throughout
 - **Inline Editing**: Direct margin editing in customer list

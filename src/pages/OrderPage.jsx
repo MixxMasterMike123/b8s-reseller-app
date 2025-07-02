@@ -24,9 +24,16 @@ const OrderPage = () => {
   const [storlekar, setStorlekar] = useState({});
   
   const [antalForpackningar, setAntalForpackningar] = useState(null);
-  const [marginal, setMarginal] = useState(35); // Default 35% marginal
+  const [marginal, setMarginal] = useState(null); // Will be set from user profile
   const [fordelningsTyp, setFordelningsTyp] = useState('jamn'); // 'jamn' eller 'perFarg'
   const [loading, setLoading] = useState(false);
+
+  // Set margin from user profile when available
+  useEffect(() => {
+    if (userProfile && userProfile.marginal) {
+      setMarginal(userProfile.marginal);
+    }
+  }, [userProfile]);
 
   // Add state for selected product  
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -218,11 +225,10 @@ const OrderPage = () => {
     }
   };
   
-  // Hantera val av antal förpackningar - nu med fast 35% marginal
+  // Hantera val av antal förpackningar - använder kundens personliga marginal
   const handleAntalChange = (antal) => {
     setAntalForpackningar(antal);
-    // Fast 35% marginal, oavsett antal
-    setMarginal(35);
+    // Margin kommer från användarens profil via useEffect
   };
   
   // Hantera egen input av antal förpackningar
@@ -230,13 +236,15 @@ const OrderPage = () => {
     const value = parseInt(e.target.value);
     if (!isNaN(value) && value > 0) {
       setAntalForpackningar(value);
-      setMarginal(35);
+      // Margin kommer från användarens profil via useEffect
     }
   };
   
   // Beräkna inköpspris baserat på marginal
   const calculateInkopspris = () => {
-    return FORSALJNINGSPRIS * 0.65; // Fast 35% marginal (100% - 35% = 65% av exkl. moms pris)
+    if (!marginal) return FORSALJNINGSPRIS * 0.6; // Default 40% margin if not set
+    const marginDecimal = marginal / 100;
+    return FORSALJNINGSPRIS * (1 - marginDecimal); // Dynamic margin calculation
   };
   
   // Antal valda färger
@@ -721,7 +729,14 @@ const OrderPage = () => {
         
         <div className="mb-8 p-4 border border-gray-200 rounded bg-blue-50">
           <h2 className="text-xl font-semibold mb-2">Information om prissättning</h2>
-          <p>Alla priser är exklusive moms och beräknas med en fast marginal på 35%.</p>
+          <p>Alla priser är exklusive moms och beräknas med din personliga marginal på {marginal || 40}%.</p>
+          {(marginal || 40) === 40 && (
+            <div className="mt-3 p-3 bg-orange-100 border border-orange-300 rounded-lg">
+              <p className="text-orange-800 font-semibold">
+                🎉 Just nu introduktionspris, endast under en kortare period, under fiskesäsong 2025
+              </p>
+            </div>
+          )}
         </div>
         
         {isFormComplete && (
@@ -922,7 +937,14 @@ const OrderPage = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="p-4 bg-white rounded border border-gray-200">
-                <h3 className="font-bold text-lg mb-3">Inköpspris med 35% marginal:</h3>
+                <h3 className="font-bold text-lg mb-3">Inköpspris med {marginal || 40}% marginal:</h3>
+                {(marginal || 40) === 40 && (
+                  <div className="mb-3 p-2 bg-green-100 border border-green-300 rounded text-sm">
+                    <p className="text-green-800">
+                      🎉 Just nu introduktionspris, endast under en kortare period, under fiskesäsong 2025
+                    </p>
+                  </div>
+                )}
                 <p className="mb-2">
                   Försäljningspris per förpackning (exkl. moms): {FORSALJNINGSPRIS.toFixed(2)} kr
                 </p>
