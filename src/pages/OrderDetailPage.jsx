@@ -373,21 +373,40 @@ const OrderDetailPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {getOrderDistribution(order).map((item, index) => (
-                  <tr key={index}>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">B8 Shield</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.color}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.size}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.quantity} st</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
-                      {index === 0 && order.prisInfo?.produktPris ? 
-                        `${order.prisInfo.produktPris.toLocaleString('sv-SE', {
+                {order.items && order.items.length > 0 ? (
+                  // Modern order items (individual line items)
+                  order.items.map((item, index) => (
+                    <tr key={index}>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.name}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.color || '-'}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.size || '-'}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.quantity} st</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
+                        {item.price?.toLocaleString('sv-SE', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2
-                        })} kr` : ''}
-                    </td>
-                  </tr>
-                ))}
+                        })} kr
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  // Legacy order items (fallback for old orders)
+                  getOrderDistribution(order).map((item, index) => (
+                    <tr key={index}>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">B8 Shield</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.color}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.size}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.quantity} st</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
+                        {index === 0 && order.prisInfo?.produktPris ? 
+                          `${order.prisInfo.produktPris.toLocaleString('sv-SE', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                          })} kr` : ''}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
               <tfoot>
                 <tr>
