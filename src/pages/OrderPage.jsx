@@ -778,14 +778,14 @@ const OrderPage = () => {
           
           {/* Order Summary Section - Takes 1 column, sticky */}
           <div className="lg:col-span-1">
-            <div className="lg:sticky lg:top-6">
+            <div className="sticky top-6">
               {isFormComplete ? (
-                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                  <h2 className="text-xl font-semibold mb-4">Orderöversikt</h2>
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <h2 className="text-sm font-semibold mb-3">Orderöversikt</h2>
             
-            <div className="mb-6">
-              <h3 className="font-medium text-lg">Din order:</h3>
-              <ul className="mt-2 space-y-1">
+            <div className="mb-4">
+              <h3 className="font-medium text-sm">Din order:</h3>
+              <ul className="mt-2 space-y-1 text-sm">
                 <li>Färger: {antalFarger} st (
                   {Object.entries(farger)
                     .filter(([key, val]) => val && key !== 'alla')
@@ -810,9 +810,9 @@ const OrderPage = () => {
               </ul>
             </div>
             
-            <div className="mb-6 p-4 bg-white rounded border border-gray-200">
-              <h3 className="font-medium text-lg mb-3">Välj fördelningstyp:</h3>
-              <div className="flex flex-col md:flex-row items-start space-y-4 md:space-y-0 md:space-x-6">
+            <div className="mb-4 p-3 bg-white rounded border border-gray-200">
+              <h3 className="font-medium text-sm mb-2">Välj fördelningstyp:</h3>
+              <div className="flex flex-col space-y-2">
                 <label className="flex items-center space-x-2">
                   <input
                     type="radio"
@@ -820,9 +820,9 @@ const OrderPage = () => {
                     value="jamn"
                     checked={fordelningsTyp === 'jamn'}
                     onChange={(e) => setFordelningsTyp(e.target.value)}
-                    className="h-5 w-5"
+                    className="h-4 w-4"
                   />
-                  <span>Jämn fördelning av alla kombinationer</span>
+                  <span className="text-sm">Jämn fördelning av alla kombinationer</span>
                 </label>
                 
                 <label className="flex items-center space-x-2">
@@ -832,27 +832,27 @@ const OrderPage = () => {
                     value="perFarg"
                     checked={fordelningsTyp === 'perFarg'}
                     onChange={(e) => setFordelningsTyp(e.target.value)}
-                    className="h-5 w-5"
+                    className="h-4 w-4"
                   />
-                  <span>Lika många av varje färg</span>
+                  <span className="text-sm">Lika många av varje färg</span>
                 </label>
               </div>
             </div>
             
-            <div className="mb-6 p-4 bg-white rounded border border-gray-200">
-              <h3 className="font-medium text-lg mb-3">Din förpackningsfördelning:</h3>
+            <div className="mb-4 p-3 bg-white rounded border border-gray-200">
+              <h3 className="font-medium text-sm mb-2">Din förpackningsfördelning:</h3>
               {fordelningsTyp === 'jamn' ? (
                 <div>
-                  <p className="mb-3 text-sm text-gray-600">
+                  <p className="mb-2 text-xs text-gray-600">
                     Fördelningen nedan visar hur många förpackningar du får av varje färg och storlek.
                   </p>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-xs">
                       <thead className="bg-gray-100">
                         <tr>
-                          <th className="p-2 text-left">Färg</th>
-                          <th className="p-2 text-left">Storlek</th>
-                          <th className="p-2 text-right">Antal</th>
+                          <th className="p-1 text-left text-xs">Färg</th>
+                          <th className="p-1 text-left text-xs">Storlek</th>
+                          <th className="p-1 text-right text-xs">Antal</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -887,9 +887,9 @@ const OrderPage = () => {
                                 
                                 return (
                                   <tr key={`${colorKey}-${sizeKey}`} className="border-b">
-                                    <td className="p-2">{colorName}</td>
-                                    <td className="p-2">{sizeName}</td>
-                                    <td className="p-2 text-right">{quantity} st</td>
+                                    <td className="p-1 text-xs">{colorName}</td>
+                                    <td className="p-1 text-xs">{sizeName}</td>
+                                    <td className="p-1 text-right text-xs">{quantity} st</td>
                                   </tr>
                                 );
                               });
@@ -897,8 +897,8 @@ const OrderPage = () => {
                       </tbody>
                       <tfoot className="bg-gray-100">
                         <tr>
-                          <td colSpan={2} className="p-2 font-semibold">Totalt</td>
-                          <td className="p-2 text-right font-semibold">{antalForpackningar} st</td>
+                          <td colSpan={2} className="p-1 font-semibold text-xs">Totalt</td>
+                          <td className="p-1 text-right font-semibold text-xs">{antalForpackningar} st</td>
                         </tr>
                       </tfoot>
                     </table>
@@ -906,16 +906,16 @@ const OrderPage = () => {
                 </div>
               ) : (
                 <div>
-                  <p className="mb-3 text-sm text-gray-600">
+                  <p className="mb-2 text-xs text-gray-600">
                     Fördelningen nedan visar hur många förpackningar du får av varje färg, jämnt fördelat över de valda storlekarna.
                   </p>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-xs">
                       <thead className="bg-gray-100">
                         <tr>
-                          <th className="p-2 text-left">Färg</th>
-                          <th className="p-2 text-right">Antal per färg</th>
-                          <th className="p-2">Storlekar</th>
+                          <th className="p-1 text-left text-xs">Färg</th>
+                          <th className="p-1 text-right text-xs">Antal per färg</th>
+                          <th className="p-1 text-xs">Storlekar</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -956,17 +956,17 @@ const OrderPage = () => {
                             
                             return (
                               <tr key={colorKey} className="border-b">
-                                <td className="p-2">{colorName}</td>
-                                <td className="p-2 text-right">{quantityPerColor} st</td>
-                                <td className="p-2 text-sm">{storleksInfo}</td>
+                                <td className="p-1 text-xs">{colorName}</td>
+                                <td className="p-1 text-right text-xs">{quantityPerColor} st</td>
+                                <td className="p-1 text-xs">{storleksInfo}</td>
                               </tr>
                             );
                           })}
                       </tbody>
                       <tfoot className="bg-gray-100">
                         <tr>
-                          <td colSpan={1} className="p-2 font-semibold">Totalt</td>
-                          <td colSpan={2} className="p-2 text-right font-semibold">{antalForpackningar} st</td>
+                          <td colSpan={1} className="p-1 font-semibold text-xs">Totalt</td>
+                          <td colSpan={2} className="p-1 text-right font-semibold text-xs">{antalForpackningar} st</td>
                         </tr>
                       </tfoot>
                     </table>
@@ -975,42 +975,40 @@ const OrderPage = () => {
               )}
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="p-4 bg-white rounded border border-gray-200">
-                <h3 className="font-bold text-lg mb-3">Inköpspris med {marginal || 40}% marginal:</h3>
-                {(marginal || 40) === 40 && (
-                  <div className="mb-3 p-2 bg-green-100 border border-green-300 rounded text-sm">
-                    <p className="text-green-800">
-                      🎉 Just nu introduktionspris, endast under en kortare period, under fiskesäsong 2025
-                    </p>
-                  </div>
-                )}
-                <p className="mb-2">
-                  Försäljningspris per förpackning (exkl. moms): {FORSALJNINGSPRIS.toFixed(2)} kr
-                </p>
-                <p className="mb-2">
-                  Inköpspris per förpackning (exkl. moms): {inkopspris.toFixed(2)} kr
-                </p>
-                <p className="mb-2 font-semibold">
-                  Totalt inköpspris (exkl. moms): {totalPris.toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr
-                </p>
-              </div>
+            <div className="mb-4 p-3 bg-white rounded border border-gray-200">
+              <h3 className="font-bold text-sm mb-2">Inköpspris med {marginal || 40}% marginal:</h3>
+              {(marginal || 40) === 40 && (
+                <div className="mb-2 p-2 bg-green-100 border border-green-300 rounded text-xs">
+                  <p className="text-green-800">
+                    🎉 Just nu introduktionspris, endast under en kortare period, under fiskesäsong 2025
+                  </p>
+                </div>
+              )}
+              <p className="mb-1 text-sm">
+                Försäljningspris per förpackning (exkl. moms): {FORSALJNINGSPRIS.toFixed(2)} kr
+              </p>
+              <p className="mb-1 text-sm">
+                Inköpspris per förpackning (exkl. moms): {inkopspris.toFixed(2)} kr
+              </p>
+              <p className="mb-2 font-semibold text-sm">
+                Totalt inköpspris (exkl. moms): {totalPris.toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr
+              </p>
             </div>
             
-                <div className="mt-6 text-center">
+                <div className="mt-4 text-center">
                   <button 
                     onClick={handleSubmitOrder}
                     disabled={loading}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full"
                   >
                     {loading ? 'Bearbetar...' : 'Bekräfta beställning'}
                   </button>
                 </div>
                 </div>
               ) : (
-                <div className="bg-gray-100 p-6 rounded-lg border border-gray-200 text-center">
-                  <h3 className="text-lg font-medium text-gray-600 mb-2">Orderöversikt</h3>
-                  <p className="text-gray-500">Välj färger, storlekar och antal för att se din orderöversikt</p>
+                <div className="bg-gray-100 p-4 rounded-lg border border-gray-200 text-center">
+                  <h3 className="text-sm font-medium text-gray-600 mb-2">Orderöversikt</h3>
+                  <p className="text-sm text-gray-500">Välj färger, storlekar och antal för att se din orderöversikt</p>
                 </div>
               )}
             </div>
