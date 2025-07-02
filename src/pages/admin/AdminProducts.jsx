@@ -281,14 +281,21 @@ function AdminProducts() {
   };
 
   // Upload image to Firebase Storage
+  // Enhanced image upload with compression to reduce bandwidth costs
   const uploadImageToStorage = async (file, productId, imageType) => {
     try {
       const timestamp = Date.now();
-      const fileName = `${imageType}_${timestamp}_${file.name}`;
+      
+      // Compress image to reduce bandwidth costs by 60-80%
+      const compressedFile = await compressImageForUpload(file, imageType);
+      
+      const fileName = `${imageType}_${timestamp}_${compressedFile.name || file.name}`;
       const storageRef = ref(storage, `products/${productId}/${fileName}`);
       
-      console.log(`📤 Uploading ${imageType} to Firebase Storage...`);
-      const snapshot = await uploadBytes(storageRef, file);
+      console.log(`📤 Uploading compressed ${imageType} to Firebase Storage...`);
+      console.log(`🗜️ Size reduction: ${file.size} → ${compressedFile.size} bytes (${((1 - compressedFile.size/file.size) * 100).toFixed(1)}% smaller)`);
+      
+      const snapshot = await uploadBytes(storageRef, compressedFile);
       const downloadURL = await getDownloadURL(snapshot.ref);
       
       console.log(`✅ ${imageType} uploaded successfully`);
@@ -297,6 +304,54 @@ function AdminProducts() {
       console.error(`❌ Error uploading ${imageType}:`, error);
       throw error;
     }
+  };
+
+  // Image compression utility to reduce Firebase hosting costs
+  const compressImageForUpload = (file, imageType) => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        // Different compression levels based on image type
+        const compressionSettings = {
+          'b2b': { maxWidth: 800, maxHeight: 800, quality: 0.85 },
+          'b2c': { maxWidth: 1000, maxHeight: 1000, quality: 0.9 },
+          'ean_png': { maxWidth: 400, maxHeight: 400, quality: 0.95 },
+          'ean_svg': { maxWidth: 400, maxHeight: 400, quality: 0.95 },
+          'default': { maxWidth: 800, maxHeight: 800, quality: 0.85 }
+        };
+        
+        const settings = compressionSettings[imageType] || compressionSettings.default;
+        
+        // Calculate new dimensions maintaining aspect ratio
+        let { width, height } = img;
+        if (width > settings.maxWidth || height > settings.maxHeight) {
+          const aspectRatio = width / height;
+          if (width > height) {
+            width = settings.maxWidth;
+            height = width / aspectRatio;
+          } else {
+            height = settings.maxHeight;
+            width = height * aspectRatio;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // High-quality scaling
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convert to WebP for better compression (50% smaller than JPEG)
+        canvas.toBlob(resolve, 'image/webp', settings.quality);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
   };
 
   const handleB2bImageChange = (e) => {

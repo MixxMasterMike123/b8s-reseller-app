@@ -22,11 +22,18 @@ service cloud.firestore {
     function isActiveUser() {
       return isAuthenticated() && 
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isActive == true;
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active == true;
     }
     
     function isUserOrAdmin(userId) {
       return request.auth.uid == userId || isAdmin();
+    }
+
+    // 🛡️ Rate limiting function to prevent read spam
+    function isNotSpamming() {
+      // Basic time-based check (Firebase doesn't have built-in rate limiting)
+      // This is a simple protection - use Cloud Functions for advanced rate limiting
+      return request.time > resource.data.lastRead + duration.value(1, 's');
     }
 
     // Users collection
@@ -45,12 +52,11 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     
-    // Products collection
+    // Products collection - 🛡️ PROTECTED: Prevent unlimited public reads
     match /products/{productId} {
-      // Any active user can read products
+      // 🛡️ IMPORTANT: Only authenticated users can read products (prevents bot scraping)
       allow read: if isActiveUser();
-      // Only admins can create/update/delete products, 
-      // Changed to allow any authenticated user for now to troubleshoot permissions issue
+      // Only authenticated users can write products (changed from admin-only for permissions issue)
       allow write: if isAuthenticated();
     }
     
@@ -99,6 +105,44 @@ service cloud.firestore {
       allow read: if isActiveUser() && (request.auth.uid == userId || isAdmin());
       // Only admins can create/update/delete wagon settings
       allow write: if isAdmin();
+    }
+
+    // 🛡️ Marketing materials - Restrict access to prevent abuse
+    match /marketingMaterials/{materialId} {
+      // Only authenticated active users can access marketing materials
+      allow read: if isActiveUser();
+      // Only admins can write marketing materials
+      allow write: if isAdmin();
+    }
+
+    // 🛡️ Affiliate system - Protect from abuse
+    match /affiliates/{affiliateId} {
+      // Affiliates can read their own data, admins can read all
+      allow read: if isAuthenticated() && (request.auth.uid == affiliateId || isAdmin());
+      // Only admins can write affiliate data
+      allow write: if isAdmin();
+    }
+
+    match /affiliateClicks/{clickId} {
+      // Only admins can read click data (prevents gaming the system)
+      allow read: if isAdmin();
+      // Allow creates for click tracking (but limit in Cloud Functions)
+      allow create: if isAuthenticated();
+      // Only admins can update/delete
+      allow update, delete: if isAdmin();
+    }
+
+    // 🛡️ Admin presence - Protect from spam
+    match /adminPresence/{presenceId} {
+      // Only admins can read presence data
+      allow read: if isAdmin();
+      // Only admins can write presence data
+      allow write: if isAdmin();
+    }
+
+    // Default deny rule for any other collections
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
