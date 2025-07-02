@@ -1511,9 +1511,9 @@ function AdminProducts() {
                         {/* Column 1: Product & Details */}
                         <td className="px-4 md:px-6 py-4">
                           <div className="flex items-start">
-                            {product.imageUrl ? (
+                            {(product.imageUrl || product.b2bImageUrl || product.b2cImageUrl) ? (
                               <img 
-                                src={product.imageUrl} 
+                                src={product.imageUrl || product.b2bImageUrl || product.b2cImageUrl} 
                                 alt={product.name} 
                                 className="w-16 h-16 mr-4 object-cover rounded-md border border-gray-200 flex-shrink-0"
                               />
