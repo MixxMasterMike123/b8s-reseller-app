@@ -248,7 +248,9 @@ function MarketingMaterialsPage() {
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <span className="text-2xl">📊</span>
+                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M3 3v18h18v-2H5V3H3zm4 12h2v4H7v-4zm4-6h2v10h-2V9zm4-2h2v12h-2V7z"/>
+                </svg>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>

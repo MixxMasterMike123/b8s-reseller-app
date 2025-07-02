@@ -344,8 +344,11 @@ const WeatherResults = () => {
                             <span className="font-medium">{data.waterData.ice.trend}</span>
                           </div>
                           {data.waterData.ice.fishingAdvice && (
-                            <div className="text-xs text-blue-700 bg-blue-50 p-2 rounded mt-2">
-                              ❄️ {data.waterData.ice.fishingAdvice}
+                            <div className="text-xs text-blue-700 bg-blue-50 p-2 rounded mt-2 flex items-center space-x-2">
+                              <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2L8.5 8.5L2 12l6.5 3.5L12 22l3.5-6.5L22 12l-6.5-3.5L12 2zm0 3l2.5 4.5L19 12l-4.5 2.5L12 19l-2.5-4.5L5 12l4.5-2.5L12 5z"/>
+                              </svg>
+                              <span>{data.waterData.ice.fishingAdvice}</span>
                             </div>
                           )}
                         </div>
@@ -356,7 +359,10 @@ const WeatherResults = () => {
                     {data.waterData.temperature?.availability?.hasData && (
                       <div className="bg-white rounded-lg p-3 border border-blue-100">
                         <h4 className="font-medium text-gray-900 mb-2 flex items-center space-x-2">
-                          <span>🌡️ Vattentemperatur</span>
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M15 13V5c0-1.66-1.34-3-3-3S9 3.34 9 5v8c-1.21.91-2 2.37-2 4 0 2.76 2.24 5 5 5s5-2.24 5-5c0-1.63-.79-3.09-2-4zm-4-8c0-.55.45-1 1-1s1 .45 1 1h-1v1h1v1h-1v1h1v1h-1v1h1c0 .55-.45 1-1 1s-1-.45-1-1V5z"/>
+                          </svg>
+                          <span>Vattentemperatur</span>
                           {data.waterData.temperature.availability.dataType === 'reference' && (
                             <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
                               Referens
@@ -393,7 +399,12 @@ const WeatherResults = () => {
                   {/* Comprehensive Fishing Insights */}
                   {data.waterData.availability.fishingInsights?.length > 0 && (
                     <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
-                      <h4 className="font-medium text-green-900 mb-2">🎣 Fiskeinsikter baserat på vattendata</h4>
+                      <h4 className="font-medium text-green-900 mb-2 flex items-center space-x-2">
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm0 2C7.582 4 4 7.582 4 12s3.582 8 8 8 8-3.582 8-8-3.582-8-8-8zm3.5 6a1.5 1.5 0 110 3 1.5 1.5 0 010-3z"/>
+                        </svg>
+                        <span>Fiskeinsikter baserat på vattendata</span>
+                      </h4>
                       <div className="space-y-2">
                         {data.waterData.availability.fishingInsights.map((insight, index) => (
                           <div key={index} className="text-sm text-green-800 bg-white p-2 rounded border-l-4 border-green-400">
@@ -409,7 +420,12 @@ const WeatherResults = () => {
               {/* Data Limitations and Suggestions */}
               {data.waterData.availability?.limitations?.length > 0 && (
                 <div className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                  <h4 className="font-medium text-yellow-900 mb-2">⚠️ Begränsad vattendata för denna plats</h4>
+                  <h4 className="font-medium text-yellow-900 mb-2 flex items-center space-x-2">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                    </svg>
+                    <span>Begränsad vattendata för denna plats</span>
+                  </h4>
                   <div className="space-y-2">
                     {data.waterData.availability.limitations.map((limitation, index) => (
                       <div key={index} className="text-sm">
@@ -417,8 +433,11 @@ const WeatherResults = () => {
                           <span className="font-medium">{limitation.parameter}:</span> {limitation.message}
                         </div>
                         {limitation.suggestion && (
-                          <div className="text-yellow-700 text-xs mt-1">
-                            💡 {limitation.suggestion}
+                          <div className="text-yellow-700 text-xs mt-1 flex items-center space-x-1">
+                            <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7z"/>
+                            </svg>
+                            <span>{limitation.suggestion}</span>
                           </div>
                         )}
                       </div>

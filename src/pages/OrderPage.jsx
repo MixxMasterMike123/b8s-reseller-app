@@ -510,7 +510,11 @@ const OrderPage = () => {
                   <p className="text-sm text-gray-500 mb-4">
                     Välj produkter och kvantiteter för att se din orderöversikt
                   </p>
-                  <div className="text-4xl text-gray-300 mb-2">📦</div>
+                  <div className="text-4xl text-gray-300 mb-2">
+                    <svg className="w-16 h-16 mx-auto" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                  </div>
                   <p className="text-xs text-gray-400">
                     Använd knapparna ovan för att välja antal av varje färg och storlek
                   </p>

@@ -84,14 +84,24 @@ const ContactPage = () => {
               </div>
               
               <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-blue-800 mb-2">🔧 Teknisk support</h3>
+                <h3 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/>
+                  </svg>
+                  Teknisk support
+                </h3>
                 <p className="text-blue-700">
                   Behöver ni hjälp med portalen eller har tekniska frågor? Vi hjälper er gärna!
                 </p>
               </div>
               
               <div className="bg-purple-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-purple-800 mb-2">📦 Produktfrågor</h3>
+                <h3 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                  </svg>
+                  Produktfrågor
+                </h3>
                 <p className="text-purple-700">
                   Frågor om B8Shield produkter, priser eller leveranser hanteras via samma e-post.
                 </p>
