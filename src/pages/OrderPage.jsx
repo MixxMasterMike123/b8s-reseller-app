@@ -471,7 +471,7 @@ const OrderPage = () => {
             <div className="p-4 border border-gray-200 rounded">
               <h2 className="text-xl font-semibold mb-2">Välj antal färger:</h2>
               <p className="text-sm text-gray-600 mb-4">
-                Förpackningsbilder visas för Storlek 4 som standardrepresentation. Alla storlekar finns tillgängliga för beställning.
+                B2B förpackningsbilder visas för Storlek 4 som standardrepresentation. Alla storlekar finns tillgängliga för beställning.
               </p>
           
           {/* Display product images for colors */}
@@ -498,13 +498,13 @@ const OrderPage = () => {
               };
               
               // Find SIZE 4 product for each color (standard representation)
-              // Use Firebase Storage images with fallback to base64
-              let size4Products = products.filter(p => (p.imageUrl || p.imageData) && p.size === '4');
+              // Prioritize B2B images from Firebase Storage, with fallback to generic images
+              let size4Products = products.filter(p => (p.b2bImageUrl || p.imageUrl || p.imageData) && p.size === '4');
               
-              // Fallback: if no SIZE 4 products available, use any products with images
+              // Fallback: if no SIZE 4 products available, use any products with B2B images
               if (size4Products.length === 0) {
-                console.log('No SIZE 4 products found, using fallback to any products with images');
-                size4Products = products.filter(p => (p.imageUrl || p.imageData));
+                console.log('No SIZE 4 products found, using fallback to any products with B2B images');
+                size4Products = products.filter(p => (p.b2bImageUrl || p.imageUrl || p.imageData));
               }
               
               size4Products.forEach(product => {
@@ -545,8 +545,8 @@ const OrderPage = () => {
               });
               
               // Check if we have all expected colors and log the collected info
-              console.log("Collected SIZE 4 color products:", Object.entries(colorProducts)
-                .map(([id, p]) => `${id}: ${p ? `${p.name} (Size: ${p.size})` : 'missing'}`));
+              console.log("Collected SIZE 4 B2B color products:", Object.entries(colorProducts)
+                .map(([id, p]) => `${id}: ${p ? `${p.name} (Size: ${p.size}, B2B: ${p.b2bImageUrl ? 'Yes' : 'No'})` : 'missing'}`));
               
               // Render one product per color (only if we have a product for that color)
               return Object.entries(colorProducts)
@@ -555,8 +555,8 @@ const OrderPage = () => {
                   <div key={product.id} className="text-center">
                     <div className="relative">
                       <img 
-                        src={product.imageUrl || product.imageData} 
-                        alt={`${product.name} - Förpackning`} 
+                        src={product.b2bImageUrl || product.imageUrl || product.imageData} 
+                        alt={`${product.name} - B2B Förpackning`} 
                         className={`w-full h-48 object-cover rounded-lg mb-3 border-3 transition-all duration-200 ${farger[colorId] ? 'border-blue-500 shadow-lg' : 'border-gray-200 hover:border-gray-300'}`} 
                       />
                       {/* Package representation badge */}
@@ -565,7 +565,7 @@ const OrderPage = () => {
                       </div>
                       {/* Package representation indicator */}
                       <div className="absolute bottom-2 left-2 bg-black bg-opacity-75 text-white px-2 py-1 text-xs rounded">
-                        Förpackning
+                        B2B Förpackning
                       </div>
                     </div>
                     <p className="text-sm font-semibold text-gray-800">{product.name}</p>
