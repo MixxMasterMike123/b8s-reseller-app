@@ -557,7 +557,7 @@ const OrderPage = () => {
                       <img 
                         src={product.b2bImageUrl || product.imageUrl || product.imageData} 
                         alt={`${product.name} - B2B Förpackning`} 
-                        className={`w-full h-48 object-cover rounded-lg mb-3 border-3 transition-all duration-200 ${farger[colorId] ? 'border-blue-500 shadow-lg' : 'border-gray-200 hover:border-gray-300'}`} 
+                        className={`w-full h-40 object-contain rounded-lg mb-3 border-3 transition-all duration-200 ${farger[colorId] ? 'border-blue-500 shadow-lg' : 'border-gray-200 hover:border-gray-300'}`} 
                       />
                       {/* Package representation badge */}
                       <div className="absolute top-2 right-2 bg-blue-600 text-white px-2 py-1 text-xs font-semibold rounded">
