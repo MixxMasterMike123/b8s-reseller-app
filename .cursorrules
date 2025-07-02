@@ -161,6 +161,16 @@ src/
   active: boolean,
   marginal: number, // Customer margin percentage (default: 40)
   notes: string,
+  
+  // Customer Activation System (Latest)
+  credentialsSent: boolean, // Whether welcome email with credentials has been sent
+  credentialsSentAt: timestamp, // When credentials were sent
+  credentialsSentBy: string, // Admin UID who sent credentials
+  temporaryPassword: string, // Generated temporary password (for admin reference)
+  firebaseAuthUid: string, // Firebase Auth UID after account creation
+  requiresPasswordChange: boolean, // Must change password on first login
+  firstLoginCompleted: boolean, // Whether customer has completed first login
+  
   createdAt: string,
   updatedAt: string
 }

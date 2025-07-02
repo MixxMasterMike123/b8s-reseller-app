@@ -3212,3 +3212,244 @@ exports.getFishTripAIAnalysis = functions
       });
     }
   });
+
+/**
+ * Customer Welcome Email Template
+ */
+const getWelcomeEmailTemplate = (customerData, temporaryPassword) => {
+  const companyName = customerData.companyName;
+  const contactPerson = customerData.contactPerson;
+  const email = customerData.email;
+  
+  return {
+    subject: `Välkommen till B8Shield Återförsäljarportalen - Dina inloggningsuppgifter`,
+    text: `
+      Hej ${contactPerson},
+      
+      Välkommen till B8Shield Återförsäljarportalen!
+      
+      Vi har skapat ett konto för ${companyName} och du kan nu komma åt vår återförsäljarportal.
+      
+      DINA INLOGGNINGSUPPGIFTER:
+      
+      E-post: ${email}
+      Tillfälligt lösenord: ${temporaryPassword}
+      
+      VIKTIG INFORMATION:
+      - Du måste ändra ditt lösenord vid första inloggningen
+      - Portalen finns på: https://b8shield-reseller-app.web.app
+      - Ditt konto har aktiverats och du har nu tillgång till alla återförsäljarfunktioner
+      
+      VAD KAN DU GÖRA I PORTALEN:
+      - Lägga beställningar direkt
+      - Se din orderhistorik
+      - Ladda ner produktkataloger
+      - Komma åt marknadsföringsmaterial
+      
+      Om du har några frågor eller problem med inloggningen, tveka inte att kontakta oss.
+      
+      Vi ser fram emot ett framgångsrikt samarbete!
+      
+      Med vänliga hälsningar,
+      B8Shield Team
+      JPH Innovation AB
+    `,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px;">
+        <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <img src="https://b8shield-reseller-app.web.app/images/B8S_logo.png" alt="B8Shield" style="max-width: 200px; height: auto;">
+          </div>
+          
+          <h2 style="color: #1f2937; margin-bottom: 20px;">Hej ${contactPerson},</h2>
+          
+          <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">
+            Välkommen till B8Shield Återförsäljarportalen!
+          </p>
+          
+          <p style="color: #374151; line-height: 1.6; margin-bottom: 25px;">
+            Vi har skapat ett konto för <strong>${companyName}</strong> och du kan nu komma åt vår återförsäljarportal.
+          </p>
+          
+          <div style="background-color: #f3f4f6; border-radius: 6px; padding: 20px; margin-bottom: 25px;">
+            <h3 style="color: #1f2937; margin-top: 0; margin-bottom: 15px;">🔐 DINA INLOGGNINGSUPPGIFTER:</h3>
+            <p style="margin: 8px 0; color: #374151;"><strong>E-post:</strong> ${email}</p>
+            <p style="margin: 8px 0; color: #374151;"><strong>Tillfälligt lösenord:</strong> <code style="background-color: #e5e7eb; padding: 2px 6px; border-radius: 4px; font-family: monospace;">${temporaryPassword}</code></p>
+          </div>
+          
+          <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 25px;">
+            <h4 style="color: #92400e; margin-top: 0; margin-bottom: 10px;">⚠️ VIKTIG INFORMATION:</h4>
+            <ul style="color: #92400e; margin: 0; padding-left: 20px;">
+              <li>Du måste ändra ditt lösenord vid första inloggningen</li>
+              <li>Portalen finns på: <a href="https://b8shield-reseller-app.web.app" style="color: #2563eb;">https://b8shield-reseller-app.web.app</a></li>
+              <li>Ditt konto har aktiverats och du har nu tillgång till alla återförsäljarfunktioner</li>
+            </ul>
+          </div>
+          
+          <div style="background-color: #ecfdf5; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
+            <h4 style="color: #065f46; margin-top: 0; margin-bottom: 15px;">✅ VAD KAN DU GÖRA I PORTALEN:</h4>
+            <ul style="color: #065f46; margin: 0; padding-left: 20px;">
+              <li>Lägga beställningar direkt</li>
+              <li>Se din orderhistorik</li>
+              <li>Ladda ner produktkataloger</li>
+              <li>Komma åt marknadsföringsmaterial</li>
+            </ul>
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="https://b8shield-reseller-app.web.app" 
+               style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+              Logga in på portalen
+            </a>
+          </div>
+          
+          <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">
+            Om du har några frågor eller problem med inloggningen, tveka inte att kontakta oss.
+          </p>
+          
+          <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">
+            Vi ser fram emot ett framgångsrikt samarbete!
+          </p>
+          
+          <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
+            <p style="color: #6b7280; font-size: 14px; margin: 0;">
+              Med vänliga hälsningar,<br>
+              <strong>B8Shield Team</strong><br>
+              JPH Innovation AB
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  };
+};
+
+/**
+ * Generate a secure temporary password using DinoPass API
+ */
+async function generateTemporaryPassword() {
+  try {
+    // Use DinoPass API for strong password generation
+    const fetch = (await import('node-fetch')).default;
+    const response = await fetch('http://www.dinopass.com/password/strong');
+    
+    if (response.ok) {
+      const password = await response.text();
+      return password.trim();
+    } else {
+      throw new Error('DinoPass API request failed');
+    }
+  } catch (error) {
+    console.error('DinoPass API failed, falling back to local generation:', error);
+    
+    // Fallback to local generation if DinoPass API fails
+    const adjectives = ['Blå', 'Grön', 'Röd', 'Gul', 'Stark', 'Snabb', 'Smart', 'Stor'];
+    const nouns = ['Fisk', 'Bete', 'Vatten', 'Sjö', 'Hav', 'Spö', 'Rulle', 'Krok'];
+    const numbers = Math.floor(Math.random() * 9000) + 1000; // 4-digit number
+    
+    const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const noun = nouns[Math.floor(Math.random() * nouns.length)];
+    
+    return `${adjective}${noun}${numbers}`;
+  }
+}
+
+/**
+ * Send Customer Welcome Email and Create Firebase Auth Account
+ * This function is called by admin to activate a customer account
+ */
+exports.sendCustomerWelcomeEmail = functions.https.onCall(async (data, context) => {
+  // Verify admin authentication
+  if (!context.auth || !context.auth.uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+  }
+
+  try {
+    // Get admin user data to verify permissions
+    const adminDoc = await db.collection('users').doc(context.auth.uid).get();
+    if (!adminDoc.exists || adminDoc.data().role !== 'admin') {
+      throw new functions.https.HttpsError('permission-denied', 'User must be admin');
+    }
+
+    const { customerId } = data;
+    if (!customerId) {
+      throw new functions.https.HttpsError('invalid-argument', 'Customer ID is required');
+    }
+
+    // Get customer data
+    const customerDoc = await db.collection('users').doc(customerId).get();
+    if (!customerDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Customer not found');
+    }
+
+    const customerData = customerDoc.data();
+    
+    // Check if credentials already sent
+    if (customerData.credentialsSent) {
+      throw new functions.https.HttpsError('already-exists', 'Credentials have already been sent to this customer');
+    }
+
+    // Generate temporary password
+    const temporaryPassword = await generateTemporaryPassword();
+
+    // Create Firebase Auth account for the customer
+    let authUser;
+    try {
+      authUser = await admin.auth().createUser({
+        email: customerData.email,
+        password: temporaryPassword,
+        displayName: customerData.contactPerson,
+        emailVerified: true, // Pre-verify since we're creating it
+      });
+    } catch (authError) {
+      if (authError.code === 'auth/email-already-exists') {
+        throw new functions.https.HttpsError('already-exists', 'An account with this email already exists');
+      }
+      throw new functions.https.HttpsError('internal', `Failed to create auth account: ${authError.message}`);
+    }
+
+    // Update customer document with activation info
+    await db.collection('users').doc(customerId).update({
+      credentialsSent: true,
+      credentialsSentAt: Timestamp.now(),
+      credentialsSentBy: context.auth.uid,
+      temporaryPassword: temporaryPassword, // Store for admin reference (consider encryption in production)
+      firebaseAuthUid: authUser.uid,
+      requiresPasswordChange: true,
+      active: true, // Activate the account
+      updatedAt: Timestamp.now()
+    });
+
+    // Prepare and send welcome email
+    const emailTemplate = getWelcomeEmailTemplate(customerData, temporaryPassword);
+    
+    const mailOptions = {
+      from: "B8Shield Team <b8shield.reseller@gmail.com>",
+      to: customerData.email,
+      subject: emailTemplate.subject,
+      text: emailTemplate.text,
+      html: emailTemplate.html,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    console.log(`Welcome email sent successfully to ${customerData.email} for customer ${customerId}`);
+
+    return {
+      success: true,
+      message: 'Welcome email sent and customer account activated successfully',
+      customerId: customerId,
+      email: customerData.email,
+      temporaryPassword: temporaryPassword // Return for admin reference
+    };
+
+  } catch (error) {
+    console.error('Error in sendCustomerWelcomeEmail:', error);
+    
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    
+    throw new functions.https.HttpsError('internal', `Failed to send welcome email: ${error.message}`);
+  }
+});

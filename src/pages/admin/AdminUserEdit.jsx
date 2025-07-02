@@ -17,15 +17,25 @@ import {
   downloadFile as downloadAdminFile,
   formatFileSize as formatAdminFileSize
 } from '../../utils/adminDocuments';
+import {
+  PaperAirplaneIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  KeyIcon
+} from '@heroicons/react/24/outline';
 
 const AdminUserEdit = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
-  const { getAllUsers, updateAnyUserProfile, updateUserMarginal, updateUserRole, toggleUserActive, isAdmin, currentUser } = useAuth();
+  const { getAllUsers, updateAnyUserProfile, updateUserMarginal, updateUserRole, toggleUserActive, isAdmin, currentUser, sendCustomerWelcomeEmail } = useAuth();
   
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  
+  // Customer activation state
+  const [sendingActivation, setSendingActivation] = useState(false);
+  const [activationResult, setActivationResult] = useState(null);
   
   // Marketing materials state
   const [customerMaterials, setCustomerMaterials] = useState([]);
@@ -354,6 +364,30 @@ const AdminUserEdit = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Handle customer activation
+  const handleSendActivation = async () => {
+    if (!userId || !user) return;
+    
+    try {
+      setSendingActivation(true);
+      const result = await sendCustomerWelcomeEmail(userId);
+      
+      setActivationResult(result);
+      
+      // Refresh user data to show updated activation status
+      const users = await getAllUsers();
+      const updatedUser = users.find(u => u.id === userId);
+      if (updatedUser) {
+        setUser(updatedUser);
+      }
+      
+    } catch (error) {
+      console.error('Error sending activation:', error);
+    } finally {
+      setSendingActivation(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -444,21 +478,79 @@ const AdminUserEdit = () => {
     <AppLayout>
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">
-              Redigera Kund
-            </h1>
-            <p className="text-sm text-gray-600 mt-1">
-              {user.companyName || user.email}
-            </p>
+        <div className="px-6 py-4 border-b border-gray-200">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900">
+                Redigera Kund
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">
+                {user.companyName || user.email}
+              </p>
+            </div>
+            <div className="flex items-center space-x-3">
+              {/* Customer Activation Button/Status */}
+              {user.credentialsSent ? (
+                <div className="flex items-center px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
+                  <CheckCircleIcon className="h-5 w-5 text-green-600 mr-2" />
+                  <div>
+                    <div className="text-sm font-medium text-green-800">
+                      Inloggningsuppgifter skickade
+                    </div>
+                    <div className="text-xs text-green-600">
+                      {user.credentialsSentAt && new Date(user.credentialsSentAt.seconds * 1000).toLocaleDateString('sv-SE')}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={handleSendActivation}
+                  disabled={sendingActivation}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {sendingActivation ? (
+                    <>
+                      <ClockIcon className="h-4 w-4 mr-2 animate-spin" />
+                      Skickar...
+                    </>
+                  ) : (
+                    <>
+                      <PaperAirplaneIcon className="h-4 w-4 mr-2" />
+                      Skicka inloggningsuppgifter
+                    </>
+                  )}
+                </button>
+              )}
+              
+              <Link
+                to="/admin/users"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Tillbaka till Kundlista
+              </Link>
+            </div>
           </div>
-          <Link
-            to="/admin/users"
-            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-          >
-            Tillbaka till Kundlista
-          </Link>
+          
+          {/* Activation Result Display */}
+          {activationResult && (
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start">
+                <KeyIcon className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
+                <div>
+                  <h4 className="text-sm font-medium text-blue-800 mb-2">
+                    Inloggningsuppgifter skickade framgångsrikt!
+                  </h4>
+                  <div className="text-sm text-blue-700">
+                    <p><strong>E-post:</strong> {user.email}</p>
+                    <p><strong>Tillfälligt lösenord:</strong> <code className="bg-blue-100 px-2 py-1 rounded font-mono">{activationResult.temporaryPassword}</code></p>
+                    <p className="text-xs mt-2 text-blue-600">
+                      Kunden kommer att få instruktioner om att ändra lösenordet vid första inloggningen.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Form */}

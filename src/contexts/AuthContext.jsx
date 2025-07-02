@@ -18,7 +18,8 @@ import {
   where, 
   getDocs 
 } from 'firebase/firestore';
-import { auth, db, isDemoMode } from '../firebase/config';
+import { httpsCallable } from 'firebase/functions';
+import { auth, db, isDemoMode, functions } from '../firebase/config';
 import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
@@ -620,6 +621,62 @@ export function AuthProvider({ children }) {
     }
   }
 
+  // Send Customer Welcome Email with Credentials - Admin only
+  async function sendCustomerWelcomeEmail(customerId) {
+    try {
+      if (isDemoMode) {
+        // Demo mode: mock activation
+        setDemoUsers(users => 
+          users.map(user => 
+            user.id === customerId 
+              ? { 
+                  ...user, 
+                  credentialsSent: true,
+                  credentialsSentAt: new Date().toISOString(),
+                  credentialsSentBy: currentUser.uid,
+                  temporaryPassword: 'SnabbFisk2024',
+                  firebaseAuthUid: `auth-${customerId}`,
+                  requiresPasswordChange: true,
+                  active: true,
+                  updatedAt: new Date().toISOString()
+                } 
+              : user
+          )
+        );
+        
+        toast.success('Welcome email sent successfully (Demo Mode)');
+        return {
+          success: true,
+          message: 'Welcome email sent and customer account activated successfully (Demo Mode)',
+          temporaryPassword: 'SnabbFisk2024'
+        };
+      } else {
+        // Real Firebase: Call the cloud function
+        if (!isAdmin) throw new Error('Unauthorized - Admin access required');
+        
+        const sendWelcomeEmail = httpsCallable(functions, 'sendCustomerWelcomeEmail');
+        const result = await sendWelcomeEmail({ customerId });
+        
+        toast.success('Welcome email sent and customer account activated successfully');
+        return result.data;
+      }
+    } catch (error) {
+      console.error('Error sending welcome email:', error);
+      
+      if (error.code === 'functions/already-exists') {
+        toast.error('Credentials have already been sent to this customer');
+      } else if (error.code === 'functions/not-found') {
+        toast.error('Customer not found');
+      } else if (error.code === 'functions/permission-denied') {
+        toast.error('Unauthorized - Admin access required');
+      } else {
+        toast.error(`Failed to send welcome email: ${error.message}`);
+      }
+      
+      throw error;
+    }
+  }
+
   // Context value
   const value = {
     currentUser,
@@ -641,7 +698,8 @@ export function AuthProvider({ children }) {
     toggleUserActive,
     updateUserRole,
     updateUserMarginal,
-    createUserProfile
+    createUserProfile,
+    sendCustomerWelcomeEmail
   };
 
   return (
