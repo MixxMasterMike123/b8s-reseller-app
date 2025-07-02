@@ -216,7 +216,7 @@ const OrderPage = () => {
   const handleSubmitOrder = async () => {
     if (totalPackages < MINIMUM_ORDER_QUANTITY) {
       toast.error(
-        `Du har beställt för få produkter (${totalPackages}), beställ minst ${remainingQuantity} st till för att nå minst ${MINIMUM_ORDER_QUANTITY} produkter`
+        `Du har beställt för få förpackningar (${totalPackages}), beställ minst ${remainingQuantity} st till för att nå minst ${MINIMUM_ORDER_QUANTITY} förpackningar`
       );
       return;
     }
@@ -317,6 +317,25 @@ const OrderPage = () => {
               <p className="text-sm text-gray-600 mb-4">
                 Välj exakt hur många förpackningar du vill ha av varje färg och storlek. Bilder visar Storlek 4 som standardrepresentation.
               </p>
+              
+              {/* Friendly information box */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-medium text-blue-900 mb-1">Så här fungerar beställningen</h3>
+                    <ul className="text-sm text-blue-800 space-y-1">
+                      <li>• <strong>Minsta beställning:</strong> 10 förpackningar totalt</li>
+                      <li>• <strong>Mix & match:</strong> Kombinera färger och storlekar precis som du vill</li>
+                      <li>• <strong>Exempel:</strong> 5 st Röd Storlek 4 + 3 st Transparent Storlek 2 + 2 st Glitter Storlek 6 = 10 förpackningar ✓</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Individual Color Cards */}
@@ -503,10 +522,10 @@ const OrderPage = () => {
                     {totalPackages > 0 && totalPackages < MINIMUM_ORDER_QUANTITY && (
                       <div className="mb-3 p-3 bg-orange-100 border border-orange-300 rounded-lg">
                         <p className="text-orange-800 text-sm font-medium">
-                          ⚠️ Minsta beställning: {MINIMUM_ORDER_QUANTITY} produkter
+                          ⚠️ Minsta beställning: {MINIMUM_ORDER_QUANTITY} förpackningar
                         </p>
                         <p className="text-orange-700 text-xs mt-1">
-                          Du behöver beställa {remainingQuantity} produkter till
+                          Du behöver beställa {remainingQuantity} förpackningar till
                         </p>
                       </div>
                     )}
@@ -520,9 +539,9 @@ const OrderPage = () => {
                           : 'bg-gray-400 text-gray-200 cursor-not-allowed'
                       } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                      {loading ? 'Bearbetar...' : 
-                       !isFormComplete ? `Minst ${MINIMUM_ORDER_QUANTITY} produkter krävs` :
-                       'Bekräfta beställning'}
+                                             {loading ? 'Bearbetar...' : 
+                        !isFormComplete ? `Minst ${MINIMUM_ORDER_QUANTITY} förpackningar krävs` :
+                        'Bekräfta beställning'}
                     </button>
                   </div>
                 </div>
@@ -533,7 +552,7 @@ const OrderPage = () => {
                     Välj produkter och kvantiteter för att se din orderöversikt
                   </p>
                   <p className="text-sm font-medium text-orange-600 mb-4">
-                    Minsta beställning: {MINIMUM_ORDER_QUANTITY} produkter
+                    Minsta beställning: {MINIMUM_ORDER_QUANTITY} förpackningar
                   </p>
                   <div className="text-4xl text-gray-300 mb-2">
                     <svg className="w-16 h-16 mx-auto" fill="currentColor" viewBox="0 0 24 24">
