@@ -537,16 +537,24 @@ const AdminUserEdit = () => {
               <div className="flex items-start">
                 <KeyIcon className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
                 <div>
-                  <h4 className="text-sm font-medium text-blue-800 mb-2">
-                    Inloggningsuppgifter skickade framgångsrikt!
-                  </h4>
-                  <div className="text-sm text-blue-700">
-                    <p><strong>E-post:</strong> {user.email}</p>
-                    <p><strong>Tillfälligt lösenord:</strong> <code className="bg-blue-100 px-2 py-1 rounded font-mono">{activationResult.temporaryPassword}</code></p>
-                    <p className="text-xs mt-2 text-blue-600">
-                      Kunden kommer att få instruktioner om att ändra lösenordet vid första inloggningen.
-                    </p>
-                  </div>
+                                     <h4 className="text-sm font-medium text-blue-800 mb-2">
+                     {activationResult.isExistingUser ? 
+                       'Befintligt konto uppdaterat och inloggningsuppgifter skickade!' :
+                       'Nytt konto skapat och inloggningsuppgifter skickade!'
+                     }
+                   </h4>
+                   <div className="text-sm text-blue-700">
+                     <p><strong>E-post:</strong> {user.email}</p>
+                     <p><strong>Tillfälligt lösenord:</strong> <code className="bg-blue-100 px-2 py-1 rounded font-mono">{activationResult.temporaryPassword}</code></p>
+                     {activationResult.isExistingUser && (
+                       <p className="text-xs mt-1 text-blue-600">
+                         <strong>Obs:</strong> Ett befintligt Firebase Auth-konto uppdaterades med nytt lösenord.
+                       </p>
+                     )}
+                     <p className="text-xs mt-2 text-blue-600">
+                       Kunden kommer att få instruktioner om att ändra lösenordet vid första inloggningen.
+                     </p>
+                   </div>
                 </div>
               </div>
             </div>

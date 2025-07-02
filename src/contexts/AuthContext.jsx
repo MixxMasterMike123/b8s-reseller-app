@@ -657,8 +657,12 @@ export function AuthProvider({ children }) {
         const sendWelcomeEmail = httpsCallable(functions, 'sendCustomerWelcomeEmail');
         const result = await sendWelcomeEmail({ customerId });
         
-        toast.success('Welcome email sent and customer account activated successfully');
-        return result.data;
+        const data = result.data;
+        const message = data.isExistingUser 
+          ? 'Welcome email sent and existing customer account updated successfully'
+          : 'Welcome email sent and new customer account created successfully';
+        toast.success(message);
+        return data;
       }
     } catch (error) {
       console.error('Error sending welcome email:', error);

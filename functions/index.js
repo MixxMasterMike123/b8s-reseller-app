@@ -3272,13 +3272,13 @@ const getWelcomeEmailTemplate = (customerData, temporaryPassword) => {
           </p>
           
           <div style="background-color: #f3f4f6; border-radius: 6px; padding: 20px; margin-bottom: 25px;">
-            <h3 style="color: #1f2937; margin-top: 0; margin-bottom: 15px;">🔐 DINA INLOGGNINGSUPPGIFTER:</h3>
+            <h3 style="color: #1f2937; margin-top: 0; margin-bottom: 15px;">[INLOGGNING] DINA INLOGGNINGSUPPGIFTER:</h3>
             <p style="margin: 8px 0; color: #374151;"><strong>E-post:</strong> ${email}</p>
             <p style="margin: 8px 0; color: #374151;"><strong>Tillfälligt lösenord:</strong> <code style="background-color: #e5e7eb; padding: 2px 6px; border-radius: 4px; font-family: monospace;">${temporaryPassword}</code></p>
           </div>
           
           <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 25px;">
-            <h4 style="color: #92400e; margin-top: 0; margin-bottom: 10px;">⚠️ VIKTIG INFORMATION:</h4>
+            <h4 style="color: #92400e; margin-top: 0; margin-bottom: 10px;">[VIKTIGT] VIKTIG INFORMATION:</h4>
             <ul style="color: #92400e; margin: 0; padding-left: 20px;">
               <li>Du måste ändra ditt lösenord vid första inloggningen</li>
               <li>Portalen finns på: <a href="https://b8shield-reseller-app.web.app" style="color: #2563eb;">https://b8shield-reseller-app.web.app</a></li>
@@ -3287,7 +3287,7 @@ const getWelcomeEmailTemplate = (customerData, temporaryPassword) => {
           </div>
           
           <div style="background-color: #ecfdf5; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
-            <h4 style="color: #065f46; margin-top: 0; margin-bottom: 15px;">✅ VAD KAN DU GÖRA I PORTALEN:</h4>
+            <h4 style="color: #065f46; margin-top: 0; margin-bottom: 15px;">[FUNKTIONER] VAD KAN DU GÖRA I PORTALEN:</h4>
             <ul style="color: #065f46; margin: 0; padding-left: 20px;">
               <li>Lägga beställningar direkt</li>
               <li>Se din orderhistorik</li>
@@ -3392,20 +3392,42 @@ exports.sendCustomerWelcomeEmail = functions.https.onCall(async (data, context) 
     // Generate temporary password
     const temporaryPassword = await generateTemporaryPassword();
 
-    // Create Firebase Auth account for the customer
+    // Create or update Firebase Auth account for the customer
     let authUser;
+    let isExistingUser = false;
+    
     try {
-      authUser = await admin.auth().createUser({
-        email: customerData.email,
-        password: temporaryPassword,
-        displayName: customerData.contactPerson,
-        emailVerified: true, // Pre-verify since we're creating it
-      });
-    } catch (authError) {
-      if (authError.code === 'auth/email-already-exists') {
-        throw new functions.https.HttpsError('already-exists', 'An account with this email already exists');
+      // First, try to get existing user
+      try {
+        authUser = await admin.auth().getUserByEmail(customerData.email);
+        isExistingUser = true;
+        console.log(`Found existing Firebase Auth user for ${customerData.email}`);
+        
+        // Update existing user's password and display name
+        await admin.auth().updateUser(authUser.uid, {
+          password: temporaryPassword,
+          displayName: customerData.contactPerson,
+          emailVerified: true
+        });
+        console.log(`Updated existing user password for ${customerData.email}`);
+        
+      } catch (getUserError) {
+        if (getUserError.code === 'auth/user-not-found') {
+          // User doesn't exist, create new
+          authUser = await admin.auth().createUser({
+            email: customerData.email,
+            password: temporaryPassword,
+            displayName: customerData.contactPerson,
+            emailVerified: true,
+          });
+          console.log(`Created new Firebase Auth user for ${customerData.email}`);
+        } else {
+          throw getUserError;
+        }
       }
-      throw new functions.https.HttpsError('internal', `Failed to create auth account: ${authError.message}`);
+    } catch (authError) {
+      console.error(`Firebase Auth error for ${customerData.email}:`, authError);
+      throw new functions.https.HttpsError('internal', `Failed to setup auth account: ${authError.message}`);
     }
 
     // Update customer document with activation info
@@ -3433,14 +3455,18 @@ exports.sendCustomerWelcomeEmail = functions.https.onCall(async (data, context) 
 
     await transporter.sendMail(mailOptions);
 
-    console.log(`Welcome email sent successfully to ${customerData.email} for customer ${customerId}`);
+    console.log(`Welcome email sent successfully to ${customerData.email} for customer ${customerId} (${isExistingUser ? 'existing' : 'new'} user)`);
 
     return {
       success: true,
-      message: 'Welcome email sent and customer account activated successfully',
+      message: isExistingUser 
+        ? 'Welcome email sent and existing customer account updated successfully' 
+        : 'Welcome email sent and new customer account created successfully',
       customerId: customerId,
       email: customerData.email,
-      temporaryPassword: temporaryPassword // Return for admin reference
+      temporaryPassword: temporaryPassword, // Return for admin reference
+      isExistingUser: isExistingUser,
+      authAction: isExistingUser ? 'updated' : 'created'
     };
 
   } catch (error) {
