@@ -39,6 +39,16 @@
         { "fieldPath": "scheduledDateTime", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "adminCustomerDocuments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "customerId", "order": "ASCENDING" },
+        { "fieldPath": "isActive", "order": "ASCENDING" },
+        { "fieldPath": "uploadedAt", "order": "DESCENDING" },
+        { "fieldPath": "__name__", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
