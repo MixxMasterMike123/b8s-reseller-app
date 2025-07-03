@@ -17,11 +17,11 @@ const AdminPresenceIndicator = () => {
   const otherAdmins = adminPresence.filter(admin => admin.isOnline || admin.isAway);
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       {/* Indicator Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+        className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors w-full"
       >
         <div className="relative">
           <UserGroupIcon className="h-5 w-5" />
@@ -31,7 +31,7 @@ const AdminPresenceIndicator = () => {
             </div>
           )}
         </div>
-        <span className="hidden md:inline">
+        <span className="flex-1 text-left">
           {onlineCount} admin{onlineCount !== 1 ? 's' : ''} online
         </span>
         {isOpen ? (
@@ -51,7 +51,7 @@ const AdminPresenceIndicator = () => {
           />
           
           {/* Dropdown Menu */}
-          <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+          <div className="absolute left-0 right-0 mt-1 mx-2 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
             <div className="p-3">
               <div className="text-sm font-medium text-gray-900 mb-3">
                 Aktiva Admins ({onlineCount}/{totalAdmins})
@@ -76,7 +76,7 @@ const AdminPresenceIndicator = () => {
                           {admin.lastSeenFormatted}
                         </div>
                       </div>
-                      <div className={`text-xs px-2 py-1 rounded ${
+                      <div className={`text-xs px-2 py-1 rounded whitespace-nowrap ${
                         admin.isOnline ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
                       }`}>
                         {admin.isOnline ? 'Online' : 'Frånvarande'}
