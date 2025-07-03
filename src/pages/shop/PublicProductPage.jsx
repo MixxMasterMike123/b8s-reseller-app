@@ -208,23 +208,14 @@ const PublicProductPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
             {/* Product Images */}
-            <div className="space-y-4">
-              {/* Main Image */}
-              <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden">
-                <img
-                  src={productImages[activeImageIndex]}
-                  alt={currentProduct.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              
-              {/* Thumbnail Images */}
+            <div className="flex gap-4 sticky top-8">
+              {/* Thumbnail Images - Left Side */}
               {productImages.length > 1 && (
-                <div className="grid grid-cols-6 gap-2">
+                <div className="flex flex-col gap-2 w-20">
                   {productImages.map((image, index) => (
                     <button
                       key={index}
-                      onClick={() => setActiveImageIndex(index)}
+                      onMouseEnter={() => setActiveImageIndex(index)}
                       className={`aspect-square bg-gray-50 rounded-md overflow-hidden border-2 transition-all ${
                         activeImageIndex === index 
                           ? 'border-black' 
@@ -240,6 +231,17 @@ const PublicProductPage = () => {
                   ))}
                 </div>
               )}
+              
+              {/* Main Image */}
+              <div className="flex-1">
+                <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden">
+                  <img
+                    src={productImages[activeImageIndex]}
+                    alt={currentProduct.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Product Details */}
