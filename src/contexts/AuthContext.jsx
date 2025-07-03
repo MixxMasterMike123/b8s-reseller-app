@@ -402,53 +402,7 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // Toggle user active status - Admin only
-  async function toggleUserActive(userId, activeStatus) {
-    try {
-      if (isDemoMode) {
-        // Demo mode: mock user status update
-        setDemoUsers(users => 
-          users.map(user => 
-            user.id === userId 
-              ? { 
-                  ...user, 
-                  active: activeStatus, 
-                  isActive: activeStatus, // Update both properties
-                  updatedAt: new Date().toISOString() 
-                } 
-              : user
-          )
-        );
-        
-        toast.success(`User ${activeStatus ? 'activated' : 'deactivated'} successfully (Demo Mode)`);
-        return true;
-      } else {
-        // Real Firebase user status update
-        if (!isAdmin) throw new Error('Unauthorized');
-        
-        const userRef = doc(db, 'users', userId);
-        await updateDoc(userRef, {
-          active: activeStatus,
-          isActive: activeStatus, // Update both properties
-          updatedAt: new Date().toISOString()
-        });
-        
-        // 🚂🍽️ Sync status to The Dining Wagon™ CRM
-        try {
-          const { syncB2BStatusToCRM } = await import('../wagons/dining-wagon/utils/b2bIntegration');
-          await syncB2BStatusToCRM(userId, { active: activeStatus });
-        } catch (error) {
-          console.error('CRM sync failed (user status update successful):', error);
-        }
-        
-        toast.success(`User ${activeStatus ? 'activated' : 'deactivated'} successfully`);
-        return true;
-      }
-    } catch (error) {
-      toast.error('Failed to update user status');
-      throw error;
-    }
-  }
+
 
   // Update user role - Admin only
   async function updateUserRole(userId, newRole) {
@@ -681,6 +635,107 @@ export function AuthProvider({ children }) {
     }
   }
 
+  // Delete Customer Account - Admin only
+  async function deleteCustomerAccount(customerId) {
+    try {
+      if (isDemoMode) {
+        // Demo mode: mock deletion
+        const userToDelete = demoUsers.find(user => user.id === customerId);
+        if (!userToDelete) {
+          throw new Error('Customer not found');
+        }
+        
+        setDemoUsers(users => users.filter(user => user.id !== customerId));
+        
+        toast.success('Customer account deleted successfully (Demo Mode)');
+        return {
+          success: true,
+          message: 'Customer and all related data deleted successfully (Demo Mode)',
+          customerId: customerId,
+          email: userToDelete.email,
+          companyName: userToDelete.companyName
+        };
+      } else {
+        // Real Firebase: Call the cloud function
+        if (!isAdmin) throw new Error('Unauthorized - Admin access required');
+        
+        const deleteCustomer = httpsCallable(functions, 'deleteCustomerAccount');
+        const result = await deleteCustomer({ customerId });
+        
+        const data = result.data;
+        toast.success(data.message);
+        return data;
+      }
+    } catch (error) {
+      console.error('Error deleting customer account:', error);
+      
+      if (error.code === 'functions/not-found') {
+        toast.error('Customer not found');
+      } else if (error.code === 'functions/permission-denied') {
+        toast.error('Unauthorized - Admin access required');
+      } else {
+        toast.error(`Failed to delete customer account: ${error.message}`);
+      }
+      
+      throw error;
+    }
+  }
+
+  // Enhanced Toggle User Active Status with Firebase Auth sync
+  async function toggleUserActive(userId, activeStatus) {
+    try {
+      if (isDemoMode) {
+        // Demo mode: mock user status update
+        setDemoUsers(users => 
+          users.map(user => 
+            user.id === userId 
+              ? { 
+                  ...user, 
+                  active: activeStatus, 
+                  isActive: activeStatus, // Update both properties
+                  updatedAt: new Date().toISOString() 
+                } 
+              : user
+          )
+        );
+        
+        toast.success(`User ${activeStatus ? 'activated' : 'deactivated'} successfully (Demo Mode)`);
+        return true;
+      } else {
+        // Real Firebase: Use the enhanced cloud function that handles both Firestore and Auth
+        if (!isAdmin) throw new Error('Unauthorized');
+        
+        const toggleStatus = httpsCallable(functions, 'toggleCustomerActiveStatus');
+        const result = await toggleStatus({ customerId: userId, activeStatus });
+        
+        const data = result.data;
+        toast.success(data.message);
+        
+        // 🚂🍽️ Sync status to The Dining Wagon™ CRM
+        try {
+          const { syncB2BStatusToCRM } = await import('../wagons/dining-wagon/utils/b2bIntegration');
+          await syncB2BStatusToCRM(userId, { active: activeStatus });
+        } catch (error) {
+          console.error('CRM sync failed (user status update successful):', error);
+        }
+        
+        return true;
+      }
+    } catch (error) {
+      console.error('Error toggling user active status:', error);
+      
+      if (error.code === 'functions/not-found') {
+        toast.error('Customer not found');
+      } else if (error.code === 'functions/permission-denied') {
+        toast.error('Unauthorized - Admin access required');
+      } else {
+        toast.error(`Failed to update user status: ${error.message}`);
+      }
+      
+      throw error;
+    }
+  }
+
   // Context value
   const value = {
     currentUser,
@@ -703,7 +758,8 @@ export function AuthProvider({ children }) {
     updateUserRole,
     updateUserMarginal,
     createUserProfile,
-    sendCustomerWelcomeEmail
+    sendCustomerWelcomeEmail,
+    deleteCustomerAccount
   };
 
   return (

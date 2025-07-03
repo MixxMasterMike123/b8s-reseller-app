@@ -13,7 +13,9 @@ import {
   DevicePhoneMobileIcon,
   CalendarDaysIcon,
   DocumentTextIcon,
-  ClockIcon
+  ClockIcon,
+  ExclamationTriangleIcon,
+  CheckIcon
 } from '@heroicons/react/24/outline';
 import {
   PhoneIcon as PhoneSolid,
@@ -21,7 +23,8 @@ import {
   EnvelopeIcon as EnvelopeSolid,
   DevicePhoneMobileIcon as DevicePhoneMobileSolid,
   CalendarDaysIcon as CalendarDaysSolid,
-  DocumentTextIcon as DocumentTextSolid
+  DocumentTextIcon as DocumentTextSolid,
+  ExclamationTriangleIcon as ExclamationSolid
 } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
 import { doc, updateDoc, Timestamp, collection, addDoc, orderBy, query, onSnapshot } from 'firebase/firestore';
@@ -31,6 +34,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 const ContactDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user, userData, isAdmin } = useAuth();
   const { contacts, getContact, hasInitialized } = useDiningContacts();
   const { getActivitiesByContact, addActivity } = useDiningActivities();
   
@@ -49,6 +53,56 @@ const ContactDetail = () => {
   const [manualTagInput, setManualTagInput] = useState('');
   const [autocompleteOptions, setAutocompleteOptions] = useState([]);
   const [showAutocomplete, setShowAutocomplete] = useState(false);
+  
+  // Dismissed activities state for trigger management
+  const [dismissedActivities, setDismissedActivities] = useState(new Set());
+
+  // User helper functions
+  const getInitials = (name) => {
+    if (!name) return '??';
+    return name.split(' ')
+      .map(word => word.charAt(0).toUpperCase())
+      .slice(0, 2)
+      .join('');
+  };
+
+  const getUserDisplayName = (activity) => {
+    return activity.createdByName || activity.createdBy || 'Okänd';
+  };
+
+  // Debug user data - remove this after fixing
+  useEffect(() => {
+    if (user) {
+      console.log('🔍 Current user object:', {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        userData: userData,
+        isAdmin: isAdmin
+      });
+    }
+  }, [user, userData, isAdmin]);
+
+  // User Attribution Component - very small text under tags
+  const UserAttribution = ({ activity, isDismissed = false }) => {
+    const creatorName = getUserDisplayName(activity);
+    const resolverName = isDismissed && activity.dismissedByName ? activity.dismissedByName : null;
+    
+    const creatorTimestamp = activity.createdAt?.toDate?.()?.toLocaleString('sv-SE') || activity.date || 'Okänt datum';
+    const resolverTimestamp = activity.dismissedAt?.toDate?.()?.toLocaleString('sv-SE') || null;
+    
+    return (
+      <div className="text-xs text-gray-400 mt-1" style={{ fontSize: '10px' }}>
+        <span title={`Skapad: ${creatorTimestamp}`}>{creatorName}</span>
+        {resolverName && (
+          <>
+            <span className="mx-1">→</span>
+            <span title={`Löst: ${resolverTimestamp}`}>{resolverName}</span>
+          </>
+        )}
+      </div>
+    );
+  };
 
   // Activity type options with Swedish labels and icons
   const activityTypes = [
@@ -199,6 +253,43 @@ const ContactDetail = () => {
     setSuggestedTags(suggestedTags.filter(t => t !== tag));
   };
 
+  // Urgency detection and management
+  const isUrgentActivity = (activity) => {
+    const tags = activity.tags || [];
+    return tags.includes('akut') || tags.includes('problem');
+  };
+
+  const getUrgencyLevel = (activity) => {
+    const tags = activity.tags || [];
+    if (tags.includes('akut')) return 'critical';
+    if (tags.includes('problem')) return 'high';
+    return 'normal';
+  };
+
+  const handleDismissActivity = async (activityId) => {
+    try {
+      // Add to dismissed set
+      const newDismissed = new Set(dismissedActivities);
+      newDismissed.add(activityId);
+      setDismissedActivities(newDismissed);
+      
+      // Update activity in Firestore to mark as dismissed
+      const activityRef = doc(db, 'diningActivities', activityId);
+      await updateDoc(activityRef, {
+        dismissed: true,
+        dismissedAt: Timestamp.now(),
+        dismissedBy: user?.uid || 'unknown',
+        dismissedByName: userData?.contactPerson || user?.displayName || user?.email || 'Okänd användare',
+        dismissedByInitials: getInitials(userData?.contactPerson || user?.displayName || user?.email || 'Okänd')
+      });
+      
+      toast.success('Markerat som löst - kommer inte längre visas i "Du bör ringa"');
+    } catch (error) {
+      console.error('Error dismissing activity:', error);
+      toast.error('Kunde inte markera som löst');
+    }
+  };
+
   // Manual tag input functions
   const processManualTags = (input) => {
     if (!input.trim()) return;
@@ -292,7 +383,10 @@ const ContactDetail = () => {
         tags: selectedTags, // Include selected tags
         contactId: id,
         contactName: contact.companyName,
-        createdAt: new Date()
+        createdAt: new Date(),
+        createdBy: user?.uid || 'unknown',
+        createdByName: userData?.contactPerson || user?.displayName || user?.email || 'Okänd användare',
+        createdByInitials: getInitials(userData?.contactPerson || user?.displayName || user?.email || 'Okänd')
       };
 
       await addActivity(activityData);
@@ -478,20 +572,107 @@ const ContactDetail = () => {
             
             {lastConversation ? (
               <div className="space-y-3">
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center space-x-2">
-                      {getActivityIcon(lastConversation.type)}
-                      <p className="font-medium text-gray-900">{lastConversation.subject}</p>
+                {(() => {
+                  const urgencyLevel = getUrgencyLevel(lastConversation);
+                  const isUrgent = isUrgentActivity(lastConversation);
+                  const isDismissed = dismissedActivities.has(lastConversation.id) || lastConversation.dismissed;
+                  
+                  // Dynamic styling based on urgency
+                  const getActivityStyle = (level, dismissed) => {
+                    if (dismissed) {
+                      return 'p-4 bg-gray-50 rounded-lg border border-gray-200';
+                    }
+                    switch(level) {
+                      case 'critical':
+                        return 'p-4 bg-red-50 rounded-lg border-2 border-red-200';
+                      case 'high':
+                        return 'p-4 bg-orange-50 rounded-lg border-2 border-orange-200';
+                      default:
+                        return 'p-4 bg-blue-50 rounded-lg';
+                    }
+                  };
+                  
+                  return (
+                    <div className={getActivityStyle(urgencyLevel, isDismissed)}>
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center space-x-2 flex-1">
+                          {getActivityIcon(lastConversation.type)}
+                          <p className="font-medium text-gray-900">{lastConversation.subject}</p>
+                          
+                          {/* Urgency indicators */}
+                          {isUrgent && !isDismissed && (
+                            <div className="flex items-center space-x-1">
+                              {urgencyLevel === 'critical' && (
+                                <>
+                                  <ExclamationSolid className="h-4 w-4 text-red-600" />
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    AKUT
+                                  </span>
+                                </>
+                              )}
+                              {urgencyLevel === 'high' && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                  PROBLEM
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          
+                          {/* Dismissed indicator */}
+                          {isDismissed && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                              <CheckIcon className="h-3 w-3 mr-1" />
+                              Löst
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-500">
+                            {lastConversation.createdAt?.toDate?.()?.toLocaleDateString('sv-SE') || lastConversation.date || 'Idag'}
+                          </span>
+                          
+                          {/* Dismiss button for urgent activities */}
+                          {isUrgent && !isDismissed && (
+                            <button
+                              onClick={() => handleDismissActivity(lastConversation.id)}
+                              className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-50 border border-gray-300 rounded transition-colors"
+                              title="Markera som löst"
+                            >
+                              <CheckIcon className="h-3 w-3 mr-1" />
+                              Löst
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {lastConversation.description && (
+                        <p className="text-gray-700 mt-2">{lastConversation.description}</p>
+                      )}
+                      
+                      {/* Show tags if any */}
+                      {lastConversation.tags && lastConversation.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {lastConversation.tags.map(tag => (
+                            <span
+                              key={tag}
+                              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                tag === 'akut' ? 'bg-red-100 text-red-800' :
+                                tag === 'problem' ? 'bg-orange-100 text-orange-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* User Attribution - very small under tags */}
+                      <UserAttribution activity={lastConversation} isDismissed={isDismissed} />
                     </div>
-                    <span className="text-sm text-gray-500">
-                      {lastConversation.createdAt?.toDate?.()?.toLocaleDateString('sv-SE') || lastConversation.date || 'Idag'}
-                    </span>
-                  </div>
-                  {lastConversation.description && (
-                    <p className="text-gray-700">{lastConversation.description}</p>
-                  )}
-                </div>
+                  );
+                })()}
               </div>
             ) : (
               <div className="text-center py-8 text-gray-500">
@@ -557,28 +738,115 @@ const ContactDetail = () => {
               </div>
               
               <div className="space-y-3">
-                {recentActivities.map((activity, index) => (
-                  <div key={activity.id || index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="flex-shrink-0 mt-0.5">
-                      {getActivityIcon(activity.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {activity.subject || activity.notes}
-                        </p>
-                        <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
-                          {activity.createdAt?.toDate?.()?.toLocaleDateString('sv-SE') || activity.date || 'Idag'}
-                        </span>
+                {recentActivities.map((activity, index) => {
+                  const urgencyLevel = getUrgencyLevel(activity);
+                  const isUrgent = isUrgentActivity(activity);
+                  const isDismissed = dismissedActivities.has(activity.id) || activity.dismissed;
+                  
+                  // Dynamic styling for timeline activities
+                  const getTimelineStyle = (level, dismissed) => {
+                    if (dismissed) {
+                      return 'flex items-start space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200';
+                    }
+                    switch(level) {
+                      case 'critical':
+                        return 'flex items-start space-x-3 p-3 bg-red-50 rounded-lg border-2 border-red-200';
+                      case 'high':
+                        return 'flex items-start space-x-3 p-3 bg-orange-50 rounded-lg border-2 border-orange-200';
+                      default:
+                        return 'flex items-start space-x-3 p-3 bg-gray-50 rounded-lg';
+                    }
+                  };
+                  
+                  return (
+                    <div key={activity.id || index} className={getTimelineStyle(urgencyLevel, isDismissed)}>
+                      <div className="flex-shrink-0 mt-0.5">
+                        {getActivityIcon(activity.type)}
                       </div>
-                      {activity.description && (
-                        <p className="text-sm text-gray-600 mt-1 line-clamp-1">
-                          {activity.description}
-                        </p>
-                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2 flex-1">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {activity.subject || activity.notes}
+                            </p>
+                            
+                            {/* Urgency indicators */}
+                            {isUrgent && !isDismissed && (
+                              <div className="flex items-center space-x-1">
+                                {urgencyLevel === 'critical' && (
+                                  <>
+                                    <ExclamationSolid className="h-3 w-3 text-red-600" />
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                      AKUT
+                                    </span>
+                                  </>
+                                )}
+                                {urgencyLevel === 'high' && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                    PROBLEM
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            
+                            {/* Dismissed indicator */}
+                            {isDismissed && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                                <CheckIcon className="h-3 w-3 mr-1" />
+                                Löst
+                              </span>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500 flex-shrink-0">
+                              {activity.createdAt?.toDate?.()?.toLocaleDateString('sv-SE') || activity.date || 'Idag'}
+                            </span>
+                            
+                            {/* Dismiss button for urgent activities */}
+                            {isUrgent && !isDismissed && (
+                              <button
+                                onClick={() => handleDismissActivity(activity.id)}
+                                className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-50 border border-gray-300 rounded transition-colors"
+                                title="Markera som löst"
+                              >
+                                <CheckIcon className="h-3 w-3 mr-0.5" />
+                                Löst
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {activity.description && (
+                          <p className="text-sm text-gray-600 mt-1 line-clamp-1">
+                            {activity.description}
+                          </p>
+                        )}
+                        
+                        {/* Show tags if any */}
+                        {activity.tags && activity.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {activity.tags.map(tag => (
+                              <span
+                                key={tag}
+                                className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${
+                                  tag === 'akut' ? 'bg-red-100 text-red-800' :
+                                  tag === 'problem' ? 'bg-orange-100 text-orange-800' :
+                                  'bg-gray-100 text-gray-800'
+                                }`}
+                              >
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* User Attribution - very small under tags */}
+                        <UserAttribution activity={activity} isDismissed={isDismissed} />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 
                 {allActivities.length > 4 && (
                   <div className="text-center py-3">

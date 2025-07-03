@@ -10,11 +10,17 @@ import {
   PhoneIcon,
   ClockIcon,
   ChatBubbleLeftRightIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  ExclamationTriangleIcon,
+  FireIcon,
+  BellIcon
 } from '@heroicons/react/24/outline';
 import {
   PhoneIcon as PhoneSolid,
-  ChatBubbleLeftRightIcon as ChatSolid
+  ChatBubbleLeftRightIcon as ChatSolid,
+  ExclamationTriangleIcon as ExclamationSolid,
+  FireIcon as FireSolid,
+  BellIcon as BellSolid
 } from '@heroicons/react/24/solid';
 
 const DiningDashboard = () => {
@@ -23,6 +29,8 @@ const DiningDashboard = () => {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredContacts, setFilteredContacts] = useState([]);
+  const [deferredContacts, setDeferredContacts] = useState(new Map()); // Map: contactId -> {timestamp, originalUrgency}
+  const [showDeferred, setShowDeferred] = useState(false);
 
   // Filter contacts based on search
   useEffect(() => {
@@ -37,22 +45,164 @@ const DiningDashboard = () => {
     }
   }, [searchQuery, contacts]);
 
-  // Get today's follow-ups (simplified)
-  const getTodaysFollowUps = () => {
+  // Swedish business hours respect
+  const isSwedishBusinessHours = () => {
+    const now = new Date();
+    const hour = now.getHours();
+    const day = now.getDay(); // 0 = Sunday, 6 = Saturday
+    
+    // Monday-Friday, 8:00-17:00 Swedish time
+    return day >= 1 && day <= 5 && hour >= 8 && hour <= 17;
+  };
+
+  // Advanced trigger scoring system
+  const calculateTriggerScore = (contact, contactActivities) => {
+    let score = 0;
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     
-    // Get contacts that need follow-up (mock logic for now)
-    return contacts
-      .filter(contact => contact.status === 'prospect' || contact.priority === 'high')
-      .slice(0, 4)
-      .map(contact => ({
+    if (!contactActivities || contactActivities.length === 0) {
+      // New contact with no activities
+      return { score: 15, reason: 'Ny kontakt', urgency: 'medium' };
+    }
+
+    const latestActivity = contactActivities[0];
+    const allTags = contactActivities.flatMap(activity => activity.tags || []);
+    const daysSinceLastContact = Math.floor((today - (latestActivity.createdAt?.toDate?.() || new Date())) / (1000 * 60 * 60 * 24));
+
+    // 🔥 URGENCY TRIGGERS (High Priority)
+    
+    // Date-based triggers - highest priority
+    allTags.forEach(tag => {
+      if (tag.includes('-')) { // Date tag format: weekday-YYYY-MM-DD
+        const tagDate = tag.split('-').slice(1).join('-'); // Extract date part
+        if (tagDate === todayStr) {
+          score += 50;
+          return { score: score + 50, reason: `Ring idag (${tag})`, urgency: 'high' };
+        } else if (tagDate < todayStr) {
+          score += 40;
+          return { score: score + 40, reason: `Försenad uppföljning (${tag})`, urgency: 'high' };
+        } else if (tagDate === new Date(today.getTime() + 24*60*60*1000).toISOString().split('T')[0]) {
+          score += 25;
+          return { score: score + 25, reason: `Förbered för imorgon (${tag})`, urgency: 'medium' };
+        }
+      }
+    });
+
+    // Critical business tags - but only if not dismissed
+    const activeAkutActivities = contactActivities.filter(activity => 
+      activity.tags?.includes('akut') && !activity.dismissed
+    );
+    const activeProblemActivities = contactActivities.filter(activity => 
+      activity.tags?.includes('problem') && !activity.dismissed
+    );
+    
+    if (activeAkutActivities.length > 0) {
+      return { score: 100, reason: 'AKUT - Ring nu!', urgency: 'critical' };
+    }
+    
+    if (activeProblemActivities.length > 0) {
+      const problemScore = 25 + (daysSinceLastContact * 5); // Escalates over time
+      if (problemScore >= 40) {
+        return { score: problemScore, reason: 'Problem eskalerar', urgency: 'high' };
+      }
+      score += problemScore;
+    }
+
+    // Enhanced #ringabak logic - priority on set day OR after couple days if no date
+    if (allTags.includes('ringabak')) {
+      const hasDateTag = allTags.some(tag => tag.includes('-') && tag.split('-').length === 3);
+      
+      if (hasDateTag) {
+        // If date tag exists, use existing date logic above
+        score += 30;
+      } else {
+        // No date tag - escalate after 2 days
+        if (daysSinceLastContact >= 2) {
+          return { score: 45, reason: 'Ringabak - Nu är det dags!', urgency: 'high' };
+        } else {
+          score += 30;
+        }
+      }
+      
+      return { score, reason: 'Lovade ringa tillbaka', urgency: 'medium' };
+    }
+
+    // 🎯 OPPORTUNITY TRIGGERS (Medium Priority)
+    
+    if (allTags.includes('hett')) {
+      const heatScore = Math.max(35 - (daysSinceLastContact * 3), 15); // Cools over time
+      score += heatScore;
+      if (heatScore > 25) {
+        return { score, reason: 'Het prospect - slå till!', urgency: 'medium' };
+      }
+    }
+
+    // ⏰ TIME-BASED TRIGGERS (Lower Priority)
+    
+    // VIP customer silence
+    if (contact.priority === 'high' && daysSinceLastContact >= 7) {
+      score += 25;
+      return { score, reason: `VIP-kund: ${daysSinceLastContact} dagar tystnad`, urgency: 'medium' };
+    }
+    
+    // Regular customer maintenance
+    if (contact.status === 'active' && daysSinceLastContact >= 21) {
+      score += 15;
+      return { score, reason: `Befintlig kund: ${daysSinceLastContact} dagar sedan`, urgency: 'low' };
+    }
+    
+    // New prospect follow-up
+    if (contact.status === 'prospect' && daysSinceLastContact >= 3) {
+      score += 20;
+      return { score, reason: `Ny prospect: ${daysSinceLastContact} dagar sedan`, urgency: 'medium' };
+    }
+
+    return { score, reason: 'Allmän uppföljning', urgency: 'low' };
+  };
+
+  // Smart trigger-based follow-ups
+  const getTodaysFollowUps = () => {
+    if (!isSwedishBusinessHours() && activities.length > 0) {
+      // Outside business hours - only show critical items that are NOT dismissed
+      const criticalActivities = activities.filter(activity => 
+        (activity.tags?.includes('akut') || activity.tags?.includes('problem')) && 
+        !activity.dismissed
+      );
+      
+      if (criticalActivities.length === 0) {
+        return []; // Respect work-life balance
+      }
+    }
+
+    // Get all contacts with their activities
+    const contactTriggers = contacts.map(contact => {
+      const contactActivities = activities
+        .filter(activity => activity.contactId === contact.id)
+        .sort((a, b) => (b.createdAt?.toDate?.() || new Date(b.date)) - (a.createdAt?.toDate?.() || new Date(a.date)));
+      
+      const triggerData = calculateTriggerScore(contact, contactActivities);
+      
+      return {
         id: contact.id,
         name: contact.companyName,
         person: contact.contactPerson,
-        action: contact.priority === 'high' ? 'Ring idag' : 'Följ upp',
-        priority: contact.priority || 'medium'
-      }));
+        ...triggerData,
+        contact,
+        activities: contactActivities
+      };
+    })
+    .filter(item => item.score >= 15) // Minimum threshold
+    .sort((a, b) => {
+      // Sort by urgency first, then score
+      const urgencyOrder = { critical: 4, high: 3, medium: 2, low: 1 };
+      if (urgencyOrder[a.urgency] !== urgencyOrder[b.urgency]) {
+        return urgencyOrder[b.urgency] - urgencyOrder[a.urgency];
+      }
+      return b.score - a.score;
+    });
+
+    return contactTriggers;
   };
 
   // Get recent conversations (simplified and grouped by contact)
@@ -89,9 +239,80 @@ const DiningDashboard = () => {
       .slice(0, 6); // Show max 6 different contacts
   };
 
-  const todaysFollowUps = getTodaysFollowUps();
+  // Smart re-surfacing logic - CRM intelligence
+  const shouldResurface = (contactId, trigger) => {
+    const deferInfo = deferredContacts.get(contactId);
+    if (!deferInfo) return false;
+    
+    const now = new Date();
+    const timeSinceDefer = now - deferInfo.timestamp;
+    const hoursDeferred = timeSinceDefer / (1000 * 60 * 60);
+    
+    // OVERRIDE DEFER: Critical events that force re-surfacing
+    if (trigger.urgency === 'critical') return true; // AKUT always surfaces
+    if (trigger.urgency === 'high' && hoursDeferred > 2) return true; // Problems escalate quickly
+    
+    // TIME-BASED RE-SURFACING: Based on original urgency and Swedish work patterns
+    if (trigger.urgency === 'medium' && hoursDeferred > 24) return true; // Next business day
+    if (trigger.urgency === 'low' && hoursDeferred > 72) return true; // After 3 days
+    
+    // EVENT-BASED RE-SURFACING: New activity on this contact
+    const contactActivities = activities
+      .filter(activity => activity.contactId === contactId)
+      .sort((a, b) => (b.createdAt?.toDate?.() || new Date(b.date)) - (a.createdAt?.toDate?.() || new Date(a.date)));
+    
+    if (contactActivities.length > 0) {
+      const latestActivity = contactActivities[0];
+      const activityTime = latestActivity.createdAt?.toDate?.() || new Date(latestActivity.date);
+      if (activityTime > deferInfo.timestamp) return true; // New activity since defer
+    }
+    
+    return false;
+  };
+
+  // Apply smart re-surfacing in useEffect to avoid state updates during render
+  useEffect(() => {
+    const allTriggers = getTodaysFollowUps();
+    const resurfacedContacts = new Map(deferredContacts);
+    let hasChanges = false;
+    
+    allTriggers.forEach(trigger => {
+      if (deferredContacts.has(trigger.id) && shouldResurface(trigger.id, trigger)) {
+        resurfacedContacts.delete(trigger.id);
+        hasChanges = true;
+      }
+    });
+    
+    if (hasChanges) {
+      setDeferredContacts(resurfacedContacts);
+    }
+  }, [activities, contacts, deferredContacts]);
+
+  // Split triggers for display
+  const allTriggers = getTodaysFollowUps();
+  const availableTriggers = allTriggers.filter(trigger => !deferredContacts.has(trigger.id));
+  const todaysFollowUps = availableTriggers.slice(0, 3); // Swedish Lagom: max 3 primary items
+  const deferredTriggers = allTriggers.filter(trigger => deferredContacts.has(trigger.id));
+  
   const recentConversations = getRecentConversations();
   const loading = contactsLoading || activitiesLoading;
+
+  // Strategic relationship timing function (not task postponement!)
+  const handleDeferContact = (contactId, urgency) => {
+    const newDeferred = new Map(deferredContacts);
+    newDeferred.set(contactId, {
+      timestamp: new Date(),
+      originalUrgency: urgency
+    });
+    setDeferredContacts(newDeferred);
+  };
+
+  // Bring contact back to focus
+  const handleUndeferContact = (contactId) => {
+    const newDeferred = new Map(deferredContacts);
+    newDeferred.delete(contactId);
+    setDeferredContacts(newDeferred);
+  };
 
   if (loading) {
     return (
@@ -181,37 +402,192 @@ const DiningDashboard = () => {
             </div>
             
             <div className="space-y-3">
-              {todaysFollowUps.length === 0 ? (
+              {!isSwedishBusinessHours() && todaysFollowUps.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <ClockIcon className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                  <p>Vila gott!</p>
+                  <p className="text-sm">Inga akuta ärenden - återkom under kontorstid</p>
+                  <p className="text-xs text-gray-400 mt-1">Mån-Fre 08:00-17:00</p>
+                </div>
+              )}
+              
+              {isSwedishBusinessHours() && todaysFollowUps.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <PhoneIcon className="h-8 w-8 text-gray-300 mx-auto mb-2" />
                   <p>Inga uppföljningar idag</p>
                   <p className="text-sm">Bra jobbat!</p>
                 </div>
-              ) : (
-                todaysFollowUps.map(followUp => (
-                  <Link
-                    key={followUp.id}
-                    to={`/admin/dining/contacts/${followUp.id}`}
-                    className="block p-4 rounded-lg border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors"
-                  >
+              )}
+              
+              {todaysFollowUps.map(followUp => {
+                // Dynamic styling based on urgency
+                const getUrgencyStyle = (urgency) => {
+                  switch(urgency) {
+                    case 'critical':
+                      return {
+                        border: 'border-red-400 bg-red-50',
+                        hover: 'hover:border-red-500 hover:bg-red-100',
+                        text: 'text-red-800',
+                        badge: 'bg-red-100 text-red-800',
+                        IconComponent: ExclamationSolid,
+                        iconColor: 'text-red-600'
+                      };
+                    case 'high':
+                      return {
+                        border: 'border-orange-200 bg-orange-50',
+                        hover: 'hover:border-orange-300 hover:bg-orange-100',
+                        text: 'text-orange-700',
+                        badge: 'bg-orange-100 text-orange-700',
+                        IconComponent: FireSolid,
+                        iconColor: 'text-orange-500'
+                      };
+                    case 'medium':
+                      return {
+                        border: 'border-blue-200 bg-blue-50',
+                        hover: 'hover:border-blue-300 hover:bg-blue-100',
+                        text: 'text-blue-700',
+                        badge: 'bg-blue-100 text-blue-700',
+                        IconComponent: BellSolid,
+                        iconColor: 'text-blue-500'
+                      };
+                    default:
+                      return {
+                        border: 'border-gray-200',
+                        hover: 'hover:border-gray-300 hover:bg-gray-50',
+                        text: 'text-gray-700',
+                        badge: 'bg-gray-100 text-gray-800',
+                        IconComponent: ChatBubbleLeftRightIcon,
+                        iconColor: 'text-gray-600'
+                      };
+                  }
+                };
+                
+                const style = getUrgencyStyle(followUp.urgency);
+                const isCritical = followUp.urgency === 'critical' || followUp.urgency === 'high';
+                
+                return (
+                  <div key={followUp.id} className={`p-4 rounded-lg border ${style.border} transition-colors`}>
                     <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium text-gray-900">{followUp.name}</div>
+                      <Link
+                        to={`/admin/dining/contacts/${followUp.id}`}
+                        className={`flex-1 ${style.hover} rounded-md p-2 -m-2`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <div className="font-medium text-gray-900">{followUp.name}</div>
+                          {followUp.urgency === 'critical' && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              AKUT
+                            </span>
+                          )}
+                        </div>
                         {followUp.person && (
                           <div className="text-sm text-gray-600">{followUp.person}</div>
                         )}
-                      </div>
-                      <div className="text-right">
-                        <div className={`text-sm font-medium ${
-                          followUp.priority === 'high' ? 'text-red-600' : 'text-orange-600'
-                        }`}>
-                          {followUp.action}
+                        <div className="text-xs text-gray-500 mt-1">
+                          {followUp.reason}
                         </div>
+                      </Link>
+                      
+                      <div className="flex items-center space-x-2 ml-4">
+                        <style.IconComponent className={`h-6 w-6 ${style.iconColor}`} />
+                        
+                        {/* Strategic timing button for non-critical relationships */}
+                        {!isCritical && (
+                          <button
+                            onClick={() => handleDeferContact(followUp.id, followUp.urgency)}
+                            className="text-xs text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors"
+                            title="Strategisk timing - kontakten återkommer automatiskt vid optimal tidpunkt"
+                          >
+                            Optimal timing
+                          </button>
+                        )}
                       </div>
                     </div>
-                  </Link>
-                ))
-              )}
+                  </div>
+                );
+              })}
+              
+              {/* Deferred items section */}
+              {(deferredTriggers.length > 0 || availableTriggers.length > 3) && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  {availableTriggers.length > 3 && (
+                    <div className="mb-4">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Övriga kontakter som behöver uppföljning:</h4>
+                      <div className="space-y-1 mb-3">
+                        {availableTriggers.slice(3).map(trigger => (
+                          <div key={trigger.id} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                            <span>
+                              <span className="font-medium">{trigger.name}</span> • {trigger.reason}
+                            </span>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                              trigger.urgency === 'critical' ? 'bg-red-100 text-red-800' :
+                              trigger.urgency === 'high' ? 'bg-orange-100 text-orange-700' :
+                              trigger.urgency === 'medium' ? 'bg-blue-100 text-blue-700' :
+                              'bg-gray-100 text-gray-700'
+                            }`}>
+                              {trigger.urgency === 'critical' ? 'Kritisk' :
+                               trigger.urgency === 'high' ? 'Hög' : 
+                               trigger.urgency === 'medium' ? 'Medium' : 'Låg'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => {
+                          // Set strategic timing for additional available items
+                          availableTriggers.slice(3).forEach(trigger => handleDeferContact(trigger.id, trigger.urgency));
+                        }}
+                        className="w-full text-center py-2 text-sm text-gray-600 hover:text-gray-800 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors mb-2"
+                      >
+                        Sätt strategisk timing för dessa {availableTriggers.length - 3} kontakter
+                      </button>
+                    </div>
+                  )}
+                  
+                                                       {deferredTriggers.length > 0 && (
+                    <button
+                      onClick={() => setShowDeferred(!showDeferred)}
+                      className="w-full text-center py-2 text-sm text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                    >
+                      {showDeferred ? 'Dölj' : 'Visa'} strategisk timing ({deferredTriggers.length})
+                    </button>
+                  )}
+                 </div>
+               )}
+               
+               {/* Show strategically timed contacts when expanded */}
+               {showDeferred && deferredTriggers.length > 0 && (
+                 <div className="mt-4 space-y-2 bg-blue-50 rounded-lg p-4">
+                   <h4 className="text-sm font-medium text-gray-700 mb-2">Strategisk timing - återkommer automatiskt</h4>
+                   <p className="text-xs text-gray-600 mb-3">Dessa kontakter återkommer automatiskt vid optimal tidpunkt baserat på urgency och aktivitet.</p>
+                   {deferredTriggers.map(followUp => {
+                     const deferInfo = deferredContacts.get(followUp.id);
+                     const timeSinceDefer = deferInfo ? Math.floor((new Date() - deferInfo.timestamp) / (1000 * 60 * 60)) : 0;
+                     
+                     return (
+                       <div key={followUp.id} className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
+                         <Link
+                           to={`/admin/dining/contacts/${followUp.id}`}
+                           className="flex-1 hover:bg-gray-50 rounded p-1 -m-1"
+                         >
+                           <div className="font-medium text-gray-900">{followUp.name}</div>
+                           <div className="text-xs text-gray-500">{followUp.reason}</div>
+                           <div className="text-xs text-blue-600 mt-1">
+                             Optimal timing sedan {timeSinceDefer}h • Återkommer automatiskt
+                           </div>
+                         </Link>
+                         <button
+                           onClick={() => handleUndeferContact(followUp.id)}
+                           className="text-xs text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded transition-colors ml-2"
+                           title="Prioritera nu istället för automatisk timing"
+                         >
+                           Prioritera nu
+                         </button>
+                       </div>
+                     );
+                   })}
+                 </div>
+               )}
             </div>
           </div>
 

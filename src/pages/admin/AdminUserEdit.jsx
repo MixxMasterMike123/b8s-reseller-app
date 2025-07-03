@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
 import {
   getCustomerMaterials,
@@ -21,13 +21,17 @@ import {
   PaperAirplaneIcon,
   CheckCircleIcon,
   ClockIcon,
-  KeyIcon
+  KeyIcon,
+  ExclamationTriangleIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../../firebase/config';
 
 const AdminUserEdit = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
-  const { getAllUsers, updateAnyUserProfile, updateUserMarginal, updateUserRole, toggleUserActive, isAdmin, currentUser, sendCustomerWelcomeEmail } = useAuth();
+  const { getAllUsers, updateAnyUserProfile, updateUserMarginal, updateUserRole, toggleUserActive, isAdmin, currentUser, sendCustomerWelcomeEmail, deleteCustomerAccount } = useAuth();
   
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -36,6 +40,9 @@ const AdminUserEdit = () => {
   // Customer activation state
   const [sendingActivation, setSendingActivation] = useState(false);
   const [activationResult, setActivationResult] = useState(null);
+  
+  // Customer deletion state
+  const [deletingCustomer, setDeletingCustomer] = useState(false);
   
   // Marketing materials state
   const [customerMaterials, setCustomerMaterials] = useState([]);
@@ -84,6 +91,9 @@ const AdminUserEdit = () => {
     notes: ''
   });
   const [errors, setErrors] = useState({});
+
+  const [submitting, setSubmitting] = useState(false);
+  const [emailEditEnabled, setEmailEditEnabled] = useState(false);
 
   const categories = [
     { value: 'kundspecifikt', label: 'Kundspecifikt' },
@@ -388,6 +398,32 @@ const AdminUserEdit = () => {
     }
   };
 
+  // Handle customer deletion
+  const handleDeleteCustomer = async () => {
+    if (!userId || !user) return;
+    
+    const confirmMessage = `Är du säker på att du vill ta bort kunden "${user.companyName || user.email}"?\n\nDetta kommer att:\n• Ta bort kundkontot från systemet\n• Ta bort Firebase Auth-kontot\n• Ta bort alla beställningar\n• Ta bort alla marknadsföringsmaterial\n• Ta bort alla admin-dokument\n\nDenna åtgärd kan INTE ångras!`;
+    
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+    
+    try {
+      setDeletingCustomer(true);
+      const result = await deleteCustomerAccount(userId);
+      
+      console.log('Customer deletion result:', result);
+      
+      // Navigate back to customer list after successful deletion
+      navigate('/admin/users');
+      
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+    } finally {
+      setDeletingCustomer(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -396,31 +432,30 @@ const AdminUserEdit = () => {
       return;
     }
 
+    setSaving(true);
+
     try {
-      setSaving(true);
-      
-      // Prepare data for update (exclude fields that shouldn't be updated via profile)
-      const profileData = {
+      // Check if email has changed and editing is enabled
+      const emailChanged = emailEditEnabled && formData.email !== user.email;
+
+      // First update the user profile
+      await updateAnyUserProfile(userId, {
         companyName: formData.companyName,
         contactPerson: formData.contactPerson,
         phone: formData.phone,
+        orgNumber: formData.orgNumber,
         address: formData.address,
         city: formData.city,
         postalCode: formData.postalCode,
         country: formData.country,
-        orgNumber: formData.orgNumber,
-        // Delivery address fields
         deliveryAddress: formData.sameAsCompanyAddress ? formData.address : formData.deliveryAddress,
         deliveryCity: formData.sameAsCompanyAddress ? formData.city : formData.deliveryCity,
         deliveryPostalCode: formData.sameAsCompanyAddress ? formData.postalCode : formData.deliveryPostalCode,
         deliveryCountry: formData.sameAsCompanyAddress ? formData.country : formData.deliveryCountry,
         sameAsCompanyAddress: formData.sameAsCompanyAddress,
         notes: formData.notes
-      };
+      });
 
-      // Update profile data
-      await updateAnyUserProfile(userId, profileData);
-      
       // Admin-only updates
       if (isAdmin) {
         // Update margin if changed
@@ -437,14 +472,27 @@ const AdminUserEdit = () => {
         if (formData.active !== user.active) {
           await toggleUserActive(userId, formData.active);
         }
+
+        // If email has changed, update it in Firebase Auth
+        if (emailChanged) {
+          try {
+            // Call the cloud function to update email
+            const updateEmail = httpsCallable(functions, 'updateCustomerEmail');
+            await updateEmail({ userId, newEmail: formData.email });
+            toast.success('E-post uppdaterad framgångsrikt');
+          } catch (error) {
+            console.error('Error updating email:', error);
+            toast.error(`Kunde inte uppdatera e-post: ${error.message}`);
+            throw error;
+          }
+        }
       }
-      
+
       toast.success('Kundprofil uppdaterad framgångsrikt');
       navigate('/admin/users');
-      
     } catch (error) {
-      console.error('Error updating user:', error);
-      toast.error('Kunde inte uppdatera kundprofil');
+      console.error('Error updating profile:', error);
+      toast.error(`Kunde inte uppdatera profil: ${error.message}`);
     } finally {
       setSaving(false);
     }
@@ -521,6 +569,25 @@ const AdminUserEdit = () => {
                   )}
                 </button>
               )}
+              
+              {/* Delete Customer Button */}
+              <button
+                onClick={handleDeleteCustomer}
+                disabled={deletingCustomer}
+                className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {deletingCustomer ? (
+                  <>
+                    <ClockIcon className="h-4 w-4 mr-2 animate-spin" />
+                    Tar bort...
+                  </>
+                ) : (
+                  <>
+                    <TrashIcon className="h-4 w-4 mr-2" />
+                    Ta bort kund
+                  </>
+                )}
+              </button>
               
               <Link
                 to="/admin/users"
@@ -628,19 +695,50 @@ const AdminUserEdit = () => {
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                   E-post *
                 </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className={`block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                    errors.email ? 'border-red-300' : ''
-                  }`}
-                  placeholder="exempel@företag.se"
-                  disabled // Email should not be editable
-                />
-                {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+                <div className="relative">
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    disabled={!emailEditEnabled}
+                    className={`block w-full rounded-md shadow-sm pr-10 transition-all duration-200 ${
+                      errors.email ? 'border-red-300' : ''
+                    } ${
+                      !emailEditEnabled 
+                        ? 'bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed' 
+                        : 'bg-white border-blue-300 text-gray-900 focus:border-blue-500 focus:ring-blue-500 cursor-text'
+                    }`}
+                    placeholder="exempel@företag.se"
+                    required
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => setEmailEditEnabled(!emailEditEnabled)}
+                      className={`p-1.5 rounded-md transition-all duration-200 ${
+                        emailEditEnabled 
+                          ? 'text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200' 
+                          : 'text-gray-400 bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                      }`}
+                      title={emailEditEnabled ? "Lås e-postfältet" : "Lås upp e-postfältet för redigering"}
+                    >
+                      <KeyIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+                {emailEditEnabled && (
+                  <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
+                    <p className="text-xs text-amber-700 flex items-center">
+                      <ExclamationTriangleIcon className="h-4 w-4 mr-1 text-amber-600" />
+                      Ändring av e-post påverkar kundens inloggningsuppgifter
+                    </p>
+                  </div>
+                )}
+                {errors.email && (
+                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                )}
               </div>
               
               <div>
@@ -894,8 +992,6 @@ const AdminUserEdit = () => {
               placeholder="Interna anteckningar om kunden..."
             />
           </div>
-
-
 
           {/* Form Actions */}
           <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">

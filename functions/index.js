@@ -3600,3 +3600,330 @@ exports.sendCustomerWelcomeEmail = functions.https.onCall(async (data, context) 
     throw new functions.https.HttpsError('internal', `Failed to send welcome email: ${error.message}`);
   }
 });
+
+// Update customer email (admin only)
+exports.updateCustomerEmail = functions.https.onCall(async (data, context) => {
+  // Verify if the caller is authenticated
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Måste vara inloggad');
+  }
+
+  // Get admin status from named database (using the same db instance as the rest of the file)
+  const callerDoc = await db
+    .collection('users')
+    .doc(context.auth.uid)
+    .get();
+
+  if (!callerDoc.exists || callerDoc.data().role !== 'admin') {
+    throw new functions.https.HttpsError('permission-denied', 'Måste vara administratör');
+  }
+
+  const { userId, newEmail } = data;
+
+  try {
+    // Get customer data from Firestore
+    const customerDoc = await db.collection('users').doc(userId).get();
+    if (!customerDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Kunden kunde inte hittas');
+    }
+    
+    const customerData = customerDoc.data();
+    
+    // Check if Firebase Auth account exists, if not create one
+    let authUser;
+    try {
+      // Try to get existing auth user by the current email
+      authUser = await admin.auth().getUserByEmail(customerData.email);
+      console.log(`Found existing Firebase Auth user for ${customerData.email}`);
+      
+      // Update existing user's email
+      await admin.auth().updateUser(authUser.uid, {
+        email: newEmail,
+        emailVerified: false
+      });
+      console.log(`Updated existing user email to ${newEmail}`);
+      
+    } catch (authError) {
+      if (authError.code === 'auth/user-not-found') {
+        // User doesn't exist in Firebase Auth, create new account
+        console.log(`Creating new Firebase Auth account for ${newEmail}`);
+        authUser = await admin.auth().createUser({
+          email: newEmail,
+          displayName: customerData.contactPerson || customerData.companyName,
+          emailVerified: false,
+        });
+        console.log(`Created new Firebase Auth user: ${authUser.uid}`);
+        
+        // Update Firestore with the new auth UID
+        await db.collection('users').doc(userId).update({
+          firebaseAuthUid: authUser.uid,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        
+      } else {
+        throw authError;
+      }
+    }
+
+    // Update email in Firestore
+    await db
+      .collection('users')
+      .doc(userId)
+      .update({
+        email: newEmail,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+    return { 
+      success: true, 
+      message: 'E-post uppdaterad framgångsrikt',
+      authAccountCreated: !authUser.uid // true if we created a new account
+    };
+  } catch (error) {
+    console.error('Error updating user email:', error);
+    if (error.code && error.code.startsWith('auth/')) {
+      throw new functions.https.HttpsError('internal', `Firebase Auth fel: ${error.message}`);
+    }
+    throw new functions.https.HttpsError('internal', 'Ett fel uppstod vid uppdatering av e-post');
+  }
+});
+
+/**
+ * Delete Customer Account (Admin Only)
+ * This function deletes both Firestore record and Firebase Auth account
+ */
+exports.deleteCustomerAccount = functions.https.onCall(async (data, context) => {
+  // Verify admin authentication
+  if (!context.auth || !context.auth.uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'Måste vara inloggad');
+  }
+
+  try {
+    // Get admin user data to verify permissions
+    const adminDoc = await db.collection('users').doc(context.auth.uid).get();
+    if (!adminDoc.exists || adminDoc.data().role !== 'admin') {
+      throw new functions.https.HttpsError('permission-denied', 'Måste vara administratör');
+    }
+
+    const { customerId } = data;
+    if (!customerId) {
+      throw new functions.https.HttpsError('invalid-argument', 'Customer ID krävs');
+    }
+
+    // Get customer data
+    const customerDoc = await db.collection('users').doc(customerId).get();
+    if (!customerDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Kunden kunde inte hittas');
+    }
+
+    const customerData = customerDoc.data();
+    let authDeletionResult = null;
+
+    // Delete Firebase Auth account if it exists
+    if (customerData.firebaseAuthUid) {
+      try {
+        await admin.auth().deleteUser(customerData.firebaseAuthUid);
+        authDeletionResult = 'deleted_by_uid';
+        console.log(`Deleted Firebase Auth user by UID: ${customerData.firebaseAuthUid}`);
+      } catch (authError) {
+        if (authError.code === 'auth/user-not-found') {
+          console.log(`Firebase Auth user not found by UID: ${customerData.firebaseAuthUid}`);
+          authDeletionResult = 'not_found_by_uid';
+        } else {
+          console.error(`Error deleting Firebase Auth user by UID: ${authError.message}`);
+          // Continue with email-based deletion attempt
+        }
+      }
+    }
+
+    // Fallback: try to delete by email if UID deletion failed
+    if (!authDeletionResult || authDeletionResult === 'not_found_by_uid') {
+      try {
+        const authUser = await admin.auth().getUserByEmail(customerData.email);
+        await admin.auth().deleteUser(authUser.uid);
+        authDeletionResult = 'deleted_by_email';
+        console.log(`Deleted Firebase Auth user by email: ${customerData.email}`);
+      } catch (authError) {
+        if (authError.code === 'auth/user-not-found') {
+          console.log(`Firebase Auth user not found by email: ${customerData.email}`);
+          authDeletionResult = 'not_found_by_email';
+        } else {
+          console.error(`Error deleting Firebase Auth user by email: ${authError.message}`);
+          authDeletionResult = 'error';
+        }
+      }
+    }
+
+    // Delete related data
+    const deletionResults = {
+      customer: false,
+      orders: 0,
+      marketingMaterials: 0,
+      adminDocuments: 0,
+      authAccount: authDeletionResult
+    };
+
+    // Delete customer's orders
+    try {
+      const ordersQuery = await db.collection('orders').where('userId', '==', customerId).get();
+      const orderDeletePromises = ordersQuery.docs.map(doc => doc.ref.delete());
+      await Promise.all(orderDeletePromises);
+      deletionResults.orders = ordersQuery.size;
+      console.log(`Deleted ${ordersQuery.size} orders for customer ${customerId}`);
+    } catch (error) {
+      console.error('Error deleting customer orders:', error);
+    }
+
+    // Delete customer's marketing materials
+    try {
+      const materialsQuery = await db.collection('users').doc(customerId).collection('marketingMaterials').get();
+      const materialDeletePromises = materialsQuery.docs.map(doc => doc.ref.delete());
+      await Promise.all(materialDeletePromises);
+      deletionResults.marketingMaterials = materialsQuery.size;
+      console.log(`Deleted ${materialsQuery.size} marketing materials for customer ${customerId}`);
+    } catch (error) {
+      console.error('Error deleting customer marketing materials:', error);
+    }
+
+    // Delete admin documents for this customer
+    try {
+      const adminDocsQuery = await db.collection('adminCustomerDocuments').where('customerId', '==', customerId).get();
+      const adminDocDeletePromises = adminDocsQuery.docs.map(doc => doc.ref.delete());
+      await Promise.all(adminDocDeletePromises);
+      deletionResults.adminDocuments = adminDocsQuery.size;
+      console.log(`Deleted ${adminDocsQuery.size} admin documents for customer ${customerId}`);
+    } catch (error) {
+      console.error('Error deleting admin documents:', error);
+    }
+
+    // Finally, delete the customer document
+    await db.collection('users').doc(customerId).delete();
+    deletionResults.customer = true;
+
+    console.log(`Customer ${customerId} (${customerData.email}) deleted successfully by admin ${context.auth.uid}`);
+
+    return {
+      success: true,
+      message: 'Kund och alla relaterade data har tagits bort framgångsrikt',
+      customerId: customerId,
+      email: customerData.email,
+      companyName: customerData.companyName,
+      deletionResults: deletionResults
+    };
+
+  } catch (error) {
+    console.error('Error in deleteCustomerAccount:', error);
+    
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    
+    throw new functions.https.HttpsError('internal', `Kunde inte ta bort kund: ${error.message}`);
+  }
+});
+
+/**
+ * Toggle Customer Active Status (Admin Only)
+ * This function updates both Firestore and Firebase Auth account status
+ */
+exports.toggleCustomerActiveStatus = functions.https.onCall(async (data, context) => {
+  // Verify admin authentication
+  if (!context.auth || !context.auth.uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'Måste vara inloggad');
+  }
+
+  try {
+    // Get admin user data to verify permissions
+    const adminDoc = await db.collection('users').doc(context.auth.uid).get();
+    if (!adminDoc.exists || adminDoc.data().role !== 'admin') {
+      throw new functions.https.HttpsError('permission-denied', 'Måste vara administratör');
+    }
+
+    const { customerId, activeStatus } = data;
+    if (!customerId || typeof activeStatus !== 'boolean') {
+      throw new functions.https.HttpsError('invalid-argument', 'Customer ID och aktiv status krävs');
+    }
+
+    // Get customer data
+    const customerDoc = await db.collection('users').doc(customerId).get();
+    if (!customerDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Kunden kunde inte hittas');
+    }
+
+    const customerData = customerDoc.data();
+    let authUpdateResult = null;
+
+    // Update Firebase Auth account if it exists
+    if (customerData.firebaseAuthUid) {
+      try {
+        await admin.auth().updateUser(customerData.firebaseAuthUid, {
+          disabled: !activeStatus // disabled = true when activeStatus = false
+        });
+        authUpdateResult = 'updated_by_uid';
+        console.log(`Updated Firebase Auth user status by UID: ${customerData.firebaseAuthUid} (disabled: ${!activeStatus})`);
+      } catch (authError) {
+        if (authError.code === 'auth/user-not-found') {
+          console.log(`Firebase Auth user not found by UID: ${customerData.firebaseAuthUid}`);
+          authUpdateResult = 'not_found_by_uid';
+        } else {
+          console.error(`Error updating Firebase Auth user by UID: ${authError.message}`);
+          // Continue with email-based update attempt
+        }
+      }
+    }
+
+    // Fallback: try to update by email if UID update failed
+    if (!authUpdateResult || authUpdateResult === 'not_found_by_uid') {
+      try {
+        const authUser = await admin.auth().getUserByEmail(customerData.email);
+        await admin.auth().updateUser(authUser.uid, {
+          disabled: !activeStatus
+        });
+        authUpdateResult = 'updated_by_email';
+        console.log(`Updated Firebase Auth user status by email: ${customerData.email} (disabled: ${!activeStatus})`);
+        
+        // Update Firestore with the found auth UID
+        await db.collection('users').doc(customerId).update({
+          firebaseAuthUid: authUser.uid,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        
+      } catch (authError) {
+        if (authError.code === 'auth/user-not-found') {
+          console.log(`Firebase Auth user not found by email: ${customerData.email}`);
+          authUpdateResult = 'not_found_by_email';
+        } else {
+          console.error(`Error updating Firebase Auth user by email: ${authError.message}`);
+          authUpdateResult = 'error';
+        }
+      }
+    }
+
+    // Update customer status in Firestore
+    await db.collection('users').doc(customerId).update({
+      active: activeStatus,
+      isActive: activeStatus, // Update both properties for compatibility
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    console.log(`Customer ${customerId} (${customerData.email}) status updated to ${activeStatus ? 'active' : 'inactive'} by admin ${context.auth.uid}`);
+
+    return {
+      success: true,
+      message: `Kund ${activeStatus ? 'aktiverad' : 'inaktiverad'} framgångsrikt`,
+      customerId: customerId,
+      email: customerData.email,
+      activeStatus: activeStatus,
+      authUpdateResult: authUpdateResult
+    };
+
+  } catch (error) {
+    console.error('Error in toggleCustomerActiveStatus:', error);
+    
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    
+    throw new functions.https.HttpsError('internal', `Kunde inte uppdatera kundstatus: ${error.message}`);
+  }
+});
