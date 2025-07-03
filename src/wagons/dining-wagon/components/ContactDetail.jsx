@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import AppLayout from '../../../components/layout/AppLayout';
+import UserBadge, { UserBadgeGroup } from '../../../components/UserBadge';
 import { useDiningContacts } from '../hooks/useDiningContacts';
 import { useDiningActivities } from '../hooks/useDiningActivities';
 import {
@@ -30,13 +31,163 @@ import toast from 'react-hot-toast';
 import { doc, updateDoc, Timestamp, collection, addDoc, orderBy, query, onSnapshot } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { useAuth } from '../../../contexts/AuthContext';
+import {
+  getAdminDocuments,
+  uploadAdminDocument,
+  deleteAdminDocument,
+  formatFileSize,
+  getFileType
+} from '../../../utils/adminDocuments';
+import {
+  ArrowLeftIcon as ArrowLeftIconOutline,
+  PencilIcon as PencilIconOutline,
+  TrashIcon,
+  GlobeAltIcon,
+  MapPinIcon,
+  UserIcon,
+  CalendarIcon,
+  ChatBubbleLeftRightIcon as ChatBubbleLeftRightIconOutline,
+  ClipboardDocumentListIcon,
+  FolderIcon,
+  CheckCircleIcon,
+  FireIcon,
+  BellIcon,
+  StarIcon,
+  DocumentArrowUpIcon,
+  PlusIcon,
+  XMarkIcon,
+  EyeIcon,
+  ArrowDownTrayIcon
+} from '@heroicons/react/24/outline';
+
+// Component to render text with highlighted mentions using consistent UserBadge
+const TextWithMentions = ({ text, className = "", adminUsers = [] }) => {
+  if (!text) return null;
+  
+  // Get all admin user full names for highlighting
+  const adminNames = adminUsers.map(user => user.fullName);
+  
+  // If no admin names to highlight, just return plain text
+  if (adminNames.length === 0) {
+    return <span className={className}>{text}</span>;
+  }
+  
+  // Create regex to match any admin full name
+  const namePattern = new RegExp(`(${adminNames.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'g');
+  const parts = text.split(namePattern);
+  
+  return (
+    <span className={className}>
+      {parts.map((part, index) => {
+                 // Check if this part is an admin name
+         if (adminNames.includes(part)) {
+           return (
+             <span
+               key={index}
+               className="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300"
+             >
+               {part}
+             </span>
+           );
+         }
+        return part;
+      })}
+    </span>
+  );
+};
+
+// ZEN Inline Activity Editor Component
+const InlineActivityEditor = ({ activity, onSave, onCancel, contactName }) => {
+  const [editData, setEditData] = useState({
+    subject: activity.subject || '',
+    description: activity.description || '',
+    tags: activity.tags || []
+  });
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!editData.subject.trim()) {
+      toast.error('Beskriv vad som hände');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await onSave(editData);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      handleSave();
+    } else if (e.key === 'Escape') {
+      onCancel();
+    }
+  };
+
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mt-2">
+      <div className="mb-2">
+        <label className="block text-xs font-medium text-gray-600 mb-1">
+          Vad är läget med {contactName}?
+        </label>
+        <input
+          type="text"
+          value={editData.subject}
+          onChange={(e) => setEditData(prev => ({ ...prev, subject: e.target.value }))}
+          onKeyDown={handleKeyDown}
+          placeholder="Beskriv vad som hände..."
+          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+          autoFocus
+        />
+      </div>
+
+      <div className="mb-2">
+        <label className="block text-xs font-medium text-gray-600 mb-1">
+          Detaljer (valfritt)
+        </label>
+        <textarea
+          value={editData.description}
+          onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
+          onKeyDown={handleKeyDown}
+          placeholder="Mer information..."
+          rows={2}
+          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+        />
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={handleSave}
+            disabled={saving || !editData.subject.trim()}
+            className="px-2 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white text-xs rounded transition-colors"
+          >
+            {saving ? 'Sparar...' : 'Spara'}
+          </button>
+          <button
+            onClick={onCancel}
+            className="px-2 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs rounded transition-colors"
+          >
+            Avbryt
+          </button>
+        </div>
+        <div className="text-xs text-gray-400">
+          Ctrl+Enter, Esc
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const ContactDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, userData, isAdmin } = useAuth();
+  const { currentUser, userData, isAdmin, getAllUsers } = useAuth();
   const { contacts, getContact, hasInitialized } = useDiningContacts();
-  const { getActivitiesByContact, addActivity } = useDiningActivities();
+  const { getActivitiesByContact, addActivity, updateActivity, deleteActivity } = useDiningActivities();
   
   const [contact, setContact] = useState(null);
   const [lastConversation, setLastConversation] = useState(null);
@@ -47,6 +198,9 @@ const ContactDetail = () => {
   });
   const [isSavingActivity, setIsSavingActivity] = useState(false);
   
+  // ZEN Inline Editing State
+  const [editingActivity, setEditingActivity] = useState(null);
+  
   // Tag system state
   const [suggestedTags, setSuggestedTags] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
@@ -54,8 +208,69 @@ const ContactDetail = () => {
   const [autocompleteOptions, setAutocompleteOptions] = useState([]);
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   
+  // @mention system state (admin-only)
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  const [mentionOptions, setMentionOptions] = useState([]);
+  const [mentionInputRef, setMentionInputRef] = useState(null);
+  const [adminUsers, setAdminUsers] = useState([]);
+  
   // Dismissed activities state for trigger management
   const [dismissedActivities, setDismissedActivities] = useState(new Set());
+
+  // Admin Documents state (ZEN integration)
+  const [adminDocuments, setAdminDocuments] = useState([]);
+  const [adminDocsLoading, setAdminDocsLoading] = useState(false);
+  const [showAdminDocUpload, setShowAdminDocUpload] = useState(false);
+  const [adminDocFile, setAdminDocFile] = useState(null);
+  const [adminDocCategory, setAdminDocCategory] = useState('dokument');
+  const [adminDocNotes, setAdminDocNotes] = useState('');
+  const [adminDocUploading, setAdminDocUploading] = useState(false);
+
+  // Load admin users dynamically for @mentions
+  useEffect(() => {
+    const loadAdminUsers = async () => {
+      try {
+        const allUsers = await getAllUsers();
+        const admins = allUsers.filter(user => user.role === 'admin');
+        
+        // Create mention-friendly usernames from names with deduplication
+        const adminMentions = [];
+        const usedUsernames = new Set();
+        
+        admins.forEach(admin => {
+          const name = admin.contactPerson || admin.companyName || admin.email;
+          const firstName = name.split(' ')[0].toLowerCase();
+          let username = firstName.substring(0, Math.min(4, firstName.length));
+          
+          // Make username unique if already used
+          let counter = 1;
+          let originalUsername = username;
+          while (usedUsernames.has(username)) {
+            username = originalUsername + counter;
+            counter++;
+          }
+          
+          usedUsernames.add(username);
+          
+          adminMentions.push({
+            username,
+            fullName: name,
+            trigger: `@${username.substring(0, 3)}`,
+            userId: admin.id,
+            email: admin.email
+          });
+        });
+        
+        setAdminUsers(adminMentions);
+      } catch (error) {
+        console.error('Error loading admin users:', error);
+      }
+    };
+    
+    if (isAdmin && getAllUsers) {
+      loadAdminUsers();
+    }
+  }, [isAdmin, getAllUsers]);
 
   // User helper functions
   const getInitials = (name) => {
@@ -72,18 +287,18 @@ const ContactDetail = () => {
 
   // Debug user data - remove this after fixing
   useEffect(() => {
-    if (user) {
+    if (currentUser) {
       console.log('🔍 Current user object:', {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
+        uid: currentUser.uid,
+        email: currentUser.email,
+        displayName: currentUser.displayName,
         userData: userData,
         isAdmin: isAdmin
       });
     }
-  }, [user, userData, isAdmin]);
+  }, [currentUser, userData, isAdmin]);
 
-  // User Attribution Component - very small text under tags
+  // User Attribution Component using centralized UserBadge
   const UserAttribution = ({ activity, isDismissed = false }) => {
     const creatorName = getUserDisplayName(activity);
     const resolverName = isDismissed && activity.dismissedByName ? activity.dismissedByName : null;
@@ -91,16 +306,28 @@ const ContactDetail = () => {
     const creatorTimestamp = activity.createdAt?.toDate?.()?.toLocaleString('sv-SE') || activity.date || 'Okänt datum';
     const resolverTimestamp = activity.dismissedAt?.toDate?.()?.toLocaleString('sv-SE') || null;
     
+    // Use centralized UserBadgeGroup for consistent styling
+    const users = [
+      {
+        name: creatorName,
+        tooltip: `Skapad: ${creatorTimestamp}`,
+        separator: resolverName ? '→' : null
+      }
+    ];
+    
+    if (resolverName) {
+      users.push({
+        name: resolverName,
+        tooltip: `Löst: ${resolverTimestamp}`
+      });
+    }
+    
     return (
-      <div className="text-xs text-gray-400 mt-1" style={{ fontSize: '10px' }}>
-        <span title={`Skapad: ${creatorTimestamp}`}>{creatorName}</span>
-        {resolverName && (
-          <>
-            <span className="mx-1">→</span>
-            <span title={`Löst: ${resolverTimestamp}`}>{resolverName}</span>
-          </>
-        )}
-      </div>
+      <UserBadgeGroup 
+        users={users}
+        size="sm"
+        className="mt-2"
+      />
     );
   };
 
@@ -186,7 +413,7 @@ const ContactDetail = () => {
     return dateTags;
   };
 
-  // Core Swedish business tag analysis
+  // Core Swedish business tag analysis (without @mention extraction)
   const analyzeTextForTags = (text) => {
     if (!text.trim()) return [];
     
@@ -212,7 +439,7 @@ const ContactDetail = () => {
     const dateTags = parseSwedishWeekdays(text);
     detected.push(...dateTags);
     
-    // Max 5 suggested tags to accommodate date tags
+    // Max 5 suggested tags for business keywords and dates
     return detected.slice(0, 5);
   };
 
@@ -357,12 +584,139 @@ const ContactDetail = () => {
     }
   }, [id, contacts, getContact, navigate, hasInitialized, getActivitiesByContact]);
 
+  // Load admin documents
+  useEffect(() => {
+    if (id) {
+      loadAdminDocuments();
+    }
+  }, [id]);
+
+  const loadAdminDocuments = async () => {
+    if (!id) return;
+    
+    setAdminDocsLoading(true);
+    try {
+      const docs = await getAdminDocuments(id);
+      setAdminDocuments(docs);
+    } catch (error) {
+      console.error('Error loading admin documents:', error);
+      toast.error('Kunde inte ladda admin-dokument');
+    } finally {
+      setAdminDocsLoading(false);
+    }
+  };
+
+  // Admin document upload
+  const handleAdminDocUpload = async () => {
+    if (!adminDocFile || !id) return;
+
+    setAdminDocUploading(true);
+    try {
+      await uploadAdminDocument(id, adminDocFile, {
+        category: adminDocCategory,
+        notes: adminDocNotes,
+        title: adminDocFile.name.split('.')[0]
+      }, currentUser?.uid);
+      
+      toast.success('Admin-dokument uppladdat');
+      setAdminDocFile(null);
+      setAdminDocCategory('dokument');
+      setAdminDocNotes('');
+      setShowAdminDocUpload(false);
+      await loadAdminDocuments();
+    } catch (error) {
+      console.error('Error uploading admin document:', error);
+      toast.error('Kunde inte ladda upp admin-dokument');
+    } finally {
+      setAdminDocUploading(false);
+    }
+  };
+
+  // Delete admin document
+  const handleDeleteAdminDoc = async (docId, fileName) => {
+    if (!confirm(`Är du säker på att du vill ta bort "${fileName}"?`)) return;
+
+    try {
+      await deleteAdminDocument(docId);
+      toast.success('Admin-dokument borttaget');
+      await loadAdminDocuments();
+    } catch (error) {
+      console.error('Error deleting admin document:', error);
+      toast.error('Kunde inte ta bort admin-dokument');
+    }
+  };
+
+  // Document categories for admin docs
+  const adminDocCategories = [
+    { id: 'dokument', name: 'Dokument' },
+    { id: 'kontrakt', name: 'Kontrakt' },
+    { id: 'förslag', name: 'Förslag' },
+    { id: 'faktura', name: 'Fakturor' },
+    { id: 'anteckningar', name: 'Anteckningar' },
+    { id: 'teknisk', name: 'Teknisk Info' },
+    { id: 'kommunikation', name: 'Kommunikation' },
+    { id: 'övrigt', name: 'Övrigt' }
+  ];
+
   // Handle activity form changes
+  // Available users for @mentions (admin-only) - now dynamic from database
+  const availableUsers = adminUsers;
+
+  // Handle @mention detection and autocomplete
+  const handleSubjectChange = (value) => {
+    setNewActivity(prev => ({ ...prev, subject: value }));
+    
+    // Only show @mentions for admins
+    if (!isAdmin) return;
+    
+    // Check for @mention trigger
+    const words = value.split(' ');
+    const lastWord = words[words.length - 1];
+    
+    if (lastWord.startsWith('@') && lastWord.length > 1) {
+      const query = lastWord.slice(1).toLowerCase();
+      const matches = availableUsers.filter(user => 
+        user.username.includes(query) || 
+        user.fullName.toLowerCase().includes(query) ||
+        user.trigger.slice(1).includes(query)
+      );
+      
+      if (matches.length > 0) {
+        setMentionOptions(matches);
+        setShowMentionDropdown(true);
+      } else {
+        setShowMentionDropdown(false);
+      }
+    } else {
+      setShowMentionDropdown(false);
+    }
+  };
+
+  // Insert @mention into subject
+  const insertMention = (user) => {
+    const words = newActivity.subject.split(' ');
+    // Insert the full name instead of @username for clean text storage
+    words[words.length - 1] = user.fullName;
+    const newSubject = words.join(' ') + ' ';
+    
+    setNewActivity(prev => ({ ...prev, subject: newSubject }));
+    setShowMentionDropdown(false);
+    
+    // Focus back to input
+    if (mentionInputRef) {
+      mentionInputRef.focus();
+    }
+  };
+
   const handleActivityChange = (field, value) => {
-    setNewActivity(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    if (field === 'subject') {
+      handleSubjectChange(value);
+    } else {
+      setNewActivity(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
   };
 
   // Save activity
@@ -465,6 +819,44 @@ const ContactDetail = () => {
 
   const conversationContext = getConversationContext();
 
+  // ZEN Inline Editing Functions
+  const handleEditActivity = (activity) => {
+    setEditingActivity(activity.id);
+  };
+
+  const handleSaveEdit = async (activityId, editData) => {
+    try {
+      await updateActivity(activityId, {
+        subject: editData.subject,
+        description: editData.description,
+        tags: editData.tags
+      });
+      setEditingActivity(null);
+      toast.success('🍽️ Aktivitet uppdaterad');
+    } catch (error) {
+      console.error('Error updating activity:', error);
+      toast.error('Kunde inte uppdatera aktivitet');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingActivity(null);
+  };
+
+  const handleDeleteActivity = async (activityId) => {
+    if (!window.confirm('Är du säker på att du vill ta bort denna aktivitet?')) {
+      return;
+    }
+
+    try {
+      await deleteActivity(activityId);
+      toast.success('🍽️ Aktivitet borttagen');
+    } catch (error) {
+      console.error('Error deleting activity:', error);
+      toast.error('Kunde inte ta bort aktivitet');
+    }
+  };
+
   if (!hasInitialized) {
     return (
       <AppLayout>
@@ -488,7 +880,7 @@ const ContactDetail = () => {
 
   return (
     <AppLayout>
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
         
         {/* Back Button */}
         <div className="mb-6">
@@ -554,6 +946,19 @@ const ContactDetail = () => {
                 <EnvelopeIcon className="h-5 w-5" />
                 <span>Maila</span>
               </a>
+              <button
+                onClick={() => setShowAdminDocUpload(true)}
+                className="flex items-center px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition-colors space-x-2"
+                title="Admin-dokument (endast synligt för administratörer)"
+              >
+                <DocumentArrowUpIcon className="h-5 w-5" />
+                <span>Dokument</span>
+                {adminDocuments.length > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {adminDocuments.length}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -591,11 +996,14 @@ const ContactDetail = () => {
                   };
                   
                   return (
-                    <div className={getActivityStyle(urgencyLevel, isDismissed)}>
+                    <div className={getActivityStyle(urgencyLevel, isDismissed)} style={{ position: 'relative' }}>
+                      {/* Date positioned horizontally with title */}
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center space-x-2 flex-1">
                           {getActivityIcon(lastConversation.type)}
-                          <p className="font-medium text-gray-900">{lastConversation.subject}</p>
+                          <div className="font-medium text-gray-900">
+                            <TextWithMentions text={lastConversation.subject} adminUsers={adminUsers} />
+                          </div>
                           
                           {/* Urgency indicators */}
                           {isUrgent && !isDismissed && (
@@ -625,10 +1033,71 @@ const ContactDetail = () => {
                           )}
                         </div>
                         
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-500">
-                            {lastConversation.createdAt?.toDate?.()?.toLocaleDateString('sv-SE') || lastConversation.date || 'Idag'}
-                          </span>
+                        {/* Date aligned with title */}
+                        <span className="text-sm text-gray-500 flex-shrink-0">
+                          {lastConversation.createdAt?.toDate?.()?.toLocaleDateString('sv-SE') || lastConversation.date || 'Idag'}
+                        </span>
+                      </div>
+                      
+                      {lastConversation.description && (
+                        <p className="text-gray-700 mt-2">{lastConversation.description}</p>
+                      )}
+                      
+                      {/* Bottom section with tags, user attribution, and buttons */}
+                      <div className="flex justify-between items-end mt-3">
+                        <div className="flex flex-col space-y-2">
+                                                      {/* Show tags if any */}
+                            {lastConversation.tags && lastConversation.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {lastConversation.tags
+                                  .filter(tag => !tag.startsWith('@')) // Filter out @mention tags
+                                  .map(tag => {
+                                  // Only show business tags (no @mentions as tags)
+                                  return (
+                                    <span
+                                      key={tag}
+                                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                        tag === 'akut' ? 'bg-red-100 text-red-800' :
+                                        tag === 'problem' ? 'bg-orange-100 text-orange-800' :
+                                        'bg-gray-100 text-gray-800'
+                                      }`}
+                                    >
+                                      #{tag}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          
+                          {/* User Attribution pill */}
+                          <UserAttribution activity={lastConversation} isDismissed={isDismissed} />
+                        </div>
+                        
+                        {/* Action buttons aligned with bottom */}
+                        <div className="flex flex-col space-y-1">
+                          {/* ZEN Inline Edit Button */}
+                          {!isDismissed && (
+                            <button
+                              onClick={() => handleEditActivity(lastConversation)}
+                              className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 bg-white hover:bg-blue-50 border border-blue-300 rounded transition-colors"
+                              title="Redigera aktivitet"
+                            >
+                              <PencilIcon className="h-3 w-3 mr-1" />
+                              Redigera
+                            </button>
+                          )}
+                          
+                          {/* Delete Button */}
+                          {!isDismissed && (
+                            <button
+                              onClick={() => handleDeleteActivity(lastConversation.id)}
+                              className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 hover:text-red-800 bg-white hover:bg-red-50 border border-red-300 rounded transition-colors"
+                              title="Ta bort aktivitet"
+                            >
+                              <TrashIcon className="h-3 w-3 mr-1" />
+                              Ta bort
+                            </button>
+                          )}
                           
                           {/* Dismiss button for urgent activities */}
                           {isUrgent && !isDismissed && (
@@ -644,30 +1113,15 @@ const ContactDetail = () => {
                         </div>
                       </div>
                       
-                      {lastConversation.description && (
-                        <p className="text-gray-700 mt-2">{lastConversation.description}</p>
+                      {/* ZEN Inline Editor */}
+                      {editingActivity === lastConversation.id && (
+                        <InlineActivityEditor
+                          activity={lastConversation}
+                          onSave={(editData) => handleSaveEdit(lastConversation.id, editData)}
+                          onCancel={handleCancelEdit}
+                          contactName={contact.companyName}
+                        />
                       )}
-                      
-                      {/* Show tags if any */}
-                      {lastConversation.tags && lastConversation.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {lastConversation.tags.map(tag => (
-                            <span
-                              key={tag}
-                              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                                tag === 'akut' ? 'bg-red-100 text-red-800' :
-                                tag === 'problem' ? 'bg-orange-100 text-orange-800' :
-                                'bg-gray-100 text-gray-800'
-                              }`}
-                            >
-                              #{tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      
-                      {/* User Attribution - very small under tags */}
-                      <UserAttribution activity={lastConversation} isDismissed={isDismissed} />
                     </div>
                   );
                 })()}
@@ -762,11 +1216,12 @@ const ContactDetail = () => {
                         {getActivityIcon(activity.type)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
+                        {/* Date aligned with title */}
+                        <div className="flex justify-between items-start mb-1">
                           <div className="flex items-center space-x-2 flex-1">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {activity.subject || activity.notes}
-                            </p>
+                            <div className="text-sm font-medium text-gray-900 truncate">
+                              <TextWithMentions text={activity.subject || activity.notes} adminUsers={adminUsers} />
+                            </div>
                             
                             {/* Urgency indicators */}
                             {isUrgent && !isDismissed && (
@@ -796,10 +1251,71 @@ const ContactDetail = () => {
                             )}
                           </div>
                           
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs text-gray-500 flex-shrink-0">
-                              {activity.createdAt?.toDate?.()?.toLocaleDateString('sv-SE') || activity.date || 'Idag'}
-                            </span>
+                          {/* Date aligned with title */}
+                          <span className="text-xs text-gray-500 flex-shrink-0">
+                            {activity.createdAt?.toDate?.()?.toLocaleDateString('sv-SE') || activity.date || 'Idag'}
+                          </span>
+                        </div>
+                        
+                        {activity.description && (
+                          <p className="text-sm text-gray-600 mt-1 line-clamp-1">
+                            {activity.description}
+                          </p>
+                        )}
+                        
+                        {/* Bottom section with tags, user attribution, and buttons */}
+                        <div className="flex justify-between items-end mt-2">
+                          <div className="flex flex-col space-y-1">
+                            {/* Show tags if any */}
+                            {activity.tags && activity.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {activity.tags
+                                  .filter(tag => !tag.startsWith('@')) // Filter out @mention tags
+                                  .map(tag => {
+                                  // Only show business tags (no @mentions as tags)
+                                  return (
+                                    <span
+                                      key={tag}
+                                      className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${
+                                        tag === 'akut' ? 'bg-red-100 text-red-800' :
+                                        tag === 'problem' ? 'bg-orange-100 text-orange-800' :
+                                        'bg-gray-100 text-gray-800'
+                                      }`}
+                                    >
+                                      #{tag}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            
+                            {/* User Attribution pill */}
+                            <UserAttribution activity={activity} isDismissed={isDismissed} />
+                          </div>
+                          
+                          {/* Action buttons aligned with bottom */}
+                          <div className="flex flex-col space-y-1">
+                            {/* ZEN Edit Button */}
+                            {!isDismissed && (
+                              <button
+                                onClick={() => handleEditActivity(activity)}
+                                className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium text-blue-600 hover:text-blue-800 bg-white hover:bg-blue-50 border border-blue-300 rounded transition-colors"
+                                title="Redigera"
+                              >
+                                <PencilIcon className="h-3 w-3" />
+                              </button>
+                            )}
+                            
+                            {/* Delete Button */}
+                            {!isDismissed && (
+                              <button
+                                onClick={() => handleDeleteActivity(activity.id)}
+                                className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium text-red-600 hover:text-red-800 bg-white hover:bg-red-50 border border-red-300 rounded transition-colors"
+                                title="Ta bort"
+                              >
+                                <TrashIcon className="h-3 w-3" />
+                              </button>
+                            )}
                             
                             {/* Dismiss button for urgent activities */}
                             {isUrgent && !isDismissed && (
@@ -815,32 +1331,17 @@ const ContactDetail = () => {
                           </div>
                         </div>
                         
-                        {activity.description && (
-                          <p className="text-sm text-gray-600 mt-1 line-clamp-1">
-                            {activity.description}
-                          </p>
-                        )}
-                        
-                        {/* Show tags if any */}
-                        {activity.tags && activity.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {activity.tags.map(tag => (
-                              <span
-                                key={tag}
-                                className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${
-                                  tag === 'akut' ? 'bg-red-100 text-red-800' :
-                                  tag === 'problem' ? 'bg-orange-100 text-orange-800' :
-                                  'bg-gray-100 text-gray-800'
-                                }`}
-                              >
-                                #{tag}
-                              </span>
-                            ))}
+                        {/* ZEN Inline Editor */}
+                        {editingActivity === activity.id && (
+                          <div className="mt-2">
+                            <InlineActivityEditor
+                              activity={activity}
+                              onSave={(editData) => handleSaveEdit(activity.id, editData)}
+                              onCancel={handleCancelEdit}
+                              contactName={contact.companyName}
+                            />
                           </div>
                         )}
-                        
-                        {/* User Attribution - very small under tags */}
-                        <UserAttribution activity={activity} isDismissed={isDismissed} />
                       </div>
                     </div>
                   );
@@ -889,19 +1390,54 @@ const ContactDetail = () => {
             </div>
           </div>
 
-          {/* Subject/Summary */}
-          <div className="mb-4">
+          {/* Subject/Summary with @mention support */}
+          <div className="mb-4 relative">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Vad hände? (sammanfattning)
+              {isAdmin && (
+                <span className="text-xs text-gray-500 ml-2">• Skriv @mic, @ken, @adm för att tagga kollegor</span>
+              )}
             </label>
             
             <input
+              ref={setMentionInputRef}
               type="text"
               value={newActivity.subject}
               onChange={(e) => handleActivityChange('subject', e.target.value)}
-              placeholder="T.ex. 'Intresserad av fler röda', 'Skickade prisförslag', 'Bekräftade leverans'..."
+              onKeyDown={(e) => {
+                if (showMentionDropdown) {
+                  if (e.key === 'Tab' || e.key === 'Enter') {
+                    e.preventDefault();
+                    if (mentionOptions.length > 0) {
+                      insertMention(mentionOptions[0]);
+                    }
+                  } else if (e.key === 'Escape') {
+                    setShowMentionDropdown(false);
+                  }
+                }
+              }}
+              placeholder="T.ex. 'Intresserad av fler röda', 'Skickade prisförslag @micke', 'Bekräftade leverans'..."
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
+            
+            {/* @mention dropdown */}
+            {isAdmin && showMentionDropdown && mentionOptions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-32 overflow-y-auto">
+                {mentionOptions.map((user, index) => (
+                  <button
+                    key={user.username}
+                    onClick={() => insertMention(user)}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center border-b border-gray-100 last:border-b-0"
+                  >
+                    <UserBadge userName={user.fullName} size="sm" className="mr-2 me-0" />
+                    <span className="text-gray-600 text-xs">@{user.username}</span>
+                  </button>
+                ))}
+                <div className="px-3 py-1 text-xs text-gray-400 bg-gray-50">
+                  Tab eller Enter för att välja
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Tag System - Between Subject and Description */}
@@ -1008,6 +1544,8 @@ const ContactDetail = () => {
             </p>
           </div>
 
+
+
           {/* Description (Optional) */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1037,6 +1575,164 @@ const ContactDetail = () => {
             Registrera alla typer av kontakt så du får en komplett historik över era interaktioner
           </p>
         </div>
+
+        {/* Admin Document Modal */}
+        {showAdminDocUpload && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-orange-600 to-red-600 text-white p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <FolderIcon className="h-8 w-8" />
+                    <div>
+                      <h2 className="text-2xl font-bold">Admin-dokument</h2>
+                      <p className="text-orange-100">{contact.companyName}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowAdminDocUpload(false)}
+                    className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-colors"
+                  >
+                    <XMarkIcon className="h-6 w-6" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 max-h-[calc(90vh-140px)] overflow-y-auto">
+                
+                {/* Upload Section */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Ladda upp dokument</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Kategori
+                      </label>
+                      <select
+                        value={adminDocCategory}
+                        onChange={(e) => setAdminDocCategory(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      >
+                        {adminDocCategories.map(cat => (
+                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Anteckningar (valfritt)
+                      </label>
+                      <textarea
+                        value={adminDocNotes}
+                        onChange={(e) => setAdminDocNotes(e.target.value)}
+                        rows={2}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholder="Interna anteckningar om dokumentet..."
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Fil
+                      </label>
+                      <input
+                        type="file"
+                        onChange={(e) => setAdminDocFile(e.target.files[0])}
+                        accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.webp,.svg"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                      {adminDocFile && (
+                        <p className="mt-1 text-sm text-gray-600">
+                          Vald fil: {adminDocFile.name} ({formatFileSize(adminDocFile.size)})
+                        </p>
+                      )}
+                    </div>
+                    
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        onClick={() => setShowAdminDocUpload(false)}
+                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        Avbryt
+                      </button>
+                      <button
+                        onClick={handleAdminDocUpload}
+                        disabled={!adminDocFile || adminDocUploading}
+                        className="px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 text-white rounded-lg transition-colors"
+                      >
+                        {adminDocUploading ? 'Laddar upp...' : 'Ladda upp'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Documents List */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Befintliga dokument ({adminDocuments.length})
+                  </h3>
+                  
+                  {adminDocsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-600"></div>
+                      <span className="ml-3 text-gray-600">Laddar dokument...</span>
+                    </div>
+                  ) : adminDocuments.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <FolderIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                      <p>Inga admin-dokument uppladdade än</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {adminDocuments.map((doc) => (
+                        <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <DocumentTextIcon className="h-6 w-6 text-blue-600" />
+                            <div>
+                              <p className="font-medium text-gray-900">{doc.fileName}</p>
+                              <p className="text-sm text-gray-600">
+                                {doc.category} • {formatFileSize(doc.fileSize)}
+                              </p>
+                              {doc.notes && (
+                                <p className="text-xs text-gray-500 mt-1">{doc.notes}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => window.open(doc.downloadUrl, '_blank')}
+                              className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors"
+                              title="Visa"
+                            >
+                              <EyeIcon className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => window.open(doc.downloadUrl, '_blank')}
+                              className="text-green-600 hover:bg-green-50 p-2 rounded-lg transition-colors"
+                              title="Ladda ner"
+                            >
+                              <ArrowDownTrayIcon className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAdminDoc(doc.id, doc.fileName)}
+                              className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                              title="Ta bort"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </AppLayout>

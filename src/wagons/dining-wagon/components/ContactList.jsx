@@ -267,30 +267,21 @@ const ContactList = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Gäst
+                  <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Gäst & Kontakt
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Kontakt
+                  <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status & Land
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Land
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Senast uppdaterad
-                  </th>
-                  <th className="relative px-6 py-3">
-                    <span className="sr-only">Åtgärder</span>
+                  <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Åtgärder
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredContacts.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan="3" className="px-4 md:px-6 py-12 text-center text-gray-500">
                       <UserGroupIcon className="mx-auto h-12 w-12 text-gray-300 mb-4" />
                       <p className="text-lg font-medium">Inga gäster hittades</p>
                       <p className="text-sm">Prova att justera dina sökfilter eller lägg till en ny gäst</p>
@@ -299,58 +290,70 @@ const ContactList = () => {
                 ) : (
                   filteredContacts.map((contact) => (
                     <tr key={contact.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          {getPriorityIcon(contact.priority)}
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-gray-900">
-                              {contact.companyName}
+                      {/* Column 1: Guest & Contact */}
+                      <td className="px-4 md:px-6 py-4">
+                        <div className="flex items-start">
+                          <div className="flex-shrink-0 h-12 w-12 mr-4">
+                            <div className="h-12 w-12 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full flex items-center justify-center">
+                              <span className="text-sm font-medium text-orange-800">
+                                {(contact.companyName || contact.contactPerson || 'G').charAt(0).toUpperCase()}
+                              </span>
                             </div>
-                            <div className="text-sm text-gray-500">
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              {getPriorityIcon(contact.priority)}
+                              <div className="text-sm font-medium text-gray-900">
+                                {contact.companyName}
+                              </div>
+                            </div>
+                            <div className="text-sm text-gray-600 mb-1">
                               {contact.contactPerson}
+                            </div>
+                            <div className="space-y-1">
+                              {contact.email && (
+                                <div className="flex items-center text-xs text-gray-500">
+                                  <EnvelopeIcon className="h-3 w-3 mr-1" />
+                                  {contact.email}
+                                </div>
+                              )}
+                              {(contact.phone || contact.phoneNumber) && (
+                                <div className="flex items-center text-xs text-gray-500">
+                                  <PhoneIcon className="h-3 w-3 mr-1" />
+                                  {contact.phone || contact.phoneNumber}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="space-y-1">
-                          {contact.email && (
-                            <div className="flex items-center text-sm text-gray-600">
-                              <EnvelopeIcon className="h-4 w-4 mr-2" />
-                              {contact.email}
-                            </div>
-                          )}
-                          {(contact.phone || contact.phoneNumber) && (
-                            <div className="flex items-center text-sm text-gray-600">
-                              <PhoneIcon className="h-4 w-4 mr-2" />
-                              {contact.phone || contact.phoneNumber}
-                            </div>
-                          )}
+
+                      {/* Column 2: Status & Country */}
+                      <td className="px-4 md:px-6 py-4">
+                        <div className="space-y-2">
+                          {getStatusBadge(contact.status)}
+                          <div className="flex items-center text-sm text-gray-600">
+                            <GlobeAltIcon className="h-4 w-4 mr-2" />
+                            {contact.country || 'Ej angivet'}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Uppdaterad: {contact.updatedAt?.toDate?.()?.toLocaleDateString('sv-SE') || 'Okänt'}
+                          </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(contact.status)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <GlobeAltIcon className="h-4 w-4 mr-2" />
-                          {contact.country || 'Ej angivet'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {contact.updatedAt?.toDate?.()?.toLocaleDateString('sv-SE') || 'Okänt'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center space-x-2">
+
+                      {/* Column 3: Actions */}
+                      <td className="px-4 md:px-6 py-4 text-right">
+                        <div className="flex items-center justify-end space-x-2">
                           <Link
                             to={`/admin/dining/contacts/${contact.id}`}
-                            className="text-orange-600 hover:text-orange-900 font-medium"
+                            className="text-orange-600 hover:text-orange-900 font-medium text-sm"
                           >
                             Visa
                           </Link>
                           <button
                             onClick={() => handleDeleteContact(contact.id, contact.companyName)}
-                            className="text-red-600 hover:text-red-900 font-medium"
+                            className="text-red-600 hover:text-red-900 font-medium text-sm"
                           >
                             Ta bort
                           </button>

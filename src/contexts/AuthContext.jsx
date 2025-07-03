@@ -21,6 +21,7 @@ import {
 import { httpsCallable } from 'firebase/functions';
 import { auth, db, isDemoMode, functions } from '../firebase/config';
 import toast from 'react-hot-toast';
+import { onNewB2BCustomer } from '../wagons/dining-wagon/utils/customerStatusAutomation';
 
 const AuthContext = createContext();
 
@@ -539,7 +540,12 @@ export function AuthProvider({ children }) {
         // Create user document in Firestore
         await setDoc(doc(db, 'users', newUserId), userProfile);
 
-        // CRM sync no longer needed - using unified users collection
+        // ZEN Automation: Trigger automatic status detection
+        try {
+          await onNewB2BCustomer(newUserId);
+        } catch (automationError) {
+          console.error('Automation error (non-critical):', automationError);
+        }
 
         return { uid: newUserId, email };
       }

@@ -76,7 +76,23 @@ export const useDiningContacts = () => {
             };
           })
           .filter(contact => contact.role !== 'admin') // Filter out admins in memory
-          .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()); // Sort by updatedAt desc
+          .sort((a, b) => {
+            try {
+              // Safe sorting with fallback dates
+              const aTime = a.updatedAt instanceof Date ? a.updatedAt.getTime() : new Date().getTime();
+              const bTime = b.updatedAt instanceof Date ? b.updatedAt.getTime() : new Date().getTime();
+              
+              // Additional safety check
+              if (isNaN(aTime) || isNaN(bTime)) {
+                return 0;
+              }
+              
+              return bTime - aTime;
+            } catch (error) {
+              console.warn('Contact sort error:', error);
+              return 0;
+            }
+          }); // Sort by updatedAt desc
         
         console.log('🍽️ Total contacts loaded (excluding admins):', contactsData.length);
         setContacts(contactsData);

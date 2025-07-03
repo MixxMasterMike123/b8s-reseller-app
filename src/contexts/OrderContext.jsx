@@ -18,6 +18,7 @@ import {
 import { db, isDemoMode } from '../firebase/config';
 import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
+import { onOrderCompleted } from '../wagons/dining-wagon/utils/customerStatusAutomation';
 
 // Create context
 const OrderContext = createContext();
@@ -667,6 +668,21 @@ export const OrderProvider = ({ children }) => {
         } catch (emailError) {
           console.error('Error sending status update emails:', emailError);
           // Don't fail the status update if email fails
+        }
+        
+        // ZEN Automation: Trigger customer status update on order completion
+        if (['delivered', 'shipped', 'completed'].includes(newStatus)) {
+          try {
+            await onOrderCompleted({ 
+              ...orderData, 
+              ...additionalData, 
+              status: newStatus,
+              userId: orderData.userId,
+              totalAmount: orderData.totalAmount || orderData.total
+            });
+          } catch (automationError) {
+            console.error('Order automation error (non-critical):', automationError);
+          }
         }
         
         toast.success(`Order status updated to ${newStatus}`);

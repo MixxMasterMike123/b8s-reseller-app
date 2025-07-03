@@ -76,7 +76,12 @@ const DiningDashboard = () => {
             createdAt: safeTimestamp(data.createdAt),
             returnTime: safeTimestamp(data.returnTime),
           };
-        }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Sort in memory
+        }).sort((a, b) => {
+          // Safe sorting with fallback dates
+          const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : new Date().getTime();
+          const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : new Date().getTime();
+          return bTime - aTime;
+        }); // Sort in memory
         
         setDeferredActivities(deferred);
       },
@@ -292,7 +297,21 @@ const DiningDashboard = () => {
     const contactTriggers = contacts.map(contact => {
       const contactActivities = activities
         .filter(activity => activity.contactId === contact.id)
-        .sort((a, b) => (b.createdAt?.toDate?.() || new Date(b.date)) - (a.createdAt?.toDate?.() || new Date(a.date)));
+        .sort((a, b) => {
+          try {
+            const aDate = a.createdAt?.toDate?.() || (a.date ? new Date(a.date) : new Date());
+            const bDate = b.createdAt?.toDate?.() || (b.date ? new Date(b.date) : new Date());
+            
+            // Ensure valid dates
+            const aTime = isNaN(aDate.getTime()) ? new Date().getTime() : aDate.getTime();
+            const bTime = isNaN(bDate.getTime()) ? new Date().getTime() : bDate.getTime();
+            
+            return bTime - aTime;
+          } catch (error) {
+            console.warn('Sort error:', error);
+            return 0;
+          }
+        });
       
       const triggerData = calculateTriggerScore(contact, contactActivities);
       
@@ -369,14 +388,38 @@ const DiningDashboard = () => {
   const getRecentConversations = () => {
     const recentActivities = activities
       .filter(activity => activity.type === 'call' || activity.type === 'meeting' || activity.type === 'email')
-      .sort((a, b) => (b.createdAt?.toDate?.() || new Date(b.date)) - (a.createdAt?.toDate?.() || new Date(a.date)))
+      .sort((a, b) => {
+        try {
+          const aDate = a.createdAt?.toDate?.() || (a.date ? new Date(a.date) : new Date());
+          const bDate = b.createdAt?.toDate?.() || (b.date ? new Date(b.date) : new Date());
+          
+          // Ensure valid dates
+          const aTime = isNaN(aDate.getTime()) ? new Date().getTime() : aDate.getTime();
+          const bTime = isNaN(bDate.getTime()) ? new Date().getTime() : bDate.getTime();
+          
+          return bTime - aTime;
+        } catch (error) {
+          console.warn('Sort error:', error);
+          return 0;
+        }
+      })
       .slice(0, 5);
 
     return recentActivities.map(activity => {
       const contact = contacts.find(c => c.id === activity.contactId);
-      const activityDate = activity.createdAt?.toDate?.() || new Date(activity.date);
+      let activityDate;
+      try {
+        activityDate = activity.createdAt?.toDate?.() || (activity.date ? new Date(activity.date) : new Date());
+        if (isNaN(activityDate.getTime())) {
+          activityDate = new Date();
+        }
+      } catch (error) {
+        console.warn('Invalid activity date:', activity, error);
+        activityDate = new Date();
+      }
+      
       const now = new Date();
-      const diffTime = Math.abs(now - activityDate);
+      const diffTime = Math.abs(now.getTime() - activityDate.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       
       let when;
