@@ -585,7 +585,7 @@ export const OrderProvider = ({ children }) => {
           from: previousStatus,
           to: newStatus,
           changedBy: currentUser.uid,
-          changedAt: new Date().toISOString(),
+          changedAt: serverTimestamp(),
           displayName: currentUser.displayName || 'Admin User'
         };
         
@@ -597,7 +597,10 @@ export const OrderProvider = ({ children }) => {
                   ...order, 
                   status: newStatus, 
                   updatedAt: new Date().toISOString(),
-                  statusHistory: [...(order.statusHistory || []), statusChange],
+                  statusHistory: [...(order.statusHistory || []), {
+                    ...statusChange,
+                    changedAt: new Date().toISOString() // Convert to ISO string for demo mode
+                  }],
                   ...additionalData // Include tracking number, carrier, admin notes, etc.
                 } 
               : order
@@ -618,13 +621,12 @@ export const OrderProvider = ({ children }) => {
         const orderData = orderDoc.data();
         const previousStatus = orderData.status || 'unknown';
         
-        // Create status history entry with regular timestamp instead of serverTimestamp
-        const now = new Date();
+        // Create status history entry with Firestore Timestamp instead of Date
         const statusChange = {
           from: previousStatus,
           to: newStatus,
           changedBy: currentUser.uid,
-          changedAt: now,
+          changedAt: serverTimestamp(),
           displayName: currentUser.displayName || currentUser.email || 'Admin User'
         };
         
