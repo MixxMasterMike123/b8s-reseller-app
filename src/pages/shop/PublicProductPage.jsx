@@ -46,13 +46,11 @@ const PublicProductPage = () => {
       // Find products matching the slug
       let productsQuery;
       if (slug === '3pack') {
-        // For 3-pack, find multipack products
+        // For 3-pack, find multipack products by checking if name contains "3-pack"
         productsQuery = query(
           collection(db, 'products'),
           where('isActive', '==', true),
-          where('availability.b2c', '==', true),
-          where('name', '>=', 'B8Shield™ – Vasskydd 3-pack'),
-          where('name', '<=', 'B8Shield™ – Vasskydd 3-pack\uf8ff')
+          where('availability.b2c', '==', true)
         );
       } else {
         // For individual products, find by color
@@ -66,13 +64,28 @@ const PublicProductPage = () => {
       
       const productsSnapshot = await getDocs(productsQuery);
       
-      if (productsSnapshot.empty) {
+      let filteredProducts = [];
+      productsSnapshot.forEach((doc) => {
+        const productData = { id: doc.id, ...doc.data() };
+        
+        if (slug === '3pack') {
+          // For 3-pack, filter products that contain "3-pack" in the name
+          if (productData.name && productData.name.includes('3-pack')) {
+            filteredProducts.push(productData);
+          }
+        } else {
+          // For individual products, all products match the color query
+          filteredProducts.push(productData);
+        }
+      });
+      
+      if (filteredProducts.length === 0) {
         toast.error('Produkten hittades inte');
         return;
       }
       
       // Get the first product as the main product
-      const mainProduct = { id: productsSnapshot.docs[0].id, ...productsSnapshot.docs[0].data() };
+      const mainProduct = filteredProducts[0];
       setProduct(mainProduct);
       
       // Use the group field to find all variants in the same group
