@@ -206,46 +206,48 @@ const PublicProductPage = () => {
         <ShopNavigation breadcrumb={currentProduct.name} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+          <div className="flex flex-col lg:flex-row gap-16">
             {/* Product Images */}
-            <div className="flex gap-4 sticky top-8">
-              {/* Thumbnail Images - Left Side */}
-              {productImages.length > 1 && (
-                <div className="flex flex-col gap-2 w-20">
-                  {productImages.map((image, index) => (
-                    <button
-                      key={index}
-                      onMouseEnter={() => setActiveImageIndex(index)}
-                      className={`aspect-square bg-gray-50 rounded-md overflow-hidden border-2 transition-all ${
-                        activeImageIndex === index 
-                          ? 'border-black' 
-                          : 'border-transparent hover:border-gray-300'
-                      }`}
-                    >
-                      <img
-                        src={image}
-                        alt={`${currentProduct.name} ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
-              
-              {/* Main Image */}
-              <div className="flex-1">
-                <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden">
-                  <img
-                    src={productImages[activeImageIndex]}
-                    alt={currentProduct.name}
-                    className="w-full h-full object-cover"
-                  />
+            <div className="lg:w-1/2">
+              <div className="flex gap-4 sticky top-24">
+                {/* Thumbnail Images - Left Side */}
+                {productImages.length > 1 && (
+                  <div className="flex flex-col gap-2 w-20">
+                    {productImages.map((image, index) => (
+                      <button
+                        key={index}
+                        onMouseEnter={() => setActiveImageIndex(index)}
+                        className={`aspect-square bg-gray-50 rounded-md overflow-hidden border-2 transition-all ${
+                          activeImageIndex === index 
+                            ? 'border-black' 
+                            : 'border-transparent hover:border-gray-300'
+                        }`}
+                      >
+                        <img
+                          src={image}
+                          alt={`${currentProduct.name} ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Main Image */}
+                <div className="flex-1">
+                  <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden">
+                    <img
+                      src={productImages[activeImageIndex]}
+                      alt={currentProduct.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Product Details */}
-            <div className="space-y-8">
+            <div className="lg:w-1/2 space-y-8">
               {/* Product Title */}
               <div>
                 <h1 className="text-3xl font-medium text-gray-900 mb-2">
