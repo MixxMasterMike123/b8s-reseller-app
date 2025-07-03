@@ -491,16 +491,16 @@ const DiningDashboard = () => {
                       <div className="flex items-center space-x-2 ml-4">
                         <style.IconComponent className={`h-6 w-6 ${style.iconColor}`} />
                         
-                        {/* Strategic timing button for non-critical relationships */}
-                        {!isCritical && (
-                          <button
-                            onClick={() => handleDeferContact(followUp.id, followUp.urgency)}
-                            className="text-xs text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors"
-                            title="Strategisk timing - kontakten återkommer automatiskt vid optimal tidpunkt"
-                          >
-                            Optimal timing
-                          </button>
-                        )}
+                                              {/* Individual defer button for non-critical activities */}
+                      {!isCritical && (
+                        <button
+                          onClick={() => handleDeferContact(followUp.id, followUp.urgency)}
+                          className="text-xs text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors"
+                          title="Hantera senare - aktiviteten återkommer automatiskt vid bättre tillfälle"
+                        >
+                          Senare
+                        </button>
+                      )}
                       </div>
                     </div>
                   </div>
@@ -512,35 +512,40 @@ const DiningDashboard = () => {
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   {availableTriggers.length > 3 && (
                     <div className="mb-4">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Övriga kontakter som behöver uppföljning:</h4>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Övriga aktiviteter som behöver uppföljning:</h4>
                       <div className="space-y-1 mb-3">
                         {availableTriggers.slice(3).map(trigger => (
                           <div key={trigger.id} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
-                            <span>
+                            <Link
+                              to={`/admin/dining/contacts/${trigger.id}`}
+                              className="flex-1 hover:bg-gray-100 rounded p-1 -m-1"
+                            >
                               <span className="font-medium">{trigger.name}</span> • {trigger.reason}
-                            </span>
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                              trigger.urgency === 'critical' ? 'bg-red-100 text-red-800' :
-                              trigger.urgency === 'high' ? 'bg-orange-100 text-orange-700' :
-                              trigger.urgency === 'medium' ? 'bg-blue-100 text-blue-700' :
-                              'bg-gray-100 text-gray-700'
-                            }`}>
-                              {trigger.urgency === 'critical' ? 'Kritisk' :
-                               trigger.urgency === 'high' ? 'Hög' : 
-                               trigger.urgency === 'medium' ? 'Medium' : 'Låg'}
-                            </span>
+                            </Link>
+                            <div className="flex items-center space-x-2 ml-2">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                trigger.urgency === 'critical' ? 'bg-red-100 text-red-800' :
+                                trigger.urgency === 'high' ? 'bg-orange-100 text-orange-700' :
+                                trigger.urgency === 'medium' ? 'bg-blue-100 text-blue-700' :
+                                'bg-gray-100 text-gray-700'
+                              }`}>
+                                {trigger.urgency === 'critical' ? 'Kritisk' :
+                                 trigger.urgency === 'high' ? 'Hög' : 
+                                 trigger.urgency === 'medium' ? 'Medium' : 'Låg'}
+                              </span>
+                              {trigger.urgency !== 'critical' && (
+                                <button
+                                  onClick={() => handleDeferContact(trigger.id, trigger.urgency)}
+                                  className="text-xs text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors"
+                                  title="Hantera senare - aktiviteten återkommer automatiskt vid bättre tillfälle"
+                                >
+                                  Senare
+                                </button>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
-                      <button
-                        onClick={() => {
-                          // Set strategic timing for additional available items
-                          availableTriggers.slice(3).forEach(trigger => handleDeferContact(trigger.id, trigger.urgency));
-                        }}
-                        className="w-full text-center py-2 text-sm text-gray-600 hover:text-gray-800 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors mb-2"
-                      >
-                        Sätt strategisk timing för dessa {availableTriggers.length - 3} kontakter
-                      </button>
                     </div>
                   )}
                   
@@ -549,17 +554,17 @@ const DiningDashboard = () => {
                       onClick={() => setShowDeferred(!showDeferred)}
                       className="w-full text-center py-2 text-sm text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
                     >
-                      {showDeferred ? 'Dölj' : 'Visa'} strategisk timing ({deferredTriggers.length})
+                      {showDeferred ? 'Dölj' : 'Visa'} uppskjutna aktiviteter ({deferredTriggers.length})
                     </button>
                   )}
                  </div>
                )}
                
-               {/* Show strategically timed contacts when expanded */}
+               {/* Show deferred activities when expanded */}
                {showDeferred && deferredTriggers.length > 0 && (
                  <div className="mt-4 space-y-2 bg-blue-50 rounded-lg p-4">
-                   <h4 className="text-sm font-medium text-gray-700 mb-2">Strategisk timing - återkommer automatiskt</h4>
-                   <p className="text-xs text-gray-600 mb-3">Dessa kontakter återkommer automatiskt vid optimal tidpunkt baserat på urgency och aktivitet.</p>
+                   <h4 className="text-sm font-medium text-gray-700 mb-2">Uppskjutna aktiviteter - återkommer automatiskt</h4>
+                   <p className="text-xs text-gray-600 mb-3">Dessa aktiviteter återkommer automatiskt vid bättre tillfälle baserat på prioritet och aktivitet.</p>
                    {deferredTriggers.map(followUp => {
                      const deferInfo = deferredContacts.get(followUp.id);
                      const timeSinceDefer = deferInfo ? Math.floor((new Date() - deferInfo.timestamp) / (1000 * 60 * 60)) : 0;
@@ -573,15 +578,15 @@ const DiningDashboard = () => {
                            <div className="font-medium text-gray-900">{followUp.name}</div>
                            <div className="text-xs text-gray-500">{followUp.reason}</div>
                            <div className="text-xs text-blue-600 mt-1">
-                             Optimal timing sedan {timeSinceDefer}h • Återkommer automatiskt
+                             Uppskjuten sedan {timeSinceDefer}h • Återkommer automatiskt vid bättre tillfälle
                            </div>
                          </Link>
                          <button
                            onClick={() => handleUndeferContact(followUp.id)}
                            className="text-xs text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded transition-colors ml-2"
-                           title="Prioritera nu istället för automatisk timing"
+                           title="Ta upp aktiviteten nu istället för att vänta"
                          >
-                           Prioritera nu
+                           Ta upp nu
                          </button>
                        </div>
                      );
