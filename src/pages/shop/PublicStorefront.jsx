@@ -164,11 +164,12 @@ const PublicStorefront = () => {
 
   // Get the best available image for B2C display
   const getB2cProductImage = (product) => {
-    // Priority: B2C main image > B2C gallery first image > B2B image > legacy Firebase Storage image > generated image
+    // Priority: B2C main image > B2C gallery first image > generated image
+    // NOTE: Do NOT fall back to B2B images in the consumer shop!
     if (product.b2cImageUrl) return product.b2cImageUrl;
     if (product.b2cImageGallery && product.b2cImageGallery.length > 0) return product.b2cImageGallery[0];
-    if (product.b2bImageUrl) return product.b2bImageUrl;
-    if (product.imageUrl) return product.imageUrl;
+    
+    // Generate consumer-focused image if no B2C images available
     return getProductImage(product); // Pass the product object to use color field
   };
 

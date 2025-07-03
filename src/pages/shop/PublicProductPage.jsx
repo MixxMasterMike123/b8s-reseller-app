@@ -160,26 +160,17 @@ const PublicProductPage = () => {
     }).format(price);
   };
 
-  // Get all available images for the product
+  // Get all available images for the product (B2C ONLY for consumer shop)
   const getProductImages = (product) => {
     const images = [];
     
-    // B2C images first (lifestyle images)
+    // B2C images only (lifestyle images for consumers)
     if (product.b2cImageUrl) images.push(product.b2cImageUrl);
     if (product.b2cImageGallery && product.b2cImageGallery.length > 0) {
       images.push(...product.b2cImageGallery);
     }
     
-    // B2B images (technical images)
-    if (product.b2bImageUrl) images.push(product.b2bImageUrl);
-    if (product.b2bImageGallery && product.b2bImageGallery.length > 0) {
-      images.push(...product.b2bImageGallery);
-    }
-    
-    // Legacy Firebase Storage image
-    if (product.imageUrl) images.push(product.imageUrl);
-    
-    // If no images, use generated image
+    // If no B2C images, use generated consumer-focused image
     if (images.length === 0) {
       images.push(getProductImage(product));
     }
