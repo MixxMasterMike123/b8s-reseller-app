@@ -280,11 +280,11 @@ const PublicStorefront = () => {
                     >
                       <div className="bg-white">
                         {/* Product Image */}
-                        <div className="relative aspect-square bg-gray-50 mb-4">
+                        <div className="relative aspect-square bg-gray-50 mb-4 overflow-hidden">
                           <img
                             src={getB2cProductImage(representativeVariant)}
                             alt={`B8Shield 3-pack`}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
                           />
                           
                           {/* Sustainable Material Badge */}
@@ -330,11 +330,11 @@ const PublicStorefront = () => {
                     >
                       <div className="bg-white">
                         {/* Product Image */}
-                        <div className="relative aspect-square bg-gray-50 mb-4">
+                        <div className="relative aspect-square bg-gray-50 mb-4 overflow-hidden">
                           <img
                             src={getB2cProductImage(colorVariant)}
                             alt={`B8Shield ${colorVariant.colorVariant}`}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
                           />
                           
                           {/* Sustainable Material Badge */}
