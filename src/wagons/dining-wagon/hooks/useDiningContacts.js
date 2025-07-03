@@ -25,13 +25,10 @@ export const useDiningContacts = () => {
     console.log('🍽️ Setting up Firebase subscription to users collection...');
     setLoading(true);
     
-    // Use users collection and filter out admin users
+    // Use users collection - simplified query to avoid index requirement
     const contactsRef = collection(db, 'users');
-    const q = query(
-      contactsRef, 
-      where('role', '!=', 'admin'),
-      orderBy('updatedAt', 'desc')
-    );
+    // Remove complex query that requires index - filter in memory instead
+    const q = query(contactsRef);
     
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {
@@ -41,28 +38,47 @@ export const useDiningContacts = () => {
           docs: snapshot.docs.length
         });
         
-        const contactsData = snapshot.docs.map(doc => {
-          const data = doc.data();
-          console.log('🍽️ Contact loaded:', { id: doc.id, companyName: data.companyName });
-          
-          // Map B2B fields to CRM format and add CRM defaults
-          return {
-            id: doc.id,
-            ...data,
-            // Map B2B active status to CRM status
-            status: data.status || (data.active ? 'active' : 'prospect'),
-            // Add CRM defaults if not present
-            priority: data.priority || 'medium',
-            source: data.source || 'b2b-existing',
-            tags: data.tags || [],
-            notes: data.notes || '',
-            lastActivityAt: data.lastActivityAt || data.updatedAt,
-            // Keep original B2B fields
-            phoneNumber: data.phone || data.phoneNumber, // Handle both field names
-          };
-        });
+        const contactsData = snapshot.docs
+          .map(doc => {
+            const data = doc.data();
+            console.log('🍽️ Contact loaded:', { id: doc.id, companyName: data.companyName });
+            
+            // Safe date handling to prevent getTime errors
+            const safeDate = (dateValue) => {
+              if (!dateValue) return new Date();
+              if (dateValue instanceof Date) return dateValue;
+              if (dateValue.toDate && typeof dateValue.toDate === 'function') {
+                return dateValue.toDate(); // Firestore Timestamp
+              }
+              if (typeof dateValue === 'string') {
+                const parsed = new Date(dateValue);
+                return isNaN(parsed.getTime()) ? new Date() : parsed;
+              }
+              return new Date();
+            };
+            
+            // Map B2B fields to CRM format and add CRM defaults
+            return {
+              id: doc.id,
+              ...data,
+              // Map B2B active status to CRM status
+              status: data.status || (data.active ? 'active' : 'prospect'),
+              // Add CRM defaults if not present
+              priority: data.priority || 'medium',
+              source: data.source || 'b2b-existing',
+              tags: data.tags || [],
+              notes: data.notes || '',
+              lastActivityAt: safeDate(data.lastActivityAt || data.updatedAt),
+              updatedAt: safeDate(data.updatedAt),
+              createdAt: safeDate(data.createdAt),
+              // Keep original B2B fields
+              phoneNumber: data.phone || data.phoneNumber, // Handle both field names
+            };
+          })
+          .filter(contact => contact.role !== 'admin') // Filter out admins in memory
+          .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()); // Sort by updatedAt desc
         
-        console.log('🍽️ Total contacts loaded:', contactsData.length);
+        console.log('🍽️ Total contacts loaded (excluding admins):', contactsData.length);
         setContacts(contactsData);
         setLoading(false);
         setHasInitialized(true); // Mark as initialized after first Firebase response
@@ -84,6 +100,7 @@ export const useDiningContacts = () => {
     try {
       setLoading(true);
       
+      const now = new Date();
       const newContact = {
         ...contactData,
         // B2B required fields
@@ -96,9 +113,9 @@ export const useDiningContacts = () => {
         source: contactData.source || 'manual',
         tags: contactData.tags || [],
         notes: contactData.notes || '',
-        lastActivityAt: new Date(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        lastActivityAt: now,
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString()
       };
 
       const docRef = await addDoc(collection(db, 'users'), newContact);
@@ -122,13 +139,14 @@ export const useDiningContacts = () => {
       setLoading(true);
       
       const contactRef = doc(db, 'users', contactId);
+      const now = new Date();
       const updatedData = {
         ...updates,
         // Sync CRM status to B2B active field
         ...(updates.status && { active: updates.status === 'active' }),
         // Update activity timestamp
-        lastActivityAt: new Date(),
-        updatedAt: new Date().toISOString()
+        lastActivityAt: now,
+        updatedAt: now.toISOString()
       };
 
       await updateDoc(contactRef, updatedData);

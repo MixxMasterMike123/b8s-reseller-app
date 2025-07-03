@@ -47,14 +47,36 @@ const DiningDashboard = () => {
   // Load deferred activities from Firebase
   useEffect(() => {
     const deferredRef = collection(db, 'diningDeferredActivities');
-    const q = query(deferredRef, orderBy('createdAt', 'desc'));
+    // Remove orderBy to avoid index requirement - sort in memory instead
+    const q = query(deferredRef);
     
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {
-        const deferred = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        const deferred = snapshot.docs.map(doc => {
+          const data = doc.data();
+          
+          // Safe date handling for Firebase timestamps
+          const safeTimestamp = (timestamp) => {
+            if (!timestamp) return new Date();
+            if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+              return timestamp.toDate(); // Firebase Timestamp
+            }
+            if (timestamp instanceof Date) return timestamp;
+            if (typeof timestamp === 'string') {
+              const parsed = new Date(timestamp);
+              return isNaN(parsed.getTime()) ? new Date() : parsed;
+            }
+            return new Date();
+          };
+          
+          return {
+            id: doc.id,
+            ...data,
+            createdAt: safeTimestamp(data.createdAt),
+            returnTime: safeTimestamp(data.returnTime),
+          };
+        }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Sort in memory
+        
         setDeferredActivities(deferred);
       },
       (error) => {
@@ -127,7 +149,10 @@ const DiningDashboard = () => {
   // Check if deferred activity should resurface
   const shouldResurface = (deferredActivity) => {
     const now = new Date();
-    const returnTime = new Date(deferredActivity.returnTime.seconds * 1000); // Firebase timestamp
+    // Safe timestamp handling
+    const returnTime = deferredActivity.returnTime instanceof Date 
+      ? deferredActivity.returnTime 
+      : new Date(deferredActivity.returnTime?.seconds * 1000 || deferredActivity.returnTime);
     return now >= returnTime;
   };
 
