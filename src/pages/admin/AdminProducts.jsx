@@ -25,6 +25,12 @@ function AdminProducts() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeTab, setActiveTab] = useState('general'); // 'general', 'b2b', 'b2c'
   
+  // Group autocomplete states
+  const [availableGroups, setAvailableGroups] = useState([]);
+  const [groupInput, setGroupInput] = useState('');
+  const [showGroupSuggestions, setShowGroupSuggestions] = useState(false);
+  const [filteredGroups, setFilteredGroups] = useState([]);
+  
   // B2B Image states
   const [b2bImageFile, setB2bImageFile] = useState(null);
   const [b2bImagePreview, setB2bImagePreview] = useState(null);
@@ -93,6 +99,7 @@ function AdminProducts() {
       
       const querySnapshot = await getDocs(collection(db, 'products'));
       const productsData = [];
+      const groupsSet = new Set();
       
       querySnapshot.forEach((doc) => {
         const data = doc.data();
@@ -100,6 +107,11 @@ function AdminProducts() {
           id: doc.id,
           ...data
         });
+        
+        // Collect unique groups for autocomplete
+        if (data.group && data.group.trim()) {
+          groupsSet.add(data.group.trim());
+        }
       });
       
       // Sort products by name (default sorting)
@@ -109,7 +121,11 @@ function AdminProducts() {
         return nameA.localeCompare(nameB);
       });
       
+      // Update available groups for autocomplete
+      setAvailableGroups(Array.from(groupsSet).sort());
+      
       console.log(`✅ Successfully loaded ${productsData.length} products from named DB`);
+      console.log(`📝 Found ${groupsSet.size} unique product groups`);
       setProducts(productsData);
       setError('');
     } catch (err) {
@@ -134,6 +150,7 @@ function AdminProducts() {
       description: '',
       size: '',
       color: '',
+      group: '',
       basePrice: 0,
       manufacturingCost: 0,
       isActive: true,
@@ -184,6 +201,9 @@ function AdminProducts() {
     setB2cGalleryFiles([]);
     setB2cGalleryPreviews([]);
     
+    // Reset group input for autocomplete
+    setGroupInput('');
+    
     setIsAddingProduct(true);
   };
 
@@ -196,6 +216,7 @@ function AdminProducts() {
       description: product.description || '',
       size: product.size || '',
       color: product.color || '',
+      group: product.group || '',
       basePrice: product.basePrice || 0,
       manufacturingCost: product.manufacturingCost || 0,
       isActive: product.isActive ?? true,
@@ -267,6 +288,9 @@ function AdminProducts() {
     setB2cGalleryFiles([]);
     setB2cGalleryPreviews(product.b2cImageGallery || []);
     
+    // Set group input for autocomplete
+    setGroupInput(product.group || '');
+    
     setIsAddingProduct(true);
   };
 
@@ -280,6 +304,45 @@ function AdminProducts() {
     } else {
       setFormData({ ...formData, [name]: value });
     }
+  };
+
+  // Handle group input with autocomplete
+  const handleGroupInputChange = (e) => {
+    const value = e.target.value;
+    setGroupInput(value);
+    setFormData({ ...formData, group: value });
+    
+    // Filter available groups based on input
+    if (value.trim()) {
+      const filtered = availableGroups.filter(group => 
+        group.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilteredGroups(filtered);
+      setShowGroupSuggestions(filtered.length > 0);
+    } else {
+      setFilteredGroups([]);
+      setShowGroupSuggestions(false);
+    }
+  };
+
+  // Handle group selection from suggestions
+  const handleGroupSelect = (selectedGroup) => {
+    setGroupInput(selectedGroup);
+    setFormData({ ...formData, group: selectedGroup });
+    setShowGroupSuggestions(false);
+  };
+
+  // Handle group input focus
+  const handleGroupFocus = () => {
+    if (availableGroups.length > 0 && !groupInput.trim()) {
+      setFilteredGroups(availableGroups);
+      setShowGroupSuggestions(true);
+    }
+  };
+
+  // Handle group input blur with delay to allow selection
+  const handleGroupBlur = () => {
+    setTimeout(() => setShowGroupSuggestions(false), 200);
   };
 
   // Upload image to Firebase Storage
@@ -817,6 +880,44 @@ function AdminProducts() {
                       <option value="Fluorescerande">Fluorescerande</option>
                       <option value="Glitter">Glitter</option>
                     </select>
+                  </div>
+                  
+                  {/* Group with Autocomplete */}
+                  <div className="sm:col-span-2 relative">
+                    <label htmlFor="group" className="block text-sm font-medium text-gray-700 mb-2">
+                      Produktgrupp
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        id="group"
+                        name="group"
+                        value={groupInput}
+                        onChange={handleGroupInputChange}
+                        onFocus={handleGroupFocus}
+                        onBlur={handleGroupBlur}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="t.ex. B8Shield Individual, B8Shield 3-Pack, B8Shield Starter Kit"
+                      />
+                      
+                      {/* Autocomplete Suggestions */}
+                      {showGroupSuggestions && filteredGroups.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                          {filteredGroups.map((group, index) => (
+                            <div
+                              key={index}
+                              onClick={() => handleGroupSelect(group)}
+                              className="px-3 py-2 cursor-pointer hover:bg-blue-50 hover:text-blue-600 text-sm"
+                            >
+                              {group}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Skriv för att se befintliga grupper eller skapa en ny. Används för att gruppera produkter i butiken.
+                    </p>
                   </div>
                   
                   {/* Base Price */}
@@ -1591,6 +1692,11 @@ function AdminProducts() {
                                 {product.color && (
                                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
                                     {product.color}
+                                  </span>
+                                )}
+                                {product.group && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                    {product.group}
                                   </span>
                                 )}
                               </div>

@@ -129,15 +129,18 @@ const PublicProductPage = () => {
     
     // B2C images first (lifestyle images)
     if (product.b2cImageUrl) images.push(product.b2cImageUrl);
-    if (product.b2cImageGallery) images.push(...product.b2cImageGallery);
+    if (product.b2cImageGallery && product.b2cImageGallery.length > 0) {
+      images.push(...product.b2cImageGallery);
+    }
     
     // B2B images (technical images)
     if (product.b2bImageUrl) images.push(product.b2bImageUrl);
-    if (product.b2bImageGallery) images.push(...product.b2bImageGallery);
+    if (product.b2bImageGallery && product.b2bImageGallery.length > 0) {
+      images.push(...product.b2bImageGallery);
+    }
     
-    // Legacy images
+    // Legacy Firebase Storage image
     if (product.imageUrl) images.push(product.imageUrl);
-    if (product.imageData) images.push(product.imageData);
     
     // If no images, use generated image
     if (images.length === 0) {
@@ -197,15 +200,15 @@ const PublicProductPage = () => {
         }}
       />
       
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-white">
         <ShopNavigation breadcrumb={`B8Shield ${productColor}`} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
             {/* Product Images */}
             <div className="space-y-4">
               {/* Main Image */}
-              <div className="aspect-square bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
+              <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden">
                 <img
                   src={productImages[activeImageIndex]}
                   alt={currentProduct.name}
@@ -215,15 +218,15 @@ const PublicProductPage = () => {
               
               {/* Thumbnail Images */}
               {productImages.length > 1 && (
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-6 gap-2">
                   {productImages.map((image, index) => (
                     <button
                       key={index}
                       onClick={() => setActiveImageIndex(index)}
-                      className={`aspect-square bg-white rounded-lg overflow-hidden border-2 transition-all ${
+                      className={`aspect-square bg-gray-50 rounded-md overflow-hidden border-2 transition-all ${
                         activeImageIndex === index 
-                          ? 'border-blue-600 shadow-lg' 
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-black' 
+                          : 'border-transparent hover:border-gray-300'
                       }`}
                     >
                       <img
@@ -239,112 +242,231 @@ const PublicProductPage = () => {
 
             {/* Product Details */}
             <div className="space-y-8">
-              {/* Product Title & Rating */}
+              {/* Product Title */}
               <div>
-                <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                  B8Shield™ – Vasskydd {productColor}
+                <h1 className="text-3xl font-medium text-gray-900 mb-2">
+                  B8Shield {productColor}
                 </h1>
-                
-                {/* Rating */}
-                <div className="flex items-center mb-6">
-                  <div className="flex text-yellow-400 mr-2">
-                    {[...Array(5)].map((_, i) => (
-                      <svg 
-                        key={i} 
-                        className="w-5 h-5 fill-current" 
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                  </div>
-                  <span className="text-sm text-gray-600">Betygsatt 5.00 av 5 baserat på 1 kundrecension</span>
-                </div>
-              </div>
+                <p className="text-lg text-gray-600 mb-4">
+                  Löparlinna Dri-FIT för kvinnor
+                </p>
 
               {/* Price */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
-                <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <div className="text-2xl font-medium text-gray-900 mb-6">
                   {formatPrice(currentProduct.b2cPrice || currentProduct.basePrice)}
                 </div>
-                <p className="text-gray-600 mt-2">Inkluderar moms</p>
               </div>
 
               {/* Size Selection */}
-              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-                <label className="block text-lg font-semibold text-gray-900 mb-4">
-                  Storlek
-                </label>
-                <select
-                  value={selectedSize}
-                  onChange={(e) => handleSizeChange(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
-                >
-                  <option value="">Välj ett alternativ</option>
-                  {variants.map((variant) => (
-                    <option key={variant.id} value={variant.id}>
-                      {variant.size ? `${variant.size} - ${formatPrice(variant.b2cPrice || variant.basePrice)}` : `Standard - ${formatPrice(variant.b2cPrice || variant.basePrice)}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Quantity & Add to Cart */}
-              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-                <div className="flex items-center space-x-4 mb-6">
-                  <label className="text-lg font-semibold text-gray-900">
-                    Antal
-                  </label>
-                  <div className="flex items-center border border-gray-300 rounded-lg">
-                    <button
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                    >
-                      −
-                    </button>
-                    <span className="px-4 py-2 text-lg font-semibold">{quantity}</span>
-                    <button
-                      onClick={() => setQuantity(quantity + 1)}
-                      className="px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                    >
-                      +
-                    </button>
-                  </div>
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-medium text-gray-900">Välj storlek</h3>
+                  <button className="text-sm text-gray-500 hover:text-gray-700 underline">
+                    Storleksguide
+                  </button>
                 </div>
                 
+                <div className="grid grid-cols-3 gap-2">
+                  {variants.map((variant) => (
+                    <button
+                      key={variant.id}
+                      onClick={() => handleSizeChange(variant.id)}
+                      className={`py-4 px-4 text-center border rounded-md transition-all ${
+                        selectedSize === variant.id
+                          ? 'border-black bg-black text-white'
+                          : 'border-gray-300 hover:border-gray-400'
+                      }`}
+                    >
+                      <div className="text-sm font-medium">
+                        {variant.size || 'Standard'}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                </div>
+                
+              {/* Add to Cart */}
+              <div className="space-y-4">
                 <button
                   onClick={handleAddToCart}
                   disabled={!selectedSize}
-                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  className="w-full bg-black text-white py-4 px-8 rounded-full text-base font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Lägg till i varukorg
+                  Lägg i shoppingbagen
+                </button>
+                
+                <button className="w-full border border-gray-300 py-4 px-8 rounded-full text-base font-medium hover:border-gray-400 transition-colors">
+                  Favorit ♡
                 </button>
               </div>
 
+              {/* Payment Options */}
+              <div className="border-t pt-6">
+                <p className="text-sm text-gray-600 mb-4">
+                  <span className="font-medium">Klarna.</span> är tillgängligt i kassan.
+                </p>
+                <p className="text-sm text-gray-600">
+                  Tillgängligt för Click and Collect i kassan
+                </p>
+              </div>
+
               {/* Product Description */}
-              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Beskrivning</h2>
-                <div className="prose prose-gray max-w-none">
-                  {getB2cDescription(currentProduct) ? (
-                    <div className="text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: getB2cDescription(currentProduct) }} />
-                  ) : (
-                    <p className="text-gray-500 italic">Ingen beskrivning tillgänglig</p>
-                  )}
+              <div className="border-t pt-6">
+                <h2 className="text-lg font-medium text-gray-900 mb-4">
+                  Visa produktinformation
+                </h2>
+                <div className="prose prose-sm max-w-none text-gray-600">
+                  <p>
+                    {getB2cDescription(currentProduct) || 
+                     `B8Shield ${productColor} har egenskaper som gör att du känner dig bekväm i naturen, även när förhållandena snabbt förändras. Det här lätta, stretchiga plagget är i ett lent material som torkar snabbt så att du kan känna dig bekväm när temperaturen stiger under vandringen. Minimala sömmar minskar dessutom risken för skav.`}
+                  </p>
+                  
+                  <ul className="mt-4 space-y-2">
+                    <li>• Färg som visas: {productColor}</li>
+                    <li>• Stil: {currentProduct.sku || 'B8S-001'}</li>
+                  </ul>
                 </div>
               </div>
 
-              {/* Detailed Product Information */}
+              {/* Expandable Information Sections */}
+              <div className="border-t pt-6 space-y-4">
+                {/* Size and Fit */}
+                <details className="group">
+                  <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 px-4 -mx-4 rounded-lg">
+                    <span className="text-base font-medium text-gray-900">Storlek och passform</span>
+                    <svg className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <div className="pb-4 px-4 -mx-4 text-sm text-gray-600">
+                    <p className="mb-3">B8Shield finns i flera storlekar för att passa olika fiskeförhållanden:</p>
+                    <ul className="space-y-2">
+                      <li>• <strong>4mm:</strong> Perfekt för lättare fiskedrag och mindre fiskar</li>
+                      <li>• <strong>6mm:</strong> Standardstorlek för allmänt fiske</li>
+                      <li>• <strong>8mm:</strong> För tyngre fiskedrag och större fiskar</li>
+                      <li>• <strong>10mm:</strong> Maximal skydd för extrema förhållanden</li>
+                    </ul>
+                    <p className="mt-3 text-xs text-gray-500">
+                      Välj storlek baserat på ditt fiskedrag och fiskeområde. Vid osäkerhet, välj en större storlek.
+                    </p>
+                  </div>
+                </details>
+
+                {/* Free Shipping and Returns */}
+                <details className="group">
+                  <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 px-4 -mx-4 rounded-lg">
+                    <span className="text-base font-medium text-gray-900">Fri frakt och fri retur</span>
+                    <svg className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <div className="pb-4 px-4 -mx-4 text-sm text-gray-600">
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-1">Leverans</h4>
+                        <p>• Fri frakt på alla beställningar över 500 SEK</p>
+                        <p>• Standard leverans: 2-5 arbetsdagar</p>
+                        <p>• Express leverans: 1-2 arbetsdagar (extra kostnad)</p>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-1">Returer</h4>
+                        <p>• 30 dagars returrätt</p>
+                        <p>• Kostnadsfri retur via PostNord</p>
+                        <p>• Produkten ska vara oanvänd och i originalförpackning</p>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+
+                {/* How it's Made */}
+                <details className="group">
+                  <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 px-4 -mx-4 rounded-lg">
+                    <span className="text-base font-medium text-gray-900">Hur den tillverkades</span>
+                    <svg className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <div className="pb-4 px-4 -mx-4 text-sm text-gray-600">
+                    <div className="space-y-3">
+                      <p>B8Shield tillverkas med miljötänk och hållbarhet i fokus:</p>
+                      <ul className="space-y-2">
+                        <li>• <strong>Återvinningsbart material:</strong> Tillverkat av högkvalitativ plast som kan återvinnas</li>
+                        <li>• <strong>Svensk design:</strong> Utvecklat och testat i svenska vatten</li>
+                        <li>• <strong>Miljövänlig produktion:</strong> Minimal miljöpåverkan under tillverkning</li>
+                        <li>• <strong>Långlivad:</strong> Designad för att hålla i många år av intensivt fiske</li>
+                      </ul>
+                      <p className="text-xs text-gray-500 mt-3">
+                        JPH Innovation AB arbetar kontinuerligt för att minska miljöpåverkan och förbättra produkternas hållbarhet.
+                      </p>
+                    </div>
+                  </div>
+                </details>
+
+                {/* Reviews */}
+                <details className="group">
+                  <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 px-4 -mx-4 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-base font-medium text-gray-900">Recensioner (1)</span>
+                      <div className="flex text-yellow-400">
+                        {[...Array(5)].map((_, i) => (
+                          <svg key={i} className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                    </div>
+                    <svg className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <div className="pb-4 px-4 -mx-4 text-sm text-gray-600">
+                    <div className="space-y-4">
+                      <div className="border-b border-gray-200 pb-4">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <div className="flex text-yellow-400">
+                            {[...Array(5)].map((_, i) => (
+                              <svg key={i} className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                              </svg>
+                            ))}
+                          </div>
+                          <span className="font-medium text-gray-900">Paul W.</span>
+                          <span className="text-gray-500">•</span>
+                          <span className="text-gray-500">Verifierat köp</span>
+                        </div>
+                        <p className="text-gray-700 mb-2">
+                          "Med B8Shield kunde jag obehindrat fiska på platser som annars hade varit omöjliga, utan att tappa ett enda fiskedrag – otroligt effektivt skydd!"
+                        </p>
+                        <p className="text-xs text-gray-500">Publicerad för 2 månader sedan</p>
+                      </div>
+                      
+                      <div className="text-center">
+                        <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                          Skriv en recension
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+
+                {/* Additional Product Info */}
               {currentProduct.descriptions?.b2cMoreInfo && (
-                <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200 mt-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Mer Information</h2>
-                  <div className="prose prose-gray max-w-none">
-                    <div 
-                      className="text-gray-700 leading-relaxed"
+                  <details className="group">
+                    <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 px-4 -mx-4 rounded-lg">
+                      <span className="text-base font-medium text-gray-900">Mer produktinformation</span>
+                      <svg className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </summary>
+                    <div className="pb-4 px-4 -mx-4 text-sm text-gray-600">
+                      <div 
+                        className="prose prose-sm max-w-none"
                       dangerouslySetInnerHTML={{ __html: currentProduct.descriptions.b2cMoreInfo }}
                     />
                   </div>
+                  </details>
+                )}
                 </div>
-              )}
             </div>
           </div>
         </div>

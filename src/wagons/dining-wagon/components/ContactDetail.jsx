@@ -712,8 +712,8 @@ const ContactDetail = () => {
     if (field === 'subject') {
       handleSubjectChange(value);
     } else {
-      setNewActivity(prev => ({
-        ...prev,
+    setNewActivity(prev => ({
+      ...prev,
         [field]: value
       }));
     }
@@ -725,7 +725,7 @@ const ContactDetail = () => {
       toast.error('Beskriv vad som hände');
       return;
     }
-    
+
     setIsSavingActivity(true);
     try {
       const activityData = {
@@ -869,7 +869,7 @@ const ContactDetail = () => {
   }
 
   if (!contact) {
-    return (
+  return (
       <AppLayout>
         <div className="text-center py-16">
           <p className="text-gray-600">Kontakt kunde inte hittas</p>
@@ -884,13 +884,13 @@ const ContactDetail = () => {
         
         {/* Back Button */}
         <div className="mb-6">
-          <Link
-            to="/admin/dining/contacts"
+              <Link 
+                to="/admin/dining/contacts" 
             className="inline-flex items-center text-gray-600 hover:text-gray-900 font-medium"
-          >
+              >
             <ArrowLeftIcon className="h-4 w-4 mr-1" />
             Tillbaka till kontakter
-          </Link>
+              </Link>
         </div>
 
         {/* Main Question */}
@@ -907,8 +907,8 @@ const ContactDetail = () => {
             <div className="flex items-start space-x-4">
               <div className="bg-orange-100 p-3 rounded-xl">
                 <BuildingOffice2Icon className="h-8 w-8 text-orange-600" />
-              </div>
-              <div>
+                </div>
+                <div>
                 <h2 className="text-2xl font-bold text-gray-900">{contact.companyName}</h2>
                 <p className="text-lg text-gray-600">{contact.contactPerson}</p>
                 <div className="flex items-center space-x-4 mt-2">
@@ -946,19 +946,19 @@ const ContactDetail = () => {
                 <EnvelopeIcon className="h-5 w-5" />
                 <span>Maila</span>
               </a>
-              <button
+                  <button
                 onClick={() => setShowAdminDocUpload(true)}
                 className="flex items-center px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition-colors space-x-2"
                 title="Admin-dokument (endast synligt för administratörer)"
-              >
+                  >
                 <DocumentArrowUpIcon className="h-5 w-5" />
-                <span>Dokument</span>
+                    <span>Dokument</span>
                 {adminDocuments.length > 0 && (
                   <span className="ml-1 inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     {adminDocuments.length}
                   </span>
                 )}
-              </button>
+                  </button>
             </div>
           </div>
         </div>
@@ -1077,40 +1077,40 @@ const ContactDetail = () => {
                         <div className="flex flex-col space-y-1">
                           {/* ZEN Inline Edit Button */}
                           {!isDismissed && (
-                            <button
+                  <button
                               onClick={() => handleEditActivity(lastConversation)}
                               className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 bg-white hover:bg-blue-50 border border-blue-300 rounded transition-colors"
                               title="Redigera aktivitet"
-                            >
+                  >
                               <PencilIcon className="h-3 w-3 mr-1" />
                               Redigera
-                            </button>
+                  </button>
                           )}
                           
                           {/* Delete Button */}
                           {!isDismissed && (
-                            <button
+                  <button
                               onClick={() => handleDeleteActivity(lastConversation.id)}
                               className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 hover:text-red-800 bg-white hover:bg-red-50 border border-red-300 rounded transition-colors"
                               title="Ta bort aktivitet"
-                            >
+                  >
                               <TrashIcon className="h-3 w-3 mr-1" />
                               Ta bort
-                            </button>
+                  </button>
                           )}
                           
                           {/* Dismiss button for urgent activities */}
                           {isUrgent && !isDismissed && (
-                            <button
+                  <button
                               onClick={() => dismissActivity(lastConversation.id)}
                               className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-50 border border-gray-300 rounded transition-colors"
                               title="Markera som löst"
-                            >
+                  >
                               <CheckIcon className="h-3 w-3 mr-1" />
                               Löst
-                            </button>
+                  </button>
                           )}
-                        </div>
+                </div>
                       </div>
                       
                       {/* ZEN Inline Editor */}
@@ -1121,11 +1121,11 @@ const ContactDetail = () => {
                           onCancel={handleCancelEdit}
                           contactName={contact.companyName}
                         />
-                      )}
-                    </div>
+              )}
+            </div>
                   );
                 })()}
-              </div>
+          </div>
             ) : (
               <div className="text-center py-8 text-gray-500">
                 <ChatBubbleLeftRightIcon className="h-8 w-8 text-gray-300 mx-auto mb-2" />
@@ -1133,7 +1133,7 @@ const ContactDetail = () => {
                 <p className="text-sm">Detta blir er första kontakt!</p>
               </div>
             )}
-          </div>
+        </div>
 
           {/* Conversation Context */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
@@ -1147,12 +1147,12 @@ const ContactDetail = () => {
                 conversationContext.map((context, index) => (
                   <div key={index} className="p-3 bg-green-50 rounded-lg">
                     <p className="text-sm text-green-800">{context}</p>
-                  </div>
+                </div>
                 ))
               ) : (
                 <div className="text-center py-4 text-gray-500">
                   <p className="text-sm">Ring och hör hur det går!</p>
-                </div>
+              </div>
               )}
               
               {/* General conversation tips */}
@@ -1164,11 +1164,11 @@ const ContactDetail = () => {
                   <li>• "Behöver ni mer material?"</li>
                   <li>• "Har ni fått bra respons från kunder?"</li>
                 </ul>
-              </div>
+                    </div>
             </div>
-          </div>
-        </div>
-
+                    </div>
+                  </div>
+                  
         {/* Contact History Timeline - "Vad har hänt innan?" */}
         {(() => {
           const allActivities = getActivitiesByContact(id);
@@ -1187,7 +1187,7 @@ const ContactDetail = () => {
                 >
                   Se alla →
                 </Link>
-              </div>
+                    </div>
               
               <div className="space-y-3">
                 {recentActivities.map((activity, index) => {
@@ -1214,15 +1214,15 @@ const ContactDetail = () => {
                     <div key={activity.id || index} className={getTimelineStyle(urgencyLevel, isDismissed)}>
                       <div className="flex-shrink-0 mt-0.5">
                         {getActivityIcon(activity.type)}
-                      </div>
+                    </div>
                       <div className="flex-1 min-w-0">
                         {/* Date aligned with title */}
                         <div className="flex justify-between items-start mb-1">
                           <div className="flex items-center space-x-2 flex-1">
                             <div className="text-sm font-medium text-gray-900 truncate">
                               <TextWithMentions text={activity.subject || activity.notes} adminUsers={adminUsers} />
-                            </div>
-                            
+                  </div>
+
                             {/* Urgency indicators */}
                             {isUrgent && !isDismissed && (
                               <div className="flex items-center space-x-1">
@@ -1239,7 +1239,7 @@ const ContactDetail = () => {
                                     PROBLEM
                                   </span>
                                 )}
-                              </div>
+                    </div>
                             )}
                             
                             {/* Dismissed indicator */}
@@ -1249,13 +1249,13 @@ const ContactDetail = () => {
                                 Löst
                               </span>
                             )}
-                          </div>
+                    </div>
                           
                           {/* Date aligned with title */}
                           <span className="text-xs text-gray-500 flex-shrink-0">
                             {activity.createdAt?.toDate?.()?.toLocaleDateString('sv-SE') || activity.date || 'Idag'}
                           </span>
-                        </div>
+                    </div>
                         
                         {activity.description && (
                           <p className="text-sm text-gray-600 mt-1 line-clamp-1">
@@ -1286,12 +1286,12 @@ const ContactDetail = () => {
                                     </span>
                                   );
                                 })}
-                              </div>
+                  </div>
                             )}
                             
                             {/* User Attribution pill */}
                             <UserAttribution activity={activity} isDismissed={isDismissed} />
-                          </div>
+                </div>
                           
                           {/* Action buttons aligned with bottom */}
                           <div className="flex flex-col space-y-1">
@@ -1328,9 +1328,9 @@ const ContactDetail = () => {
                                 Löst
                               </button>
                             )}
-                          </div>
                         </div>
-                        
+                      </div>
+                      
                         {/* ZEN Inline Editor */}
                         {editingActivity === activity.id && (
                           <div className="mt-2">
@@ -1340,7 +1340,7 @@ const ContactDetail = () => {
                               onCancel={handleCancelEdit}
                               contactName={contact.companyName}
                             />
-                          </div>
+                        </div>
                         )}
                       </div>
                     </div>
@@ -1355,10 +1355,10 @@ const ContactDetail = () => {
                     >
                       Se alla {allActivities.length} kontakter →
                     </Link>
-                  </div>
+                        </div>
                 )}
-              </div>
-            </div>
+                      </div>
+                    </div>
           ) : null;
         })()}
 
@@ -1387,8 +1387,8 @@ const ContactDetail = () => {
                   </button>
                 );
               })}
-            </div>
-          </div>
+                          </div>
+                        </div>
 
           {/* Subject/Summary with @mention support */}
           <div className="mb-4 relative">
@@ -1435,10 +1435,10 @@ const ContactDetail = () => {
                 ))}
                 <div className="px-3 py-1 text-xs text-gray-400 bg-gray-50">
                   Tab eller Enter för att välja
-                </div>
-              </div>
-            )}
-          </div>
+                          </div>
+                        </div>
+                      )}
+                  </div>
 
           {/* Tag System - Between Subject and Description */}
           {(suggestedTags.length > 0 || selectedTags.length > 0) && (
@@ -1457,7 +1457,7 @@ const ContactDetail = () => {
                     >
                       ignorera
                     </button>
-                  </div>
+                      </div>
                   <div className="flex flex-wrap gap-1.5">
                     {suggestedTags.map(tag => (
                       <button
@@ -1468,10 +1468,10 @@ const ContactDetail = () => {
                         <span className="text-blue-600 mr-1">+</span>
                         #{tag}
                       </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
               {/* Selected Tags - Clean and Minimal */}
               {selectedTags.length > 0 && (
@@ -1494,11 +1494,11 @@ const ContactDetail = () => {
                         </button>
                       </span>
                     ))}
-                  </div>
-                </div>
+                      </div>
+                      </div>
               )}
-            </div>
-          )}
+                    </div>
+                  )}
 
           {/* Manual Tag Input - TAGlist2 for Power Users */}
           <div className="mb-4 relative">
@@ -1536,13 +1536,13 @@ const ContactDetail = () => {
                     <span className="text-gray-700">{tag}</span>
                   </button>
                 ))}
-              </div>
-            )}
+                </div>
+              )}
             
             <p className="text-xs text-gray-400 mt-1">
               T.ex. "budget", "chef", "presentation" - separera med komma eller mellanslag
             </p>
-          </div>
+            </div>
 
 
 
@@ -1562,15 +1562,15 @@ const ContactDetail = () => {
 
           {/* Save Button */}
           <div className="flex justify-end">
-            <button
+                <button
               onClick={handleSaveActivity}
               disabled={!newActivity.subject.trim() || isSavingActivity}
               className="px-6 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 text-white rounded-lg font-medium transition-colors"
-            >
+                >
               {isSavingActivity ? 'Sparar...' : 'Registrera kontakt'}
-            </button>
-          </div>
-          
+                </button>
+              </div>
+
           <p className="text-sm text-gray-500 mt-2">
             Registrera alla typer av kontakt så du får en komplett historik över era interaktioner
           </p>
@@ -1632,40 +1632,40 @@ const ContactDetail = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         placeholder="Interna anteckningar om dokumentet..."
                       />
-                    </div>
-                    
+                  </div>
+                  
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Fil
                       </label>
-                      <input
+                    <input
                         type="file"
                         onChange={(e) => setAdminDocFile(e.target.files[0])}
                         accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.webp,.svg"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      />
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
                       {adminDocFile && (
                         <p className="mt-1 text-sm text-gray-600">
                           Vald fil: {adminDocFile.name} ({formatFileSize(adminDocFile.size)})
                         </p>
                       )}
-                    </div>
-                    
+                  </div>
+                  
                     <div className="flex justify-end space-x-3">
-                      <button
+                    <button
                         onClick={() => setShowAdminDocUpload(false)}
                         className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
+                    >
                         Avbryt
-                      </button>
-                      <button
+                    </button>
+                    <button
                         onClick={handleAdminDocUpload}
                         disabled={!adminDocFile || adminDocUploading}
                         className="px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 text-white rounded-lg transition-colors"
                       >
                         {adminDocUploading ? 'Laddar upp...' : 'Ladda upp'}
-                      </button>
-                    </div>
+                    </button>
+                  </div>
                   </div>
                 </div>
 
@@ -1681,11 +1681,11 @@ const ContactDetail = () => {
                       <span className="ml-3 text-gray-600">Laddar dokument...</span>
                     </div>
                   ) : adminDocuments.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-gray-500">
                       <FolderIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                       <p>Inga admin-dokument uppladdade än</p>
-                    </div>
-                  ) : (
+                  </div>
+                ) : (
                     <div className="space-y-3">
                       {adminDocuments.map((doc) => (
                         <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -1698,9 +1698,9 @@ const ContactDetail = () => {
                               </p>
                               {doc.notes && (
                                 <p className="text-xs text-gray-500 mt-1">{doc.notes}</p>
-                              )}
-                            </div>
-                          </div>
+                        )}
+                      </div>
+                    </div>
                           <div className="flex items-center space-x-2">
                             <button
                               onClick={() => window.open(doc.downloadUrl, '_blank')}
@@ -1716,22 +1716,22 @@ const ContactDetail = () => {
                             >
                               <ArrowDownTrayIcon className="h-4 w-4" />
                             </button>
-                            <button
+                <button
                               onClick={() => handleDeleteAdminDoc(doc.id, doc.fileName)}
                               className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
                               title="Ta bort"
-                            >
+                >
                               <TrashIcon className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
+                </button>
+              </div>
+            </div>
                       ))}
-                    </div>
+                </div>
                   )}
+                </div>
                 </div>
               </div>
             </div>
-          </div>
         )}
 
       </div>

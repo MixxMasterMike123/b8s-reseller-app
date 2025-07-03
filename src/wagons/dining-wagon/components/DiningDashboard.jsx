@@ -4,7 +4,7 @@ import AppLayout from '../../../components/layout/AppLayout';
 import { useDiningContacts } from '../hooks/useDiningContacts';
 import { useDiningActivities } from '../hooks/useDiningActivities';
 import B2BImportButton from './B2BImportButton';
-import { 
+import {
   collection, 
   doc, 
   addDoc, 
@@ -526,7 +526,7 @@ const DiningDashboard = () => {
             {filteredContacts.length > 0 && (
               <div className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
                 {filteredContacts.map(contact => (
-                  <Link
+              <Link
                     key={contact.id}
                     to={`/admin/dining/contacts/${contact.id}`}
                     className="block px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
@@ -534,12 +534,12 @@ const DiningDashboard = () => {
                   >
                     <div className="font-medium text-gray-900">{contact.companyName}</div>
                     <div className="text-sm text-gray-600">{contact.contactPerson}</div>
-                  </Link>
+              </Link>
                 ))}
               </div>
             )}
           </div>
-          
+
           {/* Add New Contact Button */}
           <Link
             to="/admin/dining/contacts/new"
@@ -647,7 +647,7 @@ const DiningDashboard = () => {
                               AKUT
                             </span>
                           )}
-                        </div>
+                      </div>
                         {followUp.person && (
                           <div className="text-sm text-gray-600">{followUp.person}</div>
                         )}
@@ -668,7 +668,7 @@ const DiningDashboard = () => {
                         >
                           Senare
                         </button>
-                      )}
+                        )}
                       </div>
                     </div>
                   </div>
@@ -684,12 +684,12 @@ const DiningDashboard = () => {
                       <div className="space-y-1 mb-3">
                         {availableTriggers.slice(3).map(trigger => (
                           <div key={trigger.id} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
-                            <Link
+              <Link
                               to={`/admin/dining/contacts/${trigger.id}`}
                               className="flex-1 hover:bg-gray-100 rounded p-1 -m-1"
-                            >
+              >
                               <span className="font-medium">{trigger.name}</span> • {trigger.reason}
-                            </Link>
+              </Link>
                             <div className="flex items-center space-x-2 ml-2">
                               <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                                 trigger.urgency === 'critical' ? 'bg-red-100 text-red-800' :
@@ -710,11 +710,11 @@ const DiningDashboard = () => {
                                   Senare
                                 </button>
                               )}
-                            </div>
-                          </div>
+            </div>
+          </div>
                         ))}
                       </div>
-                    </div>
+            </div>
                   )}
                   
                                                        {deferredTriggers.length > 0 && (
@@ -725,7 +725,7 @@ const DiningDashboard = () => {
                       {showDeferred ? 'Dölj' : 'Visa'} uppskjutna aktiviteter ({deferredTriggers.length})
                     </button>
                   )}
-                 </div>
+                </div>
                )}
                
                {/* Show deferred activities when expanded */}
@@ -766,7 +766,7 @@ const DiningDashboard = () => {
                            <div className="text-xs text-gray-500">{followUp.reason}</div>
                            <div className="text-xs text-blue-600 mt-1">
                              🧘‍♂️ {timingDisplay}
-                           </div>
+              </div>
                          </Link>
                          <button
                            onClick={() => handleUndeferContact(followUp.id)}
@@ -775,10 +775,10 @@ const DiningDashboard = () => {
                          >
                            Ta upp nu
                          </button>
-                       </div>
+              </div>
                      );
                    })}
-                 </div>
+              </div>
                )}
             </div>
           </div>
@@ -829,7 +829,7 @@ const DiningDashboard = () => {
                       </div>
                       <div className="text-xs text-gray-500 ml-3 flex-shrink-0">
                         {conversation.when}
-                      </div>
+                    </div>
                     </div>
                   </Link>
                 ))
