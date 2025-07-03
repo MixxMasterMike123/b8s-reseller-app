@@ -4,6 +4,18 @@ import AppLayout from '../../../components/layout/AppLayout';
 import { useDiningContacts } from '../hooks/useDiningContacts';
 import { useDiningActivities } from '../hooks/useDiningActivities';
 import B2BImportButton from './B2BImportButton';
+import { 
+  collection, 
+  doc, 
+  addDoc, 
+  deleteDoc, 
+  query, 
+  where,
+  onSnapshot,
+  orderBy
+} from 'firebase/firestore';
+import { db } from '../../../firebase/config';
+import toast from 'react-hot-toast';
 import {
   MagnifyingGlassIcon,
   UserPlusIcon,
@@ -29,8 +41,29 @@ const DiningDashboard = () => {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredContacts, setFilteredContacts] = useState([]);
-  const [deferredContacts, setDeferredContacts] = useState(new Map()); // Map: contactId -> {timestamp, originalUrgency}
+  const [deferredActivities, setDeferredActivities] = useState([]); // Firebase collection data
   const [showDeferred, setShowDeferred] = useState(false);
+
+  // Load deferred activities from Firebase
+  useEffect(() => {
+    const deferredRef = collection(db, 'diningDeferredActivities');
+    const q = query(deferredRef, orderBy('createdAt', 'desc'));
+    
+    const unsubscribe = onSnapshot(q, 
+      (snapshot) => {
+        const deferred = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setDeferredActivities(deferred);
+      },
+      (error) => {
+        console.error('❌ Error loading deferred activities:', error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
 
   // Filter contacts based on search
   useEffect(() => {
@@ -53,6 +86,49 @@ const DiningDashboard = () => {
     
     // Monday-Friday, 8:00-17:00 Swedish time
     return day >= 1 && day <= 5 && hour >= 8 && hour <= 17;
+  };
+
+  // Swedish Business Intelligence: Calculate when deferred activity should return
+  const calculateReturnTime = (urgency) => {
+    const now = new Date();
+    const hour = now.getHours();
+    const day = now.getDay(); // 0 = Sunday, 6 = Saturday
+    
+    // Morning defer (08:00-12:00) → Returns after lunch (natural break)
+    if (hour >= 8 && hour < 12) {
+      const returnTime = new Date(now);
+      returnTime.setHours(13, 0, 0, 0); // 13:00 today
+      return returnTime;
+    }
+    
+    // Afternoon defer (12:00-17:00) → Returns tomorrow morning (fresh mind)
+    if (hour >= 12 && hour < 17) {
+      const returnTime = new Date(now);
+      returnTime.setDate(returnTime.getDate() + 1);
+      returnTime.setHours(9, 0, 0, 0); // 09:00 tomorrow
+      return returnTime;
+    }
+    
+    // Friday afternoon defer → Returns Monday morning (weekend respect)
+    if (day === 5 && hour >= 12) { // Friday afternoon
+      const returnTime = new Date(now);
+      returnTime.setDate(returnTime.getDate() + 3); // Monday
+      returnTime.setHours(9, 0, 0, 0); // 09:00 Monday
+      return returnTime;
+    }
+    
+    // Evening/night defer → Returns tomorrow morning
+    const returnTime = new Date(now);
+    returnTime.setDate(returnTime.getDate() + 1);
+    returnTime.setHours(9, 0, 0, 0); // 09:00 tomorrow
+    return returnTime;
+  };
+
+  // Check if deferred activity should resurface
+  const shouldResurface = (deferredActivity) => {
+    const now = new Date();
+    const returnTime = new Date(deferredActivity.returnTime.seconds * 1000); // Firebase timestamp
+    return now >= returnTime;
   };
 
   // Advanced trigger scoring system
@@ -205,114 +281,146 @@ const DiningDashboard = () => {
     return contactTriggers;
   };
 
-  // Get recent conversations (simplified and grouped by contact)
-  const getRecentConversations = () => {
-    const recentActivities = getRecentActivities(20); // Get more to group properly
-    
-    // Group activities by contact
-    const groupedByContact = {};
-    recentActivities.forEach(activity => {
-      const contactKey = activity.contactId || activity.contactName;
-      if (!groupedByContact[contactKey]) {
-        groupedByContact[contactKey] = {
-          contactId: activity.contactId,
-          contactName: activity.contactName,
-          activities: []
-        };
+  // Swedish Business Intelligence defer function
+  const handleDeferContact = async (contactId, urgency) => {
+    try {
+      const returnTime = calculateReturnTime(urgency);
+      
+      // Create deferred activity in Firebase
+      await addDoc(collection(db, 'diningDeferredActivities'), {
+        contactId,
+        originalUrgency: urgency,
+        returnTime,
+        createdAt: new Date()
+      });
+      
+      // Get contact name for toast
+      const contact = contacts.find(c => c.id === contactId);
+      const contactName = contact?.companyName || 'Kontakt';
+      
+      // Swedish timing message
+      const now = new Date();
+      const hour = now.getHours();
+      const day = now.getDay();
+      
+      let timingMessage = '';
+      if (hour >= 8 && hour < 12) {
+        timingMessage = 'återkommer efter lunch';
+      } else if (hour >= 12 && hour < 17) {
+        timingMessage = 'återkommer imorgon morgon';
+      } else if (day === 5 && hour >= 12) {
+        timingMessage = 'återkommer måndag morgon';
+      } else {
+        timingMessage = 'återkommer imorgon morgon';
       }
-      groupedByContact[contactKey].activities.push(activity);
-    });
-    
-    // Convert to array and show most recent activity per contact
-    return Object.values(groupedByContact)
-      .map(group => {
-        const mostRecent = group.activities[0]; // First is most recent
-        return {
-          id: mostRecent.id,
-          contactId: group.contactId,
-          contact: group.contactName,
-          note: mostRecent.subject || mostRecent.notes,
-          when: mostRecent.createdAt?.toDate?.()?.toLocaleDateString('sv-SE') || 'Idag',
-          activityCount: group.activities.length
-        };
-      })
-      .slice(0, 6); // Show max 6 different contacts
-  };
-
-  // Smart re-surfacing logic - CRM intelligence
-  const shouldResurface = (contactId, trigger) => {
-    const deferInfo = deferredContacts.get(contactId);
-    if (!deferInfo) return false;
-    
-    const now = new Date();
-    const timeSinceDefer = now - deferInfo.timestamp;
-    const hoursDeferred = timeSinceDefer / (1000 * 60 * 60);
-    
-    // OVERRIDE DEFER: Critical events that force re-surfacing
-    if (trigger.urgency === 'critical') return true; // AKUT always surfaces
-    if (trigger.urgency === 'high' && hoursDeferred > 2) return true; // Problems escalate quickly
-    
-    // TIME-BASED RE-SURFACING: Based on original urgency and Swedish work patterns
-    if (trigger.urgency === 'medium' && hoursDeferred > 24) return true; // Next business day
-    if (trigger.urgency === 'low' && hoursDeferred > 72) return true; // After 3 days
-    
-    // EVENT-BASED RE-SURFACING: New activity on this contact
-    const contactActivities = activities
-      .filter(activity => activity.contactId === contactId)
-      .sort((a, b) => (b.createdAt?.toDate?.() || new Date(b.date)) - (a.createdAt?.toDate?.() || new Date(a.date)));
-    
-    if (contactActivities.length > 0) {
-      const latestActivity = contactActivities[0];
-      const activityTime = latestActivity.createdAt?.toDate?.() || new Date(latestActivity.date);
-      if (activityTime > deferInfo.timestamp) return true; // New activity since defer
+      
+      toast.success(`🧘‍♂️ ${contactName} ${timingMessage}`, {
+        duration: 4000,
+        icon: '⏰'
+      });
+      
+    } catch (error) {
+      console.error('❌ Error deferring contact:', error);
+      toast.error('Kunde inte skjuta upp aktivitet');
     }
-    
-    return false;
-  };
-
-  // Apply smart re-surfacing in useEffect to avoid state updates during render
-  useEffect(() => {
-    const allTriggers = getTodaysFollowUps();
-    const resurfacedContacts = new Map(deferredContacts);
-    let hasChanges = false;
-    
-    allTriggers.forEach(trigger => {
-      if (deferredContacts.has(trigger.id) && shouldResurface(trigger.id, trigger)) {
-        resurfacedContacts.delete(trigger.id);
-        hasChanges = true;
-      }
-    });
-    
-    if (hasChanges) {
-      setDeferredContacts(resurfacedContacts);
-    }
-  }, [activities, contacts, deferredContacts]);
-
-  // Split triggers for display
-  const allTriggers = getTodaysFollowUps();
-  const availableTriggers = allTriggers.filter(trigger => !deferredContacts.has(trigger.id));
-  const todaysFollowUps = availableTriggers.slice(0, 3); // Swedish Lagom: max 3 primary items
-  const deferredTriggers = allTriggers.filter(trigger => deferredContacts.has(trigger.id));
-  
-  const recentConversations = getRecentConversations();
-  const loading = contactsLoading || activitiesLoading;
-
-  // Strategic relationship timing function (not task postponement!)
-  const handleDeferContact = (contactId, urgency) => {
-    const newDeferred = new Map(deferredContacts);
-    newDeferred.set(contactId, {
-      timestamp: new Date(),
-      originalUrgency: urgency
-    });
-    setDeferredContacts(newDeferred);
   };
 
   // Bring contact back to focus
-  const handleUndeferContact = (contactId) => {
-    const newDeferred = new Map(deferredContacts);
-    newDeferred.delete(contactId);
-    setDeferredContacts(newDeferred);
+  const handleUndeferContact = async (contactId) => {
+    try {
+      // Find and delete deferred activity
+      const deferredActivity = deferredActivities.find(activity => activity.contactId === contactId);
+      if (deferredActivity) {
+        await deleteDoc(doc(db, 'diningDeferredActivities', deferredActivity.id));
+        
+        // Get contact name for toast
+        const contact = contacts.find(c => c.id === contactId);
+        const contactName = contact?.companyName || 'Kontakt';
+        
+        toast.success(`📞 ${contactName} prioriterad nu`, {
+          duration: 3000,
+          icon: '⚡'
+        });
+      }
+    } catch (error) {
+      console.error('❌ Error undeferring contact:', error);
+      toast.error('Kunde inte prioritera aktivitet');
+    }
   };
+
+  // Get recent conversations for display
+  const getRecentConversations = () => {
+    const recentActivities = activities
+      .filter(activity => activity.type === 'call' || activity.type === 'meeting' || activity.type === 'email')
+      .sort((a, b) => (b.createdAt?.toDate?.() || new Date(b.date)) - (a.createdAt?.toDate?.() || new Date(a.date)))
+      .slice(0, 5);
+
+    return recentActivities.map(activity => {
+      const contact = contacts.find(c => c.id === activity.contactId);
+      const activityDate = activity.createdAt?.toDate?.() || new Date(activity.date);
+      const now = new Date();
+      const diffTime = Math.abs(now - activityDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      let when;
+      if (diffDays === 1) {
+        when = 'idag';
+      } else if (diffDays === 2) {
+        when = 'igår';
+      } else if (diffDays <= 7) {
+        when = `${diffDays} dagar sedan`;
+      } else {
+        when = activityDate.toLocaleDateString('sv-SE');
+      }
+
+      // Count activities for this contact
+      const contactActivities = activities.filter(a => a.contactId === activity.contactId);
+
+      return {
+        id: activity.id,
+        contactId: activity.contactId,
+        contact: contact?.companyName || 'Okänd kontakt',
+        note: activity.note || activity.summary || 'Ingen anteckning',
+        when,
+        activityCount: contactActivities.length
+      };
+    });
+  };
+
+  // Auto-resurface logic - check if deferred activities should return
+  useEffect(() => {
+    const checkResurfacing = () => {
+      deferredActivities.forEach(async (deferredActivity) => {
+        if (shouldResurface(deferredActivity)) {
+          // Automatically remove from deferred (resurface)
+          await deleteDoc(doc(db, 'diningDeferredActivities', deferredActivity.id));
+          
+          // Get contact name for notification
+          const contact = contacts.find(c => c.id === deferredActivity.contactId);
+          const contactName = contact?.companyName || 'Kontakt';
+          
+          toast.success(`🔔 ${contactName} är tillbaka i fokus`, {
+            duration: 5000,
+            icon: '⏰'
+          });
+        }
+      });
+    };
+
+    // Check every minute for resurfacing
+    const interval = setInterval(checkResurfacing, 60000);
+    return () => clearInterval(interval);
+  }, [deferredActivities, contacts]);
+
+  // Split triggers for display
+  const allTriggers = getTodaysFollowUps();
+  const deferredContactIds = deferredActivities.map(activity => activity.contactId);
+  const availableTriggers = allTriggers.filter(trigger => !deferredContactIds.includes(trigger.id));
+  const todaysFollowUps = availableTriggers.slice(0, 3); // Swedish Lagom: max 3 primary items
+  const deferredTriggers = allTriggers.filter(trigger => deferredContactIds.includes(trigger.id));
+  
+  const recentConversations = getRecentConversations();
+  const loading = contactsLoading || activitiesLoading;
 
   if (loading) {
     return (
@@ -564,10 +672,29 @@ const DiningDashboard = () => {
                {showDeferred && deferredTriggers.length > 0 && (
                  <div className="mt-4 space-y-2 bg-blue-50 rounded-lg p-4">
                    <h4 className="text-sm font-medium text-gray-700 mb-2">Uppskjutna aktiviteter - återkommer automatiskt</h4>
-                   <p className="text-xs text-gray-600 mb-3">Dessa aktiviteter återkommer automatiskt vid bättre tillfälle baserat på prioritet och aktivitet.</p>
+                   <p className="text-xs text-gray-600 mb-3">Dessa aktiviteter återkommer automatiskt vid bättre tillfälle baserat på svensk affärsrytm.</p>
                    {deferredTriggers.map(followUp => {
-                     const deferInfo = deferredContacts.get(followUp.id);
-                     const timeSinceDefer = deferInfo ? Math.floor((new Date() - deferInfo.timestamp) / (1000 * 60 * 60)) : 0;
+                     const deferInfo = deferredActivities.find(activity => activity.contactId === followUp.id);
+                     
+                     // Calculate timing display
+                     let timingDisplay = '';
+                     if (deferInfo && deferInfo.returnTime) {
+                       const returnTime = new Date(deferInfo.returnTime.seconds * 1000);
+                       const now = new Date();
+                       
+                       if (returnTime > now) {
+                         // Still deferred - show when it returns
+                         const diffHours = Math.ceil((returnTime - now) / (1000 * 60 * 60));
+                         if (diffHours < 24) {
+                           timingDisplay = `återkommer om ${diffHours}h`;
+                         } else {
+                           timingDisplay = `återkommer ${returnTime.toLocaleDateString('sv-SE')} kl ${returnTime.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}`;
+                         }
+                       } else {
+                         // Should have resurfaced
+                         timingDisplay = 'bör vara tillbaka nu';
+                       }
+                     }
                      
                      return (
                        <div key={followUp.id} className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
@@ -578,7 +705,7 @@ const DiningDashboard = () => {
                            <div className="font-medium text-gray-900">{followUp.name}</div>
                            <div className="text-xs text-gray-500">{followUp.reason}</div>
                            <div className="text-xs text-blue-600 mt-1">
-                             Uppskjuten sedan {timeSinceDefer}h • Återkommer automatiskt vid bättre tillfälle
+                             🧘‍♂️ {timingDisplay}
                            </div>
                          </Link>
                          <button
