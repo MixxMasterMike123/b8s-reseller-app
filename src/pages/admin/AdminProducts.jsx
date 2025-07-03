@@ -152,7 +152,8 @@ function AdminProducts() {
       },
       descriptions: {
         b2b: '',
-        b2c: ''
+        b2c: '',
+        b2cMoreInfo: ''
       },
       weight: {
         value: 0,
@@ -213,7 +214,8 @@ function AdminProducts() {
       },
       descriptions: {
         b2b: product.descriptions?.b2b || '',
-        b2c: product.descriptions?.b2c || ''
+        b2c: product.descriptions?.b2c || '',
+        b2cMoreInfo: product.descriptions?.b2cMoreInfo || ''
       },
       weight: {
         value: product.weight?.value || 0,
