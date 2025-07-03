@@ -53,26 +53,27 @@ export const useDiningActivities = (contactId = null) => {
     }
   };
 
-  // Real-time activities subscription
+  // Load activities from Firebase - using 'activities' collection for fresh start
   useEffect(() => {
     setLoading(true);
     
-    const activitiesRef = collection(db, 'diningActivities');
+    // Use 'activities' collection instead of 'diningActivities' for fresh start
+    const activitiesRef = collection(db, 'activities');
     let q;
     
     if (contactId) {
-      // Get activities for specific contact
+      // Load activities for specific contact
       q = query(
-        activitiesRef, 
+        activitiesRef,
         where('contactId', '==', contactId),
         orderBy('createdAt', 'desc')
       );
     } else {
-      // Get all recent activities
+      // Load all activities, most recent first
       q = query(
-        activitiesRef, 
+        activitiesRef,
         orderBy('createdAt', 'desc'),
-        limit(100)
+        limit(100) // Limit for performance
       );
     }
     
@@ -82,6 +83,7 @@ export const useDiningActivities = (contactId = null) => {
           id: doc.id,
           ...doc.data()
         }));
+        
         setActivities(activitiesData);
         setLoading(false);
       },
@@ -89,14 +91,14 @@ export const useDiningActivities = (contactId = null) => {
         console.error('Error fetching activities:', error);
         setError('Kunde inte ladda aktiviteter');
         setLoading(false);
-        toast.error('Kunde inte ladda servicehistorik');
+        toast.error('Kunde inte ladda aktiviteter');
       }
     );
 
     return () => unsubscribe();
   }, [contactId]);
 
-  // Add new activity (Record service interaction)
+  // Add new activity
   const addActivity = useCallback(async (activityData) => {
     try {
       setLoading(true);
@@ -107,40 +109,33 @@ export const useDiningActivities = (contactId = null) => {
         updatedAt: new Date()
       };
 
-      // Validate required fields
-      if (!newActivity.contactId || !newActivity.type || !newActivity.subject) {
-        throw new Error('Saknade obligatoriska fält');
-      }
-
-      const docRef = await addDoc(collection(db, 'diningActivities'), newActivity);
+      // Use 'activities' collection for fresh start
+      const docRef = await addDoc(collection(db, 'activities'), newActivity);
       
-      const activityType = activityTypes[newActivity.type];
-      toast.success(`${activityType?.icon || '📝'} ${activityType?.label || 'Aktivitet'} registrerad`);
-      
+      toast.success('🍽️ Aktivitet registrerad');
       return docRef.id;
     } catch (error) {
       console.error('Error adding activity:', error);
-      toast.error('Kunde inte registrera aktivitet');
+      toast.error('Kunde inte lägga till aktivitet');
       throw error;
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Update activity
+  // Update existing activity
   const updateActivity = useCallback(async (activityId, updates) => {
     try {
       setLoading(true);
       
-      const activityRef = doc(db, 'diningActivities', activityId);
-      const updatedData = {
+      // Use 'activities' collection for fresh start
+      const activityRef = doc(db, 'activities', activityId);
+      await updateDoc(activityRef, {
         ...updates,
         updatedAt: new Date()
-      };
-
-      await updateDoc(activityRef, updatedData);
+      });
       
-      toast.success('📝 Aktivitet uppdaterad');
+      toast.success('🍽️ Aktivitet uppdaterad');
       return true;
     } catch (error) {
       console.error('Error updating activity:', error);
@@ -156,9 +151,10 @@ export const useDiningActivities = (contactId = null) => {
     try {
       setLoading(true);
       
-      await deleteDoc(doc(db, 'diningActivities', activityId));
+      // Use 'activities' collection for fresh start
+      await deleteDoc(doc(db, 'activities', activityId));
       
-      toast.success('🗑️ Aktivitet borttagen');
+      toast.success('🍽️ Aktivitet borttagen');
       return true;
     } catch (error) {
       console.error('Error deleting activity:', error);
@@ -169,20 +165,14 @@ export const useDiningActivities = (contactId = null) => {
     }
   }, []);
 
-  // Get activities by contact
-  const getActivitiesByContact = useCallback((targetContactId) => {
-    return activities.filter(activity => activity.contactId === targetContactId);
+  // Get activities for specific contact
+  const getActivitiesByContact = useCallback((contactId) => {
+    return activities.filter(activity => activity.contactId === contactId);
   }, [activities]);
 
-  // Get recent activities (last 7 days)
-  const getRecentActivities = useCallback((days = 7) => {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - days);
-    
-    return activities.filter(activity => {
-      const activityDate = activity.createdAt?.toDate?.() || new Date(activity.createdAt);
-      return activityDate >= cutoffDate;
-    });
+  // Get recent activities (last 10)
+  const getRecentActivities = useCallback((limit = 10) => {
+    return activities.slice(0, limit);
   }, [activities]);
 
   // Activity statistics

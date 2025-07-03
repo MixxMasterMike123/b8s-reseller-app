@@ -50,15 +50,18 @@ const FollowUpCenter = () => {
     reminderMinutes: 15
   });
 
-  // Load follow-ups
+  // Load follow-ups from Firebase
   useEffect(() => {
     setLoading(true);
     
+    // Use 'followUps' collection for fresh start
+    const followUpsRef = collection(db, 'followUps');
     let q;
+    
     if (selectedFilter === 'overdue') {
       const now = new Date();
       q = query(
-        collection(db, 'diningFollowUps'),
+        followUpsRef,
         where('scheduledDateTime', '<', now),
         where('status', '==', 'scheduled'),
         orderBy('scheduledDateTime', 'asc')
@@ -69,7 +72,7 @@ const FollowUpCenter = () => {
       tomorrow.setDate(tomorrow.getDate() + 1);
       
       q = query(
-        collection(db, 'diningFollowUps'),
+        followUpsRef,
         where('scheduledDateTime', '>=', today),
         where('scheduledDateTime', '<', tomorrow),
         orderBy('scheduledDateTime', 'asc')
@@ -80,29 +83,30 @@ const FollowUpCenter = () => {
       weekFromNow.setDate(weekFromNow.getDate() + 7);
       
       q = query(
-        collection(db, 'diningFollowUps'),
+        followUpsRef,
         where('scheduledDateTime', '>=', today),
         where('scheduledDateTime', '<', weekFromNow),
         orderBy('scheduledDateTime', 'asc')
       );
     } else {
       q = query(
-        collection(db, 'diningFollowUps'),
-        orderBy('scheduledDateTime', 'desc')
+        followUpsRef,
+        orderBy('scheduledDateTime', 'asc')
       );
     }
-
+    
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {
         const followUpsData = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
+        
         setFollowUps(followUpsData);
         setLoading(false);
       },
       (error) => {
-        console.error('Error loading follow-ups:', error);
+        console.error('Error fetching follow-ups:', error);
         toast.error('Kunde inte ladda uppföljningar');
         setLoading(false);
       }
@@ -145,7 +149,7 @@ const FollowUpCenter = () => {
         updatedAt: new Date()
       };
 
-      await addDoc(collection(db, 'diningFollowUps'), followUpData);
+      await addDoc(collection(db, 'followUps'), followUpData);
       
       // Reset form
       setNewFollowUp({
@@ -173,16 +177,16 @@ const FollowUpCenter = () => {
   // Update follow-up status
   const updateFollowUpStatus = async (followUpId, newStatus) => {
     try {
-      await updateDoc(doc(db, 'diningFollowUps', followUpId), {
+      await updateDoc(doc(db, 'followUps', followUpId), {
         status: newStatus,
         updatedAt: new Date(),
         ...(newStatus === 'completed' && { completedAt: new Date() })
       });
       
-      toast.success('Status uppdaterad');
+      toast.success('🍽️ Uppföljning uppdaterad');
     } catch (error) {
       console.error('Error updating follow-up:', error);
-      toast.error('Kunde inte uppdatera status');
+      toast.error('Kunde inte uppdatera uppföljning');
     }
   };
 
@@ -193,8 +197,8 @@ const FollowUpCenter = () => {
     }
 
     try {
-      await deleteDoc(doc(db, 'diningFollowUps', followUpId));
-      toast.success('Uppföljning borttagen');
+      await deleteDoc(doc(db, 'followUps', followUpId));
+      toast.success('🍽️ Uppföljning borttagen');
     } catch (error) {
       console.error('Error deleting follow-up:', error);
       toast.error('Kunde inte ta bort uppföljning');

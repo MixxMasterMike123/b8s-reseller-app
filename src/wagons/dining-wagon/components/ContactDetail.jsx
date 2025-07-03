@@ -266,27 +266,25 @@ const ContactDetail = () => {
     return 'normal';
   };
 
-  const handleDismissActivity = async (activityId) => {
+  // Dismiss activity (mark as resolved to remove from triggers)
+  const dismissActivity = async (activityId) => {
     try {
-      // Add to dismissed set
-      const newDismissed = new Set(dismissedActivities);
-      newDismissed.add(activityId);
-      setDismissedActivities(newDismissed);
-      
-      // Update activity in Firestore to mark as dismissed
-      const activityRef = doc(db, 'diningActivities', activityId);
+      // Use 'activities' collection for fresh start
+      const activityRef = doc(db, 'activities', activityId);
       await updateDoc(activityRef, {
         dismissed: true,
-        dismissedAt: Timestamp.now(),
+        dismissedAt: new Date(),
         dismissedBy: user?.uid || 'unknown',
-        dismissedByName: userData?.contactPerson || user?.displayName || user?.email || 'Okänd användare',
-        dismissedByInitials: getInitials(userData?.contactPerson || user?.displayName || user?.email || 'Okänd')
+        dismissedByName: userData?.contactPerson || user?.displayName || user?.email || 'Okänd användare'
       });
       
-      toast.success('Markerat som löst - kommer inte längre visas i "Du bör ringa"');
+      // Add to local dismissed set for immediate UI update
+      setDismissedActivities(prev => new Set([...prev, activityId]));
+      
+      toast.success('🍽️ Aktivitet löst');
     } catch (error) {
       console.error('Error dismissing activity:', error);
-      toast.error('Kunde inte markera som löst');
+      toast.error('Kunde inte lösa aktivitet');
     }
   };
 
@@ -635,7 +633,7 @@ const ContactDetail = () => {
                           {/* Dismiss button for urgent activities */}
                           {isUrgent && !isDismissed && (
                             <button
-                              onClick={() => handleDismissActivity(lastConversation.id)}
+                              onClick={() => dismissActivity(lastConversation.id)}
                               className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-50 border border-gray-300 rounded transition-colors"
                               title="Markera som löst"
                             >
@@ -806,7 +804,7 @@ const ContactDetail = () => {
                             {/* Dismiss button for urgent activities */}
                             {isUrgent && !isDismissed && (
                               <button
-                                onClick={() => handleDismissActivity(activity.id)}
+                                onClick={() => dismissActivity(activity.id)}
                                 className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-50 border border-gray-300 rounded transition-colors"
                                 title="Markera som löst"
                               >

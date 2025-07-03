@@ -1,126 +1,102 @@
 import React, { useState } from 'react';
 import { 
-  CloudArrowDownIcon, 
-  UserGroupIcon,
-  CheckCircleIcon,
+  CloudArrowUpIcon, 
+  CheckCircleIcon, 
   ExclamationTriangleIcon 
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../../contexts/AuthContext';
-import { bulkImportB2BUsersToCRM } from '../utils/b2bIntegration';
 import toast from 'react-hot-toast';
 
-const B2BImportButton = () => {
-  const { getAllUsers, isAdmin } = useAuth();
+const B2BImportButton = ({ className = '' }) => {
+  const { getAllUsers } = useAuth();
   const [importing, setImporting] = useState(false);
-  const [importResults, setImportResults] = useState(null);
+  const [importResult, setImportResult] = useState(null);
 
-  // Only show for admin users
-  if (!isAdmin) return null;
-
-  const handleBulkImport = async () => {
-    if (!confirm('🚂🍽️ Importera alla B2B-kunder till CRM?\n\n⚠️ Admin-användare hoppas över automatiskt.')) {
-      return;
-    }
-
-    setImporting(true);
-    setImportResults(null);
-
+  const handleImport = async () => {
     try {
-      // Get all B2B users
-      const b2bUsers = await getAllUsers();
-      console.log('🚂 Total B2B users found:', b2bUsers.length);
-
-      // Import them to CRM (function will filter out admins)
-      const results = await bulkImportB2BUsersToCRM(b2bUsers);
+      setImporting(true);
+      setImportResult(null);
       
-      setImportResults(results);
+      // Show deprecation notice
+      toast.error('🚫 B2B Import is deprecated - CRM now uses unified users collection directly');
       
-      // Show success message
-      toast.success(
-        `🍽️ CRM Import klar!\n` +
-        `✅ Skapade: ${results.imported}\n` +
-        `🔄 Uppdaterade: ${results.updated}\n` +
-        `🚫 Hoppade över admin: ${results.skipped}\n` +
-        `❌ Fel: ${results.errors}`
-      );
+      // Get all users to show current state
+      const users = await getAllUsers();
+      const customerUsers = users.filter(user => user.role !== 'admin');
+      
+      toast.success(`✅ CRM has access to ${customerUsers.length} customers from unified database`);
+      
+      setImportResult({
+        imported: 0,
+        updated: 0,
+        errors: 0,
+        skipped: users.length,
+        total: users.length,
+        message: 'Import not needed - using unified users collection'
+      });
       
     } catch (error) {
-      console.error('❌ Bulk import failed:', error);
-      toast.error('Kunde inte importera B2B-kunder till CRM');
+      console.error('Error checking users:', error);
+      toast.error('Error checking user database');
     } finally {
       setImporting(false);
     }
   };
 
   return (
-    <div className="relative">
-      <button
-        onClick={handleBulkImport}
-        disabled={importing}
-        className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors"
-      >
-        {importing ? (
-          <>
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-            <span>Importerar...</span>
-          </>
-        ) : (
-          <>
-            <CloudArrowDownIcon className="h-5 w-5" />
-            <span>Import B2B → CRM</span>
-          </>
-        )}
-      </button>
-
-      {/* Results popup */}
-      {importResults && (
-        <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-gray-900 flex items-center">
-              <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
-              Import Resultat
-            </h3>
-            <button
-              onClick={() => setImportResults(null)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <span className="sr-only">Stäng</span>
-              ✕
-            </button>
-          </div>
-          
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Totalt B2B-användare:</span>
-              <span className="font-medium">{importResults.total}</span>
+    <div className={`bg-white rounded-lg shadow p-6 ${className}`}>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-medium text-gray-900">B2B → CRM Import</h3>
+        <CloudArrowUpIcon className="h-6 w-6 text-gray-400" />
+      </div>
+      
+      <div className="space-y-4">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-start">
+            <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400 mt-0.5 mr-3" />
+            <div>
+              <h4 className="text-sm font-medium text-yellow-800">Deprecated Feature</h4>
+              <p className="text-sm text-yellow-700 mt-1">
+                B2B import is no longer needed. CRM now reads directly from the unified users collection.
+              </p>
             </div>
-            <div className="flex justify-between">
-              <span className="text-green-600">✅ Nya CRM-kontakter:</span>
-              <span className="font-medium text-green-600">{importResults.imported}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-blue-600">🔄 Uppdaterade:</span>
-              <span className="font-medium text-blue-600">{importResults.updated}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">🚫 Admin (hoppades över):</span>
-              <span className="font-medium text-gray-600">{importResults.skipped}</span>
-            </div>
-            {importResults.errors > 0 && (
-              <div className="flex justify-between">
-                <span className="text-red-600">❌ Fel:</span>
-                <span className="font-medium text-red-600">{importResults.errors}</span>
-              </div>
-            )}
-          </div>
-          
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            <p className="text-xs text-gray-500">
-              🍽️ B2B-kunder finns nu i The Dining Wagon™ CRM
-            </p>
           </div>
         </div>
-      )}
+
+        <button
+          onClick={handleImport}
+          disabled={importing}
+          className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {importing ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Checking Database...
+            </>
+          ) : (
+            <>
+              <CheckCircleIcon className="h-4 w-4 mr-2" />
+              Check Current State
+            </>
+          )}
+        </button>
+
+        {importResult && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-start">
+              <CheckCircleIcon className="h-5 w-5 text-green-400 mt-0.5 mr-3" />
+              <div>
+                <h4 className="text-sm font-medium text-green-800">Unified Database Status</h4>
+                <div className="text-sm text-green-700 mt-2 space-y-1">
+                  <p>Total users: {importResult.total}</p>
+                  <p>Available to CRM: {importResult.total - importResult.errors}</p>
+                  <p className="font-medium">{importResult.message}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

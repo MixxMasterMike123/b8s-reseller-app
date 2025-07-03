@@ -503,13 +503,7 @@ export function AuthProvider({ children }) {
           updatedAt: new Date().toISOString()
         });
         
-        // 🤝 Auto-sync B2B update to CRM
-        try {
-          const { autoSyncB2BUpdate } = await import('../utils/contactSync');
-          await autoSyncB2BUpdate(userId, { marginal: newMarginal });
-        } catch (error) {
-          console.error('Auto-sync B2B update failed (margin update successful):', error);
-        }
+        // CRM sync no longer needed - using unified users collection
         
         toast.success(`Customer margin updated to ${newMarginal}% successfully`);
         return true;
@@ -555,13 +549,7 @@ export function AuthProvider({ children }) {
         // Create user document in Firestore
         await setDoc(doc(db, 'users', newUserId), userProfile);
 
-        // 🤝 Auto-sync new B2B user to CRM
-        try {
-          const { autoSyncB2BUpdate } = await import('../utils/contactSync');
-          await autoSyncB2BUpdate(newUserId, userProfile);
-        } catch (error) {
-          console.error('Auto-sync B2B user failed (user creation still successful):', error);
-        }
+        // CRM sync no longer needed - using unified users collection
 
         return { uid: newUserId, email };
       }
@@ -707,13 +695,7 @@ export function AuthProvider({ children }) {
         const data = result.data;
         toast.success(data.message);
         
-        // 🤝 Auto-sync B2B update to CRM
-        try {
-          const { autoSyncB2BUpdate } = await import('../utils/contactSync');
-          await autoSyncB2BUpdate(userId, { active: activeStatus });
-        } catch (error) {
-          console.error('Auto-sync B2B update failed (user status update successful):', error);
-        }
+        // CRM sync no longer needed - using unified users collection
         
         return true;
       }

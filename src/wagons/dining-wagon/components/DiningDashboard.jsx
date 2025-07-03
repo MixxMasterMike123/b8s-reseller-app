@@ -46,7 +46,8 @@ const DiningDashboard = () => {
 
   // Load deferred activities from Firebase
   useEffect(() => {
-    const deferredRef = collection(db, 'diningDeferredActivities');
+    // Use 'deferredActivities' collection for fresh start
+    const deferredRef = collection(db, 'deferredActivities');
     // Remove orderBy to avoid index requirement - sort in memory instead
     const q = query(deferredRef);
     
@@ -311,64 +312,44 @@ const DiningDashboard = () => {
     try {
       const returnTime = calculateReturnTime(urgency);
       
-      // Create deferred activity in Firebase
-      await addDoc(collection(db, 'diningDeferredActivities'), {
+      // Use 'deferredActivities' collection for fresh start
+      await addDoc(collection(db, 'deferredActivities'), {
         contactId,
-        originalUrgency: urgency,
+        urgency,
         returnTime,
         createdAt: new Date()
       });
       
-      // Get contact name for toast
-      const contact = contacts.find(c => c.id === contactId);
-      const contactName = contact?.companyName || 'Kontakt';
+      // Show zen notification
+      const hour = new Date().getHours();
+      let message = '🧘‍♂️ Aktivitet uppskjuten med svensk intelligens';
       
-      // Swedish timing message
-      const now = new Date();
-      const hour = now.getHours();
-      const day = now.getDay();
-      
-      let timingMessage = '';
       if (hour >= 8 && hour < 12) {
-        timingMessage = 'återkommer efter lunch';
+        message += ' - återkommer efter lunch';
       } else if (hour >= 12 && hour < 17) {
-        timingMessage = 'återkommer imorgon morgon';
-      } else if (day === 5 && hour >= 12) {
-        timingMessage = 'återkommer måndag morgon';
+        message += ' - återkommer imorgon bitti';
       } else {
-        timingMessage = 'återkommer imorgon morgon';
+        message += ' - återkommer vid lämplig tid';
       }
       
-      toast.success(`🧘‍♂️ ${contactName} ${timingMessage}`, {
-        duration: 4000,
-        icon: '⏰'
-      });
-      
+      toast.success(message);
     } catch (error) {
-      console.error('❌ Error deferring contact:', error);
+      console.error('Error deferring contact:', error);
       toast.error('Kunde inte skjuta upp aktivitet');
     }
   };
 
-  // Bring contact back to focus
+  // Undefer (bring back immediately)
   const handleUndeferContact = async (contactId) => {
     try {
-      // Find and delete deferred activity
       const deferredActivity = deferredActivities.find(activity => activity.contactId === contactId);
       if (deferredActivity) {
-        await deleteDoc(doc(db, 'diningDeferredActivities', deferredActivity.id));
-        
-        // Get contact name for toast
-        const contact = contacts.find(c => c.id === contactId);
-        const contactName = contact?.companyName || 'Kontakt';
-        
-        toast.success(`📞 ${contactName} prioriterad nu`, {
-          duration: 3000,
-          icon: '⚡'
-        });
+        // Use 'deferredActivities' collection for fresh start
+        await deleteDoc(doc(db, 'deferredActivities', deferredActivity.id));
+        toast.success('🎯 Aktivitet prioriterad - visas nu i "Du bör ringa"');
       }
     } catch (error) {
-      console.error('❌ Error undeferring contact:', error);
+      console.error('Error undeferring contact:', error);
       toast.error('Kunde inte prioritera aktivitet');
     }
   };
@@ -418,7 +399,7 @@ const DiningDashboard = () => {
       deferredActivities.forEach(async (deferredActivity) => {
         if (shouldResurface(deferredActivity)) {
           // Automatically remove from deferred (resurface)
-          await deleteDoc(doc(db, 'diningDeferredActivities', deferredActivity.id));
+          await deleteDoc(doc(db, 'deferredActivities', deferredActivity.id));
           
           // Get contact name for notification
           const contact = contacts.find(c => c.id === deferredActivity.contactId);

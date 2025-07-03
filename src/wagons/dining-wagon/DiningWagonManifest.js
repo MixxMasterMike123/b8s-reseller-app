@@ -157,12 +157,19 @@ export const DiningWagonManifest = {
     'notifications'     // Can send notifications
   ],
 
-  // Database collections this wagon uses
+  // Database collections used by this wagon
   collections: [
-    'diningContacts',
-    'diningActivities', 
-    'diningFollowUps',
-    'diningDocuments'
+    // Main collections for fresh start
+    'users',              // Unified contacts (B2B customers as CRM contacts)
+    'activities',         // CRM activities (fresh start)
+    'followUps',          // Follow-up scheduling (fresh start)
+    'deferredActivities', // Swedish Business Intelligence defer system
+    
+    // Legacy collections (deprecated but kept for reference)
+    // 'diningContacts',     // DEPRECATED - now using 'users' collection
+    // 'diningActivities',   // DEPRECATED - now using 'activities' collection  
+    // 'diningFollowUps',    // DEPRECATED - now using 'followUps' collection
+    // 'diningDocuments'     // DEPRECATED - not yet implemented
   ],
 
   // Restaurant-themed terminology
