@@ -170,17 +170,7 @@ export function AuthProvider({ children }) {
 
         await setDoc(doc(db, 'users', user.uid), userProfile);
 
-        // 🚂🍽️ Auto-import to The Dining Wagon™ CRM
-        try {
-          const { autoImportNewB2BUser } = await import('../wagons/dining-wagon/utils/b2bIntegration');
-          await autoImportNewB2BUser({
-            id: user.uid,
-            uid: user.uid,
-            ...userProfile
-          });
-        } catch (error) {
-          console.error('CRM auto-import failed (registration still successful):', error);
-        }
+        // CRM auto-import no longer needed - using unified users collection
 
         return user;
       }
