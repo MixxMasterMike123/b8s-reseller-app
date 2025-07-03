@@ -69,7 +69,8 @@ const PublicStorefront = () => {
         productGroups[group] = {
           groupName: group,
           products: [],
-          representativeProduct: product // Use first product as representative
+          representativeProduct: product,
+          isMultipack: group.includes('multipack') || group.includes('3-pack')
         };
       }
       
@@ -78,37 +79,74 @@ const PublicStorefront = () => {
     
     // Return array of product groups with their variants
     return Object.values(productGroups).map(group => {
-      // For each group, organize products by color and size
-      const colorVariants = {};
-      
-      group.products.forEach(product => {
-        const color = product.color || 'Standard';
-        if (!colorVariants[color]) {
-          colorVariants[color] = {
-            color: color,
-            products: [],
-            representativeProduct: product
-          };
-        }
-        colorVariants[color].products.push(product);
-      });
-      
-      // Return the group with color variants
-      return {
-        ...group.representativeProduct,
-        groupName: group.groupName,
-        colorVariants: Object.values(colorVariants).map(colorGroup => ({
-          ...colorGroup.representativeProduct,
-          colorVariant: colorGroup.color,
-          variants: colorGroup.products,
-          availableSizes: colorGroup.products.map(p => ({
-            id: p.id,
-            size: p.size || 'Standard',
-            price: p.b2cPrice || p.basePrice,
-            name: p.name
+      if (group.isMultipack) {
+        // For multipacks: group by color, show one card per color
+        const colorVariants = {};
+        
+        group.products.forEach(product => {
+          const color = product.color || 'Standard';
+          if (!colorVariants[color]) {
+            colorVariants[color] = {
+              color: color,
+              products: [],
+              representativeProduct: product
+            };
+          }
+          colorVariants[color].products.push(product);
+        });
+        
+        // Return the group with color variants (one card per color)
+        return {
+          ...group.representativeProduct,
+          groupName: group.groupName,
+          isMultipack: true,
+          colorVariants: Object.values(colorVariants).map(colorGroup => ({
+            ...colorGroup.representativeProduct,
+            colorVariant: colorGroup.color,
+            variants: colorGroup.products,
+            availableColors: [colorGroup.color], // Single color for multipack
+            availableSizes: colorGroup.products.map(p => ({
+              id: p.id,
+              size: p.size || 'Standard',
+              price: p.b2cPrice || p.basePrice,
+              name: p.name
+            }))
           }))
-        }))
-      };
+        };
+      } else {
+        // For individual products: group by color, then show size variants
+        const colorVariants = {};
+        
+        group.products.forEach(product => {
+          const color = product.color || 'Standard';
+          if (!colorVariants[color]) {
+            colorVariants[color] = {
+              color: color,
+              products: [],
+              representativeProduct: product
+            };
+          }
+          colorVariants[color].products.push(product);
+        });
+        
+        // Return the group with color variants
+        return {
+          ...group.representativeProduct,
+          groupName: group.groupName,
+          isMultipack: false,
+          colorVariants: Object.values(colorVariants).map(colorGroup => ({
+            ...colorGroup.representativeProduct,
+            colorVariant: colorGroup.color,
+            variants: colorGroup.products,
+            availableSizes: colorGroup.products.map(p => ({
+              id: p.id,
+              size: p.size || 'Standard',
+              price: p.b2cPrice || p.basePrice,
+              name: p.name
+            }))
+          }))
+        };
+      }
     });
   };
 
@@ -239,61 +277,112 @@ const PublicStorefront = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {groupedProducts.flatMap(productGroup => 
-                productGroup.colorVariants?.map((colorVariant, colorIndex) => (
-                  <Link
-                    key={`${productGroup.groupName}-${colorVariant.colorVariant}-${colorIndex}`}
-                    to={`/product/${colorVariant.id}?color=${encodeURIComponent(colorVariant.colorVariant)}`}
-                    className="group block"
-                  >
-                    <div className="bg-white">
-                      {/* Product Image */}
-                      <div className="relative aspect-square bg-gray-50 mb-4">
-                        <img
-                          src={getB2cProductImage(colorVariant)}
-                          alt={`B8Shield ${colorVariant.colorVariant}`}
-                          className="w-full h-full object-cover"
-                        />
-                        
-                        {/* Sustainable Material Badge */}
-                        <div className="absolute top-3 left-3">
-                          <span className="bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded text-[11px]">
-                            Hållbara material
-                          </span>
+              {groupedProducts.map((productGroup, groupIndex) => {
+                if (productGroup.isMultipack) {
+                  // For multipacks: show only ONE card representing the entire group
+                  const representativeVariant = productGroup.colorVariants[0]; // Use first color as representative
+                  return (
+                    <Link
+                      key={`${productGroup.groupName}-multipack-${groupIndex}`}
+                      to={`/product/${representativeVariant.id}`}
+                      className="group block"
+                    >
+                      <div className="bg-white">
+                        {/* Product Image */}
+                        <div className="relative aspect-square bg-gray-50 mb-4">
+                          <img
+                            src={getB2cProductImage(representativeVariant)}
+                            alt={`B8Shield 3-pack`}
+                            className="w-full h-full object-cover"
+                          />
+                          
+                          {/* Sustainable Material Badge */}
+                          <div className="absolute top-3 left-3">
+                            <span className="bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded text-[11px]">
+                              Hållbara material
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Product Info */}
+                        <div className="space-y-1">
+                          {/* Product Name */}
+                          <h3 className="text-base font-medium text-gray-900 leading-tight">
+                            B8Shield 3-pack
+                          </h3>
+                          
+                          {/* Product Description */}
+                          <p className="text-sm text-gray-600 leading-tight">
+                            Vasskydd 3-pack för olika fiskemiljöer
+                          </p>
+                          
+                          {/* Variant Info */}
+                          <p className="text-sm text-gray-500">
+                            Innehåller alla storlekar (2mm, 4mm, 6mm) • {productGroup.colorVariants.length} färger
+                          </p>
+                          
+                          {/* Price */}
+                          <p className="text-base font-medium text-gray-900 pt-1">
+                            {formatPrice(representativeVariant.b2cPrice || representativeVariant.basePrice)}
+                          </p>
                         </div>
                       </div>
+                    </Link>
+                  );
+                } else {
+                  // For individual products: show one card per color variant
+                  return productGroup.colorVariants?.map((colorVariant, colorIndex) => (
+                    <Link
+                      key={`${productGroup.groupName}-${colorVariant.colorVariant}-${colorIndex}`}
+                      to={`/product/${colorVariant.id}?color=${encodeURIComponent(colorVariant.colorVariant)}`}
+                      className="group block"
+                    >
+                      <div className="bg-white">
+                        {/* Product Image */}
+                        <div className="relative aspect-square bg-gray-50 mb-4">
+                          <img
+                            src={getB2cProductImage(colorVariant)}
+                            alt={`B8Shield ${colorVariant.colorVariant}`}
+                            className="w-full h-full object-cover"
+                          />
+                          
+                          {/* Sustainable Material Badge */}
+                          <div className="absolute top-3 left-3">
+                            <span className="bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded text-[11px]">
+                              Hållbara material
+                            </span>
+                          </div>
+                        </div>
 
-                      {/* Product Info */}
-                      <div className="space-y-1">
-                        {/* Product Name */}
-                        <h3 className="text-base font-medium text-gray-900 leading-tight">
-                          B8Shield {colorVariant.colorVariant}
-                          {(productGroup.groupName.includes('multipack') || productGroup.groupName.includes('3-pack')) && ' 3-pack'}
-                        </h3>
-                        
-                        {/* Product Description */}
-                        <p className="text-sm text-gray-600 leading-tight">
-                          {(productGroup.groupName.includes('multipack') || productGroup.groupName.includes('3-pack'))
-                            ? 'Vasskydd 3-pack för olika fiskemiljöer'
-                            : 'Vasskydd som förhindrar fastnade fiskedrag'}
-                        </p>
-                        
-                        {/* Variant Info */}
-                        <p className="text-sm text-gray-500">
-                          {colorVariant.availableSizes?.length > 1 
-                            ? `${colorVariant.availableSizes.length} storlekar`
-                            : '1 storlek'}
-                        </p>
-                        
-                        {/* Price */}
-                        <p className="text-base font-medium text-gray-900 pt-1">
-                          {formatPrice(colorVariant.b2cPrice || colorVariant.basePrice)}
-                        </p>
+                        {/* Product Info */}
+                        <div className="space-y-1">
+                          {/* Product Name */}
+                          <h3 className="text-base font-medium text-gray-900 leading-tight">
+                            B8Shield {colorVariant.colorVariant}
+                          </h3>
+                          
+                          {/* Product Description */}
+                          <p className="text-sm text-gray-600 leading-tight">
+                            Vasskydd som förhindrar fastnade fiskedrag
+                          </p>
+                          
+                          {/* Variant Info */}
+                          <p className="text-sm text-gray-500">
+                            {colorVariant.availableSizes?.length > 1 
+                              ? `${colorVariant.availableSizes.length} storlekar`
+                              : '1 storlek'}
+                          </p>
+                          
+                          {/* Price */}
+                          <p className="text-base font-medium text-gray-900 pt-1">
+                            {formatPrice(colorVariant.b2cPrice || colorVariant.basePrice)}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                )) || []
-              )}
+                    </Link>
+                  )) || [];
+                }
+              })}
             </div>
           )}
 

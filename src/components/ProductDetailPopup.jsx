@@ -131,10 +131,9 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
   };
 
   const getProductImage = (product) => {
-    // Priority: Firebase Storage URL > Legacy base64 > Generated image
+    // Priority: Firebase Storage URL > Generated image
     if (product.imageUrl) return product.imageUrl;
     if (product.b2bImageUrl) return product.b2bImageUrl;
-    if (product.imageData) return product.imageData;
     
     // Generate image based on product color field or variant type
     const colorForGeneration = product.color || variantToColorMapping[variantType];

@@ -55,35 +55,70 @@ const PublicProductPage = () => {
         return;
       }
       
-      // Load all products in the same group with the same color
-      const variantsQuery = query(
-        collection(db, 'products'),
-        where('isActive', '==', true),
-        where('availability.b2c', '==', true),
-        where('group', '==', productGroup),
-        where('color', '==', productData.color)
-      );
+      // Check if this is a multipack product
+      const isMultipack = productGroup.includes('multipack') || productGroup.includes('3-pack');
       
-      const variantsSnapshot = await getDocs(variantsQuery);
-      const groupVariants = [];
-      
-      variantsSnapshot.forEach((doc) => {
-        const data = { id: doc.id, ...doc.data() };
-        groupVariants.push(data);
-      });
-      
-      // Sort by size (convert size to number for proper sorting)
-      groupVariants.sort((a, b) => {
-        const aSize = parseFloat(a.size?.toString().replace(/[^\d.]/g, '') || '0');
-        const bSize = parseFloat(b.size?.toString().replace(/[^\d.]/g, '') || '0');
-        return aSize - bSize;
-      });
-      
-      setVariants(groupVariants);
-      
-      // Set the current product as selected variant
-      setSelectedVariant(productData);
-      setSelectedSize(productData.id);
+      if (isMultipack) {
+        // For multipacks: load all products in the same group (different colors)
+        const variantsQuery = query(
+          collection(db, 'products'),
+          where('isActive', '==', true),
+          where('availability.b2c', '==', true),
+          where('group', '==', productGroup)
+        );
+        
+        const variantsSnapshot = await getDocs(variantsQuery);
+        const groupVariants = [];
+        
+        variantsSnapshot.forEach((doc) => {
+          const data = { id: doc.id, ...doc.data() };
+          groupVariants.push(data);
+        });
+        
+        // Sort by color for multipacks
+        groupVariants.sort((a, b) => {
+          const colorOrder = ['Transparent', 'Röd', 'Fluorescerande', 'Glitter'];
+          const aIndex = colorOrder.indexOf(a.color || 'Standard');
+          const bIndex = colorOrder.indexOf(b.color || 'Standard');
+          return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+        });
+        
+        setVariants(groupVariants);
+        
+        // Set the current product as selected variant
+        setSelectedVariant(productData);
+        setSelectedSize(productData.id);
+      } else {
+        // For individual products: load all products in the same group with the same color
+        const variantsQuery = query(
+          collection(db, 'products'),
+          where('isActive', '==', true),
+          where('availability.b2c', '==', true),
+          where('group', '==', productGroup),
+          where('color', '==', productData.color)
+        );
+        
+        const variantsSnapshot = await getDocs(variantsQuery);
+        const groupVariants = [];
+        
+        variantsSnapshot.forEach((doc) => {
+          const data = { id: doc.id, ...doc.data() };
+          groupVariants.push(data);
+        });
+        
+        // Sort by size (convert size to number for proper sorting)
+        groupVariants.sort((a, b) => {
+          const aSize = parseFloat(a.size?.toString().replace(/[^\d.]/g, '') || '0');
+          const bSize = parseFloat(b.size?.toString().replace(/[^\d.]/g, '') || '0');
+          return aSize - bSize;
+        });
+        
+        setVariants(groupVariants);
+        
+        // Set the current product as selected variant
+        setSelectedVariant(productData);
+        setSelectedSize(productData.id);
+      }
       
     } catch (error) {
       console.error('Error loading product:', error);
@@ -98,23 +133,23 @@ const PublicProductPage = () => {
     if (variant) {
       setSelectedVariant(variant);
       setSelectedSize(variantId);
-      setActiveImageIndex(0); // Reset to first image when size changes
+      setActiveImageIndex(0); // Reset to first image when variant changes
     }
   };
 
   const handleAddToCart = () => {
     if (!selectedSize) {
-      toast.error('Vänligen välj en storlek');
+      toast.error(isMultipack ? 'Vänligen välj en färg' : 'Vänligen välj en storlek');
       return;
     }
 
     const selectedVariant = variants.find(v => v.id === selectedSize);
     if (!selectedVariant) {
-      toast.error('Ogiltig storlek vald');
+      toast.error(isMultipack ? 'Ogiltig färg vald' : 'Ogiltig storlek vald');
       return;
     }
 
-    addToCart(selectedVariant, quantity, selectedVariant.size);
+    addToCart(selectedVariant, quantity, isMultipack ? selectedVariant.color : selectedVariant.size);
     toast.success('Produkt tillagd i varukorgen');
   };
 
@@ -191,6 +226,9 @@ const PublicProductPage = () => {
   const currentProduct = selectedVariant || product;
   const productImages = getProductImages(currentProduct);
   const productColor = getProductColor(currentProduct);
+  
+  // Check if this is a multipack product
+  const isMultipack = product?.group?.includes('multipack') || product?.group?.includes('3-pack');
 
   return (
     <>
@@ -263,13 +301,17 @@ const PublicProductPage = () => {
                 </div>
               </div>
 
-              {/* Size Selection */}
+              {/* Size/Color Selection */}
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-medium text-gray-900">Välj storlek</h3>
-                  <button className="text-sm text-gray-500 hover:text-gray-700 underline">
-                    Storleksguide
-                  </button>
+                  <h3 className="text-base font-medium text-gray-900">
+                    {isMultipack ? 'Välj färg' : 'Välj storlek'}
+                  </h3>
+                  {!isMultipack && (
+                    <button className="text-sm text-gray-500 hover:text-gray-700 underline">
+                      Storleksguide
+                    </button>
+                  )}
                 </div>
                 
                 <div className="grid grid-cols-3 gap-2">
@@ -284,7 +326,7 @@ const PublicProductPage = () => {
                       }`}
                     >
                       <div className="text-sm font-medium">
-                        {variant.size || 'Standard'}
+                        {isMultipack ? (variant.color || 'Standard') : (variant.size || 'Standard')}
                       </div>
                     </button>
                   ))}

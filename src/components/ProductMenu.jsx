@@ -68,9 +68,9 @@ const ProductMenu = ({ products, selectedProduct, onProductSelect }) => {
                   onClick={() => handleProductSelect(product)}
                 >
                   <div className="flex items-center">
-                    {product.imageData && (
+                    {(product.b2bImageUrl || product.imageUrl) && (
                       <img 
-                        src={product.imageData} 
+                        src={product.b2bImageUrl || product.imageUrl} 
                         alt={product.name} 
                         className="w-8 h-8 mr-3 object-cover rounded"
                       />

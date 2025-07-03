@@ -344,7 +344,7 @@ const OrderPage = () => {
                         <div className="text-center">
                           {colorProduct ? (
                             <img 
-                              src={colorProduct.b2bImageUrl || colorProduct.imageUrl || colorProduct.imageData} 
+                              src={colorProduct.b2bImageUrl || colorProduct.imageUrl} 
                               alt={`${getColorDisplayName(colorId)} - B2B Förpackning`} 
                               className="md:w-32 md:h-32 w-40 h-40 mx-auto object-contain rounded-lg border-2 border-gray-200"
                             />

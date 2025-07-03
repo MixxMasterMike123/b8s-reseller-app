@@ -45,6 +45,10 @@ function AdminProducts() {
   const [b2cGalleryFiles, setB2cGalleryFiles] = useState([]);
   const [b2cGalleryPreviews, setB2cGalleryPreviews] = useState([]);
   
+  // Track existing vs new images
+  const [existingB2cGallery, setExistingB2cGallery] = useState([]);
+  const [imagesToDelete, setImagesToDelete] = useState([]);
+  
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     id: '',
@@ -286,7 +290,11 @@ function AdminProducts() {
     setB2cImageFile(null);
     setB2cImagePreview(product.b2cImageUrl || null);
     setB2cGalleryFiles([]);
-    setB2cGalleryPreviews(product.b2cImageGallery || []);
+    setB2cGalleryPreviews([]);
+    
+    // Track existing images separately
+    setExistingB2cGallery(product.b2cImageGallery || []);
+    setImagesToDelete([]);
     
     // Set group input for autocomplete
     setGroupInput(product.group || '');
@@ -473,6 +481,35 @@ function AdminProducts() {
     setB2cGalleryFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Remove existing image from gallery
+  const removeExistingB2cImage = (index) => {
+    const imageUrl = existingB2cGallery[index];
+    
+    // Add to deletion list
+    setImagesToDelete(prev => [...prev, imageUrl]);
+    
+    // Remove from existing gallery
+    setExistingB2cGallery(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Delete image from Firebase Storage
+  const deleteImageFromStorage = async (imageUrl) => {
+    try {
+      // Extract the storage path from the URL
+      const url = new URL(imageUrl);
+      const pathStart = url.pathname.indexOf('/o/') + 3;
+      const pathEnd = url.pathname.indexOf('?');
+      const storagePath = decodeURIComponent(url.pathname.substring(pathStart, pathEnd));
+      
+      const storageRef = ref(storage, storagePath);
+      await deleteObject(storageRef);
+      console.log(`✅ Deleted image from storage: ${storagePath}`);
+    } catch (error) {
+      console.error('❌ Error deleting image from storage:', error);
+      // Don't throw error - continue with form submission even if storage deletion fails
+    }
+  };
+
   const handleEanPngChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -572,19 +609,30 @@ function AdminProducts() {
         finalProductData.b2cImageUrl = b2cImageUrl;
       }
       
-      // Upload B2C gallery images
+      // Handle B2C gallery images (existing + new)
+      let updatedGallery = [...existingB2cGallery]; // Start with existing images
+      
+      // Upload new B2C gallery images
       if (b2cGalleryFiles.length > 0) {
-        console.log(`📤 Uploading ${b2cGalleryFiles.length} B2C gallery images...`);
-        const galleryUrls = [];
+        console.log(`📤 Uploading ${b2cGalleryFiles.length} new B2C gallery images...`);
         
         for (let i = 0; i < b2cGalleryFiles.length; i++) {
           const file = b2cGalleryFiles[i];
-          const galleryUrl = await uploadImageToStorage(file, productId, `b2c_gallery_${i}`);
-          galleryUrls.push(galleryUrl);
+          const galleryUrl = await uploadImageToStorage(file, productId, `b2c_gallery_${Date.now()}_${i}`);
+          updatedGallery.push(galleryUrl);
         }
-        
-        finalProductData.b2cImageGallery = galleryUrls;
       }
+      
+      // Delete images marked for deletion from Firebase Storage
+      if (imagesToDelete.length > 0) {
+        console.log(`🗑️ Deleting ${imagesToDelete.length} images from Firebase Storage...`);
+        for (const imageUrl of imagesToDelete) {
+          await deleteImageFromStorage(imageUrl);
+        }
+      }
+      
+      // Update the gallery in the product data
+      finalProductData.b2cImageGallery = updatedGallery;
       
       if (!selectedProduct) {
         // Adding new product
@@ -638,6 +686,8 @@ function AdminProducts() {
       setB2cImagePreview(null);
       setB2cGalleryFiles([]);
       setB2cGalleryPreviews([]);
+      setExistingB2cGallery([]);
+      setImagesToDelete([]);
       
     } catch (err) {
       console.error('Error saving product:', err);
@@ -1562,25 +1612,61 @@ function AdminProducts() {
                         className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
                       />
                       
-                      {/* Gallery Previews */}
+                      {/* Existing Images */}
+                      {existingB2cGallery.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">Befintliga bilder:</h4>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                            {existingB2cGallery.map((imageUrl, index) => (
+                              <div key={`existing-${index}`} className="relative">
+                                <img 
+                                  src={imageUrl} 
+                                  alt={`Befintlig bild ${index + 1}`} 
+                                  className="w-full h-24 object-cover border border-gray-300 rounded-md"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeExistingB2cImage(index)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                                  title="Ta bort denna bild"
+                                >
+                                  ×
+                                </button>
+                                <div className="absolute bottom-1 left-1 bg-blue-500 text-white text-xs px-1 rounded">
+                                  Befintlig
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* New Images Preview */}
                       {b2cGalleryPreviews.length > 0 && (
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          {b2cGalleryPreviews.map((preview, index) => (
-                            <div key={index} className="relative">
-                              <img 
-                                src={preview} 
-                                alt={`B2C Gallery ${index + 1}`} 
-                                className="w-full h-24 object-cover border border-gray-300 rounded-md"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => removeB2cGalleryImage(index)}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ))}
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">Nya bilder att ladda upp:</h4>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {b2cGalleryPreviews.map((preview, index) => (
+                              <div key={`new-${index}`} className="relative">
+                                <img 
+                                  src={preview} 
+                                  alt={`Ny bild ${index + 1}`} 
+                                  className="w-full h-24 object-cover border border-gray-300 rounded-md"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeB2cGalleryImage(index)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                                  title="Ta bort denna bild"
+                                >
+                                  ×
+                                </button>
+                                <div className="absolute bottom-1 left-1 bg-green-500 text-white text-xs px-1 rounded">
+                                  Ny
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>

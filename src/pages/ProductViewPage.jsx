@@ -56,8 +56,8 @@ function ProductViewPage() {
     fetchProducts();
   }, []);
 
-  const handleDownloadImage = (imageData, filename, type = 'product') => {
-    if (!imageData) {
+  const handleDownloadImage = (imageUrl, filename, type = 'product') => {
+    if (!imageUrl) {
       toast.error('Ingen bild tillgänglig för nedladdning');
       return;
     }
@@ -65,8 +65,16 @@ function ProductViewPage() {
     try {
       // Create a download link
       const link = document.createElement('a');
-      link.href = imageData;
-      link.download = `${filename}_${type}.${imageData.includes('data:image/svg') ? 'svg' : imageData.includes('data:image/png') ? 'png' : 'jpg'}`;
+      link.href = imageUrl;
+      
+      // Determine file extension from URL or default to jpg
+      let extension = 'jpg';
+      if (imageUrl.includes('.png')) extension = 'png';
+      else if (imageUrl.includes('.svg')) extension = 'svg';
+      else if (imageUrl.includes('.gif')) extension = 'gif';
+      else if (imageUrl.includes('.webp')) extension = 'webp';
+      
+      link.download = `${filename}_${type}.${extension}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -89,10 +97,9 @@ function ProductViewPage() {
 
   // Add this helper function at the top level of the component
   const getProductImage = (product) => {
-    // Priority: B2B image > legacy Firebase Storage URL > legacy base64 > placeholder
+    // Priority: B2B image > legacy Firebase Storage URL > placeholder
     if (product.b2bImageUrl) return product.b2bImageUrl;
     if (product.imageUrl) return product.imageUrl;
-    if (product.imageData) return product.imageData;
     return null;
   };
 
@@ -282,20 +289,20 @@ function ProductViewPage() {
                   })()}
 
                   {/* EAN Code Images */}
-                  {(selectedProduct.eanImagePngUrl || selectedProduct.eanImagePng || selectedProduct.eanImageSvgUrl || selectedProduct.eanImageSvg) && (
+                  {(selectedProduct.eanImagePngUrl || selectedProduct.eanImageSvgUrl) && (
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <h3 className="text-sm font-medium text-gray-700 mb-3">EAN-kod bilder</h3>
                       <div className="space-y-4">
-                        {(selectedProduct.eanImagePngUrl || selectedProduct.eanImagePng) && (
+                        {selectedProduct.eanImagePngUrl && (
                           <div className="space-y-2">
                             <p className="text-xs text-gray-600">PNG/JPG Format</p>
                             <img 
-                              src={selectedProduct.eanImagePngUrl || selectedProduct.eanImagePng} 
+                              src={selectedProduct.eanImagePngUrl} 
                               alt="EAN-kod PNG" 
                               className="w-full h-20 object-contain border border-gray-200 rounded bg-white"
                             />
                             <button
-                              onClick={() => handleDownloadImage(selectedProduct.eanImagePngUrl || selectedProduct.eanImagePng, selectedProduct.name, 'ean_png')}
+                              onClick={() => handleDownloadImage(selectedProduct.eanImagePngUrl, selectedProduct.name, 'ean_png')}
                               className="w-full inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                             >
                               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -306,16 +313,16 @@ function ProductViewPage() {
                           </div>
                         )}
 
-                        {(selectedProduct.eanImageSvgUrl || selectedProduct.eanImageSvg) && (
+                        {selectedProduct.eanImageSvgUrl && (
                           <div className="space-y-2">
                             <p className="text-xs text-gray-600">SVG Format</p>
                             <img 
-                              src={selectedProduct.eanImageSvgUrl || selectedProduct.eanImageSvg} 
+                              src={selectedProduct.eanImageSvgUrl} 
                               alt="EAN-kod SVG" 
                               className="w-full h-20 object-contain border border-gray-200 rounded bg-white"
                             />
                             <button
-                              onClick={() => handleDownloadImage(selectedProduct.eanImageSvgUrl || selectedProduct.eanImageSvg, selectedProduct.name, 'ean_svg')}
+                              onClick={() => handleDownloadImage(selectedProduct.eanImageSvgUrl, selectedProduct.name, 'ean_svg')}
                               className="w-full inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                             >
                               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -418,10 +425,10 @@ function ProductViewPage() {
                               <div className="flex items-center space-x-2 text-sm">
                                 <span className="text-gray-500">EAN:</span>
                                 <span className="font-mono text-gray-900">{product.eanCode}</span>
-                                {(product.eanImagePngUrl || product.eanImagePng || product.eanImageSvgUrl || product.eanImageSvg) && (
+                                {(product.eanImagePngUrl || product.eanImageSvgUrl) && (
                                   <span className="text-xs text-gray-500 ml-2">
-                                    {(product.eanImagePngUrl || product.eanImagePng) && 'PNG '}
-                                    {(product.eanImageSvgUrl || product.eanImageSvg) && 'SVG'}
+                                    {product.eanImagePngUrl && 'PNG '}
+                                    {product.eanImageSvgUrl && 'SVG'}
                                   </span>
                                 )}
                               </div>
@@ -518,12 +525,12 @@ function ProductViewPage() {
                         <td className="px-3 py-4">
                           <div className="space-y-1">
                             <div className="text-sm font-mono text-gray-900">{product.eanCode || 'Ej angivet'}</div>
-                            {(product.eanImagePngUrl || product.eanImagePng || product.eanImageSvgUrl || product.eanImageSvg) && (
+                            {(product.eanImagePngUrl || product.eanImageSvgUrl) && (
                               <div className="flex space-x-1">
-                                {(product.eanImagePngUrl || product.eanImagePng) && (
+                                {product.eanImagePngUrl && (
                                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">PNG</span>
                                 )}
-                                {(product.eanImageSvgUrl || product.eanImageSvg) && (
+                                {product.eanImageSvgUrl && (
                                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">SVG</span>
                                 )}
                               </div>
