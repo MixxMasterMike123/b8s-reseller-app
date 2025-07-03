@@ -45,44 +45,45 @@ const PublicProductPage = () => {
       const productData = { id: productDoc.id, ...productDoc.data() };
       setProduct(productData);
       
-      // Use the color field to find variants
-      const baseColor = productData.color || 'Standard';
+      // Use the group field to find all variants in the same group
+      const productGroup = productData.group;
+      if (!productGroup) {
+        // If no group, just show this single product
+        setVariants([productData]);
+        setSelectedVariant(productData);
+        setSelectedSize(productData.id);
+        return;
+      }
       
-      // Load all variants of this product (same color, different sizes)
+      // Load all products in the same group with the same color
       const variantsQuery = query(
         collection(db, 'products'),
         where('isActive', '==', true),
-        where('availability.b2c', '==', true)
+        where('availability.b2c', '==', true),
+        where('group', '==', productGroup),
+        where('color', '==', productData.color)
       );
       
       const variantsSnapshot = await getDocs(variantsQuery);
-      const allProducts = [];
+      const groupVariants = [];
       
       variantsSnapshot.forEach((doc) => {
         const data = { id: doc.id, ...doc.data() };
-        allProducts.push(data);
+        groupVariants.push(data);
       });
       
-      // Filter products that match the same color using the color field
-      const sameColorProducts = allProducts.filter(p => {
-        const pColor = p.color || 'Standard';
-        return pColor.toLowerCase() === baseColor.toLowerCase();
-      });
-      
-      // Sort by size (assuming size is in the format like "6mm", "8mm", "10mm")
-      sameColorProducts.sort((a, b) => {
-        const aSize = parseFloat(a.size?.replace(/[^\d.]/g, '') || '0');
-        const bSize = parseFloat(b.size?.replace(/[^\d.]/g, '') || '0');
+      // Sort by size (convert size to number for proper sorting)
+      groupVariants.sort((a, b) => {
+        const aSize = parseFloat(a.size?.toString().replace(/[^\d.]/g, '') || '0');
+        const bSize = parseFloat(b.size?.toString().replace(/[^\d.]/g, '') || '0');
         return aSize - bSize;
       });
       
-      setVariants(sameColorProducts);
+      setVariants(groupVariants);
       
-      // Set initial selected variant
-      if (sameColorProducts.length > 0) {
-        setSelectedVariant(sameColorProducts[0]);
-        setSelectedSize(sameColorProducts[0].id);
-      }
+      // Set the current product as selected variant
+      setSelectedVariant(productData);
+      setSelectedSize(productData.id);
       
     } catch (error) {
       console.error('Error loading product:', error);
@@ -97,6 +98,7 @@ const PublicProductPage = () => {
     if (variant) {
       setSelectedVariant(variant);
       setSelectedSize(variantId);
+      setActiveImageIndex(0); // Reset to first image when size changes
     }
   };
 
@@ -201,7 +203,7 @@ const PublicProductPage = () => {
       />
       
       <div className="min-h-screen bg-white">
-        <ShopNavigation breadcrumb={`B8Shield ${productColor}`} />
+        <ShopNavigation breadcrumb={currentProduct.name} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
@@ -245,10 +247,10 @@ const PublicProductPage = () => {
               {/* Product Title */}
               <div>
                 <h1 className="text-3xl font-medium text-gray-900 mb-2">
-                  B8Shield {productColor}
+                  {currentProduct.name}
                 </h1>
                 <p className="text-lg text-gray-600 mb-4">
-                  Löparlinna Dri-FIT för kvinnor
+                  {getB2cDescription(currentProduct) || `B8Shield ${productColor} - ${currentProduct.size || 'Standard'}`}
                 </p>
 
               {/* Price */}
@@ -318,11 +320,12 @@ const PublicProductPage = () => {
                 <div className="prose prose-sm max-w-none text-gray-600">
                   <p>
                     {getB2cDescription(currentProduct) || 
-                     `B8Shield ${productColor} har egenskaper som gör att du känner dig bekväm i naturen, även när förhållandena snabbt förändras. Det här lätta, stretchiga plagget är i ett lent material som torkar snabbt så att du kan känna dig bekväm när temperaturen stiger under vandringen. Minimala sömmar minskar dessutom risken för skav.`}
+                     `B8Shield ${productColor} i storlek ${currentProduct.size || 'Standard'} ger dig det ultimata skyddet för dina fiskedrag. Denna högkvalitativa produkt är utvecklad för att hålla i många år av intensivt fiske, oavsett väderförhållanden. Perfekt för både nybörjare och erfarna fiskare som vill skydda sina värdefulla fiskedrag från skador.`}
                   </p>
                   
                   <ul className="mt-4 space-y-2">
                     <li>• Färg som visas: {productColor}</li>
+                    <li>• Storlek: {currentProduct.size || 'Standard'}</li>
                     <li>• Stil: {currentProduct.sku || 'B8S-001'}</li>
                   </ul>
                 </div>
