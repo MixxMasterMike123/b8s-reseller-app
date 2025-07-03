@@ -48,7 +48,13 @@ Traditional CRMs create anxiety, not productivity. We built a **relationship int
 - **Only critical items** show after 17:00
 - **Weekend and evening protection**
 
-### 4. Contextual Simplicity
+### 4. Revolutionary Swedish NLP Hashtag System
+- **World's first Swedish natural language processing** in CRM
+- **Type naturally**: "Ring tillbaka på fredag" → `#fredag-2025-01-17`
+- **Smart date intelligence**: Handles Swedish weekdays, transitions, business optimization
+- **Auto-scoring**: Natural conversation becomes actionable business intelligence
+
+### 5. Contextual Simplicity
 - **ONE "Senare" button** - no complex choices
 - **Predictable behavior** - users know when items return
 - **No UI bloat** - clean Swedish design
@@ -99,12 +105,14 @@ Remote-first, sustainable, employee-wellbeing focused
 | American "hustle culture" | Swedish work-life balance |
 | Reactive task management | Proactive relationship intelligence |
 | Anxiety-inducing | Zen-promoting |
+| Basic English tags only | Revolutionary Swedish NLP hashtag system |
+| Manual date entry | Natural language → Smart business logic |
 
 ---
 
 ## 🎪 Elevator Pitch (30 seconds)
 
-*"Traditional CRMs create anxiety, not productivity. The Dining Wagon™ is the first CRM built on Swedish cultural principles - it respects your work-life balance, shows maximum 3 activities at once, and has a defer system with Swedish business intelligence. Our customers save 2-3 hours per week and reduce stress by 40% while improving their business relationships. It's not about working harder - it's about working smarter, the Swedish way."*
+*"Traditional CRMs create anxiety, not productivity. The Dining Wagon™ is the first CRM built on Swedish cultural principles with revolutionary Swedish NLP - just type 'Ring tillbaka på fredag' and it automatically creates smart triggers. It respects your work-life balance, shows maximum 3 activities at once, and has a defer system with Swedish business intelligence. Our customers save 2-3 hours per week and reduce stress by 40% while improving their business relationships. It's not about working harder - it's about working smarter, the Swedish way."*
 
 ---
 

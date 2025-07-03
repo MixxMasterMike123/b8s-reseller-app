@@ -503,12 +503,12 @@ export function AuthProvider({ children }) {
           updatedAt: new Date().toISOString()
         });
         
-        // 🚂🍽️ Sync margin to The Dining Wagon™ CRM (affects priority)
+        // 🤝 Auto-sync B2B update to CRM
         try {
-          const { syncB2BStatusToCRM } = await import('../wagons/dining-wagon/utils/b2bIntegration');
-          await syncB2BStatusToCRM(userId, { marginal: newMarginal });
+          const { autoSyncB2BUpdate } = await import('../utils/contactSync');
+          await autoSyncB2BUpdate(userId, { marginal: newMarginal });
         } catch (error) {
-          console.error('CRM sync failed (margin update successful):', error);
+          console.error('Auto-sync B2B update failed (margin update successful):', error);
         }
         
         toast.success(`Customer margin updated to ${newMarginal}% successfully`);
@@ -555,16 +555,12 @@ export function AuthProvider({ children }) {
         // Create user document in Firestore
         await setDoc(doc(db, 'users', newUserId), userProfile);
 
-        // 🚂🍽️ Auto-import to The Dining Wagon™ CRM
+        // 🤝 Auto-sync new B2B user to CRM
         try {
-          const { autoImportNewB2BUser } = await import('../wagons/dining-wagon/utils/b2bIntegration');
-          await autoImportNewB2BUser({
-            id: newUserId,
-            uid: newUserId,
-            ...userProfile
-          });
+          const { autoSyncB2BUpdate } = await import('../utils/contactSync');
+          await autoSyncB2BUpdate(newUserId, userProfile);
         } catch (error) {
-          console.error('CRM auto-import failed (user creation still successful):', error);
+          console.error('Auto-sync B2B user failed (user creation still successful):', error);
         }
 
         return { uid: newUserId, email };
@@ -711,12 +707,12 @@ export function AuthProvider({ children }) {
         const data = result.data;
         toast.success(data.message);
         
-        // 🚂🍽️ Sync status to The Dining Wagon™ CRM
+        // 🤝 Auto-sync B2B update to CRM
         try {
-          const { syncB2BStatusToCRM } = await import('../wagons/dining-wagon/utils/b2bIntegration');
-          await syncB2BStatusToCRM(userId, { active: activeStatus });
+          const { autoSyncB2BUpdate } = await import('../utils/contactSync');
+          await autoSyncB2BUpdate(userId, { active: activeStatus });
         } catch (error) {
-          console.error('CRM sync failed (user status update successful):', error);
+          console.error('Auto-sync B2B update failed (user status update successful):', error);
         }
         
         return true;

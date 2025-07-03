@@ -7,6 +7,7 @@ import { db } from '../../firebase/config';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import AdminPresence from '../../components/AdminPresence';
+import ContactSyncStatus from '../../components/ContactSyncStatus';
 
 const AdminDashboard = () => {
   const { currentUser } = useAuth();
@@ -258,9 +259,14 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Admin Presence */}
-        <div className="mb-8">
-          <AdminPresence />
+        {/* Contact Sync Status */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+          <div className="lg:col-span-1">
+            <ContactSyncStatus />
+          </div>
+          <div className="lg:col-span-2">
+            <AdminPresence />
+          </div>
         </div>
 
         {/* Recent Orders */}

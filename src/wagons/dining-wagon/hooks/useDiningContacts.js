@@ -79,6 +79,14 @@ export const useDiningContacts = () => {
 
       const docRef = await addDoc(collection(db, 'diningContacts'), newContact);
       
+      // 🤝 Auto-sync CRM update to B2B (for new contacts)
+      try {
+        const { autoSyncCRMUpdate } = await import('../../../utils/contactSync');
+        await autoSyncCRMUpdate(docRef.id, newContact);
+      } catch (error) {
+        console.error('Auto-sync CRM update failed (contact creation successful):', error);
+      }
+      
       toast.success(`🍽️ Ny gäst tillagd: ${contactData.companyName}`);
       return docRef.id;
     } catch (error) {
@@ -102,6 +110,14 @@ export const useDiningContacts = () => {
       };
 
       await updateDoc(contactRef, updatedData);
+      
+      // 🤝 Auto-sync CRM update to B2B
+      try {
+        const { autoSyncCRMUpdate } = await import('../../../utils/contactSync');
+        await autoSyncCRMUpdate(contactId, updates);
+      } catch (error) {
+        console.error('Auto-sync CRM update failed (contact update successful):', error);
+      }
       
       toast.success('🍽️ Gästinformation uppdaterad');
       return true;
