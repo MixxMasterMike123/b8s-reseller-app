@@ -320,10 +320,10 @@ const ContactList = () => {
                               {contact.email}
                             </div>
                           )}
-                          {contact.phone && (
+                          {(contact.phone || contact.phoneNumber) && (
                             <div className="flex items-center text-sm text-gray-600">
                               <PhoneIcon className="h-4 w-4 mr-2" />
-                              {contact.phone}
+                              {contact.phone || contact.phoneNumber}
                             </div>
                           )}
                         </div>

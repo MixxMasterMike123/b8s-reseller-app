@@ -22,6 +22,7 @@ const ContactForm = () => {
   const { addContact, loading } = useDiningContacts();
 
   const [formData, setFormData] = useState({
+    // Core contact info
     companyName: '',
     contactPerson: '',
     email: '',
@@ -31,11 +32,21 @@ const ContactForm = () => {
     city: '',
     postalCode: '',
     country: 'Sverige',
+    
+    // CRM fields
     status: 'prospect',
     priority: 'medium',
     source: 'manual',
     tags: [],
-    notes: ''
+    notes: '',
+    
+    // B2B fields (with defaults)
+    marginal: 40,
+    deliveryAddress: '',
+    deliveryCity: '',
+    deliveryPostalCode: '',
+    deliveryCountry: 'Sverige',
+    sameAsCompanyAddress: true
   });
 
   const [errors, setErrors] = useState({});

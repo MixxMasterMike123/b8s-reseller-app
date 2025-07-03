@@ -22,11 +22,16 @@ export const useDiningContacts = () => {
 
   // Real-time contact subscription
   useEffect(() => {
-    console.log('🍽️ Setting up Firebase subscription...');
+    console.log('🍽️ Setting up Firebase subscription to users collection...');
     setLoading(true);
     
-    const contactsRef = collection(db, 'diningContacts');
-    const q = query(contactsRef, orderBy('updatedAt', 'desc'));
+    // Use users collection and filter out admin users
+    const contactsRef = collection(db, 'users');
+    const q = query(
+      contactsRef, 
+      where('role', '!=', 'admin'),
+      orderBy('updatedAt', 'desc')
+    );
     
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {
@@ -39,9 +44,21 @@ export const useDiningContacts = () => {
         const contactsData = snapshot.docs.map(doc => {
           const data = doc.data();
           console.log('🍽️ Contact loaded:', { id: doc.id, companyName: data.companyName });
+          
+          // Map B2B fields to CRM format and add CRM defaults
           return {
             id: doc.id,
-            ...data
+            ...data,
+            // Map B2B active status to CRM status
+            status: data.status || (data.active ? 'active' : 'prospect'),
+            // Add CRM defaults if not present
+            priority: data.priority || 'medium',
+            source: data.source || 'b2b-existing',
+            tags: data.tags || [],
+            notes: data.notes || '',
+            lastActivityAt: data.lastActivityAt || data.updatedAt,
+            // Keep original B2B fields
+            phoneNumber: data.phone || data.phoneNumber, // Handle both field names
           };
         });
         
@@ -69,23 +86,24 @@ export const useDiningContacts = () => {
       
       const newContact = {
         ...contactData,
+        // B2B required fields
+        role: 'user',
+        active: contactData.status === 'active',
+        marginal: contactData.marginal || 40,
+        // CRM fields
         status: contactData.status || 'prospect',
         priority: contactData.priority || 'medium',
         source: contactData.source || 'manual',
         tags: contactData.tags || [],
-        createdAt: new Date(),
-        updatedAt: new Date()
+        notes: contactData.notes || '',
+        lastActivityAt: new Date(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
 
-      const docRef = await addDoc(collection(db, 'diningContacts'), newContact);
+      const docRef = await addDoc(collection(db, 'users'), newContact);
       
-      // 🤝 Auto-sync CRM update to B2B (for new contacts)
-      try {
-        const { autoSyncCRMUpdate } = await import('../../../utils/contactSync');
-        await autoSyncCRMUpdate(docRef.id, newContact);
-      } catch (error) {
-        console.error('Auto-sync CRM update failed (contact creation successful):', error);
-      }
+      // ✅ No sync needed - using unified users collection
       
       toast.success(`🍽️ Ny gäst tillagd: ${contactData.companyName}`);
       return docRef.id;
@@ -103,21 +121,19 @@ export const useDiningContacts = () => {
     try {
       setLoading(true);
       
-      const contactRef = doc(db, 'diningContacts', contactId);
+      const contactRef = doc(db, 'users', contactId);
       const updatedData = {
         ...updates,
-        updatedAt: new Date()
+        // Sync CRM status to B2B active field
+        ...(updates.status && { active: updates.status === 'active' }),
+        // Update activity timestamp
+        lastActivityAt: new Date(),
+        updatedAt: new Date().toISOString()
       };
 
       await updateDoc(contactRef, updatedData);
       
-      // 🤝 Auto-sync CRM update to B2B
-      try {
-        const { autoSyncCRMUpdate } = await import('../../../utils/contactSync');
-        await autoSyncCRMUpdate(contactId, updates);
-      } catch (error) {
-        console.error('Auto-sync CRM update failed (contact update successful):', error);
-      }
+      // ✅ No sync needed - using unified users collection
       
       toast.success('🍽️ Gästinformation uppdaterad');
       return true;
@@ -135,7 +151,7 @@ export const useDiningContacts = () => {
     try {
       setLoading(true);
       
-      await deleteDoc(doc(db, 'diningContacts', contactId));
+      await deleteDoc(doc(db, 'users', contactId));
       
       toast.success('🍽️ Gäst borttagen från listan');
       return true;
