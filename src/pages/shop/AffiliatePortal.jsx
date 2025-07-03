@@ -5,14 +5,131 @@ import ShopFooter from '../../components/shop/ShopFooter';
 import AffiliateMarketingMaterials from '../../components/AffiliateMarketingMaterials';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { db } from '../../firebase/config';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import CustomerLogin from './CustomerLogin';
+import toast from 'react-hot-toast';
+import QRCode from 'qrcode';
+import { 
+  ClipboardDocumentIcon, 
+  QrCodeIcon, 
+  ArrowDownTrayIcon,
+  LinkIcon,
+  SparklesIcon
+} from '@heroicons/react/24/outline';
 
 const AffiliatePortal = () => {
   const { currentUser } = useSimpleAuth();
   const [affiliateData, setAffiliateData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Link Generator State
+  const [selectedProduct, setSelectedProduct] = useState('');
+  const [linkType, setLinkType] = useState('standard');
+  const [generatedLink, setGeneratedLink] = useState('');
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
+  const [generatingQR, setGeneratingQR] = useState(false);
+
+  // Product Groups for Link Generation
+  const productGroups = [
+    {
+      id: 'transparent',
+      name: 'B8Shield Transparent',
+      description: 'Diskret vasskydd för klart vatten',
+      path: '/product/transparent'
+    },
+    {
+      id: 'rod',
+      name: 'B8Shield Röd',
+      description: 'Vasskydd för mörkt vatten',
+      path: '/product/rod'
+    },
+    {
+      id: 'fluorescerande',
+      name: 'B8Shield Fluorescerande',
+      description: 'Vasskydd för djupt vatten',
+      path: '/product/fluorescerande'
+    },
+    {
+      id: 'glitter',
+      name: 'B8Shield Glitter',
+      description: 'Vasskydd för extra synlighet',
+      path: '/product/glitter'
+    },
+    {
+      id: '3pack',
+      name: 'B8Shield 3-pack',
+      description: 'Komplett startpaket med alla storlekar',
+      path: '/product/3pack'
+    }
+  ];
+
+  // Generate affiliate link based on selection
+  const generateAffiliateLink = (productPath = '') => {
+    if (!affiliateData?.affiliateCode) return '';
+    
+    const baseUrl = 'https://shop.b8shield.com';
+    const path = productPath || '';
+    const ref = `?ref=${affiliateData.affiliateCode}`;
+    
+    return `${baseUrl}${path}${ref}`;
+  };
+
+  // Generate QR Code
+  const generateQRCode = async (url) => {
+    try {
+      setGeneratingQR(true);
+      const qrDataUrl = await QRCode.toDataURL(url, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      setQrCodeDataUrl(qrDataUrl);
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      toast.error('Kunde inte generera QR-kod');
+    } finally {
+      setGeneratingQR(false);
+    }
+  };
+
+  // Handle link generation
+  const handleGenerateLink = () => {
+    const selectedGroup = productGroups.find(group => group.id === selectedProduct);
+    const productPath = selectedGroup ? selectedGroup.path : '';
+    const link = generateAffiliateLink(productPath);
+    
+    setGeneratedLink(link);
+    
+    if (linkType === 'qr') {
+      generateQRCode(link);
+    } else {
+      setQrCodeDataUrl('');
+    }
+  };
+
+  // Copy link to clipboard
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast.success('Länk kopierad!');
+    }).catch(() => {
+      toast.error('Kunde inte kopiera länk');
+    });
+  };
+
+  // Download QR code
+  const downloadQRCode = () => {
+    if (!qrCodeDataUrl) return;
+    
+    const link = document.createElement('a');
+    link.download = `B8Shield-QR-${affiliateData.affiliateCode}-${selectedProduct || 'shop'}.png`;
+    link.href = qrCodeDataUrl;
+    link.click();
+    toast.success('QR-kod nedladdad!');
+  };
 
   const fetchAffiliateData = useCallback(async () => {
     if (!currentUser) {

@@ -128,7 +128,7 @@ function App() {
             // B2C Shop Routes
             <>
               <Route path="/" element={<PublicStorefront />} />
-              <Route path="/product/:id" element={<PublicProductPage />} />
+              <Route path="/product/:slug" element={<PublicProductPage />} />
               <Route path="/cart" element={<ShoppingCart />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />

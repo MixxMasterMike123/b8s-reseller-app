@@ -3,13 +3,14 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getProductImage } from '../../utils/productImages';
+import { slugToProductMap, getProductSeoTitle, getProductSeoDescription } from '../../utils/productUrls';
 import toast from 'react-hot-toast';
 import { generateProductSchema } from '../../utils/productFeed';
 import { useCart } from '../../contexts/CartContext';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 
 const PublicProductPage = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const [searchParams] = useSearchParams();
   const colorParam = searchParams.get('color');
   
@@ -26,32 +27,61 @@ const PublicProductPage = () => {
   const cartItemCount = cart.items.reduce((total, item) => total + item.quantity, 0);
 
   useEffect(() => {
-    if (id) {
+    if (slug) {
       loadProduct();
     }
-  }, [id]);
+  }, [slug]);
 
   const loadProduct = async () => {
     try {
       setLoading(true);
       
-      // Load the main product
-      const productDoc = await getDoc(doc(db, 'products', id));
-      if (!productDoc.exists()) {
+      // Convert slug to product color/type
+      const productColor = slugToProductMap[slug];
+      if (!productColor) {
         toast.error('Produkten hittades inte');
         return;
       }
       
-      const productData = { id: productDoc.id, ...productDoc.data() };
-      setProduct(productData);
+      // Find products matching the slug
+      let productsQuery;
+      if (slug === '3pack') {
+        // For 3-pack, find multipack products
+        productsQuery = query(
+          collection(db, 'products'),
+          where('isActive', '==', true),
+          where('availability.b2c', '==', true),
+          where('name', '>=', 'B8Shield™ – Vasskydd 3-pack'),
+          where('name', '<=', 'B8Shield™ – Vasskydd 3-pack\uf8ff')
+        );
+      } else {
+        // For individual products, find by color
+        productsQuery = query(
+          collection(db, 'products'),
+          where('isActive', '==', true),
+          where('availability.b2c', '==', true),
+          where('color', '==', productColor)
+        );
+      }
+      
+      const productsSnapshot = await getDocs(productsQuery);
+      
+      if (productsSnapshot.empty) {
+        toast.error('Produkten hittades inte');
+        return;
+      }
+      
+      // Get the first product as the main product
+      const mainProduct = { id: productsSnapshot.docs[0].id, ...productsSnapshot.docs[0].data() };
+      setProduct(mainProduct);
       
       // Use the group field to find all variants in the same group
-      const productGroup = productData.group;
+      const productGroup = mainProduct.group;
       if (!productGroup) {
         // If no group, just show this single product
-        setVariants([productData]);
-        setSelectedVariant(productData);
-        setSelectedSize(productData.id);
+        setVariants([mainProduct]);
+        setSelectedVariant(mainProduct);
+        setSelectedSize(mainProduct.id);
         return;
       }
       
@@ -86,8 +116,8 @@ const PublicProductPage = () => {
         setVariants(groupVariants);
         
         // Set the current product as selected variant
-        setSelectedVariant(productData);
-        setSelectedSize(productData.id);
+        setSelectedVariant(mainProduct);
+        setSelectedSize(mainProduct.id);
       } else {
         // For individual products: load all products in the same group with the same color
         const variantsQuery = query(
@@ -95,7 +125,7 @@ const PublicProductPage = () => {
           where('isActive', '==', true),
           where('availability.b2c', '==', true),
           where('group', '==', productGroup),
-          where('color', '==', productData.color)
+          where('color', '==', mainProduct.color)
         );
         
         const variantsSnapshot = await getDocs(variantsQuery);
@@ -116,8 +146,8 @@ const PublicProductPage = () => {
         setVariants(groupVariants);
         
         // Set the current product as selected variant
-        setSelectedVariant(productData);
-        setSelectedSize(productData.id);
+        setSelectedVariant(mainProduct);
+        setSelectedSize(mainProduct.id);
       }
       
     } catch (error) {

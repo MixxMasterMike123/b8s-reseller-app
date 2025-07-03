@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getProductImage } from '../../utils/productImages';
+import { getProductUrl } from '../../utils/productUrls';
 import toast from 'react-hot-toast';
 import { useCart } from '../../contexts/CartContext';
 import ShopNavigation from '../../components/shop/ShopNavigation';
@@ -275,7 +276,7 @@ const PublicStorefront = () => {
                   return (
                     <Link
                       key={`${productGroup.groupName}-multipack-${groupIndex}`}
-                      to={`/product/${representativeVariant.id}`}
+                      to={getProductUrl(representativeVariant)}
                       className="group block"
                     >
                       <div className="bg-white">
@@ -325,7 +326,7 @@ const PublicStorefront = () => {
                   return productGroup.colorVariants?.map((colorVariant, colorIndex) => (
                     <Link
                       key={`${productGroup.groupName}-${colorVariant.colorVariant}-${colorIndex}`}
-                      to={`/product/${colorVariant.id}?color=${encodeURIComponent(colorVariant.colorVariant)}`}
+                      to={getProductUrl(colorVariant)}
                       className="group block"
                     >
                       <div className="bg-white">
