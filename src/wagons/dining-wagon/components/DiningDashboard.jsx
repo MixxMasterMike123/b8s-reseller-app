@@ -164,8 +164,19 @@ const DiningDashboard = () => {
     const todayStr = today.toISOString().split('T')[0];
     
     if (!contactActivities || contactActivities.length === 0) {
-      // New contact with no activities
-      return { score: 15, reason: 'Ny kontakt', urgency: 'medium' };
+      // Fresh start: Only show new contacts if they have specific CRM fields set
+      // or if they're marked as prospects/high priority
+      if (contact.status === 'prospect' && contact.priority === 'high') {
+        return { score: 25, reason: 'VIP prospect - bör kontaktas', urgency: 'medium' };
+      } else if (contact.status === 'prospect') {
+        return { score: 20, reason: 'Ny prospect', urgency: 'low' };
+      } else if (contact.priority === 'high') {
+        return { score: 15, reason: 'VIP-kund utan aktivitet', urgency: 'low' };
+      }
+      
+      // For fresh start: Don't show regular active customers without activities
+      // They'll naturally get activities as CRM usage grows
+      return { score: 0, reason: 'Ingen aktivitet ännu', urgency: 'none' };
     }
 
     const latestActivity = contactActivities[0];
@@ -294,7 +305,7 @@ const DiningDashboard = () => {
         activities: contactActivities
       };
     })
-    .filter(item => item.score >= 15) // Minimum threshold
+    .filter(item => item.score > 0) // Only show items with actual triggers
     .sort((a, b) => {
       // Sort by urgency first, then score
       const urgencyOrder = { critical: 4, high: 3, medium: 2, low: 1 };
