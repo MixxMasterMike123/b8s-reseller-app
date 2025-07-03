@@ -14,9 +14,7 @@ const PublicStorefront = () => {
   const [loading, setLoading] = useState(true);
 
 
-  // Debug info
-  const hostname = window.location.hostname;
-  const subdomain = hostname.split('.')[0];
+
 
   useEffect(() => {
     loadProducts();
@@ -186,15 +184,7 @@ const PublicStorefront = () => {
     <div className="min-h-screen bg-white">
       <ShopNavigation />
       
-      {/* Debug Info */}
-      <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4">
-        <div className="max-w-7xl mx-auto">
-          <h3 className="text-sm font-medium text-yellow-800">Debug Info (B2C Shop Mode)</h3>
-          <p className="text-xs text-yellow-700">
-            Hostname: {hostname} | Subdomain: {subdomain} | Full URL: {window.location.href}
-          </p>
-        </div>
-      </div>
+
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
