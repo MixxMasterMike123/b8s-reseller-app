@@ -81,10 +81,10 @@ function ProductViewPage() {
       link.click();
       document.body.removeChild(link);
       
-      toast.success(`${type === 'product' ? 'Produktbild' : 'EAN-kod'} nedladdad`);
+      toast.success(`${type === 'product' ? t('products.product_image', 'Produktbild') : t('products.ean_code', 'EAN-kod')} ${t('products.downloaded', 'nedladdad')}`);
     } catch (error) {
       console.error('Download error:', error);
-      toast.error('Kunde inte ladda ner bilden');
+      toast.error(t('products.download_error', 'Kunde inte ladda ner bilden'));
     }
   };
 
@@ -112,7 +112,7 @@ function ProductViewPage() {
           <div className="text-center">
             <p className="text-gray-500">{t('products.login_required', 'Du måste vara inloggad för att se produkter')}.</p>
             <Link to="/login" className="text-blue-600 hover:underline">
-              Logga in
+              {t('marketing.login_link', 'Logga in')}
             </Link>
           </div>
         </div>
@@ -127,22 +127,22 @@ function ProductViewPage() {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Produktkatalog</h1>
-              <p className="mt-1 text-sm text-gray-600">Bläddra bland våra produkter och ladda ner bilder</p>
+              <h1 className="text-2xl font-bold text-gray-900">{t('product.catalog', 'Produktkatalog')}</h1>
+              <p className="mt-1 text-sm text-gray-600">{t('products.browse_description', 'Bläddra bland våra produkter och ladda ner bilder')}</p>
             </div>
             <div className="flex gap-3">
               <Link 
                 to="/" 
                 className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                Tillbaka till Dashboard
+                {t('nav.back_to_dashboard', 'Tillbaka till Dashboard')}
               </Link>
               {isAdmin && (
                 <Link 
                   to="/admin/products" 
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
-                  Hantera Produkter
+                  {t('products.manage_products', 'Hantera Produkter')}
                 </Link>
               )}
             </div>
@@ -178,14 +178,14 @@ function ProductViewPage() {
                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
-                  Tillbaka till produktlista
+                  {t('products.back_to_list', 'Tillbaka till produktlista')}
                 </button>
                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                   selectedProduct.isActive 
                     ? 'bg-green-100 text-green-800' 
                     : 'bg-red-100 text-red-800'
                 }`}>
-                  {selectedProduct.isActive ? 'Aktiv' : 'Inaktiv'}
+                  {selectedProduct.isActive ? t('products.status.active', 'Aktiv') : t('products.status.inactive', 'Inaktiv')}
                 </span>
               </div>
             </div>
@@ -211,24 +211,24 @@ function ProductViewPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">Pris</h3>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">{t('products.price', 'Pris')}</h3>
                       <p className="text-lg font-semibold text-gray-900">
                         {selectedProduct.basePrice?.toFixed(2)} SEK
                       </p>
-                      <p className="text-xs text-gray-500">Exkl. moms</p>
+                      <p className="text-xs text-gray-500">{t('products.excl_vat', 'Exkl. moms')}</p>
                     </div>
 
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">Storlek</h3>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">{t('product_menu.size', 'Storlek')}</h3>
                       <p className="text-lg font-semibold text-gray-900">
-                        {selectedProduct.size || 'Ej angivet'}
+                        {selectedProduct.size || t('profile.not_specified', 'Ej angivet')}
                       </p>
                     </div>
 
                     {/* Weight */}
                     {selectedProduct.weight?.value > 0 && (
                       <div className="bg-gray-50 p-4 rounded-lg">
-                        <h3 className="text-sm font-medium text-gray-500 mb-1">Vikt</h3>
+                        <h3 className="text-sm font-medium text-gray-500 mb-1">{t('products.weight', 'Vikt')}</h3>
                         <p className="text-lg font-semibold text-gray-900">
                           {selectedProduct.weight.value} {selectedProduct.weight.unit}
                         </p>
@@ -240,20 +240,20 @@ function ProductViewPage() {
                       selectedProduct.dimensions?.width?.value > 0 || 
                       selectedProduct.dimensions?.height?.value > 0) && (
                       <div className="bg-gray-50 p-4 rounded-lg">
-                        <h3 className="text-sm font-medium text-gray-500 mb-1">Mått</h3>
+                        <h3 className="text-sm font-medium text-gray-500 mb-1">{t('products.dimensions', 'Mått')}</h3>
                         <p className="text-lg font-semibold text-gray-900">
                           {selectedProduct.dimensions?.length?.value || 0} × {' '}
                           {selectedProduct.dimensions?.width?.value || 0} × {' '}
                           {selectedProduct.dimensions?.height?.value || 0} {' '}
                           {selectedProduct.dimensions?.length?.unit || 'mm'}
                         </p>
-                        <p className="text-xs text-gray-500">L × B × H</p>
+                        <p className="text-xs text-gray-500">{t('products.dimensions_label', 'L × B × H')}</p>
                       </div>
                     )}
 
                     {selectedProduct.eanCode && (
                       <div className="bg-gray-50 p-4 rounded-lg sm:col-span-2">
-                        <h3 className="text-sm font-medium text-gray-500 mb-1">EAN-kod</h3>
+                        <h3 className="text-sm font-medium text-gray-500 mb-1">{t('products.ean_code', 'EAN-kod')}</h3>
                         <p className="text-lg font-mono font-semibold text-gray-900">
                           {selectedProduct.eanCode}
                         </p>
@@ -269,7 +269,7 @@ function ProductViewPage() {
                     const imageUrl = getProductImage(selectedProduct);
                     return imageUrl ? (
                       <div className="bg-gray-50 p-4 rounded-lg">
-                        <h3 className="text-sm font-medium text-gray-700 mb-3">Produktbild</h3>
+                        <h3 className="text-sm font-medium text-gray-700 mb-3">{t('products.product_image', 'Produktbild')}</h3>
                         <div className="space-y-3">
                           <img 
                             src={imageUrl} 
@@ -283,7 +283,7 @@ function ProductViewPage() {
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                            Ladda ner produktbild
+                            {t('products.download_image', 'Ladda ner produktbild')}
                           </button>
                         </div>
                       </div>
@@ -293,11 +293,11 @@ function ProductViewPage() {
                   {/* EAN Code Images */}
                   {(selectedProduct.eanImagePngUrl || selectedProduct.eanImageSvgUrl) && (
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="text-sm font-medium text-gray-700 mb-3">EAN-kod bilder</h3>
+                      <h3 className="text-sm font-medium text-gray-700 mb-3">{t('products.ean_images', 'EAN-kod bilder')}</h3>
                       <div className="space-y-4">
                         {selectedProduct.eanImagePngUrl && (
                           <div className="space-y-2">
-                            <p className="text-xs text-gray-600">PNG/JPG Format</p>
+                            <p className="text-xs text-gray-600">{t('products.png_format', 'PNG/JPG Format')}</p>
                             <img 
                               src={selectedProduct.eanImagePngUrl} 
                               alt="EAN-kod PNG" 
@@ -310,14 +310,14 @@ function ProductViewPage() {
                               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                               </svg>
-                              Ladda ner PNG
+                              {t('products.download_png', 'Ladda ner PNG')}
                             </button>
                           </div>
                         )}
 
                         {selectedProduct.eanImageSvgUrl && (
                           <div className="space-y-2">
-                            <p className="text-xs text-gray-600">SVG Format</p>
+                            <p className="text-xs text-gray-600">{t('products.svg_format', 'SVG Format')}</p>
                             <img 
                               src={selectedProduct.eanImageSvgUrl} 
                               alt="EAN-kod SVG" 
@@ -330,7 +330,7 @@ function ProductViewPage() {
                               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                               </svg>
-                              Ladda ner SVG
+                              {t('products.download_svg', 'Ladda ner SVG')}
                             </button>
                           </div>
                         )}
@@ -346,7 +346,7 @@ function ProductViewPage() {
           <div className="bg-white shadow rounded-lg overflow-hidden">
             <div className="px-4 md:px-6 py-4 border-b border-gray-200">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h2 className="text-lg md:text-lg font-medium text-gray-900">Tillgängliga Produkter</h2>
+                <h2 className="text-lg md:text-lg font-medium text-gray-900">{t('products.available_products', 'Tillgängliga Produkter')}</h2>
                 <div className="w-full sm:w-64">
                   <ProductMenu 
                     products={products} 
@@ -366,7 +366,7 @@ function ProductViewPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                   </div>
-                  <p className="text-base text-gray-500">Inga produkter tillgängliga</p>
+                  <p className="text-base text-gray-500">{t('product_menu.no_products', 'Inga produkter tillgängliga')}</p>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-200">
@@ -389,7 +389,7 @@ function ProductViewPage() {
                               />
                             ) : (
                               <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
-                                <span className="text-sm text-gray-500">Ingen bild</span>
+                                <span className="text-sm text-gray-500">{t('products.no_image', 'Ingen bild')}</span>
                               </div>
                             );
                           })()}
@@ -414,18 +414,18 @@ function ProductViewPage() {
                           <div className="mt-3 space-y-2">
                             <div className="flex flex-wrap gap-4 text-sm">
                               <div className="flex items-center space-x-2">
-                                <span className="text-gray-500">Storlek:</span>
-                                <span className="font-medium text-gray-900">{product.size || 'Ej angivet'}</span>
+                                <span className="text-gray-500">{t('product_menu.size', 'Storlek')}:</span>
+                                <span className="font-medium text-gray-900">{product.size || t('profile.not_specified', 'Ej angivet')}</span>
                               </div>
                               <div className="flex items-center space-x-2">
-                                <span className="text-gray-500">Pris:</span>
+                                <span className="text-gray-500">{t('products.price', 'Pris')}:</span>
                                 <span className="font-semibold text-gray-900">{product.basePrice?.toFixed(2)} SEK</span>
                               </div>
                             </div>
                             
                             {product.eanCode && (
                               <div className="flex items-center space-x-2 text-sm">
-                                <span className="text-gray-500">EAN:</span>
+                                <span className="text-gray-500">{t('products.ean_code', 'EAN')}:</span>
                                 <span className="font-mono text-gray-900">{product.eanCode}</span>
                                 {(product.eanImagePngUrl || product.eanImageSvgUrl) && (
                                   <span className="text-xs text-gray-500 ml-2">
@@ -437,7 +437,7 @@ function ProductViewPage() {
                             )}
                             
                             {/* Price note */}
-                            <p className="text-xs text-gray-500">Exkl. moms</p>
+                            <p className="text-xs text-gray-500">{t('products.excl_vat', 'Exkl. moms')}</p>
                           </div>
                           
                           {/* Action Button */}
@@ -449,7 +449,7 @@ function ProductViewPage() {
                               }}
                               className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors text-base font-medium min-h-[48px] flex items-center justify-center"
                             >
-                              Visa detaljer och ladda ner
+                              {t('products.view_details_download', 'Visa detaljer och ladda ner')}
                             </button>
                           </div>
                         </div>
@@ -466,16 +466,16 @@ function ProductViewPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/5">
-                      Produkt
+                      {t('products.table.product', 'Produkt')}
                     </th>
                     <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
-                      Storlek & Pris
+                      {t('products.table.size_price', 'Storlek & Pris')}
                     </th>
                     <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
-                      EAN-kod
+                      {t('products.table.ean_code', 'EAN-kod')}
                     </th>
                     <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
-                      Åtgärder
+                      {t('products.table.actions', 'Åtgärder')}
                     </th>
                   </tr>
                 </thead>
@@ -483,7 +483,7 @@ function ProductViewPage() {
                   {products.length === 0 ? (
                     <tr>
                       <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
-                        Inga produkter tillgängliga
+                        {t('product_menu.no_products', 'Inga produkter tillgängliga')}
                       </td>
                     </tr>
                   ) : (
@@ -519,14 +519,14 @@ function ProductViewPage() {
                         </td>
                         <td className="px-3 py-4">
                           <div className="space-y-1">
-                            <div className="text-sm text-gray-900">{product.size || 'Ej angivet'}</div>
+                            <div className="text-sm text-gray-900">{product.size || t('profile.not_specified', 'Ej angivet')}</div>
                             <div className="text-sm font-semibold text-gray-900">{product.basePrice?.toFixed(2)} SEK</div>
-                            <div className="text-xs text-gray-500">Exkl. moms</div>
+                            <div className="text-xs text-gray-500">{t('products.excl_vat', 'Exkl. moms')}</div>
                           </div>
                         </td>
                         <td className="px-3 py-4">
                           <div className="space-y-1">
-                            <div className="text-sm font-mono text-gray-900">{product.eanCode || 'Ej angivet'}</div>
+                            <div className="text-sm font-mono text-gray-900">{product.eanCode || t('profile.not_specified', 'Ej angivet')}</div>
                             {(product.eanImagePngUrl || product.eanImageSvgUrl) && (
                               <div className="flex space-x-1">
                                 {product.eanImagePngUrl && (
@@ -547,7 +547,7 @@ function ProductViewPage() {
                             }}
                             className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                           >
-                            Visa detaljer
+                            {t('products.view_details', 'Visa detaljer')}
                           </button>
                         </td>
                       </tr>
