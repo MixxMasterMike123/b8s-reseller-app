@@ -147,3 +147,6 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# Protect service account in public folder
+public/service-account.json

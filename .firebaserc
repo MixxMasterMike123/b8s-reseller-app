@@ -1,5 +1,16 @@
 {
   "projects": {
     "default": "b8shield-reseller-app"
-  }
+  },
+  "targets": {
+    "b8shield-reseller-app": {
+      "hosting": {
+        "partner": [
+          "partner.b8shield.com"
+        ]
+      }
+    }
+  },
+  "etags": {},
+  "dataconnectEmulatorConfig": {}
 }

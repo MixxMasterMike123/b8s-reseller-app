@@ -139,7 +139,10 @@ export const useAdminPresence = () => {
       snapshot.forEach((doc) => {
         const data = doc.data();
         const lastSeenTime = data.lastSeen?.toDate?.() || data.lastActivity || new Date();
-        const timeSinceLastSeen = Date.now() - lastSeenTime.getTime();
+        
+        // Ensure lastSeenTime is a valid Date object
+        const validLastSeenTime = lastSeenTime instanceof Date ? lastSeenTime : new Date(lastSeenTime);
+        const timeSinceLastSeen = Date.now() - validLastSeenTime.getTime();
         
         // Consider user offline if not seen for more than 5 minutes
         const isOnline = data.status === 'online' && timeSinceLastSeen < ACTIVITY_TIMEOUT;
@@ -151,7 +154,7 @@ export const useAdminPresence = () => {
           isOnline,
           isAway,
           isOffline: !isOnline && !isAway,
-          lastSeenTime,
+          lastSeenTime: validLastSeenTime,
           timeSinceLastSeen,
           lastSeenFormatted: formatTimeSince(timeSinceLastSeen)
         });

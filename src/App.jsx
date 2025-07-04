@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { SimpleAuthContextProvider } from './contexts/SimpleAuthContext';
 import { OrderProvider } from './contexts/OrderContext';
 import { CartProvider } from './contexts/CartContext';
+import { TranslationProvider } from './contexts/TranslationContext';
 import { functions } from './firebase/config';
 import { httpsCallable } from 'firebase/functions';
 
@@ -34,6 +35,7 @@ import AdminProducts from './pages/admin/AdminProducts';
 import AdminMarketingMaterials from './pages/admin/AdminMarketingMaterials';
 import AdminMarketingMaterialEdit from './pages/admin/AdminMarketingMaterialEdit';
 import AdminSettings from './pages/admin/AdminSettings';
+import AdminTranslations from './pages/admin/AdminTranslations';
 
 // B2C Shop Components (new)
 import PublicStorefront from './pages/shop/PublicStorefront';
@@ -295,6 +297,12 @@ function App() {
                 </AdminRoute>
               } />
 
+              <Route path="/admin/translations" element={
+                <AdminRoute>
+                  <AdminTranslations />
+                </AdminRoute>
+              } />
+
               {/* 🚂 WAGON SYSTEM: Auto-generated wagon routes */}
               {wagonRoutes.map(({ path, component: Component, adminOnly, private: isPrivate, wagonId }) => (
                 <Route 
@@ -335,7 +343,9 @@ function App() {
       <SimpleAuthContextProvider>
         <OrderProvider>
           <CartProvider>
-            {content}
+            <TranslationProvider>
+              {content}
+            </TranslationProvider>
           </CartProvider>
         </OrderProvider>
       </SimpleAuthContextProvider>

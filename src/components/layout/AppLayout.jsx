@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import MentionNotifications from '../../wagons/dining-wagon/components/MentionNotifications';
+import LanguageSwitcher from '../LanguageSwitcher';
 
 // 🚂 WAGON SYSTEM: Import wagon registry for menu items
 import wagonRegistry from '../../wagons/WagonRegistry.js';
@@ -23,7 +24,8 @@ import {
   CubeIcon,
   MegaphoneIcon,
   SparklesIcon,
-  CpuChipIcon
+  CpuChipIcon,
+  LanguageIcon
 } from '@heroicons/react/24/outline';
 
 const AppLayout = ({ children }) => {
@@ -155,6 +157,12 @@ const AppLayout = ({ children }) => {
       path: '/admin/marketing',
       icon: MegaphoneIcon,
       description: 'Hantera marknadsföringsmaterial',
+    },
+    {
+      name: 'Översättningar',
+      path: '/admin/translations',
+      icon: LanguageIcon,
+      description: 'Hantera språk och översättningar',
     },
     {
       name: 'Affiliates',
@@ -404,6 +412,9 @@ const AppLayout = ({ children }) => {
                 <MentionNotifications />
               )}
               
+              {/* Language Switcher */}
+              <LanguageSwitcher />
+              
               <div className="flex items-center space-x-3">
                 <div className="flex-shrink-0">
                   <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
@@ -456,6 +467,9 @@ const AppLayout = ({ children }) => {
                 <MentionNotifications />
               )}
               
+              {/* Language Switcher */}
+              <LanguageSwitcher />
+              
               <div className="flex-shrink-0">
                 <button
                   onClick={handleLogout}
@@ -501,96 +515,24 @@ const AppLayout = ({ children }) => {
               </div>
               <div className="mt-5 h-0 flex-1 overflow-y-auto">
                 <nav className="space-y-1 px-2">
-                  {navLinks.map((item) => (
-                    <Link
-                      key={item.name}
-                      to={item.path}
-                      className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
-                        isActive(item.path)
-                          ? 'bg-blue-50 text-blue-700'
-                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                  <Link
+                    key={item.name}
+                    to={item.path}
+                    className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
+                      isActive(item.path)
+                        ? 'bg-blue-50 text-blue-700'
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <item.icon
+                      className={`mr-4 h-6 w-6 flex-shrink-0 ${
+                        isActive(item.path) ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
                       }`}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <item.icon
-                        className={`mr-4 h-6 w-6 flex-shrink-0 ${
-                          isActive(item.path) ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
-                        }`}
-                        aria-hidden="true"
-                      />
-                      {item.name}
-                    </Link>
-                  ))}
-
-                  {/* 🚂 WAGON SYSTEM: User wagon menu items (mobile) */}
-                  {userWagonMenuItems.length > 0 && (
-                    <>
-                      <div className="relative my-4">
-                        <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                          <div className="w-full border-t border-gray-300" />
-                        </div>
-                        <div className="relative flex justify-center">
-                          <span className="bg-white px-2 text-xs text-gray-500 uppercase tracking-wider font-semibold flex items-center">
-                            <CpuChipIcon className="h-4 w-4 mr-1" />
-                            AI Verktyg
-                          </span>
-                        </div>
-                      </div>
-                      
-                      {userWagonMenuItems.map((item) => (
-                        <Link
-                          key={`user-wagon-mobile-${item.wagonId}`}
-                          to={item.path}
-                          className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
-                            isActive(item.path)
-                              ? 'bg-blue-50 text-blue-700'
-                              : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                          }`}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          <SparklesIcon className="mr-4 h-6 w-6 flex-shrink-0 text-blue-500" />
-                          <div>
-                            <div>{item.title}</div>
-                            <div className="text-xs text-gray-500">{item.description}</div>
-                          </div>
-                        </Link>
-                      ))}
-                    </>
-                  )}
-                  
-                  {isAdmin && (
-                    <>
-                      <div className="relative my-4">
-                        <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                          <div className="w-full border-t border-gray-300" />
-                        </div>
-                        <div className="relative flex justify-center">
-                          <span className="bg-white px-2 text-xs text-gray-500 uppercase tracking-wider font-semibold">Admin</span>
-                        </div>
-                      </div>
-                      
-                      {adminNavLinks.map((item) => (
-                        <Link
-                          key={item.name}
-                          to={item.path}
-                          className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
-                            isActive(item.path)
-                              ? 'bg-blue-50 text-blue-700'
-                              : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                          }`}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          <item.icon
-                            className={`mr-4 h-6 w-6 flex-shrink-0 ${
-                              isActive(item.path) ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
-                            }`}
-                            aria-hidden="true"
-                          />
-                          {item.name}
-                        </Link>
-                      ))}
-                    </>
-                  )}
+                      aria-hidden="true"
+                    />
+                    {item.name}
+                  </Link>
                 </nav>
               </div>
               <div className="border-t border-gray-200 p-4">
