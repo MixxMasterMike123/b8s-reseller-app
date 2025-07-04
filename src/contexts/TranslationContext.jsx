@@ -16,114 +16,6 @@ const AVAILABLE_LANGUAGES = [
   { code: 'en-US', name: 'English (US)', flag: '🇺🇸' }
 ];
 
-// Mock translations for testing (will be loaded from Firebase/Google Sheets in production)
-const MOCK_TRANSLATIONS = {
-  'en-GB': {
-    // Navigation
-    'nav.dashboard': 'Dashboard',
-    'nav.products': 'Product Catalogue',
-    'nav.marketing': 'Marketing Materials',
-    'nav.orders': 'Order History',
-    'nav.profile': 'Profile',
-    'nav.contact': 'Contact & Support',
-    
-    // Dashboard
-    'dashboard.welcome': 'Reseller Portal',
-    'dashboard.quicklinks': 'Quick Links',
-    'dashboard.recentOrders': 'Recent Orders',
-    'dashboard.features': 'Features:',
-    
-    // Orders
-    'order.title': 'Place an Order',
-    'order.confirm': 'Confirm Order',
-    'order.history': 'Order History',
-    'order.status': 'Order Status',
-    
-    // Products
-    'product.catalog': 'Product Catalogue',
-    'product.details': 'Product Details',
-    'product.price': 'Price',
-    'product.download': 'Download',
-    
-    // Common
-    'common.loading': 'Loading...',
-    'common.save': 'Save',
-    'common.cancel': 'Cancel',
-    'common.edit': 'Edit',
-    'common.delete': 'Delete',
-    'common.search': 'Search',
-    'common.filter': 'Filter',
-    'common.export': 'Export',
-    'common.import': 'Import',
-    
-    // Language switcher
-    'language.switch': 'Switch Language',
-    'language.current': 'Current Language',
-    'language.swedish': 'Swedish',
-    'language.english_uk': 'English (UK)',
-    'language.english_us': 'English (US)',
-    
-    // Welcome messages
-    'welcome.message': 'Welcome to our reseller portal – a tool to make your collaboration with us as smooth as possible.',
-    'welcome.features.orders': 'Place orders directly',
-    'welcome.features.history': 'Overview of order history',
-    'welcome.features.catalog': 'Browse product catalogue',
-    'welcome.features.materials': 'Download marketing materials'
-  },
-  'en-US': {
-    // Navigation
-    'nav.dashboard': 'Dashboard',
-    'nav.products': 'Product Catalog',
-    'nav.marketing': 'Marketing Materials',
-    'nav.orders': 'Order History',
-    'nav.profile': 'Profile',
-    'nav.contact': 'Contact & Support',
-    
-    // Dashboard
-    'dashboard.welcome': 'Reseller Portal',
-    'dashboard.quicklinks': 'Quick Links',
-    'dashboard.recentOrders': 'Recent Orders',
-    'dashboard.features': 'Features:',
-    
-    // Orders
-    'order.title': 'Place an Order',
-    'order.confirm': 'Confirm Order',
-    'order.history': 'Order History',
-    'order.status': 'Order Status',
-    
-    // Products
-    'product.catalog': 'Product Catalog',
-    'product.details': 'Product Details',
-    'product.price': 'Price',
-    'product.download': 'Download',
-    
-    // Common
-    'common.loading': 'Loading...',
-    'common.save': 'Save',
-    'common.cancel': 'Cancel',
-    'common.edit': 'Edit',
-    'common.delete': 'Delete',
-    'common.search': 'Search',
-    'common.filter': 'Filter',
-    'common.export': 'Export',
-    'common.import': 'Import',
-    
-    // Language switcher
-    'language.switch': 'Switch Language',
-    'language.current': 'Current Language',
-    'language.swedish': 'Swedish',
-    'language.english_uk': 'English (UK)',
-    'language.english_us': 'English (US)',
-    
-    // Welcome messages
-    'welcome.message': 'Welcome to our reseller portal – a tool to make your collaboration with us as smooth as possible.',
-    'welcome.features.orders': 'Place orders directly',
-    'welcome.features.history': 'Overview of order history',
-    'welcome.features.catalog': 'Browse product catalog',
-    'welcome.features.materials': 'Download marketing materials'
-  }
-};
-
 export const TranslationProvider = ({ children }) => {
   const [currentLanguage, setCurrentLanguage] = useState('sv-SE');
   const [translations, setTranslations] = useState({});
@@ -139,44 +31,31 @@ export const TranslationProvider = ({ children }) => {
         return;
       }
 
-      // Try to load from Firebase first
-      try {
-        const collectionName = `translations_${languageCode.replace('-', '_')}`;
-        console.log(`🌍 Loading translations from: ${collectionName}`);
-        
-        const querySnapshot = await getDocs(collection(db, collectionName));
-        
-        if (querySnapshot.empty) {
-          console.log(`⚠️ No translations found in ${collectionName}, using mock data`);
-          // Fall back to mock translations if no Firebase data
-          const langTranslations = MOCK_TRANSLATIONS[languageCode] || {};
-          setTranslations(langTranslations);
-          return;
-        }
-
-        // Process Firebase translations
-        const firebaseTranslations = {};
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          // Use 'value' field if available, otherwise 'translation'
-          firebaseTranslations[doc.id] = data.value || data.translation || '';
-        });
-        
-        console.log(`✅ Loaded ${Object.keys(firebaseTranslations).length} translations from Firebase`);
-        setTranslations(firebaseTranslations);
-        
-      } catch (firebaseError) {
-        console.warn(`⚠️ Firebase translation loading failed for ${languageCode}:`, firebaseError);
-        console.log(`📦 Falling back to mock translations for ${languageCode}`);
-        
-        // Fall back to mock translations
-        const langTranslations = MOCK_TRANSLATIONS[languageCode] || {};
-        setTranslations(langTranslations);
+      // Load from Firebase
+      const collectionName = `translations_${languageCode.replace('-', '_')}`;
+      console.log(`🌍 Loading translations from: ${collectionName}`);
+      
+      const querySnapshot = await getDocs(collection(db, collectionName));
+      
+      if (querySnapshot.empty) {
+        console.log(`⚠️ No translations found in ${collectionName}`);
+        setTranslations({});
+        return;
       }
+
+      // Process Firebase translations
+      const firebaseTranslations = {};
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        // Use 'value' field if available, otherwise 'translation'
+        firebaseTranslations[doc.id] = data.value || data.translation || '';
+      });
+      
+      console.log(`✅ Loaded ${Object.keys(firebaseTranslations).length} translations from Firebase`);
+      setTranslations(firebaseTranslations);
       
     } catch (error) {
       console.error('Error loading translations:', error);
-      // Final fallback to empty object
       setTranslations({});
     } finally {
       setLoading(false);
@@ -221,25 +100,34 @@ export const TranslationProvider = ({ children }) => {
 
   // Initialize language from URL or localStorage
   useEffect(() => {
-    const urlPath = window.location.pathname;
-    const urlLangMatch = urlPath.match(/^\/([a-z]{2}(-[A-Z]{2})?)\//);
-    
-    let initialLanguage = 'sv-SE'; // Default to Swedish
-    
-    if (urlLangMatch && isLanguageSupported(urlLangMatch[1])) {
-      initialLanguage = urlLangMatch[1];
-    } else {
-      // Check localStorage
-      const savedLanguage = localStorage.getItem('b8shield-language');
-      if (savedLanguage && isLanguageSupported(savedLanguage)) {
-        initialLanguage = savedLanguage;
+    const initializeLanguage = async () => {
+      try {
+        // Check URL parameters first
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlLang = urlParams.get('lang');
+        
+        if (urlLang && isLanguageSupported(urlLang)) {
+          await changeLanguage(urlLang);
+          return;
+        }
+        
+        // Check localStorage
+        const savedLang = localStorage.getItem('b8shield-language');
+        if (savedLang && isLanguageSupported(savedLang)) {
+          await changeLanguage(savedLang);
+          return;
+        }
+        
+        // Default to Swedish
+        setCurrentLanguage('sv-SE');
+        
+      } catch (error) {
+        console.error('Language initialization failed:', error);
+        setCurrentLanguage('sv-SE');
       }
-    }
-    
-    setCurrentLanguage(initialLanguage);
-    if (initialLanguage !== 'sv-SE') {
-      loadTranslations(initialLanguage);
-    }
+    };
+
+    initializeLanguage();
   }, []);
 
   const value = {
@@ -247,10 +135,9 @@ export const TranslationProvider = ({ children }) => {
     translations,
     loading,
     changeLanguage,
-    loadTranslations,
+    t,
     getAvailableLanguages,
-    isLanguageSupported,
-    t
+    isLanguageSupported
   };
 
   return (

@@ -27,7 +27,9 @@ const AdminTranslations = () => {
   const { currentUser, userProfile } = useAuth();
   const { getAvailableLanguages, currentLanguage } = useTranslation();
   const [activeTab, setActiveTab] = useState('overview');
+  const [translationType, setTranslationType] = useState('admin');
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('en-GB');
   const [translations, setTranslations] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -51,10 +53,10 @@ const AdminTranslations = () => {
 
   // Google Sheets configuration
   const [sheetUrls, setSheetUrls] = useState({
-    admin: 'https://docs.google.com/spreadsheets/d/1KUyrNujoFGQScQaiivK6ZH5H8ISSVK6onZnjXeiah3g/edit?gid=0#gid=0',
+    admin: '',
     b2b: '',
     b2c: '',
-    content: 'https://docs.google.com/spreadsheets/d/1lrr7N6NEL3F0Xd4SFPviJaAkpxmxvTALFjpVIM5aoFQ/edit?gid=0#gid=0'
+    content: ''
   });
   
   const [sheetsService] = useState(() => new GoogleSheetsService());
@@ -130,7 +132,13 @@ const AdminTranslations = () => {
   const loadTranslationsFromSheet = async (sheetType = 'admin') => {
     const url = sheetUrls[sheetType];
     if (!url) {
-      toast.error(`Ingen URL konfigurerad för ${sheetType} översättningar`);
+      const typeNames = {
+        admin: 'Admin Portal',
+        b2b: 'B2B Portal', 
+        b2c: 'B2C Shop',
+        content: 'Innehållsfält'
+      };
+      toast.error(`Ingen Google Sheets URL konfigurerad för ${typeNames[sheetType] || sheetType}. Gå till Inställningar-fliken för att konfigurera URL.`);
       return;
     }
 
@@ -181,7 +189,7 @@ const AdminTranslations = () => {
     
     try {
       // For now, we'll generate CSV for manual upload
-      const filename = `translations_${activeTab}_${new Date().toISOString().split('T')[0]}.csv`;
+      const filename = `translations_${translationType}_${new Date().toISOString().split('T')[0]}.csv`;
       sheetsService.downloadCSV(translations, filename);
       
       toast.success('CSV-fil nedladdad! Ladda upp till Google Sheets manuellt.', { id: toastId });
@@ -191,7 +199,7 @@ const AdminTranslations = () => {
   };
 
   const handleImportFromSheets = async () => {
-    await loadTranslationsFromSheet('admin');
+    await loadTranslationsFromSheet(translationType);
   };
 
   const handleLoadSheet = async (sheetType) => {
@@ -320,6 +328,69 @@ const AdminTranslations = () => {
     } catch (error) {
       console.error('Firebase import error:', error);
       toast.error(`❌ Import misslyckades: ${error.message}`, { id: toastId });
+    }
+  };
+
+  // Save current translations (including manual edits) to Firebase
+  const saveCurrentTranslationsToFirebase = async (languageCode = 'en-GB') => {
+    if (!translations || translations.length === 0) {
+      toast.error('Inga översättningar att spara. Ladda först översättningar.');
+      return;
+    }
+
+    const confirmed = window.confirm(`Vill du spara alla aktuella översättningar (inklusive manuella ändringar) till Firebase för ${languageCode}? Detta kommer att skriva över befintliga översättningar.`);
+    if (!confirmed) return;
+
+    const toastId = toast.loading(`Sparar ${translations.length} översättningar till Firebase...`);
+    
+    try {
+      const collectionName = `translations_${languageCode.replace('-', '_')}`;
+      console.log(`🔥 Saving current translations to Firebase collection: ${collectionName}`);
+      
+      // Use batch for better performance
+      const batch = writeBatch(db);
+      let saveCount = 0;
+      
+      translations.forEach((translation) => {
+        // Skip rows without translation key or value
+        const translationKey = translation.key || translation.id;
+        const translationValue = languageCode === 'en-GB' 
+          ? (translation['en-GB'] || translation.englishUK)
+          : (translation['en-US'] || translation.englishUS);
+          
+        if (!translationKey || !translationValue) {
+          return;
+        }
+        
+        const docRef = doc(db, collectionName, translationKey);
+        const translationData = {
+          value: translationValue,
+          context: translation.context || '',
+          status: translation.status || 'approved',
+          lastModified: new Date(),
+          translator: translation.translator || currentUser.email,
+          swedishOriginal: translation['sv-SE'] || translation.swedish || '',
+          manuallyEdited: true // Mark as manually edited
+        };
+        
+        batch.set(docRef, translationData);
+        saveCount++;
+      });
+      
+      if (saveCount === 0) {
+        toast.error('Inga giltiga översättningar hittades att spara.', { id: toastId });
+        return;
+      }
+      
+      // Commit the batch
+      await batch.commit();
+      
+      toast.success(`💾 Sparade ${saveCount} översättningar (inklusive manuella ändringar) till Firebase!`, { id: toastId });
+      console.log(`💾 Successfully saved ${saveCount} translations to ${collectionName}`);
+      
+    } catch (error) {
+      console.error('Firebase save error:', error);
+      toast.error(`❌ Sparning misslyckades: ${error.message}`, { id: toastId });
     }
   };
 
@@ -552,164 +623,201 @@ const AdminTranslations = () => {
     </div>
   );
 
-  const renderManageTranslations = () => (
-    <div className="space-y-6">
-      {translations.length === 0 ? (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-          <GlobeAltIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Inga översättningar att visa</h3>
-          <p className="text-gray-600 mb-4">
-            Gå till Import/Export-fliken för att ladda översättningar från Google Sheets eller Firebase.
-          </p>
-          <button
-            onClick={() => setActiveTab('import')}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-          >
-            <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
-            Gå till Import/Export
-          </button>
-        </div>
-      ) : (
-        <>
-          {/* Filter and Search */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Sök översättningar
-                </label>
-                <input
-                  type="text"
-                  placeholder="Sök efter nyckel eller text..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div className="sm:w-48">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Filtrera status
-                </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="">Alla</option>
-                  <option value="new">Nya</option>
-                  <option value="translated">Översatta</option>
-                  <option value="reviewed">Granskade</option>
-                  <option value="approved">Godkända</option>
-                </select>
-              </div>
-            </div>
+  const renderManageTranslations = () => {
+    // Filter translations based on search and status
+    const filteredTranslations = translations.filter(translation => {
+      const matchesSearch = !searchQuery || 
+        (translation.key || translation.id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (translation['sv-SE'] || translation.swedish || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (translation['en-GB'] || translation.englishUK || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (translation['en-US'] || translation.englishUS || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (translation.context || '').toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = !statusFilter || translation.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+
+    return (
+      <div className="space-y-6">
+        {translations.length === 0 ? (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+            <GlobeAltIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Inga översättningar att visa</h3>
+            <p className="text-gray-600 mb-4">
+              Gå till Import/Export-fliken för att ladda översättningar från Google Sheets eller Firebase.
+            </p>
+            <button
+              onClick={() => setActiveTab('import-export')}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            >
+              <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
+              Gå till Import/Export
+            </button>
           </div>
-
-          {/* Translation Table */}
-          <div className="bg-white shadow rounded-lg overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">
-                Översättningar ({translations.length})
-              </h3>
-              {/* Debug info */}
-              <p className="text-sm text-gray-500 mt-1">
-                Visar {Math.min(20, translations.length)} av {translations.length} översättningar
-              </p>
-            </div>
-            
-            {/* Card-based layout instead of table */}
-            <div className="divide-y divide-gray-200">
-              {translations.slice(0, 20).map((translation, index) => (
-                <div key={index} className="p-6 hover:bg-gray-50">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      {/* Key and Status */}
-                      <div className="flex items-center gap-3 mb-3">
-                        <h4 className="text-sm font-medium text-gray-900 truncate">
-                          {translation.key || translation.id}
-                        </h4>
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          translation.status === 'approved' ? 'bg-green-100 text-green-800' :
-                          translation.status === 'reviewed' ? 'bg-blue-100 text-blue-800' :
-                          translation.status === 'translated' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {translation.status === 'approved' ? 'Godkänd' :
-                           translation.status === 'reviewed' ? 'Granskad' :
-                           translation.status === 'translated' ? 'Översatt' :
-                           'Ny'}
-                        </span>
-                      </div>
-
-                      {/* Context */}
-                      {translation.context && (
-                        <p className="text-xs text-gray-500 mb-3">{translation.context}</p>
-                      )}
-
-                      {/* Translations */}
-                      <div className="space-y-2">
-                        {/* Swedish */}
-                        <div>
-                          <span className="inline-flex items-center text-xs font-medium text-gray-600 mb-1">
-                            🇸🇪 Svenska
-                          </span>
-                          <p className="text-sm text-gray-900">
-                            {translation['sv-SE'] || translation.swedish || translation['Svenska'] || '-'}
-                          </p>
-                        </div>
-
-                        {/* English UK */}
-                        {(translation['en-GB'] || translation.englishUK) && (
-                          <div>
-                            <span className="inline-flex items-center text-xs font-medium text-gray-600 mb-1">
-                              🇬🇧 English (UK)
-                            </span>
-                            <p className="text-sm text-gray-700">
-                              {translation['en-GB'] || translation.englishUK}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* English US */}
-                        {(translation['en-US'] || translation.englishUS) && (
-                          <div>
-                            <span className="inline-flex items-center text-xs font-medium text-gray-600 mb-1">
-                              🇺🇸 English (US)
-                            </span>
-                            <p className="text-sm text-gray-700">
-                              {translation['en-US'] || translation.englishUS}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex flex-col gap-2 ml-4">
-                      <button 
-                        className="text-blue-600 hover:text-blue-900 px-3 py-1 text-sm rounded border border-blue-300 hover:bg-blue-50" 
-                        onClick={() => handleEditTranslation(translation, index)}
-                      >
-                        Redigera
-                      </button>
-                      <button 
-                        className="text-red-600 hover:text-red-900 px-3 py-1 text-sm rounded border border-red-300 hover:bg-red-50" 
-                        onClick={() => handleDeleteTranslation(index)}
-                      >
-                        Ta bort
-                      </button>
-                    </div>
-                  </div>
+        ) : (
+          <>
+            {/* Filter and Search */}
+            <div className="bg-white shadow rounded-lg p-6">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Sök översättningar
+                  </label>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Sök efter nyckel eller text..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
-              ))}
+                <div className="sm:w-48">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Filtrera status
+                  </label>
+                  <select 
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Alla</option>
+                    <option value="new">Nya</option>
+                    <option value="translated">Översatta</option>
+                    <option value="reviewed">Granskade</option>
+                    <option value="approved">Godkända</option>
+                  </select>
+                </div>
+              </div>
             </div>
-            
-            {translations.length > 20 && (
-              <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-                <p className="text-sm text-gray-600">
-                  Visar 20 av {translations.length} översättningar. Använd sökfunktionen för att hitta specifika texter.
+
+            {/* Translation Table */}
+            <div className="bg-white shadow rounded-lg overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Översättningar ({filteredTranslations.length}{filteredTranslations.length !== translations.length ? ` av ${translations.length}` : ''})
+                </h3>
+                {/* Debug info */}
+                <p className="text-sm text-gray-500 mt-1">
+                  Visar {Math.min(20, filteredTranslations.length)} av {filteredTranslations.length} översättningar
                 </p>
               </div>
-            )}
-          </div>
-        </>
-      )}
-    </div>
-  );
+              
+              {/* Card-based layout instead of table */}
+              <div className="divide-y divide-gray-200">
+                {filteredTranslations.slice(0, 20).map((translation, index) => (
+                  <div key={index} className="p-6 hover:bg-gray-50">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        {/* Key and Status */}
+                        <div className="flex items-center gap-3 mb-3">
+                          <h4 className="text-sm font-medium text-gray-900 truncate">
+                            {translation.key || translation.id}
+                          </h4>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            translation.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            translation.status === 'reviewed' ? 'bg-blue-100 text-blue-800' :
+                            translation.status === 'translated' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {translation.status === 'approved' ? 'Godkänd' :
+                             translation.status === 'reviewed' ? 'Granskad' :
+                             translation.status === 'translated' ? 'Översatt' :
+                             'Ny'}
+                          </span>
+                        </div>
+
+                        {/* Context */}
+                        {translation.context && (
+                          <p className="text-xs text-gray-500 mb-3">{translation.context}</p>
+                        )}
+
+                        {/* Translations */}
+                        <div className="space-y-2">
+                          {/* Swedish */}
+                          <div>
+                            <span className="inline-flex items-center text-xs font-medium text-gray-600 mb-1">
+                              🇸🇪 Svenska
+                            </span>
+                            <p className="text-sm text-gray-900">
+                              {translation['sv-SE'] || translation.swedish || translation['Svenska'] || '-'}
+                            </p>
+                          </div>
+
+                          {/* English UK */}
+                          {(translation['en-GB'] || translation.englishUK) && (
+                            <div>
+                              <span className="inline-flex items-center text-xs font-medium text-gray-600 mb-1">
+                                🇬🇧 English (UK)
+                              </span>
+                              <p className="text-sm text-gray-700">
+                                {translation['en-GB'] || translation.englishUK}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* English US */}
+                          {(translation['en-US'] || translation.englishUS) && (
+                            <div>
+                              <span className="inline-flex items-center text-xs font-medium text-gray-600 mb-1">
+                                🇺🇸 English (US)
+                              </span>
+                              <p className="text-sm text-gray-700">
+                                {translation['en-US'] || translation.englishUS}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex flex-col gap-2 ml-4">
+                        <button 
+                          className="text-blue-600 hover:text-blue-900 px-3 py-1 text-sm rounded border border-blue-300 hover:bg-blue-50" 
+                          onClick={() => handleEditTranslation(translation, index)}
+                        >
+                          Redigera
+                        </button>
+                        <button 
+                          className="text-red-600 hover:text-red-900 px-3 py-1 text-sm rounded border border-red-300 hover:bg-red-50" 
+                          onClick={() => handleDeleteTranslation(index)}
+                        >
+                          Ta bort
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {filteredTranslations.length > 20 && (
+                <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                  <p className="text-sm text-gray-600">
+                    Visar 20 av {filteredTranslations.length} översättningar. Använd sökfunktionen för att hitta specifika texter.
+                  </p>
+                </div>
+              )}
+              
+              {filteredTranslations.length === 0 && translations.length > 0 && (
+                <div className="px-6 py-8 text-center">
+                  <p className="text-gray-500">Inga översättningar matchar dina sökkriterier.</p>
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setStatusFilter('');
+                    }}
+                    className="mt-2 text-blue-600 hover:text-blue-800 text-sm"
+                  >
+                    Rensa filter
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
 
   const renderExtractStrings = () => (
     <div className="space-y-6">
@@ -752,6 +860,25 @@ const AdminTranslations = () => {
 
   const renderImportExport = () => (
     <div className="space-y-6">
+      {/* URL Configuration Status Banner */}
+      {!sheetUrls[translationType] && (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <ExclamationTriangleIcon className="h-5 w-5 text-orange-600 mr-2" />
+            <div>
+              <h4 className="font-medium text-orange-900">Google Sheets URL inte konfigurerad</h4>
+              <p className="text-sm text-orange-700">
+                {translationType === 'admin' ? 'Admin Portal' : 
+                 translationType === 'b2b' ? 'B2B Portal' : 
+                 translationType === 'b2c' ? 'B2C Shop' : 
+                 'Innehållsfält'} har ingen Google Sheets URL konfigurerad. 
+                Gå till <strong>Inställningar</strong>-fliken för att konfigurera URL:en.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Data Status Banner */}
       {translations.length === 0 && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -790,8 +917,8 @@ const AdminTranslations = () => {
               Välj översättningstyp
             </label>
             <select 
-              value={activeTab}
-              onChange={(e) => setActiveTab(e.target.value)}
+              value={translationType}
+              onChange={(e) => setTranslationType(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="admin">Admin Portal</option>
@@ -809,7 +936,7 @@ const AdminTranslations = () => {
               </p>
               <button
                 onClick={handleImportFromSheets}
-                disabled={loading}
+                disabled={loading || !sheetUrls[translationType]}
                 className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
               >
                 {loading ? (
@@ -858,7 +985,7 @@ const AdminTranslations = () => {
             </select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-3">
               <h4 className="font-medium text-gray-900">📤 Importera till Firebase</h4>
               <p className="text-sm text-gray-600">
@@ -875,6 +1002,25 @@ const AdminTranslations = () => {
                   <DocumentArrowUpIcon className="h-4 w-4 mr-2" />
                 )}
                 Importera till Firebase
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="font-medium text-gray-900">💾 Spara ändringar</h4>
+              <p className="text-sm text-gray-600">
+                Spara manuella ändringar från "Hantera översättningar" till Firebase
+              </p>
+              <button
+                onClick={() => saveCurrentTranslationsToFirebase(selectedLanguage)}
+                disabled={loading || !translations.length}
+                className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+              >
+                {loading ? (
+                  <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <CheckIcon className="h-4 w-4 mr-2" />
+                )}
+                Spara ändringar
               </button>
             </div>
 
@@ -921,8 +1067,8 @@ const AdminTranslations = () => {
             <h4 className="font-medium text-blue-900 mb-2">🔄 Rekommenderat arbetsflöde</h4>
             <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800">
               <li>Importera från Google Sheets (för att få senaste översättningar)</li>
-              <li>Granska översättningarna i tabellen ovan</li>
-              <li>Importera till Firebase (för att aktivera översättningarna i portalen)</li>
+              <li>Granska och redigera översättningarna i "Hantera översättningar"</li>
+              <li>Spara ändringar till Firebase (för manuella redigeringar)</li>
               <li>Testa språkväxlaren i portalen för att se resultatet</li>
             </ol>
           </div>

@@ -29,10 +29,10 @@ export const TRANSLATION_STATUS = {
 
 // Google Sheets URLs for each translation category
 export const TRANSLATION_SHEETS = {
-  ADMIN: 'https://docs.google.com/spreadsheets/d/1KUyrNujoFGQScQaiivK6ZH5H8ISSVK6onZnjXeiah3g/edit?gid=0#gid=0',
-  B2B: '', // To be added
-  B2C: '', // To be added
-  WEB: ''  // To be added
+  ADMIN: '', // Configured via admin interface
+  B2B: '',   // Configured via admin interface
+  B2C: '',   // Configured via admin interface
+  WEB: ''    // Configured via admin interface
 };
 
 /**
