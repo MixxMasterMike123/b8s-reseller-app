@@ -194,7 +194,7 @@ const OrderPage = () => {
         
       } catch (error) {
         console.error('Error fetching products:', error);
-        toast.error('Ett fel uppstod när produkterna skulle hämtas');
+        toast.error(t('orders.errors.fetch_products', 'Ett fel uppstod när produkterna skulle hämtas'));
       } finally {
         setIsLoading(false);
       }
@@ -207,7 +207,11 @@ const OrderPage = () => {
   const handleSubmitOrder = async () => {
     if (totalPackages < MINIMUM_ORDER_QUANTITY) {
       toast.error(
-        `Du har beställt för få förpackningar (${totalPackages}), beställ minst ${remainingQuantity} st till för att nå minst ${MINIMUM_ORDER_QUANTITY} förpackningar`
+        t('orders.errors.minimum_quantity', 'Du har beställt för få förpackningar ({{current}}), beställ minst {{remaining}} st till för att nå minst {{minimum}} förpackningar', {
+          current: totalPackages,
+          remaining: remainingQuantity,
+          minimum: MINIMUM_ORDER_QUANTITY
+        })
       );
       return;
     }
@@ -274,11 +278,11 @@ const OrderPage = () => {
       // Submit order to Firestore
       const order = await createOrder(orderData);
       
-      toast.success('Order skapad!');
+      toast.success(t('orders.success.created', 'Order skapad!'));
       navigate(`/orders/${order.id}`);
     } catch (error) {
       console.error('Error creating order:', error);
-      toast.error('Ett fel uppstod när ordern skulle skapas. Försök igen.');
+      toast.error(t('orders.errors.create_failed', 'Ett fel uppstod när ordern skulle skapas. Försök igen.'));
     } finally {
       setLoading(false);
     }
@@ -295,7 +299,7 @@ const OrderPage = () => {
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">B2B Beställning - Individuell SKU-val</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-6">{t('orders.title', 'B2B Beställning - Individuell SKU-val')}</h1>
         
         {/* Main Grid Layout: Individual Products (2 cols) | Order Summary (1 col) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -304,9 +308,9 @@ const OrderPage = () => {
           <div className="lg:col-span-2 space-y-6">
           
             <div className="mb-6">
-              <h2 className="md:text-xl text-2xl font-semibold mb-4">Välj produkter och kvantiteter</h2>
+              <h2 className="md:text-xl text-2xl font-semibold mb-4">{t('orders.select_products', 'Välj produkter och kvantiteter')}</h2>
               <p className="md:text-sm text-base text-gray-600 mb-4 leading-relaxed">
-                Välj exakt hur många förpackningar du vill ha av varje färg och storlek. Bilder visar Storlek 4 som standardrepresentation.
+                {t('orders.select_description', 'Välj exakt hur många förpackningar du vill ha av varje färg och storlek. Bilder visar Storlek 4 som standardrepresentation.')}
               </p>
               
               {/* Friendly information box */}
@@ -318,12 +322,12 @@ const OrderPage = () => {
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <h3 className="md:text-sm text-base font-medium text-blue-900 mb-2">Så här fungerar beställningen</h3>
+                    <h3 className="md:text-sm text-base font-medium text-blue-900 mb-2">{t('orders.how_it_works', 'Så här fungerar beställningen')}</h3>
                     <ul className="md:text-sm text-base text-blue-800 md:space-y-1 space-y-2">
-                      <li>• <strong>Minsta beställningsvolym:</strong> 10 förpackningar totalt</li>
-                      <li>• <strong>Mix & match:</strong> Kombinera färger och storlekar precis som du vill</li>
-                      <li className="md:block hidden">• <strong>Exempel:</strong> 5 st Röd Storlek 4 + 3 st Transparent Storlek 2 + 2 st Glitter Storlek 6 = 10 förpackningar ✓</li>
-                      <li className="md:hidden block">• <strong>Exempel:</strong> 5 st Röd Storlek 4 + 3 st Transparent Storlek 2 + 2 st Glitter Storlek 6 = 10 förpackningar ✓</li>
+                      <li>• <strong>{t('orders.minimum_volume', 'Minsta beställningsvolym')}:</strong> {t('orders.minimum_packages', '10 förpackningar totalt')}</li>
+                      <li>• <strong>{t('orders.mix_match', 'Mix & match')}:</strong> {t('orders.combine_colors', 'Kombinera färger och storlekar precis som du vill')}</li>
+                      <li className="md:block hidden">• <strong>{t('orders.example', 'Exempel')}:</strong> {t('orders.example_text', '5 st Röd Storlek 4 + 3 st Transparent Storlek 2 + 2 st Glitter Storlek 6 = 10 förpackningar ✓')}</li>
+                      <li className="md:hidden block">• <strong>{t('orders.example', 'Exempel')}:</strong> {t('orders.example_text', '5 st Röd Storlek 4 + 3 st Transparent Storlek 2 + 2 st Glitter Storlek 6 = 10 förpackningar ✓')}</li>
                     </ul>
                   </div>
                 </div>
@@ -352,7 +356,7 @@ const OrderPage = () => {
                             />
                           ) : (
                             <div className="md:w-32 md:h-32 w-40 h-40 mx-auto bg-gray-200 rounded-lg flex items-center justify-center">
-                              <span className="text-gray-500 md:text-sm text-base">Ingen bild</span>
+                              <span className="text-gray-500 md:text-sm text-base">{t('orders.no_image', 'Ingen bild')}</span>
                             </div>
                           )}
                           <h3 className="md:text-lg text-xl font-semibold mt-3 text-gray-800">
@@ -360,7 +364,7 @@ const OrderPage = () => {
                           </h3>
                           {colorSubtotal > 0 && (
                             <div className="mt-2 bg-blue-600 text-white md:px-3 md:py-1 px-4 py-2 rounded-full md:text-sm text-base font-medium inline-block">
-                              Totalt: {colorSubtotal} st
+                              {t('orders.total', 'Totalt')}: {colorSubtotal} st
                             </div>
                           )}
                         </div>
@@ -373,7 +377,7 @@ const OrderPage = () => {
                             <div key={size} className="md:flex md:items-center md:justify-between md:p-3 p-4 bg-white rounded border border-gray-200 md:space-y-0 space-y-4">
                               <div className="flex-1">
                                 <label className="font-medium text-gray-700 md:text-base text-lg">
-                                  Storlek {size}
+                                  {t('orders.size', 'Storlek')} {size}
                                 </label>
                               </div>
                               
@@ -402,7 +406,7 @@ const OrderPage = () => {
                                 <input
                                   type="number"
                                   min="0"
-                                  placeholder="Annat antal"
+                                  placeholder={t('orders.other_quantity', 'Annat antal')}
                                   value={colorData.sizes[size] === 0 ? '' : colorData.sizes[size]}
                                   onChange={(e) => handleCustomQuantity(colorId, size, e.target.value)}
                                   className={`md:w-16 w-full md:px-2 md:py-1 px-4 py-3 md:text-sm text-base border-2 rounded-lg transition-all duration-200 md:min-h-0 min-h-[48px] ${
@@ -423,7 +427,7 @@ const OrderPage = () => {
                                   className="md:px-2 md:py-1 px-4 py-2 md:text-sm text-base text-red-600 hover:text-red-800 md:min-h-0 min-h-[40px] md:w-auto w-full md:mt-0 mt-2 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 hover:border-red-300 transition-colors"
                                 >
                                   <span className="md:inline hidden">✕</span>
-                                  <span className="md:hidden inline">Rensa {size}</span>
+                                  <span className="md:hidden inline">{t('orders.clear', 'Rensa')} {size}</span>
                                 </button>
                               )}
                             </div>
@@ -438,13 +442,13 @@ const OrderPage = () => {
         
                         {/* Information Section */}
             <div className="md:p-4 p-5 border border-gray-200 rounded bg-blue-50">
-              <h2 className="md:text-xl text-2xl font-semibold mb-3">Information om prissättning</h2>
-              <p className="md:text-base text-lg leading-relaxed">Alla priser är exklusive moms och beräknas med din personliga marginal på {marginal || 40}%.</p>
+              <h2 className="md:text-xl text-2xl font-semibold mb-3">{t('orders.pricing_info', 'Information om prissättning')}</h2>
+              <p className="md:text-base text-lg leading-relaxed">{t('orders.pricing_description', 'Alla priser är exklusive moms och beräknas med din personliga marginal på {{margin}}%.', { margin: marginal || 40 })}</p>
               {(marginal || 40) === 40 && (
                 <div className="mt-4 md:p-3 p-4 bg-orange-100 border border-orange-300 rounded-lg">
-                  <p className="text-orange-800 font-semibold md:text-base text-lg">
-                    🎉 Just nu introduktionspris, endast under en kortare period, under fiskesäsong 2025
-                  </p>
+                                      <p className="text-orange-800 font-semibold md:text-base text-lg">
+                      🎉 {t('orders.intro_pricing', 'Just nu introduktionspris, endast under en kortare period, under fiskesäsong 2025')}
+                    </p>
                 </div>
               )}
             </div>
@@ -456,15 +460,15 @@ const OrderPage = () => {
             <div className="lg:sticky lg:top-6">
               {isFormComplete ? (
                 <div className="bg-gray-50 md:p-4 p-6 rounded-lg border border-gray-200">
-                  <h2 className="md:text-lg text-xl font-semibold mb-4">Orderöversikt</h2>
+                  <h2 className="md:text-lg text-xl font-semibold mb-4">{t('orders.order_summary', 'Orderöversikt')}</h2>
             
                   {/* Order Lines */}
                   <div className="mb-4">
-                    <h3 className="font-medium text-sm mb-2">Dina val:</h3>
+                    <h3 className="font-medium text-sm mb-2">{t('orders.your_choices', 'Dina val')}:</h3>
                     <div className="space-y-2">
                       {orderLines.map((line, index) => (
                         <div key={index} className="flex justify-between text-sm bg-white p-2 rounded">
-                          <span>{line.colorName} - Storlek {line.size}</span>
+                          <span>{line.colorName} - {t('orders.size', 'Storlek')} {line.size}</span>
                           <span className="font-medium">{line.quantity} st</span>
                         </div>
                       ))}
@@ -474,34 +478,34 @@ const OrderPage = () => {
                   {/* Total Summary */}
                   <div className="mb-4 p-3 bg-white rounded border">
                     <div className="flex justify-between text-sm mb-1">
-                      <span>Totalt antal förpackningar:</span>
+                      <span>{t('orders.total_packages', 'Totalt antal förpackningar')}:</span>
                       <span className="font-medium">{totalPackages} st</span>
                     </div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span>Antal färger:</span>
+                      <span>{t('orders.number_of_colors', 'Antal färger')}:</span>
                       <span className="font-medium">{totalActiveColors} st</span>  
                     </div>
                   </div>
                   
                   {/* Price Breakdown */}
                   <div className="mb-4 p-3 bg-white rounded border">
-                    <h3 className="font-bold text-sm mb-2">Inköpspris med {marginal || 40}% marginal:</h3>
+                    <h3 className="font-bold text-sm mb-2">{t('orders.purchase_price_with_margin', 'Inköpspris med {{margin}}% marginal', { margin: marginal || 40 })}:</h3>
                     {(marginal || 40) === 40 && (
                       <div className="mb-2 p-2 bg-green-100 border border-green-300 rounded text-xs">
-                        <p className="text-green-800">
-                          🎉 Just nu introduktionspris, endast under en kortare period, under fiskesäsong 2025
-                        </p>
+                                                  <p className="text-green-800">
+                            🎉 {t('orders.intro_pricing', 'Just nu introduktionspris, endast under en kortare period, under fiskesäsong 2025')}
+                          </p>
                       </div>
                     )}
                     <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span>Pris per förpackning (exkl. moms):</span>
-                        <span>{inkopspris.toFixed(2)} kr</span>
-                      </div>
-                      <div className="flex justify-between font-semibold">
-                        <span>Totalt inköpspris (exkl. moms):</span>
-                        <span>{totalPris.toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr</span>
-                      </div>
+                                              <div className="flex justify-between">
+                          <span>{t('orders.price_per_package', 'Pris per förpackning (exkl. moms)')}:</span>
+                          <span>{inkopspris.toFixed(2)} kr</span>
+                        </div>
+                        <div className="flex justify-between font-semibold">
+                          <span>{t('orders.total_purchase_price', 'Totalt inköpspris (exkl. moms)')}:</span>
+                          <span>{totalPris.toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr</span>
+                        </div>
               </div>
             </div>
             
@@ -510,10 +514,10 @@ const OrderPage = () => {
                     {totalPackages > 0 && totalPackages < MINIMUM_ORDER_QUANTITY && (
                       <div className="mb-3 md:p-3 p-4 bg-orange-100 border border-orange-300 rounded-lg">
                         <p className="text-orange-800 md:text-sm text-base font-medium">
-                          ⚠️ Minsta beställning: {MINIMUM_ORDER_QUANTITY} förpackningar
+                          ⚠️ {t('orders.minimum_order', 'Minsta beställning')}: {MINIMUM_ORDER_QUANTITY} {t('orders.packages', 'förpackningar')}
                         </p>
                         <p className="text-orange-700 md:text-xs text-sm mt-1">
-                          Du behöver beställa {remainingQuantity} förpackningar till
+                          {t('orders.need_more_packages', 'Du behöver beställa {{remaining}} förpackningar till', { remaining: remainingQuantity })}
                         </p>
                       </div>
                     )}
@@ -527,29 +531,29 @@ const OrderPage = () => {
                           : 'bg-gray-400 text-gray-200 cursor-not-allowed'
                       } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                      {loading ? 'Bearbetar...' : 
-                        !isFormComplete ? `Minst ${MINIMUM_ORDER_QUANTITY} förpackningar krävs` :
-                        'Bekräfta beställning'}
+                      {loading ? t('orders.processing', 'Bearbetar...') : 
+                        !isFormComplete ? t('orders.minimum_required', 'Minst {{minimum}} förpackningar krävs', { minimum: MINIMUM_ORDER_QUANTITY }) :
+                        t('orders.confirm_order', 'Bekräfta beställning')}
                     </button>
                   </div>
                 </div>
               ) : (
                 <div className="bg-gray-100 p-6 rounded-lg border border-gray-200 text-center">
-                  <h3 className="text-lg font-medium text-gray-600 mb-2">Orderöversikt</h3>
+                  <h3 className="text-lg font-medium text-gray-600 mb-2">{t('orders.order_summary', 'Orderöversikt')}</h3>
                   <p className="text-sm text-gray-500 mb-2">
-                    Välj produkter och kvantiteter för att se din orderöversikt
+                    {t('orders.select_products_to_see_summary', 'Välj produkter och kvantiteter för att se din orderöversikt')}
                   </p>
                   <p className="text-sm font-medium text-orange-600 mb-4">
-                    Minsta beställning: {MINIMUM_ORDER_QUANTITY} förpackningar
+                    {t('orders.minimum_order', 'Minsta beställning')}: {MINIMUM_ORDER_QUANTITY} {t('orders.packages', 'förpackningar')}
                   </p>
                   <div className="text-4xl text-gray-300 mb-2">
                     <svg className="w-16 h-16 mx-auto" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                     </svg>
                   </div>
-                  <p className="text-xs text-gray-400">
-                    Använd knapparna ovan för att välja antal av varje färg och storlek
-                  </p>
+                                      <p className="text-xs text-gray-400">
+                      {t('orders.use_buttons_instruction', 'Använd knapparna ovan för att välja antal av varje färg och storlek')}
+                    </p>
                 </div>
               )}
               </div>
