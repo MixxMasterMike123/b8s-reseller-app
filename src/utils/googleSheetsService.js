@@ -114,6 +114,7 @@ class GoogleSheetsService {
 
   /**
    * Parse CSV text into rows array
+   * Properly handles quoted strings with commas inside
    */
   parseCsvToRows(csvText) {
     const rows = [];
@@ -121,15 +122,51 @@ class GoogleSheetsService {
     
     for (const line of lines) {
       if (line.trim()) {
-        // Simple CSV parsing (handles basic cases)
-        const row = line.split(',').map(cell => 
-          cell.replace(/^"(.*)"$/, '$1').trim()
-        );
+        const row = this.parseCSVLine(line);
         rows.push(row);
       }
     }
     
     return rows;
+  }
+
+  /**
+   * Parse a single CSV line, properly handling quoted strings with commas
+   */
+  parseCSVLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    let i = 0;
+    
+    while (i < line.length) {
+      const char = line[i];
+      
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          // Handle escaped quotes ("")
+          current += '"';
+          i += 2;
+          continue;
+        } else {
+          // Toggle quote state
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        // Found a field separator outside of quotes
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+      
+      i++;
+    }
+    
+    // Add the last field
+    result.push(current.trim());
+    
+    return result;
   }
 
   /**
