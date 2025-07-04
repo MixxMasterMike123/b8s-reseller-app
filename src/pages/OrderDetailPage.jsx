@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { useOrder } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../contexts/TranslationContext';
 import AppLayout from '../components/layout/AppLayout';
 import OrderStatusMenu from '../components/OrderStatusMenu';
 import ProductMenu from '../components/ProductMenu';
@@ -47,6 +48,7 @@ const OrderDetailPage = () => {
   const navigate = useNavigate();
   const { getOrderById, cancelOrder, updateOrderStatus, error: orderError } = useOrder();
   const { isAdmin } = useAuth();
+  const { t } = useTranslation();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -64,8 +66,8 @@ const OrderDetailPage = () => {
       const orderData = await getOrderById(orderId);
       
       if (!orderData) {
-        setError(orderError || 'Beställningen hittades inte');
-        toast.error('Beställningen hittades inte');
+        setError(orderError || t('order_detail.order_not_found', 'Beställningen hittades inte'));
+        toast.error(t('order_detail.order_not_found', 'Beställningen hittades inte'));
         return;
       }
       
@@ -73,8 +75,8 @@ const OrderDetailPage = () => {
       setError(null);
     } catch (err) {
       console.error('Error fetching order:', err);
-      setError('Kunde inte hämta beställningsdetaljer');
-      toast.error('Kunde inte hämta beställningsdetaljer');
+      setError(t('order_detail.fetch_error', 'Kunde inte hämta beställningsdetaljer'));
+      toast.error(t('order_detail.fetch_error', 'Kunde inte hämta beställningsdetaljer'));
     } finally {
       setLoading(false);
       setFetchAttempted(true);
@@ -113,39 +115,39 @@ const OrderDetailPage = () => {
 
   const formatDate = (date) => {
     try {
-      if (!date) return 'Okänt datum';
+      if (!date) return t('order_detail.unknown_date', 'Okänt datum');
       
       const jsDate = getOrderDate(date);
-      if (!jsDate) return 'Okänt datum';
+      if (!jsDate) return t('order_detail.unknown_date', 'Okänt datum');
       
       return format(jsDate, 'PPP', { locale: sv });
     } catch (err) {
       console.error('Error formatting date:', err, date);
-      return 'Felaktigt datum';
+      return t('order_detail.invalid_date', 'Felaktigt datum');
     }
   };
 
   const getStatusInfo = (status) => {
     switch (status) {
       case 'pending':
-        return { text: 'Väntar på bekräftelse', color: 'bg-yellow-100 text-yellow-800' };
+        return { text: t('order_detail.status.pending', 'Väntar på bekräftelse'), color: 'bg-yellow-100 text-yellow-800' };
       case 'confirmed':
-        return { text: 'Bekräftad', color: 'bg-blue-100 text-blue-800' };
+        return { text: t('order_detail.status.confirmed', 'Bekräftad'), color: 'bg-blue-100 text-blue-800' };
       case 'processing':
-        return { text: 'Under behandling', color: 'bg-purple-100 text-purple-800' };
+        return { text: t('order_detail.status.processing', 'Under behandling'), color: 'bg-purple-100 text-purple-800' };
       case 'shipped':
-        return { text: 'Skickad', color: 'bg-indigo-100 text-indigo-800' };
+        return { text: t('order_detail.status.shipped', 'Skickad'), color: 'bg-indigo-100 text-indigo-800' };
       case 'delivered':
-        return { text: 'Levererad', color: 'bg-green-100 text-green-800' };
+        return { text: t('order_detail.status.delivered', 'Levererad'), color: 'bg-green-100 text-green-800' };
       case 'cancelled':
-        return { text: 'Avbruten', color: 'bg-red-100 text-red-800' };
+        return { text: t('order_detail.status.cancelled', 'Avbruten'), color: 'bg-red-100 text-red-800' };
       default:
-        return { text: 'Okänd status', color: 'bg-gray-100 text-gray-800' };
+        return { text: t('order_detail.status.unknown', 'Okänd status'), color: 'bg-gray-100 text-gray-800' };
     }
   };
 
   const handleCancelOrder = async () => {
-    if (window.confirm('Är du säker på att du vill avbryta denna beställning?')) {
+    if (window.confirm(t('order_detail.cancel_confirm', 'Är du säker på att du vill avbryta denna beställning?'))) {
       setCancelLoading(true);
       try {
         await cancelOrder(orderId);
@@ -154,11 +156,11 @@ const OrderDetailPage = () => {
         const updatedOrder = await getOrderById(orderId);
         if (updatedOrder) {
           setOrder(updatedOrder);
-          toast.success('Beställningen har avbrutits');
+          toast.success(t('order_detail.cancel_success', 'Beställningen har avbrutits'));
         }
       } catch (err) {
         console.error('Error cancelling order:', err);
-        toast.error('Kunde inte avbryta beställningen');
+        toast.error(t('order_detail.cancel_error', 'Kunde inte avbryta beställningen'));
       } finally {
         setCancelLoading(false);
       }
@@ -178,11 +180,11 @@ const OrderDetailPage = () => {
       const updatedOrder = await getOrderById(orderId);
       if (updatedOrder) {
         setOrder(updatedOrder);
-        toast.success(`Orderstatus uppdaterad till ${getStatusInfo(newStatus).text}`);
+        toast.success(t('order_detail.status_updated', 'Orderstatus uppdaterad till {{status}}', { status: getStatusInfo(newStatus).text }));
       }
     } catch (err) {
       console.error('Error updating order status:', err);
-      toast.error('Kunde inte uppdatera orderstatus: ' + (err.message || ''));
+      toast.error(t('order_detail.status_update_error', 'Kunde inte uppdatera orderstatus: {{error}}', { error: err.message || '' }));
     } finally {
       setUpdateStatusLoading(false);
     }
@@ -213,7 +215,7 @@ const OrderDetailPage = () => {
         <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-6">
           <div className="py-12 text-center">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-            <p className="mt-2 text-gray-600">Hämtar beställningsdetaljer...</p>
+            <p className="mt-2 text-gray-600">{t('order_detail.loading', 'Hämtar beställningsdetaljer...')}</p>
           </div>
         </div>
       </AppLayout>
@@ -230,20 +232,20 @@ const OrderDetailPage = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
-            <h2 className="text-xl font-medium text-gray-700 mb-2">Ett fel uppstod</h2>
+            <h2 className="text-xl font-medium text-gray-700 mb-2">{t('order_detail.error_occurred', 'Ett fel uppstod')}</h2>
             <p className="text-gray-500 mb-6">{error}</p>
             <div className="flex justify-center space-x-4">
               <button
                 onClick={handleRetry}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
-                Försök igen
+                {t('order_detail.try_again', 'Försök igen')}
               </button>
               <Link
                 to="/orders"
                 className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                Tillbaka till orderlistan
+                {t('order_detail.back_to_orders', 'Tillbaka till orderlistan')}
               </Link>
             </div>
           </div>
@@ -257,12 +259,12 @@ const OrderDetailPage = () => {
       <AppLayout>
         <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-6">
           <div className="py-12 text-center">
-            <h2 className="text-xl font-medium text-gray-700 mb-2">Beställningen hittades inte</h2>
+            <h2 className="text-xl font-medium text-gray-700 mb-2">{t('order_detail.order_not_found', 'Beställningen hittades inte')}</h2>
             <Link
               to="/orders"
               className="text-blue-600 hover:text-blue-800 font-medium"
             >
-              Tillbaka till orderlistan
+              {t('order_detail.back_to_orders', 'Tillbaka till orderlistan')}
             </Link>
           </div>
         </div>
@@ -283,10 +285,10 @@ const OrderDetailPage = () => {
                   <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
                 </svg>
               </Link>
-              <h1 className="text-xl md:text-2xl font-bold text-gray-800 truncate">Orderdetaljer</h1>
+              <h1 className="text-xl md:text-2xl font-bold text-gray-800 truncate">{t('order_detail.title', 'Orderdetaljer')}</h1>
             </div>
             <p className="text-sm md:text-base text-gray-600">
-              Ordernummer: <span className="font-semibold">{order.orderNumber}</span>
+              {t('order_detail.order_number', 'Ordernummer')}: <span className="font-semibold">{order.orderNumber}</span>
             </p>
           </div>
           
@@ -314,7 +316,7 @@ const OrderDetailPage = () => {
                 disabled={cancelLoading}
                 className="w-full md:w-auto bg-red-600 text-white px-4 py-3 md:py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px] md:min-h-0 text-base md:text-sm font-medium"
               >
-                {cancelLoading ? 'Avbryter...' : 'Avbryt beställning'}
+                {cancelLoading ? t('order_detail.cancelling', 'Avbryter...') : t('order_detail.cancel_order', 'Avbryt beställning')}
               </button>
             )}
           </div>
@@ -322,40 +324,40 @@ const OrderDetailPage = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
           <div className="bg-gray-50 p-4 md:p-4 rounded-lg">
-            <h2 className="text-base md:text-lg font-semibold mb-3 text-gray-800">Orderinformation</h2>
+            <h2 className="text-base md:text-lg font-semibold mb-3 text-gray-800">{t('order_detail.order_information', 'Orderinformation')}</h2>
             <div className="space-y-2 md:space-y-2">
               <p className="text-sm md:text-base text-gray-700">
-                <span className="font-medium">Datum:</span> {formatDate(order.createdAt)}
+                <span className="font-medium">{t('order_detail.date', 'Datum')}:</span> {formatDate(order.createdAt)}
               </p>
               <p className="text-sm md:text-base text-gray-700">
-                <span className="font-medium">Status:</span> {statusText}
+                <span className="font-medium">{t('order_detail.status', 'Status')}:</span> {statusText}
               </p>
               <p className="text-sm md:text-base text-gray-700">
-                <span className="font-medium">Betalningssätt:</span> {order.paymentMethod || 'Faktura'}
+                <span className="font-medium">{t('order_detail.payment_method', 'Betalningssätt')}:</span> {order.paymentMethod || t('order_detail.invoice', 'Faktura')}
               </p>
               {order.deliveryMethod && (
                 <p className="text-sm md:text-base text-gray-700">
-                  <span className="font-medium">Leveranssätt:</span> {order.deliveryMethod}
+                  <span className="font-medium">{t('order_detail.delivery_method', 'Leveranssätt')}:</span> {order.deliveryMethod}
                 </p>
               )}
             </div>
           </div>
 
           <div className="bg-gray-50 p-4 md:p-4 rounded-lg">
-            <h2 className="text-base md:text-lg font-semibold mb-3 text-gray-800">Leveransadress</h2>
+            <h2 className="text-base md:text-lg font-semibold mb-3 text-gray-800">{t('order_detail.delivery_address', 'Leveransadress')}</h2>
             <div className="space-y-2 md:space-y-2">
               <p className="text-sm md:text-base text-gray-700">
-                <span className="font-medium">Företag:</span> {order.companyName || 'Ej angett'}
+                <span className="font-medium">{t('order_detail.company', 'Företag')}:</span> {order.companyName || t('order_detail.not_specified', 'Ej angett')}
               </p>
               <p className="text-sm md:text-base text-gray-700">
-                <span className="font-medium">Kontaktperson:</span> {order.contactName || 'Ej angett'}
+                <span className="font-medium">{t('order_detail.contact_person', 'Kontaktperson')}:</span> {order.contactName || t('order_detail.not_specified', 'Ej angett')}
               </p>
               <p className="text-sm md:text-base text-gray-700">
-                <span className="font-medium">Adress:</span> {order.address || 'Ej angett'}
+                <span className="font-medium">{t('order_detail.address', 'Adress')}:</span> {order.address || t('order_detail.not_specified', 'Ej angett')}
               </p>
               {order.postalCode && order.city && (
                 <p className="text-sm md:text-base text-gray-700">
-                  <span className="font-medium">Postnummer & Ort:</span> {order.postalCode}, {order.city}
+                  <span className="font-medium">{t('order_detail.postal_code_city', 'Postnummer & Ort')}:</span> {order.postalCode}, {order.city}
                 </p>
               )}
             </div>
@@ -363,7 +365,7 @@ const OrderDetailPage = () => {
         </div>
 
         <div className="mb-6 md:mb-8">
-          <h2 className="text-base md:text-lg font-semibold mb-4 text-gray-800">Orderdetaljer</h2>
+          <h2 className="text-base md:text-lg font-semibold mb-4 text-gray-800">{t('order_detail.order_details', 'Orderdetaljer')}</h2>
           
           {/* Mobile Card Layout */}
           <div className="md:hidden space-y-3">
@@ -382,18 +384,18 @@ const OrderDetailPage = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <p className="text-xs text-gray-500 uppercase tracking-wider">Färg</p>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">{t('order_detail.color', 'Färg')}</p>
                       <p className="text-sm font-medium text-gray-900">{item.color || '-'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 uppercase tracking-wider">Storlek</p>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">{t('order_detail.size', 'Storlek')}</p>
                       <p className="text-sm font-medium text-gray-900">{item.size || '-'}</p>
                     </div>
                   </div>
                   <div className="mt-3 pt-3 border-t border-gray-300">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Antal</span>
-                      <span className="text-base font-semibold text-gray-900">{item.quantity} st</span>
+                      <span className="text-sm text-gray-600">{t('order_detail.quantity', 'Antal')}</span>
+                      <span className="text-base font-semibold text-gray-900">{item.quantity} {t('order_detail.pieces', 'st')}</span>
                     </div>
                   </div>
                 </div>
@@ -415,18 +417,18 @@ const OrderDetailPage = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <p className="text-xs text-gray-500 uppercase tracking-wider">Färg</p>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">{t('order_detail.color', 'Färg')}</p>
                       <p className="text-sm font-medium text-gray-900">{item.color}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 uppercase tracking-wider">Storlek</p>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">{t('order_detail.size', 'Storlek')}</p>
                       <p className="text-sm font-medium text-gray-900">{item.size}</p>
                     </div>
                   </div>
                   <div className="mt-3 pt-3 border-t border-gray-300">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Antal</span>
-                      <span className="text-base font-semibold text-gray-900">{item.quantity} st</span>
+                      <span className="text-sm text-gray-600">{t('order_detail.quantity', 'Antal')}</span>
+                      <span className="text-base font-semibold text-gray-900">{item.quantity} {t('order_detail.pieces', 'st')}</span>
                     </div>
                   </div>
                 </div>
@@ -435,10 +437,10 @@ const OrderDetailPage = () => {
             
             {/* Mobile Pricing Summary */}
             <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200 mt-4">
-              <h3 className="font-semibold text-gray-900 mb-3">Prissummering</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">{t('order_detail.price_summary', 'Prissummering')}</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Delsumma:</span>
+                  <span className="text-sm text-gray-600">{t('order_detail.subtotal', 'Delsumma')}:</span>
                   <span className="text-sm font-medium text-gray-900">
                     {order.prisInfo?.produktPris?.toLocaleString('sv-SE', {
                       minimumFractionDigits: 2,
@@ -447,7 +449,7 @@ const OrderDetailPage = () => {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Moms (25%):</span>
+                  <span className="text-sm text-gray-600">{t('order_detail.vat', 'Moms')} (25%):</span>
                   <span className="text-sm font-medium text-gray-900">
                     {order.prisInfo?.moms?.toLocaleString('sv-SE', {
                       minimumFractionDigits: 2,
@@ -456,7 +458,7 @@ const OrderDetailPage = () => {
                   </span>
                 </div>
                 <div className="flex justify-between pt-2 border-t border-blue-300">
-                  <span className="text-base font-bold text-gray-900">Totalt:</span>
+                  <span className="text-base font-bold text-gray-900">{t('order_detail.total', 'Totalt')}:</span>
                   <span className="text-base font-bold text-gray-900">
                     {order.prisInfo?.totalPris?.toLocaleString('sv-SE', {
                       minimumFractionDigits: 2,
@@ -473,9 +475,9 @@ const OrderDetailPage = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead>
                 <tr>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/5">Produkt & Detaljer</th>
-                  <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">Antal</th>
-                  <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">Pris</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/5">{t('order_detail.table.product_details', 'Produkt & Detaljer')}</th>
+                  <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">{t('order_detail.table.quantity', 'Antal')}</th>
+                  <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">{t('order_detail.table.price', 'Pris')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -487,14 +489,14 @@ const OrderDetailPage = () => {
                         <div className="space-y-1">
                           <div className="text-sm font-semibold text-gray-900">{item.name}</div>
                           <div className="text-xs text-gray-600">
-                            {item.color && <span>Färg: {item.color}</span>}
+                            {item.color && <span>{t('order_detail.color', 'Färg')}: {item.color}</span>}
                             {item.color && item.size && <span> • </span>}
-                            {item.size && <span>Storlek: {item.size}</span>}
+                            {item.size && <span>{t('order_detail.size', 'Storlek')}: {item.size}</span>}
                           </div>
                         </div>
                       </td>
                       <td className="px-3 py-4 text-center">
-                        <span className="text-sm font-medium text-gray-900">{item.quantity} st</span>
+                        <span className="text-sm font-medium text-gray-900">{item.quantity} {t('order_detail.pieces', 'st')}</span>
                       </td>
                       <td className="px-3 py-4 text-right">
                         <span className="text-sm font-semibold text-gray-900">
@@ -514,12 +516,12 @@ const OrderDetailPage = () => {
                         <div className="space-y-1">
                           <div className="text-sm font-semibold text-gray-900">B8 Shield</div>
                           <div className="text-xs text-gray-600">
-                            Färg: {item.color} • Storlek: {item.size}
+                            {t('order_detail.color', 'Färg')}: {item.color} • {t('order_detail.size', 'Storlek')}: {item.size}
                           </div>
                         </div>
                       </td>
                       <td className="px-3 py-4 text-center">
-                        <span className="text-sm font-medium text-gray-900">{item.quantity} st</span>
+                        <span className="text-sm font-medium text-gray-900">{item.quantity} {t('order_detail.pieces', 'st')}</span>
                       </td>
                       <td className="px-3 py-4 text-right">
                         {index === 0 && order.prisInfo?.produktPris && (
@@ -537,7 +539,7 @@ const OrderDetailPage = () => {
               </tbody>
               <tfoot className="bg-gray-100">
                 <tr>
-                  <td colSpan="2" className="px-3 py-3 text-sm text-right font-medium">Delsumma:</td>
+                  <td colSpan="2" className="px-3 py-3 text-sm text-right font-medium">{t('order_detail.subtotal', 'Delsumma')}:</td>
                   <td className="px-3 py-3 text-sm text-gray-700 text-right">
                     {order.prisInfo?.produktPris?.toLocaleString('sv-SE', {
                       minimumFractionDigits: 2,
@@ -546,7 +548,7 @@ const OrderDetailPage = () => {
                   </td>
                 </tr>
                 <tr>
-                  <td colSpan="2" className="px-3 py-3 text-sm text-right font-medium">Moms (25%):</td>
+                  <td colSpan="2" className="px-3 py-3 text-sm text-right font-medium">{t('order_detail.vat', 'Moms')} (25%):</td>
                   <td className="px-3 py-3 text-sm text-gray-700 text-right">
                     {order.prisInfo?.moms?.toLocaleString('sv-SE', {
                       minimumFractionDigits: 2,
@@ -555,7 +557,7 @@ const OrderDetailPage = () => {
                   </td>
                 </tr>
                 <tr className="bg-gray-200">
-                  <td colSpan="2" className="px-3 py-3 text-sm text-right font-bold">Totalt:</td>
+                  <td colSpan="2" className="px-3 py-3 text-sm text-right font-bold">{t('order_detail.total', 'Totalt')}:</td>
                   <td className="px-3 py-3 text-sm font-bold text-gray-800 text-right">
                     {order.prisInfo?.totalPris?.toLocaleString('sv-SE', {
                       minimumFractionDigits: 2,
@@ -570,7 +572,7 @@ const OrderDetailPage = () => {
 
         {order.note && (
           <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-2 text-gray-800">Anteckningar</h2>
+            <h2 className="text-lg font-semibold mb-2 text-gray-800">{t('order_detail.notes', 'Anteckningar')}</h2>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-gray-700">{order.note}</p>
             </div>
@@ -580,18 +582,18 @@ const OrderDetailPage = () => {
         {/* Status History Section */}
         {isAdmin && order.statusHistory && order.statusHistory.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-2 text-gray-800">Statushistorik</h2>
+            <h2 className="text-lg font-semibold mb-2 text-gray-800">{t('order_detail.status_history', 'Statushistorik')}</h2>
             <div className="bg-gray-50 p-4 rounded-lg">
               <ul className="space-y-3">
                 {order.statusHistory.map((history, index) => (
                   <li key={index} className="border-b border-gray-200 pb-2 last:border-0 last:pb-0">
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="font-medium">Status ändrad från </span>
+                        <span className="font-medium">{t('order_detail.status_changed_from', 'Status ändrad från')} </span>
                         <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusInfo(history.from).color}`}>
                           {getStatusInfo(history.from).text}
                         </span>
-                        <span className="font-medium"> till </span>
+                        <span className="font-medium"> {t('order_detail.to', 'till')} </span>
                         <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusInfo(history.to).color}`}>
                           {getStatusInfo(history.to).text}
                         </span>
@@ -602,7 +604,7 @@ const OrderDetailPage = () => {
                     </div>
                     {history.displayName && (
                       <div className="text-sm text-gray-500 mt-1">
-                        Av: {history.displayName}
+                        {t('order_detail.by', 'Av')}: {history.displayName}
                       </div>
                     )}
                   </li>
@@ -613,32 +615,32 @@ const OrderDetailPage = () => {
         )}
 
         <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-2 text-gray-800">Produkter</h2>
+          <h2 className="text-lg font-semibold mb-2 text-gray-800">{t('order_detail.products', 'Produkter')}</h2>
           <div className="mb-4">
             <ProductMenu 
               products={orderProducts} 
               selectedProduct={null} 
               onProductSelect={(product) => {
                 // Just view product details in read-only mode
-                toast.success(`Visning av ${product.name}`);
+                toast.success(t('order_detail.viewing_product', 'Visning av {{product}}', { product: product.name }));
               }} 
             />
           </div>
           
           <div className="bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold mb-3 text-gray-800">Produktinformation</h2>
+            <h2 className="text-lg font-semibold mb-3 text-gray-800">{t('order_detail.product_information', 'Produktinformation')}</h2>
             <div className="space-y-2">
               <p className="text-gray-700">
-                <span className="font-medium">Produkt:</span> {order.productName || 'Ej angett'}
+                <span className="font-medium">{t('order_detail.product', 'Produkt')}:</span> {order.productName || t('order_detail.not_specified', 'Ej angett')}
               </p>
               <p className="text-gray-700">
-                <span className="font-medium">Färg:</span> {order.color || 'Ej angett'}
+                <span className="font-medium">{t('order_detail.color', 'Färg')}:</span> {order.color || t('order_detail.not_specified', 'Ej angett')}
               </p>
               <p className="text-gray-700">
-                <span className="font-medium">Storlek:</span> {order.size || 'Ej angett'}
+                <span className="font-medium">{t('order_detail.size', 'Storlek')}:</span> {order.size || t('order_detail.not_specified', 'Ej angett')}
               </p>
               <p className="text-gray-700">
-                <span className="font-medium">Antal:</span> {order.quantity || 'Ej angett'}
+                <span className="font-medium">{t('order_detail.quantity', 'Antal')}:</span> {order.quantity || t('order_detail.not_specified', 'Ej angett')}
               </p>
             </div>
           </div>
@@ -649,14 +651,14 @@ const OrderDetailPage = () => {
             to="/orders"
             className="w-full md:w-auto inline-flex items-center justify-center px-4 py-3 md:py-2 border border-gray-300 rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 font-medium min-h-[48px] md:min-h-0 text-base md:text-sm transition-colors"
           >
-            Tillbaka till orderlistan
+            {t('order_detail.back_to_orders', 'Tillbaka till orderlistan')}
           </Link>
           {order.status === 'pending' && (
             <Link
               to={`/orders/${orderId}/edit`}
               className="w-full md:w-auto inline-flex items-center justify-center bg-blue-600 text-white px-4 py-3 md:py-2 rounded-lg hover:bg-blue-700 transition-colors min-h-[48px] md:min-h-0 text-base md:text-sm font-medium"
             >
-              Redigera beställning
+              {t('order_detail.edit_order', 'Redigera beställning')}
             </Link>
           )}
         </div>
