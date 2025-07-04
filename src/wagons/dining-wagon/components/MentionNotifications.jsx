@@ -8,10 +8,74 @@ import {
   ChatBubbleLeftRightIcon 
 } from '@heroicons/react/24/outline';
 import { BellIcon as BellSolid } from '@heroicons/react/24/solid';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const MentionNotifications = () => {
   const { mentions, unreadCount, markAsRead, deleteMention, markAllAsRead } = useMentionNotifications();
+  const { getAllUsers } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [adminUsers, setAdminUsers] = useState([]);
+
+  // Load admin users for mention highlighting
+  useEffect(() => {
+    const loadAdminUsers = async () => {
+      try {
+        const allUsers = await getAllUsers();
+        const admins = allUsers.filter(user => user.role === 'admin');
+        
+        // Create mention-friendly usernames from names
+        const adminMentions = admins.map(admin => ({
+          fullName: admin.contactPerson || admin.companyName || admin.email,
+          userId: admin.id,
+          email: admin.email
+        }));
+        
+        setAdminUsers(adminMentions);
+      } catch (error) {
+        console.error('Error loading admin users:', error);
+      }
+    };
+    
+    if (getAllUsers) {
+      loadAdminUsers();
+    }
+  }, [getAllUsers]);
+
+  // Component to render text with highlighted mentions using same styling as CRM
+  const TextWithMentions = ({ text, className = "" }) => {
+    if (!text) return null;
+    
+    // Get all admin user full names for highlighting
+    const adminNames = adminUsers.map(user => user.fullName);
+    
+    // If no admin names to highlight, just return plain text
+    if (adminNames.length === 0) {
+      return <span className={className}>{text}</span>;
+    }
+    
+    // Create regex to match any admin full name
+    const namePattern = new RegExp(`(${adminNames.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'g');
+    const parts = text.split(namePattern);
+    
+    return (
+      <span className={className}>
+        {parts.map((part, index) => {
+          // Check if this part is an admin name
+          if (adminNames.includes(part)) {
+            return (
+              <span
+                key={index}
+                className="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300"
+              >
+                {part}
+              </span>
+            );
+          }
+          return part;
+        })}
+      </span>
+    );
+  };
 
   const handleMentionClick = async (mention) => {
     // Mark as read immediately
@@ -131,9 +195,9 @@ const MentionNotifications = () => {
                           Omnämnd av {mention.mentionedByName}
                         </p>
                         
-                        <p className="text-sm text-gray-700 mt-1 line-clamp-2">
-                          {mention.mentionText}
-                        </p>
+                        <div className="text-sm text-gray-700 mt-1 line-clamp-2">
+                          <TextWithMentions text={mention.mentionText} />
+                        </div>
                       </div>
                     </div>
                   </Link>
