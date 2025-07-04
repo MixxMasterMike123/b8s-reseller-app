@@ -1,0 +1,124 @@
+key,context,swedish,englishUK,englishUS,status,translator,lastModified,notes,charCount
+"b2b.nav.error_loading_wagon_menu_items","AppLayout.jsx:67","Error loading wagon menu items:","","","new","","","From AppLayout.jsx",31
+"b2b.nav.kontakt_support","AppLayout.jsx:121","Kontakt & Support","","","new","","","From AppLayout.jsx",17
+"b2b.nav.oversikt_och_statistik","AppLayout.jsx:137","Översikt och statistik","","","new","","","From AppLayout.jsx",22
+"b2b.nav.hantera_anvandare","AppLayout.jsx:143","Hantera användare","","","new","","","From AppLayout.jsx",17
+"b2b.nav.hantera_bestallningar","AppLayout.jsx:149","Hantera beställningar","","","new","","","From AppLayout.jsx",21
+"b2b.nav.marknadsforing","AppLayout.jsx:158","Marknadsföring","","","new","","","From AppLayout.jsx",14
+"b2b.nav.hantera_marknadsforingsmaterial","AppLayout.jsx:161","Hantera marknadsföringsmaterial","","","new","","","From AppLayout.jsx",31
+"b2b.nav.oversattningar","AppLayout.jsx:164","Översättningar","","","new","","","From AppLayout.jsx",14
+"b2b.nav.hantera_sprak_och_oversattningar","AppLayout.jsx:167","Hantera språk och översättningar","","","new","","","From AppLayout.jsx",32
+"b2b.nav.installningar","AppLayout.jsx:176","Inställningar","","","new","","","From AppLayout.jsx",13
+"b2b.nav.systeminstallningar","AppLayout.jsx:179","Systeminställningar","","","new","","","From AppLayout.jsx",19
+"b2b.nav.group_flex_itemscenter_px3_py2_textsm_fontmedium_r","AppLayout.jsx:217","group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50 hover:text-gray-900 mb-4","","","new","","","From AppLayout.jsx",120
+"b2b.nav.ga_till_admin_panel","AppLayout.jsx:368","Gå till Admin Panel","","","new","","","From AppLayout.jsx",19
+"b2b.products._searching_for_product_variant_varianttype","ProductDetailPopup.jsx:28","🔍 Searching for product variant: ${variantType}","","","new","","","From ProductDetailPopup.jsx",48
+"b2b.products.b8shield_varianttype","ProductDetailPopup.jsx:73","B8Shield ${variantType}","","","new","","","From ProductDetailPopup.jsx",23
+"b2b.products.paverkar_inte_krokens_funktion","ProductDetailPopup.jsx:105","Påverkar inte krokens funktion","","","new","","","From ProductDetailPopup.jsx",30
+"b2b.products.enkelt_att_vaxla_mellan_drag","ProductDetailPopup.jsx:106","Enkelt att växla mellan drag","","","new","","","From ProductDetailPopup.jsx",28
+"b2b.products.passar_krokstorlek_2_4_och_6","ProductDetailPopup.jsx:107","Passar krokstorlek 2, 4 och 6","","","new","","","From ProductDetailPopup.jsx",29
+"b2b.products.bevarar_dragets_naturliga_farger","ProductDetailPopup.jsx:111","Bevarar dragets naturliga färger","","","new","","","From ProductDetailPopup.jsx",32
+"b2b.products.traditionell_betesfarg","ProductDetailPopup.jsx:112","Traditionell betesfärg","","","new","","","From ProductDetailPopup.jsx",22
+"b2b.products.synlig_i_morka_vatten","ProductDetailPopup.jsx:113","Synlig i mörka vatten","","","new","","","From ProductDetailPopup.jsx",21
+"b2b.products.perfekt_for_nattfiske","ProductDetailPopup.jsx:113","Perfekt för nattfiske","","","new","","","From ProductDetailPopup.jsx",21
+"b2b.products.b8shield_variant","ProductDetailPopup.jsx:123","B8Shield ${variant}","","","new","","","From ProductDetailPopup.jsx",19
+"b2b.products.den_har_varianten_ar_perfekt_for_kunder_som_getsal","ProductDetailPopup.jsx:237","Den här varianten är perfekt för kunder som {getSalesTip(variantType)}","","","new","","","From ProductDetailPopup.jsx",70
+"b2b.training.valkommen","TrainingModal.jsx:36","Välkommen","","","new","","","From TrainingModal.jsx",9
+"b2b.training.till_b8shield_aterforsaljarportal","TrainingModal.jsx:37","Till B8Shield återförsäljarportal","","","new","","","From TrainingModal.jsx",33
+"b2b.training.av_den_orsaken_ar_det_avgorande_att_ni","TrainingModal.jsx:95","Av den orsaken är det avgörande att ni","","","new","","","From TrainingModal.jsx",38
+"b2b.training.for_att_salja_b8shield","TrainingModal.jsx:96","För att sälja B8Shield","","","new","","","From TrainingModal.jsx",22
+"b2b.training.sa_forklarar_du_produkten_pa_15_sekunder","TrainingModal.jsx:141","Så förklarar du produkten på 15 sekunder","","","new","","","From TrainingModal.jsx",40
+"b2b.training.sag_detta_till_kunden","TrainingModal.jsx:142","Säg detta till kunden","","","new","","","From TrainingModal.jsx",21
+"b2b.training.nar_man_inte_vill_kompromissa_med_fiskedragets_nat","TrainingModal.jsx:165","När man inte vill kompromissa med fiskedragets naturliga färger och utseende","","","new","","","From TrainingModal.jsx",76
+"b2b.training.utnyttja_den_traditionella_roda_fargen_pa_manga_be","TrainingModal.jsx:166","Utnyttja den traditionella röda färgen på många betesfiskar för att attrahera mer fisk","","","new","","","From TrainingModal.jsx",86
+"b2b.training.nar_du_skall_natt_fiska_och_vill_attrahera_fiskar_","TrainingModal.jsx:167","När du skall natt fiska och vill attrahera fiskar i grumliga eller mörka vatten","","","new","","","From TrainingModal.jsx",79
+"b2b.training.nar_man_skall_fiska_i_stark_solljus_hjalper_dess_g","TrainingModal.jsx:168","När man skall fiska i stark solljus hjälper dess gnistrande färg till med att attrahera mer fisk","","","new","","","From TrainingModal.jsx",96
+"b2b.training.klicka_for_detaljer","TrainingModal.jsx:181","Klicka för detaljer","","","new","","","From TrainingModal.jsx",19
+"b2b.training.vanliga_fragor","TrainingModal.jsx:211","Vanliga frågor","","","new","","","From TrainingModal.jsx",14
+"b2b.training.kommer_fisken_sluta_hugga","TrainingModal.jsx:221","Kommer fisken sluta hugga?","","","new","","","From TrainingModal.jsx",26
+"b2b.training.forstor_det_gangen_pa_draget","TrainingModal.jsx:234","Förstör det gången på draget?","","","new","","","From TrainingModal.jsx",29
+"b2b.training.nar_ska_man_anvanda_den","TrainingModal.jsx:247","När ska man använda den?","","","new","","","From TrainingModal.jsx",24
+"b2b.training.du_ar_nu_certifierad_b8shieldsaljare","TrainingModal.jsx:262","Du är nu certifierad B8Shield-säljare","","","new","","","From TrainingModal.jsx",37
+"b2b.training.certifierad_b8shieldsaljare","TrainingModal.jsx:270","Certifierad B8Shield-Säljare","","","new","","","From TrainingModal.jsx",28
+"b2b.training.du_har_genomfort_saljutbildningen","TrainingModal.jsx:271","Du har genomfört säljutbildningen","","","new","","","From TrainingModal.jsx",33
+"b2b.training.nu_kan_du","TrainingModal.jsx:275","Nu kan du:","","","new","","","From TrainingModal.jsx",10
+"b2b.training.forklara_b8shield_pa_15_sekunder","TrainingModal.jsx:279","Förklara B8Shield på 15 sekunder","","","new","","","From TrainingModal.jsx",32
+"b2b.training.hantera_kundinvandningar","TrainingModal.jsx:283","Hantera kundinvändningar","","","new","","","From TrainingModal.jsx",24
+"b2b.training.oka_din_forsaljning_med_ratt_teknik","TrainingModal.jsx:287","Öka din försäljning med rätt teknik","","","new","","","From TrainingModal.jsx",35
+"b2b.training.steg_current_av_total","TrainingModal.jsx:354","Steg {{current}} av {{total}}","","","new","","","From TrainingModal.jsx",29
+"b2b.training.foregaende","TrainingModal.jsx:376","Föregående","","","new","","","From TrainingModal.jsx",10
+"b2b.training.borja_salja","TrainingModal.jsx:391","Börja sälja!","","","new","","","From TrainingModal.jsx",12
+"b2b.contact._kontakt_support","ContactPage.jsx:22","📞 Kontakt & Support","","","new","","","From ContactPage.jsx",20
+"b2b.contact.vi_ar_har_for_att_hjalpa_er_med_alla_era_fragor_oc","ContactPage.jsx:25","Vi är här för att hjälpa er med alla era frågor och behov","","","new","","","From ContactPage.jsx",57
+"b2b.contact.support_hjalp","ContactPage.jsx:85","Support & Hjälp","","","new","","","From ContactPage.jsx",15
+"b2b.contact.skicka_era_fragor_till","ContactPage.jsx:92","Skicka era frågor till","","","new","","","From ContactPage.jsx",22
+"b2b.contact.sa_aterkommer_vi_sa_snart_som_mojligt","ContactPage.jsx:92","så återkommer vi så snart som möjligt","","","new","","","From ContactPage.jsx",37
+"b2b.contact.behover_ni_hjalp_med_portalen_eller_har_tekniska_f","ContactPage.jsx:104","Behöver ni hjälp med portalen eller har tekniska frågor? Vi hjälper er gärna!","","","new","","","From ContactPage.jsx",77
+"b2b.contact.produktfragor","ContactPage.jsx:113","Produktfrågor","","","new","","","From ContactPage.jsx",13
+"b2b.contact.fragor_om_b8shield_produkter_priser_eller_leverans","ContactPage.jsx:116","Frågor om B8Shield produkter, priser eller leveranser hanteras via samma e-post","","","new","","","From ContactPage.jsx",79
+"b2b.contact._oppettider_svarstider","ContactPage.jsx:126","🕒 Öppettider & Svarstider","","","new","","","From ContactPage.jsx",26
+"b2b.contact.mandag_fredag","ContactPage.jsx:138","Måndag - Fredag","","","new","","","From ContactPage.jsx",15
+"b2b.contact._snabblankar","ContactPage.jsx:161","🔗 Snabblänkar","","","new","","","From ContactPage.jsx",14
+"b2b.contact.lagg_en_bestallning","ContactPage.jsx:173","Lägg en beställning","","","new","","","From ContactPage.jsx",19
+"b2b.dashboard.training_completed","DashboardPage.jsx:34","Training completed!","","","new","","","From DashboardPage.jsx",19
+"b2b.dashboard.testa_saljutbildning","DashboardPage.jsx:57","Testa Säljutbildning","","","new","","","From DashboardPage.jsx",20
+"b2b.dashboard.aterforsaljarportal","DashboardPage.jsx:75","Återförsäljarportal","","","new","","","From DashboardPage.jsx",19
+"b2b.dashboard.lagga_bestallningar_direkt","DashboardPage.jsx:95","Lägga beställningar direkt","","","new","","","From DashboardPage.jsx",26
+"b2b.dashboard.overblick_over_orderhistorik","DashboardPage.jsx:99","Överblick över orderhistorik","","","new","","","From DashboardPage.jsx",28
+"b2b.dashboard.bladdra_i_produktkatalog","DashboardPage.jsx:103","Bläddra i produktkatalog","","","new","","","From DashboardPage.jsx",24
+"b2b.dashboard.ladda_ner_marknadsforingsmaterial","DashboardPage.jsx:107","Ladda ner marknadsföringsmaterial","","","new","","","From DashboardPage.jsx",33
+"b2b.dashboard.skapa_en_ny_bestallning_for_dina_kunder","DashboardPage.jsx:129","Skapa en ny beställning för dina kunder","","","new","","","From DashboardPage.jsx",39
+"b2b.dashboard.visa_och_spara_dina_tidigare_bestallningar","DashboardPage.jsx:144","Visa och spåra dina tidigare beställningar","","","new","","","From DashboardPage.jsx",42
+"b2b.dashboard.bladdra_och_ladda_ner_produktinformation","DashboardPage.jsx:159","Bläddra och ladda ner produktinformation","","","new","","","From DashboardPage.jsx",40
+"b2b.dashboard.ladda_ner_broschyrer_och_marknadsforingsmaterial","DashboardPage.jsx:174","Ladda ner broschyrer och marknadsföringsmaterial","","","new","","","From DashboardPage.jsx",48
+"b2b.dashboard.information_for_butikspersonal","DashboardPage.jsx:184","Information för butikspersonal","","","new","","","From DashboardPage.jsx",30
+"b2b.dashboard.av_den_orsaken_ar_det_avgorande_att_ni","DashboardPage.jsx:210","Av den orsaken är det avgörande att ni:","","","new","","","From DashboardPage.jsx",39
+"b2b.dashboard.sa_forklarar_du_produkten_pa_15_sekunder","DashboardPage.jsx:249","Så förklarar du produkten på 15 sekunder:","","","new","","","From DashboardPage.jsx",41
+"b2b.dashboard.b8shield_finns_i_4_olika_utforanden","DashboardPage.jsx:262","B8Shield finns i 4 olika utföranden:","","","new","","","From DashboardPage.jsx",36
+"b2b.dashboard.vanliga_fragor_och_vad_du_svarar","DashboardPage.jsx:289","Vanliga frågor – och vad du svarar:","","","new","","","From DashboardPage.jsx",35
+"b2b.dashboard.fraga_1_kommer_fisken_sluta_hugga","DashboardPage.jsx:295","Fråga 1: Kommer fisken sluta hugga?","","","new","","","From DashboardPage.jsx",35
+"b2b.dashboard.fraga_2_forstor_det_gangen_pa_draget","DashboardPage.jsx:302","Fråga 2: Förstör det gången på draget?","","","new","","","From DashboardPage.jsx",38
+"b2b.dashboard.fraga_3_nar_ska_man_anvanda_den","DashboardPage.jsx:309","Fråga 3: När ska man använda den?","","","new","","","From DashboardPage.jsx",33
+"b2b.dashboard.ostergatan_30_c","DashboardPage.jsx:326","Östergatan 30 C","","","new","","","From DashboardPage.jsx",15
+"b2b.dashboard.152_43_sodertalje","DashboardPage.jsx:327","152 43 Södertälje","","","new","","","From DashboardPage.jsx",17
+"b2b.marketing.allmant","MarketingMaterialsPage.jsx:48","allmänt","","","new","","","From MarketingMaterialsPage.jsx",7
+"b2b.marketing.ovrigt","MarketingMaterialsPage.jsx:57","övrigt","","","new","","","From MarketingMaterialsPage.jsx",6
+"b2b.marketing.kunde_inte_ladda_marknadsforingsmaterial","MarketingMaterialsPage.jsx:95","Kunde inte ladda marknadsföringsmaterial","","","new","","","From MarketingMaterialsPage.jsx",40
+"b2b.marketing.du_maste_vara_inloggad_for_att_se_marknadsforingsm","MarketingMaterialsPage.jsx:155","Du måste vara inloggad för att se marknadsföringsmaterial","","","new","","","From MarketingMaterialsPage.jsx",57
+"b2b.marketing.marknadsforingsmaterial","MarketingMaterialsPage.jsx:172","Marknadsföringsmaterial","","","new","","","From MarketingMaterialsPage.jsx",23
+"b2b.marketing.ladda_ner_bilder_broschyrer_videos_och_annat_mater","MarketingMaterialsPage.jsx:174","Ladda ner bilder, broschyrer, videos och annat material för marknadsföring","","","new","","","From MarketingMaterialsPage.jsx",74
+"b2b.marketing.filter_och_sok","MarketingMaterialsPage.jsx:200","Filter och sök","","","new","","","From MarketingMaterialsPage.jsx",14
+"b2b.marketing.sok_material","MarketingMaterialsPage.jsx:205","Sök material","","","new","","","From MarketingMaterialsPage.jsx",12
+"b2b.marketing.allmant_material","MarketingMaterialsPage.jsx:283","Allmänt material","","","new","","","From MarketingMaterialsPage.jsx",16
+"b2b.marketing.group_relative_bgwhite_border_bordergray200_rounde","MarketingMaterialsPage.jsx:368","group relative bg-white border border-gray-200 rounded-xl p-6 hover:shadow-xl hover:border-blue-200 transition-all duration-300 flex flex-col h-full","","","new","","","From MarketingMaterialsPage.jsx",148
+"b2b.orders.blandade_farger","OrderDetailPage.jsx:38","Blandade färger","","","new","","","From OrderDetailPage.jsx",15
+"b2b.orders.fetching_order_with_id","OrderDetailPage.jsx:63","Fetching order with ID:","","","new","","","From OrderDetailPage.jsx",23
+"b2b.orders.bestallningen_hittades_inte","OrderDetailPage.jsx:67","Beställningen hittades inte","","","new","","","From OrderDetailPage.jsx",27
+"b2b.orders.kunde_inte_hamta_bestallningsdetaljer","OrderDetailPage.jsx:76","Kunde inte hämta beställningsdetaljer","","","new","","","From OrderDetailPage.jsx",37
+"b2b.orders.ar_du_saker_pa_att_du_vill_avbryta_denna_bestallni","OrderDetailPage.jsx:148","Är du säker på att du vill avbryta denna beställning?","","","new","","","From OrderDetailPage.jsx",53
+"b2b.orders.bestallningen_har_avbrutits","OrderDetailPage.jsx:157","Beställningen har avbrutits","","","new","","","From OrderDetailPage.jsx",27
+"b2b.orders.kunde_inte_avbryta_bestallningen","OrderDetailPage.jsx:161","Kunde inte avbryta beställningen","","","new","","","From OrderDetailPage.jsx",32
+"b2b.orders.kunde_inte_uppdatera_orderstatus_","OrderDetailPage.jsx:185","Kunde inte uppdatera orderstatus: ","","","new","","","From OrderDetailPage.jsx",34
+"b2b.orders.border_bordergray300_textgray700_px4_py2_roundedlg","OrderDetailPage.jsx:244","border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors","","","new","","","From OrderDetailPage.jsx",92
+"b2b.orders.avbryt_bestallning","OrderDetailPage.jsx:317","Avbryt beställning","","","new","","","From OrderDetailPage.jsx",18
+"b2b.orders.okant_datum","OrderHistoryPage.jsx:87","Okänt datum","","","new","","","From OrderHistoryPage.jsx",11
+"b2b.orders.vantar_pa_bekraftelse","OrderHistoryPage.jsx:103","Väntar på bekräftelse","","","new","","","From OrderHistoryPage.jsx",21
+"b2b.orders.bekraftad","OrderHistoryPage.jsx:105","Bekräftad","","","new","","","From OrderHistoryPage.jsx",9
+"b2b.orders.okand_status","OrderHistoryPage.jsx:115","Okänd status","","","new","","","From OrderHistoryPage.jsx",12
+"b2b.orders.rod","OrderPage.jsx:55","Röd","","","new","","","From OrderPage.jsx",3
+"b2b.orders._b2b_products_loaded_for_individual_ordering","OrderPage.jsx:192","📊 B2B products loaded for individual ordering:","","","new","","","From OrderPage.jsx",47
+"b2b.orders.ett_fel_uppstod_nar_produkterna_skulle_hamtas","OrderPage.jsx:197","Ett fel uppstod när produkterna skulle hämtas","","","new","","","From OrderPage.jsx",45
+"b2b.orders.du_har_bestallt_for_fa_forpackningar_totalpackages","OrderPage.jsx:210","Du har beställt för få förpackningar (${totalPackages}), beställ minst ${remainingQuantity} st till för att nå minst ${MINIMUM_ORDER_QUANTITY} förpackningar","","","new","","","From OrderPage.jsx",156
+"b2b.orders.order_skapad","OrderPage.jsx:277","Order skapad!","","","new","","","From OrderPage.jsx",13
+"b2b.orders.getcolordisplaynamecolorid_b2b_forpackning","OrderPage.jsx:350","${getColorDisplayName(colorId)} - B2B Förpackning","","","new","","","From OrderPage.jsx",49
+"b2b.orders.minst_minimumorderquantity_forpackningar_kravs","OrderPage.jsx:531","Minst ${MINIMUM_ORDER_QUANTITY} förpackningar krävs","","","new","","","From OrderPage.jsx",51
+"b2b.orders.bekrafta_bestallning","OrderPage.jsx:532","Bekräfta beställning","","","new","","","From OrderPage.jsx",20
+"b2b.products.ingen_bild_tillganglig_for_nedladdning","ProductViewPage.jsx:63","Ingen bild tillgänglig för nedladdning","","","new","","","From ProductViewPage.jsx",38
+"b2b.products.du_maste_vara_inloggad_for_att_se_produkter","ProductViewPage.jsx:113","Du måste vara inloggad för att se produkter","","","new","","","From ProductViewPage.jsx",43
+"b2b.profile.no_user_found_in_named_database_creating_profile","ProfilePage.jsx:77","No user found in named database, creating profile","","","new","","","From ProfilePage.jsx",49
+"b2b.profile.error_creating_profile_in_named_database","ProfilePage.jsx:98","Error creating profile in named database:","","","new","","","From ProfilePage.jsx",41
+"b2b.profile.profile_update_error","ProfilePage.jsx:220","Profile update error:","","","new","","","From ProfilePage.jsx",21
+"b2b.profile.foretagsinformation","ProfilePage.jsx:276","Företagsinformation","","","new","","","From ProfilePage.jsx",19
+"b2b.profile.foretagsnamn","ProfilePage.jsx:284","Företagsnamn","","","new","","","From ProfilePage.jsx",12
+"b2b.profile.spara_andringar","ProfilePage.jsx:597","Spara Ändringar","","","new","","","From ProfilePage.jsx",15
+"b2b.profile.uppdatera_losenord","ProfilePage.jsx:641","Uppdatera Lösenord","","","new","","","From ProfilePage.jsx",18

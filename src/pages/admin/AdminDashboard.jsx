@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../contexts/TranslationContext';
 import AppLayout from '../../components/layout/AppLayout';
 import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../firebase/config';
@@ -21,6 +22,7 @@ import AdminPresenceIndicator from '../../components/AdminPresenceIndicator';
 
 const AdminDashboard = () => {
   const { currentUser } = useAuth();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [stats, setStats] = useState({
@@ -33,7 +35,7 @@ const AdminDashboard = () => {
   // Helper function to format Firestore timestamps
   const formatOrderDate = (timestamp) => {
     try {
-      if (!timestamp) return 'Okänt datum';
+      if (!timestamp) return t('admin.dashboard.unknown_date', 'Okänt datum');
       
       // Handle Firestore Timestamp
       if (timestamp.toDate) {
@@ -42,12 +44,12 @@ const AdminDashboard = () => {
       
       // Handle regular Date or timestamp string
       const date = new Date(timestamp);
-      if (isNaN(date.getTime())) return 'Okänt datum';
+      if (isNaN(date.getTime())) return t('admin.dashboard.unknown_date', 'Okänt datum');
       
       return format(date, 'd MMM yyyy', { locale: sv });
     } catch (error) {
       console.error('Error formatting date:', error);
-      return 'Okänt datum';
+      return t('admin.dashboard.unknown_date', 'Okänt datum');
     }
   };
 
@@ -81,7 +83,7 @@ const AdminDashboard = () => {
     }
     
     if (amount === null || amount === undefined || isNaN(amount)) {
-      return 'Okänt belopp';
+      return t('admin.dashboard.unknown_amount', 'Okänt belopp');
     }
     
     return `${amount.toLocaleString('sv-SE')} SEK`;
@@ -129,7 +131,7 @@ const AdminDashboard = () => {
       <AppLayout>
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <span className="ml-3 text-blue-600">Laddar statistik...</span>
+          <span className="ml-3 text-blue-600">{t('admin.dashboard.loading_stats', 'Laddar statistik...')}</span>
         </div>
       </AppLayout>
     );
@@ -152,7 +154,7 @@ const AdminDashboard = () => {
                   className="mt-2 text-sm font-medium text-red-700 hover:text-red-600"
                   onClick={() => window.location.reload()}
                 >
-                  Försök igen
+                  {t('admin.dashboard.try_again', 'Försök igen')}
                 </button>
               </div>
             </div>
@@ -169,22 +171,26 @@ const AdminDashboard = () => {
         <nav className="mb-8">
           <ol className="flex items-center space-x-2 text-sm text-gray-500">
             <li>
-              <Link to="/" className="hover:text-gray-700">Dashboard</Link>
+              <Link to="/" className="hover:text-gray-700">{t('admin.dashboard.breadcrumb_dashboard', 'Dashboard')}</Link>
             </li>
             <li>
               <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
               </svg>
             </li>
-            <li className="font-medium text-gray-900">Admin Dashboard</li>
+            <li className="font-medium text-gray-900">{t('admin.dashboard.breadcrumb_admin', 'Admin Dashboard')}</li>
           </ol>
         </nav>
 
         {/* Welcome Section */}
         <div className="bg-white shadow rounded-lg mb-8">
           <div className="px-4 py-5 sm:p-6">
-            <h1 className="text-2xl font-bold text-gray-900">Välkommen till Admin Dashboard</h1>
-            <p className="mt-1 text-gray-500">Här kan du se en översikt över systemet och hantera användare, ordrar och produkter.</p>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {t('admin.dashboard.welcome', 'Välkommen till Admin Dashboard')}
+            </h1>
+            <p className="mt-1 text-gray-500">
+              {t('admin.dashboard.description', 'Här kan du se en översikt över systemet och hantera användare, ordrar och produkter.')}
+            </p>
           </div>
         </div>
 
@@ -201,7 +207,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Totalt antal användare</dt>
+                    <dt className="text-sm font-medium text-gray-500 truncate">{t('admin.dashboard.total_users', 'Totalt antal användare')}</dt>
                     <dd className="text-2xl font-semibold text-gray-900">{stats.totalUsers}</dd>
                   </dl>
                 </div>
@@ -210,7 +216,7 @@ const AdminDashboard = () => {
             <div className="bg-gray-50 px-5 py-3">
               <div className="text-sm">
                 <Link to="/admin/users" className="font-medium text-blue-700 hover:text-blue-900">
-                  Visa alla användare
+                  {t('admin.dashboard.view_all_users', 'Visa alla användare')}
                 </Link>
               </div>
             </div>
@@ -227,7 +233,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Aktiva användare</dt>
+                    <dt className="text-sm font-medium text-gray-500 truncate">{t('admin.dashboard.active_users', 'Aktiva användare')}</dt>
                     <dd className="text-2xl font-semibold text-gray-900">{stats.activeUsers}</dd>
                   </dl>
                 </div>
@@ -236,7 +242,7 @@ const AdminDashboard = () => {
             <div className="bg-gray-50 px-5 py-3">
               <div className="text-sm">
                 <Link to="/admin/users" className="font-medium text-blue-700 hover:text-blue-900">
-                  Hantera användare
+                  {t('admin.dashboard.manage_users', 'Hantera användare')}
                 </Link>
               </div>
             </div>
@@ -253,7 +259,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Totalt antal ordrar</dt>
+                    <dt className="text-sm font-medium text-gray-500 truncate">{t('admin.dashboard.total_orders', 'Totalt antal ordrar')}</dt>
                     <dd className="text-2xl font-semibold text-gray-900">{stats.totalOrders}</dd>
                   </dl>
                 </div>
@@ -262,7 +268,7 @@ const AdminDashboard = () => {
             <div className="bg-gray-50 px-5 py-3">
               <div className="text-sm">
                 <Link to="/admin/orders" className="font-medium text-blue-700 hover:text-blue-900">
-                  Visa alla ordrar
+                  {t('admin.dashboard.view_all_orders', 'Visa alla ordrar')}
                 </Link>
               </div>
             </div>
@@ -273,13 +279,13 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Kontakthantering</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">{t('admin.dashboard.contact_management', 'Kontakthantering')}</h3>
               <div className="text-sm text-gray-600">
                 <div className="flex items-center space-x-2">
                   <CheckCircleIcon className="h-5 w-5 text-green-500" />
-                  <span>Enhetlig kontaktdatabas aktiv</span>
+                  <span>{t('admin.dashboard.unified_contact_db', 'Enhetlig kontaktdatabas aktiv')}</span>
                 </div>
-                <p className="mt-2">B2B och CRM använder samma kontaktdatabas för perfekt synkronisering.</p>
+                <p className="mt-2">{t('admin.dashboard.contact_sync_description', 'B2B och CRM använder samma kontaktdatabas för perfekt synkronisering.')}</p>
               </div>
             </div>
           </div>
@@ -291,12 +297,12 @@ const AdminDashboard = () => {
         {/* Recent Orders */}
         <div className="bg-white shadow rounded-lg">
           <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">Senaste ordrar</h3>
+            <h3 className="text-lg leading-6 font-medium text-gray-900">{t('admin.dashboard.recent_orders', 'Senaste ordrar')}</h3>
           </div>
           <div className="divide-y divide-gray-200">
             {stats.recentOrders.length === 0 ? (
               <div className="px-4 py-8 text-center text-gray-500">
-                <p>Inga ordrar hittades</p>
+                <p>{t('admin.dashboard.no_orders_found', 'Inga ordrar hittades')}</p>
               </div>
             ) : (
               stats.recentOrders.map((order) => {
@@ -311,7 +317,7 @@ const AdminDashboard = () => {
                             {orderSource.type}
                           </span>
                           <p className="ml-3 flex-shrink-0 font-normal text-gray-500">
-                            från {formatOrderDate(order.createdAt)}
+                            {t('admin.dashboard.order_from', 'från')} {formatOrderDate(order.createdAt)}
                           </p>
                         </div>
                         <div className="mt-2 flex">
@@ -319,7 +325,7 @@ const AdminDashboard = () => {
                             <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" />
                             </svg>
-                            {order.items?.length || 0} produkter
+                            {order.items?.length || 0} {t('admin.dashboard.products', 'produkter')}
                           </div>
                           <div className="ml-6 flex items-center text-sm text-gray-500">
                             <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -334,7 +340,7 @@ const AdminDashboard = () => {
                           to={`/admin/orders/${order.id}`}
                           className="font-medium text-blue-600 hover:text-blue-500"
                         >
-                          Visa detaljer
+                          {t('admin.dashboard.view_details', 'Visa detaljer')}
                         </Link>
                       </div>
                     </div>
@@ -346,7 +352,7 @@ const AdminDashboard = () => {
           <div className="bg-gray-50 px-4 py-4 sm:px-6">
             <div className="text-sm">
               <Link to="/admin/orders" className="font-medium text-blue-600 hover:text-blue-500">
-                Visa alla ordrar <span aria-hidden="true">&rarr;</span>
+                {t('admin.dashboard.view_all_orders', 'Visa alla ordrar')} <span aria-hidden="true">&rarr;</span>
               </Link>
             </div>
           </div>

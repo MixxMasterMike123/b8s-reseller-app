@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../contexts/TranslationContext';
 import { useOrder } from '../contexts/OrderContext';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
@@ -10,6 +11,7 @@ import AppLayout from '../components/layout/AppLayout';
 const OrderPage = () => {
   const navigate = useNavigate();
   const { currentUser, userProfile } = useAuth();
+  const { t } = useTranslation();
   const { createOrder, PRODUCT_SETTINGS, generateOrderNumber } = useOrder();
   
   // State for products data

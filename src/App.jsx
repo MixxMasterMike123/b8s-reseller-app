@@ -1,10 +1,10 @@
 import React, { useEffect, useState, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { SimpleAuthContextProvider } from './contexts/SimpleAuthContext';
 import { OrderProvider } from './contexts/OrderContext';
 import { CartProvider } from './contexts/CartContext';
-import { TranslationProvider } from './contexts/TranslationContext';
+import { TranslationProvider, useTranslation } from './contexts/TranslationContext';
 import { functions } from './firebase/config';
 import { httpsCallable } from 'firebase/functions';
 

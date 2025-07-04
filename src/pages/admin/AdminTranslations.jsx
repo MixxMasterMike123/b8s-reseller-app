@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { db } from '../../firebase/config';
+import { collection, doc, setDoc, getDocs, deleteDoc, writeBatch } from 'firebase/firestore';
 import AppLayout from '../../components/layout/AppLayout';
 import GoogleSheetsService from '../../utils/googleSheetsService';
 import toast from 'react-hot-toast';
@@ -29,6 +31,17 @@ const AdminTranslations = () => {
   const [selectedLanguage, setSelectedLanguage] = useState('en-GB');
   const [translations, setTranslations] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [editingTranslation, setEditingTranslation] = useState(null);
+  const [editForm, setEditForm] = useState({
+    key: '',
+    context: '',
+    'sv-SE': '',
+    'en-GB': '',
+    'en-US': '',
+    status: 'new',
+    translator: '',
+    notes: ''
+  });
   const [stats, setStats] = useState({
     totalStrings: 0,
     translatedStrings: 0,
@@ -67,6 +80,51 @@ const AdminTranslations = () => {
     { id: 'import-export', name: 'Import/Export', icon: DocumentArrowDownIcon },
     { id: 'settings', name: 'Inställningar', icon: CogIcon }
   ];
+
+  // Load Google Sheets URLs from Firebase
+  const loadSheetUrls = async () => {
+    try {
+      const settingsDoc = await getDocs(collection(db, 'appSettings'));
+      const translationSettings = settingsDoc.docs.find(doc => doc.id === 'translationSettings');
+      
+      if (translationSettings && translationSettings.data().googleSheetsUrls) {
+        setSheetUrls(prev => ({
+          ...prev,
+          ...translationSettings.data().googleSheetsUrls
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading sheet URLs:', error);
+      toast.error('Kunde inte ladda Google Sheets inställningar');
+    }
+  };
+
+  // Save Google Sheets URLs to Firebase
+  const saveSheetUrls = async () => {
+    try {
+      await setDoc(doc(db, 'appSettings', 'translationSettings'), {
+        googleSheetsUrls: sheetUrls,
+        lastUpdated: new Date().toISOString(),
+        updatedBy: currentUser.email
+      }, { merge: true });
+      
+      toast.success('Google Sheets URLs sparade!');
+    } catch (error) {
+      console.error('Error saving sheet URLs:', error);
+      toast.error('Kunde inte spara inställningar');
+    }
+  };
+
+  // Clear a specific Google Sheets URL
+  const clearSheetUrl = (sheetType) => {
+    setSheetUrls(prev => ({ ...prev, [sheetType]: '' }));
+    toast.success(`${sheetType.toUpperCase()} URL rensad`);
+  };
+
+  // Load initial data
+  useEffect(() => {
+    loadSheetUrls();
+  }, []);
 
   // Load translations from Google Sheets
   const loadTranslationsFromSheet = async (sheetType = 'admin') => {
@@ -108,11 +166,6 @@ const AdminTranslations = () => {
     }
   };
 
-  // Load initial data
-  useEffect(() => {
-    loadTranslationsFromSheet('admin');
-  }, []);
-
   const handleExtractStrings = () => {
     toast.loading('Extraherar texter från koden...');
     
@@ -145,79 +198,317 @@ const AdminTranslations = () => {
     await loadTranslationsFromSheet(sheetType);
   };
 
+  // Edit translation functions
+  const handleEditTranslation = (translation, index) => {
+    setEditingTranslation(index);
+    setEditForm({
+      key: translation.key || translation.id || '',
+      context: translation.context || '',
+      'sv-SE': translation['sv-SE'] || translation.swedish || '',
+      'en-GB': translation['en-GB'] || translation.englishUK || '',
+      'en-US': translation['en-US'] || translation.englishUS || '',
+      status: translation.status || 'new',
+      translator: translation.translator || currentUser.email,
+      notes: translation.notes || ''
+    });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editForm.key.trim()) {
+      toast.error('Nyckel får inte vara tom');
+      return;
+    }
+
+    const updatedTranslations = [...translations];
+    updatedTranslations[editingTranslation] = {
+      ...updatedTranslations[editingTranslation],
+      ...editForm,
+      lastModified: new Date().toISOString()
+    };
+
+    setTranslations(updatedTranslations);
+    setEditingTranslation(null);
+    setEditForm({
+      key: '',
+      context: '',
+      'sv-SE': '',
+      'en-GB': '',
+      'en-US': '',
+      status: 'new',
+      translator: '',
+      notes: ''
+    });
+
+    toast.success('Översättning uppdaterad');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingTranslation(null);
+    setEditForm({
+      key: '',
+      context: '',
+      'sv-SE': '',
+      'en-GB': '',
+      'en-US': '',
+      status: 'new',
+      translator: '',
+      notes: ''
+    });
+  };
+
+  const handleDeleteTranslation = (index) => {
+    if (window.confirm('Är du säker på att du vill ta bort denna översättning?')) {
+      const updatedTranslations = translations.filter((_, i) => i !== index);
+      setTranslations(updatedTranslations);
+      toast.success('Översättning borttagen');
+    }
+  };
+
+  // Import translations to Firebase
+  const importToFirebase = async (languageCode = 'en-GB') => {
+    if (!translations || translations.length === 0) {
+      toast.error('Inga översättningar att importera. Ladda först från Google Sheets.');
+      return;
+    }
+
+    const toastId = toast.loading(`Importerar ${translations.length} översättningar till Firebase...`);
+    
+    try {
+      const collectionName = `translations_${languageCode.replace('-', '_')}`;
+      console.log(`🔥 Importing to Firebase collection: ${collectionName}`);
+      
+      // Use batch for better performance
+      const batch = writeBatch(db);
+      let importCount = 0;
+      
+      translations.forEach((translation) => {
+        // Skip rows without translation key or value
+        const translationKey = translation.key || translation.id;
+        const translationValue = languageCode === 'en-GB' 
+          ? (translation['en-GB'] || translation.englishUK)
+          : (translation['en-US'] || translation.englishUS);
+          
+        if (!translationKey || !translationValue) {
+          return;
+        }
+        
+        const docRef = doc(db, collectionName, translationKey);
+        const translationData = {
+          value: translationValue,
+          context: translation.context || '',
+          status: translation.status || 'approved',
+          lastModified: new Date(),
+          translator: translation.translator || currentUser.email,
+          swedishOriginal: translation['sv-SE'] || translation.swedish || ''
+        };
+        
+        batch.set(docRef, translationData);
+        importCount++;
+      });
+      
+      if (importCount === 0) {
+        toast.error('Inga giltiga översättningar hittades för import.', { id: toastId });
+        return;
+      }
+      
+      // Commit the batch
+      await batch.commit();
+      
+      toast.success(`✅ Importerade ${importCount} översättningar till Firebase!`, { id: toastId });
+      console.log(`✅ Successfully imported ${importCount} translations to ${collectionName}`);
+      
+    } catch (error) {
+      console.error('Firebase import error:', error);
+      toast.error(`❌ Import misslyckades: ${error.message}`, { id: toastId });
+    }
+  };
+
+  // Clear Firebase translations
+  const clearFirebaseTranslations = async (languageCode = 'en-GB') => {
+    const confirmed = window.confirm(`Är du säker på att du vill ta bort alla ${languageCode} översättningar från Firebase? Detta kan inte ångras.`);
+    
+    if (!confirmed) return;
+    
+    const toastId = toast.loading(`Tar bort ${languageCode} översättningar från Firebase...`);
+    
+    try {
+      const collectionName = `translations_${languageCode.replace('-', '_')}`;
+      const querySnapshot = await getDocs(collection(db, collectionName));
+      
+      const batch = writeBatch(db);
+      let deleteCount = 0;
+      
+      querySnapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+        deleteCount++;
+      });
+      
+      if (deleteCount > 0) {
+        await batch.commit();
+        toast.success(`🗑️ Tog bort ${deleteCount} översättningar från Firebase`, { id: toastId });
+      } else {
+        toast.info('Inga översättningar att ta bort', { id: toastId });
+      }
+      
+    } catch (error) {
+      console.error('Firebase clear error:', error);
+      toast.error(`❌ Kunde inte ta bort översättningar: ${error.message}`, { id: toastId });
+    }
+  };
+
+  // Load translations from Firebase
+  const loadFromFirebase = async (languageCode = 'en-GB') => {
+    const toastId = toast.loading(`Laddar ${languageCode} översättningar från Firebase...`);
+    
+    try {
+      const collectionName = `translations_${languageCode.replace('-', '_')}`;
+      const querySnapshot = await getDocs(collection(db, collectionName));
+      
+      const firebaseTranslations = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        firebaseTranslations.push({
+          key: doc.id,
+          [languageCode]: data.value || '',
+          context: data.context || '',
+          status: data.status || 'approved',
+          translator: data.translator || '',
+          lastModified: data.lastModified?.toDate?.()?.toISOString() || '',
+          swedishOriginal: data.swedishOriginal || ''
+        });
+      });
+      
+      setTranslations(firebaseTranslations);
+      toast.success(`📥 Laddade ${firebaseTranslations.length} översättningar från Firebase`, { id: toastId });
+      
+    } catch (error) {
+      console.error('Firebase load error:', error);
+      toast.error(`❌ Kunde inte ladda från Firebase: ${error.message}`, { id: toastId });
+    }
+  };
+
   const renderOverview = () => (
     <div className="space-y-6">
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
+      {/* Welcome Message when no data loaded */}
+      {translations.length === 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
           <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <DocumentTextIcon className="h-8 w-8 text-blue-600" />
-            </div>
-            <div className="ml-5 w-0 flex-1">
-              <dl>
-                <dt className="text-sm font-medium text-gray-500 truncate">Totalt antal texter</dt>
-                <dd className="text-lg font-medium text-gray-900">{stats.totalStrings}</dd>
-              </dl>
+            <GlobeAltIcon className="h-8 w-8 text-blue-600 mr-3" />
+            <div>
+              <h3 className="text-lg font-medium text-blue-900">Välkommen till översättningssystemet</h3>
+              <p className="text-blue-700 mt-1">
+                Börja med att ladda översättningar från Google Sheets eller Firebase för att se statistik och hantera språk.
+              </p>
             </div>
           </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <CheckIcon className="h-8 w-8 text-green-600" />
-            </div>
-            <div className="ml-5 w-0 flex-1">
-              <dl>
-                <dt className="text-sm font-medium text-gray-500 truncate">Översatta</dt>
-                <dd className="text-lg font-medium text-gray-900">{stats.translatedStrings}</dd>
-              </dl>
-            </div>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              onClick={() => loadTranslationsFromSheet('admin')}
+              disabled={loading}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+            >
+              {loading ? (
+                <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
+              )}
+              Ladda från Google Sheets
+            </button>
+            <button
+              onClick={() => loadFromFirebase('en-GB')}
+              disabled={loading}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            >
+              {loading ? (
+                <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
+              )}
+              Ladda från Firebase
+            </button>
           </div>
         </div>
+      )}
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <ExclamationTriangleIcon className="h-8 w-8 text-yellow-600" />
-            </div>
-            <div className="ml-5 w-0 flex-1">
-              <dl>
-                <dt className="text-sm font-medium text-gray-500 truncate">Väntar på översättning</dt>
-                <dd className="text-lg font-medium text-gray-900">{stats.pendingStrings}</dd>
-              </dl>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Language Progress */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Översättningsframsteg per språk</h3>
-          <div className="space-y-4">
-            {stats.languages.map((lang) => (
-              <div key={lang.code}>
-                <div className="flex justify-between text-sm font-medium text-gray-900 mb-1">
-                  <span>{lang.name}</span>
-                  <span>{lang.progress}% ({lang.strings}/{stats.totalStrings})</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className={`h-2 rounded-full ${
-                      lang.progress === 100 ? 'bg-green-600' :
-                      lang.progress > 50 ? 'bg-blue-600' :
-                      lang.progress > 0 ? 'bg-yellow-600' : 'bg-gray-400'
-                    }`}
-                    style={{ width: `${lang.progress}%` }}
-                  ></div>
-                </div>
+      {/* Statistics Cards - only show when data is loaded */}
+      {translations.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <DocumentTextIcon className="h-8 w-8 text-blue-600" />
               </div>
-            ))}
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Totalt antal texter</dt>
+                  <dd className="text-lg font-medium text-gray-900">{stats.totalStrings}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <CheckIcon className="h-8 w-8 text-green-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Översatta</dt>
+                  <dd className="text-lg font-medium text-gray-900">{stats.translatedStrings}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <ExclamationTriangleIcon className="h-8 w-8 text-yellow-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Väntar på översättning</dt>
+                  <dd className="text-lg font-medium text-gray-900">{stats.pendingStrings}</dd>
+                </dl>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Language Progress - only show when data is loaded */}
+      {translations.length > 0 && (
+        <div className="bg-white shadow rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Översättningsframsteg per språk</h3>
+            <div className="space-y-4">
+              {stats.languages.map((lang) => (
+                <div key={lang.code} className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <span className="text-2xl mr-3">
+                      {lang.code === 'sv-SE' ? '🇸🇪' : lang.code === 'en-GB' ? '🇬🇧' : '🇺🇸'}
+                    </span>
+                    <div>
+                      <div className="font-medium text-gray-900">{lang.name}</div>
+                      <div className="text-sm text-gray-500">{lang.strings} av {stats.totalStrings} texter</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ width: `${lang.progress}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-sm font-medium text-gray-900">{lang.progress}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div className="bg-white shadow rounded-lg">
@@ -263,107 +554,160 @@ const AdminTranslations = () => {
 
   const renderManageTranslations = () => (
     <div className="space-y-6">
-      {/* Filters */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Sök översättningar</label>
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Sök efter nyckel eller text..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+      {translations.length === 0 ? (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+          <GlobeAltIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Inga översättningar att visa</h3>
+          <p className="text-gray-600 mb-4">
+            Gå till Import/Export-fliken för att ladda översättningar från Google Sheets eller Firebase.
+          </p>
+          <button
+            onClick={() => setActiveTab('import')}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+          >
+            <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
+            Gå till Import/Export
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* Filter and Search */}
+          <div className="bg-white shadow rounded-lg p-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Sök översättningar
+                </label>
+                <input
+                  type="text"
+                  placeholder="Sök efter nyckel eller text..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="sm:w-48">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Filtrera status
+                </label>
+                <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">Alla</option>
+                  <option value="new">Nya</option>
+                  <option value="translated">Översatta</option>
+                  <option value="reviewed">Granskade</option>
+                  <option value="approved">Godkända</option>
+                </select>
+              </div>
             </div>
           </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Språk</label>
-            <select
-              value={selectedLanguage}
-              onChange={(e) => setSelectedLanguage(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {languages.filter(lang => lang.code !== 'sv-SE').map(lang => (
-                <option key={lang.code} value={lang.code}>{lang.name}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-            <select className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="all">Alla</option>
-              <option value="translated">Översatta</option>
-              <option value="pending">Väntar</option>
-              <option value="needs-review">Behöver granskning</option>
-            </select>
-          </div>
-        </div>
-      </div>
 
-      {/* Translations Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Översättningar</h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nyckel</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kontext</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Svenska</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {languages.find(l => l.code === selectedLanguage)?.name}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Åtgärder</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {translations.map((translation) => (
-                <tr key={translation.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
-                    {translation.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {translation.context}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                    {translation.swedish}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
-                    {selectedLanguage === 'en-GB' ? translation.englishUK : translation.englishUS || (
-                      <span className="text-gray-400 italic">Ej översatt</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      translation.status === 'translated' 
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {translation.status === 'translated' ? 'Översatt' : 'Väntar'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-blue-600 hover:text-blue-900 mr-3">
-                      <PencilIcon className="h-4 w-4" />
-                    </button>
-                    <button className="text-red-600 hover:text-red-900">
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
-                  </td>
-                </tr>
+          {/* Translation Table */}
+          <div className="bg-white shadow rounded-lg overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900">
+                Översättningar ({translations.length})
+              </h3>
+              {/* Debug info */}
+              <p className="text-sm text-gray-500 mt-1">
+                Visar {Math.min(20, translations.length)} av {translations.length} översättningar
+              </p>
+            </div>
+            
+            {/* Card-based layout instead of table */}
+            <div className="divide-y divide-gray-200">
+              {translations.slice(0, 20).map((translation, index) => (
+                <div key={index} className="p-6 hover:bg-gray-50">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      {/* Key and Status */}
+                      <div className="flex items-center gap-3 mb-3">
+                        <h4 className="text-sm font-medium text-gray-900 truncate">
+                          {translation.key || translation.id}
+                        </h4>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          translation.status === 'approved' ? 'bg-green-100 text-green-800' :
+                          translation.status === 'reviewed' ? 'bg-blue-100 text-blue-800' :
+                          translation.status === 'translated' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {translation.status === 'approved' ? 'Godkänd' :
+                           translation.status === 'reviewed' ? 'Granskad' :
+                           translation.status === 'translated' ? 'Översatt' :
+                           'Ny'}
+                        </span>
+                      </div>
+
+                      {/* Context */}
+                      {translation.context && (
+                        <p className="text-xs text-gray-500 mb-3">{translation.context}</p>
+                      )}
+
+                      {/* Translations */}
+                      <div className="space-y-2">
+                        {/* Swedish */}
+                        <div>
+                          <span className="inline-flex items-center text-xs font-medium text-gray-600 mb-1">
+                            🇸🇪 Svenska
+                          </span>
+                          <p className="text-sm text-gray-900">
+                            {translation['sv-SE'] || translation.swedish || translation['Svenska'] || '-'}
+                          </p>
+                        </div>
+
+                        {/* English UK */}
+                        {(translation['en-GB'] || translation.englishUK) && (
+                          <div>
+                            <span className="inline-flex items-center text-xs font-medium text-gray-600 mb-1">
+                              🇬🇧 English (UK)
+                            </span>
+                            <p className="text-sm text-gray-700">
+                              {translation['en-GB'] || translation.englishUK}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* English US */}
+                        {(translation['en-US'] || translation.englishUS) && (
+                          <div>
+                            <span className="inline-flex items-center text-xs font-medium text-gray-600 mb-1">
+                              🇺🇸 English (US)
+                            </span>
+                            <p className="text-sm text-gray-700">
+                              {translation['en-US'] || translation.englishUS}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex flex-col gap-2 ml-4">
+                      <button 
+                        className="text-blue-600 hover:text-blue-900 px-3 py-1 text-sm rounded border border-blue-300 hover:bg-blue-50" 
+                        onClick={() => handleEditTranslation(translation, index)}
+                      >
+                        Redigera
+                      </button>
+                      <button 
+                        className="text-red-600 hover:text-red-900 px-3 py-1 text-sm rounded border border-red-300 hover:bg-red-50" 
+                        onClick={() => handleDeleteTranslation(index)}
+                      >
+                        Ta bort
+                      </button>
+                    </div>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </div>
+            
+            {translations.length > 20 && (
+              <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <p className="text-sm text-gray-600">
+                  Visar 20 av {translations.length} översättningar. Använd sökfunktionen för att hitta specifika texter.
+                </p>
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 
@@ -408,6 +752,35 @@ const AdminTranslations = () => {
 
   const renderImportExport = () => (
     <div className="space-y-6">
+      {/* Data Status Banner */}
+      {translations.length === 0 && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mr-2" />
+            <div>
+              <h4 className="font-medium text-yellow-900">Inga översättningar laddade</h4>
+              <p className="text-sm text-yellow-700">
+                Du behöver först ladda översättningar från Google Sheets eller Firebase för att kunna arbeta med dem.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {translations.length > 0 && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <CheckIcon className="h-5 w-5 text-green-600 mr-2" />
+            <div>
+              <h4 className="font-medium text-green-900">Översättningar laddade</h4>
+              <p className="text-sm text-green-700">
+                {translations.length} översättningar är nu laddade och redo att arbeta med.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white shadow rounded-lg p-6">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Google Sheets Integration</h3>
         
@@ -455,13 +828,103 @@ const AdminTranslations = () => {
               </p>
               <button
                 onClick={handleExportToSheets}
-                disabled={loading}
+                disabled={loading || translations.length === 0}
                 className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
               >
                 <DocumentArrowUpIcon className="h-4 w-4 mr-2" />
                 Exportera till CSV
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Firebase Integration Section */}
+      <div className="bg-white shadow rounded-lg p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">🔥 Firebase Integration</h3>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Välj språk för Firebase-operationer
+            </label>
+            <select 
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="en-GB">🇬🇧 English (UK)</option>
+              <option value="en-US">🇺🇸 English (US)</option>
+            </select>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-3">
+              <h4 className="font-medium text-gray-900">📤 Importera till Firebase</h4>
+              <p className="text-sm text-gray-600">
+                Spara översättningar från Google Sheets till Firebase-databasen
+              </p>
+              <button
+                onClick={() => importToFirebase(selectedLanguage)}
+                disabled={loading || !translations.length}
+                className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 disabled:opacity-50"
+              >
+                {loading ? (
+                  <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <DocumentArrowUpIcon className="h-4 w-4 mr-2" />
+                )}
+                Importera till Firebase
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="font-medium text-gray-900">📥 Ladda från Firebase</h4>
+              <p className="text-sm text-gray-600">
+                Visa översättningar som redan finns i Firebase-databasen
+              </p>
+              <button
+                onClick={() => loadFromFirebase(selectedLanguage)}
+                disabled={loading}
+                className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
+              >
+                {loading ? (
+                  <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
+                )}
+                Ladda från Firebase
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="font-medium text-gray-900">🗑️ Rensa Firebase</h4>
+              <p className="text-sm text-gray-600">
+                Ta bort alla översättningar för valt språk från Firebase
+              </p>
+              <button
+                onClick={() => clearFirebaseTranslations(selectedLanguage)}
+                disabled={loading}
+                className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
+              >
+                {loading ? (
+                  <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <TrashIcon className="h-4 w-4 mr-2" />
+                )}
+                Rensa Firebase
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-medium text-blue-900 mb-2">🔄 Rekommenderat arbetsflöde</h4>
+            <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800">
+              <li>Importera från Google Sheets (för att få senaste översättningar)</li>
+              <li>Granska översättningarna i tabellen ovan</li>
+              <li>Importera till Firebase (för att aktivera översättningarna i portalen)</li>
+              <li>Testa språkväxlaren i portalen för att se resultatet</li>
+            </ol>
           </div>
         </div>
       </div>
@@ -488,47 +951,17 @@ const AdminTranslations = () => {
                 <button
                   onClick={() => handleLoadSheet(key)}
                   disabled={!url || loading}
-                  className="text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400"
+                  className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                 >
-                  Testa
+                  {loading ? (
+                    <ArrowPathIcon className="h-3 w-3 animate-spin" />
+                  ) : (
+                    'Ladda'
+                  )}
                 </button>
               </div>
             </div>
           ))}
-        </div>
-      </div>
-
-      <div className="bg-white shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Instruktioner</h3>
-        
-        <div className="space-y-4 text-sm text-gray-600">
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Steg 1: Konfigurera Google Sheets</h4>
-            <ul className="list-disc list-inside space-y-1 ml-4">
-              <li>Gå till Inställningar-fliken</li>
-              <li>Klistra in dina Google Sheets-URL:er</li>
-              <li>Testa anslutningarna</li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Steg 2: Importera översättningar</h4>
-            <ul className="list-disc list-inside space-y-1 ml-4">
-              <li>Välj översättningstyp ovan</li>
-              <li>Klicka "Importera från Sheets"</li>
-              <li>Systemet läser automatiskt från Google Sheets</li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Steg 3: Exportera för översättning</h4>
-            <ul className="list-disc list-inside space-y-1 ml-4">
-              <li>Klicka "Exportera till CSV"</li>
-              <li>Ladda upp CSV-filen till Google Sheets</li>
-              <li>Översätt texterna i Google Sheets</li>
-              <li>Importera tillbaka när översättningen är klar</li>
-            </ul>
-          </div>
         </div>
       </div>
     </div>
@@ -543,80 +976,136 @@ const AdminTranslations = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Admin Portal Översättningar
             </label>
-            <input
-              type="url"
-              value={sheetUrls.admin}
-              onChange={(e) => setSheetUrls(prev => ({ ...prev, admin: e.target.value }))}
-              placeholder="https://docs.google.com/spreadsheets/d/..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              onClick={() => handleLoadSheet('admin')}
-              className="mt-2 inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200"
-            >
-              <ArrowPathIcon className="h-4 w-4 mr-1" />
-              Testa anslutning
-            </button>
+            <div className="flex space-x-2">
+              <input
+                type="url"
+                value={sheetUrls.admin}
+                onChange={(e) => setSheetUrls(prev => ({ ...prev, admin: e.target.value }))}
+                placeholder="https://docs.google.com/spreadsheets/d/..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {sheetUrls.admin && (
+                <button
+                  onClick={() => clearSheetUrl('admin')}
+                  className="px-3 py-2 text-red-600 hover:text-red-800 border border-red-300 rounded-md hover:bg-red-50"
+                  title="Rensa URL"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <div className="mt-2 flex space-x-2">
+              <button
+                onClick={() => handleLoadSheet('admin')}
+                disabled={!sheetUrls.admin}
+                className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ArrowPathIcon className="h-4 w-4 mr-1" />
+                Testa anslutning
+              </button>
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               B2B Portal Översättningar
             </label>
-            <input
-              type="url"
-              value={sheetUrls.b2b}
-              onChange={(e) => setSheetUrls(prev => ({ ...prev, b2b: e.target.value }))}
-              placeholder="https://docs.google.com/spreadsheets/d/..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              onClick={() => handleLoadSheet('b2b')}
-              className="mt-2 inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200"
-            >
-              <ArrowPathIcon className="h-4 w-4 mr-1" />
-              Testa anslutning
-            </button>
+            <div className="flex space-x-2">
+              <input
+                type="url"
+                value={sheetUrls.b2b}
+                onChange={(e) => setSheetUrls(prev => ({ ...prev, b2b: e.target.value }))}
+                placeholder="https://docs.google.com/spreadsheets/d/..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {sheetUrls.b2b && (
+                <button
+                  onClick={() => clearSheetUrl('b2b')}
+                  className="px-3 py-2 text-red-600 hover:text-red-800 border border-red-300 rounded-md hover:bg-red-50"
+                  title="Rensa URL"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <div className="mt-2 flex space-x-2">
+              <button
+                onClick={() => handleLoadSheet('b2b')}
+                disabled={!sheetUrls.b2b}
+                className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ArrowPathIcon className="h-4 w-4 mr-1" />
+                Testa anslutning
+              </button>
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               B2C Shop Översättningar
             </label>
-            <input
-              type="url"
-              value={sheetUrls.b2c}
-              onChange={(e) => setSheetUrls(prev => ({ ...prev, b2c: e.target.value }))}
-              placeholder="https://docs.google.com/spreadsheets/d/..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              onClick={() => handleLoadSheet('b2c')}
-              className="mt-2 inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200"
-            >
-              <ArrowPathIcon className="h-4 w-4 mr-1" />
-              Testa anslutning
-            </button>
+            <div className="flex space-x-2">
+              <input
+                type="url"
+                value={sheetUrls.b2c}
+                onChange={(e) => setSheetUrls(prev => ({ ...prev, b2c: e.target.value }))}
+                placeholder="https://docs.google.com/spreadsheets/d/..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {sheetUrls.b2c && (
+                <button
+                  onClick={() => clearSheetUrl('b2c')}
+                  className="px-3 py-2 text-red-600 hover:text-red-800 border border-red-300 rounded-md hover:bg-red-50"
+                  title="Rensa URL"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <div className="mt-2 flex space-x-2">
+              <button
+                onClick={() => handleLoadSheet('b2c')}
+                disabled={!sheetUrls.b2c}
+                className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ArrowPathIcon className="h-4 w-4 mr-1" />
+                Testa anslutning
+              </button>
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Innehållsfält Översättningar
             </label>
-            <input
-              type="url"
-              value={sheetUrls.content}
-              onChange={(e) => setSheetUrls(prev => ({ ...prev, content: e.target.value }))}
-              placeholder="https://docs.google.com/spreadsheets/d/..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              onClick={() => handleLoadSheet('content')}
-              className="mt-2 inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200"
-            >
-              <ArrowPathIcon className="h-4 w-4 mr-1" />
-              Testa anslutning
-            </button>
+            <div className="flex space-x-2">
+              <input
+                type="url"
+                value={sheetUrls.content}
+                onChange={(e) => setSheetUrls(prev => ({ ...prev, content: e.target.value }))}
+                placeholder="https://docs.google.com/spreadsheets/d/..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {sheetUrls.content && (
+                <button
+                  onClick={() => clearSheetUrl('content')}
+                  className="px-3 py-2 text-red-600 hover:text-red-800 border border-red-300 rounded-md hover:bg-red-50"
+                  title="Rensa URL"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <div className="mt-2 flex space-x-2">
+              <button
+                onClick={() => handleLoadSheet('content')}
+                disabled={!sheetUrls.content}
+                className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ArrowPathIcon className="h-4 w-4 mr-1" />
+                Testa anslutning
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -676,7 +1165,7 @@ const AdminTranslations = () => {
 
       <div className="flex justify-end pt-6 border-t">
         <button
-          onClick={() => toast.success('Inställningar sparade!')}
+          onClick={saveSheetUrls}
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           Spara inställningar
@@ -726,6 +1215,155 @@ const AdminTranslations = () => {
         {activeTab === 'import-export' && renderImportExport()}
         {activeTab === 'settings' && renderSettings()}
       </div>
+
+      {/* Edit Translation Modal */}
+      {editingTranslation !== null && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Redigera översättning
+                </h3>
+                <button
+                  onClick={handleCancelEdit}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XMarkIcon className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Nyckel *
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.key}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, key: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="t.ex. dashboard.welcome"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Status
+                    </label>
+                    <select
+                      value={editForm.status}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, status: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="new">Ny</option>
+                      <option value="translated">Översatt</option>
+                      <option value="reviewed">Granskad</option>
+                      <option value="approved">Godkänd</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Kontext
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.context}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, context: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Beskriv var denna text används"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    🇸🇪 Svenska (Original)
+                  </label>
+                  <textarea
+                    value={editForm['sv-SE']}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, 'sv-SE': e.target.value }))}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Svensk text"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    🇬🇧 English (UK)
+                  </label>
+                  <textarea
+                    value={editForm['en-GB']}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, 'en-GB': e.target.value }))}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="English translation (UK)"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    🇺🇸 English (US)
+                  </label>
+                  <textarea
+                    value={editForm['en-US']}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, 'en-US': e.target.value }))}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="English translation (US)"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Översättare
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.translator}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, translator: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="E-postadress"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Anteckningar
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.notes}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, notes: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Valfria anteckningar"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
+                <button
+                  onClick={handleCancelEdit}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                >
+                  Avbryt
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  Spara ändringar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 };

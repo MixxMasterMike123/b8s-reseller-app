@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../contexts/TranslationContext';
 import AppLayout from '../components/layout/AppLayout';
 import ProductMenu from '../components/ProductMenu';
 import toast from 'react-hot-toast';
 
 function ProductViewPage() {
   const { currentUser, isAdmin } = useAuth();
+  const { t } = useTranslation();
   const [products, setProducts] = useState([]);
   const [filteredProduct, setFilteredProduct] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -47,7 +49,7 @@ function ProductViewPage() {
         setProducts(productsData);
       } catch (err) {
         console.error('❌ Error fetching products:', err);
-        setError('Kunde inte ladda produkter');
+        setError(t('products.could_not_load', 'Kunde inte ladda produkter'));
       } finally {
         setLoading(false);
       }
@@ -58,7 +60,7 @@ function ProductViewPage() {
 
   const handleDownloadImage = (imageUrl, filename, type = 'product') => {
     if (!imageUrl) {
-      toast.error('Ingen bild tillgänglig för nedladdning');
+      toast.error(t('products.no_image_available', 'Ingen bild tillgänglig för nedladdning'));
       return;
     }
 
@@ -108,7 +110,7 @@ function ProductViewPage() {
       <AppLayout>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="text-center">
-            <p className="text-gray-500">Du måste vara inloggad för att se produkter.</p>
+            <p className="text-gray-500">{t('products.login_required', 'Du måste vara inloggad för att se produkter')}.</p>
             <Link to="/login" className="text-blue-600 hover:underline">
               Logga in
             </Link>

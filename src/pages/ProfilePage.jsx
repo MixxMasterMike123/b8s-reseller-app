@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../contexts/TranslationContext';
 import { getAuth, updatePassword as firebaseUpdatePassword } from 'firebase/auth';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
@@ -9,6 +10,7 @@ import AppLayout from '../components/layout/AppLayout';
 
 const ProfilePage = () => {
   const { currentUser, updateUserProfile } = useAuth();
+  const { t } = useTranslation();
   const [userData, setUserData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -239,12 +241,12 @@ const ProfilePage = () => {
         {/* Header */}
         <div className="px-4 md:px-6 py-4 md:py-5 border-b border-gray-200">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900">Profil</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900">{t('profile.title', 'Profil')}</h1>
             <Link
               to="/"
               className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-3 md:py-2 border border-gray-300 text-base md:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 min-h-[48px] md:min-h-0"
             >
-              Tillbaka till Dashboard
+              {t('profile.back_to_dashboard', 'Tillbaka till Dashboard')}
             </Link>
           </div>
         </div>
@@ -264,35 +266,35 @@ const ProfilePage = () => {
           )}
 
           <div className="mb-6 md:mb-8">
-            <h2 className="text-lg md:text-xl font-medium text-gray-900 mb-4 md:mb-6">Profilinformation</h2>
+            <h2 className="text-lg md:text-xl font-medium text-gray-900 mb-4 md:mb-6">{t('profile.profile_information', 'Profilinformation')}</h2>
             
             {!isEditing ? (
               <div className="bg-gray-50 p-4 md:p-6 rounded-lg space-y-6 md:space-y-8">
                 {/* Company Information */}
                 <div>
                   <h3 className="text-base md:text-lg font-medium text-gray-900 mb-3 md:mb-4 pb-2 border-b border-gray-200">
-                    Företagsinformation
+                    {t('profile.company_information', 'Företagsinformation')}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     <div>
-                      <p className="text-sm md:text-sm text-gray-500 mb-1">E-post</p>
+                      <p className="text-sm md:text-sm text-gray-500 mb-1">{t('profile.email', 'E-post')}</p>
                       <p className="font-medium text-base">{currentUser?.email}</p>
                     </div>
                     <div>
-                      <p className="text-sm md:text-sm text-gray-500 mb-1">Företagsnamn</p>
-                      <p className="font-medium text-base">{userData?.companyName || 'Ej angivet'}</p>
+                      <p className="text-sm md:text-sm text-gray-500 mb-1">{t('profile.company_name', 'Företagsnamn')}</p>
+                      <p className="font-medium text-base">{userData?.companyName || t('profile.not_specified', 'Ej angivet')}</p>
                     </div>
                     <div>
-                      <p className="text-sm md:text-sm text-gray-500 mb-1">Kontaktperson</p>
-                      <p className="font-medium text-base">{userData?.contactPerson || 'Ej angivet'}</p>
+                      <p className="text-sm md:text-sm text-gray-500 mb-1">{t('profile.contact_person', 'Kontaktperson')}</p>
+                      <p className="font-medium text-base">{userData?.contactPerson || t('profile.not_specified', 'Ej angivet')}</p>
                     </div>
                     <div>
-                      <p className="text-sm md:text-sm text-gray-500 mb-1">Telefon</p>
-                      <p className="font-medium text-base">{userData?.phone || 'Ej angivet'}</p>
+                      <p className="text-sm md:text-sm text-gray-500 mb-1">{t('profile.phone', 'Telefon')}</p>
+                      <p className="font-medium text-base">{userData?.phone || t('profile.not_specified', 'Ej angivet')}</p>
                     </div>
                     <div>
-                      <p className="text-sm md:text-sm text-gray-500 mb-1">Organisationsnummer</p>
-                      <p className="font-medium text-base">{userData?.orgNumber || 'Ej angivet'}</p>
+                      <p className="text-sm md:text-sm text-gray-500 mb-1">{t('profile.org_number', 'Organisationsnummer')}</p>
+                      <p className="font-medium text-base">{userData?.orgNumber || t('profile.not_specified', 'Ej angivet')}</p>
                     </div>
                   </div>
                 </div>

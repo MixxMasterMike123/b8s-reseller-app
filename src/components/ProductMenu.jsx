@@ -1,13 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from '../contexts/TranslationContext';
 
 const ProductMenu = ({ products, selectedProduct, onProductSelect }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
 
   // Get current product label
   const getCurrentProductLabel = () => {
-    if (!selectedProduct) return 'Select a product';
-    return selectedProduct.name || 'Unknown product';
+    if (!selectedProduct) return t('product_menu.select_product', 'Välj en produkt');
+    return selectedProduct.name || t('product_menu.unknown_product', 'Okänd produkt');
   };
 
   // Handle click outside to close menu
@@ -77,7 +79,7 @@ const ProductMenu = ({ products, selectedProduct, onProductSelect }) => {
                     )}
                     <div>
                       <div className="font-medium">{product.name}</div>
-                      {product.size && <div className="text-xs text-gray-500">Size: {product.size}</div>}
+                      {product.size && <div className="text-xs text-gray-500">{t('product_menu.size', 'Storlek')}: {product.size}</div>}
                     </div>
                     {selectedProduct && product.id === selectedProduct.id && (
                       <svg className="h-5 w-5 ml-auto text-green-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -88,7 +90,7 @@ const ProductMenu = ({ products, selectedProduct, onProductSelect }) => {
                 </button>
               ))
             ) : (
-              <div className="px-4 py-2 text-sm text-gray-500">No products available</div>
+              <div className="px-4 py-2 text-sm text-gray-500">{t('product_menu.no_products', 'Inga produkter tillgängliga')}</div>
             )}
           </div>
         </div>

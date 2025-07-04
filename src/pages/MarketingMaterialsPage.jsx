@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../contexts/TranslationContext';
 import AppLayout from '../components/layout/AppLayout';
 import ImagePreviewModal from '../components/ImagePreviewModal';
 import { useImagePreview } from '../hooks/useImagePreview';
@@ -22,6 +23,7 @@ import {
 
 function MarketingMaterialsPage() {
   const { currentUser, isAdmin } = useAuth();
+  const { t } = useTranslation();
   const [genericMaterials, setGenericMaterials] = useState([]);
   const [customerMaterials, setCustomerMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,25 +44,25 @@ function MarketingMaterialsPage() {
   } = useImagePreview(300);
 
   const categories = [
-    { value: 'alla', label: 'Alla kategorier' },
-    { value: 'allmänt', label: 'Allmänt' },
-    { value: 'produktbilder', label: 'Produktbilder' },
-    { value: 'annonser', label: 'Annonser' },
-    { value: 'broschyrer', label: 'Broschyrer' },
-    { value: 'videos', label: 'Videos' },
-    { value: 'prislista', label: 'Prislista' },
-    { value: 'instruktioner', label: 'Instruktioner' },
-    { value: 'dokument', label: 'Dokument' },
-    { value: 'kundspecifikt', label: 'Kundspecifikt' },
-    { value: 'övrigt', label: 'Övrigt' }
+    { value: 'alla', label: t('marketing.categories.all', 'Alla kategorier') },
+    { value: 'allmänt', label: t('marketing.categories.general', 'Allmänt') },
+    { value: 'produktbilder', label: t('marketing.categories.product_images', 'Produktbilder') },
+    { value: 'annonser', label: t('marketing.categories.ads', 'Annonser') },
+    { value: 'broschyrer', label: t('marketing.categories.brochures', 'Broschyrer') },
+    { value: 'videos', label: t('marketing.categories.videos', 'Videos') },
+    { value: 'prislista', label: t('marketing.categories.price_list', 'Prislista') },
+    { value: 'instruktioner', label: t('marketing.categories.instructions', 'Instruktioner') },
+    { value: 'dokument', label: t('marketing.categories.documents', 'Dokument') },
+    { value: 'kundspecifikt', label: t('marketing.categories.customer_specific', 'Kundspecifikt') },
+    { value: 'övrigt', label: t('marketing.categories.other', 'Övrigt') }
   ];
 
   const fileTypes = [
-    { value: 'alla', label: 'Alla filtyper' },
-    { value: 'image', label: 'Bilder' },
-    { value: 'video', label: 'Videos' },
-    { value: 'document', label: 'Dokument' },
-    { value: 'archive', label: 'Arkiv' }
+    { value: 'alla', label: t('marketing.file_types.all', 'Alla filtyper') },
+    { value: 'image', label: t('marketing.file_types.images', 'Bilder') },
+    { value: 'video', label: t('marketing.file_types.videos', 'Videos') },
+    { value: 'document', label: t('marketing.file_types.documents', 'Dokument') },
+    { value: 'archive', label: t('marketing.file_types.archives', 'Arkiv') }
   ];
 
   useEffect(() => {
@@ -90,7 +92,7 @@ function MarketingMaterialsPage() {
       }
     } catch (error) {
       console.error('Error loading materials:', error);
-      toast.error('Kunde inte ladda marknadsföringsmaterial');
+      toast.error(t('marketing.errors.load_failed', 'Kunde inte ladda marknadsföringsmaterial'));
     } finally {
       setLoading(false);
     }
@@ -99,10 +101,10 @@ function MarketingMaterialsPage() {
   const handleDownload = async (material) => {
     try {
       await downloadFile(material.downloadURL, material.fileName);
-      toast.success('Nedladdning startad');
+      toast.success(t('marketing.download.started', 'Nedladdning startad'));
     } catch (error) {
       console.error('Download error:', error);
-      toast.error('Kunde inte ladda ner filen');
+      toast.error(t('marketing.errors.download_failed', 'Kunde inte ladda ner filen'));
     }
   };
 
@@ -150,9 +152,9 @@ function MarketingMaterialsPage() {
       <AppLayout>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="text-center">
-            <p className="text-gray-500">Du måste vara inloggad för att se marknadsföringsmaterial.</p>
+            <p className="text-gray-500">{t('marketing.login_required', 'Du måste vara inloggad för att se marknadsföringsmaterial')}.</p>
             <Link to="/login" className="text-blue-600 hover:underline">
-              Logga in
+              {t('marketing.login_link', 'Logga in')}
             </Link>
           </div>
         </div>
@@ -167,9 +169,9 @@ function MarketingMaterialsPage() {
         <div className="mb-6 md:mb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Marknadsföringsmaterial</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{t('marketing.title', 'Marknadsföringsmaterial')}</h1>
               <p className="mt-2 text-base md:text-lg text-gray-600">
-                Ladda ner bilder, broschyrer, videos och annat material för marknadsföring
+                {t('marketing.subtitle', 'Ladda ner bilder, broschyrer, videos och annat material för marknadsföring')}
               </p>
             </div>
             <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-3">
@@ -177,14 +179,14 @@ function MarketingMaterialsPage() {
                 to="/" 
                 className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-3 md:py-2 border border-gray-300 text-base md:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 min-h-[48px] md:min-h-0"
               >
-                Tillbaka till Dashboard
+                {t('marketing.back_to_dashboard', 'Tillbaka till Dashboard')}
               </Link>
               {isAdmin && (
                 <Link 
                   to="/admin/marketing" 
                   className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-3 md:py-2 border border-transparent text-base md:text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 min-h-[48px] md:min-h-0"
                 >
-                  Hantera Material
+                  {t('marketing.manage_materials', 'Hantera Material')}
                 </Link>
               )}
             </div>
@@ -195,24 +197,24 @@ function MarketingMaterialsPage() {
         <div className="mb-6 md:mb-8 bg-white shadow-sm rounded-lg p-4 md:p-6">
           <div className="flex items-center mb-4">
             <FunnelIcon className="h-5 w-5 text-gray-400 mr-2" />
-            <h2 className="text-base md:text-lg font-medium text-gray-900">Filter och sök</h2>
+            <h2 className="text-base md:text-lg font-medium text-gray-900">{t('marketing.filters.title', 'Filter och sök')}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-base md:text-sm font-medium text-gray-700 mb-2">
-                Sök material
+                {t('marketing.filters.search_label', 'Sök material')}
               </label>
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Sök efter namn eller beskrivning..."
+                placeholder={t('marketing.filters.search_placeholder', 'Sök efter namn eller beskrivning...')}
                 className="w-full px-4 py-3 md:px-3 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base min-h-[48px] md:min-h-0"
               />
             </div>
             <div>
               <label className="block text-base md:text-sm font-medium text-gray-700 mb-2">
-                Kategori
+                {t('marketing.filters.category_label', 'Kategori')}
               </label>
               <select
                 value={selectedCategory}
@@ -226,7 +228,7 @@ function MarketingMaterialsPage() {
             </div>
             <div>
               <label className="block text-base md:text-sm font-medium text-gray-700 mb-2">
-                Filtyp
+                {t('marketing.filters.file_type_label', 'Filtyp')}
               </label>
               <select
                 value={selectedType}
@@ -247,7 +249,7 @@ function MarketingMaterialsPage() {
                 }}
                 className="w-full px-4 py-3 md:py-2 border border-gray-300 text-base md:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 min-h-[48px] md:min-h-0"
               >
-                Rensa filter
+                {t('marketing.filters.clear_filters', 'Rensa filter')}
               </button>
             </div>
           </div>
@@ -263,7 +265,7 @@ function MarketingMaterialsPage() {
                 </div>
                 <div className="ml-4 md:ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Totalt material</dt>
+                    <dt className="text-sm font-medium text-gray-500 truncate">{t('marketing.stats.total_materials', 'Totalt material')}</dt>
                     <dd className="text-lg font-medium text-gray-900">{allMaterials.length}</dd>
                   </dl>
                 </div>
@@ -278,7 +280,7 @@ function MarketingMaterialsPage() {
                 </div>
                 <div className="ml-4 md:ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Allmänt material</dt>
+                    <dt className="text-sm font-medium text-gray-500 truncate">{t('marketing.stats.general_materials', 'Allmänt material')}</dt>
                     <dd className="text-lg font-medium text-gray-900">{genericMaterials.length}</dd>
                   </dl>
                 </div>
@@ -293,7 +295,7 @@ function MarketingMaterialsPage() {
                 </div>
                 <div className="ml-4 md:ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Ditt material</dt>
+                    <dt className="text-sm font-medium text-gray-500 truncate">{t('marketing.stats.your_materials', 'Ditt material')}</dt>
                     <dd className="text-lg font-medium text-gray-900">{customerMaterials.length}</dd>
                   </dl>
                 </div>
@@ -308,7 +310,7 @@ function MarketingMaterialsPage() {
                 </div>
                 <div className="ml-4 md:ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Filtrerat</dt>
+                    <dt className="text-sm font-medium text-gray-500 truncate">{t('marketing.stats.filtered', 'Filtrerat')}</dt>
                     <dd className="text-lg font-medium text-gray-900">{filteredMaterials.length}</dd>
                   </dl>
                 </div>
@@ -329,11 +331,11 @@ function MarketingMaterialsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2z M3 7l9-4 9 4" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Inget material hittades</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('marketing.empty.title', 'Inget material hittades')}</h3>
             <p className="text-gray-500 mb-4">
               {allMaterials.length === 0 
-                ? 'Det finns inget marknadsföringsmaterial tillgängligt ännu.'
-                : 'Prova att ändra dina filterinställningar.'}
+                ? t('marketing.empty.no_materials', 'Det finns inget marknadsföringsmaterial tillgängligt ännu.')
+                : t('marketing.empty.try_filters', 'Prova att ändra dina filterinställningar.')}
             </p>
             {allMaterials.length > 0 && (
               <button
@@ -344,7 +346,7 @@ function MarketingMaterialsPage() {
                 }}
                 className="inline-flex items-center justify-center px-6 py-3 md:px-4 md:py-2 border border-transparent text-base md:text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 min-h-[48px] md:min-h-0"
               >
-                Visa allt material
+                {t('marketing.empty.show_all', 'Visa allt material')}
               </button>
             )}
           </div>
@@ -366,7 +368,7 @@ function MarketingMaterialsPage() {
                       <div key={`${material.source}-${material.id}`} className="group relative bg-white border border-gray-200 rounded-xl p-6 hover:shadow-xl hover:border-blue-200 transition-all duration-300 flex flex-col h-full">
                         {/* Category Pill */}
                         <div className="absolute top-4 right-4 z-10 px-3 py-1.5 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                          {material.category || 'Övrigt'}
+                          {material.category || t('marketing.categories.other', 'Övrigt')}
                         </div>
 
                         {/* Material Preview */}
@@ -433,7 +435,7 @@ function MarketingMaterialsPage() {
                             className="w-full inline-flex items-center justify-center px-4 py-3 md:py-3 border border-transparent text-base md:text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-sm hover:shadow-md min-h-[48px] md:min-h-0"
                           >
                             <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
-                            Ladda ner
+                            {t('marketing.download.button', 'Ladda ner')}
                           </button>
                         </div>
                       </div>

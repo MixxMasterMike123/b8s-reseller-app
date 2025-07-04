@@ -1,0 +1,102 @@
+Key,Context,Swedish Original,English UK,English US,Status
+b2b.nav.kontakt_support,B2B Navigation,Kontakt & Support,Contact & Support,Contact & Support,Ny
+b2b.nav.oversikt_och_statistik,B2B Navigation,Översikt och statistik,Overview and Statistics,Overview and Statistics,Ny
+b2b.nav.hantera_anvandare,B2B Navigation,Hantera användare,Manage Users,Manage Users,Ny
+b2b.nav.hantera_bestallningar,B2B Navigation,Hantera beställningar,Manage Orders,Manage Orders,Ny
+b2b.nav.marknadsforing,B2B Navigation,Marknadsföring,Marketing,Marketing,Ny
+b2b.nav.hantera_marknadsforingsmaterial,B2B Navigation,Hantera marknadsföringsmaterial,Manage Marketing Materials,Manage Marketing Materials,Ny
+b2b.nav.oversattningar,B2B Navigation,Översättningar,Translations,Translations,Ny
+b2b.nav.hantera_sprak_och_oversattningar,B2B Navigation,Hantera språk och översättningar,Manage Languages and Translations,Manage Languages and Translations,Ny
+b2b.nav.installningar,B2B Navigation,Inställningar,Settings,Settings,Ny
+b2b.nav.systeminstallningar,B2B Navigation,Systeminställningar,System Settings,System Settings,Ny
+b2b.nav.ga_till_admin_panel,B2B Navigation,Gå till Admin Panel,Go to Admin Panel,Go to Admin Panel,Ny
+b2b.products.paverkar_inte_krokens_funktion,B2B Products,Påverkar inte krokens funktion,Does not affect hook function,Does not affect hook function,Ny
+b2b.products.enkelt_att_vaxla_mellan_drag,B2B Products,Enkelt att växla mellan drag,Easy to switch between lures,Easy to switch between lures,Ny
+b2b.products.passar_krokstorlek_2_4_och_6,B2B Products,Passar krokstorlek 2,Fits hook size 2,Fits hook size 2,Ny
+b2b.products.bevarar_dragets_naturliga_farger,B2B Products,Bevarar dragets naturliga färger,Preserves the lure's natural colours,Preserves the lure's natural colors,Ny
+b2b.products.traditionell_betesfarg,B2B Products,Traditionell betesfärg,Traditional bait colour,Traditional bait color,Ny
+b2b.products.synlig_i_morka_vatten,B2B Products,Synlig i mörka vatten,Visible in dark water,Visible in dark water,Ny
+b2b.products.perfekt_for_nattfiske,B2B Products,Perfekt för nattfiske,Perfect for night fishing,Perfect for night fishing,Ny
+b2b.products.ingen_bild_tillganglig_for_nedladdning,B2B Products,Ingen bild tillgänglig för nedladdning,No image available for download,No image available for download,Ny
+b2b.products.du_maste_vara_inloggad_for_att_se_produkter,B2B Products,Du måste vara inloggad för att se produkter,You must be logged in to view products,You must be logged in to view products,Ny
+b2b.training.valkommen,B2B Training,Välkommen,Welcome,Welcome,Ny
+b2b.training.till_b8shield_aterforsaljarportal,B2B Training,Till B8Shield återförsäljarportal,To B8Shield Reseller Portal,To B8Shield Reseller Portal,Ny
+b2b.training.av_den_orsaken_ar_det_avgorande_att_ni,B2B Training,Av den orsaken är det avgörande att ni,For this reason it is crucial that you,For this reason it is crucial that you,Ny
+b2b.training.for_att_salja_b8shield,B2B Training,För att sälja B8Shield,To sell B8Shield,To sell B8Shield,Ny
+b2b.training.sa_forklarar_du_produkten_pa_15_sekunder,B2B Training,Så förklarar du produkten på 15 sekunder,How to explain the product in 15 seconds,How to explain the product in 15 seconds,Ny
+b2b.training.sag_detta_till_kunden,B2B Training,Säg detta till kunden,Say this to the customer,Say this to the customer,Ny
+b2b.training.nar_man_inte_vill_kompromissa_med_fiskedragets_nat,B2B Training,"När man inte vill kompromissa med fiskedragets naturliga färger och utseende","When you don't want to compromise with the fishing lure's natural colours and appearance","When you don't want to compromise with the fishing lure's natural colors and appearance",Ny
+b2b.training.utnyttja_den_traditionella_roda_fargen_pa_manga_be,B2B Training,"Utnyttja den traditionella röda färgen på många betesfiskar för att attrahera mer fisk","Utilise the traditional red colour of many baitfish to attract more fish","Utilize the traditional red color of many baitfish to attract more fish",Ny
+b2b.training.nar_du_skall_natt_fiska_och_vill_attrahera_fiskar_,B2B Training,"När du skall natt fiska och vill attrahera fiskar i grumliga eller mörka vatten","When you're night fishing and want to attract fish in murky or dark water","When you're night fishing and want to attract fish in murky or dark water",Ny
+b2b.training.nar_man_skall_fiska_i_stark_solljus_hjalper_dess_g,B2B Training,"När man skall fiska i stark solljus hjälper dess gnistrande färg till med att attrahera mer fisk","When fishing in bright sunlight its sparkling colour helps attract more fish","When fishing in bright sunlight its sparkling color helps attract more fish",Ny
+b2b.training.klicka_for_detaljer,B2B Training,Klicka för detaljer,Click for details,Click for details,Ny
+b2b.training.vanliga_fragor,B2B Training,Vanliga frågor,Common questions,Common questions,Ny
+b2b.training.kommer_fisken_sluta_hugga,B2B Training,Kommer fisken sluta hugga?,Will the fish stop biting?,Will the fish stop biting?,Ny
+b2b.training.forstor_det_gangen_pa_draget,B2B Training,Förstör det gången på draget?,Does it ruin the lure's action?,Does it ruin the lure's action?,Ny
+b2b.training.nar_ska_man_anvanda_den,B2B Training,När ska man använda den?,When should you use it?,When should you use it?,Ny
+b2b.training.du_ar_nu_certifierad_b8shieldsaljare,B2B Training,Du är nu certifierad B8Shield-säljare,You are now a certified B8Shield salesperson,You are now a certified B8Shield salesperson,Ny
+b2b.training.certifierad_b8shieldsaljare,B2B Training,Certifierad B8Shield-Säljare,Certified B8Shield Salesperson,Certified B8Shield Salesperson,Ny
+b2b.training.du_har_genomfort_saljutbildningen,B2B Training,Du har genomfört säljutbildningen,You have completed the sales training,You have completed the sales training,Ny
+b2b.training.nu_kan_du,B2B Training,Nu kan du:,Now you can:,Now you can:,Ny
+b2b.training.forklara_b8shield_pa_15_sekunder,B2B Training,Förklara B8Shield på 15 sekunder,Explain B8Shield in 15 seconds,Explain B8Shield in 15 seconds,Ny
+b2b.training.hantera_kundinvandningar,B2B Training,Hantera kundinvändningar,Handle customer objections,Handle customer objections,Ny
+b2b.training.oka_din_forsaljning_med_ratt_teknik,B2B Training,Öka din försäljning med rätt teknik,Increase your sales with the right technique,Increase your sales with the right technique,Ny
+b2b.training.foregaende,B2B Training,Föregående,Previous,Previous,Ny
+b2b.training.borja_salja,B2B Training,Börja sälja!,Start selling!,Start selling!,Ny
+b2b.contact.vi_ar_har_for_att_hjalpa_er_med_alla_era_fragor_oc,B2B Contact,"Vi är här för att hjälpa er med alla era frågor och behov","We are here to help you with all your questions and needs","We are here to help you with all your questions and needs",Ny
+b2b.contact.support_hjalp,B2B Contact,Support & Hjälp,Support & Help,Support & Help,Ny
+b2b.contact.skicka_era_fragor_till,B2B Contact,Skicka era frågor till,Send your questions to,Send your questions to,Ny
+b2b.contact.sa_aterkommer_vi_sa_snart_som_mojligt,B2B Contact,så återkommer vi så snart som möjligt,and we'll get back to you as soon as possible,and we'll get back to you as soon as possible,Ny
+b2b.contact.behover_ni_hjalp_med_portalen_eller_har_tekniska_f,B2B Contact,"Behöver ni hjälp med portalen eller har tekniska frågor? Vi hjälper er gärna!","Do you need help with the portal or have technical questions? We're happy to help!","Do you need help with the portal or have technical questions? We're happy to help!",Ny
+b2b.contact.produktfragor,B2B Contact,Produktfrågor,Product questions,Product questions,Ny
+b2b.contact.fragor_om_b8shield_produkter_priser_eller_leverans,B2B Contact,Frågor om B8Shield produkter,Questions about B8Shield products,Questions about B8Shield products,Ny
+b2b.contact.mandag_fredag,B2B Contact,Måndag - Fredag,Monday - Friday,Monday - Friday,Ny
+b2b.contact.lagg_en_bestallning,B2B Contact,Lägg en beställning,Place an order,Place an order,Ny
+b2b.dashboard.testa_saljutbildning,B2B Dashboard,Testa Säljutbildning,Test Sales Training,Test Sales Training,Ny
+b2b.dashboard.aterforsaljarportal,B2B Dashboard,Återförsäljarportal,Reseller Portal,Reseller Portal,Ny
+b2b.dashboard.lagga_bestallningar_direkt,B2B Dashboard,Lägga beställningar direkt,Place orders directly,Place orders directly,Ny
+b2b.dashboard.overblick_over_orderhistorik,B2B Dashboard,Överblick över orderhistorik,Overview of order history,Overview of order history,Ny
+b2b.dashboard.bladdra_i_produktkatalog,B2B Dashboard,Bläddra i produktkatalog,Browse product catalogue,Browse product catalog,Ny
+b2b.dashboard.ladda_ner_marknadsforingsmaterial,B2B Dashboard,Ladda ner marknadsföringsmaterial,Download marketing materials,Download marketing materials,Ny
+b2b.dashboard.skapa_en_ny_bestallning_for_dina_kunder,B2B Dashboard,Skapa en ny beställning för dina kunder,Create a new order for your customers,Create a new order for your customers,Ny
+b2b.dashboard.visa_och_spara_dina_tidigare_bestallningar,B2B Dashboard,Visa och spåra dina tidigare beställningar,View and track your previous orders,View and track your previous orders,Ny
+b2b.dashboard.bladdra_och_ladda_ner_produktinformation,B2B Dashboard,Bläddra och ladda ner produktinformation,Browse and download product information,Browse and download product information,Ny
+b2b.dashboard.ladda_ner_broschyrer_och_marknadsforingsmaterial,B2B Dashboard,Ladda ner broschyrer och marknadsföringsmaterial,Download brochures and marketing materials,Download brochures and marketing materials,Ny
+b2b.dashboard.information_for_butikspersonal,B2B Dashboard,Information för butikspersonal,Information for shop staff,Information for store staff,Ny
+b2b.dashboard.av_den_orsaken_ar_det_avgorande_att_ni,B2B Dashboard,Av den orsaken är det avgörande att ni:,For this reason it is crucial that you:,For this reason it is crucial that you:,Ny
+b2b.dashboard.sa_forklarar_du_produkten_pa_15_sekunder,B2B Dashboard,Så förklarar du produkten på 15 sekunder:,How to explain the product in 15 seconds:,How to explain the product in 15 seconds:,Ny
+b2b.dashboard.b8shield_finns_i_4_olika_utforanden,B2B Dashboard,B8Shield finns i 4 olika utföranden:,B8Shield comes in 4 different versions:,B8Shield comes in 4 different versions:,Ny
+b2b.dashboard.vanliga_fragor_och_vad_du_svarar,B2B Dashboard,Vanliga frågor – och vad du svarar:,Common questions – and what you answer:,Common questions – and what you answer:,Ny
+b2b.dashboard.fraga_1_kommer_fisken_sluta_hugga,B2B Dashboard,Fråga 1: Kommer fisken sluta hugga?,Question 1: Will the fish stop biting?,Question 1: Will the fish stop biting?,Ny
+b2b.dashboard.fraga_2_forstor_det_gangen_pa_draget,B2B Dashboard,Fråga 2: Förstör det gången på draget?,Question 2: Does it ruin the lure's action?,Question 2: Does it ruin the lure's action?,Ny
+b2b.dashboard.fraga_3_nar_ska_man_anvanda_den,B2B Dashboard,Fråga 3: När ska man använda den?,Question 3: When should you use it?,Question 3: When should you use it?,Ny
+b2b.dashboard.ostergatan_30_c,B2B Dashboard,Östergatan 30 C,Östergatan 30 C,Östergatan 30 C,Ny
+b2b.dashboard.152_43_sodertalje,B2B Dashboard,152 43 Södertälje,152 43 Södertälje,152 43 Södertälje,Ny
+b2b.marketing.allmant,B2B Marketing,allmänt,general,general,Ny
+b2b.marketing.ovrigt,B2B Marketing,övrigt,other,other,Ny
+b2b.marketing.kunde_inte_ladda_marknadsforingsmaterial,B2B Marketing,Kunde inte ladda marknadsföringsmaterial,Could not load marketing materials,Could not load marketing materials,Ny
+b2b.marketing.du_maste_vara_inloggad_for_att_se_marknadsforingsm,B2B Marketing,Du måste vara inloggad för att se marknadsföringsmaterial,You must be logged in to view marketing materials,You must be logged in to view marketing materials,Ny
+b2b.marketing.marknadsforingsmaterial,B2B Marketing,Marknadsföringsmaterial,Marketing Materials,Marketing Materials,Ny
+b2b.marketing.ladda_ner_bilder_broschyrer_videos_och_annat_mater,B2B Marketing,Ladda ner bilder,Download images,Download images,Ny
+b2b.marketing.filter_och_sok,B2B Marketing,Filter och sök,Filter and search,Filter and search,Ny
+b2b.marketing.sok_material,B2B Marketing,Sök material,Search materials,Search materials,Ny
+b2b.marketing.allmant_material,B2B Marketing,Allmänt material,General materials,General materials,Ny
+b2b.orders.blandade_farger,B2B Orders,Blandade färger,Mixed colours,Mixed colors,Ny
+b2b.orders.bestallningen_hittades_inte,B2B Orders,Beställningen hittades inte,Order not found,Order not found,Ny
+b2b.orders.kunde_inte_hamta_bestallningsdetaljer,B2B Orders,Kunde inte hämta beställningsdetaljer,Could not fetch order details,Could not fetch order details,Ny
+b2b.orders.ar_du_saker_pa_att_du_vill_avbryta_denna_bestallni,B2B Orders,Är du säker på att du vill avbryta denna beställning?,Are you sure you want to cancel this order?,Are you sure you want to cancel this order?,Ny
+b2b.orders.bestallningen_har_avbrutits,B2B Orders,Beställningen har avbrutits,The order has been cancelled,The order has been canceled,Ny
+b2b.orders.kunde_inte_avbryta_bestallningen,B2B Orders,Kunde inte avbryta beställningen,Could not cancel the order,Could not cancel the order,Ny
+b2b.orders.avbryt_bestallning,B2B Orders,Avbryt beställning,Cancel order,Cancel order,Ny
+b2b.orders.okant_datum,B2B Orders,Okänt datum,Unknown date,Unknown date,Ny
+b2b.orders.vantar_pa_bekraftelse,B2B Orders,Väntar på bekräftelse,Waiting for confirmation,Waiting for confirmation,Ny
+b2b.orders.bekraftad,B2B Orders,Bekräftad,Confirmed,Confirmed,Ny
+b2b.orders.okand_status,B2B Orders,Okänd status,Unknown status,Unknown status,Ny
+b2b.orders.rod,B2B Orders,Röd,Red,Red,Ny
+b2b.orders.ett_fel_uppstod_nar_produkterna_skulle_hamtas,B2B Orders,Ett fel uppstod när produkterna skulle hämtas,An error occurred when fetching products,An error occurred when fetching products,Ny
+b2b.orders.order_skapad,B2B Orders,Order skapad!,Order created!,Order created!,Ny
+b2b.orders.bekrafta_bestallning,B2B Orders,Bekräfta beställning,Confirm order,Confirm order,Ny
+b2b.profile.foretagsinformation,B2B Profile,Företagsinformation,Company Information,Company Information,Ny
+b2b.profile.foretagsnamn,B2B Profile,Företagsnamn,Company Name,Company Name,Ny
+b2b.profile.spara_andringar,B2B Profile,Spara Ändringar,Save Changes,Save Changes,Ny
+b2b.profile.uppdatera_losenord,B2B Profile,Uppdatera Lösenord,Update Password,Update Password,Ny 

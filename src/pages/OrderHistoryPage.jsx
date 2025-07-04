@@ -4,11 +4,13 @@ import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../contexts/TranslationContext';
 import { useOrder } from '../contexts/OrderContext';
 import AppLayout from '../components/layout/AppLayout';
 
 const OrderHistoryPage = () => {
   const { currentUser } = useAuth();
+  const { t } = useTranslation();
   const { getUserOrders, loading } = useOrder();
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);

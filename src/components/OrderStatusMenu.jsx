@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from '../contexts/TranslationContext';
 
 const getStatusStyles = (status) => {
   switch (status) {
@@ -20,23 +21,24 @@ const getStatusStyles = (status) => {
 };
 
 const OrderStatusMenu = ({ currentStatus, onStatusChange, disabled, className = '' }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
 
   // Status options with shorter labels
   const statusOptions = [
-    { value: 'pending', label: 'Väntar' },
-    { value: 'confirmed', label: 'Bekräftad' },
-    { value: 'processing', label: 'Behandlas' },
-    { value: 'shipped', label: 'Skickad' },
-    { value: 'delivered', label: 'Levererad' },
-    { value: 'cancelled', label: 'Avbruten' }
+    { value: 'pending', label: t('order_status.pending', 'Väntar') },
+    { value: 'confirmed', label: t('order_status.confirmed', 'Bekräftad') },
+    { value: 'processing', label: t('order_status.processing', 'Behandlas') },
+    { value: 'shipped', label: t('order_status.shipped', 'Skickad') },
+    { value: 'delivered', label: t('order_status.delivered', 'Levererad') },
+    { value: 'cancelled', label: t('order_status.cancelled', 'Avbruten') }
   ];
 
   // Get current status label
   const getCurrentStatusLabel = () => {
     const status = statusOptions.find(option => option.value === currentStatus);
-    return status ? status.label : 'Okänd';
+    return status ? status.label : t('order_status.unknown', 'Okänd');
   };
 
   // Handle click outside to close menu
