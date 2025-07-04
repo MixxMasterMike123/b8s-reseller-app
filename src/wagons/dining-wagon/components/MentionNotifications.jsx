@@ -42,7 +42,7 @@ const MentionNotifications = () => {
   }, [getAllUsers]);
 
   // Component to render text with highlighted mentions using same styling as CRM
-  const TextWithMentions = ({ text, className = "" }) => {
+  const TextWithMentions = ({ text, className = "", adminUsers = [] }) => {
     if (!text) return null;
     
     // Get all admin user full names for highlighting
@@ -196,7 +196,7 @@ const MentionNotifications = () => {
                         </p>
                         
                         <div className="text-sm text-gray-700 mt-1 line-clamp-2">
-                          <TextWithMentions text={mention.mentionText} />
+                          <TextWithMentions text={mention.mentionText} adminUsers={adminUsers} />
                         </div>
                       </div>
                     </div>
