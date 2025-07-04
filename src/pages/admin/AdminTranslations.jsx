@@ -624,14 +624,27 @@ const AdminTranslations = () => {
   );
 
   const renderManageTranslations = () => {
+    // Normalize Swedish characters for better search
+    const normalizeSwedish = (text) => {
+      if (!text) return '';
+      return text.toLowerCase()
+        .replace(/å/g, 'a')
+        .replace(/ä/g, 'a')
+        .replace(/ö/g, 'o')
+        .replace(/é/g, 'e')
+        .replace(/ü/g, 'u');
+    };
+
     // Filter translations based on search and status
     const filteredTranslations = translations.filter(translation => {
+      const normalizedQuery = normalizeSwedish(searchQuery);
+      
       const matchesSearch = !searchQuery || 
-        (translation.key || translation.id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (translation['sv-SE'] || translation.swedish || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (translation['en-GB'] || translation.englishUK || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (translation['en-US'] || translation.englishUS || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (translation.context || '').toLowerCase().includes(searchQuery.toLowerCase());
+        normalizeSwedish(translation.key || translation.id || '').includes(normalizedQuery) ||
+        normalizeSwedish(translation['sv-SE'] || translation.swedish || '').includes(normalizedQuery) ||
+        normalizeSwedish(translation['en-GB'] || translation.englishUK || '').includes(normalizedQuery) ||
+        normalizeSwedish(translation['en-US'] || translation.englishUS || '').includes(normalizedQuery) ||
+        normalizeSwedish(translation.context || '').includes(normalizedQuery);
       
       const matchesStatus = !statusFilter || translation.status === statusFilter;
       
@@ -687,6 +700,47 @@ const AdminTranslations = () => {
                     <option value="reviewed">Granskade</option>
                     <option value="approved">Godkända</option>
                   </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Save to Firebase Section */}
+            <div className="bg-white shadow rounded-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">💾 Spara ändringar till Firebase</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Spara alla aktuella översättningar (inklusive manuella ändringar) till Firebase-databasen
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Språk
+                    </label>
+                    <select 
+                      value={selectedLanguage}
+                      onChange={(e) => setSelectedLanguage(e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    >
+                      <option value="en-GB">🇬🇧 English (UK)</option>
+                      <option value="en-US">🇺🇸 English (US)</option>
+                    </select>
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      onClick={() => saveCurrentTranslationsToFirebase(selectedLanguage)}
+                      disabled={loading || !translations.length}
+                      className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 flex items-center"
+                    >
+                      {loading ? (
+                        <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <CheckIcon className="h-4 w-4 mr-2" />
+                      )}
+                      Spara till Firebase
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
