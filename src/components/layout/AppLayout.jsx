@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import AdminPresenceIndicator from '../AdminPresenceIndicator';
+import MentionNotifications from '../../wagons/dining-wagon/components/MentionNotifications';
 
 // 🚂 WAGON SYSTEM: Import wagon registry for menu items
 import wagonRegistry from '../../wagons/WagonRegistry.js';
@@ -366,12 +366,6 @@ const AppLayout = ({ children }) => {
           
           {/* User Profile Section */}
           <div className="border-t border-gray-200 p-4">
-            {/* Admin Presence Indicator for admins */}
-            {isAdmin && (
-              <div className="mb-3">
-                <AdminPresenceIndicator />
-              </div>
-            )}
             
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -399,8 +393,42 @@ const AppLayout = ({ children }) => {
         </div>
       </div>
       
-      {/* Mobile header */}
+      {/* Desktop and Mobile header */}
       <div className="md:pl-64 flex flex-col flex-1">
+        {/* Desktop header - hidden on mobile */}
+        <div className="sticky top-0 z-20 hidden md:flex h-16 flex-shrink-0 bg-white shadow border-b border-gray-200">
+          <div className="flex flex-1 justify-end px-6">
+            <div className="flex items-center space-x-4">
+              {/* Admin tools for desktop */}
+              {isAdmin && (
+                <MentionNotifications />
+              )}
+              
+              <div className="flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                    {userProfile?.companyName?.charAt(0)?.toUpperCase() || 
+                     currentUser?.email?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                </div>
+                <div className="hidden lg:block">
+                  <div className="text-sm font-medium text-gray-900">
+                    {userProfile?.companyName || currentUser?.email}
+                  </div>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  title="Logga ut"
+                >
+                  <ArrowRightOnRectangleIcon className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Mobile header */}
         <div className="sticky top-0 z-10 flex h-16 flex-shrink-0 bg-white shadow md:hidden">
           <button
             type="button"
@@ -423,8 +451,10 @@ const AppLayout = ({ children }) => {
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              {/* Admin Presence Indicator for mobile */}
-              {isAdmin && <AdminPresenceIndicator />}
+              {/* Admin tools for mobile */}
+              {isAdmin && (
+                <MentionNotifications />
+              )}
               
               <div className="flex-shrink-0">
                 <button

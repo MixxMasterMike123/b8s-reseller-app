@@ -82,4 +82,20 @@ code {
   h1, h2, h3, h4, h5, h6 {
     color: black;
   }
+}
+
+/* Activity highlight animation for @mention notifications */
+@keyframes highlight-pulse {
+  0% {
+    background-color: rgba(59, 130, 246, 0.1);
+    transform: scale(1);
+  }
+  50% {
+    background-color: rgba(59, 130, 246, 0.3);
+    transform: scale(1.02);
+  }
+  100% {
+    background-color: rgba(59, 130, 246, 0.1);
+    transform: scale(1);
+  }
 } 

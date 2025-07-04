@@ -28,7 +28,7 @@ import {
   ExclamationTriangleIcon as ExclamationSolid
 } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
-import { doc, updateDoc, Timestamp, collection, addDoc, orderBy, query, onSnapshot } from 'firebase/firestore';
+import { doc, updateDoc, Timestamp, collection, addDoc, orderBy, query, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { useAuth } from '../../../contexts/AuthContext';
 import {
@@ -189,6 +189,10 @@ const ContactDetail = () => {
   const { contacts, getContact, hasInitialized } = useDiningContacts();
   const { getActivitiesByContact, addActivity, updateActivity, deleteActivity } = useDiningActivities();
   
+  // URL parameter detection for activity highlighting
+  const [searchParams, setSearchParams] = useState(new URLSearchParams(window.location.search));
+  const highlightActivityId = searchParams.get('highlight');
+  
   const [contact, setContact] = useState(null);
   const [lastConversation, setLastConversation] = useState(null);
   const [newActivity, setNewActivity] = useState({
@@ -225,6 +229,26 @@ const ContactDetail = () => {
   const [adminDocCategory, setAdminDocCategory] = useState('dokument');
   const [adminDocNotes, setAdminDocNotes] = useState('');
   const [adminDocUploading, setAdminDocUploading] = useState(false);
+
+  // Auto-scroll and highlight activity from URL parameter
+  useEffect(() => {
+    if (highlightActivityId && contact) {
+      const timer = setTimeout(() => {
+        const element = document.getElementById(`activity-${highlightActivityId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Add highlight animation
+          element.style.animation = 'highlight-pulse 2s ease-in-out';
+          
+          // Remove highlight parameter from URL after navigation
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, '', newUrl);
+        }
+      }, 500); // Small delay to ensure DOM is ready
+      
+      return () => clearTimeout(timer);
+    }
+  }, [highlightActivityId, contact]);
 
   // Load admin users dynamically for @mentions
   useEffect(() => {
@@ -719,6 +743,43 @@ const ContactDetail = () => {
     }
   };
 
+  // Function to extract mentioned users and create notifications
+  const createMentionNotifications = async (activityId, text) => {
+    if (!isAdmin || !text) return;
+    
+    const mentionedUsers = [];
+    
+    // Extract mentioned full names from text
+    adminUsers.forEach(user => {
+      if (text.includes(user.fullName)) {
+        mentionedUsers.push(user);
+      }
+    });
+    
+    // Create notification records for each mentioned user
+    for (const user of mentionedUsers) {
+      try {
+        await addDoc(collection(db, 'userMentions'), {
+          userId: user.userId,
+          activityId: activityId,
+          contactId: id,
+          contactName: contact.companyName,
+          mentionText: text,
+          mentionedBy: currentUser.uid,
+          mentionedByName: userData?.contactPerson || currentUser?.displayName || currentUser?.email || 'Okänd',
+          isRead: false,
+          createdAt: serverTimestamp()
+        });
+      } catch (error) {
+        console.error('Error creating mention notification:', error);
+      }
+    }
+    
+    if (mentionedUsers.length > 0) {
+      console.log(`Created ${mentionedUsers.length} mention notifications`);
+    }
+  };
+
   // Save activity
   const handleSaveActivity = async () => {
     if (!newActivity.subject.trim()) {
@@ -727,6 +788,8 @@ const ContactDetail = () => {
     }
 
     setIsSavingActivity(true);
+    const user = currentUser;
+    
     try {
       const activityData = {
         type: newActivity.type,
@@ -735,13 +798,17 @@ const ContactDetail = () => {
         tags: selectedTags, // Include selected tags
         contactId: id,
         contactName: contact.companyName,
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
         createdBy: user?.uid || 'unknown',
         createdByName: userData?.contactPerson || user?.displayName || user?.email || 'Okänd användare',
         createdByInitials: getInitials(userData?.contactPerson || user?.displayName || user?.email || 'Okänd')
       };
 
-      await addActivity(activityData);
+      const activityId = await addActivity(activityData);
+      
+      // Create mention notifications if any @mentions detected
+      const combinedText = `${newActivity.subject} ${newActivity.description}`.trim();
+      await createMentionNotifications(activityId, combinedText);
       
       // Immediately update the lastConversation state
       setLastConversation({
@@ -996,7 +1063,11 @@ const ContactDetail = () => {
                   };
                   
                   return (
-                    <div className={getActivityStyle(urgencyLevel, isDismissed)} style={{ position: 'relative' }}>
+                    <div 
+                      id={`activity-${lastConversation.id}`}
+                      className={getActivityStyle(urgencyLevel, isDismissed)} 
+                      style={{ position: 'relative' }}
+                    >
                       {/* Date positioned horizontally with title */}
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center space-x-2 flex-1">
@@ -1211,7 +1282,11 @@ const ContactDetail = () => {
                   };
                   
                   return (
-                    <div key={activity.id || index} className={getTimelineStyle(urgencyLevel, isDismissed)}>
+                    <div 
+                      key={activity.id || index} 
+                      id={`activity-${activity.id}`}
+                      className={getTimelineStyle(urgencyLevel, isDismissed)}
+                    >
                       <div className="flex-shrink-0 mt-0.5">
                         {getActivityIcon(activity.type)}
                     </div>
