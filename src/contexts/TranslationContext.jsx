@@ -73,21 +73,28 @@ export const TranslationProvider = ({ children }) => {
     }
   };
 
-  // Get translated string with fallback
-  const t = (key, fallback = '') => {
+  // Get translated string with fallback and variable interpolation
+  const t = (key, fallback = '', variables = {}) => {
+    let text = '';
+    
     // If Swedish (default), return the fallback or key
     if (currentLanguage === 'sv-SE') {
-      return fallback || key;
+      text = fallback || key;
+    } else {
+      // For other languages, try to get translation
+      const translation = translations[key];
+      text = translation || fallback || key;
     }
     
-    // For other languages, try to get translation
-    const translation = translations[key];
-    if (translation) {
-      return translation;
+    // Handle variable interpolation
+    if (variables && Object.keys(variables).length > 0) {
+      Object.entries(variables).forEach(([variable, value]) => {
+        const placeholder = `{{${variable}}}`;
+        text = text.replace(new RegExp(placeholder, 'g'), value);
+      });
     }
     
-    // Fallback to provided fallback or key
-    return fallback || key;
+    return text;
   };
 
   // Get available languages
