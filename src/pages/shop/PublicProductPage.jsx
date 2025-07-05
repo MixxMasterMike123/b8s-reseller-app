@@ -7,12 +7,16 @@ import { slugToProductMap, getProductSeoTitle, getProductSeoDescription } from '
 import toast from 'react-hot-toast';
 import { generateProductSchema } from '../../utils/productFeed';
 import { useCart } from '../../contexts/CartContext';
+import { useTranslation } from '../../contexts/TranslationContext';
+import { getProductGroupContent } from '../../utils/productGroups';
 import ShopNavigation from '../../components/shop/ShopNavigation';
+import SizeGuideModal from '../../components/SizeGuideModal';
 
 const PublicProductPage = () => {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
   const colorParam = searchParams.get('color');
+  const { t } = useTranslation();
   
   const [product, setProduct] = useState(null);
   const [variants, setVariants] = useState([]);
@@ -21,6 +25,9 @@ const PublicProductPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [groupContent, setGroupContent] = useState(null);
+  const [groupContentLoading, setGroupContentLoading] = useState(false);
+  const [sizeGuideModalOpen, setSizeGuideModalOpen] = useState(false);
   const { addToCart, cart } = useCart();
 
   // Calculate total items in cart
@@ -31,6 +38,21 @@ const PublicProductPage = () => {
       loadProduct();
     }
   }, [slug]);
+
+  const loadGroupContent = async (groupId) => {
+    if (!groupId) return;
+    
+    try {
+      setGroupContentLoading(true);
+      const content = await getProductGroupContent(groupId);
+      setGroupContent(content);
+    } catch (error) {
+      console.error('Error loading group content:', error);
+      // Don't show error toast as this is optional content
+    } finally {
+      setGroupContentLoading(false);
+    }
+  };
 
   const loadProduct = async () => {
     try {
@@ -87,6 +109,11 @@ const PublicProductPage = () => {
       // Get the first product as the main product
       const mainProduct = filteredProducts[0];
       setProduct(mainProduct);
+      
+      // Load group content if product has a group
+      if (mainProduct.group) {
+        loadGroupContent(mainProduct.group);
+      }
       
       // Use the group field to find all variants in the same group
       const productGroup = mainProduct.group;
@@ -233,6 +260,28 @@ const PublicProductPage = () => {
     return product.color || 'Standard';
   };
 
+  // Helper function to get group content value with multilingual support
+  const getGroupContentValue = (contentField) => {
+    if (!groupContent || !contentField) return '';
+    
+    const content = groupContent[contentField];
+    if (!content) return '';
+    
+    // If it's a string, return it directly
+    if (typeof content === 'string') {
+      return content;
+    }
+    
+    // If it's an object (multilingual), get the appropriate language
+    if (typeof content === 'object') {
+      // Try to get Swedish first, then English UK, then English US, then any available
+      return content['sv-SE'] || content['en-GB'] || content['en-US'] || 
+             Object.values(content).find(val => val && val.length > 0) || '';
+    }
+    
+    return '';
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
@@ -342,8 +391,11 @@ const PublicProductPage = () => {
                     {isMultipack ? 'Välj färg' : 'Välj storlek'}
                   </h3>
                   {!isMultipack && (
-                    <button className="text-sm text-gray-500 hover:text-gray-700 underline">
-                      Storleksguide
+                    <button 
+                      onClick={() => setSizeGuideModalOpen(true)}
+                      className="text-sm text-gray-500 hover:text-gray-700 underline"
+                    >
+                      {t('size_guide_link', 'Storleksguide')}
                     </button>
                   )}
                 </div>
@@ -413,75 +465,122 @@ const PublicProductPage = () => {
 
               {/* Expandable Information Sections */}
               <div className="border-t pt-6 space-y-4">
-                {/* Size and Fit */}
+                {/* Size and Fit - From Group Content */}
                 <details className="group">
                   <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 px-4 -mx-4 rounded-lg">
-                    <span className="text-base font-medium text-gray-900">Storlek och passform</span>
+                    <span className="text-base font-medium text-gray-900">
+                      {t('size_and_fit_section', 'Storlek och passform')}
+                    </span>
                     <svg className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </summary>
                   <div className="pb-4 px-4 -mx-4 text-sm text-gray-600">
-                    <p className="mb-3">B8Shield finns i flera storlekar för att passa olika fiskeförhållanden:</p>
-                    <ul className="space-y-2">
-                      <li>• <strong>4mm:</strong> Perfekt för lättare fiskedrag och mindre fiskar</li>
-                      <li>• <strong>6mm:</strong> Standardstorlek för allmänt fiske</li>
-                      <li>• <strong>8mm:</strong> För tyngre fiskedrag och större fiskar</li>
-                      <li>• <strong>10mm:</strong> Maximal skydd för extrema förhållanden</li>
-                    </ul>
-                    <p className="mt-3 text-xs text-gray-500">
-                      Välj storlek baserat på ditt fiskedrag och fiskeområde. Vid osäkerhet, välj en större storlek.
-                    </p>
-                  </div>
-                </details>
-
-                {/* Free Shipping and Returns */}
-                <details className="group">
-                  <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 px-4 -mx-4 rounded-lg">
-                    <span className="text-base font-medium text-gray-900">Fri frakt och fri retur</span>
-                    <svg className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </summary>
-                  <div className="pb-4 px-4 -mx-4 text-sm text-gray-600">
-                    <div className="space-y-3">
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-1">Leverans</h4>
-                        <p>• Fri frakt på alla beställningar över 500 SEK</p>
-                        <p>• Standard leverans: 2-5 arbetsdagar</p>
-                        <p>• Express leverans: 1-2 arbetsdagar (extra kostnad)</p>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-1">Returer</h4>
-                        <p>• 30 dagars returrätt</p>
-                        <p>• Kostnadsfri retur via PostNord</p>
-                        <p>• Produkten ska vara oanvänd och i originalförpackning</p>
-                      </div>
-                    </div>
-                  </div>
-                </details>
-
-                {/* How it's Made */}
-                <details className="group">
-                  <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 px-4 -mx-4 rounded-lg">
-                    <span className="text-base font-medium text-gray-900">Hur den tillverkades</span>
-                    <svg className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </summary>
-                  <div className="pb-4 px-4 -mx-4 text-sm text-gray-600">
-                    <div className="space-y-3">
-                      <p>B8Shield tillverkas med miljötänk och hållbarhet i fokus:</p>
-                      <ul className="space-y-2">
-                        <li>• <strong>Återvinningsbart material:</strong> Tillverkat av högkvalitativ plast som kan återvinnas</li>
-                        <li>• <strong>Svensk design:</strong> Utvecklat och testat i svenska vatten</li>
-                        <li>• <strong>Miljövänlig produktion:</strong> Minimal miljöpåverkan under tillverkning</li>
-                        <li>• <strong>Långlivad:</strong> Designad för att hålla i många år av intensivt fiske</li>
-                      </ul>
-                      <p className="text-xs text-gray-500 mt-3">
-                        JPH Innovation AB arbetar kontinuerligt för att minska miljöpåverkan och förbättra produkternas hållbarhet.
+                    {groupContentLoading ? (
+                      <p className="text-gray-500 italic">
+                        {t('loading_group_content', 'Laddar information...')}
                       </p>
-                    </div>
+                    ) : (
+                      getGroupContentValue('sizeAndFit') ? (
+                        <div 
+                          className="prose prose-sm max-w-none"
+                          dangerouslySetInnerHTML={{ __html: getGroupContentValue('sizeAndFit') }}
+                        />
+                      ) : (
+                        <div className="space-y-3">
+                          <p className="mb-3">B8Shield finns i flera storlekar för att passa olika fiskeförhållanden:</p>
+                          <ul className="space-y-2">
+                            <li>• <strong>4mm:</strong> Perfekt för lättare fiskedrag och mindre fiskar</li>
+                            <li>• <strong>6mm:</strong> Standardstorlek för allmänt fiske</li>
+                            <li>• <strong>8mm:</strong> För tyngre fiskedrag och större fiskar</li>
+                            <li>• <strong>10mm:</strong> Maximal skydd för extrema förhållanden</li>
+                          </ul>
+                          <p className="mt-3 text-xs text-gray-500">
+                            Välj storlek baserat på ditt fiskedrag och fiskeområde. Vid osäkerhet, välj en större storlek.
+                          </p>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </details>
+
+                {/* Free Shipping and Returns - From Group Content */}
+                <details className="group">
+                  <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 px-4 -mx-4 rounded-lg">
+                    <span className="text-base font-medium text-gray-900">
+                      {t('shipping_returns_section', 'Fri frakt och fri retur')}
+                    </span>
+                    <svg className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <div className="pb-4 px-4 -mx-4 text-sm text-gray-600">
+                    {groupContentLoading ? (
+                      <p className="text-gray-500 italic">
+                        {t('loading_group_content', 'Laddar information...')}
+                      </p>
+                    ) : (
+                      getGroupContentValue('shippingReturns') ? (
+                        <div 
+                          className="prose prose-sm max-w-none"
+                          dangerouslySetInnerHTML={{ __html: getGroupContentValue('shippingReturns') }}
+                        />
+                      ) : (
+                        <div className="space-y-3">
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-1">Leverans</h4>
+                            <p>• Fri frakt på alla beställningar över 500 SEK</p>
+                            <p>• Standard leverans: 2-5 arbetsdagar</p>
+                            <p>• Express leverans: 1-2 arbetsdagar (extra kostnad)</p>
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-1">Returer</h4>
+                            <p>• 30 dagars returrätt</p>
+                            <p>• Kostnadsfri retur via PostNord</p>
+                            <p>• Produkten ska vara oanvänd och i originalförpackning</p>
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </details>
+
+                {/* How it's Made - From Group Content */}
+                <details className="group">
+                  <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 px-4 -mx-4 rounded-lg">
+                    <span className="text-base font-medium text-gray-900">
+                      {t('how_its_made_section', 'Hur den tillverkades')}
+                    </span>
+                    <svg className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <div className="pb-4 px-4 -mx-4 text-sm text-gray-600">
+                    {groupContentLoading ? (
+                      <p className="text-gray-500 italic">
+                        {t('loading_group_content', 'Laddar information...')}
+                      </p>
+                    ) : (
+                      getGroupContentValue('howItsMade') ? (
+                        <div 
+                          className="prose prose-sm max-w-none"
+                          dangerouslySetInnerHTML={{ __html: getGroupContentValue('howItsMade') }}
+                        />
+                      ) : (
+                        <div className="space-y-3">
+                          <p>B8Shield tillverkas med miljötänk och hållbarhet i fokus:</p>
+                          <ul className="space-y-2">
+                            <li>• <strong>Återvinningsbart material:</strong> Tillverkat av högkvalitativ plast som kan återvinnas</li>
+                            <li>• <strong>Svensk design:</strong> Utvecklat och testat i svenska vatten</li>
+                            <li>• <strong>Miljövänlig produktion:</strong> Minimal miljöpåverkan under tillverkning</li>
+                            <li>• <strong>Långlivad:</strong> Designad för att hålla i många år av intensivt fiske</li>
+                          </ul>
+                          <p className="text-xs text-gray-500 mt-3">
+                            JPH Innovation AB arbetar kontinuerligt för att minska miljöpåverkan och förbättra produkternas hållbarhet.
+                          </p>
+                        </div>
+                      )
+                    )}
                   </div>
                 </details>
 
@@ -554,6 +653,14 @@ const PublicProductPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Size Guide Modal */}
+      <SizeGuideModal 
+        isOpen={sizeGuideModalOpen}
+        onClose={() => setSizeGuideModalOpen(false)}
+        sizeGuideContent={getGroupContentValue('sizeGuide')}
+        productName={currentProduct.name}
+      />
     </>
   );
 };
