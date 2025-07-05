@@ -5,6 +5,7 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage
 import { db, storage } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
+import { useTranslation } from '../../contexts/TranslationContext';
 import toast from 'react-hot-toast';
 import ProductMenu from '../../components/ProductMenu';
 import ReactQuill from 'react-quill';
@@ -21,6 +22,7 @@ const USE_DEFAULT_DB = false;
 function AdminProducts() {
   const { isAdmin } = useAuth();
   const { currentLanguage, getContentValue, setContentValue } = useContentTranslation();
+  const { t } = useTranslation();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -1819,7 +1821,7 @@ function AdminProducts() {
                               </div>
                               {/* Translation status indicators */}
                               <div className="flex items-center gap-3 mt-1">
-                                <span className="text-xs text-gray-500" style={{fontSize: '10px'}}>Översättningar:</span>
+                                <span className="text-xs text-gray-500" style={{fontSize: '10px'}}>{t('översättningar_label', 'Översättningar:')}</span>
                                 {/* B2B Status */}
                                 {(() => {
                                   const b2bDescription = product.descriptions?.b2b;
@@ -1840,8 +1842,8 @@ function AdminProducts() {
                                   
                                   return (
                                     <div className="flex items-center gap-1">
-                                      <span className="text-gray-600 font-medium" style={{fontSize: '10px'}}>B2B</span>
-                                      <div className={`w-2 h-2 rounded-full ${statusColor}`} title={`B2B: ${completedLanguages}/3 språk`}></div>
+                                      <span className="text-gray-600 font-medium" style={{fontSize: '10px'}}>{t('b2b_label', 'B2B')}</span>
+                                      <div className={`w-2 h-2 rounded-full ${statusColor}`} title={t('b2b_translation_status', 'B2B: {{count}}/3 språk', {count: completedLanguages})}></div>
                                     </div>
                                   );
                                 })()}
@@ -1866,8 +1868,8 @@ function AdminProducts() {
                                   
                                   return (
                                     <div className="flex items-center gap-1">
-                                      <span className="text-gray-600 font-medium" style={{fontSize: '10px'}}>B2C</span>
-                                      <div className={`w-2 h-2 rounded-full ${statusColor}`} title={`B2C: ${completedLanguages}/3 språk`}></div>
+                                      <span className="text-gray-600 font-medium" style={{fontSize: '10px'}}>{t('b2c_label', 'B2C')}</span>
+                                      <div className={`w-2 h-2 rounded-full ${statusColor}`} title={t('b2c_translation_status', 'B2C: {{count}}/3 språk', {count: completedLanguages})}></div>
                                     </div>
                                   );
                                 })()}
