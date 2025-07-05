@@ -13,6 +13,7 @@ import ShopNavigation from '../../components/shop/ShopNavigation';
 import SizeGuideModal from '../../components/SizeGuideModal';
 import ReviewsSection from '../../components/ReviewsSection';
 import { getReviewStats } from '../../utils/trustpilotAPI';
+import SeoHreflang from '../../components/shop/SeoHreflang';
 
 const PublicProductPage = () => {
   const { slug } = useParams();
@@ -350,6 +351,7 @@ const PublicProductPage = () => {
 
   return (
     <>
+      <SeoHreflang />
       {/* Schema.org structured data */}
       <script
         type="application/ld+json"

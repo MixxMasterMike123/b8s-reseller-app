@@ -5,6 +5,7 @@ import { SHIPPING_COSTS } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import toast from 'react-hot-toast';
 import ShopNavigation from '../../components/shop/ShopNavigation';
+import SeoHreflang from '../../components/shop/SeoHreflang';
 
 const ShoppingCart = () => {
   const { cart, updateQuantity, removeFromCart, updateShippingCountry, calculateTotals, applyDiscountCode, removeDiscount } = useCart();
@@ -87,197 +88,200 @@ const ShoppingCart = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <ShopNavigation breadcrumb={t('cart_breadcrumb', 'Varukorg')} />
+    <>
+      <SeoHreflang />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <ShopNavigation breadcrumb={t('cart_breadcrumb', 'Varukorg')} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">{t('your_cart_title', 'Din Varukorg')}</h1>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-8">{t('your_cart_title', 'Din Varukorg')}</h1>
 
-        {cart.items.length === 0 ? (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">{t('cart_is_empty_heading', 'Din varukorg är tom')}</h2>
-            <p className="text-gray-600 mb-8">{t('cart_empty_description', 'Utforska våra produkter och lägg till något i din varukorg.')}</p>
-            <Link
-              to="/"
-              className="inline-block bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-            >
-              {t('continue_shopping', 'Fortsätt handla')}
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Cart Items */}
-            <div className="lg:col-span-2 space-y-4">
-              {cart.items.map((item) => (
-                <div
-                  key={`${item.id}-${item.size}`}
-                  className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200 flex items-center gap-6"
-                >
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-24 h-24 object-cover rounded-lg"
-                  />
-                  
-                  <div className="flex-grow">
-                    <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
-                    {item.size && (
-                      <p className="text-gray-600">{t('size_label', 'Storlek: {{size}}', { size: item.size })}</p>
-                    )}
-                    <p className="text-blue-600 font-semibold">{formatPrice(item.price)}</p>
-                  </div>
+          {cart.items.length === 0 ? (
+            <div className="text-center py-12">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-4">{t('cart_is_empty_heading', 'Din varukorg är tom')}</h2>
+              <p className="text-gray-600 mb-8">{t('cart_empty_description', 'Utforska våra produkter och lägg till något i din varukorg.')}</p>
+              <Link
+                to="/"
+                className="inline-block bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+              >
+                {t('continue_shopping', 'Fortsätt handla')}
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Cart Items */}
+              <div className="lg:col-span-2 space-y-4">
+                {cart.items.map((item) => (
+                  <div
+                    key={`${item.id}-${item.size}`}
+                    className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200 flex items-center gap-6"
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-24 h-24 object-cover rounded-lg"
+                    />
+                    
+                    <div className="flex-grow">
+                      <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
+                      {item.size && (
+                        <p className="text-gray-600">{t('size_label', 'Storlek: {{size}}', { size: item.size })}</p>
+                      )}
+                      <p className="text-blue-600 font-semibold">{formatPrice(item.price)}</p>
+                    </div>
 
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center border border-gray-300 rounded-lg">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center border border-gray-300 rounded-lg">
+                        <button
+                          onClick={() => handleQuantityChange(item.id, item.size, item.quantity - 1)}
+                          className="px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                        >
+                          −
+                        </button>
+                        <span className="px-4 py-2 text-lg font-semibold">{item.quantity}</span>
+                        <button
+                          onClick={() => handleQuantityChange(item.id, item.size, item.quantity + 1)}
+                          className="px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                        >
+                          +
+                        </button>
+                      </div>
+                      
                       <button
-                        onClick={() => handleQuantityChange(item.id, item.size, item.quantity - 1)}
-                        className="px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                        onClick={() => handleRemove(item.id, item.size)}
+                        className="text-red-500 hover:text-red-700 transition-colors"
                       >
-                        −
-                      </button>
-                      <span className="px-4 py-2 text-lg font-semibold">{item.quantity}</span>
-                      <button
-                        onClick={() => handleQuantityChange(item.id, item.size, item.quantity + 1)}
-                        className="px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                      >
-                        +
+                        <svg 
+                          className="w-6 h-6" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth="2" 
+                            d="M6 18L18 6M6 6l12 12" 
+                          />
+                        </svg>
                       </button>
                     </div>
-                    
-                    <button
-                      onClick={() => handleRemove(item.id, item.size)}
-                      className="text-red-500 hover:text-red-700 transition-colors"
-                    >
-                      <svg 
-                        className="w-6 h-6" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                      >
-                        <path 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round" 
-                          strokeWidth="2" 
-                          d="M6 18L18 6M6 6l12 12" 
-                        />
-                      </svg>
-                    </button>
                   </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Order Summary */}
-            <div className="lg:col-span-1 space-y-6">
-              {/* Shipping Country Selection */}
-              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('shipping_country', 'Leveransland')}</h3>
-                <select
-                  value={cart.shippingCountry}
-                  onChange={handleCountryChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <optgroup label={t('nordic_countries', 'Norden')}>
-                    {SHIPPING_COSTS.NORDIC.countries.map(country => (
-                      <option key={country} value={country}>
-                        {getCountryName(country)}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label={t('other_countries_group', 'Övriga')}>
-                    <option value="OTHER">{t('country_other', 'Övriga länder')}</option>
-                  </optgroup>
-                </select>
-              </div>
-
-              {/* Discount Code Section */}
-              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('discount_code', 'Rabattkod')}</h3>
-                <div className="flex space-x-2">
-                  <input
-                    type="text"
-                    value={discountCodeInput}
-                    onChange={(e) => setDiscountCodeInput(e.target.value)}
-                    placeholder={t('enter_your_code', 'Ange din kod')}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    disabled={!!discountCode}
-                  />
-                  <button
-                    onClick={handleApplyDiscount}
-                    disabled={!!discountCode}
-                    className="px-6 py-3 bg-gray-800 text-white font-semibold rounded-xl hover:bg-gray-900 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {t('apply_button', 'Applicera')}
-                  </button>
-                </div>
+                ))}
               </div>
 
               {/* Order Summary */}
-              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('order_summary', 'Ordersammanfattning')}</h3>
-                
-                <div className="space-y-3">
-                  <div className="flex justify-between text-gray-700">
-                    <span>{t('subtotal', 'Delsumma')}</span>
-                    <span>{formatPrice(subtotal)}</span>
-                  </div>
+              <div className="lg:col-span-1 space-y-6">
+                {/* Shipping Country Selection */}
+                <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('shipping_country', 'Leveransland')}</h3>
+                  <select
+                    value={cart.shippingCountry}
+                    onChange={handleCountryChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <optgroup label={t('nordic_countries', 'Norden')}>
+                      {SHIPPING_COSTS.NORDIC.countries.map(country => (
+                        <option key={country} value={country}>
+                          {getCountryName(country)}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label={t('other_countries_group', 'Övriga')}>
+                      <option value="OTHER">{t('country_other', 'Övriga länder')}</option>
+                    </optgroup>
+                  </select>
+                </div>
 
-                  {discountAmount > 0 && (
-                     <div className="flex justify-between items-center">
-                       <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-1 rounded-full">
-                         {t('affiliate_discount_label', 'Affiliate rabatt, {{percentage}}%', { percentage: discountPercentage })}
-                       </span>
-                       <span className="text-green-600 font-semibold">- {formatPrice(discountAmount)}</span>
-                     </div>
-                  )}
-
-                  <div className="flex justify-between text-gray-700">
-                    <span>{t('shipping_cost_label', 'Frakt ({{country}})', { country: getCountryName(cart.shippingCountry) })}</span>
-                    <span>{formatPrice(shipping)}</span>
+                {/* Discount Code Section */}
+                <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('discount_code', 'Rabattkod')}</h3>
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={discountCodeInput}
+                      onChange={(e) => setDiscountCodeInput(e.target.value)}
+                      placeholder={t('enter_your_code', 'Ange din kod')}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      disabled={!!discountCode}
+                    />
+                    <button
+                      onClick={handleApplyDiscount}
+                      disabled={!!discountCode}
+                      className="px-6 py-3 bg-gray-800 text-white font-semibold rounded-xl hover:bg-gray-900 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {t('apply_button', 'Applicera')}
+                    </button>
                   </div>
                 </div>
 
-                <div className="border-t border-gray-200 my-4"></div>
+                {/* Order Summary */}
+                <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('order_summary', 'Ordersammanfattning')}</h3>
+                  
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-gray-700">
+                      <span>{t('subtotal', 'Delsumma')}</span>
+                      <span>{formatPrice(subtotal)}</span>
+                    </div>
 
-                <div className="space-y-1">
-                  <div className="flex justify-between font-bold text-gray-900 text-xl">
-                    <span>{t('total', 'Totalt')}</span>
-                    <span>{formatPrice(total)}</span>
+                    {discountAmount > 0 && (
+                       <div className="flex justify-between items-center">
+                         <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-1 rounded-full">
+                           {t('affiliate_discount_label', 'Affiliate rabatt, {{percentage}}%', { percentage: discountPercentage })}
+                         </span>
+                         <span className="text-green-600 font-semibold">- {formatPrice(discountAmount)}</span>
+                       </div>
+                    )}
+
+                    <div className="flex justify-between text-gray-700">
+                      <span>{t('shipping_cost_label', 'Frakt ({{country}})', { country: getCountryName(cart.shippingCountry) })}</span>
+                      <span>{formatPrice(shipping)}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-end text-sm text-gray-500">
-                    <span>
-                      {t('vat_included', 'Varav Moms (25%) {{amount}}', {
-                        amount: new Intl.NumberFormat('sv-SE', {
-                          style: 'currency',
-                          currency: 'SEK',
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        }).format(vat)
-                      })}
-                    </span>
+
+                  <div className="border-t border-gray-200 my-4"></div>
+
+                  <div className="space-y-1">
+                    <div className="flex justify-between font-bold text-gray-900 text-xl">
+                      <span>{t('total', 'Totalt')}</span>
+                      <span>{formatPrice(total)}</span>
+                    </div>
+                    <div className="flex justify-end text-sm text-gray-500">
+                      <span>
+                        {t('vat_included', 'Varav Moms (25%) {{amount}}', {
+                          amount: new Intl.NumberFormat('sv-SE', {
+                            style: 'currency',
+                            currency: 'SEK',
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }).format(vat)
+                        })}
+                      </span>
+                    </div>
                   </div>
                 </div>
+
+                {/* Checkout Button */}
+                <button
+                  onClick={handleCheckout}
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                >
+                  {t('go_to_checkout', 'Gå till kassan')}
+                </button>
+
+                <Link
+                  to="/"
+                  className="block text-center text-gray-600 hover:text-blue-600 transition-colors"
+                >
+                  {t('or_continue_shopping', 'eller fortsätt handla')}
+                </Link>
               </div>
-
-              {/* Checkout Button */}
-              <button
-                onClick={handleCheckout}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-              >
-                {t('go_to_checkout', 'Gå till kassan')}
-              </button>
-
-              <Link
-                to="/"
-                className="block text-center text-gray-600 hover:text-blue-600 transition-colors"
-              >
-                {t('or_continue_shopping', 'eller fortsätt handla')}
-              </Link>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
