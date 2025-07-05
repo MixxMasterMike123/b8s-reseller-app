@@ -16,8 +16,36 @@ const AVAILABLE_LANGUAGES = [
   { code: 'en-US', name: 'English (US)', flag: '🇺🇸' }
 ];
 
+// Initialize language synchronously from localStorage
+const getInitialLanguage = () => {
+  try {
+    // Check URL parameters first
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlLang = urlParams.get('lang');
+    
+    if (urlLang && AVAILABLE_LANGUAGES.some(lang => lang.code === urlLang)) {
+      console.log(`🌍 Initial language from URL: ${urlLang}`);
+      return urlLang;
+    }
+    
+    // Check localStorage
+    const savedLang = localStorage.getItem('b8shield-language');
+    if (savedLang && AVAILABLE_LANGUAGES.some(lang => lang.code === savedLang)) {
+      console.log(`🌍 Initial language from localStorage: ${savedLang}`);
+      return savedLang;
+    }
+    
+    // Default to Swedish
+    console.log(`🌍 Initial language defaulted to: sv-SE`);
+    return 'sv-SE';
+  } catch (error) {
+    console.error('Error getting initial language:', error);
+    return 'sv-SE';
+  }
+};
+
 export const TranslationProvider = ({ children }) => {
-  const [currentLanguage, setCurrentLanguage] = useState('sv-SE');
+  const [currentLanguage, setCurrentLanguage] = useState(getInitialLanguage());
   const [translations, setTranslations] = useState({});
   const [loading, setLoading] = useState(false);
 
@@ -94,39 +122,19 @@ export const TranslationProvider = ({ children }) => {
     return AVAILABLE_LANGUAGES.some(lang => lang.code === languageCode);
   };
 
-  // Initialize language from URL or localStorage
+  // Load translations for the initial language
   useEffect(() => {
-    const initializeLanguage = async () => {
+    const initializeTranslations = async () => {
       try {
-        let targetLanguage = 'sv-SE'; // Default to Swedish
-        
-        // Check URL parameters first
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlLang = urlParams.get('lang');
-        
-        if (urlLang && isLanguageSupported(urlLang)) {
-          targetLanguage = urlLang;
-        } else {
-          // Check localStorage
-          const savedLang = localStorage.getItem('b8shield-language');
-          if (savedLang && isLanguageSupported(savedLang)) {
-            targetLanguage = savedLang;
-          }
-        }
-        
-        // Always load translations for the determined language
-        console.log(`🌍 Initializing language: ${targetLanguage}`);
-        setCurrentLanguage(targetLanguage);
-        await loadTranslations(targetLanguage);
-        
+        console.log(`🌍 Loading translations for initial language: ${currentLanguage}`);
+        await loadTranslations(currentLanguage);
       } catch (error) {
-        console.error('Language initialization failed:', error);
-        setCurrentLanguage('sv-SE');
+        console.error('Translation initialization failed:', error);
         await loadTranslations('sv-SE');
       }
     };
 
-    initializeLanguage();
+    initializeTranslations();
   }, []);
 
   const value = {
