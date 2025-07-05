@@ -1821,11 +1821,18 @@ function AdminProducts() {
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {['sv-SE', 'en-GB', 'en-US'].map(langCode => {
                                   const langNames = { 'sv-SE': 'SV', 'en-GB': 'EN', 'en-US': 'US' };
-                                  const hasTranslation = product.descriptions && 
-                                    product.descriptions.b2b && 
-                                    typeof product.descriptions.b2b === 'object' && 
-                                    product.descriptions.b2b[langCode] && 
-                                    product.descriptions.b2b[langCode].trim().length > 0;
+                                  
+                                  // Check translation availability (same logic as ContentLanguageIndicator)
+                                  let hasTranslation = false;
+                                  const b2bDescription = product.descriptions?.b2b;
+                                  
+                                  if (typeof b2bDescription === 'string') {
+                                    // Old format - only Swedish is available
+                                    hasTranslation = langCode === 'sv-SE' && b2bDescription.length > 0;
+                                  } else if (typeof b2bDescription === 'object' && b2bDescription) {
+                                    // New multilingual format - check specific language
+                                    hasTranslation = !!(b2bDescription[langCode] && b2bDescription[langCode].length > 0);
+                                  }
                                   
                                   return (
                                     <span 
