@@ -17,10 +17,10 @@ const LoginPage = () => {
   const [currentLanguage, setCurrentLanguage] = useState(credentialTranslations.getStoredLanguage());
   const [translationsLoaded, setTranslationsLoaded] = useState(false);
 
-  // Load translations on component mount
+  // Load translations on component mount and language change
   useEffect(() => {
     const loadTranslations = async () => {
-      await credentialTranslations.loadTranslations(currentLanguage);
+      await credentialTranslations.setLanguage(currentLanguage);
       setTranslationsLoaded(true);
     };
     
@@ -28,8 +28,9 @@ const LoginPage = () => {
   }, [currentLanguage]);
 
   const handleLanguageChange = async (languageCode) => {
+    setTranslationsLoaded(false);  // Show loading state during switch
     setCurrentLanguage(languageCode);
-    await credentialTranslations.setLanguage(languageCode);
+    // Let useEffect handle the translation loading
   };
 
   const t = (key, fallback = null) => {
