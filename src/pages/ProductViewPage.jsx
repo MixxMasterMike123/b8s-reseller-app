@@ -400,12 +400,18 @@ function ProductViewPage() {
                               <h3 className="text-base font-semibold text-gray-900 truncate">
                                 {product.name}
                               </h3>
-                              <SmartProductDescription 
-                                product={product}
-                                type="best"
-                                as="p"
-                                className="mt-1 text-sm text-gray-600 line-clamp-2"
-                              />
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {product.size && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                                    {product.size}
+                                  </span>
+                                )}
+                                {product.sku && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+                                    {product.sku}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                           
@@ -508,12 +514,18 @@ function ProductViewPage() {
                             })()}
                             <div className="min-w-0 flex-1">
                               <div className="text-sm font-semibold text-gray-900 truncate">{product.name}</div>
-                              <SmartProductDescription 
-                                product={product}
-                                type="best"
-                                as="div"
-                                className="text-xs text-gray-600 truncate max-w-xs"
-                              />
+                              <div className="mt-1 flex flex-wrap gap-1">
+                                {product.size && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                    {product.size}
+                                  </span>
+                                )}
+                                {product.sku && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                    {product.sku}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>
