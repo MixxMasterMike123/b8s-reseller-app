@@ -98,29 +98,31 @@ export const TranslationProvider = ({ children }) => {
   useEffect(() => {
     const initializeLanguage = async () => {
       try {
+        let targetLanguage = 'sv-SE'; // Default to Swedish
+        
         // Check URL parameters first
         const urlParams = new URLSearchParams(window.location.search);
         const urlLang = urlParams.get('lang');
         
         if (urlLang && isLanguageSupported(urlLang)) {
-          await changeLanguage(urlLang);
-          return;
+          targetLanguage = urlLang;
+        } else {
+          // Check localStorage
+          const savedLang = localStorage.getItem('b8shield-language');
+          if (savedLang && isLanguageSupported(savedLang)) {
+            targetLanguage = savedLang;
+          }
         }
         
-        // Check localStorage
-        const savedLang = localStorage.getItem('b8shield-language');
-        if (savedLang && isLanguageSupported(savedLang)) {
-          await changeLanguage(savedLang);
-          return;
-        }
-        
-        // Default to Swedish and load translations
-        setCurrentLanguage('sv-SE');
-        await loadTranslations('sv-SE');
+        // Always load translations for the determined language
+        console.log(`🌍 Initializing language: ${targetLanguage}`);
+        setCurrentLanguage(targetLanguage);
+        await loadTranslations(targetLanguage);
         
       } catch (error) {
         console.error('Language initialization failed:', error);
         setCurrentLanguage('sv-SE');
+        await loadTranslations('sv-SE');
       }
     };
 
