@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
-import ShopLanguageSwitcher from './ShopLanguageSwitcher';
 import CountrySwitcher from './CountrySwitcher';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useNavigate } from 'react-router-dom';
@@ -77,7 +76,6 @@ const ShopNavigation = ({ breadcrumb }) => {
             )}
           </Link>
           <div className="flex items-center ml-4 space-x-4">
-            <ShopLanguageSwitcher />
             <CountrySwitcher />
           </div>
         </div>
