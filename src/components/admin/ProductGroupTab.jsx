@@ -2,27 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../../contexts/TranslationContext';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import toast from 'react-hot-toast';
 import { 
   getProductGroupContent, 
-  saveProductGroupContent, 
   getDefaultGroupContent,
-  getProductsInGroup,
-  validateGroupContent
+  getProductsInGroup
 } from '../../utils/productGroups';
-import { useAuth } from '../../contexts/AuthContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import ContentLanguageIndicator from '../ContentLanguageIndicator';
 
-const ProductGroupTab = ({ productGroup, onContentChange }) => {
+const ProductGroupTab = ({ productGroup, onContentChange, onGroupContentUpdate }) => {
   const { t } = useTranslation();
-  const { user } = useAuth();
   const { currentLanguage, getContentValue, setContentValue } = useContentTranslation();
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [groupContent, setGroupContent] = useState(getDefaultGroupContent());
   const [productsInGroup, setProductsInGroup] = useState([]);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
     if (productGroup) {
@@ -32,23 +25,46 @@ const ProductGroupTab = ({ productGroup, onContentChange }) => {
   }, [productGroup]);
 
   const loadGroupContent = async () => {
-    if (!productGroup) return;
+    if (!productGroup) {
+      console.log('🚫 loadGroupContent: No productGroup provided');
+      return;
+    }
     
+    console.log('📖 Loading group content for:', productGroup);
     setLoading(true);
     try {
       const content = await getProductGroupContent(productGroup);
+      console.log('📖 Loaded content from DB:', content);
+      
       if (content) {
-        setGroupContent(content);
+        // Ensure groupName is always set
+        const finalContent = {
+          ...content,
+          groupName: content.groupName || productGroup
+        };
+        console.log('📖 Setting loaded content:', finalContent);
+        setGroupContent(finalContent);
+        
+        // Notify parent of loaded content
+        if (onGroupContentUpdate) {
+          onGroupContentUpdate(finalContent);
+        }
       } else {
         // Initialize with group name if no content exists
-        setGroupContent({
+        const defaultContent = {
           ...getDefaultGroupContent(),
           groupName: productGroup
-        });
+        };
+        console.log('📖 No content found, using default:', defaultContent);
+        setGroupContent(defaultContent);
+        
+        // Notify parent of default content
+        if (onGroupContentUpdate) {
+          onGroupContentUpdate(defaultContent);
+        }
       }
     } catch (error) {
-      console.error('Error loading group content:', error);
-      toast.error(t('group_content_load_error', 'Kunde inte ladda gruppinnehåll'));
+      console.error('❌ Error loading group content:', error);
     } finally {
       setLoading(false);
     }
@@ -66,37 +82,24 @@ const ProductGroupTab = ({ productGroup, onContentChange }) => {
   };
 
   const handleContentChange = (field, value) => {
-    setGroupContent(prev => ({
-      ...prev,
-      [field]: setContentValue(prev[field], value)
-    }));
-    setHasUnsavedChanges(true);
+    console.log('📝 Content change:', { field, value, currentLanguage });
+    
+    const newValue = setContentValue(groupContent[field], value);
+    console.log('🔄 New content value:', { field, oldValue: groupContent[field], newValue });
+    
+    const updatedContent = {
+      ...groupContent,
+      [field]: newValue
+    };
+    
+    setGroupContent(updatedContent);
     
     if (onContentChange) {
       onContentChange(field, value);
     }
-  };
-
-  const handleSave = async () => {
-    if (!productGroup || !user?.uid) return;
     
-    // Validate content
-    const errors = validateGroupContent(groupContent);
-    if (errors.length > 0) {
-      toast.error(errors[0]);
-      return;
-    }
-    
-    setSaving(true);
-    try {
-      await saveProductGroupContent(productGroup, groupContent, user.uid);
-      setHasUnsavedChanges(false);
-      toast.success(t('group_content_saved', 'Gruppinnehåll sparat'));
-    } catch (error) {
-      console.error('Error saving group content:', error);
-      toast.error(t('group_content_save_error', 'Kunde inte spara gruppinnehåll'));
-    } finally {
-      setSaving(false);
+    if (onGroupContentUpdate) {
+      onGroupContentUpdate(updatedContent);
     }
   };
 
@@ -142,32 +145,18 @@ const ProductGroupTab = ({ productGroup, onContentChange }) => {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <h3 className="text-lg font-medium text-blue-900">
-              {t('group_content_title', 'Gruppinnehåll för {{group}}', { group: productGroup })}
-            </h3>
-            <p className="text-sm text-blue-700 mt-1">
-              {t('group_content_desc', 'Detta innehåll delas mellan alla produkter i gruppen')}
+        <div>
+          <h3 className="text-lg font-medium text-blue-900">
+            {t('group_content_title', 'Gruppinnehåll för {{group}}', { group: productGroup })}
+          </h3>
+          <p className="text-sm text-blue-700 mt-1">
+            {t('group_content_desc', 'Detta innehåll delas mellan alla produkter i gruppen')}
+          </p>
+          {productsInGroup.length > 0 && (
+            <p className="text-xs text-blue-600 mt-2">
+              {t('affected_products', 'Påverkar {{count}} produkter', { count: productsInGroup.length })}
             </p>
-            {productsInGroup.length > 0 && (
-              <p className="text-xs text-blue-600 mt-2">
-                {t('affected_products', 'Påverkar {{count}} produkter', { count: productsInGroup.length })}
-              </p>
-            )}
-          </div>
-          
-          <button
-            onClick={handleSave}
-            disabled={!hasUnsavedChanges || saving}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              hasUnsavedChanges && !saving
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            {saving ? t('saving', 'Sparar...') : t('save_group_content', 'Spara gruppinnehåll')}
-          </button>
+          )}
         </div>
       </div>
 
@@ -182,7 +171,15 @@ const ProductGroupTab = ({ productGroup, onContentChange }) => {
           />
           <ReactQuill
             theme="snow"
-            value={getContentValue(groupContent.sizeGuide) || ''}
+            value={(() => {
+              const value = getContentValue(groupContent.sizeGuide) || '';
+              console.log('🎨 Rendering sizeGuide:', { 
+                raw: groupContent.sizeGuide, 
+                processed: value, 
+                currentLanguage 
+              });
+              return value;
+            })()}
             onChange={(value) => handleContentChange('sizeGuide', value)}
             modules={quillModules}
             placeholder={currentLanguage === 'sv-SE' ? 
@@ -239,7 +236,15 @@ const ProductGroupTab = ({ productGroup, onContentChange }) => {
           />
           <ReactQuill
             theme="snow"
-            value={getContentValue(groupContent.howItsMade) || ''}
+            value={(() => {
+              const value = getContentValue(groupContent.howItsMade) || '';
+              console.log('🎨 Rendering howItsMade:', { 
+                raw: groupContent.howItsMade, 
+                processed: value, 
+                currentLanguage 
+              });
+              return value;
+            })()}
             onChange={(value) => handleContentChange('howItsMade', value)}
             modules={quillModules}
             placeholder={currentLanguage === 'sv-SE' ? 

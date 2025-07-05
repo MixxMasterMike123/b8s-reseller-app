@@ -18,22 +18,38 @@ const PRODUCT_GROUPS_COLLECTION = 'productGroups';
  * Get product group content by group ID
  */
 export const getProductGroupContent = async (groupId) => {
-  if (!groupId) return null;
+  if (!groupId) {
+    console.log('🚫 getProductGroupContent: No groupId provided');
+    return null;
+  }
+  
+  console.log('🔍 getProductGroupContent called for:', groupId);
   
   try {
     const docRef = doc(db, PRODUCT_GROUPS_COLLECTION, groupId);
+    console.log('📄 Document path:', docRef.path);
+    
     const docSnap = await getDoc(docRef);
+    console.log('📄 Document exists:', docSnap.exists());
     
     if (docSnap.exists()) {
+      const data = docSnap.data();
+      console.log('📄 Document data:', data);
       return {
         id: docSnap.id,
-        ...docSnap.data()
+        ...data
       };
     }
     
+    console.log('📄 No document found for group:', groupId);
     return null;
   } catch (error) {
-    console.error('Error getting product group content:', error);
+    console.error('❌ Error getting product group content:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      code: error.code,
+      groupId
+    });
     throw error;
   }
 };
@@ -44,9 +60,19 @@ export const getProductGroupContent = async (groupId) => {
 export const saveProductGroupContent = async (groupId, groupData, currentUserUid) => {
   if (!groupId) throw new Error('Group ID is required');
   
+  console.log('🔍 saveProductGroupContent called with:', {
+    groupId,
+    groupData,
+    currentUserUid,
+    collection: PRODUCT_GROUPS_COLLECTION
+  });
+  
   try {
     const docRef = doc(db, PRODUCT_GROUPS_COLLECTION, groupId);
+    console.log('📝 Document reference created:', docRef.path);
+    
     const docSnap = await getDoc(docRef);
+    console.log('📖 Document exists:', docSnap.exists());
     
     const now = serverTimestamp();
     const dataToSave = {
@@ -55,21 +81,33 @@ export const saveProductGroupContent = async (groupId, groupData, currentUserUid
       updatedAt: now
     };
     
+    console.log('💾 Data to save:', dataToSave);
+    
     if (docSnap.exists()) {
       // Update existing
+      console.log('📝 Updating existing document...');
       await updateDoc(docRef, dataToSave);
+      console.log('✅ Document updated successfully');
     } else {
       // Create new
-      await setDoc(docRef, {
+      const finalData = {
         ...dataToSave,
         groupId,
         createdAt: now
-      });
+      };
+      console.log('📝 Creating new document with:', finalData);
+      await setDoc(docRef, finalData);
+      console.log('✅ Document created successfully');
     }
     
     return true;
   } catch (error) {
-    console.error('Error saving product group content:', error);
+    console.error('❌ Error saving product group content:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
     throw error;
   }
 };

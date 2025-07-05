@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { db, storage } from '../../firebase/config';
+import { db, storage, auth } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { useTranslation } from '../../contexts/TranslationContext';
@@ -13,6 +13,7 @@ import 'react-quill/dist/quill.snow.css';
 import AppLayout from '../../components/layout/AppLayout';
 import ContentLanguageIndicator from '../../components/ContentLanguageIndicator';
 import ProductGroupTab from '../../components/admin/ProductGroupTab';
+import { saveProductGroupContent } from '../../utils/productGroups';
 
 // Maximum size for image files (5MB)
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
@@ -21,7 +22,7 @@ const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const USE_DEFAULT_DB = false;
 
 function AdminProducts() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const { currentLanguage, getContentValue, setContentValue } = useContentTranslation();
   const { t } = useTranslation();
   const [products, setProducts] = useState([]);
@@ -100,6 +101,7 @@ function AdminProducts() {
     }
   });
   const [filteredProduct, setFilteredProduct] = useState(null);
+  const [groupContent, setGroupContent] = useState(null);
 
   // Load products from Firestore
   const fetchProducts = async () => {
@@ -214,6 +216,9 @@ function AdminProducts() {
     // Reset group input for autocomplete
     setGroupInput('');
     
+    // Reset group content
+    setGroupContent(null);
+    
     setIsAddingProduct(true);
   };
 
@@ -304,6 +309,9 @@ function AdminProducts() {
     
     // Set group input for autocomplete
     setGroupInput(product.group || '');
+    
+    // Reset group content (will be loaded by ProductGroupTab)
+    setGroupContent(null);
     
     setIsAddingProduct(true);
   };
@@ -679,6 +687,42 @@ function AdminProducts() {
         }
       }
       
+      // Save group content if it exists and has been modified
+      if (formData.group && groupContent && Object.keys(groupContent).length > 0) {
+        try {
+          console.log('💾 Saving group content for:', formData.group);
+          console.log('💾 Group content:', groupContent);
+          console.log('💾 User state:', user);
+          console.log('💾 User UID:', user?.uid);
+          
+          // Try to get user UID from context, fallback to Firebase Auth directly
+          let userUid = user?.uid;
+          if (!userUid) {
+            console.log('💾 No user in context, checking Firebase Auth directly...');
+            const currentUser = auth.currentUser;
+            userUid = currentUser?.uid;
+            console.log('💾 Firebase Auth currentUser:', currentUser);
+            console.log('💾 Firebase Auth currentUser UID:', userUid);
+          }
+          
+          if (userUid) {
+            await saveProductGroupContent(formData.group, groupContent, userUid);
+            console.log('✅ Group content saved successfully');
+            toast.success('Gruppinnehåll sparat');
+          } else {
+            console.log('⚠️ No user found in context or Firebase Auth, skipping group content save');
+            console.log('⚠️ Debug - isAdmin:', isAdmin);
+            console.log('⚠️ Debug - user object:', user);
+            console.log('⚠️ Debug - auth.currentUser:', auth.currentUser);
+            toast.error('Kunde inte spara gruppinnehåll - ingen användare hittades');
+          }
+        } catch (error) {
+          console.error('❌ Error saving group content:', error);
+          toast.error('Kunde inte spara gruppinnehåll');
+          // Don't fail the whole operation, just log the error
+        }
+      }
+
       // Refresh products list
       await fetchProducts();
       setIsAddingProduct(false);
@@ -694,6 +738,9 @@ function AdminProducts() {
       setB2cGalleryPreviews([]);
       setExistingB2cGallery([]);
       setImagesToDelete([]);
+      
+      // Clear group content
+      setGroupContent(null);
       
     } catch (err) {
       console.error('Error saving product:', err);
@@ -1732,6 +1779,10 @@ function AdminProducts() {
                     productGroup={formData.group}
                     onContentChange={(field, value) => {
                       console.log('Group content changed:', field, value);
+                    }}
+                    onGroupContentUpdate={(content) => {
+                      console.log('📝 Group content updated:', content);
+                      setGroupContent(content);
                     }}
                   />
                 </div>
