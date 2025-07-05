@@ -1802,17 +1802,17 @@ function AdminProducts() {
                               <div className="text-xs text-gray-500 mb-1">SKU: <span className="font-mono">{product.sku || 'Ej angivet'}</span></div>
                               <div className="flex flex-wrap gap-2 text-xs">
                                 {product.size && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded font-medium bg-blue-100 text-blue-800" style={{fontSize: '10px'}}>
                                     {product.size}
                                   </span>
                                 )}
                                 {product.color && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded font-medium bg-purple-100 text-purple-800" style={{fontSize: '10px'}}>
                                     {product.color}
                                   </span>
                                 )}
                                 {product.group && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded font-medium bg-green-100 text-green-800" style={{fontSize: '10px'}}>
                                     {product.group}
                                   </span>
                                 )}
@@ -1840,7 +1840,7 @@ function AdminProducts() {
                                   
                                   return (
                                     <div className="flex items-center gap-1">
-                                      <span className="text-xs text-gray-600 font-medium">B2B</span>
+                                      <span className="text-gray-600 font-medium" style={{fontSize: '10px'}}>B2B</span>
                                       <div className={`w-2 h-2 rounded-full ${statusColor}`} title={`B2B: ${completedLanguages}/3 språk`}></div>
                                     </div>
                                   );
@@ -1866,7 +1866,7 @@ function AdminProducts() {
                                   
                                   return (
                                     <div className="flex items-center gap-1">
-                                      <span className="text-xs text-gray-600 font-medium">B2C</span>
+                                      <span className="text-gray-600 font-medium" style={{fontSize: '10px'}}>B2C</span>
                                       <div className={`w-2 h-2 rounded-full ${statusColor}`} title={`B2C: ${completedLanguages}/3 språk`}></div>
                                     </div>
                                   );
