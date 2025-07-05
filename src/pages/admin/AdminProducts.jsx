@@ -4,11 +4,13 @@ import { collection, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc,
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
+import { useContentTranslation } from '../../hooks/useContentTranslation';
 import toast from 'react-hot-toast';
 import ProductMenu from '../../components/ProductMenu';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import AppLayout from '../../components/layout/AppLayout';
+import ContentLanguageIndicator from '../../components/ContentLanguageIndicator';
 
 // Maximum size for image files (5MB)
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
@@ -18,6 +20,7 @@ const USE_DEFAULT_DB = false;
 
 function AdminProducts() {
   const { isAdmin } = useAuth();
+  const { currentLanguage, getContentValue, setContentValue } = useContentTranslation();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -817,9 +820,25 @@ function AdminProducts() {
           /* Product Form with Tabs */
           <div className="bg-white shadow rounded-lg mb-8">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">
-                {selectedProduct ? 'Redigera Produkt' : 'Lägg till Ny Produkt'}
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-medium text-gray-900">
+                  {selectedProduct ? 'Redigera Produkt' : 'Lägg till Ny Produkt'}
+                </h2>
+                
+                {/* Current Language Indicator */}
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">Redigerar på:</span>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                    currentLanguage === 'sv-SE' ? 'bg-blue-100 text-blue-800' :
+                    currentLanguage === 'en-GB' ? 'bg-green-100 text-green-800' :
+                    'bg-purple-100 text-purple-800'
+                  }`}>
+                    {currentLanguage === 'sv-SE' ? '🇸🇪 Svenska' :
+                     currentLanguage === 'en-GB' ? '🇬🇧 English (UK)' :
+                     '🇺🇸 English (US)'}
+                  </span>
+                </div>
+              </div>
               
               {/* Tab Navigation */}
               <div className="flex space-x-8">
@@ -1381,23 +1400,25 @@ function AdminProducts() {
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   {/* B2B Description */}
                   <div className="sm:col-span-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        B2B Beskrivning (Teknisk information för återförsäljare)
-                      </label>
-                    </div>
+                    <ContentLanguageIndicator 
+                      contentField={formData.descriptions?.b2b}
+                      label="B2B Beskrivning (Teknisk information för återförsäljare)"
+                    />
                     <textarea
-                      value={formData.descriptions?.b2b || ''}
+                      value={getContentValue(formData.descriptions?.b2b)}
                       onChange={(e) => setFormData({
                         ...formData,
                         descriptions: {
                           ...formData.descriptions,
-                          b2b: e.target.value
+                          b2b: setContentValue(formData.descriptions?.b2b, e.target.value)
                         }
                       })}
                       rows={4}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Tekniska specifikationer, installationsanvisningar, etc."
+                      placeholder={currentLanguage === 'sv-SE' ? 
+                        "Tekniska specifikationer, installationsanvisningar, etc." :
+                        "Technical specifications, installation instructions, etc."
+                      }
                     />
                   </div>
                   
@@ -1517,39 +1538,43 @@ function AdminProducts() {
                   
                   {/* B2C Description */}
                   <div className="sm:col-span-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        B2C Beskrivning (Konsumentvänlig beskrivning)
-                      </label>
-                    </div>
+                    <ContentLanguageIndicator 
+                      contentField={formData.descriptions?.b2c}
+                      label="B2C Beskrivning (Konsumentvänlig beskrivning)"
+                    />
                     <textarea
-                      value={formData.descriptions?.b2c || ''}
+                      value={getContentValue(formData.descriptions?.b2c)}
                       onChange={(e) => setFormData({
                         ...formData,
                         descriptions: {
                           ...formData.descriptions,
-                          b2c: e.target.value
+                          b2c: setContentValue(formData.descriptions?.b2c, e.target.value)
                         }
                       })}
                       rows={4}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                      placeholder="Marknadsföringstext, fördelar för konsumenten, användningsområden..."
+                      placeholder={currentLanguage === 'sv-SE' ? 
+                        "Marknadsföringstext, fördelar för konsumenten, användningsområden..." :
+                        "Marketing text, consumer benefits, use cases..."
+                      }
                     />
                   </div>
 
                   {/* B2C More Info (WYSIWYG) */}
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Mer Information (Detaljerad produktinformation)
-                    </label>
+                    <ContentLanguageIndicator 
+                      contentField={formData.descriptions?.b2cMoreInfo}
+                      label="Mer Information (Detaljerad produktinformation)"
+                      className="mb-2"
+                    />
                     <div className="border border-gray-300 rounded-md overflow-hidden bg-white">
                       <ReactQuill
-                        value={formData.descriptions?.b2cMoreInfo || ''}
+                        value={getContentValue(formData.descriptions?.b2cMoreInfo)}
                         onChange={(content) => setFormData({
                           ...formData,
                           descriptions: {
                             ...formData.descriptions,
-                            b2cMoreInfo: content
+                            b2cMoreInfo: setContentValue(formData.descriptions?.b2cMoreInfo, content)
                           }
                         })}
                         modules={{
@@ -1563,11 +1588,17 @@ function AdminProducts() {
                           ]
                         }}
                         theme="snow"
-                        placeholder="Lägg till detaljerad produktinformation här..."
+                        placeholder={currentLanguage === 'sv-SE' ? 
+                          "Lägg till detaljerad produktinformation här..." :
+                          "Add detailed product information here..."
+                        }
                       />
                     </div>
                     <p className="mt-2 text-xs text-gray-500">
-                      Använd editorn för att lägga till detaljerad produktinformation, specifikationer, instruktioner, etc.
+                      {currentLanguage === 'sv-SE' ? 
+                        "Använd editorn för att lägga till detaljerad produktinformation, specifikationer, instruktioner, etc." :
+                        "Use the editor to add detailed product information, specifications, instructions, etc."
+                      }
                     </p>
                   </div>
                   

@@ -4,6 +4,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/TranslationContext';
+import { SmartProductDescription } from '../components/SmartContent';
 import AppLayout from '../components/layout/AppLayout';
 import ProductMenu from '../components/ProductMenu';
 import toast from 'react-hot-toast';
@@ -198,15 +199,12 @@ function ProductViewPage() {
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">{selectedProduct.name}</h2>
                     {/* B2B Technical Description */}
-                    {selectedProduct.descriptions?.b2b && (
-                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                        <p className="text-gray-800 whitespace-pre-line">{selectedProduct.descriptions.b2b}</p>
-                      </div>
-                    )}
-                    {/* Fallback to general description if no B2B description */}
-                    {!selectedProduct.descriptions?.b2b && selectedProduct.description && (
-                      <p className="text-gray-600">{selectedProduct.description}</p>
-                    )}
+                    <SmartProductDescription 
+                      product={selectedProduct}
+                      type="best"
+                      as="div"
+                      className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-gray-800"
+                    />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -402,11 +400,12 @@ function ProductViewPage() {
                               <h3 className="text-base font-semibold text-gray-900 truncate">
                                 {product.name}
                               </h3>
-                              {(product.descriptions?.b2b || product.description) && (
-                                <p className="mt-1 text-sm text-gray-600 line-clamp-2">
-                                  {product.descriptions?.b2b || product.description}
-                                </p>
-                              )}
+                              <SmartProductDescription 
+                                product={product}
+                                type="best"
+                                as="p"
+                                className="mt-1 text-sm text-gray-600 line-clamp-2"
+                              />
                             </div>
                           </div>
                           
@@ -509,11 +508,12 @@ function ProductViewPage() {
                             })()}
                             <div className="min-w-0 flex-1">
                               <div className="text-sm font-semibold text-gray-900 truncate">{product.name}</div>
-                              {(product.descriptions?.b2b || product.description) && (
-                                <div className="text-xs text-gray-600 truncate max-w-xs">
-                                  {product.descriptions?.b2b || product.description}
-                                </div>
-                              )}
+                              <SmartProductDescription 
+                                product={product}
+                                type="best"
+                                as="div"
+                                className="text-xs text-gray-600 truncate max-w-xs"
+                              />
                             </div>
                           </div>
                         </td>

@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import { useTranslation } from '../contexts/TranslationContext';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronDownIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
 
 const LanguageSwitcher = () => {
   const { currentLanguage, changeLanguage, getAvailableLanguages } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
   
   const languages = getAvailableLanguages();
   const currentLang = languages.find(lang => lang.code === currentLanguage);
@@ -16,11 +13,8 @@ const LanguageSwitcher = () => {
     // Update context
     await changeLanguage(languageCode);
     
-    // Update URL
-    const currentPath = location.pathname;
-    const newPath = currentPath.replace(/^\/[a-z]{2}(-[A-Z]{2})?/, `/${languageCode}`);
-    navigate(newPath + location.search);
-    
+    // Don't navigate - just change the language and stay on current page
+    // The B8Shield system doesn't use language prefixes in URLs
     setIsOpen(false);
   };
   

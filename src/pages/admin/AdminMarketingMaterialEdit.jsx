@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../contexts/TranslationContext';
+import { useContentTranslation } from '../../hooks/useContentTranslation';
 import AppLayout from '../../components/layout/AppLayout';
+import ContentLanguageIndicator from '../../components/ContentLanguageIndicator';
 import toast from 'react-hot-toast';
 import {
   getGenericMaterialById,
@@ -16,6 +19,8 @@ function AdminMarketingMaterialEdit() {
   const { materialId } = useParams();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const { currentLanguage } = useTranslation();
+  const { getContentValue, setContentValue } = useContentTranslation();
   const [material, setMaterial] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -79,7 +84,7 @@ function AdminMarketingMaterialEdit() {
       
       setMaterial(materialData);
       setFormData({
-        name: materialData.name,
+        name: materialData.name || '',
         description: materialData.description || '',
         category: materialData.category || 'allmänt',
         file: null
@@ -266,12 +271,12 @@ function AdminMarketingMaterialEdit() {
             <div className="space-y-3">
               <div>
                 <span className="text-sm font-medium text-gray-700">Namn:</span>
-                <p className="text-sm text-gray-900">{material.name}</p>
+                <p className="text-sm text-gray-900">{getContentValue(material.name)}</p>
               </div>
               {material.description && (
                 <div>
                   <span className="text-sm font-medium text-gray-700">Beskrivning:</span>
-                  <p className="text-sm text-gray-900">{material.description}</p>
+                  <p className="text-sm text-gray-900">{getContentValue(material.description)}</p>
                 </div>
               )}
               <div>
@@ -295,16 +300,17 @@ function AdminMarketingMaterialEdit() {
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Namn *
-                </label>
+                <ContentLanguageIndicator 
+                  contentField={formData.name}
+                  label="Namn *"
+                />
                 <input
                   type="text"
                   required
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  value={getContentValue(formData.name)}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: setContentValue(prev.name, e.target.value) }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Materialnamn"
+                  placeholder={currentLanguage === 'sv-SE' ? "Materialnamn" : "Material name"}
                 />
               </div>
               
@@ -324,15 +330,16 @@ function AdminMarketingMaterialEdit() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Beskrivning
-                </label>
+                <ContentLanguageIndicator 
+                  contentField={formData.description}
+                  label="Beskrivning"
+                />
                 <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  value={getContentValue(formData.description)}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: setContentValue(prev.description, e.target.value) }))}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Beskrivning av materialet"
+                  placeholder={currentLanguage === 'sv-SE' ? "Beskrivning av materialet" : "Description of the material"}
                 />
               </div>
 

@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../contexts/TranslationContext';
+import { useContentTranslation } from '../../hooks/useContentTranslation';
 import AppLayout from '../../components/layout/AppLayout';
+import ContentLanguageIndicator from '../../components/ContentLanguageIndicator';
 import toast from 'react-hot-toast';
 import {
   getGenericMaterials,
@@ -15,6 +18,8 @@ import {
 
 function AdminMarketingMaterials() {
   const { isAdmin } = useAuth();
+  const { currentLanguage } = useTranslation();
+  const { getContentValue, setContentValue } = useContentTranslation();
   const navigate = useNavigate();
   const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -222,16 +227,17 @@ function AdminMarketingMaterials() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Namn *
-                  </label>
+                  <ContentLanguageIndicator 
+                    contentField={formData.name}
+                    label="Namn *"
+                  />
                   <input
                     type="text"
                     required
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    value={getContentValue(formData.name)}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: setContentValue(prev.name, e.target.value) }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Materialnamn"
+                    placeholder={currentLanguage === 'sv-SE' ? "Materialnamn" : "Material name"}
                   />
                 </div>
                 <div>
@@ -251,15 +257,16 @@ function AdminMarketingMaterials() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Beskrivning
-                </label>
+                <ContentLanguageIndicator 
+                  contentField={formData.description}
+                  label="Beskrivning"
+                />
                 <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  value={getContentValue(formData.description)}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: setContentValue(prev.description, e.target.value) }))}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Beskrivning av materialet"
+                  placeholder={currentLanguage === 'sv-SE' ? "Beskrivning av materialet" : "Description of the material"}
                 />
               </div>
 
@@ -370,7 +377,7 @@ function AdminMarketingMaterials() {
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="text-sm font-medium text-gray-900 mb-1">
-                              {material.name}
+                              {getContentValue(material.name)}
                             </div>
                             <div className="mb-2">
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -379,7 +386,7 @@ function AdminMarketingMaterials() {
                             </div>
                             {material.description && (
                               <div className="text-xs text-gray-500 line-clamp-2">
-                                {material.description}
+                                {getContentValue(material.description)}
                               </div>
                             )}
                           </div>
