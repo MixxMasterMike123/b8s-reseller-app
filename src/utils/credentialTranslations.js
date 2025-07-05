@@ -42,15 +42,9 @@ class CredentialTranslations {
     if (this.loaded && this.currentLanguage === language) return;
     
     try {
-      // For Swedish, use empty translations (no translation needed)
-      if (language === 'sv-SE') {
-        this.translations = {};
-        this.currentLanguage = language;
-        this.loaded = true;
-        return;
-      }
-
+      // Load from Firebase for all languages including Swedish
       const collectionName = `translations_${language.replace('-', '_')}`;
+      console.log(`🔐 Loading credential translations from: ${collectionName}`);
       const querySnapshot = await getDocs(collection(db, collectionName));
       
       if (!querySnapshot.empty) {
