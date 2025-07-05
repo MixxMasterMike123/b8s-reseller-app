@@ -1819,6 +1819,7 @@ function AdminProducts() {
                               </div>
                               {/* Translation status indicators */}
                               <div className="flex items-center gap-3 mt-1">
+                                <span className="text-xs text-gray-500" style={{fontSize: '10px'}}>Översättningar:</span>
                                 {/* B2B Status */}
                                 {(() => {
                                   const b2bDescription = product.descriptions?.b2b;
