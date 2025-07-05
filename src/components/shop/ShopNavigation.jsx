@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
+import ShopLanguageSwitcher from './ShopLanguageSwitcher';
 
 const ShopNavigation = ({ breadcrumb }) => {
   const { cart } = useCart();
@@ -35,6 +36,9 @@ const ShopNavigation = ({ breadcrumb }) => {
               </span>
             )}
           </Link>
+          <div className="ml-4">
+            <ShopLanguageSwitcher />
+          </div>
         </div>
       </div>
     </nav>

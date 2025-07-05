@@ -5,6 +5,7 @@ import { useTranslation } from '../../contexts/TranslationContext';
 import toast from 'react-hot-toast';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
+import ShopCredentialLanguageSwitcher from '../../components/shop/ShopCredentialLanguageSwitcher';
 
 const CustomerLogin = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
@@ -15,6 +16,7 @@ const CustomerLogin = ({ onLoginSuccess }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const [currentLanguage, setCurrentLanguage] = useState(localStorage.getItem('b8shield-credential-language') || 'sv-SE');
 
   const from = location.state?.from?.pathname || "/affiliate-portal";
 
@@ -44,6 +46,12 @@ const CustomerLogin = ({ onLoginSuccess }) => {
       {!onLoginSuccess && <ShopNavigation />}
       <div className={`flex items-center justify-center ${onLoginSuccess ? 'w-full' : 'min-h-screen bg-gray-50'}`}>
         <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
+          <div className="flex justify-end mb-4">
+            <ShopCredentialLanguageSwitcher
+              currentLanguage={currentLanguage}
+              onLanguageChange={setCurrentLanguage}
+            />
+          </div>
           <div>
             <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
               {t('customer_login_title', 'Logga in på ditt konto')}

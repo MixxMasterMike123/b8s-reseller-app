@@ -1,14 +1,22 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from '../../contexts/TranslationContext';
+import ShopCredentialLanguageSwitcher from '../../components/shop/ShopCredentialLanguageSwitcher';
 
 const CustomerRegister = () => {
   const { t } = useTranslation();
+  const [currentLanguage, setCurrentLanguage] = React.useState(localStorage.getItem('b8shield-credential-language') || 'sv-SE');
   
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-md mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-md p-8">
+          <div className="flex justify-end mb-4">
+            <ShopCredentialLanguageSwitcher
+              currentLanguage={currentLanguage}
+              onLanguageChange={setCurrentLanguage}
+            />
+          </div>
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
               {t('customer_register_title', 'Skapa konto')}
