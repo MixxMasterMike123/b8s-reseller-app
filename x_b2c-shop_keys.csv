@@ -8,3 +8,4 @@
 "no_group_content","Ingen information tillgänglig","No information available","No information available","B2C product page - fallback text","Complete","","","Fallback when no group content exists"
 "loading_group_content","Laddar information...","Loading information...","Loading information...","B2C product page - loading state","Complete","","","Loading state for group content"
 "product_reviews_section","Recensioner","Reviews","Reviews","B2C product page - reviews section","Complete","","","Reviews section header on product page"
+"product_reviews_section_with_count","Recensioner (16)","Reviews (16)","Reviews (16)","B2C product page - reviews section with count","Complete","","","Reviews section header with total count on product page"
