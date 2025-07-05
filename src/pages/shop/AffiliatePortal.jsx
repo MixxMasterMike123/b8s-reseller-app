@@ -71,8 +71,9 @@ const AffiliatePortal = () => {
     if (!affiliateData?.affiliateCode) return '';
     
     const baseUrl = 'https://shop.b8shield.com';
-    const countryCode = localStorage.getItem('b8shield-country') || 'se';
-    const path = productPath ? `/${countryCode}${productPath}` : `/${countryCode}`;
+    // Convert full language code (e.g., 'sv-SE') to short code ('se')
+    const langCode = (affiliateData.preferredLang || 'sv-SE').split('-')[1].toLowerCase();
+    const path = productPath ? `/${langCode}${productPath}` : `/${langCode}`;
     const ref = `?ref=${affiliateData.affiliateCode}`;
     
     return `${baseUrl}${path}${ref}`;

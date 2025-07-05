@@ -360,7 +360,7 @@ const AdminAffiliates = () => {
                             )}
                             
                             <a
-                              href={`https://shop.b8shield.com/?ref=${affiliate.affiliateCode}`}
+                              href={`https://shop.b8shield.com/${(affiliate.preferredLang || 'sv-SE').split('-')[1].toLowerCase()}?ref=${affiliate.affiliateCode}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center px-3 py-2 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-gray-300 rounded transition-colors"
