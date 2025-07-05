@@ -30,13 +30,17 @@ const getInitialLanguage = () => {
     
     // Check localStorage
     const savedLang = localStorage.getItem('b8shield-language');
+    console.log(`🌍 MAIN APP: Checking localStorage 'b8shield-language':`, savedLang);
+    console.log(`🌍 MAIN APP: Available languages:`, AVAILABLE_LANGUAGES.map(l => l.code));
     if (savedLang && AVAILABLE_LANGUAGES.some(lang => lang.code === savedLang)) {
-      console.log(`🌍 Initial language from localStorage: ${savedLang}`);
+      console.log(`🌍 MAIN APP: Initial language from localStorage: ${savedLang}`);
       return savedLang;
+    } else {
+      console.log(`🌍 MAIN APP: Saved language not found or unsupported: ${savedLang}`);
     }
     
     // Default to Swedish
-    console.log(`🌍 Initial language defaulted to: sv-SE`);
+    console.log(`🌍 MAIN APP: Initial language defaulted to: sv-SE`);
     return 'sv-SE';
   } catch (error) {
     console.error('Error getting initial language:', error);
@@ -45,7 +49,9 @@ const getInitialLanguage = () => {
 };
 
 export const TranslationProvider = ({ children }) => {
-  const [currentLanguage, setCurrentLanguage] = useState(getInitialLanguage());
+  const initialLanguage = getInitialLanguage();
+  console.log(`🌍 MAIN APP: Component initializing with language: ${initialLanguage}`);
+  const [currentLanguage, setCurrentLanguage] = useState(initialLanguage);
   const [translations, setTranslations] = useState({});
   const [loading, setLoading] = useState(false);
 

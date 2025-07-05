@@ -20,8 +20,9 @@ class CredentialTranslations {
   getStoredLanguage() {
     // Try localStorage first (same key as main app)
     const stored = localStorage.getItem('b8shield-language');
+    console.log(`🔐 CREDENTIAL: Checking localStorage 'b8shield-language':`, stored);
     if (stored) {
-      console.log(`🔐 Language loaded from localStorage: ${stored}`);
+      console.log(`🔐 CREDENTIAL: Language loaded from localStorage: ${stored}`);
       return stored;
     }
     
@@ -109,10 +110,12 @@ class CredentialTranslations {
     
     // Store preference in localStorage (unified key shared with main app)
     localStorage.setItem('b8shield-language', language);
-    console.log(`🔐 Language preference saved: ${language} (shared with main app)`);
+    console.log(`🔐 CREDENTIAL: Language preference saved: ${language} (shared with main app)`);
+    console.log(`🔐 CREDENTIAL: localStorage now contains:`, localStorage.getItem('b8shield-language'));
     
     // Also set cookie for cross-session persistence
     document.cookie = `b8shield-language=${language}; path=/; max-age=${365 * 24 * 60 * 60}`; // 1 year
+    console.log(`🔐 CREDENTIAL: Cookie set for language: ${language}`);
   }
 }
 

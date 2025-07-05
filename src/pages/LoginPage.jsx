@@ -14,7 +14,9 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [currentLanguage, setCurrentLanguage] = useState(credentialTranslations.getStoredLanguage());
+  const initialLanguage = credentialTranslations.getStoredLanguage();
+  console.log(`🔐 LOGIN PAGE: Initial language detected: ${initialLanguage}`);
+  const [currentLanguage, setCurrentLanguage] = useState(initialLanguage);
   const [translationsLoaded, setTranslationsLoaded] = useState(false);
 
   // Load translations on component mount and language change

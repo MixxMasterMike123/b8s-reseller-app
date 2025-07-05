@@ -67,6 +67,23 @@ import OrderConfirmation from './pages/shop/OrderConfirmation';
 
 import { Toaster } from 'react-hot-toast';
 
+// Component to conditionally wrap with TranslationProvider based on route
+const ConditionalTranslationProvider = ({ children }) => {
+  const location = useLocation();
+  
+  // Credential pages that should NOT use TranslationProvider (they use credentialTranslations)
+  const credentialRoutes = ['/login', '/register', '/forgot-password'];
+  const isCredentialPage = credentialRoutes.includes(location.pathname);
+  
+  if (isCredentialPage) {
+    console.log(`🌍 CONDITIONAL: Credential page detected (${location.pathname}) - using credentialTranslations`);
+    return children; // No TranslationProvider wrapper
+  } else {
+    console.log(`🌍 CONDITIONAL: Authenticated page detected (${location.pathname}) - using TranslationProvider`);
+    return <TranslationProvider>{children}</TranslationProvider>;
+  }
+};
+
 function App() {
   // 🚂 WAGON SYSTEM: State for wagon routes
   const [wagonRoutes, setWagonRoutes] = useState([]);
@@ -343,9 +360,15 @@ function App() {
       <SimpleAuthContextProvider>
         <OrderProvider>
           <CartProvider>
-            <TranslationProvider>
-              {content}
-            </TranslationProvider>
+            {appMode === 'shop' ? (
+              // B2C Shop - No TranslationProvider needed (uses own system)
+              content
+            ) : (
+              // B2B Reseller Portal - Only wrap authenticated routes with TranslationProvider
+              <ConditionalTranslationProvider>
+                {content}
+              </ConditionalTranslationProvider>
+            )}
           </CartProvider>
         </OrderProvider>
       </SimpleAuthContextProvider>
