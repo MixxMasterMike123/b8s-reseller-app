@@ -16,6 +16,7 @@ import {
   TrashIcon,
   CheckIcon,
   XMarkIcon,
+  ExclamationTriangleIcon,
   GlobeAltIcon,
   DocumentTextIcon,
   CogIcon,
