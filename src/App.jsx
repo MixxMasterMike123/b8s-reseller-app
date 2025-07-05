@@ -71,10 +71,10 @@ import { Toaster } from 'react-hot-toast';
 const ConditionalTranslationProvider = ({ children, appMode }) => {
   const location = useLocation();
   
-  // B2C Shop doesn't use TranslationProvider (uses own system)
+  // B2C Shop now uses TranslationProvider for internationalization
   if (appMode === 'shop') {
-    console.log(`🌍 CONDITIONAL: B2C Shop mode - no TranslationProvider needed`);
-    return children;
+    console.log(`🌍 CONDITIONAL: B2C Shop mode - using TranslationProvider for i18n`);
+    return <TranslationProvider>{children}</TranslationProvider>;
   }
   
   // B2B Reseller Portal - Credential pages should NOT use TranslationProvider (they use credentialTranslations)
