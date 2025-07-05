@@ -31,7 +31,7 @@ const AdminTranslations = () => {
   const [translationType, setTranslationType] = useState('admin');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [selectedLanguage, setSelectedLanguage] = useState('en-GB');
+  const [selectedLanguage, setSelectedLanguage] = useState('sv-SE');
   const [translations, setTranslations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingTranslation, setEditingTranslation] = useState(null);
@@ -583,7 +583,7 @@ const AdminTranslations = () => {
   };
 
   // Import translations to Firebase
-  const importToFirebase = async (languageCode = 'en-GB') => {
+  const importToFirebase = async (languageCode = 'sv-SE') => {
     if (!translations || translations.length === 0) {
       toast.error('Inga översättningar att importera. Ladda först från Google Sheets.');
       return;
@@ -602,9 +602,11 @@ const AdminTranslations = () => {
       translations.forEach((translation) => {
         // Skip rows without translation key or value
         const translationKey = translation.key || translation.id;
-        const translationValue = languageCode === 'en-GB' 
-          ? (translation['en-GB'] || translation.englishUK)
-          : (translation['en-US'] || translation.englishUS);
+        const translationValue = languageCode === 'sv-SE'
+          ? (translation['sv-SE'] || translation.swedish)
+          : languageCode === 'en-GB' 
+            ? (translation['en-GB'] || translation.englishUK)
+            : (translation['en-US'] || translation.englishUS);
           
         if (!translationKey || !translationValue) {
           return;
@@ -642,7 +644,7 @@ const AdminTranslations = () => {
   };
 
   // Save current translations (including manual edits) to Firebase
-  const saveCurrentTranslationsToFirebase = async (languageCode = 'en-GB') => {
+  const saveCurrentTranslationsToFirebase = async (languageCode = 'sv-SE') => {
     if (!translations || translations.length === 0) {
       toast.error('Inga översättningar att spara. Ladda först översättningar.');
       return;
@@ -664,9 +666,11 @@ const AdminTranslations = () => {
       translations.forEach((translation) => {
         // Skip rows without translation key or value
         const translationKey = translation.key || translation.id;
-        const translationValue = languageCode === 'en-GB' 
-          ? (translation['en-GB'] || translation.englishUK)
-          : (translation['en-US'] || translation.englishUS);
+        const translationValue = languageCode === 'sv-SE'
+          ? (translation['sv-SE'] || translation.swedish)
+          : languageCode === 'en-GB' 
+            ? (translation['en-GB'] || translation.englishUK)
+            : (translation['en-US'] || translation.englishUS);
           
         if (!translationKey || !translationValue) {
           return;
@@ -705,7 +709,7 @@ const AdminTranslations = () => {
   };
 
   // Clear Firebase translations
-  const clearFirebaseTranslations = async (languageCode = 'en-GB') => {
+  const clearFirebaseTranslations = async (languageCode = 'sv-SE') => {
     const confirmed = window.confirm(`Är du säker på att du vill ta bort alla ${languageCode} översättningar från Firebase? Detta kan inte ångras.`);
     
     if (!confirmed) return;
@@ -738,7 +742,7 @@ const AdminTranslations = () => {
   };
 
   // Load translations from Firebase
-  const loadFromFirebase = async (languageCode = 'en-GB') => {
+  const loadFromFirebase = async (languageCode = 'sv-SE') => {
     const toastId = toast.loading(`Laddar ${languageCode} översättningar från Firebase...`);
     
     try {
@@ -796,7 +800,7 @@ const AdminTranslations = () => {
               Ladda från Google Sheets
             </button>
             <button
-              onClick={() => loadFromFirebase('en-GB')}
+              onClick={() => loadFromFirebase('sv-SE')}
               disabled={loading}
               className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
             >
@@ -1407,6 +1411,7 @@ const AdminTranslations = () => {
               onChange={(e) => setSelectedLanguage(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
+              <option value="sv-SE">🇸🇪 Svenska</option>
               <option value="en-GB">🇬🇧 English (UK)</option>
               <option value="en-US">🇺🇸 English (US)</option>
             </select>
