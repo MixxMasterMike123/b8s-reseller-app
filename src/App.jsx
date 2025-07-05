@@ -68,10 +68,16 @@ import OrderConfirmation from './pages/shop/OrderConfirmation';
 import { Toaster } from 'react-hot-toast';
 
 // Component to conditionally wrap with TranslationProvider based on route
-const ConditionalTranslationProvider = ({ children }) => {
+const ConditionalTranslationProvider = ({ children, appMode }) => {
   const location = useLocation();
   
-  // Credential pages that should NOT use TranslationProvider (they use credentialTranslations)
+  // B2C Shop doesn't use TranslationProvider (uses own system)
+  if (appMode === 'shop') {
+    console.log(`🌍 CONDITIONAL: B2C Shop mode - no TranslationProvider needed`);
+    return children;
+  }
+  
+  // B2B Reseller Portal - Credential pages should NOT use TranslationProvider (they use credentialTranslations)
   const credentialRoutes = ['/login', '/register', '/forgot-password'];
   const isCredentialPage = credentialRoutes.includes(location.pathname);
   
@@ -130,19 +136,20 @@ function App() {
   const content = (
     <Router>
       <AffiliateTracker /> 
-      <div className="min-h-screen bg-gray-50">
-        <Toaster 
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: '#363636',
-              color: '#fff',
-            },
-          }}
-        />
-        
-        <Routes>
+      <ConditionalTranslationProvider appMode={appMode}>
+        <div className="min-h-screen bg-gray-50">
+          <Toaster 
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: '#363636',
+                color: '#fff',
+              },
+            }}
+          />
+          
+          <Routes>
           {appMode === 'shop' ? (
             // B2C Shop Routes
             <>
@@ -351,7 +358,8 @@ function App() {
             </>
           )}
         </Routes>
-      </div>
+        </div>
+      </ConditionalTranslationProvider>
     </Router>
   );
 
@@ -360,15 +368,7 @@ function App() {
       <SimpleAuthContextProvider>
         <OrderProvider>
           <CartProvider>
-            {appMode === 'shop' ? (
-              // B2C Shop - No TranslationProvider needed (uses own system)
-              content
-            ) : (
-              // B2B Reseller Portal - Only wrap authenticated routes with TranslationProvider
-              <ConditionalTranslationProvider>
-                {content}
-              </ConditionalTranslationProvider>
-            )}
+            {content}
           </CartProvider>
         </OrderProvider>
       </SimpleAuthContextProvider>
