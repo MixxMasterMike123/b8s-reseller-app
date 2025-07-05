@@ -78,24 +78,6 @@ const ShopNavigation = ({ breadcrumb }) => {
           </Link>
           <div className="flex items-center ml-4 space-x-4">
             <CountrySwitcher />
-            <ShopLanguageSwitcher />
-            {affiliateData && (affiliateData.affiliateCode || affiliateData.name) && (
-              <div className="flex items-center px-2 py-1 bg-blue-50 border border-blue-200 rounded text-blue-700 text-xs font-medium">
-                <span>
-                  {affiliateData.name
-                    ? t('affiliate_logged_in_as_name', 'Inloggad som affiliate ({{name}})', { name: affiliateData.name })
-                    : t('affiliate_logged_in_as_email', 'Inloggad som affiliate ({{email}})', { email: currentUser?.email || affiliateData.affiliateCode })}
-                </span>
-                <button
-                  className="ml-2 p-1 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  onClick={handleAffiliateLogout}
-                  aria-label={t('affiliate_logout', 'Logga ut')}
-                  title={t('affiliate_logout', 'Logga ut')}
-                >
-                  <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>

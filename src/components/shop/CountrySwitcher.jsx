@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDownIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { COUNTRIES, getCountryFromPath, getAvailableCountries } from '../../config/countries';
+import { useTranslation } from '../../contexts/TranslationContext';
 
 const CountrySwitcher = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Get current country from URL
   const getCurrentCountry = () => {
@@ -16,6 +18,20 @@ const CountrySwitcher = () => {
 
   const currentCountry = getCurrentCountry();
   const currentCountryData = COUNTRIES[currentCountry];
+
+  // Map country code to translation key
+  const getCountryName = (country) => {
+    switch (country.code) {
+      case 'se':
+        return t('country_sweden', 'Sweden');
+      case 'gb':
+        return t('country_uk', 'United Kingdom');
+      case 'us':
+        return t('country_us', 'United States');
+      default:
+        return country.name;
+    }
+  };
 
   const handleCountryChange = (countryCode) => {
     const country = COUNTRIES[countryCode];
@@ -55,7 +71,7 @@ const CountrySwitcher = () => {
         className="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         <span className="text-lg">{currentCountryData.flag}</span>
-        <span className="hidden sm:inline">{currentCountryData.name}</span>
+        <span className="hidden sm:inline">{getCountryName(currentCountryData)}</span>
         <ChevronDownIcon className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       
@@ -71,7 +87,7 @@ const CountrySwitcher = () => {
                 }`}
               >
                 <span className="text-lg">{country.flag}</span>
-                <span className="flex-1">{country.name}</span>
+                <span className="flex-1">{getCountryName(country)}</span>
                 {currentCountry === country.code && (
                   <CheckIcon className="h-4 w-4 text-blue-600" />
                 )}
