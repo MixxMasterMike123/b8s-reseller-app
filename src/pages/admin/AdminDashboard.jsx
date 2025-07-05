@@ -15,7 +15,6 @@ import {
   CubeIcon, 
   ChartBarIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
 import AdminPresenceIndicator from '../../components/AdminPresenceIndicator';
@@ -276,22 +275,8 @@ const AdminDashboard = () => {
         </div>
 
         {/* Admin Presence */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">{t('admin.dashboard.contact_management', 'Kontakthantering')}</h3>
-              <div className="text-sm text-gray-600">
-                <div className="flex items-center space-x-2">
-                  <CheckCircleIcon className="h-5 w-5 text-green-500" />
-                  <span>{t('admin.dashboard.unified_contact_db', 'Enhetlig kontaktdatabas aktiv')}</span>
-                </div>
-                <p className="mt-2">{t('admin.dashboard.contact_sync_description', 'B2B och CRM använder samma kontaktdatabas för perfekt synkronisering.')}</p>
-              </div>
-            </div>
-          </div>
-          <div className="lg:col-span-2">
-            <AdminPresence />
-          </div>
+        <div className="mb-8">
+          <AdminPresence />
         </div>
 
         {/* Recent Orders */}
