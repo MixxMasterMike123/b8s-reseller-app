@@ -6,6 +6,7 @@ import { useTranslation } from '../../contexts/TranslationContext';
 import toast from 'react-hot-toast';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import SeoHreflang from '../../components/shop/SeoHreflang';
+import { getCountryAwareUrl } from '../../utils/productUrls';
 
 const ShoppingCart = () => {
   const { cart, updateQuantity, removeFromCart, updateShippingCountry, calculateTotals, applyDiscountCode, removeDiscount } = useCart();
@@ -84,7 +85,7 @@ const ShoppingCart = () => {
       toast.error(t('cart_is_empty', 'Din varukorg är tom'));
       return;
     }
-    navigate('/checkout');
+    navigate(getCountryAwareUrl('checkout'));
   };
 
   return (
@@ -101,7 +102,7 @@ const ShoppingCart = () => {
               <h2 className="text-2xl font-semibold text-gray-900 mb-4">{t('cart_is_empty_heading', 'Din varukorg är tom')}</h2>
               <p className="text-gray-600 mb-8">{t('cart_empty_description', 'Utforska våra produkter och lägg till något i din varukorg.')}</p>
               <Link
-                to="/"
+                to={getCountryAwareUrl('')}
                 className="inline-block bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
               >
                 {t('continue_shopping', 'Fortsätt handla')}
@@ -270,8 +271,9 @@ const ShoppingCart = () => {
                   {t('go_to_checkout', 'Gå till kassan')}
                 </button>
 
+                {/* Continue Shopping Link */}
                 <Link
-                  to="/"
+                  to={getCountryAwareUrl('')}
                   className="block text-center text-gray-600 hover:text-blue-600 transition-colors"
                 >
                   {t('or_continue_shopping', 'eller fortsätt handla')}
