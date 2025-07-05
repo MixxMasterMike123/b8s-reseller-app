@@ -1817,9 +1817,29 @@ function AdminProducts() {
                                   </span>
                                 )}
                               </div>
-                              {product.description && (
-                                <div className="text-xs text-gray-500 mt-1 line-clamp-2">{product.description}</div>
-                              )}
+                              {/* Language availability badges */}
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {['sv-SE', 'en-GB', 'en-US'].map(langCode => {
+                                  const langNames = { 'sv-SE': 'SV', 'en-GB': 'EN', 'en-US': 'US' };
+                                  const hasTranslation = product.description && 
+                                    typeof product.description === 'object' && 
+                                    product.description[langCode] && 
+                                    product.description[langCode].trim().length > 0;
+                                  
+                                  return (
+                                    <span 
+                                      key={langCode}
+                                      className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${
+                                        hasTranslation 
+                                          ? 'bg-green-100 text-green-800' 
+                                          : 'bg-gray-100 text-gray-400'
+                                      }`}
+                                    >
+                                      {langNames[langCode]}
+                                    </span>
+                                  );
+                                })}
+                              </div>
                             </div>
                           </div>
                         </td>
