@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import ShopNavigation from '../../components/shop/ShopNavigation';
+import { getCountryAwareUrl } from '../../utils/productUrls';
 
 const TermsOfService = () => {
   return (
@@ -175,7 +176,7 @@ const TermsOfService = () => {
               <h2 className="text-2xl font-semibold text-gray-900 mb-4">10. Personuppgifter</h2>
               <p className="mb-4">
                 Behandling av personuppgifter regleras av vår 
-                <Link to="/privacy" className="text-blue-600 hover:underline"> Integritetspolicy</Link>.
+                <Link to={getCountryAwareUrl('privacy')} className="text-blue-600 hover:underline">Integritetspolicy</Link>.
               </p>
             </section>
 
@@ -213,10 +214,10 @@ const TermsOfService = () => {
 
           <div className="mt-8 pt-8 border-t border-gray-200">
             <Link 
-              to="/" 
+              to={getCountryAwareUrl('')} 
               className="inline-flex items-center text-blue-600 hover:text-blue-800"
             >
-              ← Tillbaka till butiken
+              ← Tillbaka till startsidan
             </Link>
           </div>
         </div>

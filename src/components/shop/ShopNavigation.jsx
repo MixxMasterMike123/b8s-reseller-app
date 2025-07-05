@@ -10,6 +10,7 @@ import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { db } from '../../firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
+import { getCountryAwareUrl } from '../../utils/productUrls';
 
 const ShopNavigation = ({ breadcrumb }) => {
   const { cart } = useCart();
@@ -45,20 +46,20 @@ const ShopNavigation = ({ breadcrumb }) => {
 
   const handleAffiliateLogout = async () => {
     await logout();
-    navigate('/');
+    navigate(getCountryAwareUrl(''));
   };
 
   return (
     <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          <Link to={getCountryAwareUrl('')} className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
             B8Shield™
           </Link>
           
           {/* Breadcrumb */}
           <div className="hidden md:flex items-center space-x-2 text-sm text-gray-500">
-            <Link to="/" className="hover:text-blue-600 transition-colors">Hem</Link>
+            <Link to={getCountryAwareUrl('')} className="hover:text-blue-600 transition-colors">Hem</Link>
             {breadcrumb && (
               <>
                 <span>/</span>
@@ -67,7 +68,7 @@ const ShopNavigation = ({ breadcrumb }) => {
             )}
           </div>
           
-          <Link to="/cart" className="text-gray-700 hover:text-blue-600 transition-colors font-medium relative">
+          <Link to={getCountryAwareUrl('cart')} className="text-gray-700 hover:text-blue-600 transition-colors font-medium relative">
             Varukorg
             {cartItemCount > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">

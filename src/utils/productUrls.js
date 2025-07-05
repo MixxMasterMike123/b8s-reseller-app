@@ -79,4 +79,18 @@ export const getProductSeoTitle = (slug) => {
   };
   
   return titles[slug] || 'B8Shield - Professionellt Vasskydd';
+};
+
+// Generate country-aware URL for B2C shop links
+export const getCountryAwareUrl = (path) => {
+  // Get current country from URL path
+  const pathname = window.location.pathname;
+  const segments = pathname.split('/').filter(Boolean);
+  const countryCode = segments[0] || 'se'; // Default to 'se' if no country in path
+  
+  // Remove leading slash if present
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  
+  // Return URL with country code
+  return `/${countryCode}${cleanPath ? `/${cleanPath}` : ''}`;
 }; 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { getCountryAwareUrl } from '../../utils/productUrls';
 
 const ShopFooter = () => {
   return (
@@ -26,17 +27,17 @@ const ShopFooter = () => {
             <h3 className="text-lg font-semibold mb-4">Snabblänkar</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/" className="text-gray-300 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('')} className="text-gray-300 hover:text-white transition-colors">
                   Hem
                 </Link>
               </li>
               <li>
-                <Link to="/cart" className="text-gray-300 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('cart')} className="text-gray-300 hover:text-white transition-colors">
                   Varukorg
                 </Link>
               </li>
               <li>
-                <Link to="/account" className="text-gray-300 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('account')} className="text-gray-300 hover:text-white transition-colors">
                   Mitt konto
                 </Link>
               </li>
@@ -53,22 +54,22 @@ const ShopFooter = () => {
             <h3 className="text-lg font-semibold mb-4">Kundservice & Info</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/shipping" className="text-gray-300 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('shipping')} className="text-gray-300 hover:text-white transition-colors">
                   Leveransinformation
                 </Link>
               </li>
               <li>
-                <Link to="/returns" className="text-gray-300 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('returns')} className="text-gray-300 hover:text-white transition-colors">
                   Returer & Ångerrätt
                 </Link>
               </li>
               <li>
-                <Link to="/affiliate-registration" className="text-gray-300 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('affiliate-registration')} className="text-gray-300 hover:text-white transition-colors">
                   Bli en affiliate
                 </Link>
               </li>
                <li>
-                <Link to="/affiliate-portal" className="text-gray-300 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('affiliate-portal')} className="text-gray-300 hover:text-white transition-colors">
                   Affiliate-portal
                 </Link>
               </li>
@@ -90,22 +91,22 @@ const ShopFooter = () => {
             <h3 className="text-lg font-semibold mb-4">Juridiskt</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/terms" className="text-gray-300 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('terms')} className="text-gray-300 hover:text-white transition-colors">
                   Användarvillkor
                 </Link>
               </li>
               <li>
-                <Link to="/privacy" className="text-gray-300 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('privacy')} className="text-gray-300 hover:text-white transition-colors">
                   Integritetspolicy
                 </Link>
               </li>
               <li>
-                <Link to="/cookies" className="text-gray-300 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('cookies')} className="text-gray-300 hover:text-white transition-colors">
                   Cookie-policy
                 </Link>
               </li>
               <li>
-                <Link to="/returns" className="text-gray-300 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('returns')} className="text-gray-300 hover:text-white transition-colors">
                   Returpolicy
                 </Link>
               </li>

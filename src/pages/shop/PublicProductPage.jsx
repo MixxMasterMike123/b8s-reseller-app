@@ -3,7 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getProductImage } from '../../utils/productImages';
-import { slugToProductMap, getProductSeoTitle, getProductSeoDescription } from '../../utils/productUrls';
+import { slugToProductMap, getProductSeoTitle, getProductSeoDescription, getCountryAwareUrl } from '../../utils/productUrls';
 import toast from 'react-hot-toast';
 import { generateProductSchema } from '../../utils/productFeed';
 import { useCart } from '../../contexts/CartContext';
@@ -334,8 +334,8 @@ const PublicProductPage = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('product_not_found_page_title', 'Produkten hittades inte')}</h1>
-          <Link to="/" className="bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition-colors">
-            {t('back_to_shop_button', 'Tillbaka till butiken')}
+          <Link to={getCountryAwareUrl('')} className="bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition-colors">
+            {t('back_to_shop', 'Tillbaka till butiken')}
           </Link>
         </div>
       </div>

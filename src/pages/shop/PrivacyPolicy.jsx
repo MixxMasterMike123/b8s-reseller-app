@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import ShopNavigation from '../../components/shop/ShopNavigation';
+import { getCountryAwareUrl } from '../../utils/productUrls';
 
 const PrivacyPolicy = () => {
   return (
@@ -115,7 +116,7 @@ const PrivacyPolicy = () => {
               <p className="mb-4">
                 Vi använder cookies och liknande tekniker för att förbättra din upplevelse på vår webbplats. 
                 Du kan hantera dina cookie-inställningar genom din webbläsare. För mer information, 
-                se vår <Link to="/cookies" className="text-blue-600 hover:underline">Cookie-policy</Link>.
+                se vår <Link to={getCountryAwareUrl('cookies')} className="text-blue-600 hover:underline">Cookie-policy</Link>.
               </p>
             </section>
 
@@ -170,10 +171,10 @@ const PrivacyPolicy = () => {
 
           <div className="mt-8 pt-8 border-t border-gray-200">
             <Link 
-              to="/" 
+              to={getCountryAwareUrl('')} 
               className="inline-flex items-center text-blue-600 hover:text-blue-800"
             >
-              ← Tillbaka till butiken
+              ← Tillbaka till startsidan
             </Link>
           </div>
         </div>
