@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import TrustpilotWidget from './TrustpilotWidget';
+import { getRandomReviews, getAverageRating, getReviewStats } from '../utils/trustpilotAPI';
 
 const ReviewsSection = ({ 
   businessId, 
@@ -9,41 +10,36 @@ const ReviewsSection = ({
   showManualReviews = true,
   className = '' 
 }) => {
-  const [displayMode, setDisplayMode] = useState('trustpilot');
+  const [displayMode, setDisplayMode] = useState('manual');
   const [trustpilotFailed, setTrustpilotFailed] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  // Sample manual reviews as fallback
-  const defaultReviews = [
-    {
-      id: 'manual1',
-      rating: 5,
-      text: 'Med B8Shield kunde jag obehindrat fiska på platser som annars hade varit omöjliga, utan att tappa ett enda fiskedrag – otroligt effektivt skydd!',
-      author: 'Paul Wieringa',
-      title: 'Sportfiskarna Sverige',
-      date: '2024-11-15',
-      verified: true
-    },
-    {
-      id: 'manual2',
-      rating: 5,
-      text: 'Fantastisk produkt! Har använt B8Shield i över 6 månader och har inte förlorat en enda jigg sedan dess. Rekommenderas varmt!',
-      author: 'Erik S.',
-      title: 'Verified Purchase',
-      date: '2024-11-20',
-      verified: true
-    },
-    {
-      id: 'manual3',
-      rating: 4,
-      text: 'Mycket bra kvalitet och fungerar som det ska. Lite dyrt men värt pengarna för att slippa förlora fiskedrag.',
-      author: 'Maria L.',
-      title: 'Verified Purchase',
-      date: '2024-11-25',
-      verified: true
-    }
-  ];
+  // Load reviews from API
+  useEffect(() => {
+    const loadReviews = async () => {
+      try {
+        // Get 3 random reviews for display
+        const randomReviews = getRandomReviews(3);
+        const avgRating = await getAverageRating();
+        const stats = await getReviewStats();
+        
+        setReviews(randomReviews);
+        setAverageRating(avgRating);
+        setTotalReviews(stats.totalReviews);
+      } catch (error) {
+        console.error('Error loading reviews:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const allReviews = [...manualReviews, ...defaultReviews];
+    loadReviews();
+  }, []);
+
+  const allReviews = [...manualReviews, ...reviews];
 
   const renderStars = (rating) => {
     return (
@@ -69,9 +65,7 @@ const ReviewsSection = ({
     });
   };
 
-  const averageRating = allReviews.length > 0 
-    ? (allReviews.reduce((sum, review) => sum + review.rating, 0) / allReviews.length).toFixed(1)
-    : 0;
+  // Use the average rating from the API instead of calculating from displayed reviews
 
   return (
     <div className={`reviews-section ${className}`}>
@@ -84,7 +78,7 @@ const ReviewsSection = ({
           </span>
         </div>
         <p className="text-gray-600">
-          Baserat på {allReviews.length} recensioner
+          Baserat på {totalReviews} recensioner
         </p>
       </div>
 
@@ -134,45 +128,55 @@ const ReviewsSection = ({
       {/* Manual Reviews */}
       {(displayMode === 'manual' || !showTrustpilot || trustpilotFailed) && showManualReviews && (
         <div className="space-y-6">
-          {allReviews.map((review) => (
-            <div key={review.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center">
-                  {renderStars(review.rating)}
-                  {review.verified && (
-                    <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                      Verifierat köp
-                    </span>
-                  )}
-                </div>
-                <span className="text-sm text-gray-500">
-                  {formatDate(review.date)}
-                </span>
-              </div>
-              
-              <blockquote className="text-gray-700 italic mb-3">
-                "{review.text}"
-              </blockquote>
-              
-              <div className="flex items-center">
-                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mr-3">
-                  <span className="text-sm font-medium text-gray-700">
-                    {review.author.charAt(0)}
+          {loading ? (
+            <div className="text-center text-gray-500">Laddar recensioner...</div>
+          ) : (
+            reviews.map((review) => (
+              <div key={review.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center">
+                    {renderStars(review.rating)}
+                    {review.verified && (
+                      <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                        Verifierat köp
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-sm text-gray-500">
+                    {formatDate(review.date)}
                   </span>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    {review.author}
-                  </p>
-                  {review.title && (
-                    <p className="text-xs text-gray-500">
-                      {review.title}
+                
+                {review.title && (
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                    {review.title}
+                  </h4>
+                )}
+                
+                <blockquote className="text-gray-700 italic mb-3">
+                  "{review.text}"
+                </blockquote>
+                
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mr-3">
+                    <span className="text-sm font-medium text-gray-700">
+                      {review.author.charAt(0)}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {review.author}
                     </p>
-                  )}
+                    {review.location && (
+                      <p className="text-xs text-gray-500">
+                        {review.location}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       )}
 
@@ -201,6 +205,22 @@ const ReviewsSection = ({
             </svg>
             Lämna en recension
           </a>
+          <button 
+            onClick={() => {
+              setLoading(true);
+              setTimeout(() => {
+                const newReviews = getRandomReviews(3);
+                setReviews(newReviews);
+                setLoading(false);
+              }, 500);
+            }}
+            className="inline-flex items-center justify-center bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Visa andra recensioner
+          </button>
         </div>
         <p className="text-sm text-gray-500">
           Dina recensioner hjälper andra kunder och oss att förbättra våra produkter
