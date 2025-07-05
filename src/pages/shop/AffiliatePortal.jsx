@@ -71,11 +71,11 @@ const AffiliatePortal = () => {
     if (!affiliateData?.affiliateCode) return '';
     
     const baseUrl = 'https://shop.b8shield.com';
-    // Convert full language code (e.g., 'sv-SE') to short code ('se')
-    const langCode = (affiliateData.preferredLang || 'sv-SE').split('-')[1].toLowerCase();
+    // Get the country code from the language code (e.g., 'en-US' -> 'us', 'en-GB' -> 'gb', 'sv-SE' -> 'se')
+    const countryCode = (affiliateData.preferredLang || 'sv-SE').split('-')[1].toLowerCase();
     const ref = `?ref=${affiliateData.affiliateCode}`;
     
-    return `${baseUrl}/${langCode}${productPath}${ref}`;
+    return `${baseUrl}/${countryCode}${productPath}${ref}`;
   };
 
   // Generate QR Code
