@@ -303,6 +303,7 @@ function AdminMarketingMaterialEdit() {
                 <ContentLanguageIndicator 
                   contentField={formData.name}
                   label="Namn *"
+                  currentValue={getContentValue(formData.name)}
                 />
                 <input
                   type="text"
@@ -333,6 +334,7 @@ function AdminMarketingMaterialEdit() {
                 <ContentLanguageIndicator 
                   contentField={formData.description}
                   label="Beskrivning"
+                  currentValue={getContentValue(formData.description)}
                 />
                 <textarea
                   value={getContentValue(formData.description)}

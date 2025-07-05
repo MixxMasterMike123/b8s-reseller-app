@@ -8,7 +8,7 @@
 import React from 'react';
 import { useTranslation } from '../contexts/TranslationContext';
 
-const ContentLanguageIndicator = ({ contentField, label, className = '' }) => {
+const ContentLanguageIndicator = ({ contentField, label, className = '', currentValue = null }) => {
   const { currentLanguage, getAvailableLanguages } = useTranslation();
   
   // Get language display info
@@ -47,6 +47,11 @@ const ContentLanguageIndicator = ({ contentField, label, className = '' }) => {
   
   // Check if current language has content
   const hasCurrentLanguageContent = () => {
+    // If currentValue is provided (real-time editing), use that
+    if (currentValue !== null) {
+      return currentValue && currentValue.length > 0;
+    }
+    
     if (!contentField) return false;
     
     if (typeof contentField === 'string') {
