@@ -25,13 +25,7 @@ export const TranslationProvider = ({ children }) => {
   const loadTranslations = async (languageCode) => {
     setLoading(true);
     try {
-      // For Swedish, use fallback (no translation needed)
-      if (languageCode === 'sv-SE') {
-        setTranslations({});
-        return;
-      }
-
-      // Load from Firebase
+      // Load from Firebase for all languages including Swedish
       const collectionName = `translations_${languageCode.replace('-', '_')}`;
       console.log(`🌍 Loading translations from: ${collectionName}`);
       
@@ -77,14 +71,9 @@ export const TranslationProvider = ({ children }) => {
   const t = (key, fallback = '', variables = {}) => {
     let text = '';
     
-    // If Swedish (default), return the fallback or key
-    if (currentLanguage === 'sv-SE') {
-      text = fallback || key;
-    } else {
-      // For other languages, try to get translation
-      const translation = translations[key];
-      text = translation || fallback || key;
-    }
+    // For all languages, try to get translation from Firebase first, then fallback
+    const translation = translations[key];
+    text = translation || fallback || key;
     
     // Handle variable interpolation
     if (variables && Object.keys(variables).length > 0) {
@@ -125,8 +114,9 @@ export const TranslationProvider = ({ children }) => {
           return;
         }
         
-        // Default to Swedish
+        // Default to Swedish and load translations
         setCurrentLanguage('sv-SE');
+        await loadTranslations('sv-SE');
         
       } catch (error) {
         console.error('Language initialization failed:', error);
