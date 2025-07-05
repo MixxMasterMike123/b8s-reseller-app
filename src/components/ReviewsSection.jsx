@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TrustpilotWidget from './TrustpilotWidget';
 import { getRandomReviews, getAverageRating, getReviewStats } from '../utils/trustpilotAPI';
+import { useTranslation } from '../contexts/TranslationContext';
 
 const ReviewsSection = ({ 
   businessId, 
@@ -10,6 +11,7 @@ const ReviewsSection = ({
   showManualReviews = true,
   className = '' 
 }) => {
+  const { t, currentLanguage } = useTranslation();
   const [displayMode, setDisplayMode] = useState('manual');
   const [trustpilotFailed, setTrustpilotFailed] = useState(false);
   const [reviews, setReviews] = useState([]);
@@ -17,15 +19,20 @@ const ReviewsSection = ({
   const [totalReviews, setTotalReviews] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  // Helper: get language code (sv or en)
+  const getLang = () => {
+    if (currentLanguage?.startsWith('sv')) return 'sv';
+    return 'en';
+  };
+
   // Load reviews from API
   useEffect(() => {
     const loadReviews = async () => {
       try {
-        // Get 3 random reviews for display
-        const randomReviews = getRandomReviews(3);
+        // Get 3 random reviews for display, filtered by language
+        const randomReviews = getRandomReviews(3, getLang());
         const avgRating = await getAverageRating();
         const stats = await getReviewStats();
-        
         setReviews(randomReviews);
         setAverageRating(avgRating);
         setTotalReviews(stats.totalReviews);
@@ -35,9 +42,8 @@ const ReviewsSection = ({
         setLoading(false);
       }
     };
-
     loadReviews();
-  }, []);
+  }, [currentLanguage]);
 
   const allReviews = [...manualReviews, ...reviews];
 
@@ -58,14 +64,14 @@ const ReviewsSection = ({
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('sv-SE', {
+    // Use Swedish or English locale
+    const locale = getLang() === 'sv' ? 'sv-SE' : 'en-GB';
+    return new Date(dateString).toLocaleDateString(locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     });
   };
-
-  // Use the average rating from the API instead of calculating from displayed reviews
 
   return (
     <div className={`reviews-section ${className}`}>
@@ -74,11 +80,11 @@ const ReviewsSection = ({
         <div className="flex items-center justify-center mb-2">
           {renderStars(Math.round(averageRating))}
           <span className="ml-2 text-lg font-semibold text-gray-700">
-            {averageRating} av 5
+            {averageRating} {t('reviews_out_of_5', 'av 5')}
           </span>
         </div>
         <p className="text-gray-600">
-          Baserat på {totalReviews} recensioner
+          {t('reviews_based_on_count', 'Baserat på {{count}} recensioner', { count: totalReviews })}
         </p>
       </div>
 
@@ -94,7 +100,7 @@ const ReviewsSection = ({
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              Trustpilot
+              {t('reviews_trustpilot_tab', 'Trustpilot')}
             </button>
             <button
               onClick={() => setDisplayMode('manual')}
@@ -104,7 +110,7 @@ const ReviewsSection = ({
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              Kundrecensioner
+              {t('reviews_manual_tab', 'Kundrecensioner')}
             </button>
           </div>
         </div>
@@ -116,7 +122,7 @@ const ReviewsSection = ({
           <TrustpilotWidget 
             businessId={businessId}
             domain={domain}
-            locale="sv-SE"
+            locale={getLang() === 'sv' ? 'sv-SE' : 'en-GB'}
             theme="light"
             showReviews={true}
             showStars={false} // We show our own stars above
@@ -129,7 +135,7 @@ const ReviewsSection = ({
       {(displayMode === 'manual' || !showTrustpilot || trustpilotFailed) && showManualReviews && (
         <div className="space-y-6">
           {loading ? (
-            <div className="text-center text-gray-500">Laddar recensioner...</div>
+            <div className="text-center text-gray-500">{t('reviews_loading', 'Laddar recensioner...')}</div>
           ) : (
             reviews.map((review) => (
               <div key={review.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -138,7 +144,7 @@ const ReviewsSection = ({
                     {renderStars(review.rating)}
                     {review.verified && (
                       <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                        Verifierat köp
+                        {t('reviews_verified_purchase', 'Verifierat köp')}
                       </span>
                     )}
                   </div>
@@ -146,17 +152,14 @@ const ReviewsSection = ({
                     {formatDate(review.date)}
                   </span>
                 </div>
-                
                 {review.title && (
                   <h4 className="text-lg font-semibold text-gray-900 mb-2">
                     {review.title}
                   </h4>
                 )}
-                
                 <blockquote className="text-gray-700 italic mb-3">
                   "{review.text}"
                 </blockquote>
-                
                 <div className="flex items-center">
                   <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mr-3">
                     <span className="text-sm font-medium text-gray-700">
@@ -192,7 +195,7 @@ const ReviewsSection = ({
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
             </svg>
-            Läs alla recensioner
+            {t('reviews_read_all', 'Läs alla recensioner')}
           </a>
           <a 
             href="https://www.trustpilot.com/evaluate/shop.b8shield.com"
@@ -203,13 +206,13 @@ const ReviewsSection = ({
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
             </svg>
-            Lämna en recension
+            {t('reviews_leave_review', 'Lämna en recension')}
           </a>
           <button 
             onClick={() => {
               setLoading(true);
               setTimeout(() => {
-                const newReviews = getRandomReviews(3);
+                const newReviews = getRandomReviews(3, getLang());
                 setReviews(newReviews);
                 setLoading(false);
               }, 500);
@@ -219,11 +222,11 @@ const ReviewsSection = ({
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            Visa andra recensioner
+            {t('reviews_show_other', 'Visa andra recensioner')}
           </button>
         </div>
         <p className="text-sm text-gray-500">
-          Dina recensioner hjälper andra kunder och oss att förbättra våra produkter
+          {t('reviews_help_others', 'Dina recensioner hjälper andra kunder och oss att förbättra våra produkter')}
         </p>
       </div>
     </div>

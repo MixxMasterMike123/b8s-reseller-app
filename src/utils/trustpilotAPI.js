@@ -89,6 +89,7 @@ export const fetchTrustpilotReviews = async (businessUnitId) => {
 const getManualReviews = () => [
   {
     id: 'manual_1',
+    lang: 'sv',
     rating: 5,
     title: 'Otroligt effektivt skydd!',
     text: 'Med B8Shield kunde jag obehindrat fiska på platser som annars hade varit omöjliga, utan att tappa ett enda fiskedrag – otroligt effektivt skydd!',
@@ -99,6 +100,7 @@ const getManualReviews = () => [
   },
   {
     id: 'manual_2',
+    lang: 'sv',
     rating: 5,
     title: 'Fantastisk kvalitet',
     text: 'Har använt B8Shield i över 6 månader och har inte förlorat en enda jigg sedan dess. Fantastisk produkt som verkligen håller vad den lovar!',
@@ -109,6 +111,7 @@ const getManualReviews = () => [
   },
   {
     id: 'manual_3',
+    lang: 'sv',
     rating: 4,
     title: 'Bra värde för pengarna',
     text: 'Mycket bra kvalitet och fungerar som det ska. Lite dyrt men definitivt värt pengarna för att slippa förlora dyrare fiskedrag.',
@@ -119,6 +122,7 @@ const getManualReviews = () => [
   },
   {
     id: 'manual_4',
+    lang: 'sv',
     rating: 5,
     title: 'Perfekt för stenig botten',
     text: 'Fiskar mycket i steniga områden och förlorade ständigt jiggs. Sedan jag började använda B8Shield har jag sparat hundratals kronor!',
@@ -129,6 +133,7 @@ const getManualReviews = () => [
   },
   {
     id: 'manual_5',
+    lang: 'sv',
     rating: 5,
     title: 'Rekommenderas varmt',
     text: 'Som en fiskeguide använder jag B8Shield dagligen. Kunderna är alltid imponerade av hur sällan vi fastnar. Toppenkvalitet!',
@@ -139,6 +144,7 @@ const getManualReviews = () => [
   },
   {
     id: 'manual_6',
+    lang: 'sv',
     rating: 4,
     title: 'Bra produkt',
     text: 'Fungerar bra som beskrivet. Har märkt en stor skillnad i antalet fasthängningar. Lätt att använda och praktisk design.',
@@ -149,6 +155,7 @@ const getManualReviews = () => [
   },
   {
     id: 'manual_7',
+    lang: 'sv',
     rating: 5,
     title: 'Sparar fiskedrag dagligen',
     text: 'Fiskar från båt och tidigare tappade jag flera jiggs per tur. Nu kanske en per månad! B8Shield har revolutionerat mitt fiske.',
@@ -159,6 +166,7 @@ const getManualReviews = () => [
   },
   {
     id: 'manual_8',
+    lang: 'sv',
     rating: 4,
     title: 'Smart lösning',
     text: 'Enkel men genial produkt. Installationen är lätt och effekten märks direkt. Rekommenderar till alla som fiskar med jigg.',
@@ -169,6 +177,7 @@ const getManualReviews = () => [
   },
   {
     id: 'manual_9',
+    lang: 'sv',
     rating: 5,
     title: 'Livränddare för fiskedrag',
     text: 'Som en ivrig sportfiskare har B8Shield blivit min bästa vän. Inga mer förlorade dyra jiggs i stenarna!',
@@ -179,6 +188,7 @@ const getManualReviews = () => [
   },
   {
     id: 'manual_10',
+    lang: 'sv',
     rating: 5,
     title: 'Perfekt för gössfiske',
     text: 'Fiskar mycket gös vid stenpackningar och B8Shield har varit en game-changer. Sparar både tid och pengar.',
@@ -189,6 +199,7 @@ const getManualReviews = () => [
   },
   {
     id: 'manual_11',
+    lang: 'sv',
     rating: 4,
     title: 'Solid kvalitet',
     text: 'Bra byggkvalitet och hållbarhet. Har använt samma B8Shield i flera månader utan några problem.',
@@ -199,6 +210,7 @@ const getManualReviews = () => [
   },
   {
     id: 'manual_12',
+    lang: 'sv',
     rating: 5,
     title: 'Måste ha för alla fiskare',
     text: 'Efter att ha testat B8Shield kan jag inte förstå hur jag kunde fiska utan den tidigare. Absolut nödvändig!',
@@ -209,6 +221,7 @@ const getManualReviews = () => [
   },
   {
     id: 'manual_13',
+    lang: 'sv',
     rating: 4,
     title: 'Bra investering',
     text: 'Kostade lite i början men har redan sparat in pengarna genom att inte förlora fiskedrag. Smart köp.',
@@ -219,6 +232,7 @@ const getManualReviews = () => [
   },
   {
     id: 'manual_14',
+    lang: 'sv',
     rating: 5,
     title: 'Revolutionerande produkt',
     text: 'B8Shield har verkligen förändrat mitt fiske. Kan nu våga fiska på ställen som jag aldrig vågade tidigare.',
@@ -229,6 +243,7 @@ const getManualReviews = () => [
   },
   {
     id: 'manual_15',
+    lang: 'sv',
     rating: 5,
     title: 'Toppen service också',
     text: 'Snabb leverans och bra kundsupport när jag hade frågor. Produkten fungerar utmärkt och rekommenderas varmt!',
@@ -239,6 +254,7 @@ const getManualReviews = () => [
   },
   {
     id: 'manual_16',
+    lang: 'sv',
     rating: 4,
     title: 'Väl värt pengarna',
     text: 'Som frekvent fiskare har detta sparat mig många hundra kronor i förlorade fiskedrag. Klart värt investeringen.',
@@ -246,14 +262,36 @@ const getManualReviews = () => [
     date: '2024-06-18',
     verified: true,
     location: 'Kiruna, Sverige'
+  },
+  {
+    id: 'manual_en_1',
+    lang: 'en',
+    rating: 5,
+    title: 'Incredible protection!',
+    text: 'With B8Shield I could fish in places that were previously impossible, without losing a single lure – incredibly effective protection!',
+    author: 'Paul W.',
+    date: '2024-11-15',
+    verified: true,
+    location: 'Stockholm, Sweden'
+  },
+  {
+    id: 'manual_en_2',
+    lang: 'en',
+    rating: 4,
+    title: 'Great value for money',
+    text: 'Very good quality and works as it should. A bit expensive but definitely worth it to avoid losing more expensive lures.',
+    author: 'Maria L.',
+    date: '2024-11-25',
+    verified: true,
+    location: 'Malmo, Sweden'
   }
 ];
 
 /**
  * Get 3 random reviews for display
  */
-export const getRandomReviews = (count = 3) => {
-  const allReviews = getManualReviews();
+export const getRandomReviews = (count = 3, lang = 'sv') => {
+  const allReviews = getManualReviews().filter(r => r.lang === lang);
   const shuffled = [...allReviews].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, count);
 };
