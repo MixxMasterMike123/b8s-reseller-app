@@ -73,10 +73,9 @@ const AffiliatePortal = () => {
     const baseUrl = 'https://shop.b8shield.com';
     // Convert full language code (e.g., 'sv-SE') to short code ('se')
     const langCode = (affiliateData.preferredLang || 'sv-SE').split('-')[1].toLowerCase();
-    const path = productPath ? `/${langCode}${productPath}` : `/${langCode}`;
     const ref = `?ref=${affiliateData.affiliateCode}`;
     
-    return `${baseUrl}${path}${ref}`;
+    return `${baseUrl}/${langCode}${productPath}${ref}`;
   };
 
   // Generate QR Code
