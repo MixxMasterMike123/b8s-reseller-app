@@ -63,6 +63,17 @@ const CountryRouter = ({ children }) => {
     }
   }, [location.pathname, isInitialized, navigate, changeLanguage]);
 
+  // Handle language updates when country changes in URL
+  useEffect(() => {
+    if (!isInitialized) return;
+    
+    const currentCountry = getCountryFromPath(location.pathname);
+    if (currentCountry) {
+      console.log(`🌍 CountryRouter: Country changed to ${currentCountry}, updating language`);
+      updateLanguageForCountry(currentCountry);
+    }
+  }, [location.pathname, isInitialized, changeLanguage]);
+
   // Don't render children until we've determined the country
   if (!isInitialized) {
     return (

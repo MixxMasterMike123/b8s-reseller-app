@@ -77,6 +77,7 @@ const ShopNavigation = ({ breadcrumb }) => {
             )}
           </Link>
           <div className="flex items-center ml-4 space-x-4">
+            <ShopLanguageSwitcher />
             <CountrySwitcher />
           </div>
         </div>
