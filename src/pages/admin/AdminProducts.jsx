@@ -1821,10 +1821,11 @@ function AdminProducts() {
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {['sv-SE', 'en-GB', 'en-US'].map(langCode => {
                                   const langNames = { 'sv-SE': 'SV', 'en-GB': 'EN', 'en-US': 'US' };
-                                  const hasTranslation = product.description && 
-                                    typeof product.description === 'object' && 
-                                    product.description[langCode] && 
-                                    product.description[langCode].trim().length > 0;
+                                  const hasTranslation = product.descriptions && 
+                                    product.descriptions.b2b && 
+                                    typeof product.descriptions.b2b === 'object' && 
+                                    product.descriptions.b2b[langCode] && 
+                                    product.descriptions.b2b[langCode].trim().length > 0;
                                   
                                   return (
                                     <span 
