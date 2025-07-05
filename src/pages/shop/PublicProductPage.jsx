@@ -622,10 +622,32 @@ const PublicProductPage = () => {
                         <p className="text-xs text-gray-500">Publicerad för 2 månader sedan</p>
                       </div>
                       
-                      <div className="text-center">
-                        <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                          Skriv en recension
-                        </button>
+                      <div className="text-center space-y-3">
+                        <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                          <a 
+                            href="https://www.trustpilot.com/review/shop.b8shield.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-gray-600 hover:text-gray-800 text-sm font-medium flex items-center justify-center"
+                          >
+                            <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                            Läs alla recensioner
+                          </a>
+                          <span className="hidden sm:inline text-gray-400">•</span>
+                          <a 
+                            href="https://www.trustpilot.com/evaluate/shop.b8shield.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center justify-center"
+                          >
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                            Skriv en recension
+                          </a>
+                        </div>
                       </div>
                     </div>
                   </div>

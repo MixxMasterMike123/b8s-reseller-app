@@ -176,11 +176,35 @@ const ReviewsSection = ({
         </div>
       )}
 
-      {/* CTA to leave a review */}
-      <div className="text-center mt-8">
-        <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-          Lämna en recension
-        </button>
+      {/* CTA to read more reviews and leave a review */}
+      <div className="text-center mt-8 space-y-4">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <a 
+            href="https://www.trustpilot.com/review/shop.b8shield.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center bg-white border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          >
+            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+            Läs alla recensioner
+          </a>
+          <a 
+            href="https://www.trustpilot.com/evaluate/shop.b8shield.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+            Lämna en recension
+          </a>
+        </div>
+        <p className="text-sm text-gray-500">
+          Dina recensioner hjälper andra kunder och oss att förbättra våra produkter
+        </p>
       </div>
     </div>
   );

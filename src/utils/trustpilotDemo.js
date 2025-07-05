@@ -2,9 +2,15 @@
 // This file shows how to easily switch from manual to Trustpilot reviews
 
 export const TRUSTPILOT_CONFIG = {
-  // Set these when your Trustpilot profile is ready
-  BUSINESS_ID: '', // Get this from your Trustpilot business dashboard
+  // B8Shield Trustpilot Configuration
+  BUSINESS_EMAIL: 'info@b8shield.com', // Trustpilot login email
   DOMAIN: 'shop.b8shield.com',
+  BUSINESS_ID: '', // Get this from your Trustpilot business dashboard after setup
+  
+  // Trustpilot URLs
+  PROFILE_URL: 'https://www.trustpilot.com/review/shop.b8shield.com',
+  REVIEW_URL: 'https://www.trustpilot.com/evaluate/shop.b8shield.com',
+  BUSINESS_DASHBOARD: 'https://business.trustpilot.com',
   
   // Current status
   IS_PROFILE_READY: false, // Change to true when Trustpilot profile is set up
@@ -20,11 +26,17 @@ export const TRUSTPILOT_CONFIG = {
 
 // Instructions for enabling Trustpilot:
 export const TRUSTPILOT_SETUP_INSTRUCTIONS = `
-🚀 HOW TO ENABLE TRUSTPILOT:
+🚀 B8SHIELD TRUSTPILOT SETUP:
 
-1. Go to https://business.trustpilot.com
-2. Claim your profile for "shop.b8shield.com"
-3. Verify your business
+📧 LOGIN CREDENTIALS:
+   Email: info@b8shield.com
+   Password: AAAtpb8s
+   URL: https://business.trustpilot.com
+
+🔧 SETUP STEPS:
+1. Login to Trustpilot Business Dashboard
+2. Claim/verify profile for "shop.b8shield.com"
+3. Complete business verification process
 4. Get your Business Unit ID from Settings > Business Information
 5. Update TRUSTPILOT_CONFIG in this file:
    - Set BUSINESS_ID to your Business Unit ID
@@ -32,8 +44,12 @@ export const TRUSTPILOT_SETUP_INSTRUCTIONS = `
    - Set SHOW_TRUSTPILOT to true
 6. Rebuild and deploy
 
-📍 CURRENT STATUS: Manual reviews only
-📍 NEXT STEP: Set up Trustpilot business profile
+🔗 PROFILE LINKS ADDED:
+   - Read reviews: https://www.trustpilot.com/review/shop.b8shield.com
+   - Leave review: https://www.trustpilot.com/evaluate/shop.b8shield.com
+
+📍 CURRENT STATUS: Manual reviews + Trustpilot links active
+📍 NEXT STEP: Complete Trustpilot business verification
 `;
 
 // Function to get current review configuration
