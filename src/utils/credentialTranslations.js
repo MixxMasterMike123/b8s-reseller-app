@@ -6,7 +6,7 @@
  * Fetches translations from Firebase and provides a simple t() function.
  */
 
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
 class CredentialTranslations {
@@ -42,22 +42,43 @@ class CredentialTranslations {
     if (this.loaded && this.currentLanguage === language) return;
     
     try {
-      const translationKey = `translations_${language.replace('-', '_')}`;
-      const docRef = doc(db, 'translations', translationKey);
-      const docSnap = await getDoc(docRef);
-      
-      if (docSnap.exists()) {
-        this.translations = docSnap.data();
+      // For Swedish, use empty translations (no translation needed)
+      if (language === 'sv-SE') {
+        this.translations = {};
         this.currentLanguage = language;
         this.loaded = true;
+        return;
+      }
+
+      const collectionName = `translations_${language.replace('-', '_')}`;
+      const querySnapshot = await getDocs(collection(db, collectionName));
+      
+      if (!querySnapshot.empty) {
+        // Process Firebase translations
+        const firebaseTranslations = {};
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          // Use 'value' field if available
+          firebaseTranslations[doc.id] = data.value || data.translation || '';
+        });
+        
+        this.translations = firebaseTranslations;
+        this.currentLanguage = language;
+        this.loaded = true;
+        console.log(`✅ Credential translations loaded: ${Object.keys(firebaseTranslations).length} keys for ${language}`);
       } else {
-        // Fallback to Swedish if translation not found
-        if (language !== 'sv-SE') {
-          await this.loadTranslations('sv-SE');
-        }
+        console.log(`⚠️ No credential translations found for ${language}, using fallbacks`);
+        // No translations found, set empty and mark as loaded
+        this.translations = {};
+        this.currentLanguage = language;
+        this.loaded = true;
       }
     } catch (error) {
       console.error('Failed to load credential translations:', error);
+      // On error, set empty and mark as loaded to prevent infinite loading
+      this.translations = {};
+      this.currentLanguage = language;
+      this.loaded = true;
     }
   }
 
