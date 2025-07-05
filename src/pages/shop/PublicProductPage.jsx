@@ -12,6 +12,7 @@ import { getProductGroupContent } from '../../utils/productGroups';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import SizeGuideModal from '../../components/SizeGuideModal';
 import ReviewsSection from '../../components/ReviewsSection';
+import { getReviewStats } from '../../utils/trustpilotAPI';
 
 const PublicProductPage = () => {
   const { slug } = useParams();
@@ -29,6 +30,7 @@ const PublicProductPage = () => {
   const [groupContent, setGroupContent] = useState(null);
   const [groupContentLoading, setGroupContentLoading] = useState(false);
   const [sizeGuideModalOpen, setSizeGuideModalOpen] = useState(false);
+  const [reviewCount, setReviewCount] = useState(16); // Default fallback
   const { addToCart, cart } = useCart();
 
   // Calculate total items in cart
@@ -39,6 +41,21 @@ const PublicProductPage = () => {
       loadProduct();
     }
   }, [slug]);
+
+  // Load review count
+  useEffect(() => {
+    const loadReviewCount = async () => {
+      try {
+        const stats = await getReviewStats();
+        setReviewCount(stats.totalReviews);
+      } catch (error) {
+        console.error('Error loading review count:', error);
+        // Keep default fallback value of 16
+      }
+    };
+
+    loadReviewCount();
+  }, []);
 
   const loadGroupContent = async (groupId) => {
     if (!groupId) return;
@@ -589,7 +606,7 @@ const PublicProductPage = () => {
                 <details className="group">
                   <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 px-4 -mx-4 rounded-lg">
                     <span className="text-base font-medium text-gray-900">
-                      {t('product_reviews_section_with_count', 'Recensioner (16)')}
+                      {t('product_reviews_section_with_count', 'Recensioner ({{count}})', {count: reviewCount})}
                     </span>
                     <svg className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
