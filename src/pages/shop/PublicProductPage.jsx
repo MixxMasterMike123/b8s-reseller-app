@@ -79,7 +79,7 @@ const PublicProductPage = () => {
       // Convert slug to product color/type
       const productColor = slugToProductMap[slug];
       if (!productColor) {
-        toast.error('Produkten hittades inte');
+        toast.error(t('product_not_found', 'Produkten hittades inte'));
         return;
       }
       
@@ -120,7 +120,7 @@ const PublicProductPage = () => {
       });
       
       if (filteredProducts.length === 0) {
-        toast.error('Produkten hittades inte');
+        toast.error(t('product_not_found', 'Produkten hittades inte'));
         return;
       }
       
@@ -210,7 +210,7 @@ const PublicProductPage = () => {
       
     } catch (error) {
       console.error('Error loading product:', error);
-      toast.error('Kunde inte ladda produkten');
+      toast.error(t('error_loading_product', 'Kunde inte ladda produkten'));
     } finally {
       setLoading(false);
     }
@@ -227,18 +227,18 @@ const PublicProductPage = () => {
 
   const handleAddToCart = () => {
     if (!selectedSize) {
-      toast.error(isMultipack ? 'Vänligen välj en färg' : 'Vänligen välj en storlek');
+      toast.error(isMultipack ? t('please_select_color', 'Vänligen välj en färg') : t('please_select_size', 'Vänligen välj en storlek'));
       return;
     }
 
     const selectedVariant = variants.find(v => v.id === selectedSize);
     if (!selectedVariant) {
-      toast.error(isMultipack ? 'Ogiltig färg vald' : 'Ogiltig storlek vald');
+      toast.error(isMultipack ? t('invalid_color_selected', 'Ogiltig färg vald') : t('invalid_size_selected', 'Ogiltig storlek vald'));
       return;
     }
 
     addToCart(selectedVariant, quantity, isMultipack ? selectedVariant.color : selectedVariant.size);
-    toast.success('Produkt tillagd i varukorgen');
+    toast.success(t('product_added_to_cart_product_page', 'Produkt tillagd i varukorgen'));
   };
 
   const formatPrice = (price) => {
@@ -315,9 +315,9 @@ const PublicProductPage = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Produkten hittades inte</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('product_not_found_page_title', 'Produkten hittades inte')}</h1>
           <Link to="/" className="bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition-colors">
-            Tillbaka till butiken
+            {t('back_to_shop_button', 'Tillbaka till butiken')}
           </Link>
         </div>
       </div>
@@ -406,7 +406,7 @@ const PublicProductPage = () => {
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-base font-medium text-gray-900">
-                    {isMultipack ? 'Välj färg' : 'Välj storlek'}
+                    {isMultipack ? t('select_color', 'Välj färg') : t('select_size', 'Välj storlek')}
                   </h3>
                   {!isMultipack && (
                     <button 
@@ -444,39 +444,39 @@ const PublicProductPage = () => {
                   disabled={!selectedSize}
                   className="w-full bg-black text-white py-4 px-8 rounded-full text-base font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Lägg i shoppingbagen
+                  {t('add_to_shopping_bag', 'Lägg i shoppingbagen')}
                 </button>
                 
                 <button className="w-full border border-gray-300 py-4 px-8 rounded-full text-base font-medium hover:border-gray-400 transition-colors">
-                  Favorit ♡
+                  {t('favorite_button', 'Favorit ♡')}
                 </button>
               </div>
 
               {/* Payment Options */}
               <div className="border-t pt-6">
                 <p className="text-sm text-gray-600 mb-4">
-                  <span className="font-medium">Klarna.</span> är tillgängligt i kassan.
+                  <span className="font-medium">Klarna.</span> {t('klarna_available_at_checkout', 'är tillgängligt i kassan.')}
                 </p>
                 <p className="text-sm text-gray-600">
-                  Tillgängligt för Click and Collect i kassan
+                  {t('click_and_collect_available', 'Tillgängligt för Click and Collect i kassan')}
                 </p>
               </div>
 
               {/* Product Description */}
               <div className="border-t pt-6">
                 <h2 className="text-lg font-medium text-gray-900 mb-4">
-                  Visa produktinformation
+                  {t('show_product_information', 'Visa produktinformation')}
                 </h2>
                 <div className="prose prose-sm max-w-none text-gray-600">
                   <p>
                     {getB2cDescription(currentProduct) || 
-                     `B8Shield ${productColor} i storlek ${currentProduct.size || 'Standard'} ger dig det ultimata skyddet för dina fiskedrag. Denna högkvalitativa produkt är utvecklad för att hålla i många år av intensivt fiske, oavsett väderförhållanden. Perfekt för både nybörjare och erfarna fiskare som vill skydda sina värdefulla fiskedrag från skador.`}
+                     t('product_detailed_description', 'B8Shield {{color}} i storlek {{size}} ger dig det ultimata skyddet för dina fiskedrag. Denna högkvalitativa produkt är utvecklad för att hålla i många år av intensivt fiske, oavsett väderförhållanden. Perfekt för både nybörjare och erfarna fiskare som vill skydda sina värdefulla fiskedrag från skador.', { color: productColor, size: currentProduct.size || 'Standard' })}
                   </p>
                   
                   <ul className="mt-4 space-y-2">
-                    <li>• Färg som visas: {productColor}</li>
-                    <li>• Storlek: {currentProduct.size || 'Standard'}</li>
-                    <li>• Stil: {currentProduct.sku || 'B8S-001'}</li>
+                    <li>• {t('product_color_shown', 'Färg som visas: {{color}}', { color: productColor })}</li>
+                    <li>• {t('product_size_spec', 'Storlek: {{size}}', { size: currentProduct.size || 'Standard' })}</li>
+                    <li>• {t('product_style_spec', 'Stil: {{sku}}', { sku: currentProduct.sku || 'B8S-001' })}</li>
                   </ul>
                 </div>
               </div>
@@ -627,7 +627,7 @@ const PublicProductPage = () => {
               {currentProduct.descriptions?.b2cMoreInfo && (
                   <details className="group">
                     <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 px-4 -mx-4 rounded-lg">
-                      <span className="text-base font-medium text-gray-900">Mer produktinformation</span>
+                      <span className="text-base font-medium text-gray-900">{t('more_product_information', 'Mer produktinformation')}</span>
                       <svg className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>

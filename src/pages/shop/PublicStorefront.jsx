@@ -6,12 +6,14 @@ import { getProductImage } from '../../utils/productImages';
 import { getProductUrl } from '../../utils/productUrls';
 import toast from 'react-hot-toast';
 import { useCart } from '../../contexts/CartContext';
+import { useTranslation } from '../../contexts/TranslationContext';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
 import ReviewsSection from '../../components/ReviewsSection';
 import { getRandomReviews } from '../../utils/trustpilotAPI';
 
 const PublicStorefront = () => {
+  const { t } = useTranslation();
   const [products, setProducts] = useState([]);
   const [groupedProducts, setGroupedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -74,7 +76,7 @@ const PublicStorefront = () => {
       
     } catch (error) {
       console.error('Error loading products:', error);
-      toast.error('Kunde inte ladda produkter');
+      toast.error(t('error_loading_products', 'Kunde inte ladda produkter'));
     } finally {
       setLoading(false);
     }
@@ -183,7 +185,7 @@ const PublicStorefront = () => {
 
   const addToCart = (product) => {
     // TODO: Implement cart functionality
-    toast.success(`${product.name} tillagd i varukorgen!`);
+    toast.success(t('product_added_to_cart', '{{name}} tillagd i varukorgen!', { name: product.name }));
   };
 
   // Get the best available image for B2C display
@@ -201,7 +203,7 @@ const PublicStorefront = () => {
   const getB2cProductDescription = (product) => {
     if (product.descriptions?.b2c) return product.descriptions.b2c;
     if (product.description) return product.description;
-    return `B8Shield ${product.colorVariant || ''} - Vasskydd som förhindrar att dina fiskedrag fastnar`;
+    return t('product_description_fallback', 'B8Shield {{color}} - Vasskydd som förhindrar att dina fiskedrag fastnar', { color: product.colorVariant || '' });
   };
 
 
@@ -228,17 +230,17 @@ const PublicStorefront = () => {
           <div className="text-center">
             <div className="inline-flex items-center px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full text-sm font-medium text-blue-600 border border-blue-200/50 mb-8">
               <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-              Ny innovation från Sverige
+              {t('hero_innovation_badge', 'Ny innovation från Sverige')}
             </div>
             
             <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white mb-6 drop-shadow-lg">
-              Fastna
-              <span className="bg-gradient-to-r from-red-400 to-red-500 bg-clip-text text-transparent"> aldrig </span>
-              mer!
+              {t('hero_title_start', 'Fastna')}
+              <span className="bg-gradient-to-r from-red-400 to-red-500 bg-clip-text text-transparent"> {t('hero_title_middle', 'aldrig')} </span>
+              {t('hero_title_end', 'mer!')}
             </h1>
             
             <p className="text-xl sm:text-2xl text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
-              B8Shield™ – Vasskydd som förhindrar att dina fiskedrag fastnar i vassen utan att påverka ditt fiske.
+              {t('hero_subtitle', 'B8Shield™ – Vasskydd som förhindrar att dina fiskedrag fastnar i vassen utan att påverka ditt fiske.')}
             </p>
 
             {/* Social Proof - Dynamic Review */}
@@ -271,10 +273,10 @@ const PublicStorefront = () => {
                 onClick={() => document.getElementById('products').scrollIntoView({ behavior: 'smooth' })}
                 className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
               >
-                Handla nu
+                {t('hero_shop_now_button', 'Handla nu')}
               </button>
               <button className="border-2 border-white/70 text-white px-8 py-4 rounded-full text-lg font-semibold hover:border-white hover:bg-white/10 transition-all duration-300 backdrop-blur-sm">
-                Läs mer
+                {t('hero_read_more_button', 'Läs mer')}
               </button>
             </div>
           </div>
@@ -286,10 +288,10 @@ const PublicStorefront = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Våra Produkter
+              {t('products_section_title', 'Våra Produkter')}
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Välj mellan olika färger och storlekar för att passa ditt fiske
+              {t('products_section_subtitle', 'Välj mellan olika färger och storlekar för att passa ditt fiske')}
             </p>
           </div>
 
@@ -324,7 +326,7 @@ const PublicStorefront = () => {
                           {/* Sustainable Material Badge */}
                           <div className="absolute top-3 left-3">
                             <span className="bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded text-[11px]">
-                              Hållbara material
+                              {t('sustainable_materials_badge', 'Hållbara material')}
                             </span>
                           </div>
                         </div>
@@ -333,17 +335,17 @@ const PublicStorefront = () => {
                         <div className="space-y-1">
                           {/* Product Name */}
                           <h3 className="text-base font-medium text-gray-900 leading-tight">
-                            B8Shield 3-pack
+                            {t('product_name_3pack', 'B8Shield 3-pack')}
                           </h3>
                           
                           {/* Product Description */}
                           <p className="text-sm text-gray-600 leading-tight">
-                            Vasskydd 3-pack för olika fiskemiljöer
+                            {t('product_description_3pack', 'Vasskydd 3-pack för olika fiskemiljöer')}
                           </p>
                           
                           {/* Variant Info */}
                           <p className="text-sm text-gray-500">
-                            Innehåller alla storlekar (2mm, 4mm, 6mm) • {productGroup.colorVariants.length} färger
+                            {t('product_3pack_info', 'Innehåller alla storlekar (2mm, 4mm, 6mm) • {{count}} färger', { count: productGroup.colorVariants.length })}
                           </p>
                           
                           {/* Price */}
@@ -374,7 +376,7 @@ const PublicStorefront = () => {
                           {/* Sustainable Material Badge */}
                           <div className="absolute top-3 left-3">
                             <span className="bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded text-[11px]">
-                              Hållbara material
+                              {t('sustainable_materials_badge', 'Hållbara material')}
                             </span>
                           </div>
                         </div>
@@ -383,19 +385,19 @@ const PublicStorefront = () => {
                         <div className="space-y-1">
                           {/* Product Name */}
                           <h3 className="text-base font-medium text-gray-900 leading-tight">
-                            B8Shield {colorVariant.colorVariant}
+                            {t('product_name_individual', 'B8Shield {{color}}', { color: colorVariant.colorVariant })}
                           </h3>
                           
                           {/* Product Description */}
                           <p className="text-sm text-gray-600 leading-tight">
-                            Vasskydd som förhindrar fastnade fiskedrag
+                            {t('product_description_individual', 'Vasskydd som förhindrar fastnade fiskedrag')}
                           </p>
                           
                           {/* Variant Info */}
                           <p className="text-sm text-gray-500">
                             {colorVariant.availableSizes?.length > 1 
-                              ? `${colorVariant.availableSizes.length} storlekar`
-                              : '1 storlek'}
+                              ? t('product_multiple_sizes', '{{count}} storlekar', { count: colorVariant.availableSizes.length })
+                              : t('product_single_size', '1 storlek')}
                           </p>
                           
                           {/* Price */}
@@ -418,7 +420,7 @@ const PublicStorefront = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                 </svg>
               </div>
-              <p className="text-gray-500 text-lg">Inga produkter tillgängliga för tillfället.</p>
+              <p className="text-gray-500 text-lg">{t('no_products_available', 'Inga produkter tillgängliga för tillfället.')}</p>
             </div>
           )}
         </div>
@@ -429,7 +431,7 @@ const PublicStorefront = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Varför välja B8Shield™?
+              {t('features_section_title', 'Varför välja B8Shield™?')}
             </h2>
           </div>
 
@@ -440,8 +442,8 @@ const PublicStorefront = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Bevisat Effektivt</h3>
-              <p className="text-gray-600">Minska förlusten av beten med upp till 90% enligt våra tester</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">{t('feature_proven_effective_title', 'Bevisat Effektivt')}</h3>
+              <p className="text-gray-600">{t('feature_proven_effective_description', 'Minska förlusten av beten med upp till 90% enligt våra tester')}</p>
             </div>
 
             <div className="text-center group">
@@ -450,8 +452,8 @@ const PublicStorefront = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Enkelt att Använda</h3>
-              <p className="text-gray-600">Fäst enkelt på ditt fiskedrag på några sekunder</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">{t('feature_easy_to_use_title', 'Enkelt att Använda')}</h3>
+              <p className="text-gray-600">{t('feature_easy_to_use_description', 'Fäst enkelt på ditt fiskedrag på några sekunder')}</p>
             </div>
 
             <div className="text-center group">
@@ -460,8 +462,8 @@ const PublicStorefront = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Miljövänligt</h3>
-              <p className="text-gray-600">Återvinningsbart material som skyddar våra vattenmiljöer</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">{t('feature_eco_friendly_title', 'Miljövänligt')}</h3>
+              <p className="text-gray-600">{t('feature_eco_friendly_description', 'Återvinningsbart material som skyddar våra vattenmiljöer')}</p>
             </div>
           </div>
         </div>
@@ -472,10 +474,10 @@ const PublicStorefront = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Vad våra kunder säger
+              {t('reviews_section_title', 'Vad våra kunder säger')}
             </h2>
             <p className="text-xl text-gray-600">
-              Äkta recensioner från nöjda sportfiskare
+              {t('reviews_section_subtitle', 'Äkta recensioner från nöjda sportfiskare')}
             </p>
           </div>
           
