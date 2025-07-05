@@ -16,24 +16,39 @@ class CredentialTranslations {
     this.loaded = false;
   }
 
-  // Get language from localStorage/cookie
+  // Get language from localStorage/cookie (shared with main app)
   getStoredLanguage() {
-    // Try localStorage first
-    const stored = localStorage.getItem('b8shield-credential-language');
-    if (stored) return stored;
+    // Try localStorage first (same key as main app)
+    const stored = localStorage.getItem('b8shield-language');
+    if (stored) {
+      console.log(`🔐 Language loaded from localStorage: ${stored}`);
+      return stored;
+    }
     
-    // Try cookie
+    // Try old credential-specific key for backward compatibility
+    const oldStored = localStorage.getItem('b8shield-credential-language');
+    if (oldStored) {
+      // Migrate to new unified key
+      localStorage.setItem('b8shield-language', oldStored);
+      localStorage.removeItem('b8shield-credential-language');
+      console.log(`🔐 Language migrated from old key: ${oldStored}`);
+      return oldStored;
+    }
+    
+    // Try cookie (unified key)
     const cookie = document.cookie
       .split('; ')
-      .find(row => row.startsWith('b8shield-credential-language='));
+      .find(row => row.startsWith('b8shield-language='));
     
     if (cookie) {
       const value = cookie.split('=')[1];
-      localStorage.setItem('b8shield-credential-language', value);
+      localStorage.setItem('b8shield-language', value);
+      console.log(`🔐 Language loaded from cookie: ${value}`);
       return value;
     }
     
     // Default to Swedish
+    console.log(`🔐 Language defaulted to: sv-SE`);
     return 'sv-SE';
   }
 
@@ -91,6 +106,13 @@ class CredentialTranslations {
     this.currentLanguage = language;
     this.loaded = false;
     await this.loadTranslations(language);
+    
+    // Store preference in localStorage (unified key shared with main app)
+    localStorage.setItem('b8shield-language', language);
+    console.log(`🔐 Language preference saved: ${language} (shared with main app)`);
+    
+    // Also set cookie for cross-session persistence
+    document.cookie = `b8shield-language=${language}; path=/; max-age=${365 * 24 * 60 * 60}`; // 1 year
   }
 }
 
