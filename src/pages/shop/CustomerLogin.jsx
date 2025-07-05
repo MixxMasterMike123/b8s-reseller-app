@@ -16,7 +16,19 @@ const CustomerLogin = ({ onLoginSuccess }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const [currentLanguage, setCurrentLanguage] = useState(localStorage.getItem('b8shield-credential-language') || 'sv-SE');
+  
+  // Read from unified key first, then credential-specific key, then default to Swedish
+  const getInitialLanguage = () => {
+    const unifiedLang = localStorage.getItem('b8shield-language');
+    if (unifiedLang) return unifiedLang;
+    
+    const credentialLang = localStorage.getItem('b8shield-credential-language');
+    if (credentialLang) return credentialLang;
+    
+    return 'sv-SE';
+  };
+  
+  const [currentLanguage, setCurrentLanguage] = useState(getInitialLanguage());
 
   const from = location.state?.from?.pathname || "/affiliate-portal";
 

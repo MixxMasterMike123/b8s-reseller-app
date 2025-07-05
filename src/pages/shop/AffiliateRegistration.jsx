@@ -8,7 +8,7 @@ import { db } from '../../firebase/config';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const AffiliateRegistration = () => {
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -25,7 +25,8 @@ const AffiliateRegistration = () => {
       tiktok: '',
     },
     promotionMethod: '',
-    message: ''
+    message: '',
+    preferredLang: localStorage.getItem('b8shield-language') || currentLanguage || 'sv-SE',
   });
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -54,10 +55,9 @@ const AffiliateRegistration = () => {
     }
     setLoading(true);
     try {
-      // This only submits an application, not creates an affiliate directly
       await addDoc(collection(db, 'affiliateApplications'), {
         ...formData,
-        status: 'pending', // Initial status
+        status: 'pending',
         createdAt: serverTimestamp(),
       });
       setSubmitted(true);
@@ -311,6 +311,24 @@ const AffiliateRegistration = () => {
                     placeholder={t('affiliate_reg_message_placeholder', 'Berätta lite mer om dig själv och din publik...')}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   ></textarea>
+                </div>
+
+                <div>
+                  <label htmlFor="preferredLang" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('affiliate_reg_preferred_lang', 'Föredraget språk')} <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="preferredLang"
+                    id="preferredLang"
+                    value={formData.preferredLang}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="sv-SE">{t('lang_swedish', 'Svenska')}</option>
+                    <option value="en-GB">{t('lang_english_uk', 'English (UK)')}</option>
+                    <option value="en-US">{t('lang_english_us', 'English (US)')}</option>
+                  </select>
                 </div>
 
                 <div className="text-center">

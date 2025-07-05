@@ -20,12 +20,16 @@ const CredentialLanguageSwitcher = ({ currentLanguage, onLanguageChange }) => {
   const currentLang = languages.find(lang => lang.code === currentLanguage) || languages[0];
 
   const handleLanguageChange = (languageCode) => {
-    // Store in localStorage
+    // Store in unified key (shared with main app)
+    localStorage.setItem('b8shield-language', languageCode);
+    // Also store in credential-specific key for backward compatibility
     localStorage.setItem('b8shield-credential-language', languageCode);
     
-    // Store in cookie for 30 days
+    // Store in cookie for 30 days (unified key)
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + 30);
+    document.cookie = `b8shield-language=${languageCode}; expires=${expiryDate.toUTCString()}; path=/`;
+    // Also set credential-specific cookie for backward compatibility
     document.cookie = `b8shield-credential-language=${languageCode}; expires=${expiryDate.toUTCString()}; path=/`;
     
     onLanguageChange(languageCode);

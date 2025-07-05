@@ -29,6 +29,7 @@ import {
 } from '@heroicons/react/24/solid';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
+import { useTranslation } from '../../contexts/TranslationContext';
 
 const SocialLinks = ({ socials }) => {
   if (!socials || Object.values(socials).every(val => !val)) {
@@ -92,6 +93,7 @@ const AdminAffiliateEdit = () => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -106,6 +108,7 @@ const AdminAffiliateEdit = () => {
   const [commissionRate, setCommissionRate] = useState('');
   const [checkoutDiscount, setCheckoutDiscount] = useState('');
   const [status, setStatus] = useState('');
+  const [preferredLang, setPreferredLang] = useState('');
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('sv-SE', {
@@ -234,6 +237,7 @@ const AdminAffiliateEdit = () => {
           setCommissionRate(affiliateData.commissionRate?.toString() || '');
           setCheckoutDiscount(affiliateData.checkoutDiscount?.toString() || '');
           setStatus(affiliateData.status || '');
+          setPreferredLang(affiliateData.preferredLang || 'sv-SE');
         } else {
           toast.error('Kunde inte hitta affiliate eller ansökan.');
           navigate('/admin/affiliates');
@@ -250,6 +254,10 @@ const AdminAffiliateEdit = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    if (data && data.preferredLang) setPreferredLang(data.preferredLang);
+  }, [data]);
 
   const handleApprove = async () => {
     const toastId = toast.loading('Godkänner affiliate...');
@@ -300,6 +308,7 @@ const AdminAffiliateEdit = () => {
         commissionRate: Number(commissionRate),
         checkoutDiscount: Number(checkoutDiscount),
         status: status,
+        preferredLang: preferredLang,
         updatedAt: new Date(),
       });
       toast.success('Ändringar sparade!', { id: toastId });
@@ -594,6 +603,29 @@ const AdminAffiliateEdit = () => {
                             </div>
                           ) : (
                             <span className="text-lg font-semibold">{data.checkoutDiscount}%</span>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            {isEditing ? t('affiliate_reg_preferred_lang', 'Föredraget språk') : 'Föredraget språk'}
+                          </label>
+                          {isEditing ? (
+                            <select
+                              value={preferredLang}
+                              onChange={e => setPreferredLang(e.target.value)}
+                              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            >
+                              <option value="sv-SE">{t('lang_swedish', 'Svenska')}</option>
+                              <option value="en-GB">{t('lang_english_uk', 'English (UK)')}</option>
+                              <option value="en-US">{t('lang_english_us', 'English (US)')}</option>
+                            </select>
+                          ) : (
+                            <span className="text-lg font-semibold">
+                              {preferredLang === 'sv-SE' && t('lang_swedish', 'Svenska')}
+                              {preferredLang === 'en-GB' && t('lang_english_uk', 'English (UK)')}
+                              {preferredLang === 'en-US' && t('lang_english_us', 'English (US)')}
+                            </span>
                           )}
                         </div>
                       </div>

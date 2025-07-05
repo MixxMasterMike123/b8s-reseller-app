@@ -334,3 +334,7 @@
 "affiliate_logout_success","Du har loggats ut","You have been logged out","You have been logged out","B2C affiliate - logout toast","Pending","","","Toast message for successful affiliate logout"
 "affiliate_logged_in_as_name","Inloggad som affiliate ({{name}})","Logged in as affiliate ({{name}})","Logged in as affiliate ({{name}})","B2C affiliate - session indicator with name","Pending","","","Indicator for affiliate session in header, shows name"
 "affiliate_logged_in_as_email","Inloggad som affiliate ({{email}})","Logged in as affiliate ({{email}})","Logged in as affiliate ({{email}})","B2C affiliate - session indicator with email fallback","Pending","","","Indicator for affiliate session in header, shows email if no name"
+"affiliate_reg_preferred_lang","Föredraget språk","Preferred Language","Preferred Language","Affiliate registration - preferred language field","Pending","","","Label for preferred language dropdown"
+"lang_swedish","Svenska","Swedish","Swedish","Language option - Swedish","Pending","","","Swedish language option"
+"lang_english_uk","Engelska (UK)","English (UK)","English (UK)","Language option - English UK","Pending","","","English UK language option"
+"lang_english_us","Engelska (US)","English (US)","English (US)","Language option - English US","Pending","","","English US language option"

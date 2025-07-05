@@ -5,7 +5,19 @@ import ShopCredentialLanguageSwitcher from '../../components/shop/ShopCredential
 
 const CustomerRegister = () => {
   const { t } = useTranslation();
-  const [currentLanguage, setCurrentLanguage] = React.useState(localStorage.getItem('b8shield-credential-language') || 'sv-SE');
+  
+  // Read from unified key first, then credential-specific key, then default to Swedish
+  const getInitialLanguage = () => {
+    const unifiedLang = localStorage.getItem('b8shield-language');
+    if (unifiedLang) return unifiedLang;
+    
+    const credentialLang = localStorage.getItem('b8shield-credential-language');
+    if (credentialLang) return credentialLang;
+    
+    return 'sv-SE';
+  };
+  
+  const [currentLanguage, setCurrentLanguage] = React.useState(getInitialLanguage());
   
   return (
     <div className="min-h-screen bg-gray-50">
