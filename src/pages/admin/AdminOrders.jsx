@@ -7,6 +7,7 @@ import { sv } from 'date-fns/locale';
 import OrderStatusMenu from '../../components/OrderStatusMenu';
 import { toast } from 'react-hot-toast';
 
+
 const getStatusStyles = (status) => {
   switch (status) {
     case 'pending':
@@ -26,27 +27,27 @@ const getStatusStyles = (status) => {
   }
 };
 
-const getStatusLabel = (status) => {
-  switch (status) {
-    case 'pending':
-      return 'Väntar';
-    case 'confirmed':
-      return 'Bekräftad';
-    case 'processing':
-      return 'Behandlas';
-    case 'shipped':
-      return 'Skickad';
-    case 'delivered':
-      return 'Levererad';
-    case 'cancelled':
-      return 'Avbruten';
-    default:
-      return 'Okänd';
-  }
-};
-
 const AdminOrders = () => {
   const { getAllOrders, updateOrderStatus, loading: contextLoading, error: contextError } = useOrder();
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'Väntar';
+      case 'confirmed':
+        return 'Bekräftad';
+      case 'processing':
+        return 'Behandlas';
+      case 'shipped':
+        return 'Skickad';
+      case 'delivered':
+        return 'Levererad';
+      case 'cancelled':
+        return 'Avbruten';
+      default:
+        return 'Okänd';
+    }
+  };
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

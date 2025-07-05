@@ -93,37 +93,37 @@ const AppLayout = ({ children }) => {
 
   const navLinks = [
     {
-      name: 'Dashboard',
+      name: t('nav.dashboard', 'Dashboard'),
       path: '/',
       icon: HomeIcon,
     },
     {
-      name: 'Produktkatalog',
+      name: t('nav.product_catalog', 'Produktkatalog'),
       path: '/products',
       icon: CubeIcon,
     },
     {
-      name: 'Marknadsföringsmaterial',
+      name: t('nav.marketing_materials', 'Marknadsföringsmaterial'),
       path: '/marketing',
       icon: MegaphoneIcon,
     },
     {
-      name: 'Lägg en beställning',
+      name: t('nav.place_order', 'Lägg en beställning'),
       path: '/order',
       icon: ShoppingCartIcon,
     },
     {
-      name: 'Orderhistorik',
+      name: t('nav.order_history', 'Orderhistorik'),
       path: '/orders',
       icon: ClipboardDocumentListIcon,
     },
     {
-      name: 'Kontakt & Support',
+      name: t('nav.contact_support', 'Kontakt & Support'),
       path: '/contact',
       icon: PhoneIcon,
     },
     {
-      name: 'Profil',
+      name: t('nav.profile', 'Profil'),
       path: '/profile',
       icon: UserIcon,
     }
@@ -131,52 +131,52 @@ const AppLayout = ({ children }) => {
   
   const adminNavLinks = [
     {
-      name: 'Admin Dashboard',
+      name: t('nav.admin_dashboard', 'Admin Dashboard'),
       path: '/admin',
       icon: ChartBarIcon,
-      description: 'Översikt och statistik',
+      description: t('nav.admin_dashboard_desc', 'Översikt och statistik'),
     },
     {
-      name: 'Kunder',
+      name: t('nav.admin_customers', 'Kunder'),
       path: '/admin/users',
       icon: UsersIcon,
-      description: 'Hantera användare',
+      description: t('nav.admin_customers_desc', 'Hantera användare'),
     },
     {
-      name: 'Ordrar',
+      name: t('nav.admin_orders', 'Ordrar'),
       path: '/admin/orders',
       icon: ClipboardDocumentListIcon,
-      description: 'Hantera beställningar',
+      description: t('nav.admin_orders_desc', 'Hantera beställningar'),
     },
     {
-      name: 'Produkter',
+      name: t('nav.admin_products', 'Produkter'),
       path: '/admin/products',
       icon: CubeIcon,
-      description: 'Hantera produkter',
+      description: t('nav.admin_products_desc', 'Hantera produkter'),
     },
     {
-      name: 'Marknadsföring',
+      name: t('nav.admin_marketing', 'Marknadsföring'),
       path: '/admin/marketing',
       icon: MegaphoneIcon,
-      description: 'Hantera marknadsföringsmaterial',
+      description: t('nav.admin_marketing_desc', 'Hantera marknadsföringsmaterial'),
     },
     {
-      name: 'Översättningar',
+      name: t('nav.admin_translations', 'Översättningar'),
       path: '/admin/translations',
       icon: LanguageIcon,
-      description: 'Hantera språk och översättningar',
+      description: t('nav.admin_translations_desc', 'Hantera språk och översättningar'),
     },
     {
-      name: 'Affiliates',
+      name: t('nav.admin_affiliates', 'Affiliates'),
       path: '/admin/affiliates',
       icon: UsersIcon,
-      description: 'Hantera affiliate-partners',
+      description: t('nav.admin_affiliates_desc', 'Hantera affiliate-partners'),
     },
     {
-      name: 'Inställningar',
+      name: t('nav.admin_settings', 'Inställningar'),
       path: '/admin/settings',
       icon: Cog6ToothIcon,
-      description: 'Systeminställningar',
+      description: t('nav.admin_settings_desc', 'Systeminställningar'),
     }
   ];
   
@@ -219,7 +219,7 @@ const AppLayout = ({ children }) => {
                     <svg xmlns="http://www.w3.org/2000/svg" className="mr-3 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
                     </svg>
-                    Tillbaka till Dashboard
+                    {t('nav.back_to_dashboard', 'Tillbaka till Dashboard')}
                   </Link>
                   
                   {/* Admin Navigation */}
@@ -256,7 +256,7 @@ const AppLayout = ({ children }) => {
                         <div className="relative flex justify-center">
                           <span className="bg-white px-2 text-xs text-gray-500 uppercase tracking-wider font-semibold flex items-center">
                             <CpuChipIcon className="h-4 w-4 mr-1" />
-                            AI Vagnar
+                            {t('nav.ai_wagons', 'AI Vagnar')}
                           </span>
                         </div>
                       </div>

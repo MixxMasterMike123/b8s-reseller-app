@@ -621,12 +621,12 @@ export const OrderProvider = ({ children }) => {
         const orderData = orderDoc.data();
         const previousStatus = orderData.status || 'unknown';
         
-        // Create status history entry with Firestore Timestamp instead of Date
+        // Create status history entry - use Date for array items, serverTimestamp for top-level fields
         const statusChange = {
           from: previousStatus,
           to: newStatus,
           changedBy: currentUser.uid,
-          changedAt: serverTimestamp(),
+          changedAt: new Date(), // Use Date object instead of serverTimestamp() for array items
           displayName: currentUser.displayName || currentUser.email || 'Admin User'
         };
         

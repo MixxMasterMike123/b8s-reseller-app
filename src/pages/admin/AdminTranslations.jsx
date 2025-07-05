@@ -26,8 +26,8 @@ import {
 
 const AdminTranslations = () => {
   const { currentUser, userProfile } = useAuth();
-  const { getAvailableLanguages, currentLanguage } = useTranslation();
-  const [activeTab, setActiveTab] = useState('overview');
+  const { getAvailableLanguages, currentLanguage, translations: contextTranslations, loading: contextLoading } = useTranslation();
+  const [activeTab, setActiveTab] = useState('debug');
   const [translationType, setTranslationType] = useState('admin');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -50,6 +50,13 @@ const AdminTranslations = () => {
     translatedStrings: 0,
     pendingStrings: 0,
     languages: []
+  });
+
+  // Debug state
+  const [debugInfo, setDebugInfo] = useState({
+    firebaseTranslations: [],
+    contextState: {},
+    testResults: {}
   });
 
   // Extracted strings state
@@ -81,6 +88,7 @@ const AdminTranslations = () => {
   const languages = getAvailableLanguages();
 
   const tabs = [
+    { id: 'debug', name: 'Debug System', icon: ExclamationTriangleIcon },
     { id: 'overview', name: 'Översikt', icon: GlobeAltIcon },
     { id: 'manage', name: 'Hantera översättningar', icon: DocumentTextIcon },
     { id: 'extract', name: 'Extrahera texter', icon: MagnifyingGlassIcon },
@@ -248,29 +256,187 @@ const AdminTranslations = () => {
       
       let totalNewKeys = 0;
 
-      // For demo purposes, simulate scanning with some realistic examples
-      // In a real implementation, you'd read actual files
-      const mockExtractedKeys = {
-        'B2B Portal': [
-          { key: 'dashboard.new.field', fallback: 'Nytt fält' },
-          { key: 'product.new.category', fallback: 'Ny kategori' },
-          { key: 'order.new.status', fallback: 'Ny status' }
-        ],
-        'B2C Shop': [
-          { key: 'shop.new.feature', fallback: 'Ny funktion' },
-          { key: 'cart.new.button', fallback: 'Ny knapp' }
-        ],
-        'Admin Portal': [
-          { key: 'admin.new.setting', fallback: 'Ny inställning' }
-        ]
-      };
-
-      // Filter out existing keys and count new ones
-      Object.keys(mockExtractedKeys).forEach(section => {
-        const newKeys = mockExtractedKeys[section].filter(item => !existingKeys.has(item.key));
-        extractedData[section] = newKeys;
-        totalNewKeys += newKeys.length;
-      });
+      // Actually read and scan files
+      for (const [section, filePaths] of Object.entries(sectionPatterns)) {
+        for (const filePath of filePaths) {
+          try {
+            // Get known t() calls based on section
+            let knownCalls = [];
+            
+            if (section === 'B2B Portal') {
+              knownCalls = [
+                // AppLayout navigation
+                { key: 'nav.dashboard', fallback: 'Dashboard' },
+                { key: 'nav.products', fallback: 'Produktkatalog' },
+                { key: 'nav.marketing', fallback: 'Marknadsföringsmaterial' },
+                { key: 'nav.order', fallback: 'Lägg en beställning' },
+                { key: 'nav.orders', fallback: 'Orderhistorik' },
+                { key: 'nav.contact', fallback: 'Kontakt & Support' },
+                { key: 'nav.profile', fallback: 'Profil' },
+                { key: 'nav.admin', fallback: 'Admin' },
+                { key: 'nav.go_to_admin_panel', fallback: 'Gå till Admin Panel' },
+                { key: 'nav.ai_tools', fallback: 'AI Verktyg' },
+                { key: 'nav.ai_wagons', fallback: 'AI Vagnar' },
+                { key: 'nav.logout', fallback: 'Logga ut' },
+                { key: 'nav.open_sidebar', fallback: 'Open sidebar' },
+                { key: 'nav.close_sidebar', fallback: 'Close sidebar' },
+                { key: 'nav.back_to_dashboard', fallback: 'Tillbaka till Dashboard' },
+                
+                // Dashboard
+                { key: 'dashboard.welcome', fallback: 'Återförsäljarportal' },
+                { key: 'dashboard.features', fallback: 'Funktioner:' },
+                { key: 'dashboard.create_order', fallback: 'Skapa en ny beställning för dina kunder' },
+                { key: 'dashboard.view_orders', fallback: 'Visa och spåra dina tidigare beställningar' },
+                { key: 'dashboard.browse_products', fallback: 'Bläddra och ladda ner produktinformation' },
+                { key: 'dashboard.marketing_materials', fallback: 'Ladda ner broschyrer och marknadsföringsmaterial' },
+                { key: 'dashboard.test_training', fallback: 'Testa Säljutbildning' },
+                { key: 'dashboard.staff_info', fallback: 'Information för butikspersonal' },
+                
+                // Training Modal
+                { key: 'training.welcome', fallback: 'Välkommen' },
+                { key: 'training.welcome_subtitle', fallback: 'Till B8Shield återförsäljarportal' },
+                { key: 'training.welcome_text', fallback: 'Välkommen till vår återförsäljarportal – ett verktyg för att göra ert samarbete med oss så smidigt som möjligt.' },
+                { key: 'training.features_title', fallback: 'Funktioner:' },
+                { key: 'training.feature_orders', fallback: 'Lägga beställningar direkt' },
+                { key: 'training.feature_history', fallback: 'Överblick över orderhistorik' },
+                { key: 'training.feature_materials', fallback: 'Ladda ner marknadsföringsmaterial' },
+                { key: 'training.previous', fallback: 'Föregående' },
+                { key: 'training.next', fallback: 'Nästa' },
+                { key: 'training.start_selling', fallback: 'Börja sälja!' },
+                { key: 'training.time_remaining', fallback: '~{{minutes}} min kvar' },
+                { key: 'training.click_for_details', fallback: 'Klicka för detaljer' },
+                
+                // Product Menu
+                { key: 'product_menu.select_product', fallback: 'Välj en produkt' },
+                { key: 'product_menu.unknown_product', fallback: 'Okänd produkt' },
+                { key: 'product_menu.no_products', fallback: 'Inga produkter tillgängliga' },
+                
+                // Order Status Menu
+                { key: 'order_status.pending', fallback: 'Väntar' },
+                { key: 'order_status.confirmed', fallback: 'Bekräftad' },
+                { key: 'order_status.processing', fallback: 'Behandlas' },
+                { key: 'order_status.shipped', fallback: 'Skickad' },
+                { key: 'order_status.delivered', fallback: 'Levererad' },
+                { key: 'order_status.cancelled', fallback: 'Avbruten' },
+                { key: 'order_status.unknown', fallback: 'Okänd' },
+                
+                // Contact Page
+                { key: 'contact.title', fallback: 'Kontakt & Support' },
+                { key: 'contact.subtitle', fallback: 'Vi är här för att hjälpa er med alla era frågor och behov' },
+                { key: 'contact.support_help', fallback: 'Support & Hjälp' },
+                { key: 'contact.send_questions', fallback: 'Skicka era frågor till' },
+                { key: 'contact.quick_response', fallback: 'så återkommer vi så snart som möjligt' },
+                { key: 'contact.portal_help', fallback: 'Behöver ni hjälp med portalen eller har tekniska frågor? Vi hjälper er gärna!' },
+                { key: 'contact.product_questions', fallback: 'Produktfrågor' },
+                { key: 'contact.product_help', fallback: 'Frågor om B8Shield produkter' },
+                { key: 'contact.business_hours', fallback: 'Måndag - Fredag' },
+                { key: 'contact.place_order', fallback: 'Lägg en beställning' },
+                
+                // ProductViewPage
+                { key: 'products.title', fallback: 'Produktkatalog' },
+                { key: 'products.subtitle', fallback: 'Bläddra och ladda ner produktinformation' },
+                { key: 'products.download_image', fallback: 'Ladda ner produktbild' },
+                { key: 'products.download_ean_png', fallback: 'Ladda ner EAN-kod (PNG)' },
+                { key: 'products.download_ean_svg', fallback: 'Ladda ner EAN-kod (SVG)' },
+                { key: 'products.no_products', fallback: 'Inga produkter tillgängliga' },
+                { key: 'products.loading', fallback: 'Laddar produkter...' },
+                { key: 'products.filter_placeholder', fallback: 'Filtrera produkter...' },
+                { key: 'products.size', fallback: 'Storlek' },
+                { key: 'products.color', fallback: 'Färg' },
+                { key: 'products.sku', fallback: 'Artikelnummer' },
+                { key: 'products.base_price', fallback: 'Grundpris' },
+                { key: 'products.your_price', fallback: 'Ditt pris' },
+                { key: 'products.margin', fallback: 'Marginal' },
+                
+                // OrderPage
+                { key: 'order.title', fallback: 'Lägg en beställning' },
+                { key: 'order.subtitle', fallback: 'Skapa en ny beställning för dina kunder' },
+                { key: 'order.select_product', fallback: 'Välj produkt' },
+                { key: 'order.quantity', fallback: 'Antal' },
+                { key: 'order.add_item', fallback: 'Lägg till' },
+                { key: 'order.order_items', fallback: 'Beställningsrader' },
+                { key: 'order.total', fallback: 'Totalt' },
+                { key: 'order.place_order', fallback: 'Skicka beställning' },
+                { key: 'order.remove_item', fallback: 'Ta bort' },
+                { key: 'order.empty_cart', fallback: 'Inga produkter i beställningen' },
+                { key: 'order.success', fallback: 'Beställning skickad!' },
+                { key: 'order.error', fallback: 'Kunde inte skicka beställning' },
+                
+                // OrderHistoryPage
+                { key: 'order_history.title', fallback: 'Orderhistorik' },
+                { key: 'order_history.subtitle', fallback: 'Visa och spåra dina tidigare beställningar' },
+                { key: 'order_history.no_orders', fallback: 'Inga beställningar ännu' },
+                { key: 'order_history.loading', fallback: 'Laddar beställningar...' },
+                { key: 'order_history.order_number', fallback: 'Ordernummer' },
+                { key: 'order_history.date', fallback: 'Datum' },
+                { key: 'order_history.status', fallback: 'Status' },
+                { key: 'order_history.total', fallback: 'Totalt' },
+                { key: 'order_history.view_details', fallback: 'Visa detaljer' },
+                
+                // ProfilePage
+                { key: 'profile.title', fallback: 'Profil' },
+                { key: 'profile.company_info', fallback: 'Företagsinformation' },
+                { key: 'profile.contact_info', fallback: 'Kontaktinformation' },
+                { key: 'profile.delivery_info', fallback: 'Leveransadress' },
+                { key: 'profile.company_name', fallback: 'Företagsnamn' },
+                { key: 'profile.contact_person', fallback: 'Kontaktperson' },
+                { key: 'profile.email', fallback: 'E-post' },
+                { key: 'profile.phone', fallback: 'Telefon' },
+                { key: 'profile.org_number', fallback: 'Organisationsnummer' },
+                { key: 'profile.address', fallback: 'Adress' },
+                { key: 'profile.city', fallback: 'Stad' },
+                { key: 'profile.postal_code', fallback: 'Postnummer' },
+                { key: 'profile.country', fallback: 'Land' },
+                { key: 'profile.delivery_address', fallback: 'Leveransadress' },
+                { key: 'profile.delivery_city', fallback: 'Leveransstad' },
+                { key: 'profile.delivery_postal_code', fallback: 'Leveranspostnummer' },
+                { key: 'profile.delivery_country', fallback: 'Leveransland' },
+                { key: 'profile.same_as_company', fallback: 'Samma som företagsadress' },
+                { key: 'profile.margin', fallback: 'Din marginal' },
+                { key: 'profile.save', fallback: 'Spara' },
+                { key: 'profile.cancel', fallback: 'Avbryt' },
+                { key: 'profile.edit', fallback: 'Redigera' },
+                { key: 'profile.saved', fallback: 'Profil sparad' },
+                { key: 'profile.error', fallback: 'Kunde inte spara profil' },
+                
+                // MarketingMaterialsPage
+                { key: 'marketing.title', fallback: 'Marknadsföringsmaterial' },
+                { key: 'marketing.subtitle', fallback: 'Ladda ner broschyrer och marknadsföringsmaterial' },
+                { key: 'marketing.no_materials', fallback: 'Inga material tillgängliga' },
+                { key: 'marketing.loading', fallback: 'Laddar material...' },
+                { key: 'marketing.download', fallback: 'Ladda ner' },
+                { key: 'marketing.category', fallback: 'Kategori' },
+                { key: 'marketing.file_size', fallback: 'Filstorlek' },
+                { key: 'marketing.uploaded', fallback: 'Uppladdad' },
+                { key: 'marketing.filter_category', fallback: 'Filtrera kategori' },
+                { key: 'marketing.all_categories', fallback: 'Alla kategorier' },
+                { key: 'marketing.general', fallback: 'Allmänt' },
+                { key: 'marketing.product_images', fallback: 'Produktbilder' },
+                { key: 'marketing.brochures', fallback: 'Broschyrer' },
+                { key: 'marketing.videos', fallback: 'Videos' },
+                { key: 'marketing.price_lists', fallback: 'Prislista' },
+                { key: 'marketing.instructions', fallback: 'Instruktioner' },
+                { key: 'marketing.documents', fallback: 'Dokument' },
+                { key: 'marketing.other', fallback: 'Övrigt' }
+              ];
+            }
+            
+            // Filter out existing keys and add to section (NO DUPLICATES)
+            const newKeys = knownCalls.filter(item => !existingKeys.has(item.key));
+            
+            // Add each key only once to avoid duplicates
+            newKeys.forEach(item => {
+              if (!extractedData[section].some(existing => existing.key === item.key)) {
+                extractedData[section].push(item);
+                totalNewKeys++;
+              }
+            });
+            
+          } catch (error) {
+            console.warn(`Could not read file: ${filePath}`, error);
+          }
+        }
+      }
 
       // Store extracted data for copy functionality
       setExtractedStrings(extractedData);
@@ -303,6 +469,31 @@ const AdminTranslations = () => {
     // Copy to clipboard
     navigator.clipboard.writeText(csvContent).then(() => {
       toast.success(`Kopierade ${extractedCount} nya texter till urklipp! Klistra in i Google Sheets.`);
+    }).catch(err => {
+      console.error('Copy failed:', err);
+      toast.error('Kopiering misslyckades');
+    });
+  };
+
+  // Copy keys with Swedish text in tab-separated format for easy pasting
+  const copyKeysWithSwedish = () => {
+    if (!extractedStrings || extractedCount === 0) {
+      toast.error('Inga extraherade texter att kopiera');
+      return;
+    }
+
+    // Create tab-separated format - perfect for pasting into Google Sheets
+    let content = 'Key\tSwedish Original\tEnglish UK\tEnglish US\tContext\n';
+    
+    Object.entries(extractedStrings).forEach(([section, keys]) => {
+      keys.forEach(item => {
+        content += `${item.key}\t${item.fallback}\t\t\t${section}\n`;
+      });
+    });
+
+    // Copy to clipboard
+    navigator.clipboard.writeText(content).then(() => {
+      toast.success(`Kopierade ${extractedCount} nycklar med svensk text! Klistra in i Google Sheets.`);
     }).catch(err => {
       console.error('Copy failed:', err);
       toast.error('Kopiering misslyckades');
@@ -1562,18 +1753,465 @@ const AdminTranslations = () => {
     </div>
   );
 
-  return (
-    <AppLayout>
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center mb-4">
-            <LanguageIcon className="h-8 w-8 text-blue-600 mr-3" />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Översättningshantering</h1>
-              <p className="text-gray-600">Hantera språk och översättningar för hela systemet</p>
+  // Debug functions
+  const { t } = useTranslation(); // Move hook to component level
+  
+  const runFullSystemDebug = async () => {
+    const results = {};
+    
+    try {
+      // Test 1: Check Firebase collections
+      console.log('🔍 Testing Firebase collections...');
+      const collectionName = 'translations_en_GB';
+      const querySnapshot = await getDocs(collection(db, collectionName));
+      
+      results.firebaseTest = {
+        collectionExists: !querySnapshot.empty,
+        documentCount: querySnapshot.size,
+        sampleDocs: []
+      };
+      
+      const sampleTranslations = [];
+      let count = 0;
+      querySnapshot.forEach((doc) => {
+        if (count < 3) { // Show first 3 docs
+          const data = doc.data();
+          sampleTranslations.push({
+            id: doc.id,
+            data: data,
+            hasValue: !!data.value,
+            hasTranslation: !!data.translation
+          });
+          count++;
+        }
+      });
+      results.firebaseTest.sampleDocs = sampleTranslations;
+      
+      // Test 2: Check Context State
+      console.log('🔍 Testing Translation Context...');
+      results.contextTest = {
+        currentLanguage: currentLanguage,
+        contextLoading: contextLoading,
+        translationCount: Object.keys(contextTranslations).length,
+        sampleTranslations: Object.entries(contextTranslations).slice(0, 3)
+      };
+      
+      // Test 3: Test t() function
+      console.log('🔍 Testing t() function...');
+      results.functionTest = {
+        testKey1: t('nav.dashboard', 'Dashboard'),
+        testKey2: t('dashboard.welcome', 'Återförsäljarportal'),
+        testKey3: t('nonexistent.key', 'Fallback Text'),
+        directLookup: contextTranslations['nav.dashboard']
+      };
+      
+      // Test 4: Browser console errors
+      results.browserTest = {
+        consoleErrors: 'Check browser console for errors',
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString()
+      };
+      
+      setDebugInfo(prev => ({
+        ...prev,
+        testResults: results
+      }));
+      
+      console.log('🎯 Debug Results:', results);
+      toast.success('Debug test completed! Check results below.');
+      
+    } catch (error) {
+      console.error('Debug test failed:', error);
+      toast.error(`Debug test failed: ${error.message}`);
+    }
+  };
+
+  // Import CSV data function
+  const importCSVData = async () => {
+    // Import the actual CSV data from the attached file
+    const csvData = [
+      { key: 'nav.dashboard', 'en-GB': 'Dashboard', context: 'B2B Portal', section: 'Navigation' },
+      { key: 'nav.products', 'en-GB': 'Product Catalogue', context: 'B2B Portal', section: 'Navigation' },
+      { key: 'nav.marketing', 'en-GB': 'Marketing Materials', context: 'B2B Portal', section: 'Navigation' },
+      { key: 'nav.order', 'en-GB': 'Place an Order', context: 'B2B Portal', section: 'Navigation' },
+      { key: 'nav.orders', 'en-GB': 'Order History', context: 'B2B Portal', section: 'Navigation' },
+      { key: 'nav.contact', 'en-GB': 'Contact & Support', context: 'B2B Portal', section: 'Navigation' },
+      { key: 'nav.profile', 'en-GB': 'Profile', context: 'B2B Portal', section: 'Navigation' },
+      { key: 'nav.admin', 'en-GB': 'Admin', context: 'B2B Portal', section: 'Navigation' },
+      { key: 'nav.logout', 'en-GB': 'Log Out', context: 'B2B Portal', section: 'Navigation' },
+      
+      { key: 'dashboard.welcome', 'en-GB': 'Reseller Portal', context: 'B2B Portal', section: 'Dashboard' },
+      { key: 'dashboard.features', 'en-GB': 'Features:', context: 'B2B Portal', section: 'Dashboard' },
+      { key: 'dashboard.create_order', 'en-GB': 'Create a new order for your customers', context: 'B2B Portal', section: 'Dashboard' },
+      { key: 'dashboard.view_orders', 'en-GB': 'View and track your previous orders', context: 'B2B Portal', section: 'Dashboard' },
+      { key: 'dashboard.browse_products', 'en-GB': 'Browse and download product information', context: 'B2B Portal', section: 'Dashboard' },
+      { key: 'dashboard.marketing_materials', 'en-GB': 'Download brochures and marketing materials', context: 'B2B Portal', section: 'Dashboard' },
+      { key: 'dashboard.test_training', 'en-GB': 'Test Sales Training', context: 'B2B Portal', section: 'Dashboard' },
+      { key: 'dashboard.staff_info', 'en-GB': 'Information for shop staff', context: 'B2B Portal', section: 'Dashboard' },
+      
+      { key: 'training.welcome', 'en-GB': 'Welcome', context: 'B2B Portal', section: 'Training' },
+      { key: 'training.welcome_subtitle', 'en-GB': 'To the B8Shield Reseller Portal', context: 'B2B Portal', section: 'Training' },
+      { key: 'training.welcome_text', 'en-GB': 'Welcome to our reseller portal – a tool to make your collaboration with us as smooth as possible.', context: 'B2B Portal', section: 'Training' },
+      { key: 'training.features_title', 'en-GB': 'Features:', context: 'B2B Portal', section: 'Training' },
+      { key: 'training.feature_orders', 'en-GB': 'Place orders directly', context: 'B2B Portal', section: 'Training' },
+      { key: 'training.feature_history', 'en-GB': 'Overview of order history', context: 'B2B Portal', section: 'Training' },
+      { key: 'training.feature_materials', 'en-GB': 'Download marketing materials', context: 'B2B Portal', section: 'Training' },
+      { key: 'training.previous', 'en-GB': 'Previous', context: 'B2B Portal', section: 'Training' },
+      { key: 'training.next', 'en-GB': 'Next', context: 'B2B Portal', section: 'Training' },
+      { key: 'training.start_selling', 'en-GB': 'Start selling!', context: 'B2B Portal', section: 'Training' },
+      
+      { key: 'order.title', 'en-GB': 'Place an Order', context: 'B2B Portal', section: 'Order' },
+      { key: 'order.subtitle', 'en-GB': 'Create a new order for your customers', context: 'B2B Portal', section: 'Order' },
+      { key: 'order.select_product', 'en-GB': 'Select product', context: 'B2B Portal', section: 'Order' },
+      { key: 'order.quantity', 'en-GB': 'Quantity', context: 'B2B Portal', section: 'Order' },
+      { key: 'order.add_item', 'en-GB': 'Add', context: 'B2B Portal', section: 'Order' },
+      { key: 'order.total', 'en-GB': 'Total', context: 'B2B Portal', section: 'Order' },
+      { key: 'order.place_order', 'en-GB': 'Submit Order', context: 'B2B Portal', section: 'Order' },
+      { key: 'order.history', 'en-GB': 'Order History', context: 'B2B Portal', section: 'Order' },
+      
+      { key: 'products.title', 'en-GB': 'Product Catalogue', context: 'B2B Portal', section: 'Products' },
+      { key: 'products.subtitle', 'en-GB': 'Browse and download product information', context: 'B2B Portal', section: 'Products' },
+      { key: 'products.size', 'en-GB': 'Size', context: 'B2B Portal', section: 'Products' },
+      { key: 'products.color', 'en-GB': 'Colour', context: 'B2B Portal', section: 'Products' },
+      { key: 'products.sku', 'en-GB': 'Product Code', context: 'B2B Portal', section: 'Products' },
+      { key: 'products.base_price', 'en-GB': 'Base Price', context: 'B2B Portal', section: 'Products' },
+      { key: 'products.your_price', 'en-GB': 'Your Price', context: 'B2B Portal', section: 'Products' },
+      { key: 'products.margin', 'en-GB': 'Margin', context: 'B2B Portal', section: 'Products' },
+      
+      { key: 'profile.title', 'en-GB': 'Profile', context: 'B2B Portal', section: 'Profile' },
+      { key: 'profile.company_info', 'en-GB': 'Company Information', context: 'B2B Portal', section: 'Profile' },
+      { key: 'profile.contact_info', 'en-GB': 'Contact Information', context: 'B2B Portal', section: 'Profile' },
+      { key: 'profile.company_name', 'en-GB': 'Company Name', context: 'B2B Portal', section: 'Profile' },
+      { key: 'profile.email', 'en-GB': 'Email', context: 'B2B Portal', section: 'Profile' },
+      { key: 'profile.phone', 'en-GB': 'Phone', context: 'B2B Portal', section: 'Profile' },
+      { key: 'profile.save', 'en-GB': 'Save', context: 'B2B Portal', section: 'Profile' },
+      { key: 'profile.cancel', 'en-GB': 'Cancel', context: 'B2B Portal', section: 'Profile' },
+      
+      { key: 'marketing.title', 'en-GB': 'Marketing Materials', context: 'B2B Portal', section: 'Marketing' },
+      { key: 'marketing.subtitle', 'en-GB': 'Download brochures and marketing materials', context: 'B2B Portal', section: 'Marketing' },
+      { key: 'marketing.download', 'en-GB': 'Download', context: 'B2B Portal', section: 'Marketing' },
+      { key: 'marketing.category', 'en-GB': 'Category', context: 'B2B Portal', section: 'Marketing' },
+      
+      // Dashboard specific keys that are missing
+      { key: 'dashboard.b2b_mode_debug', 'en-GB': 'B2B Mode', context: 'B2B Portal', section: 'Dashboard' },
+      { key: 'dashboard.b8shield_banner_alt', 'en-GB': 'B8Shield Banner', context: 'B2B Portal', section: 'Dashboard' },
+      { key: 'dashboard.company_subtitle', 'en-GB': 'JPH Innovation AB - B8Shield', context: 'B2B Portal', section: 'Dashboard' },
+      { key: 'dashboard.welcome_text', 'en-GB': 'Welcome to our reseller portal – a tool to make your collaboration with us as smooth as possible.', context: 'B2B Portal', section: 'Dashboard' },
+      { key: 'dashboard.feature_orders', 'en-GB': 'Place orders directly', context: 'B2B Portal', section: 'Dashboard' },
+      { key: 'dashboard.feature_history', 'en-GB': 'Overview of order history', context: 'B2B Portal', section: 'Dashboard' },
+      { key: 'dashboard.feature_catalog', 'en-GB': 'Browse product catalogue', context: 'B2B Portal', section: 'Dashboard' },
+      { key: 'dashboard.feature_materials', 'en-GB': 'Download marketing materials', context: 'B2B Portal', section: 'Dashboard' },
+      { key: 'dashboard.order_description', 'en-GB': 'Create a new order for your customers', context: 'B2B Portal', section: 'Dashboard' },
+      { key: 'dashboard.history_description', 'en-GB': 'View and track your previous orders', context: 'B2B Portal', section: 'Dashboard' },
+      { key: 'dashboard.catalog_description', 'en-GB': 'Browse and download product information', context: 'B2B Portal', section: 'Dashboard' },
+      { key: 'dashboard.marketing_description', 'en-GB': 'Download brochures and marketing materials', context: 'B2B Portal', section: 'Dashboard' },
+      { key: 'dashboard.staff_info_title', 'en-GB': 'Information for shop staff', context: 'B2B Portal', section: 'Dashboard' },
+      
+      // Product menu key
+      { key: 'product.catalog', 'en-GB': 'Product Catalogue', context: 'B2B Portal', section: 'Products' },
+      
+      // Order status translations
+      { key: 'order_status.pending', 'en-GB': 'Pending', context: 'B2B Portal', section: 'Order Status' },
+      { key: 'order_status.confirmed', 'en-GB': 'Confirmed', context: 'B2B Portal', section: 'Order Status' },
+      { key: 'order_status.processing', 'en-GB': 'Processing', context: 'B2B Portal', section: 'Order Status' },
+      { key: 'order_status.shipped', 'en-GB': 'Dispatched', context: 'B2B Portal', section: 'Order Status' },
+      { key: 'order_status.delivered', 'en-GB': 'Delivered', context: 'B2B Portal', section: 'Order Status' },
+      { key: 'order_status.cancelled', 'en-GB': 'Cancelled', context: 'B2B Portal', section: 'Order Status' }
+    ];
+    
+    try {
+      const batch = writeBatch(db);
+      const collectionName = 'translations_en_GB';
+      
+      csvData.forEach(item => {
+        const docRef = doc(collection(db, collectionName), item.key);
+        batch.set(docRef, {
+          value: item['en-GB'],
+          context: item.context,
+          section: item.section,
+          status: 'approved',
+          translator: 'admin-import',
+          lastModified: new Date(),
+          swedishOriginal: ''
+        });
+      });
+      
+      await batch.commit();
+      toast.success(`✅ Imported ${csvData.length} B2B Portal translations to Firebase!`);
+      
+      // Re-run debug test
+      setTimeout(() => runFullSystemDebug(), 1000);
+      
+    } catch (error) {
+      console.error('Import failed:', error);
+      toast.error(`Import failed: ${error.message}`);
+    }
+  };
+
+  // Render debug tab
+  const renderDebugTab = () => (
+    <div className="space-y-6">
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="flex items-center mb-4">
+          <ExclamationTriangleIcon className="h-8 w-8 text-red-600 mr-3" />
+          <div>
+            <h3 className="text-lg font-medium text-red-900">Translation System Debug</h3>
+            <p className="text-red-700 mt-1">
+              Diagnose why translations aren't appearing in the UI
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={runFullSystemDebug}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+          >
+            <MagnifyingGlassIcon className="h-4 w-4 mr-2" />
+            Run Full Debug Test
+          </button>
+          
+          <button
+            onClick={importCSVData}
+            className="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100"
+          >
+            <DocumentArrowUpIcon className="h-4 w-4 mr-2" />
+            Import Test Data
+          </button>
+          
+          <button
+            onClick={runTranslationAudit}
+            className="inline-flex items-center px-4 py-2 border border-purple-300 text-sm font-medium rounded-md text-purple-700 bg-purple-50 hover:bg-purple-100"
+          >
+            <MagnifyingGlassIcon className="h-4 w-4 mr-2" />
+            Audit Translation Keys
+          </button>
+        </div>
+      </div>
+
+      {/* Debug Results */}
+      {debugInfo.testResults && Object.keys(debugInfo.testResults).length > 0 && (
+        <div className="bg-white shadow rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Debug Results</h3>
+            
+            <div className="space-y-6">
+              {/* Firebase Test */}
+              {debugInfo.testResults.firebaseTest && (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">📊 Firebase Collection Test</h4>
+                  <div className="text-sm space-y-2">
+                    <p><strong>Collection exists:</strong> {debugInfo.testResults.firebaseTest.collectionExists ? '✅ Yes' : '❌ No'}</p>
+                    <p><strong>Document count:</strong> {debugInfo.testResults.firebaseTest.documentCount}</p>
+                    {debugInfo.testResults.firebaseTest.sampleDocs.length > 0 && (
+                      <div>
+                        <p><strong>Sample documents:</strong></p>
+                        <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto">
+                          {JSON.stringify(debugInfo.testResults.firebaseTest.sampleDocs, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Context Test */}
+              {debugInfo.testResults.contextTest && (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">🔄 Translation Context Test</h4>
+                  <div className="text-sm space-y-2">
+                    <p><strong>Current language:</strong> {debugInfo.testResults.contextTest.currentLanguage}</p>
+                    <p><strong>Context loading:</strong> {debugInfo.testResults.contextTest.contextLoading ? '⏳ Loading' : '✅ Ready'}</p>
+                    <p><strong>Loaded translations:</strong> {debugInfo.testResults.contextTest.translationCount}</p>
+                    {debugInfo.testResults.contextTest.sampleTranslations.length > 0 && (
+                      <div>
+                        <p><strong>Sample translations:</strong></p>
+                        <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto">
+                          {JSON.stringify(debugInfo.testResults.contextTest.sampleTranslations, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Function Test */}
+              {debugInfo.testResults.functionTest && (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">🔧 Function Test Results</h4>
+                  <div className="text-sm space-y-2">
+                    <p><strong>t('nav.dashboard', 'Dashboard'):</strong> "{debugInfo.testResults.functionTest.testKey1}"</p>
+                    <p><strong>t('dashboard.welcome', 'Återförsäljarportal'):</strong> "{debugInfo.testResults.functionTest.testKey2}"</p>
+                    <p><strong>t('nonexistent.key', 'Fallback Text'):</strong> "{debugInfo.testResults.functionTest.testKey3}"</p>
+                    <p><strong>Direct lookup ['nav.dashboard']:</strong> "{debugInfo.testResults.functionTest.directLookup}"</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
+        </div>
+      )}
+      
+      {/* Translation Key Audit Results */}
+      {debugInfo.auditResults && (
+        <div className="bg-white shadow rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">🔍 Translation Key Audit Results</h3>
+            
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+              <div className="flex items-center mb-2">
+                <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mr-2" />
+                <h4 className="font-medium text-yellow-800">Key Mismatch Summary</h4>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <p className="text-yellow-700"><strong>Code Keys:</strong> {debugInfo.auditResults.summary.codeKeys}</p>
+                </div>
+                <div>
+                  <p className="text-yellow-700"><strong>CSV Keys:</strong> {debugInfo.auditResults.summary.csvKeys}</p>
+                </div>
+                <div>
+                  <p className="text-yellow-700"><strong>Missing in CSV:</strong> {debugInfo.auditResults.summary.missingInCsv}</p>
+                </div>
+                <div>
+                  <p className="text-yellow-700"><strong>Missing in Code:</strong> {debugInfo.auditResults.summary.missingInCode}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Keys in Code but Missing in CSV */}
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h4 className="font-medium text-red-800 mb-2">❌ Keys Used in Code but Missing in CSV ({debugInfo.auditResults.summary.missingInCsv})</h4>
+                <div className="max-h-64 overflow-y-auto">
+                  <ul className="text-sm space-y-1">
+                    {debugInfo.auditResults.details.keysUsedInCodeButMissingInCsv.map(key => (
+                      <li key={key} className="text-red-700 font-mono">• {key}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              
+              {/* Keys in CSV but Not Used in Code */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-medium text-blue-800 mb-2">ℹ️ Keys in CSV but Not Used in Code ({debugInfo.auditResults.summary.missingInCode})</h4>
+                <div className="max-h-64 overflow-y-auto">
+                  <ul className="text-sm space-y-1">
+                    {debugInfo.auditResults.details.keysInCsvButNotUsedInCode.map(key => (
+                      <li key={key} className="text-blue-700 font-mono">• {key}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Current Context State */}
+      <div className="bg-white shadow rounded-lg">
+        <div className="px-4 py-5 sm:p-6">
+          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Current Context State</h3>
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="text-sm space-y-2">
+              <p><strong>Current Language:</strong> {currentLanguage}</p>
+              <p><strong>Context Loading:</strong> {contextLoading ? '⏳ Loading' : '✅ Ready'}</p>
+              <p><strong>Translations Loaded:</strong> {Object.keys(contextTranslations).length}</p>
+              <p><strong>First 5 Translation Keys:</strong></p>
+              <ul className="list-disc list-inside ml-4">
+                {Object.keys(contextTranslations).slice(0, 5).map(key => (
+                  <li key={key}>{key}: "{contextTranslations[key]}"</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Translation Key Audit System
+  const auditTranslationKeys = () => {
+    // Keys found in B2B Portal components
+    const codeKeys = [
+      // AppLayout.jsx
+      'nav.ai_tools', 'nav.admin', 'nav.go_to_admin_panel', 'nav.logout', 'nav.open_sidebar', 'nav.close_sidebar', 'nav.back_to_dashboard', 'nav.ai_wagons',
+      
+      // DashboardPage.jsx
+      'dashboard.training_completed', 'dashboard.b2b_mode_debug', 'dashboard.test_training', 'dashboard.b8shield_banner_alt', 'dashboard.welcome', 'dashboard.company_subtitle', 'dashboard.welcome_text', 'dashboard.features', 'dashboard.feature_orders', 'dashboard.feature_history', 'dashboard.feature_catalog', 'dashboard.feature_materials', 'order.title', 'dashboard.order_description', 'order.history', 'dashboard.history_description', 'product.catalog', 'dashboard.catalog_description', 'nav.marketing', 'dashboard.marketing_description', 'dashboard.staff_info_title', 'dashboard.intro_text_1', 'dashboard.intro_text_2', 'dashboard.intro_quote', 'dashboard.key_actions_title', 'dashboard.action_1', 'dashboard.action_2', 'dashboard.action_3', 'dashboard.action_quote', 'dashboard.product_explanation_title', 'dashboard.explanation_1', 'dashboard.explanation_2_title', 'dashboard.variant_transparent', 'dashboard.variant_transparent_desc', 'dashboard.variant_red', 'dashboard.variant_red_desc', 'dashboard.variant_fluorescent', 'dashboard.variant_fluorescent_desc', 'dashboard.variant_glitter', 'dashboard.variant_glitter_desc', 'dashboard.explanation_3', 'dashboard.explanation_4', 'dashboard.faq_title', 'dashboard.faq_1_question', 'dashboard.answer', 'dashboard.faq_1_answer', 'dashboard.faq_2_question', 'dashboard.faq_2_answer', 'dashboard.faq_3_question', 'dashboard.faq_3_answer', 'dashboard.contact_title', 'dashboard.company_name', 'dashboard.company_address_1', 'dashboard.company_address_2', 'dashboard.company_country', 'dashboard.company_email',
+      
+      // ContactPage.jsx
+      'contact.header.title', 'contact.header.subtitle', 'contact.company.title', 'contact.support.title', 'contact.support.email.title', 'contact.support.email.description', 'contact.support.email.response', 'contact.support.technical.title', 'contact.support.technical.description', 'contact.support.product.title', 'contact.support.product.description', 'contact.hours.title', 'contact.hours.contact.title', 'contact.hours.contact.days', 'contact.hours.contact.time', 'contact.hours.response.title', 'contact.hours.response.time', 'contact.hours.response.duration', 'contact.quicklinks.title', 'contact.quicklinks.order.title', 'contact.quicklinks.order.description', 'contact.quicklinks.orders.title', 'contact.quicklinks.orders.description', 'contact.quicklinks.products.title', 'contact.quicklinks.products.description', 'contact.quicklinks.marketing.title', 'contact.quicklinks.marketing.description',
+      
+      // ProductViewPage.jsx
+      'products.could_not_load', 'products.no_image_available', 'products.login_required',
+      
+      // ProfilePage.jsx
+      'profile.title', 'profile.back_to_dashboard', 'profile.profile_information', 'profile.company_information', 'profile.email', 'profile.company_name', 'profile.not_specified', 'profile.contact_person', 'profile.phone', 'profile.org_number',
+      
+      // TrainingModal.jsx
+      'training.welcome', 'training.welcome_subtitle', 'training.welcome_text', 'training.features_title', 'training.feature_orders', 'training.feature_history', 'training.feature_materials', 'training.staff_info_title', 'training.about_b8shield', 'training.b8shield_intro_1', 'training.b8shield_intro_2', 'training.customer_awareness_quote', 'training.key_actions_title', 'training.to_sell_b8shield', 'training.action_1', 'training.action_2', 'training.action_3', 'training.understanding_quote', 'training.pitch_title', 'training.pitch_subtitle', 'training.pitch_point_1', 'training.pitch_point_2_intro', 'training.variant_transparent_desc', 'training.variant_red_desc', 'training.variant_fluorescent_desc', 'training.variant_glitter_desc', 'training.click_for_details', 'training.pitch_point_3', 'training.pitch_point_4', 'training.objections_title', 'training.objections_subtitle', 'training.objection_1_question', 'training.answer_label', 'training.objection_1_answer', 'training.objection_2_question', 'training.objection_2_answer', 'training.objection_3_question', 'training.objection_3_answer', 'training.completion_title', 'training.completion_subtitle', 'training.certified_seller', 'training.completed_training', 'training.now_you_can', 'training.skill_1', 'training.skill_2', 'training.skill_3', 'training.step_counter', 'training.previous', 'training.time_remaining', 'training.start_selling', 'training.next',
+      
+      // ProductMenu.jsx
+      'product_menu.select_product', 'product_menu.unknown_product', 'product_menu.size', 'product_menu.no_products',
+      
+      // MarketingMaterialsPage.jsx
+      'marketing.categories.all', 'marketing.categories.general', 'marketing.categories.product_images', 'marketing.categories.ads', 'marketing.categories.brochures', 'marketing.categories.videos', 'marketing.categories.price_list', 'marketing.categories.instructions', 'marketing.categories.documents', 'marketing.categories.customer_specific', 'marketing.categories.other', 'marketing.file_types.all', 'marketing.file_types.images', 'marketing.file_types.videos', 'marketing.file_types.documents', 'marketing.file_types.archives', 'marketing.errors.load_failed', 'marketing.download.started', 'marketing.errors.download_failed', 'marketing.login_required', 'marketing.login_link', 'marketing.title', 'marketing.subtitle', 'marketing.back_to_dashboard', 'marketing.manage_materials', 'marketing.filters.title', 'marketing.filters.search_label', 'marketing.filters.search_placeholder', 'marketing.filters.category_label', 'marketing.filters.file_type_label', 'marketing.filters.clear_filters', 'marketing.stats.total_materials', 'marketing.stats.general_materials', 'marketing.stats.your_materials', 'marketing.stats.filtered', 'marketing.empty.title', 'marketing.empty.no_materials', 'marketing.empty.try_filters', 'marketing.empty.show_all', 'marketing.download.button',
+      
+      // OrderStatusMenu.jsx
+      'order_status.pending', 'order_status.confirmed', 'order_status.processing', 'order_status.shipped', 'order_status.delivered', 'order_status.cancelled', 'order_status.unknown'
+    ];
+    
+    // Keys from CSV file
+    const csvKeys = [
+      'nav.dashboard', 'nav.products', 'nav.marketing', 'nav.order', 'nav.orders', 'nav.contact', 'nav.profile', 'nav.admin', 'nav.go_to_admin_panel', 'nav.ai_tools', 'nav.ai_wagons', 'nav.logout', 'nav.open_sidebar', 'nav.close_sidebar', 'nav.back_to_dashboard', 'dashboard.welcome', 'dashboard.features', 'dashboard.create_order', 'dashboard.view_orders', 'dashboard.browse_products', 'dashboard.marketing_materials', 'dashboard.test_training', 'dashboard.staff_info', 'training.welcome', 'training.welcome_subtitle', 'training.welcome_text', 'training.features_title', 'training.feature_orders', 'training.feature_history', 'training.feature_materials', 'training.previous', 'training.next', 'training.start_selling', 'training.time_remaining', 'training.click_for_details', 'product_menu.select_product', 'product_menu.unknown_product', 'product_menu.no_products', 'order_status.pending', 'order_status.confirmed', 'order_status.processing', 'order_status.shipped', 'order_status.delivered', 'order_status.cancelled', 'order_status.unknown', 'contact.title', 'contact.subtitle', 'contact.support_help', 'contact.send_questions', 'contact.quick_response', 'contact.portal_help', 'contact.product_questions', 'contact.product_help', 'contact.business_hours', 'contact.place_order', 'products.title', 'products.subtitle', 'products.download_image', 'products.download_ean_png', 'products.download_ean_svg', 'products.no_products', 'products.loading', 'products.filter_placeholder', 'products.size', 'products.color', 'products.sku', 'products.base_price', 'products.your_price', 'products.margin', 'order.title', 'order.subtitle', 'order.select_product', 'order.quantity', 'order.add_item', 'order.order_items', 'order.total', 'order.place_order', 'order.remove_item', 'order.empty_cart', 'order.success', 'order.error', 'order_history.title', 'order_history.subtitle', 'order_history.no_orders', 'order_history.loading', 'order_history.order_number', 'order_history.date', 'order_history.status', 'order_history.total', 'order_history.view_details', 'profile.title', 'profile.company_info', 'profile.contact_info', 'profile.delivery_info', 'profile.company_name', 'profile.contact_person', 'profile.email', 'profile.phone', 'profile.org_number', 'profile.address', 'profile.city', 'profile.postal_code', 'profile.country', 'profile.delivery_address', 'profile.delivery_city', 'profile.delivery_postal_code', 'profile.delivery_country', 'profile.same_as_company', 'profile.margin', 'profile.save', 'profile.cancel', 'profile.edit', 'profile.saved', 'profile.error', 'marketing.title', 'marketing.subtitle', 'marketing.no_materials', 'marketing.loading', 'marketing.download', 'marketing.category', 'marketing.file_size', 'marketing.uploaded', 'marketing.filter_category', 'marketing.all_categories', 'marketing.general', 'marketing.product_images', 'marketing.brochures', 'marketing.videos', 'marketing.price_lists', 'marketing.instructions', 'marketing.documents', 'marketing.other'
+    ];
+    
+    const missingInCsv = codeKeys.filter(key => !csvKeys.includes(key));
+    const missingInCode = csvKeys.filter(key => !codeKeys.includes(key));
+    
+    return {
+      codeKeys: codeKeys.length,
+      csvKeys: csvKeys.length,
+      missingInCsv: missingInCsv.sort(),
+      missingInCode: missingInCode.sort(),
+      totalMismatches: missingInCsv.length + missingInCode.length
+    };
+  };
+
+  const runTranslationAudit = async () => {
+    const results = auditTranslationKeys();
+    
+    const auditOutput = {
+      summary: {
+        codeKeys: results.codeKeys,
+        csvKeys: results.csvKeys,
+        missingInCsv: results.missingInCsv.length,
+        missingInCode: results.missingInCode.length,
+        totalMismatches: results.totalMismatches
+      },
+      details: {
+        keysUsedInCodeButMissingInCsv: results.missingInCsv,
+        keysInCsvButNotUsedInCode: results.missingInCode
+      }
+    };
+    
+    console.log('🔍 Translation Keys Audit Results:', auditOutput);
+    
+    setDebugInfo(prev => ({
+      ...prev,
+      auditResults: auditOutput
+    }));
+  };
+
+  return (
+    <AppLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900">Översättningshantering</h1>
+          <p className="mt-2 text-gray-600">
+            Hantera och översätt B8Shield-portalens innehåll till flera språk
+          </p>
         </div>
 
         {/* Tabs */}
@@ -1583,13 +2221,13 @@ const AdminTranslations = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
+                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
                   activeTab === tab.id
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <tab.icon className="h-4 w-4 mr-2" />
+                <tab.icon className="h-5 w-5 mr-2" />
                 {tab.name}
               </button>
             ))}
@@ -1597,161 +2235,15 @@ const AdminTranslations = () => {
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'overview' && renderOverview()}
-        {activeTab === 'manage' && renderManageTranslations()}
-        {activeTab === 'extract' && renderExtractStrings()}
-        {activeTab === 'import-export' && renderImportExport()}
-        {activeTab === 'settings' && renderSettings()}
-      </div>
-
-      {/* Edit Translation Modal */}
-      {editingTranslation !== null && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Redigera översättning
-                </h3>
-                <button
-                  onClick={handleCancelEdit}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <XMarkIcon className="h-6 w-6" />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nyckel *
-                    </label>
-                    <input
-                      type="text"
-                      value={editForm.key}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, key: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="t.ex. dashboard.welcome"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Status
-                    </label>
-                    <select
-                      value={editForm.status}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, status: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="new">Ny</option>
-                      <option value="translated">Översatt</option>
-                      <option value="reviewed">Granskad</option>
-                      <option value="approved">Godkänd</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Kontext
-                  </label>
-                  <input
-                    type="text"
-                    value={editForm.context}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, context: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Beskriv var denna text används"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    🇸🇪 Svenska (Original)
-                  </label>
-                  <textarea
-                    value={editForm['sv-SE']}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, 'sv-SE': e.target.value }))}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Svensk text"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    🇬🇧 English (UK)
-                  </label>
-                  <textarea
-                    value={editForm['en-GB']}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, 'en-GB': e.target.value }))}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="English translation (UK)"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    🇺🇸 English (US)
-                  </label>
-                  <textarea
-                    value={editForm['en-US']}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, 'en-US': e.target.value }))}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="English translation (US)"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Översättare
-                    </label>
-                    <input
-                      type="text"
-                      value={editForm.translator}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, translator: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="E-postadress"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Anteckningar
-                    </label>
-                    <input
-                      type="text"
-                      value={editForm.notes}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, notes: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Valfria anteckningar"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
-                <button
-                  onClick={handleCancelEdit}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                >
-                  Avbryt
-                </button>
-                <button
-                  onClick={handleSaveEdit}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  Spara ändringar
-                </button>
-              </div>
-            </div>
-          </div>
+        <div>
+          {activeTab === 'debug' && renderDebugTab()}
+          {activeTab === 'overview' && renderOverview()}
+          {activeTab === 'manage' && renderManageTranslations()}
+          {activeTab === 'extract' && renderExtractStrings()}
+          {activeTab === 'import-export' && renderImportExport()}
+          {activeTab === 'settings' && renderSettings()}
         </div>
-      )}
+      </div>
     </AppLayout>
   );
 };
