@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { useCart } from '../../contexts/CartContext';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
+import ReviewsSection from '../../components/ReviewsSection';
 
 const PublicStorefront = () => {
   const [products, setProducts] = useState([]);
@@ -431,6 +432,28 @@ const PublicStorefront = () => {
               <p className="text-gray-600">Återvinningsbart material som skyddar våra vattenmiljöer</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Reviews Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Vad våra kunder säger
+            </h2>
+            <p className="text-xl text-gray-600">
+              Äkta recensioner från nöjda sportfiskare
+            </p>
+          </div>
+          
+          <ReviewsSection 
+            businessId="" // Will be set when Trustpilot profile is ready
+            domain="shop.b8shield.com"
+            showTrustpilot={false} // Start with manual reviews, enable when Trustpilot is set up
+            showManualReviews={true}
+            className="w-full"
+          />
         </div>
       </section>
 

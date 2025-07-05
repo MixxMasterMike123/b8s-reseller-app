@@ -12,6 +12,7 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import AppLayout from '../../components/layout/AppLayout';
 import ContentLanguageIndicator from '../../components/ContentLanguageIndicator';
+import ProductGroupTab from '../../components/admin/ProductGroupTab';
 
 // Maximum size for image files (5MB)
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
@@ -28,7 +29,7 @@ function AdminProducts() {
   const [error, setError] = useState('');
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [activeTab, setActiveTab] = useState('general'); // 'general', 'b2b', 'b2c'
+  const [activeTab, setActiveTab] = useState('general'); // 'general', 'b2b', 'b2c', 'group'
   
   // Group autocomplete states
   const [availableGroups, setAvailableGroups] = useState([]);
@@ -877,6 +878,20 @@ function AdminProducts() {
                 >
                   B2C (Konsument)
                 </button>
+                {/* Group Tab - Only show when editing and has group */}
+                {selectedProduct && formData.group && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('group')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      activeTab === 'group'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    {t('group_tab_label', 'Gruppinnehåll')}
+                  </button>
+                )}
               </div>
             </div>
             
@@ -1707,6 +1722,18 @@ function AdminProducts() {
                       Ytterligare bilder som visar produkten i användning, olika vinklar, etc.
                     </p>
                   </div>
+                </div>
+              )}
+
+              {/* Group Tab */}
+              {activeTab === 'group' && (
+                <div className="space-y-6">
+                  <ProductGroupTab 
+                    productGroup={formData.group}
+                    onContentChange={(field, value) => {
+                      console.log('Group content changed:', field, value);
+                    }}
+                  />
                 </div>
               )}
 
