@@ -1,8 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { getCountryAwareUrl } from '../../utils/productUrls';
+import { useTranslation } from '../../contexts/TranslationContext';
 
 const ShopFooter = () => {
+  const { t } = useTranslation();
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -12,8 +16,7 @@ const ShopFooter = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">B8Shield</h3>
             <p className="text-gray-300 text-sm mb-4">
-              Professionellt skydd för dina fiskedon. Utvecklat av JPH Innovation AB 
-              för att maximera din framgång på vattnet.
+              {t('footer_company_description', 'Professionellt skydd för dina fiskedon. Utvecklat av JPH Innovation AB för att maximera din framgång på vattnet.')}
             </p>
             <div className="text-gray-400 text-sm">
               <p>JPH Innovation AB</p>
@@ -24,26 +27,26 @@ const ShopFooter = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Snabblänkar</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('footer_quick_links', 'Snabblänkar')}</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link to={getCountryAwareUrl('')} className="text-gray-300 hover:text-white transition-colors">
-                  Hem
+                  {t('footer_home', 'Hem')}
                 </Link>
               </li>
               <li>
                 <Link to={getCountryAwareUrl('cart')} className="text-gray-300 hover:text-white transition-colors">
-                  Varukorg
+                  {t('footer_cart', 'Varukorg')}
                 </Link>
               </li>
               <li>
                 <Link to={getCountryAwareUrl('account')} className="text-gray-300 hover:text-white transition-colors">
-                  Mitt konto
+                  {t('footer_my_account', 'Mitt konto')}
                 </Link>
               </li>
               <li>
                 <a href="mailto:info@b8shield.com" className="text-gray-300 hover:text-white transition-colors">
-                  Kontakt
+                  {t('footer_contact', 'Kontakt')}
                 </a>
               </li>
             </ul>
@@ -51,36 +54,36 @@ const ShopFooter = () => {
 
           {/* Customer Service */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Kundservice & Info</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('footer_customer_service', 'Kundservice & Info')}</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link to={getCountryAwareUrl('shipping')} className="text-gray-300 hover:text-white transition-colors">
-                  Leveransinformation
+                  {t('footer_shipping_info', 'Leveransinformation')}
                 </Link>
               </li>
               <li>
                 <Link to={getCountryAwareUrl('returns')} className="text-gray-300 hover:text-white transition-colors">
-                  Returer & Ångerrätt
+                  {t('footer_returns', 'Returer & Ångerrätt')}
                 </Link>
               </li>
               <li>
                 <Link to={getCountryAwareUrl('affiliate-registration')} className="text-gray-300 hover:text-white transition-colors">
-                  Bli en affiliate
+                  {t('footer_become_affiliate', 'Bli en affiliate')}
                 </Link>
               </li>
-               <li>
+              <li>
                 <Link to={getCountryAwareUrl('affiliate-portal')} className="text-gray-300 hover:text-white transition-colors">
-                  Affiliate-portal
+                  {t('footer_affiliate_portal', 'Affiliate-portal')}
                 </Link>
               </li>
               <li>
                 <a href="mailto:info@b8shield.com" className="text-gray-300 hover:text-white transition-colors">
-                  Kundtjänst
+                  {t('footer_customer_support', 'Kundtjänst')}
                 </a>
               </li>
               <li>
                 <span className="text-gray-400">
-                  Mån-Fre: 09:00-17:00
+                  {t('footer_business_hours', 'Mån-Fre: 09:00-17:00')}
                 </span>
               </li>
             </ul>
@@ -88,26 +91,26 @@ const ShopFooter = () => {
 
           {/* Legal & Compliance */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Juridiskt</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('footer_legal', 'Juridiskt')}</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link to={getCountryAwareUrl('terms')} className="text-gray-300 hover:text-white transition-colors">
-                  Användarvillkor
+                  {t('footer_terms', 'Användarvillkor')}
                 </Link>
               </li>
               <li>
                 <Link to={getCountryAwareUrl('privacy')} className="text-gray-300 hover:text-white transition-colors">
-                  Integritetspolicy
+                  {t('footer_privacy', 'Integritetspolicy')}
                 </Link>
               </li>
               <li>
                 <Link to={getCountryAwareUrl('cookies')} className="text-gray-300 hover:text-white transition-colors">
-                  Cookie-policy
+                  {t('footer_cookies', 'Cookie-policy')}
                 </Link>
               </li>
               <li>
                 <Link to={getCountryAwareUrl('returns')} className="text-gray-300 hover:text-white transition-colors">
-                  Returpolicy
+                  {t('footer_return_policy', 'Returpolicy')}
                 </Link>
               </li>
             </ul>
@@ -118,20 +121,20 @@ const ShopFooter = () => {
         <div className="border-t border-gray-800 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-gray-400 text-sm">
-              <p>&copy; {new Date().getFullYear()} JPH Innovation AB. Alla rättigheter förbehållna.</p>
+              <p>{t('footer_copyright', '© {{year}} JPH Innovation AB. Alla rättigheter förbehållna.', { year: currentYear })}</p>
             </div>
             
             <div className="flex items-center space-x-6 mt-4 md:mt-0">
               {/* Trust Badges */}
               <div className="flex items-center space-x-2 text-xs text-gray-400">
                 <span className="bg-green-600 text-white px-2 py-1 rounded">
-                  ✓ SSL
+                  {t('footer_badge_ssl', '✓ SSL')}
                 </span>
                 <span className="bg-blue-600 text-white px-2 py-1 rounded">
-                  ✓ GDPR
+                  {t('footer_badge_gdpr', '✓ GDPR')}
                 </span>
                 <span className="bg-purple-600 text-white px-2 py-1 rounded">
-                  ✓ 14 dagar ångerrätt
+                  {t('footer_badge_returns', '✓ 14 dagar ångerrätt')}
                 </span>
               </div>
             </div>
@@ -140,9 +143,7 @@ const ShopFooter = () => {
           {/* Additional Legal Text */}
           <div className="mt-4 text-xs text-gray-500 text-center md:text-left">
             <p>
-              Organisationsnummer: [ORG-NR] | 
-              Registrerad för F-skatt | 
-              Medlem i Svensk Handel
+              {t('footer_legal_info', 'Organisationsnummer: {{orgNr}} | Registrerad för F-skatt | Medlem i Svensk Handel', { orgNr: '559123-4567' })}
             </p>
           </div>
         </div>
