@@ -27,10 +27,18 @@ const PublicStorefront = () => {
 
   const loadHeroReview = () => {
     try {
-      // Get 1 random review for the hero section
-      const randomReviews = getRandomReviews(1);
-      if (randomReviews.length > 0) {
-        setHeroReview(randomReviews[0]);
+      // Get all reviews and exclude Paul W. to avoid confusion with original testimonial
+      const allReviews = getRandomReviews(16); // Get all reviews
+      const filteredReviews = allReviews.filter(review => review.author !== 'Paul W.');
+      
+      if (filteredReviews.length > 0) {
+        // Pick a random review from the filtered list
+        const randomIndex = Math.floor(Math.random() * filteredReviews.length);
+        const selectedReview = filteredReviews[randomIndex];
+        console.log('Hero review loaded:', selectedReview);
+        setHeroReview(selectedReview);
+      } else {
+        console.log('No filtered reviews available, using fallback');
       }
     } catch (error) {
       console.error('Error loading hero review:', error);
