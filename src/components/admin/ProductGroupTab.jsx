@@ -11,10 +11,13 @@ import {
   validateGroupContent
 } from '../../utils/productGroups';
 import { useAuth } from '../../contexts/AuthContext';
+import { useContentTranslation } from '../../hooks/useContentTranslation';
+import ContentLanguageIndicator from '../ContentLanguageIndicator';
 
 const ProductGroupTab = ({ productGroup, onContentChange }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { currentLanguage, getContentValue, setContentValue } = useContentTranslation();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [groupContent, setGroupContent] = useState(getDefaultGroupContent());
@@ -65,7 +68,7 @@ const ProductGroupTab = ({ productGroup, onContentChange }) => {
   const handleContentChange = (field, value) => {
     setGroupContent(prev => ({
       ...prev,
-      [field]: value
+      [field]: setContentValue(prev[field], value)
     }));
     setHasUnsavedChanges(true);
     
@@ -172,57 +175,77 @@ const ProductGroupTab = ({ productGroup, onContentChange }) => {
       <div className="grid grid-cols-1 gap-6">
         {/* Size Guide */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {t('size_guide_label', 'Storleksguide')}
-          </label>
+          <ContentLanguageIndicator 
+            contentField={groupContent.sizeGuide}
+            label={t('size_guide_label', 'Storleksguide')}
+            className="mb-2"
+          />
           <ReactQuill
             theme="snow"
-            value={groupContent.sizeGuide || ''}
+            value={getContentValue(groupContent.sizeGuide) || ''}
             onChange={(value) => handleContentChange('sizeGuide', value)}
             modules={quillModules}
-            placeholder={t('size_guide_placeholder', 'Ange storleksguide för produktgruppen...')}
+            placeholder={currentLanguage === 'sv-SE' ? 
+              t('size_guide_placeholder', 'Ange storleksguide för produktgruppen...') :
+              'Enter size guide for the product group...'
+            }
           />
         </div>
 
         {/* Size and Fit */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {t('size_and_fit_label', 'Storlek och Passform')}
-          </label>
+          <ContentLanguageIndicator 
+            contentField={groupContent.sizeAndFit}
+            label={t('size_and_fit_label', 'Storlek och Passform')}
+            className="mb-2"
+          />
           <ReactQuill
             theme="snow"
-            value={groupContent.sizeAndFit || ''}
+            value={getContentValue(groupContent.sizeAndFit) || ''}
             onChange={(value) => handleContentChange('sizeAndFit', value)}
             modules={quillModules}
-            placeholder={t('size_and_fit_placeholder', 'Beskriv storlekar och passform...')}
+            placeholder={currentLanguage === 'sv-SE' ? 
+              t('size_and_fit_placeholder', 'Beskriv storlekar och passform...') :
+              'Describe sizes and fit...'
+            }
           />
         </div>
 
         {/* Shipping and Returns */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {t('shipping_returns_label', 'Frakt och Retur')}
-          </label>
+          <ContentLanguageIndicator 
+            contentField={groupContent.shippingReturns}
+            label={t('shipping_returns_label', 'Frakt och Retur')}
+            className="mb-2"
+          />
           <ReactQuill
             theme="snow"
-            value={groupContent.shippingReturns || ''}
+            value={getContentValue(groupContent.shippingReturns) || ''}
             onChange={(value) => handleContentChange('shippingReturns', value)}
             modules={quillModules}
-            placeholder={t('shipping_returns_placeholder', 'Ange frakt- och returinformation...')}
+            placeholder={currentLanguage === 'sv-SE' ? 
+              t('shipping_returns_placeholder', 'Ange frakt- och returinformation...') :
+              'Enter shipping and return information...'
+            }
           />
         </div>
 
         {/* How It's Made */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {t('how_its_made_label', 'Hur den tillverkas')}
-          </label>
+          <ContentLanguageIndicator 
+            contentField={groupContent.howItsMade}
+            label={t('how_its_made_label', 'Hur den tillverkas')}
+            className="mb-2"
+          />
           <ReactQuill
             theme="snow"
-            value={groupContent.howItsMade || ''}
+            value={getContentValue(groupContent.howItsMade) || ''}
             onChange={(value) => handleContentChange('howItsMade', value)}
             modules={quillModules}
-            placeholder={t('how_its_made_placeholder', 'Beskriv tillverkningsprocess och hållbarhet...')}
+            placeholder={currentLanguage === 'sv-SE' ? 
+              t('how_its_made_placeholder', 'Beskriv tillverkningsprocess och hållbarhet...') :
+              'Describe manufacturing process and sustainability...'
+            }
           />
         </div>
       </div>
