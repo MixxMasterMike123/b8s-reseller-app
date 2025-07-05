@@ -59,7 +59,9 @@ const ShopNavigation = ({ breadcrumb }) => {
           
           {/* Breadcrumb */}
           <div className="hidden md:flex items-center space-x-2 text-sm text-gray-500">
-            <Link to={getCountryAwareUrl('')} className="hover:text-blue-600 transition-colors">Hem</Link>
+            <Link to={getCountryAwareUrl('')} className="hover:text-blue-600 transition-colors">
+              {t('nav_home', 'Hem')}
+            </Link>
             {breadcrumb && (
               <>
                 <span>/</span>
@@ -69,7 +71,7 @@ const ShopNavigation = ({ breadcrumb }) => {
           </div>
           
           <Link to={getCountryAwareUrl('cart')} className="text-gray-700 hover:text-blue-600 transition-colors font-medium relative">
-            Varukorg
+            {t('nav_cart', 'Varukorg')}
             {cartItemCount > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                 {cartItemCount}

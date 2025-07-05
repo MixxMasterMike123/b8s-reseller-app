@@ -362,7 +362,7 @@ const PublicProductPage = () => {
       />
       
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <ShopNavigation breadcrumb={currentProduct?.name} />
+        <ShopNavigation breadcrumb={currentProduct?.name || t('product_loading', 'Laddar produkt...')} />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col lg:flex-row gap-16">

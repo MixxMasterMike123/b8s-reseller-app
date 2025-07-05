@@ -260,6 +260,8 @@ const Checkout = () => {
     <>
       <SeoHreflang />
       <div className="min-h-screen bg-gray-50">
+        <ShopNavigation breadcrumb={t('breadcrumb_checkout', 'Kassa')} />
+        
         {/* Header */}
         <div className="bg-white border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 py-4">

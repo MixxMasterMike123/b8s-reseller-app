@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
 import SeoHreflang from '../../components/shop/SeoHreflang';
+import { getCountryAwareUrl } from '../../utils/productUrls';
 
 const OrderConfirmation = () => {
   const { orderId } = useParams();
@@ -68,7 +69,7 @@ const OrderConfirmation = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <ShopNavigation />
+        <ShopNavigation breadcrumb={t('breadcrumb_order_confirmation', 'Orderbekräftelse')} />
         <div className="max-w-2xl mx-auto px-4 py-16 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">{t('order_confirmation_loading', 'Laddar orderbekräftelse...')}</p>
@@ -81,7 +82,7 @@ const OrderConfirmation = () => {
   if (!order) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <ShopNavigation />
+        <ShopNavigation breadcrumb={t('breadcrumb_order_confirmation', 'Orderbekräftelse')} />
         <div className="max-w-2xl mx-auto px-4 py-16 text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">
             {t('order_confirmation_not_found_title', 'Order hittades inte')}
@@ -90,7 +91,7 @@ const OrderConfirmation = () => {
             {t('order_confirmation_not_found_description', 'Vi kunde inte hitta den begärda ordern.')}
           </p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate(getCountryAwareUrl(''))}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
           >
             {t('order_confirmation_back_to_shop', 'Tillbaka till butiken')}
@@ -104,8 +105,8 @@ const OrderConfirmation = () => {
   return (
     <>
       <SeoHreflang />
-      <div className="min-h-screen bg-gray-50">
-        <ShopNavigation />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <ShopNavigation breadcrumb={t('breadcrumb_order_confirmation', 'Orderbekräftelse')} />
         
         <div className="max-w-4xl mx-auto px-4 py-8">
           
@@ -317,13 +318,13 @@ const OrderConfirmation = () => {
 
                 <div className="mt-6 space-y-3">
                   <button
-                    onClick={() => navigate('/')}
+                    onClick={() => navigate(getCountryAwareUrl(''))}
                     className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                   >
                     {t('order_confirmation_continue_shopping', 'Fortsätt handla')}
                   </button>
                   <button
-                    onClick={() => navigate('/account')}
+                    onClick={() => navigate(getCountryAwareUrl('account'))}
                     className="w-full bg-gray-100 text-gray-700 px-4 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
                   >
                     {t('order_confirmation_view_orders', 'Visa mina beställningar')}
