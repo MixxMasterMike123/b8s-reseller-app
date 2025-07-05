@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/TranslationContext';
+import { useContentTranslation } from '../hooks/useContentTranslation';
 import AppLayout from '../components/layout/AppLayout';
 import ImagePreviewModal from '../components/ImagePreviewModal';
 import { useImagePreview } from '../hooks/useImagePreview';
@@ -24,6 +25,7 @@ import {
 function MarketingMaterialsPage() {
   const { currentUser, isAdmin } = useAuth();
   const { t } = useTranslation();
+  const { getContentValue } = useContentTranslation();
   const [genericMaterials, setGenericMaterials] = useState([]);
   const [customerMaterials, setCustomerMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -130,9 +132,11 @@ function MarketingMaterialsPage() {
   const filteredMaterials = allMaterials.filter(material => {
     const matchesCategory = selectedCategory === 'alla' || material.category === selectedCategory;
     const matchesType = selectedType === 'alla' || material.fileType === selectedType;
+    const materialName = getContentValue(material.name) || '';
+    const materialDescription = getContentValue(material.description) || '';
     const matchesSearch = searchTerm === '' || 
-      material.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (material.description && material.description.toLowerCase().includes(searchTerm.toLowerCase()));
+      materialName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      materialDescription.toLowerCase().includes(searchTerm.toLowerCase());
     
     return matchesCategory && matchesType && matchesSearch;
   });
@@ -375,13 +379,13 @@ function MarketingMaterialsPage() {
                         <div className="mb-6">
                           <div 
                             className="relative w-20 h-20 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl overflow-hidden cursor-pointer mx-auto shadow-sm border border-gray-100"
-                            onClick={() => material.fileType === 'image' && material.downloadURL && openPreview(material.downloadURL, material.name)}
+                            onClick={() => material.fileType === 'image' && material.downloadURL && openPreview(material.downloadURL, getContentValue(material.name))}
                           >
                             {material.fileType === 'image' && material.downloadURL ? (
                               <>
                                 <img 
                                   src={material.downloadURL}
-                                  alt={material.name}
+                                  alt={getContentValue(material.name)}
                                   className="w-full h-full object-cover"
                                   onError={(e) => {
                                     // Fallback to icon if image fails to load
@@ -408,12 +412,12 @@ function MarketingMaterialsPage() {
                         <div className="text-center space-y-4 flex-grow">
                           <div className="space-y-2">
                             <h3 className="font-semibold text-gray-900 text-base leading-tight line-clamp-2">
-                              {material.name}
+                              {getContentValue(material.name)}
                             </h3>
                             
-                            {material.description && (
+                            {getContentValue(material.description) && (
                               <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
-                                {material.description}
+                                {getContentValue(material.description)}
                               </p>
                             )}
                           </div>

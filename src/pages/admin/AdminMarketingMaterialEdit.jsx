@@ -249,7 +249,7 @@ function AdminMarketingMaterialEdit() {
                 {material.fileType === 'image' && material.downloadURL ? (
                   <img 
                     src={material.downloadURL}
-                    alt={material.name}
+                    alt={getContentValue(material.name)}
                     className="max-w-full max-h-full object-contain"
                     onError={(e) => {
                       e.target.style.display = 'none';

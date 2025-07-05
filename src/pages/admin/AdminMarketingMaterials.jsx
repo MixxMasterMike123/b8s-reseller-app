@@ -18,7 +18,7 @@ import {
 
 function AdminMarketingMaterials() {
   const { isAdmin } = useAuth();
-  const { currentLanguage } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const { getContentValue, setContentValue } = useContentTranslation();
   const navigate = useNavigate();
   const [materials, setMaterials] = useState([]);
@@ -60,7 +60,7 @@ function AdminMarketingMaterials() {
       setMaterials(materialsData);
     } catch (error) {
       console.error('Error loading materials:', error);
-      toast.error('Kunde inte ladda marknadsföringsmaterial');
+      toast.error(t('admin.marketing.errors.load_failed'));
     } finally {
       setLoading(false);
     }
@@ -81,7 +81,7 @@ function AdminMarketingMaterials() {
     e.preventDefault();
     
     if (!formData.file) {
-      toast.error('Välj en fil att ladda upp');
+      toast.error(t('admin.marketing.errors.select_file'));
       return;
     }
 
@@ -360,7 +360,7 @@ function AdminMarketingMaterials() {
                               {material.fileType === 'image' && material.downloadURL ? (
                                 <img 
                                   src={material.downloadURL}
-                                  alt={material.name}
+                                  alt={getContentValue(material.name)}
                                   className="w-full h-full object-cover"
                                   onError={(e) => {
                                     // Fallback to icon if image fails to load
