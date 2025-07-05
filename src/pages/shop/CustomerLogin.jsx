@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
+import { useTranslation } from '../../contexts/TranslationContext';
 import toast from 'react-hot-toast';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
@@ -11,6 +12,7 @@ const CustomerLogin = ({ onLoginSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useSimpleAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -23,7 +25,7 @@ const CustomerLogin = ({ onLoginSuccess }) => {
 
     try {
       await login(email, password);
-      toast.success('Inloggad!');
+      toast.success(t('customer_login_success', 'Inloggad!'));
       if (onLoginSuccess) {
         onLoginSuccess();
       } else {
@@ -31,7 +33,7 @@ const CustomerLogin = ({ onLoginSuccess }) => {
       }
     } catch (err) {
       console.error(err);
-      setError('Felaktig e-post eller lösenord. Kontrollera dina uppgifter och försök igen.');
+      setError(t('customer_login_error', 'Felaktig e-post eller lösenord. Kontrollera dina uppgifter och försök igen.'));
     } finally {
       setLoading(false);
     }
@@ -44,12 +46,12 @@ const CustomerLogin = ({ onLoginSuccess }) => {
         <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
           <div>
             <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Logga in på ditt konto
+              {t('customer_login_title', 'Logga in på ditt konto')}
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">
-              Eller{' '}
+              {t('customer_login_or', 'Eller')}{' '}
               <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
-                skapa ett nytt konto
+                {t('customer_login_create_account', 'skapa ett nytt konto')}
               </Link>
             </p>
           </div>
@@ -58,7 +60,7 @@ const CustomerLogin = ({ onLoginSuccess }) => {
             <div className="rounded-md shadow-sm -space-y-px">
               <div>
                 <label htmlFor="email-address" className="sr-only">
-                  E-postadress
+                  {t('customer_login_email_label', 'E-postadress')}
                 </label>
                 <input
                   id="email-address"
@@ -67,14 +69,14 @@ const CustomerLogin = ({ onLoginSuccess }) => {
                   autoComplete="email"
                   required
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="E-postadress"
+                  placeholder={t('customer_login_email_placeholder', 'E-postadress')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div>
                 <label htmlFor="password" className="sr-only">
-                  Lösenord
+                  {t('customer_login_password_label', 'Lösenord')}
                 </label>
                 <input
                   id="password"
@@ -83,7 +85,7 @@ const CustomerLogin = ({ onLoginSuccess }) => {
                   autoComplete="current-password"
                   required
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="Lösenord"
+                  placeholder={t('customer_login_password_placeholder', 'Lösenord')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -93,7 +95,7 @@ const CustomerLogin = ({ onLoginSuccess }) => {
             <div className="flex items-center justify-between">
               <div className="text-sm">
                 <Link to="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
-                  Glömt ditt lösenord?
+                  {t('customer_login_forgot_password', 'Glömt ditt lösenord?')}
                 </Link>
               </div>
             </div>
@@ -104,7 +106,7 @@ const CustomerLogin = ({ onLoginSuccess }) => {
                 disabled={loading}
                 className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
               >
-                {loading ? 'Loggar in...' : 'Logga in'}
+                {loading ? t('customer_login_loading', 'Loggar in...') : t('customer_login_button', 'Logga in')}
               </button>
             </div>
           </form>
@@ -113,7 +115,7 @@ const CustomerLogin = ({ onLoginSuccess }) => {
                 to="/" 
                 className="font-medium text-blue-600 hover:text-blue-500"
               >
-                &larr; Tillbaka till butiken
+                &larr; {t('customer_login_back_to_shop', 'Tillbaka till butiken')}
               </Link>
           </div>
         </div>

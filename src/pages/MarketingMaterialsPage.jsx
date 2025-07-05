@@ -132,8 +132,20 @@ function MarketingMaterialsPage() {
   const filteredMaterials = allMaterials.filter(material => {
     const matchesCategory = selectedCategory === 'alla' || material.category === selectedCategory;
     const matchesType = selectedType === 'alla' || material.fileType === selectedType;
-    const materialName = getContentValue(material.name) || '';
-    const materialDescription = getContentValue(material.description) || '';
+    
+    // Safe content extraction
+    const safeGetContentValue = (field) => {
+      const value = getContentValue(field);
+      if (typeof value === 'string') {
+        return value;
+      } else if (typeof value === 'object' && value) {
+        return value['sv-SE'] || value['en-GB'] || value['en-US'] || String(value) || '';
+      }
+      return String(value || '');
+    };
+    
+    const materialName = safeGetContentValue(material.name) || '';
+    const materialDescription = safeGetContentValue(material.description) || '';
     const matchesSearch = searchTerm === '' || 
       materialName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       materialDescription.toLowerCase().includes(searchTerm.toLowerCase());
@@ -379,13 +391,34 @@ function MarketingMaterialsPage() {
                         <div className="mb-6">
                           <div 
                             className="relative w-20 h-20 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl overflow-hidden cursor-pointer mx-auto shadow-sm border border-gray-100"
-                            onClick={() => material.fileType === 'image' && material.downloadURL && openPreview(material.downloadURL, getContentValue(material.name))}
+                            onClick={() => {
+                              if (material.fileType === 'image' && material.downloadURL) {
+                                const safeName = (() => {
+                                  const nameValue = getContentValue(material.name);
+                                  if (typeof nameValue === 'string') {
+                                    return nameValue;
+                                  } else if (typeof nameValue === 'object' && nameValue) {
+                                    return nameValue['sv-SE'] || nameValue['en-GB'] || nameValue['en-US'] || String(nameValue) || '';
+                                  }
+                                  return String(nameValue || '');
+                                })();
+                                openPreview(material.downloadURL, safeName);
+                              }
+                            }}
                           >
                             {material.fileType === 'image' && material.downloadURL ? (
                               <>
                                 <img 
                                   src={material.downloadURL}
-                                  alt={getContentValue(material.name)}
+                                  alt={(() => {
+                                    const nameValue = getContentValue(material.name);
+                                    if (typeof nameValue === 'string') {
+                                      return nameValue;
+                                    } else if (typeof nameValue === 'object' && nameValue) {
+                                      return nameValue['sv-SE'] || nameValue['en-GB'] || nameValue['en-US'] || String(nameValue) || '';
+                                    }
+                                    return String(nameValue || '');
+                                  })()}
                                   className="w-full h-full object-cover"
                                   onError={(e) => {
                                     // Fallback to icon if image fails to load
@@ -412,12 +445,36 @@ function MarketingMaterialsPage() {
                         <div className="text-center space-y-4 flex-grow">
                           <div className="space-y-2">
                             <h3 className="font-semibold text-gray-900 text-base leading-tight line-clamp-2">
-                              {getContentValue(material.name)}
+                              {(() => {
+                                const nameValue = getContentValue(material.name);
+                                if (typeof nameValue === 'string') {
+                                  return nameValue;
+                                } else if (typeof nameValue === 'object' && nameValue) {
+                                  return nameValue['sv-SE'] || nameValue['en-GB'] || nameValue['en-US'] || String(nameValue) || '';
+                                }
+                                return String(nameValue || '');
+                              })()}
                             </h3>
                             
-                            {getContentValue(material.description) && (
+                            {(() => {
+                              const descriptionValue = getContentValue(material.description);
+                              if (typeof descriptionValue === 'string') {
+                                return descriptionValue;
+                              } else if (typeof descriptionValue === 'object' && descriptionValue) {
+                                return descriptionValue['sv-SE'] || descriptionValue['en-GB'] || descriptionValue['en-US'] || String(descriptionValue) || '';
+                              }
+                              return String(descriptionValue || '');
+                            })() && (
                               <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
-                                {getContentValue(material.description)}
+                                {(() => {
+                                  const descriptionValue = getContentValue(material.description);
+                                  if (typeof descriptionValue === 'string') {
+                                    return descriptionValue;
+                                  } else if (typeof descriptionValue === 'object' && descriptionValue) {
+                                    return descriptionValue['sv-SE'] || descriptionValue['en-GB'] || descriptionValue['en-US'] || String(descriptionValue) || '';
+                                  }
+                                  return String(descriptionValue || '');
+                                })()}
                               </p>
                             )}
                           </div>

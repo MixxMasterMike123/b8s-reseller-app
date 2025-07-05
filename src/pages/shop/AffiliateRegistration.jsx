@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from '../../contexts/TranslationContext';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
 import toast from 'react-hot-toast';
@@ -7,6 +8,7 @@ import { db } from '../../firebase/config';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const AffiliateRegistration = () => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -47,7 +49,7 @@ const AffiliateRegistration = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.promotionMethod) {
-      toast.error('Vänligen fyll i alla obligatoriska fält.');
+      toast.error(t('affiliate_reg_required_fields', 'Vänligen fyll i alla obligatoriska fält.'));
       return;
     }
     setLoading(true);
@@ -59,10 +61,10 @@ const AffiliateRegistration = () => {
         createdAt: serverTimestamp(),
       });
       setSubmitted(true);
-      toast.success('Tack för din ansökan! Vi återkommer inom kort.');
+      toast.success(t('affiliate_reg_success', 'Tack för din ansökan! Vi återkommer inom kort.'));
     } catch (error) {
       console.error('Error submitting affiliate application:', error);
-      toast.error('Ett fel uppstod. Försök igen.');
+      toast.error(t('affiliate_reg_error', 'Ett fel uppstod. Försök igen.'));
     } finally {
       setLoading(false);
     }
@@ -77,16 +79,20 @@ const AffiliateRegistration = () => {
           
           {!submitted ? (
             <>
-              <h1 className="text-4xl font-bold text-gray-900 mb-4 text-center">Bli en B8Shield Partner</h1>
+              <h1 className="text-4xl font-bold text-gray-900 mb-4 text-center">
+                {t('affiliate_reg_title', 'Bli en B8Shield Partner')}
+              </h1>
               <p className="text-lg text-gray-600 mb-8 text-center max-w-2xl mx-auto">
-                Älskar du våra produkter? Gå med i vårt affiliate-program och tjäna provision genom att marknadsföra B8Shield till din publik.
+                {t('affiliate_reg_subtitle', 'Älskar du våra produkter? Gå med i vårt affiliate-program och tjäna provision genom att marknadsföra B8Shield till din publik.')}
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-800">Grunduppgifter</h3>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  {t('affiliate_reg_basic_info', 'Grunduppgifter')}
+                </h3>
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                    Fullständigt Namn <span className="text-red-500">*</span>
+                    {t('affiliate_reg_full_name', 'Fullständigt Namn')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -101,7 +107,7 @@ const AffiliateRegistration = () => {
                 
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    E-postadress <span className="text-red-500">*</span>
+                    {t('affiliate_reg_email', 'E-postadress')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
@@ -116,7 +122,7 @@ const AffiliateRegistration = () => {
                 
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                    Telefonnummer
+                    {t('affiliate_reg_phone', 'Telefonnummer')}
                   </label>
                   <input
                     type="tel"
@@ -128,11 +134,13 @@ const AffiliateRegistration = () => {
                   />
                 </div>
 
-                <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t">Adressuppgifter</h3>
+                <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t">
+                  {t('affiliate_reg_address_info', 'Adressuppgifter')}
+                </h3>
                 
                 <div>
                   <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                    Gatuadress
+                    {t('affiliate_reg_street_address', 'Gatuadress')}
                   </label>
                   <input
                     type="text"
@@ -146,7 +154,7 @@ const AffiliateRegistration = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="md:col-span-1">
                     <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700 mb-1">
-                      Postnummer
+                      {t('affiliate_reg_postal_code', 'Postnummer')}
                     </label>
                     <input
                       type="text"
@@ -159,7 +167,7 @@ const AffiliateRegistration = () => {
                   </div>
                   <div className="md:col-span-2">
                     <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                      Stad
+                      {t('affiliate_reg_city', 'Stad')}
                     </label>
                     <input
                       type="text"
@@ -173,7 +181,7 @@ const AffiliateRegistration = () => {
                 </div>
                  <div>
                   <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
-                    Land
+                    {t('affiliate_reg_country', 'Land')}
                   </label>
                   <select
                     name="country"
@@ -182,48 +190,94 @@ const AffiliateRegistration = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   >
-                    <option value="SE">Sverige</option>
-                    <option value="NO">Norge</option>
-                    <option value="DK">Danmark</option>
-                    <option value="FI">Finland</option>
-                    <option value="DE">Tyskland</option>
-                    <option value="GB">Storbritannien</option>
+                    <option value="SE">{t('affiliate_reg_country_sweden', 'Sverige')}</option>
+                    <option value="NO">{t('affiliate_reg_country_norway', 'Norge')}</option>
+                    <option value="DK">{t('affiliate_reg_country_denmark', 'Danmark')}</option>
+                    <option value="FI">{t('affiliate_reg_country_finland', 'Finland')}</option>
+                    <option value="DE">{t('affiliate_reg_country_germany', 'Tyskland')}</option>
+                    <option value="GB">{t('affiliate_reg_country_uk', 'Storbritannien')}</option>
                     {/* Add more countries as needed */}
                   </select>
                 </div>
 
-                <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t">Kanaler & Marknadsföring</h3>
+                <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t">
+                  {t('affiliate_reg_channels_marketing', 'Kanaler & Marknadsföring')}
+                </h3>
 
                 <div className="space-y-4">
-                  <p className="text-sm text-gray-600">Länka till dina relevanta kanaler. Fyll i de som är applicerbara.</p>
+                  <p className="text-sm text-gray-600">
+                    {t('affiliate_reg_channels_description', 'Länka till dina relevanta kanaler. Fyll i de som är applicerbara.')}
+                  </p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                     <div>
-                      <label htmlFor="socials.website" className="block text-sm font-medium text-gray-700 mb-1">Webbplats / Blogg</label>
-                      <input type="url" name="socials.website" id="socials.website" value={formData.socials.website} onChange={handleChange} placeholder="https://dinsida.se" className="w-full px-4 py-2 border border-gray-300 rounded-lg"/>
+                      <label htmlFor="socials.website" className="block text-sm font-medium text-gray-700 mb-1">
+                        {t('affiliate_reg_website_blog', 'Webbplats / Blogg')}
+                      </label>
+                      <input 
+                        type="url" 
+                        name="socials.website" 
+                        id="socials.website" 
+                        value={formData.socials.website} 
+                        onChange={handleChange} 
+                        placeholder={t('affiliate_reg_website_placeholder', 'https://dinsida.se')}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                      />
                     </div>
                     <div>
                       <label htmlFor="socials.instagram" className="block text-sm font-medium text-gray-700 mb-1">Instagram</label>
-                      <input type="url" name="socials.instagram" id="socials.instagram" value={formData.socials.instagram} onChange={handleChange} placeholder="https://instagram.com/dittnamn" className="w-full px-4 py-2 border border-gray-300 rounded-lg"/>
+                      <input 
+                        type="url" 
+                        name="socials.instagram" 
+                        id="socials.instagram" 
+                        value={formData.socials.instagram} 
+                        onChange={handleChange} 
+                        placeholder={t('affiliate_reg_instagram_placeholder', 'https://instagram.com/dittnamn')}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                      />
                     </div>
                     <div>
                       <label htmlFor="socials.youtube" className="block text-sm font-medium text-gray-700 mb-1">YouTube</label>
-                      <input type="url" name="socials.youtube" id="socials.youtube" value={formData.socials.youtube} onChange={handleChange} placeholder="https://youtube.com/c/dinkanal" className="w-full px-4 py-2 border border-gray-300 rounded-lg"/>
+                      <input 
+                        type="url" 
+                        name="socials.youtube" 
+                        id="socials.youtube" 
+                        value={formData.socials.youtube} 
+                        onChange={handleChange} 
+                        placeholder={t('affiliate_reg_youtube_placeholder', 'https://youtube.com/c/dinkanal')}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                      />
                     </div>
                      <div>
                       <label htmlFor="socials.facebook" className="block text-sm font-medium text-gray-700 mb-1">Facebook</label>
-                      <input type="url" name="socials.facebook" id="socials.facebook" value={formData.socials.facebook} onChange={handleChange} placeholder="https://facebook.com/dinsida" className="w-full px-4 py-2 border border-gray-300 rounded-lg"/>
+                      <input 
+                        type="url" 
+                        name="socials.facebook" 
+                        id="socials.facebook" 
+                        value={formData.socials.facebook} 
+                        onChange={handleChange} 
+                        placeholder={t('affiliate_reg_facebook_placeholder', 'https://facebook.com/dinsida')}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                      />
                     </div>
                      <div>
                       <label htmlFor="socials.tiktok" className="block text-sm font-medium text-gray-700 mb-1">TikTok</label>
-                      <input type="url" name="socials.tiktok" id="socials.tiktok" value={formData.socials.tiktok} onChange={handleChange} placeholder="https://tiktok.com/@dittnamn" className="w-full px-4 py-2 border border-gray-300 rounded-lg"/>
+                      <input 
+                        type="url" 
+                        name="socials.tiktok" 
+                        id="socials.tiktok" 
+                        value={formData.socials.tiktok} 
+                        onChange={handleChange} 
+                        placeholder={t('affiliate_reg_tiktok_placeholder', 'https://tiktok.com/@dittnamn')}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                      />
                     </div>
                   </div>
                 </div>
                 
                 <div>
                   <label htmlFor="promotionMethod" className="block text-sm font-medium text-gray-700 mb-1">
-                    Vilken är din primära kanal för marknadsföring? <span className="text-red-500">*</span>
+                    {t('affiliate_reg_primary_channel', 'Vilken är din primära kanal för marknadsföring?')} <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="promotionMethod"
@@ -233,20 +287,20 @@ const AffiliateRegistration = () => {
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   >
-                    <option value="">Välj ett alternativ...</option>
-                    <option value="blog">Blogg / Webbplats</option>
-                    <option value="youtube">YouTube-kanal</option>
+                    <option value="">{t('affiliate_reg_select_option', 'Välj ett alternativ...')}</option>
+                    <option value="blog">{t('affiliate_reg_blog_website', 'Blogg / Webbplats')}</option>
+                    <option value="youtube">{t('affiliate_reg_youtube_channel', 'YouTube-kanal')}</option>
                     <option value="instagram">Instagram</option>
-                    <option value="facebook">Facebook-grupp / Sida</option>
+                    <option value="facebook">{t('affiliate_reg_facebook_group', 'Facebook-grupp / Sida')}</option>
                     <option value="tiktok">TikTok</option>
-                    <option value="forum">Onlineforum</option>
-                    <option value="other">Annat</option>
+                    <option value="forum">{t('affiliate_reg_online_forum', 'Onlineforum')}</option>
+                    <option value="other">{t('affiliate_reg_other', 'Annat')}</option>
                   </select>
                 </div>
                 
                 <div>
                   <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
-                    Meddelande (valfritt)
+                    {t('affiliate_reg_message_optional', 'Meddelande (valfritt)')}
                   </label>
                   <textarea
                     name="message"
@@ -254,7 +308,7 @@ const AffiliateRegistration = () => {
                     rows="4"
                     value={formData.message}
                     onChange={handleChange}
-                    placeholder="Berätta lite mer om dig själv och din publik..."
+                    placeholder={t('affiliate_reg_message_placeholder', 'Berätta lite mer om dig själv och din publik...')}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   ></textarea>
                 </div>
@@ -265,7 +319,7 @@ const AffiliateRegistration = () => {
                     disabled={loading}
                     className="w-full md:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50"
                   >
-                    {loading ? 'Skickar...' : 'Skicka ansökan'}
+                    {loading ? t('affiliate_reg_sending', 'Skickar...') : t('affiliate_reg_submit', 'Skicka ansökan')}
                   </button>
                 </div>
               </form>
@@ -277,12 +331,14 @@ const AffiliateRegistration = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Tack för din ansökan!</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                {t('affiliate_reg_thank_you', 'Tack för din ansökan!')}
+              </h2>
               <p className="text-gray-600 mb-8">
-                Vi har tagit emot din ansökan och kommer att granska den inom 3-5 arbetsdagar. Du kommer att få ett e-postmeddelande från oss när vi har ett beslut.
+                {t('affiliate_reg_thank_you_description', 'Vi har tagit emot din ansökan och kommer att granska den inom 3-5 arbetsdagar. Du kommer att få ett e-postmeddelande från oss när vi har ett beslut.')}
               </p>
               <Link to="/" className="text-blue-600 hover:underline">
-                ← Tillbaka till butiken
+                {t('affiliate_reg_back_to_shop', '← Tillbaka till butiken')}
               </Link>
             </div>
           )}

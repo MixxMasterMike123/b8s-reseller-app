@@ -4,8 +4,10 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { ArrowDownTrayIcon, MagnifyingGlassIcon, PhotoIcon, DocumentIcon, FilmIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline';
 import { useImagePreview } from '../hooks/useImagePreview';
 import ImagePreviewModal from './ImagePreviewModal';
+import { useTranslation } from '../contexts/TranslationContext';
 
 const AffiliateMarketingMaterials = ({ affiliateCode }) => {
+  const { t } = useTranslation();
   const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -62,15 +64,15 @@ const AffiliateMarketingMaterials = ({ affiliateCode }) => {
 
   const getCategoryLabel = (category) => {
     const labels = {
-      'allmänt': 'Allmänt',
-      'produktbilder': 'Produktbilder',
-      'annonser': 'Annonser',
-      'broschyrer': 'Broschyrer',
-      'videos': 'Videos',
-      'prislista': 'Prislista',
-      'instruktioner': 'Instruktioner',
-      'dokument': 'Dokument',
-      'övrigt': 'Övrigt'
+      'allmänt': t('marketing_materials_allmänt', 'Allmänt'),
+      'produktbilder': t('marketing_materials_produktbilder', 'Produktbilder'),
+      'annonser': t('marketing_materials_annonser', 'Annonser'),
+      'broschyrer': t('marketing_materials_broschyrer', 'Broschyrer'),
+      'videos': t('marketing_materials_videos', 'Videos'),
+      'prislista': t('marketing_materials_prislista', 'Prislista'),
+      'instruktioner': t('marketing_materials_instruktioner', 'Instruktioner'),
+      'dokument': t('marketing_materials_dokument', 'Dokument'),
+      'övrigt': t('marketing_materials_övrigt', 'Övrigt')
     };
     return labels[category] || category;
   };
@@ -81,6 +83,38 @@ const AffiliateMarketingMaterials = ({ affiliateCode }) => {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // Helper function to safely get content value (prevents React Error #31)
+  const safeGetContentValue = (content) => {
+    if (!content) return '';
+    
+    // If it's a string, return it directly
+    if (typeof content === 'string') {
+      return content;
+    }
+    
+    // If it's an object (multilingual), get the appropriate language
+    if (typeof content === 'object' && content !== null) {
+      // Try to get Swedish first, then English UK, then English US
+      const swedishValue = content['sv-SE'];
+      const englishGBValue = content['en-GB'];
+      const englishUSValue = content['en-US'];
+      
+      // Ensure we return a string, never an object
+      if (typeof swedishValue === 'string') return swedishValue;
+      if (typeof englishGBValue === 'string') return englishGBValue;
+      if (typeof englishUSValue === 'string') return englishUSValue;
+      
+      // Find any available string value
+      const stringValue = Object.values(content).find(val => typeof val === 'string' && val && val.length > 0);
+      
+      // Final safety: convert to string and fallback to empty string
+      return String(stringValue || '');
+    }
+    
+    // Final safety: convert anything else to string
+    return String(content || '');
   };
 
   const handleDownload = async (material) => {
@@ -115,19 +149,19 @@ const AffiliateMarketingMaterials = ({ affiliateCode }) => {
   }, {});
 
   const categories = [
-    { value: 'all', label: 'Alla kategorier' },
-    { value: 'annonser', label: 'Annonser' },
-    { value: 'produktbilder', label: 'Produktbilder' },
-    { value: 'broschyrer', label: 'Broschyrer' },
-    { value: 'videos', label: 'Videos' },
-    { value: 'allmänt', label: 'Allmänt' }
+    { value: 'all', label: t('marketing_materials_all_categories', 'Alla kategorier') },
+    { value: 'annonser', label: t('marketing_materials_annonser', 'Annonser') },
+    { value: 'produktbilder', label: t('marketing_materials_produktbilder', 'Produktbilder') },
+    { value: 'broschyrer', label: t('marketing_materials_broschyrer', 'Broschyrer') },
+    { value: 'videos', label: t('marketing_materials_videos', 'Videos') },
+    { value: 'allmänt', label: t('marketing_materials_allmänt', 'Allmänt') }
   ];
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2 text-gray-600">Laddar material...</span>
+        <span className="ml-2 text-gray-600">{t('marketing_materials_loading', 'Laddar material...')}</span>
       </div>
     );
   }
@@ -136,8 +170,8 @@ const AffiliateMarketingMaterials = ({ affiliateCode }) => {
     return (
       <div className="text-center py-8">
         <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-500">Inga marknadsföringsmaterial tillgängliga än.</p>
-        <p className="text-sm text-gray-400 mt-2">Material kommer att läggas till snart.</p>
+        <p className="text-gray-500">{t('marketing_materials_no_materials', 'Inga marknadsföringsmaterial tillgängliga än.')}</p>
+        <p className="text-sm text-gray-400 mt-2">{t('marketing_materials_coming_soon', 'Material kommer att läggas till snart.')}</p>
       </div>
     );
   }
@@ -178,11 +212,11 @@ const AffiliateMarketingMaterials = ({ affiliateCode }) => {
                     {material.fileType === 'image' && material.downloadURL ? (
                       <div 
                         className="relative h-32 bg-white rounded-md overflow-hidden cursor-pointer group"
-                        onClick={() => openPreview(material.downloadURL, material.name)}
+                        onClick={() => openPreview(material.downloadURL, safeGetContentValue(material.name))}
                       >
                         <img 
                           src={material.downloadURL}
-                          alt={material.name}
+                          alt={safeGetContentValue(material.name)}
                           className="w-full h-full object-cover"
                         />
                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -206,12 +240,12 @@ const AffiliateMarketingMaterials = ({ affiliateCode }) => {
                   {/* Info */}
                   <div className="space-y-2">
                     <h4 className="font-medium text-gray-900 text-sm line-clamp-2">
-                      {material.name}
+                      {safeGetContentValue(material.name)}
                     </h4>
                     
-                    {material.description && (
+                    {safeGetContentValue(material.description) && (
                       <p className="text-xs text-gray-600 line-clamp-2">
-                        {material.description}
+                        {safeGetContentValue(material.description)}
                       </p>
                     )}
 
@@ -225,7 +259,7 @@ const AffiliateMarketingMaterials = ({ affiliateCode }) => {
                         className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition-colors"
                       >
                         <ArrowDownTrayIcon className="h-3 w-3 mr-1" />
-                        Ladda ner
+                        {t('marketing_materials_download', 'Ladda ner')}
                       </button>
                     </div>
                   </div>

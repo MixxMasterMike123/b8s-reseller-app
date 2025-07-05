@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { SHIPPING_COSTS } from '../../contexts/CartContext';
+import { useTranslation } from '../../contexts/TranslationContext';
 import toast from 'react-hot-toast';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 
 const ShoppingCart = () => {
   const { cart, updateQuantity, removeFromCart, updateShippingCountry, calculateTotals, applyDiscountCode, removeDiscount } = useCart();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [discountCodeInput, setDiscountCodeInput] = useState('');
 
@@ -23,12 +25,12 @@ const ShoppingCart = () => {
   
   const getCountryName = (countryCode) => {
     switch(countryCode) {
-        case 'SE': return 'Sverige';
-        case 'NO': return 'Norge';
-        case 'DK': return 'Danmark';
-        case 'FI': return 'Finland';
-        case 'IS': return 'Island';
-        default: return 'Övriga länder';
+        case 'SE': return t('country_sweden', 'Sverige');
+        case 'NO': return t('country_norway', 'Norge');
+        case 'DK': return t('country_denmark', 'Danmark');
+        case 'FI': return t('country_finland', 'Finland');
+        case 'IS': return t('country_iceland', 'Island');
+        default: return t('country_other', 'Övriga länder');
     }
   }
   
@@ -47,7 +49,7 @@ const ShoppingCart = () => {
   const handleQuantityChange = (productId, size, newQuantity) => {
     if (newQuantity < 1) {
       removeFromCart(productId, size);
-      toast.success('Produkt borttagen från varukorgen');
+      toast.success(t('product_removed_from_cart', 'Produkt borttagen från varukorgen'));
     } else {
       updateQuantity(productId, size, newQuantity);
     }
@@ -55,7 +57,7 @@ const ShoppingCart = () => {
 
   const handleRemove = (productId, size) => {
     removeFromCart(productId, size);
-    toast.success('Produkt borttagen från varukorgen');
+    toast.success(t('product_removed_from_cart', 'Produkt borttagen från varukorgen'));
   };
 
   const handleCountryChange = (event) => {
@@ -64,7 +66,7 @@ const ShoppingCart = () => {
 
   const handleApplyDiscount = async () => {
     if (!discountCodeInput.trim()) {
-      toast.error('Vänligen ange en rabattkod.');
+      toast.error(t('please_enter_discount_code', 'Vänligen ange en rabattkod.'));
       return;
     }
     const result = await applyDiscountCode(discountCodeInput);
@@ -78,7 +80,7 @@ const ShoppingCart = () => {
 
   const handleCheckout = () => {
     if (cart.items.length === 0) {
-      toast.error('Din varukorg är tom');
+      toast.error(t('cart_is_empty', 'Din varukorg är tom'));
       return;
     }
     navigate('/checkout');
@@ -86,20 +88,20 @@ const ShoppingCart = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <ShopNavigation breadcrumb="Varukorg" />
+      <ShopNavigation breadcrumb={t('cart_breadcrumb', 'Varukorg')} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Din Varukorg</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">{t('your_cart_title', 'Din Varukorg')}</h1>
 
         {cart.items.length === 0 ? (
           <div className="text-center py-12">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Din varukorg är tom</h2>
-            <p className="text-gray-600 mb-8">Utforska våra produkter och lägg till något i din varukorg.</p>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">{t('cart_is_empty_heading', 'Din varukorg är tom')}</h2>
+            <p className="text-gray-600 mb-8">{t('cart_empty_description', 'Utforska våra produkter och lägg till något i din varukorg.')}</p>
             <Link
               to="/"
               className="inline-block bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
             >
-              Fortsätt handla
+              {t('continue_shopping', 'Fortsätt handla')}
             </Link>
           </div>
         ) : (
@@ -120,7 +122,7 @@ const ShoppingCart = () => {
                   <div className="flex-grow">
                     <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
                     {item.size && (
-                      <p className="text-gray-600">Storlek: {item.size}</p>
+                      <p className="text-gray-600">{t('size_label', 'Storlek: {{size}}', { size: item.size })}</p>
                     )}
                     <p className="text-blue-600 font-semibold">{formatPrice(item.price)}</p>
                   </div>
@@ -169,38 +171,34 @@ const ShoppingCart = () => {
             <div className="lg:col-span-1 space-y-6">
               {/* Shipping Country Selection */}
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Leveransland</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('shipping_country', 'Leveransland')}</h3>
                 <select
                   value={cart.shippingCountry}
                   onChange={handleCountryChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <optgroup label="Norden">
+                  <optgroup label={t('nordic_countries', 'Norden')}>
                     {SHIPPING_COSTS.NORDIC.countries.map(country => (
                       <option key={country} value={country}>
-                        {country === 'SE' ? 'Sverige' :
-                         country === 'NO' ? 'Norge' :
-                         country === 'DK' ? 'Danmark' :
-                         country === 'FI' ? 'Finland' :
-                         'Island'}
+                        {getCountryName(country)}
                       </option>
                     ))}
                   </optgroup>
-                  <optgroup label="Övriga">
-                    <option value="OTHER">Övriga länder</option>
+                  <optgroup label={t('other_countries_group', 'Övriga')}>
+                    <option value="OTHER">{t('country_other', 'Övriga länder')}</option>
                   </optgroup>
                 </select>
               </div>
 
               {/* Discount Code Section */}
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Rabattkod</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('discount_code', 'Rabattkod')}</h3>
                 <div className="flex space-x-2">
                   <input
                     type="text"
                     value={discountCodeInput}
                     onChange={(e) => setDiscountCodeInput(e.target.value)}
-                    placeholder="Ange din kod"
+                    placeholder={t('enter_your_code', 'Ange din kod')}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     disabled={!!discountCode}
                   />
@@ -209,32 +207,32 @@ const ShoppingCart = () => {
                     disabled={!!discountCode}
                     className="px-6 py-3 bg-gray-800 text-white font-semibold rounded-xl hover:bg-gray-900 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
-                    Applicera
+                    {t('apply_button', 'Applicera')}
                   </button>
                 </div>
               </div>
 
               {/* Order Summary */}
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Ordersammanfattning</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('order_summary', 'Ordersammanfattning')}</h3>
                 
                 <div className="space-y-3">
                   <div className="flex justify-between text-gray-700">
-                    <span>Delsumma</span>
+                    <span>{t('subtotal', 'Delsumma')}</span>
                     <span>{formatPrice(subtotal)}</span>
                   </div>
 
                   {discountAmount > 0 && (
                      <div className="flex justify-between items-center">
                        <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-1 rounded-full">
-                         Affiliate rabatt, {discountPercentage}%
+                         {t('affiliate_discount_label', 'Affiliate rabatt, {{percentage}}%', { percentage: discountPercentage })}
                        </span>
                        <span className="text-green-600 font-semibold">- {formatPrice(discountAmount)}</span>
                      </div>
                   )}
 
                   <div className="flex justify-between text-gray-700">
-                    <span>Frakt ({getCountryName(cart.shippingCountry)})</span>
+                    <span>{t('shipping_cost_label', 'Frakt ({{country}})', { country: getCountryName(cart.shippingCountry) })}</span>
                     <span>{formatPrice(shipping)}</span>
                   </div>
                 </div>
@@ -243,18 +241,19 @@ const ShoppingCart = () => {
 
                 <div className="space-y-1">
                   <div className="flex justify-between font-bold text-gray-900 text-xl">
-                    <span>Totalt</span>
+                    <span>{t('total', 'Totalt')}</span>
                     <span>{formatPrice(total)}</span>
                   </div>
                   <div className="flex justify-end text-sm text-gray-500">
                     <span>
-                      Varav Moms (25%){' '}
-                      {new Intl.NumberFormat('sv-SE', {
-                        style: 'currency',
-                        currency: 'SEK',
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      }).format(vat)}
+                      {t('vat_included', 'Varav Moms (25%) {{amount}}', {
+                        amount: new Intl.NumberFormat('sv-SE', {
+                          style: 'currency',
+                          currency: 'SEK',
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }).format(vat)
+                      })}
                     </span>
                   </div>
                 </div>
@@ -265,14 +264,14 @@ const ShoppingCart = () => {
                 onClick={handleCheckout}
                 className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
               >
-                Gå till kassan
+                {t('go_to_checkout', 'Gå till kassan')}
               </button>
 
               <Link
                 to="/"
                 className="block text-center text-gray-600 hover:text-blue-600 transition-colors"
               >
-                eller fortsätt handla
+                {t('or_continue_shopping', 'eller fortsätt handla')}
               </Link>
             </div>
           </div>

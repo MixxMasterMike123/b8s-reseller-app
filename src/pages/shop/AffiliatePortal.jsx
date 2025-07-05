@@ -4,6 +4,7 @@ import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
 import AffiliateMarketingMaterials from '../../components/AffiliateMarketingMaterials';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
+import { useTranslation } from '../../contexts/TranslationContext';
 import { db } from '../../firebase/config';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import CustomerLogin from './CustomerLogin';
@@ -19,6 +20,7 @@ import {
 
 const AffiliatePortal = () => {
   const { currentUser } = useSimpleAuth();
+  const { t } = useTranslation();
   const [affiliateData, setAffiliateData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -90,7 +92,7 @@ const AffiliatePortal = () => {
       setQrCodeDataUrl(qrDataUrl);
     } catch (error) {
       console.error('Error generating QR code:', error);
-      toast.error('Kunde inte generera QR-kod');
+      toast.error(t('affiliate_portal_qr_error', 'Kunde inte generera QR-kod'));
     } finally {
       setGeneratingQR(false);
     }
@@ -114,9 +116,9 @@ const AffiliatePortal = () => {
   // Copy link to clipboard
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-      toast.success('Länk kopierad!');
+      toast.success(t('affiliate_portal_link_copied', 'Länk kopierad!'));
     }).catch(() => {
-      toast.error('Kunde inte kopiera länk');
+      toast.error(t('affiliate_portal_copy_error', 'Kunde inte kopiera länk'));
     });
   };
 
@@ -128,7 +130,7 @@ const AffiliatePortal = () => {
     link.download = `B8Shield-QR-${affiliateData.affiliateCode}-${selectedProduct || 'shop'}.png`;
     link.href = qrCodeDataUrl;
     link.click();
-    toast.success('QR-kod nedladdad!');
+    toast.success(t('affiliate_portal_qr_downloaded', 'QR-kod nedladdad!'));
   };
 
   const fetchAffiliateData = useCallback(async () => {
@@ -145,7 +147,7 @@ const AffiliatePortal = () => {
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
-        setError("Du är inte en godkänd affiliate. Ansök idag!");
+        setError(t("affiliate_portal_not_approved", "Du är inte en godkänd affiliate. Ansök idag!"));
         setAffiliateData(null);
       } else {
         const docData = querySnapshot.docs[0].data();
@@ -153,7 +155,7 @@ const AffiliatePortal = () => {
       }
     } catch (err) {
       console.error("Error fetching affiliate data:", err);
-      setError("Kunde inte ladda affiliate-data. Försök igen senare.");
+      setError(t("affiliate_portal_load_error", "Kunde inte ladda affiliate-data. Försök igen senare."));
     } finally {
       setLoading(false);
     }
@@ -167,10 +169,42 @@ const AffiliatePortal = () => {
     return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(amount);
   };
 
+  // Helper function to safely get content value (prevents React Error #31)
+  const safeGetContentValue = (content) => {
+    if (!content) return '';
+    
+    // If it's a string, return it directly
+    if (typeof content === 'string') {
+      return content;
+    }
+    
+    // If it's an object (multilingual), get the appropriate language
+    if (typeof content === 'object' && content !== null) {
+      // Try to get Swedish first, then English UK, then English US
+      const swedishValue = content['sv-SE'];
+      const englishGBValue = content['en-GB'];
+      const englishUSValue = content['en-US'];
+      
+      // Ensure we return a string, never an object
+      if (typeof swedishValue === 'string') return swedishValue;
+      if (typeof englishGBValue === 'string') return englishGBValue;
+      if (typeof englishUSValue === 'string') return englishUSValue;
+      
+      // Find any available string value
+      const stringValue = Object.values(content).find(val => typeof val === 'string' && val && val.length > 0);
+      
+      // Final safety: convert to string and fallback to empty string
+      return String(stringValue || '');
+    }
+    
+    // Final safety: convert anything else to string
+    return String(content || '');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p>Laddar portal...</p>
+        <p>{t('affiliate_portal_loading', 'Laddar portal...')}</p>
       </div>
     );
   }
@@ -180,15 +214,15 @@ const AffiliatePortal = () => {
       <div className="min-h-screen bg-gray-50">
         <ShopNavigation />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-            <h1 className="text-2xl font-bold mb-4">Affiliate Portal</h1>
-            <p className="text-gray-600 mb-8">Vänligen logga in för att se din instrumentpanel.</p>
+            <h1 className="text-2xl font-bold mb-4">{t('affiliate_portal_title', 'Affiliate Portal')}</h1>
+            <p className="text-gray-600 mb-8">{t('affiliate_portal_login_prompt', 'Vänligen logga in för att se din instrumentpanel.')}</p>
             <div className="max-w-md mx-auto">
                 <CustomerLogin onLoginSuccess={() => fetchAffiliateData()} />
             </div>
             <p className="mt-8">
-                Inte en affiliate än?{' '}
+                {t('affiliate_portal_not_affiliate', 'Inte en affiliate än?')}{' '}
                 <Link to="/affiliate-registration" className="font-medium text-blue-600 hover:text-blue-800">
-                    Ansök här!
+                    {t('affiliate_portal_apply_here', 'Ansök här!')}
                 </Link>
             </p>
         </div>
@@ -202,11 +236,11 @@ const AffiliatePortal = () => {
       <div className="min-h-screen bg-gray-50">
         <ShopNavigation />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-          <h1 className="text-2xl font-bold text-red-600">Ingen åtkomst</h1>
-          <p className="text-gray-700 mt-2">{error || "Vi kunde inte hitta ett aktivt affiliate-konto kopplat till din e-post."}</p>
-          <p className="text-gray-500 text-sm mt-1">Observera: Det kan ta några minuter efter godkännande innan portalen blir aktiv.</p>
+          <h1 className="text-2xl font-bold text-red-600">{t('affiliate_portal_no_access', 'Ingen åtkomst')}</h1>
+          <p className="text-gray-700 mt-2">{error || t('affiliate_portal_no_account', "Vi kunde inte hitta ett aktivt affiliate-konto kopplat till din e-post.")}</p>
+          <p className="text-gray-500 text-sm mt-1">{t('affiliate_portal_approval_note', 'Observera: Det kan ta några minuter efter godkännande innan portalen blir aktiv.')}</p>
           <Link to="/affiliate-registration" className="mt-4 inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-            Ansök för att bli Affiliate
+            {t('affiliate_portal_apply_to_become', 'Ansök för att bli Affiliate')}
           </Link>
         </div>
         <ShopFooter />
@@ -222,8 +256,8 @@ const AffiliatePortal = () => {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <header className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-900">Affiliate Portal</h1>
-          <p className="text-lg text-gray-600 mt-2">Välkommen, {affiliateData.name}!</p>
+          <h1 className="text-4xl font-bold text-gray-900">{t('affiliate_portal_title', 'Affiliate Portal')}</h1>
+          <p className="text-lg text-gray-600 mt-2">{t('affiliate_portal_welcome', 'Välkommen, {{name}}!', { name: safeGetContentValue(affiliateData.name) })}</p>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -232,8 +266,8 @@ const AffiliatePortal = () => {
           <main className="lg:col-span-2 space-y-8">
             {/* Affiliate Link */}
             <div className="bg-white p-6 rounded-2xl shadow-lg">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Din unika affiliatelänk</h2>
-              <p className="text-gray-600 mb-4">Dela denna länk för att spåra klick och tjäna provision. Alla köp som görs via din länk ger dig {affiliateData.commissionRate}% i provision.</p>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">{t('affiliate_portal_unique_link', 'Din unika affiliatelänk')}</h2>
+              <p className="text-gray-600 mb-4">{t('affiliate_portal_link_description', 'Dela denna länk för att spåra klick och tjäna provision. Alla köp som görs via din länk ger dig {{commissionRate}}% i provision.', { commissionRate: affiliateData.commissionRate })}</p>
               <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
@@ -244,20 +278,20 @@ const AffiliatePortal = () => {
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(affiliateLink);
-                    alert('Länk kopierad!');
+                    toast.success(t('affiliate_portal_link_copied', 'Länk kopierad!'));
                   }}
                   className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                 >
-                  Kopiera
+                  {t('affiliate_portal_copy', 'Kopiera')}
                 </button>
               </div>
             </div>
 
             {/* Marketing Materials Section */}
             <div className="bg-white p-6 rounded-2xl shadow-lg">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Marknadsföringsmaterial</h2>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">{t('affiliate_portal_marketing_materials', 'Marknadsföringsmaterial')}</h2>
               <p className="text-gray-600 mb-6">
-                Ladda ner bilder, banners och annonser för att marknadsföra B8Shield effektivt.
+                {t('affiliate_portal_materials_description', 'Ladda ner bilder, banners och annonser för att marknadsföra B8Shield effektivt.')}
               </p>
               
               <AffiliateMarketingMaterials affiliateCode={affiliateData.affiliateCode} />
@@ -267,28 +301,28 @@ const AffiliatePortal = () => {
           {/* Stats Sidebar */}
           <aside className="space-y-8">
             <div className="bg-white p-6 rounded-2xl shadow-lg">
-              <h3 className="text-xl font-semibold text-gray-800 mb-6">Din Statistik</h3>
+              <h3 className="text-xl font-semibold text-gray-800 mb-6">{t('affiliate_portal_your_stats', 'Din Statistik')}</h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Klick (30 dagar)</span>
+                  <span className="text-gray-600">{t('affiliate_portal_clicks_30_days', 'Klick (30 dagar)')}</span>
                   <span className="font-bold text-lg text-gray-800">{affiliateData.stats.clicks.toLocaleString('sv-SE')}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Konverteringar (30 dagar)</span>
+                  <span className="text-gray-600">{t('affiliate_portal_conversions_30_days', 'Konverteringar (30 dagar)')}</span>
                   <span className="font-bold text-lg text-gray-800">{affiliateData.stats.conversions}</span>
                 </div>
                 <div className="border-t my-4"></div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Obetald Provision</span>
+                  <span className="text-gray-600">{t('affiliate_portal_unpaid_commission', 'Obetald Provision')}</span>
                   <span className="font-bold text-lg text-green-600">{formatCurrency(affiliateData.stats.balance)}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Totala Intäkter</span>
+                  <span className="text-gray-600">{t('affiliate_portal_total_earnings', 'Totala Intäkter')}</span>
                   <span className="font-bold text-lg text-gray-800">{formatCurrency(affiliateData.stats.totalEarnings)}</span>
                 </div>
               </div>
               <button className="w-full mt-6 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors">
-                Begär utbetalning
+                {t('affiliate_portal_request_payout', 'Begär utbetalning')}
               </button>
             </div>
           </aside>

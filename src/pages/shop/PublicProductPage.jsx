@@ -285,19 +285,36 @@ const PublicProductPage = () => {
     const content = groupContent[contentField];
     if (!content) return '';
     
+    // CRITICAL: Triple safety checks to prevent React Error #31
+    // Check if content is null or undefined
+    if (content === null || content === undefined) return '';
+    
     // If it's a string, return it directly
     if (typeof content === 'string') {
       return content;
     }
     
     // If it's an object (multilingual), get the appropriate language
-    if (typeof content === 'object') {
-      // Try to get Swedish first, then English UK, then English US, then any available
-      return content['sv-SE'] || content['en-GB'] || content['en-US'] || 
-             Object.values(content).find(val => val && val.length > 0) || '';
+    if (typeof content === 'object' && content !== null) {
+      // Try to get Swedish first, then English UK, then English US
+      const swedishValue = content['sv-SE'];
+      const englishGBValue = content['en-GB'];
+      const englishUSValue = content['en-US'];
+      
+      // Ensure we return a string, never an object
+      if (typeof swedishValue === 'string') return swedishValue;
+      if (typeof englishGBValue === 'string') return englishGBValue;
+      if (typeof englishUSValue === 'string') return englishUSValue;
+      
+      // Find any available string value
+      const stringValue = Object.values(content).find(val => typeof val === 'string' && val && val.length > 0);
+      
+      // Final safety: convert to string and fallback to empty string
+      return String(stringValue || '');
     }
     
-    return '';
+    // Final safety: convert anything else to string
+    return String(content || '');
   };
 
   if (loading) {
