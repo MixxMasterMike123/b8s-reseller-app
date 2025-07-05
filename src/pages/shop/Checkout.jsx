@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { ChevronLeftIcon, LockClosedIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
 
 import ShopNavigation from '../../components/shop/ShopNavigation';
+import ShopFooter from '../../components/shop/ShopFooter';
 import SeoHreflang from '../../components/shop/SeoHreflang';
 import { getCountryAwareUrl } from '../../utils/productUrls';
 
@@ -220,7 +221,7 @@ const Checkout = () => {
       clearCart();
       
       // Redirect to order confirmation page, only passing the orderNumber
-      navigate(`/order-confirmation/${docRef.id}`, { 
+      navigate(getCountryAwareUrl(`order-confirmation/${docRef.id}`), { 
         state: { orderNumber } 
       });
 
@@ -651,6 +652,9 @@ const Checkout = () => {
             </div>
           </div>
         </div>
+
+        {/* Footer */}
+        <ShopFooter />
       </div>
     </>
   );

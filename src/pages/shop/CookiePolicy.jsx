@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import ShopNavigation from '../../components/shop/ShopNavigation';
+import ShopFooter from '../../components/shop/ShopFooter';
 import { getCountryAwareUrl } from '../../utils/productUrls';
 
 const CookiePolicy = () => {
@@ -352,6 +353,9 @@ const CookiePolicy = () => {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <ShopFooter />
     </div>
   );
 };

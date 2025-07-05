@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from '../../contexts/TranslationContext';
+import ShopNavigation from '../../components/shop/ShopNavigation';
+import ShopFooter from '../../components/shop/ShopFooter';
 import ShopCredentialLanguageSwitcher from '../../components/shop/ShopCredentialLanguageSwitcher';
 
 const CustomerRegister = () => {
@@ -20,8 +22,10 @@ const CustomerRegister = () => {
   const [currentLanguage, setCurrentLanguage] = React.useState(getInitialLanguage());
   
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-md mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <ShopNavigation />
+      
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-md p-8">
           <div className="flex justify-end mb-4">
             <ShopCredentialLanguageSwitcher
@@ -53,6 +57,9 @@ const CustomerRegister = () => {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <ShopFooter />
     </div>
   );
 };

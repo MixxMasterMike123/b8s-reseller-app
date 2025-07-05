@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import ShopNavigation from '../../components/shop/ShopNavigation';
+import ShopFooter from '../../components/shop/ShopFooter';
 import { getCountryAwareUrl } from '../../utils/productUrls';
 
 const TermsOfService = () => {
@@ -222,6 +223,9 @@ const TermsOfService = () => {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <ShopFooter />
     </div>
   );
 };

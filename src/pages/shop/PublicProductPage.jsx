@@ -10,6 +10,7 @@ import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { getProductGroupContent } from '../../utils/productGroups';
 import ShopNavigation from '../../components/shop/ShopNavigation';
+import ShopFooter from '../../components/shop/ShopFooter';
 import SizeGuideModal from '../../components/SizeGuideModal';
 import ReviewsSection from '../../components/ReviewsSection';
 import { getReviewStats } from '../../utils/trustpilotAPI';
@@ -360,9 +361,9 @@ const PublicProductPage = () => {
         }}
       />
       
-      <div className="min-h-screen bg-white">
-        <ShopNavigation breadcrumb={currentProduct.name} />
-
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <ShopNavigation breadcrumb={currentProduct?.name} />
+        
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col lg:flex-row gap-16">
             {/* Product Images */}
@@ -663,6 +664,9 @@ const PublicProductPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Footer */}
+        <ShopFooter />
       </div>
 
       {/* Size Guide Modal */}

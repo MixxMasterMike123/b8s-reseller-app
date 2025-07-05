@@ -5,6 +5,7 @@ import { SHIPPING_COSTS } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import toast from 'react-hot-toast';
 import ShopNavigation from '../../components/shop/ShopNavigation';
+import ShopFooter from '../../components/shop/ShopFooter';
 import SeoHreflang from '../../components/shop/SeoHreflang';
 import { getCountryAwareUrl } from '../../utils/productUrls';
 
@@ -282,6 +283,9 @@ const ShoppingCart = () => {
             </div>
           )}
         </div>
+
+        {/* Footer */}
+        <ShopFooter />
       </div>
     </>
   );
