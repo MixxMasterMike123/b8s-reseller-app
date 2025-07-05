@@ -1817,63 +1817,57 @@ function AdminProducts() {
                                   </span>
                                 )}
                               </div>
-                              {/* Translation completion indicators */}
-                              <div className="flex flex-wrap gap-2 mt-1">
-                                {/* B2B Translation Status */}
+                              {/* Translation status indicators */}
+                              <div className="flex items-center gap-3 mt-1">
+                                {/* B2B Status */}
                                 {(() => {
                                   const b2bDescription = product.descriptions?.b2b;
                                   let completedLanguages = 0;
-                                  const totalLanguages = 3; // sv-SE, en-GB, en-US
                                   
                                   if (typeof b2bDescription === 'string') {
-                                    // Old format - only Swedish available
                                     completedLanguages = b2bDescription.length > 0 ? 1 : 0;
                                   } else if (typeof b2bDescription === 'object' && b2bDescription) {
-                                    // New multilingual format - count completed languages
                                     completedLanguages = ['sv-SE', 'en-GB', 'en-US'].filter(lang => 
                                       b2bDescription[lang] && b2bDescription[lang].length > 0
                                     ).length;
                                   }
                                   
-                                  const percentage = Math.round((completedLanguages / totalLanguages) * 100);
-                                  const bgColor = percentage === 100 ? 'bg-green-100 text-green-800' :
-                                                 percentage >= 66 ? 'bg-blue-100 text-blue-800' :
-                                                 percentage >= 33 ? 'bg-yellow-100 text-yellow-800' :
-                                                 'bg-gray-100 text-gray-600';
+                                  const statusColor = completedLanguages === 3 ? 'bg-green-500' :
+                                                     completedLanguages >= 2 ? 'bg-blue-500' :
+                                                     completedLanguages >= 1 ? 'bg-yellow-500' :
+                                                     'bg-gray-300';
                                   
                                   return (
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${bgColor}`}>
-                                      B2B {completedLanguages}/{totalLanguages}
-                                    </span>
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-xs text-gray-600 font-medium">B2B</span>
+                                      <div className={`w-2 h-2 rounded-full ${statusColor}`} title={`B2B: ${completedLanguages}/3 språk`}></div>
+                                    </div>
                                   );
                                 })()}
                                 
-                                {/* B2C Translation Status */}
+                                {/* B2C Status */}
                                 {(() => {
                                   const b2cDescription = product.descriptions?.b2c;
                                   let completedLanguages = 0;
-                                  const totalLanguages = 3; // sv-SE, en-GB, en-US
                                   
                                   if (typeof b2cDescription === 'string') {
-                                    // Old format - only Swedish available
                                     completedLanguages = b2cDescription.length > 0 ? 1 : 0;
                                   } else if (typeof b2cDescription === 'object' && b2cDescription) {
-                                    // New multilingual format - count completed languages
                                     completedLanguages = ['sv-SE', 'en-GB', 'en-US'].filter(lang => 
                                       b2cDescription[lang] && b2cDescription[lang].length > 0
                                     ).length;
                                   }
                                   
-                                  const percentage = Math.round((completedLanguages / totalLanguages) * 100);
-                                  const bgColor = percentage === 100 ? 'bg-green-100 text-green-800' :
-                                                 percentage >= 66 ? 'bg-blue-100 text-blue-800' :
-                                                 percentage >= 33 ? 'bg-yellow-100 text-yellow-800' :
-                                                 'bg-gray-100 text-gray-600';
+                                  const statusColor = completedLanguages === 3 ? 'bg-green-500' :
+                                                     completedLanguages >= 2 ? 'bg-blue-500' :
+                                                     completedLanguages >= 1 ? 'bg-yellow-500' :
+                                                     'bg-gray-300';
                                   
                                   return (
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${bgColor}`}>
-                                      B2C {completedLanguages}/{totalLanguages}
-                                    </span>
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-xs text-gray-600 font-medium">B2C</span>
+                                      <div className={`w-2 h-2 rounded-full ${statusColor}`} title={`B2C: ${completedLanguages}/3 språk`}></div>
+                                    </div>
                                   );
                                 })()}
                               </div>
