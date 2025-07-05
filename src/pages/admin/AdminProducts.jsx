@@ -1817,36 +1817,65 @@ function AdminProducts() {
                                   </span>
                                 )}
                               </div>
-                              {/* Language availability badges */}
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {['sv-SE', 'en-GB', 'en-US'].map(langCode => {
-                                  const langNames = { 'sv-SE': 'SV', 'en-GB': 'EN', 'en-US': 'US' };
-                                  
-                                  // Check translation availability (same logic as ContentLanguageIndicator)
-                                  let hasTranslation = false;
+                              {/* Translation completion indicators */}
+                              <div className="flex flex-wrap gap-2 mt-1">
+                                {/* B2B Translation Status */}
+                                {(() => {
                                   const b2bDescription = product.descriptions?.b2b;
+                                  let completedLanguages = 0;
+                                  const totalLanguages = 3; // sv-SE, en-GB, en-US
                                   
                                   if (typeof b2bDescription === 'string') {
-                                    // Old format - only Swedish is available
-                                    hasTranslation = langCode === 'sv-SE' && b2bDescription.length > 0;
+                                    // Old format - only Swedish available
+                                    completedLanguages = b2bDescription.length > 0 ? 1 : 0;
                                   } else if (typeof b2bDescription === 'object' && b2bDescription) {
-                                    // New multilingual format - check specific language
-                                    hasTranslation = !!(b2bDescription[langCode] && b2bDescription[langCode].length > 0);
+                                    // New multilingual format - count completed languages
+                                    completedLanguages = ['sv-SE', 'en-GB', 'en-US'].filter(lang => 
+                                      b2bDescription[lang] && b2bDescription[lang].length > 0
+                                    ).length;
                                   }
                                   
+                                  const percentage = Math.round((completedLanguages / totalLanguages) * 100);
+                                  const bgColor = percentage === 100 ? 'bg-green-100 text-green-800' :
+                                                 percentage >= 66 ? 'bg-blue-100 text-blue-800' :
+                                                 percentage >= 33 ? 'bg-yellow-100 text-yellow-800' :
+                                                 'bg-gray-100 text-gray-600';
+                                  
                                   return (
-                                    <span 
-                                      key={langCode}
-                                      className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${
-                                        hasTranslation 
-                                          ? 'bg-green-100 text-green-800' 
-                                          : 'bg-gray-100 text-gray-400'
-                                      }`}
-                                    >
-                                      {langNames[langCode]}
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${bgColor}`}>
+                                      B2B {completedLanguages}/{totalLanguages}
                                     </span>
                                   );
-                                })}
+                                })()}
+                                
+                                {/* B2C Translation Status */}
+                                {(() => {
+                                  const b2cDescription = product.descriptions?.b2c;
+                                  let completedLanguages = 0;
+                                  const totalLanguages = 3; // sv-SE, en-GB, en-US
+                                  
+                                  if (typeof b2cDescription === 'string') {
+                                    // Old format - only Swedish available
+                                    completedLanguages = b2cDescription.length > 0 ? 1 : 0;
+                                  } else if (typeof b2cDescription === 'object' && b2cDescription) {
+                                    // New multilingual format - count completed languages
+                                    completedLanguages = ['sv-SE', 'en-GB', 'en-US'].filter(lang => 
+                                      b2cDescription[lang] && b2cDescription[lang].length > 0
+                                    ).length;
+                                  }
+                                  
+                                  const percentage = Math.round((completedLanguages / totalLanguages) * 100);
+                                  const bgColor = percentage === 100 ? 'bg-green-100 text-green-800' :
+                                                 percentage >= 66 ? 'bg-blue-100 text-blue-800' :
+                                                 percentage >= 33 ? 'bg-yellow-100 text-yellow-800' :
+                                                 'bg-gray-100 text-gray-600';
+                                  
+                                  return (
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${bgColor}`}>
+                                      B2C {completedLanguages}/{totalLanguages}
+                                    </span>
+                                  );
+                                })()}
                               </div>
                             </div>
                           </div>
