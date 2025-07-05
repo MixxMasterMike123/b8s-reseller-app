@@ -1997,14 +1997,14 @@ function AdminProducts() {
                                 )}
                               </div>
                             )}
-                            {/* B2B/B2C Image indicators */}
+                            {/* B2B/B2C Availability indicators */}
                             <div className="flex gap-1 mt-2">
-                              {product.b2bImageUrl && (
+                              {product.availability?.b2b && (
                                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
                                   B2B
                                 </span>
                               )}
-                              {product.b2cImageUrl && (
+                              {product.availability?.b2c && (
                                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                                   B2C
                                 </span>
