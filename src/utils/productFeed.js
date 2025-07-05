@@ -21,7 +21,7 @@ export const generateProductFeed = async () => {
       <g:id>${doc.id}</g:id>
       <g:title>${product.name}</g:title>
       <g:description>${product.descriptions?.b2c || product.description}</g:description>
-      <g:link>https://shop.b8shield.com/produkt/${doc.id}</g:link>
+      <g:link>https://shop.b8shield.com/se/product/${doc.id}</g:link>
       <g:image_link>${product.b2cImageUrl || product.imageUrl}</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>${product.stock > 0 ? 'in stock' : 'out of stock'}</g:availability>
@@ -63,7 +63,7 @@ export const generateProductSchema = (product) => {
     },
     "offers": {
       "@type": "Offer",
-      "url": `https://shop.b8shield.com/produkt/${product.id}`,
+      "url": `https://shop.b8shield.com/se/product/${product.id}`,
       "priceCurrency": "SEK",
       "price": product.b2cPrice || product.basePrice,
       "priceValidUntil": new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],

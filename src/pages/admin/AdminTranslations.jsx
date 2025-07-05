@@ -605,8 +605,8 @@ const AdminTranslations = () => {
         const translationValue = languageCode === 'sv-SE'
           ? (translation['sv-SE'] || translation.swedish)
           : languageCode === 'en-GB' 
-            ? (translation['en-GB'] || translation.englishUK)
-            : (translation['en-US'] || translation.englishUS);
+          ? (translation['en-GB'] || translation.englishUK)
+          : (translation['en-US'] || translation.englishUS);
           
         if (!translationKey || !translationValue) {
           return;
@@ -669,8 +669,8 @@ const AdminTranslations = () => {
         const translationValue = languageCode === 'sv-SE'
           ? (translation['sv-SE'] || translation.swedish)
           : languageCode === 'en-GB' 
-            ? (translation['en-GB'] || translation.englishUK)
-            : (translation['en-US'] || translation.englishUS);
+          ? (translation['en-GB'] || translation.englishUK)
+          : (translation['en-US'] || translation.englishUS);
           
         if (!translationKey || !translationValue) {
           return;

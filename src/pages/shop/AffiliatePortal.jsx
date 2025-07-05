@@ -71,7 +71,8 @@ const AffiliatePortal = () => {
     if (!affiliateData?.affiliateCode) return '';
     
     const baseUrl = 'https://shop.b8shield.com';
-    const path = productPath || '';
+    const countryCode = localStorage.getItem('b8shield-country') || 'se';
+    const path = productPath ? `/${countryCode}${productPath}` : `/${countryCode}`;
     const ref = `?ref=${affiliateData.affiliateCode}`;
     
     return `${baseUrl}${path}${ref}`;

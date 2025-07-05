@@ -46,7 +46,13 @@ export const getProductSlug = (product) => {
 // Generate full product URL
 export const getProductUrl = (product) => {
   const slug = getProductSlug(product);
-  return `/product/${slug}`;
+  
+  // Get current country from URL path
+  const pathname = window.location.pathname;
+  const segments = pathname.split('/').filter(Boolean);
+  const countryCode = segments[0] || 'se'; // Default to 'se' if no country in path
+  
+  return `/${countryCode}/product/${slug}`;
 };
 
 // Get product description for SEO
