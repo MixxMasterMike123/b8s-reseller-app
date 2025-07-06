@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useTranslation } from '../../contexts/TranslationContext';
 import {
@@ -20,20 +20,23 @@ const AffiliateAnalyticsTab = ({ affiliateCode }) => {
     try {
       const startDate = new Date(Date.now() - range * DAY_MS);
 
-      // Fetch clicks
+      // Fetch clicks (timestamp is a Firestore Timestamp)
       const clicksQuery = query(
         collection(db, 'affiliateClicks'),
         where('affiliateCode', '==', affiliateCode),
-        where('timestamp', '>=', startDate)
+        where('timestamp', '>=', startDate),
+        orderBy('timestamp', 'desc'),
+        limit(1000)
       );
       const clickSnap = await getDocs(clicksQuery);
       const clickData = clickSnap.docs.map(d => d.data());
 
-      // Fetch orders
+      // Fetch orders – createdAt might be a string, so we fetch latest 500 and filter client-side
       const ordersQuery = query(
         collection(db, 'orders'),
         where('affiliateCode', '==', affiliateCode),
-        where('createdAt', '>=', startDate)
+        orderBy('createdAt', 'desc'),
+        limit(500)
       );
       const orderSnap = await getDocs(ordersQuery);
       const orderData = orderSnap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -65,7 +68,12 @@ const AffiliateAnalyticsTab = ({ affiliateCode }) => {
       add(key, 'clicks');
     });
     orders.forEach(o => {
-      const d = new Date(o.createdAt?.seconds ? o.createdAt.seconds * 1000 : o.createdAt);
+      let d;
+      if (o.createdAt?.seconds) {
+        d = new Date(o.createdAt.seconds * 1000);
+      } else {
+        d = new Date(o.createdAt);
+      }
       const key = d.toLocaleDateString('sv-SE');
       add(key, 'conversions');
     });
@@ -159,14 +167,17 @@ const AffiliateAnalyticsTab = ({ affiliateCode }) => {
               </tr>
             </thead>
             <tbody>
-              {orders.sort((a,b)=>b.createdAt.seconds - a.createdAt.seconds).slice(0,20).map(o => (
-                <tr key={o.id} className="border-t">
-                  <td className="px-3 py-1">{new Date(o.createdAt.seconds * 1000).toLocaleDateString('sv-SE')}</td>
-                  <td className="px-3 py-1 font-mono">{o.id.substring(0,8)}…</td>
-                  <td className="px-3 py-1">{formatCurrency(o.totalAmount || 0)}</td>
-                  <td className="px-3 py-1">{formatCurrency(o.affiliateCommission || 0)}</td>
-                </tr>
-              ))}
+              {orders.slice(0,20).map(o => {
+                const created = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000) : new Date(o.createdAt);
+                return (
+                  <tr key={o.id} className="border-t">
+                    <td className="px-3 py-1">{created.toLocaleDateString('sv-SE')}</td>
+                    <td className="px-3 py-1 font-mono">{o.id.substring(0,8)}…</td>
+                    <td className="px-3 py-1">{formatCurrency(o.totalAmount || 0)}</td>
+                    <td className="px-3 py-1">{formatCurrency(o.affiliateCommission || 0)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
