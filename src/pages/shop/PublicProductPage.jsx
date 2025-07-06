@@ -178,7 +178,8 @@ const PublicProductPage = () => {
         
         setVariants(groupVariants);
         
-        // Set the current product as selected variant
+        // The mainProduct is the specific variant the user landed on.
+        // It should be the default selection.
         setSelectedVariant(mainProduct);
         setSelectedSize(mainProduct.id);
       } else {
@@ -232,7 +233,6 @@ const PublicProductPage = () => {
   };
 
   const handleAddToCart = () => {
-    console.log('[PublicProductPage] handleAddToCart CLICKED!');
     if (!selectedVariant) {
       toast.error(t('please_select_size', 'Vänligen välj en storlek'));
       return;
