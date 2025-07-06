@@ -380,23 +380,12 @@ const PublicProductPage = () => {
                       </p>
                     ) : (
                       groupContent?.sizeAndFit ? (
-                        <div 
-                          className="prose prose-sm max-w-none"
-                          dangerouslySetInnerHTML={{ __html: groupContent.sizeAndFit }}
+                        <div
+                          className="prose prose-sm text-gray-700"
+                          dangerouslySetInnerHTML={{ __html: getContentValue(groupContent.sizeAndFit) }}
                         />
                       ) : (
-                        <div className="space-y-3">
-                          <p className="mb-3">B8Shield finns i flera storlekar för att passa olika fiskeförhållanden:</p>
-                          <ul className="space-y-2">
-                            <li>• <strong>4mm:</strong> Perfekt för lättare fiskedrag och mindre fiskar</li>
-                            <li>• <strong>6mm:</strong> Standardstorlek för allmänt fiske</li>
-                            <li>• <strong>8mm:</strong> För tyngre fiskedrag och större fiskar</li>
-                            <li>• <strong>10mm:</strong> Maximal skydd för extrema förhållanden</li>
-                          </ul>
-                          <p className="mt-3 text-xs text-gray-500">
-                            Välj storlek baserat på ditt fiskedrag och fiskeområde. Vid osäkerhet, välj en större storlek.
-                          </p>
-                        </div>
+                        <p className="text-sm text-gray-500">{t('no_group_content', 'No information available')}</p>
                       )
                     )}
                   </div>
@@ -419,25 +408,12 @@ const PublicProductPage = () => {
                       </p>
                     ) : (
                       groupContent?.shippingReturns ? (
-                        <div 
-                          className="prose prose-sm max-w-none"
-                          dangerouslySetInnerHTML={{ __html: groupContent.shippingReturns }}
+                        <div
+                          className="prose prose-sm text-gray-700"
+                          dangerouslySetInnerHTML={{ __html: getContentValue(groupContent.shippingReturns) }}
                         />
                       ) : (
-                        <div className="space-y-3">
-                          <div>
-                            <h4 className="font-medium text-gray-900 mb-1">Leverans</h4>
-                            <p>• Fri frakt på alla beställningar över 500 SEK</p>
-                            <p>• Standard leverans: 2-5 arbetsdagar</p>
-                            <p>• Express leverans: 1-2 arbetsdagar (extra kostnad)</p>
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-gray-900 mb-1">Returer</h4>
-                            <p>• 30 dagars returrätt</p>
-                            <p>• Kostnadsfri retur via PostNord</p>
-                            <p>• Produkten ska vara oanvänd och i originalförpackning</p>
-                          </div>
-                        </div>
+                        <p className="text-sm text-gray-500">{t('no_group_content', 'No information available')}</p>
                       )
                     )}
                   </div>
@@ -460,23 +436,12 @@ const PublicProductPage = () => {
                       </p>
                     ) : (
                       groupContent?.howItsMade ? (
-                        <div 
-                          className="prose prose-sm max-w-none"
-                          dangerouslySetInnerHTML={{ __html: groupContent.howItsMade }}
+                        <div
+                          className="prose prose-sm text-gray-700"
+                          dangerouslySetInnerHTML={{ __html: getContentValue(groupContent.howItsMade) }}
                         />
                       ) : (
-                        <div className="space-y-3">
-                          <p>B8Shield tillverkas med miljötänk och hållbarhet i fokus:</p>
-                          <ul className="space-y-2">
-                            <li>• <strong>Återvinningsbart material:</strong> Tillverkat av högkvalitativ plast som kan återvinnas</li>
-                            <li>• <strong>Svensk design:</strong> Utvecklat och testat i svenska vatten</li>
-                            <li>• <strong>Miljövänlig produktion:</strong> Minimal miljöpåverkan under tillverkning</li>
-                            <li>• <strong>Långlivad:</strong> Designad för att hålla i många år av intensivt fiske</li>
-                          </ul>
-                          <p className="text-xs text-gray-500 mt-3">
-                            JPH Innovation AB arbetar kontinuerligt för att minska miljöpåverkan och förbättra produkternas hållbarhet.
-                          </p>
-                        </div>
+                        <p className="text-sm text-gray-500">{t('no_group_content', 'No information available')}</p>
                       )
                     )}
                   </div>
