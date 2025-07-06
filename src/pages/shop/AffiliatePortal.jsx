@@ -352,7 +352,7 @@ const AffiliatePortal = () => {
         );
       case 'profile':
         return (
-          <div className="bg-white p-6 rounded-2xl shadow-lg max-w-xl mx-auto space-y-6">
+          <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-3xl mx-auto space-y-6">
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">{t('affiliate_profile_title', 'Din Profil')}</h2>
 
             {/* Email (read-only) */}
@@ -370,13 +370,13 @@ const AffiliatePortal = () => {
             {/* Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_name', 'Namn')}</label>
-              <input name="name" value={profileForm.name} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2" />
+              <input name="name" value={profileForm.name} onChange={handleProfileChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50" />
             </div>
 
             {/* Preferred Language */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_language', 'Föredraget språk')}</label>
-              <select name="preferredLang" value={profileForm.preferredLang} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2">
+              <select name="preferredLang" value={profileForm.preferredLang} onChange={handleProfileChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50">
                 <option value="sv-SE">Svenska</option>
                 <option value="en-GB">English (UK)</option>
                 <option value="en-US">English (US)</option>
@@ -386,37 +386,37 @@ const AffiliatePortal = () => {
             {/* Phone */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_phone', 'Telefonnummer')}</label>
-              <input name="phone" value={profileForm.phone} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2" />
+              <input name="phone" value={profileForm.phone} onChange={handleProfileChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50" />
             </div>
 
             {/* Address 1 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_address1', 'Adressrad 1')}</label>
-              <input name="address1" value={profileForm.address1} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2" />
+              <input name="address1" value={profileForm.address1} onChange={handleProfileChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50" />
             </div>
 
             {/* Address 2 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_address2', 'Adressrad 2')}</label>
-              <input name="address2" value={profileForm.address2} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2" />
+              <input name="address2" value={profileForm.address2} onChange={handleProfileChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50" />
             </div>
 
             {/* City */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_city', 'Stad')}</label>
-              <input name="city" value={profileForm.city} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2" />
+              <input name="city" value={profileForm.city} onChange={handleProfileChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50" />
             </div>
 
             {/* Postal Code */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_postal', 'Postnummer')}</label>
-              <input name="postalCode" value={profileForm.postalCode} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2" />
+              <input name="postalCode" value={profileForm.postalCode} onChange={handleProfileChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50" />
             </div>
 
             {/* Country */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_country', 'Land')}</label>
-              <input name="country" value={profileForm.country} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2" />
+              <input name="country" value={profileForm.country} onChange={handleProfileChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50" />
             </div>
 
             <button onClick={saveProfile} className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
