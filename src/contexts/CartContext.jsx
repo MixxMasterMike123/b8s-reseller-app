@@ -259,6 +259,8 @@ export const CartProvider = ({ children }) => {
           name: product.name,
           price: product.b2cPrice || product.basePrice,
           image: product.b2cImageUrl || product.imageUrl,
+          sku: product.sku,
+          color: product.color,
           size: selectedSize,
           quantity
         });
