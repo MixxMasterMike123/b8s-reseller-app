@@ -480,9 +480,9 @@ const PublicProductPage = () => {
                     <div className="pb-4 px-4 -mx-4 text-sm text-gray-600">
                       <div 
                         className="prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: product.descriptions.b2cMoreInfo }}
-                    />
-                  </div>
+                        dangerouslySetInnerHTML={{ __html: getContentValue(product.descriptions.b2cMoreInfo) }}
+                      />
+                    </div>
                   </details>
                 )}
               </div>
