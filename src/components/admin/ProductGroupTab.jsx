@@ -5,14 +5,17 @@ import 'react-quill/dist/quill.snow.css';
 import { 
   getProductGroupContent, 
   getDefaultGroupContent,
-  getProductsInGroup
+  getProductsInGroup,
+  saveProductGroupContent
 } from '../../utils/productGroups';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import ContentLanguageIndicator from '../ContentLanguageIndicator';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ProductGroupTab = ({ productGroup, onContentChange, onGroupContentUpdate }) => {
   const { t } = useTranslation();
   const { currentLanguage, getContentValue, setContentValue } = useContentTranslation();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [groupContent, setGroupContent] = useState(getDefaultGroupContent());
   const [productsInGroup, setProductsInGroup] = useState([]);
@@ -120,6 +123,13 @@ const ProductGroupTab = ({ productGroup, onContentChange, onGroupContentUpdate }
     setGroupContent(updatedContent);
     if (onGroupContentUpdate) {
       onGroupContentUpdate(updatedContent);
+    }
+
+    // Immediate persistence for default product selection
+    if (productGroup && user?.uid) {
+      saveProductGroupContent(productGroup, updatedContent, user.uid)
+        .then(() => console.log('✅ defaultProductId saved'))
+        .catch((err) => console.error('❌ Failed to save defaultProductId', err));
     }
   };
 
