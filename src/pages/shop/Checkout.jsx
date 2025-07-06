@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { db } from '../../firebase/config';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import toast from 'react-hot-toast';
@@ -17,6 +18,7 @@ const Checkout = () => {
   const { cart, calculateTotals, clearCart } = useCart();
   const { user } = useSimpleAuth();
   const { t } = useTranslation();
+  const { getContentValue } = useContentTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState('contact'); // 'contact', 'shipping', 'payment'
@@ -583,29 +585,26 @@ const Checkout = () => {
                 
                 {/* Cart Items */}
                 <div className="space-y-4 mb-6">
-                  {cart.items.map(item => (
-                    <div key={item.id} className="flex items-center space-x-4">
-                      <div className="relative">
-                        <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                          {item.image ? (
-                            <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-lg" />
-                          ) : (
-                            <ShoppingBagIcon className="h-8 w-8 text-gray-400" />
-                          )}
+                  {cart.items.map((item) => {
+                    const itemName = getContentValue(item.name);
+                    return (
+                      <div key={`${item.id}-${item.size}`} className="flex items-center justify-between py-2">
+                        <div className="flex items-center">
+                          <div className="relative">
+                            <img src={item.image} alt={itemName} className="w-16 h-16 object-cover rounded-lg" />
+                            <span className="absolute -top-2 -right-2 bg-gray-800 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
+                              {item.quantity}
+                            </span>
+                          </div>
+                          <div className="ml-4">
+                            <p className="font-semibold">{itemName}</p>
+                            {item.size && <p className="text-sm text-gray-600">{t('size_label', 'Storlek: {{size}}', { size: item.size })}</p>}
+                          </div>
                         </div>
-                        <div className="absolute -top-2 -right-2 bg-gray-600 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
-                          {item.quantity}
-                        </div>
+                        <p className="font-semibold">{formatPrice(item.price * item.quantity)}</p>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">{item.name}</h3>
-                        <p className="text-sm text-gray-500">{item.variant || t('checkout_standard_variant', 'Standard')}</p>
-                      </div>
-                      <div className="font-medium text-gray-900">
-                        {formatPrice(item.price * item.quantity)}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Totals */}
