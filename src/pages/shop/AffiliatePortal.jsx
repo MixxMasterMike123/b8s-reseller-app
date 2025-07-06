@@ -24,6 +24,8 @@ import {
 import { generateAffiliateLink } from '../../utils/productUrls';
 import AffiliateSuccessGuide from '../../components/affiliate/AffiliateSuccessGuide';
 import AffiliateAnalyticsTab from './AffiliateAnalyticsTab';
+import { collection as fsCollection, query as fsQuery, where as fsWhere } from 'firebase/firestore';
+import { db as firebaseDb } from '../../firebase/config';
 
 const AffiliatePortal = () => {
   const { currentUser } = useSimpleAuth();
@@ -277,6 +279,35 @@ const AffiliatePortal = () => {
     }
   };
 
+  // Live 30-day stats sourced the same way as Analytics tab
+  const [liveStats, setLiveStats] = useState(null);
+
+  const loadLiveStats = async () => {
+    if (!affiliateData?.affiliateCode) return;
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const startDate = new Date(Date.now() - 30 * DAY_MS);
+    const clicksQ = fsQuery(
+      fsCollection(firebaseDb, 'affiliateClicks'),
+      fsWhere('affiliateCode', '==', affiliateData.affiliateCode),
+      fsWhere('timestamp', '>=', startDate)
+    );
+    const ordersQ = fsQuery(
+      fsCollection(firebaseDb, 'orders'),
+      fsWhere('affiliateCode', '==', affiliateData.affiliateCode),
+      fsWhere('createdAt', '>=', startDate)
+    );
+    const [clickSnap, orderSnap] = await Promise.all([getDocs(clicksQ), getDocs(ordersQ)]);
+    setLiveStats({
+      clicks: clickSnap.size,
+      conversions: orderSnap.size
+    });
+  };
+
+  useEffect(() => {
+    loadLiveStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [affiliateData]);
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
@@ -334,11 +365,11 @@ const AffiliatePortal = () => {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">{t('affiliate_portal_clicks_30_days', 'Klick (30 dagar)')}</span>
-                    <span className="font-bold text-lg text-gray-800">{affiliateData.stats.clicks.toLocaleString('sv-SE')}</span>
+                    <span className="font-bold text-lg text-gray-800">{(liveStats?.clicks ?? affiliateData.stats.clicks).toLocaleString('sv-SE')}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">{t('affiliate_portal_conversions_30_days', 'Konverteringar (30 dagar)')}</span>
-                    <span className="font-bold text-lg text-gray-800">{affiliateData.stats.conversions}</span>
+                    <span className="font-bold text-lg text-gray-800">{liveStats?.conversions ?? affiliateData.stats.conversions}</span>
                   </div>
                   <div className="border-t my-4"></div>
                   <div className="flex justify-between items-center">
