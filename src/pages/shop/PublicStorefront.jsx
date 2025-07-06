@@ -306,37 +306,115 @@ const PublicStorefront = () => {
                 </div>
               </div>
             ) : (
-              <div className="mt-8 grid grid-cols-1 gap-y-12 sm:grid-cols-2 sm:gap-x-6 lg:grid-cols-4 xl:gap-x-8">
-                {groupedProducts.map((group) => {
-                  const firstVariant = group.isMultipack ? group.colorVariants[0].variants[0] : group.colorVariants[0].variants[0];
-                  const productUrl = getProductUrl(firstVariant);
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {groupedProducts.map((productGroup, groupIndex) => {
+                  if (productGroup.isMultipack) {
+                    // For multipacks: show only ONE card representing the entire group
+                    const representativeVariant = productGroup.colorVariants[0]; // Use first color as representative
+                    const productUrl = getProductUrl(representativeVariant);
+                    return (
+                      <Link
+                        key={`${productGroup.groupName}-multipack-${groupIndex}`}
+                        to={productUrl}
+                        className="group block"
+                      >
+                        <div className="bg-white">
+                          {/* Product Image */}
+                          <div className="relative aspect-square bg-gray-50 mb-4 overflow-hidden">
+                            <img
+                              src={getB2cProductImage(representativeVariant)}
+                              alt={`B8Shield 3-pack`}
+                              className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+                            />
+                            
+                            {/* Sustainable Material Badge */}
+                            <div className="absolute top-3 left-3">
+                              <span className="bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded text-[11px]">
+                                {t('sustainable_materials_badge', 'Hållbara material')}
+                              </span>
+                            </div>
+                          </div>
 
-                  return (
-                    <div key={group.id} className="relative group">
-                      <div className="relative w-full h-72 rounded-lg overflow-hidden">
-                        <img
-                          src={getB2cProductImage(group)}
-                          alt={getContentValue(group.name)}
-                          className="w-full h-full object-center object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black bg-opacity-20 group-hover:bg-opacity-10 transition-all" />
-                      </div>
-                      <div className="relative mt-4">
-                        <h3 className="text-sm font-medium text-gray-900">{getContentValue(group.name)}</h3>
-                        <p className="mt-1 text-sm text-gray-500">{group.isMultipack ? t('multipack_product_card_subtitle', 'Flera färger') : t('product_card_subtitle_sizes', 'Flera storlekar')}</p>
-                      </div>
-                      <div className="absolute top-0 inset-x-0 h-96 rounded-lg p-4 flex items-end justify-end overflow-hidden">
-                        <div
-                          aria-hidden="true"
-                          className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-black opacity-50"
-                        />
-                        <p className="relative text-lg font-semibold text-white">{formatPrice(group.b2cPrice || group.basePrice)}</p>
-                      </div>
-                      <Link to={productUrl} className="absolute inset-0">
-                        <span className="sr-only">{t('view_product_sr', 'Visa produkt')}, {getContentValue(group.name)}</span>
+                          {/* Product Info */}
+                          <div className="space-y-1">
+                            {/* Product Name */}
+                            <h3 className="text-base font-medium text-gray-900 leading-tight">
+                              {t('product_name_3pack', 'B8Shield 3-pack')}
+                            </h3>
+                            
+                            {/* Product Description */}
+                            <p className="text-sm text-gray-600 leading-tight">
+                              {t('product_description_3pack', 'Vasskydd 3-pack för olika fiskemiljöer')}
+                            </p>
+                            
+                            {/* Variant Info */}
+                            <p className="text-sm text-gray-500">
+                              {t('product_3pack_info', 'Innehåller alla storlekar (2mm, 4mm, 6mm) • {{count}} färger', { count: productGroup.colorVariants.length })}
+                            </p>
+                            
+                            {/* Price */}
+                            <p className="text-base font-medium text-gray-900 pt-1">
+                              {formatPrice(representativeVariant.b2cPrice || representativeVariant.basePrice)}
+                            </p>
+                          </div>
+                        </div>
                       </Link>
-                    </div>
-                  );
+                    );
+                  } else {
+                    // For individual products: show one card per color variant
+                    return productGroup.colorVariants?.map((colorVariant, colorIndex) => {
+                      const productUrl = getProductUrl(colorVariant);
+                      return (
+                      <Link
+                        key={`${productGroup.groupName}-${colorVariant.colorVariant}-${colorIndex}`}
+                        to={productUrl}
+                        className="group block"
+                      >
+                        <div className="bg-white">
+                          {/* Product Image */}
+                          <div className="relative aspect-square bg-gray-50 mb-4 overflow-hidden">
+                            <img
+                              src={getB2cProductImage(colorVariant)}
+                              alt={`B8Shield ${colorVariant.colorVariant}`}
+                              className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+                            />
+                            
+                            {/* Sustainable Material Badge */}
+                            <div className="absolute top-3 left-3">
+                              <span className="bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded text-[11px]">
+                                {t('sustainable_materials_badge', 'Hållbara material')}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Product Info */}
+                          <div className="space-y-1">
+                            {/* Product Name */}
+                            <h3 className="text-base font-medium text-gray-900 leading-tight">
+                              {t('product_name_individual', 'B8Shield {{color}}', { color: colorVariant.colorVariant })}
+                            </h3>
+                            
+                            {/* Product Description */}
+                            <p className="text-sm text-gray-600 leading-tight">
+                              {t('product_description_individual', 'Vasskydd som förhindrar fastnade fiskedrag')}
+                            </p>
+                            
+                            {/* Variant Info */}
+                            <p className="text-sm text-gray-500">
+                              {colorVariant.availableSizes?.length > 1 
+                                ? t('product_multiple_sizes', '{{count}} storlekar', { count: colorVariant.availableSizes.length })
+                                : t('product_single_size', '1 storlek')}
+                            </p>
+                            
+                            {/* Price */}
+                            <p className="text-base font-medium text-gray-900 pt-1">
+                              {formatPrice(colorVariant.b2cPrice || colorVariant.basePrice)}
+                            </p>
+                          </div>
+                        </div>
+                      </Link>
+                    )}) || [];
+                  }
                 })}
               </div>
             )}
