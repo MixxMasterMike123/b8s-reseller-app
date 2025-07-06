@@ -4,6 +4,7 @@ import { db } from '../../firebase/config';
 import { doc, getDoc } from 'firebase/firestore';
 import { CheckCircleIcon, ShoppingBagIcon, TruckIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useContentTranslation } from '../../hooks/useContentTranslation';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
 import { format } from 'date-fns';
@@ -17,6 +18,7 @@ const OrderConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { getContentValue } = useContentTranslation();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -175,27 +177,30 @@ const OrderConfirmation = () => {
                   {t('order_confirmation_order_contents', 'Orderinnehåll')}
                 </h2>
                 <div className="space-y-4">
-                  {order.items?.map((item, index) => (
-                    <div key={index} className="flex items-center space-x-4 py-3 border-b border-gray-100 last:border-b-0">
-                      <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                        {item.image ? (
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-lg" />
-                        ) : (
-                          <ShoppingBagIcon className="h-8 w-8 text-gray-400" />
-                        )}
+                  {order.items?.map((item, index) => {
+                    const itemName = getContentValue(item.name);
+                    return (
+                      <div key={index} className="flex items-center space-x-4 py-3 border-b border-gray-100 last:border-b-0">
+                        <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                          {item.image ? (
+                            <img src={item.image} alt={itemName} className="w-full h-full object-cover rounded-lg" />
+                          ) : (
+                            <ShoppingBagIcon className="h-8 w-8 text-gray-400" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-medium text-gray-900">{itemName}</h3>
+                          <p className="text-sm text-gray-500">
+                            {t('order_confirmation_quantity', 'Antal: {{quantity}}', { quantity: item.quantity })}
+                          </p>
+                          {item.variant && <p className="text-sm text-gray-500">{item.variant}</p>}
+                        </div>
+                        <div className="font-medium text-gray-900">
+                          {formatPrice(item.price * item.quantity)}
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">{item.name}</h3>
-                        <p className="text-sm text-gray-500">
-                          {t('order_confirmation_quantity', 'Antal: {{quantity}}', { quantity: item.quantity })}
-                        </p>
-                        {item.variant && <p className="text-sm text-gray-500">{item.variant}</p>}
-                      </div>
-                      <div className="font-medium text-gray-900">
-                        {formatPrice(item.price * item.quantity)}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
