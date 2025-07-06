@@ -13,6 +13,7 @@ import wagonRegistry from './wagons/WagonRegistry.js';
 
 // Country Router for B2C Shop
 import CountryRouter from './components/shop/CountryRouter';
+import CookiebotCMP from './components/shop/CookiebotCMP';
 
 // B2B Reseller Portal Components (existing)
 import PrivateRoute from './components/auth/PrivateRoute';
@@ -138,6 +139,7 @@ function App() {
 
   const content = (
     <Router>
+      {appMode === 'shop' && <CookiebotCMP />}
       <AffiliateTracker /> 
       <ConditionalTranslationProvider appMode={appMode}>
         <div className="min-h-screen bg-gray-50">
