@@ -239,6 +239,7 @@ export const CartProvider = ({ children }) => {
 
   // Add item to cart
   const addToCart = (product, quantity = 1) => {
+    console.log('[CartContext] addToCart called with product:', product);
     setCart(prevCart => {
       const existingItemIndex = prevCart.items.findIndex(
         item => item.id === product.id
@@ -275,6 +276,7 @@ export const CartProvider = ({ children }) => {
         });
       }
 
+      console.log('[CartContext] New cart items state:', newItems);
       return {
         ...prevCart,
         items: newItems

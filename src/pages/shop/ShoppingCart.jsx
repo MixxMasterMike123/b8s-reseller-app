@@ -17,6 +17,8 @@ const ShoppingCart = () => {
   const navigate = useNavigate();
   const [discountCodeInput, setDiscountCodeInput] = useState('');
 
+  console.log('[ShoppingCart] Rendering with cart items:', cart.items);
+
   const { subtotal, vat, shipping, total, discountAmount, discountCode, discountPercentage } = calculateTotals();
   
   // Pre-fill discount input if a code is applied to the cart from context
