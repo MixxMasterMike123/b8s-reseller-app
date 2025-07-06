@@ -6,7 +6,7 @@ import AffiliateMarketingMaterials from '../../components/AffiliateMarketingMate
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { db } from '../../firebase/config';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import CustomerLogin from './CustomerLogin';
 import toast from 'react-hot-toast';
 import QRCode from 'qrcode';
@@ -142,8 +142,9 @@ const AffiliatePortal = () => {
         setError(t("affiliate_portal_not_approved", "Du är inte en godkänd affiliate. Ansök idag!"));
         setAffiliateData(null);
       } else {
-        const docData = querySnapshot.docs[0].data();
-        setAffiliateData(docData);
+        const firstDoc = querySnapshot.docs[0];
+        const docData = firstDoc.data();
+        setAffiliateData({ ...docData, _docId: firstDoc.id });
       }
     } catch (err) {
       console.error("Error fetching affiliate data:", err);
@@ -216,8 +217,52 @@ const AffiliatePortal = () => {
       id: 'materials',
       name: t('affiliate_portal_tab_materials', 'Marknadsföringsmaterial'),
       icon: <PresentationChartBarIcon className="h-5 w-5" />
+    },
+    {
+      id: 'profile',
+      name: t('affiliate_portal_tab_profile', 'Profil'),
+      icon: <SparklesIcon className="h-5 w-5" />
     }
   ];
+
+  /* -------------------- Profile editing -------------------- */
+  const [profileForm, setProfileForm] = useState({ name: '', preferredLang: 'sv-SE', paymentMethod: 'bank', paymentDetails: '' });
+  useEffect(() => {
+    if (affiliateData) {
+      setProfileForm({
+        name: affiliateData.name || '',
+        preferredLang: affiliateData.preferredLang || 'sv-SE',
+        paymentMethod: affiliateData.paymentInfo?.method || 'bank',
+        paymentDetails: affiliateData.paymentInfo?.details || ''
+      });
+    }
+  }, [affiliateData]);
+
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target;
+    setProfileForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const saveProfile = async () => {
+    if (!affiliateData?._docId) return;
+    try {
+      const docRef = doc(db, 'affiliates', affiliateData._docId);
+      await updateDoc(docRef, {
+        name: profileForm.name,
+        preferredLang: profileForm.preferredLang,
+        paymentInfo: {
+          method: profileForm.paymentMethod,
+          details: profileForm.paymentDetails
+        },
+        updatedAt: new Date()
+      });
+      toast.success(t('affiliate_profile_saved', 'Profil uppdaterad'));
+      setAffiliateData(prev => ({ ...prev, name: profileForm.name, preferredLang: profileForm.preferredLang, paymentInfo: { method: profileForm.paymentMethod, details: profileForm.paymentDetails } }));
+    } catch (err) {
+      console.error('Failed saving profile', err);
+      toast.error(t('affiliate_profile_save_error', 'Kunde inte spara profilen'));
+    }
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -297,6 +342,60 @@ const AffiliatePortal = () => {
                 </button>
               </div>
             </aside>
+          </div>
+        );
+      case 'profile':
+        return (
+          <div className="bg-white p-6 rounded-2xl shadow-lg max-w-xl mx-auto space-y-6">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">{t('affiliate_profile_title', 'Din Profil')}</h2>
+
+            {/* Email (read-only) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input type="email" value={affiliateData?.email || ''} disabled className="w-full bg-gray-100 border-gray-300 rounded-lg px-4 py-2" />
+            </div>
+
+            {/* Affiliate Code (read-only) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Affiliate-kod</label>
+              <input type="text" value={affiliateData?.affiliateCode || ''} disabled className="w-full bg-gray-100 border-gray-300 rounded-lg px-4 py-2" />
+            </div>
+
+            {/* Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_name', 'Namn')}</label>
+              <input name="name" value={profileForm.name} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2" />
+            </div>
+
+            {/* Preferred Language */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_language', 'Föredraget språk')}</label>
+              <select name="preferredLang" value={profileForm.preferredLang} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2">
+                <option value="sv-SE">Svenska</option>
+                <option value="en-GB">English (UK)</option>
+                <option value="en-US">English (US)</option>
+              </select>
+            </div>
+
+            {/* Payment Method */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_payment_method', 'Utbetalningsmetod')}</label>
+              <select name="paymentMethod" value={profileForm.paymentMethod} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2">
+                <option value="bank">Bankkonto</option>
+                <option value="swish">Swish</option>
+                <option value="paypal">PayPal</option>
+              </select>
+            </div>
+
+            {/* Payment Details */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_payment_details', 'Betalningsdetaljer')}</label>
+              <textarea name="paymentDetails" rows="3" value={profileForm.paymentDetails} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2" />
+            </div>
+
+            <button onClick={saveProfile} className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+              {t('affiliate_profile_save_button', 'Spara Profil')}
+            </button>
           </div>
         );
       case 'success':
