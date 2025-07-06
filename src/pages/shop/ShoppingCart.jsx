@@ -51,17 +51,17 @@ const ShoppingCart = () => {
     }).format(price);
   };
 
-  const handleQuantityChange = (productId, size, newQuantity) => {
+  const handleQuantityChange = (productId, newQuantity) => {
     if (newQuantity < 1) {
-      removeFromCart(productId, size);
+      removeFromCart(productId);
       toast.success(t('product_removed_from_cart', 'Produkt borttagen från varukorgen'));
     } else {
-      updateQuantity(productId, size, newQuantity);
+      updateQuantity(productId, newQuantity);
     }
   };
 
-  const handleRemove = (productId, size) => {
-    removeFromCart(productId, size);
+  const handleRemove = (productId) => {
+    removeFromCart(productId);
     toast.success(t('product_removed_from_cart', 'Produkt borttagen från varukorgen'));
   };
 
@@ -119,7 +119,7 @@ const ShoppingCart = () => {
                   const itemName = getContentValue(item.name);
                   return (
                     <div
-                      key={`${item.id}-${item.size}`}
+                      key={item.id}
                       className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200 flex items-center gap-6"
                     >
                       <img
@@ -153,14 +153,14 @@ const ShoppingCart = () => {
                       <div className="flex items-center space-x-4">
                         <div className="flex items-center rounded-lg border border-gray-300">
                           <button
-                            onClick={() => handleQuantityChange(item.id, item.size, item.quantity - 1)}
+                            onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
                             className="px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors"
                           >
                             −
                           </button>
                           <span className="px-4 py-2 text-lg font-semibold">{item.quantity}</span>
                           <button
-                            onClick={() => handleQuantityChange(item.id, item.size, item.quantity + 1)}
+                            onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
                             className="px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors"
                           >
                             +
@@ -168,7 +168,7 @@ const ShoppingCart = () => {
                         </div>
                         
                         <button
-                          onClick={() => handleRemove(item.id, item.size)}
+                          onClick={() => handleRemove(item.id)}
                           className="text-red-500 hover:text-red-700 transition-colors"
                         >
                           <svg 

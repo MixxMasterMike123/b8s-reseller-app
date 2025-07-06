@@ -238,10 +238,10 @@ export const CartProvider = ({ children }) => {
   };
 
   // Add item to cart
-  const addToCart = (product, quantity = 1, selectedSize = null) => {
+  const addToCart = (product, quantity = 1) => {
     setCart(prevCart => {
       const existingItemIndex = prevCart.items.findIndex(
-        item => item.id === product.id && item.size === selectedSize
+        item => item.id === product.id
       );
 
       const newItems = [...prevCart.items];
@@ -261,7 +261,7 @@ export const CartProvider = ({ children }) => {
           image: product.b2cImageUrl || product.imageUrl,
           sku: product.sku,
           color: product.color,
-          size: selectedSize,
+          size: product.size,
           quantity
         });
       }
@@ -274,11 +274,11 @@ export const CartProvider = ({ children }) => {
   };
 
   // Update item quantity
-  const updateQuantity = (productId, size, newQuantity) => {
+  const updateQuantity = (productId, newQuantity) => {
     setCart(prevCart => ({
       ...prevCart,
       items: prevCart.items.map(item =>
-        item.id === productId && item.size === size
+        item.id === productId
           ? { ...item, quantity: Math.max(0, newQuantity) }
           : item
       ).filter(item => item.quantity > 0) // Remove items with quantity 0
@@ -286,11 +286,11 @@ export const CartProvider = ({ children }) => {
   };
 
   // Remove item from cart
-  const removeFromCart = (productId, size) => {
+  const removeFromCart = (productId) => {
     setCart(prevCart => ({
       ...prevCart,
       items: prevCart.items.filter(
-        item => !(item.id === productId && item.size === size)
+        item => !(item.id === productId)
       )
     }));
   };
