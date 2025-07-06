@@ -18,10 +18,12 @@ import {
   SparklesIcon,
   HomeIcon,
   BookOpenIcon,
-  PresentationChartBarIcon
+  PresentationChartBarIcon,
+  ChartBarIcon
 } from '@heroicons/react/24/outline';
 import { generateAffiliateLink } from '../../utils/productUrls';
 import AffiliateSuccessGuide from '../../components/affiliate/AffiliateSuccessGuide';
+import AffiliateAnalyticsTab from './AffiliateAnalyticsTab';
 
 const AffiliatePortal = () => {
   const { currentUser } = useSimpleAuth();
@@ -217,6 +219,11 @@ const AffiliatePortal = () => {
       id: 'materials',
       name: t('affiliate_portal_tab_materials', 'Marknadsföringsmaterial'),
       icon: <PresentationChartBarIcon className="h-5 w-5" />
+    },
+    {
+      id: 'analytics',
+      name: t('affiliate_portal_tab_analytics', 'Analys'),
+      icon: <ChartBarIcon className="h-5 w-5" />
     },
     {
       id: 'profile',
@@ -436,6 +443,8 @@ const AffiliatePortal = () => {
             <AffiliateMarketingMaterials affiliateCode={affiliateData.affiliateCode} />
           </div>
         );
+      case 'analytics':
+        return <AffiliateAnalyticsTab affiliateCode={affiliateData.affiliateCode} />;
       default:
         return null;
     }
@@ -504,11 +513,7 @@ const AffiliatePortal = () => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center px-3 py-2 text-sm font-medium rounded-md w-full ${
-                      activeTab === tab.id
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
+                    className={`flex items-center px-3 py-2 text-sm font-medium rounded-md w-full ${activeTab === tab.id ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
                   >
                     <span className="mr-3">{tab.icon}</span>
                     {tab.name}
@@ -518,8 +523,8 @@ const AffiliatePortal = () => {
             </div>
           </div>
 
-          {/* Content Area */}
-          <div className="flex-1">
+          {/* Tab Content */}
+          <div className="md:w-2/3">
             {renderTabContent()}
           </div>
         </div>
@@ -529,4 +534,4 @@ const AffiliatePortal = () => {
   );
 };
 
-export default AffiliatePortal; 
+export default AffiliatePortal;
