@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { SHIPPING_COSTS } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useContentTranslation } from '../../hooks/useContentTranslation';
 import toast from 'react-hot-toast';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
@@ -12,6 +13,7 @@ import { getCountryAwareUrl } from '../../utils/productUrls';
 const ShoppingCart = () => {
   const { cart, updateQuantity, removeFromCart, updateShippingCountry, calculateTotals, applyDiscountCode, removeDiscount } = useCart();
   const { t } = useTranslation();
+  const { getContentValue } = useContentTranslation();
   const navigate = useNavigate();
   const [discountCodeInput, setDiscountCodeInput] = useState('');
 
@@ -113,63 +115,66 @@ const ShoppingCart = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Cart Items */}
               <div className="lg:col-span-2 space-y-4">
-                {cart.items.map((item) => (
-                  <div
-                    key={`${item.id}-${item.size}`}
-                    className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200 flex items-center gap-6"
-                  >
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-24 h-24 object-cover rounded-lg"
-                    />
-                    
-                    <div className="flex-grow">
-                      <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
-                      {item.size && (
-                        <p className="text-gray-600">{t('size_label', 'Storlek: {{size}}', { size: item.size })}</p>
-                      )}
-                      <p className="text-blue-600 font-semibold">{formatPrice(item.price)}</p>
-                    </div>
+                {cart.items.map((item) => {
+                  const itemName = getContentValue(item.name);
+                  return (
+                    <div
+                      key={`${item.id}-${item.size}`}
+                      className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200 flex items-center gap-6"
+                    >
+                      <img
+                        src={item.image}
+                        alt={itemName}
+                        className="w-24 h-24 object-cover rounded-lg"
+                      />
+                      
+                      <div className="flex-grow">
+                        <h3 className="text-lg font-semibold text-gray-900">{itemName}</h3>
+                        {item.size && (
+                          <p className="text-gray-600">{t('size_label', 'Storlek: {{size}}', { size: item.size })}</p>
+                        )}
+                        <p className="text-blue-600 font-semibold">{formatPrice(item.price)}</p>
+                      </div>
 
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center border border-gray-300 rounded-lg">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center border border-gray-300 rounded-lg">
+                          <button
+                            onClick={() => handleQuantityChange(item.id, item.size, item.quantity - 1)}
+                            className="px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                          >
+                            −
+                          </button>
+                          <span className="px-4 py-2 text-lg font-semibold">{item.quantity}</span>
+                          <button
+                            onClick={() => handleQuantityChange(item.id, item.size, item.quantity + 1)}
+                            className="px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                          >
+                            +
+                          </button>
+                        </div>
+                        
                         <button
-                          onClick={() => handleQuantityChange(item.id, item.size, item.quantity - 1)}
-                          className="px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                          onClick={() => handleRemove(item.id, item.size)}
+                          className="text-red-500 hover:text-red-700 transition-colors"
                         >
-                          −
-                        </button>
-                        <span className="px-4 py-2 text-lg font-semibold">{item.quantity}</span>
-                        <button
-                          onClick={() => handleQuantityChange(item.id, item.size, item.quantity + 1)}
-                          className="px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                        >
-                          +
+                          <svg 
+                            className="w-6 h-6" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round" 
+                              strokeWidth="2" 
+                              d="M6 18L18 6M6 6l12 12" 
+                            />
+                          </svg>
                         </button>
                       </div>
-                      
-                      <button
-                        onClick={() => handleRemove(item.id, item.size)}
-                        className="text-red-500 hover:text-red-700 transition-colors"
-                      >
-                        <svg 
-                          className="w-6 h-6" 
-                          fill="none" 
-                          stroke="currentColor" 
-                          viewBox="0 0 24 24"
-                        >
-                          <path 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round" 
-                            strokeWidth="2" 
-                            d="M6 18L18 6M6 6l12 12" 
-                          />
-                        </svg>
-                      </button>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Order Summary */}
