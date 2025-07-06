@@ -21,6 +21,7 @@ import {
   PresentationChartBarIcon
 } from '@heroicons/react/24/outline';
 import { generateAffiliateLink } from '../../utils/productUrls';
+import AffiliateSuccessGuide from '../../components/affiliate/AffiliateSuccessGuide';
 
 const AffiliatePortal = () => {
   const { currentUser } = useSimpleAuth();
@@ -208,8 +209,8 @@ const AffiliatePortal = () => {
       icon: <HomeIcon className="h-5 w-5" />
     },
     {
-      id: 'guide',
-      name: t('affiliate_portal_tab_guide', 'Success Management'),
+      id: 'success',
+      name: t('affiliate_portal_tab_success', 'Success Management'),
       icon: <BookOpenIcon className="h-5 w-5" />
     },
     {
@@ -218,6 +219,103 @@ const AffiliatePortal = () => {
       icon: <PresentationChartBarIcon className="h-5 w-5" />
     }
   ];
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'overview':
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Content */}
+            <main className="lg:col-span-2 space-y-8">
+              {/* Affiliate Link */}
+              <div className="bg-white p-6 rounded-2xl shadow-lg">
+                <h2 className="text-2xl font-semibold text-gray-800 mb-4">{t('affiliate_portal_unique_link', 'Din unika affiliatelänk')}</h2>
+                <p className="text-gray-600 mb-4">{t('affiliate_portal_link_description', 'Dela denna länk för att spåra klick och tjäna provision. Alla köp som görs via din länk ger dig {{commissionRate}}% i provision.', { commissionRate: affiliateData.commissionRate })}</p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={generatedLink}
+                    className="w-full bg-gray-100 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none"
+                  />
+                  <button
+                    onClick={() => copyToClipboard(generatedLink)}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  >
+                    {t('affiliate_portal_copy', 'Kopiera')}
+                  </button>
+                </div>
+
+                {/* QR Code Section */}
+                {qrCodeDataUrl && (
+                  <div className="mt-6">
+                    <h3 className="text-lg font-medium text-gray-800 mb-2">{t('affiliate_portal_qr_code', 'QR-kod för din länk')}</h3>
+                    <div className="flex items-center gap-4">
+                      <img src={qrCodeDataUrl} alt="QR Code" className="w-32 h-32" />
+                      <button
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.href = qrCodeDataUrl;
+                          link.download = 'affiliate-qr-code.png';
+                          link.click();
+                        }}
+                        className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
+                      >
+                        <ArrowDownTrayIcon className="h-5 w-5" />
+                        {t('affiliate_portal_download_qr', 'Ladda ner QR-kod')}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </main>
+
+            {/* Stats Sidebar */}
+            <aside className="space-y-8">
+              <div className="bg-white p-6 rounded-2xl shadow-lg">
+                <h3 className="text-xl font-semibold text-gray-800 mb-6">{t('affiliate_portal_your_stats', 'Din Statistik')}</h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">{t('affiliate_portal_clicks_30_days', 'Klick (30 dagar)')}</span>
+                    <span className="font-bold text-lg text-gray-800">{affiliateData.stats.clicks.toLocaleString('sv-SE')}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">{t('affiliate_portal_conversions_30_days', 'Konverteringar (30 dagar)')}</span>
+                    <span className="font-bold text-lg text-gray-800">{affiliateData.stats.conversions}</span>
+                  </div>
+                  <div className="border-t my-4"></div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">{t('affiliate_portal_unpaid_commission', 'Obetald Provision')}</span>
+                    <span className="font-bold text-lg text-green-600">{formatCurrency(affiliateData.stats.balance)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">{t('affiliate_portal_total_earnings', 'Totala Intäkter')}</span>
+                    <span className="font-bold text-lg text-gray-800">{formatCurrency(affiliateData.stats.totalEarnings)}</span>
+                  </div>
+                </div>
+                <button className="w-full mt-6 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors">
+                  {t('affiliate_portal_request_payout', 'Begär utbetalning')}
+                </button>
+              </div>
+            </aside>
+          </div>
+        );
+      case 'success':
+        return <AffiliateSuccessGuide />;
+      case 'materials':
+        return (
+          <div className="bg-white p-6 rounded-2xl shadow-lg">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">{t('affiliate_portal_marketing_materials', 'Marknadsföringsmaterial')}</h2>
+            <p className="text-gray-600 mb-6">
+              {t('affiliate_portal_materials_description', 'Ladda ner bilder, banners och annonser för att marknadsföra B8Shield effektivt.')}
+            </p>
+            <AffiliateMarketingMaterials affiliateCode={affiliateData.affiliateCode} />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
   if (loading) {
     return (
@@ -298,101 +396,7 @@ const AffiliatePortal = () => {
 
           {/* Content Area */}
           <div className="flex-1">
-            {activeTab === 'overview' && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Content */}
-                <main className="lg:col-span-2 space-y-8">
-                  {/* Affiliate Link */}
-                  <div className="bg-white p-6 rounded-2xl shadow-lg">
-                    <h2 className="text-2xl font-semibold text-gray-800 mb-4">{t('affiliate_portal_unique_link', 'Din unika affiliatelänk')}</h2>
-                    <p className="text-gray-600 mb-4">{t('affiliate_portal_link_description', 'Dela denna länk för att spåra klick och tjäna provision. Alla köp som görs via din länk ger dig {{commissionRate}}% i provision.', { commissionRate: affiliateData.commissionRate })}</p>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <input
-                        type="text"
-                        readOnly
-                        value={generatedLink}
-                        className="w-full bg-gray-100 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none"
-                      />
-                      <button
-                        onClick={() => copyToClipboard(generatedLink)}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                      >
-                        {t('affiliate_portal_copy', 'Kopiera')}
-                      </button>
-                    </div>
-
-                    {/* QR Code Section */}
-                    {qrCodeDataUrl && (
-                      <div className="mt-6">
-                        <h3 className="text-lg font-medium text-gray-800 mb-2">{t('affiliate_portal_qr_code', 'QR-kod för din länk')}</h3>
-                        <div className="flex items-center gap-4">
-                          <img src={qrCodeDataUrl} alt="QR Code" className="w-32 h-32" />
-                          <button
-                            onClick={() => {
-                              const link = document.createElement('a');
-                              link.href = qrCodeDataUrl;
-                              link.download = 'affiliate-qr-code.png';
-                              link.click();
-                            }}
-                            className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
-                          >
-                            <ArrowDownTrayIcon className="h-5 w-5" />
-                            {t('affiliate_portal_download_qr', 'Ladda ner QR-kod')}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </main>
-
-                {/* Stats Sidebar */}
-                <aside className="space-y-8">
-                  <div className="bg-white p-6 rounded-2xl shadow-lg">
-                    <h3 className="text-xl font-semibold text-gray-800 mb-6">{t('affiliate_portal_your_stats', 'Din Statistik')}</h3>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">{t('affiliate_portal_clicks_30_days', 'Klick (30 dagar)')}</span>
-                        <span className="font-bold text-lg text-gray-800">{affiliateData.stats.clicks.toLocaleString('sv-SE')}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">{t('affiliate_portal_conversions_30_days', 'Konverteringar (30 dagar)')}</span>
-                        <span className="font-bold text-lg text-gray-800">{affiliateData.stats.conversions}</span>
-                      </div>
-                      <div className="border-t my-4"></div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">{t('affiliate_portal_unpaid_commission', 'Obetald Provision')}</span>
-                        <span className="font-bold text-lg text-green-600">{formatCurrency(affiliateData.stats.balance)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">{t('affiliate_portal_total_earnings', 'Totala Intäkter')}</span>
-                        <span className="font-bold text-lg text-gray-800">{formatCurrency(affiliateData.stats.totalEarnings)}</span>
-                      </div>
-                    </div>
-                    <button className="w-full mt-6 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors">
-                      {t('affiliate_portal_request_payout', 'Begär utbetalning')}
-                    </button>
-                  </div>
-                </aside>
-              </div>
-            )}
-
-            {activeTab === 'guide' && (
-              <div className="bg-white p-6 rounded-2xl shadow-lg">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-4">{t('affiliate_portal_success_guide', 'Success Management')}</h2>
-                <p className="text-gray-600 mb-4">{t('affiliate_portal_success_guide_intro', 'Här hittar du tips och strategier för att maximera din framgång som B8Shield affiliate.')}</p>
-                {/* Add success guide content here */}
-              </div>
-            )}
-
-            {activeTab === 'materials' && (
-              <div className="bg-white p-6 rounded-2xl shadow-lg">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-4">{t('affiliate_portal_marketing_materials', 'Marknadsföringsmaterial')}</h2>
-                <p className="text-gray-600 mb-6">
-                  {t('affiliate_portal_materials_description', 'Ladda ner bilder, banners och annonser för att marknadsföra B8Shield effektivt.')}
-                </p>
-                <AffiliateMarketingMaterials affiliateCode={affiliateData.affiliateCode} />
-              </div>
-            )}
+            {renderTabContent()}
           </div>
         </div>
       </div>
