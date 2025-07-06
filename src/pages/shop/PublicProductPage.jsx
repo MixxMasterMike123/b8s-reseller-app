@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { generateProductSchema } from '../../utils/productFeed';
 import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { getProductGroupContent } from '../../utils/productGroups';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
@@ -21,6 +22,7 @@ const PublicProductPage = () => {
   const [searchParams] = useSearchParams();
   const colorParam = searchParams.get('color');
   const { t } = useTranslation();
+  const { getContentValue } = useContentTranslation();
   
   const [product, setProduct] = useState(null);
   const [variants, setVariants] = useState([]);
@@ -198,16 +200,18 @@ const PublicProductPage = () => {
         
         // Sort by size (convert size to number for proper sorting)
         groupVariants.sort((a, b) => {
-          const aSize = parseFloat(a.size?.toString().replace(/[^\d.]/g, '') || '0');
-          const bSize = parseFloat(b.size?.toString().replace(/[^\d.]/g, '') || '0');
+          const aSize = parseInt(a.size) || 0;
+          const bSize = parseInt(b.size) || 0;
           return aSize - bSize;
         });
         
         setVariants(groupVariants);
         
-        // Set the current product as selected variant
-        setSelectedVariant(mainProduct);
-        setSelectedSize(mainProduct.id);
+        // Set the first variant as selected
+        if (groupVariants.length > 0) {
+          setSelectedVariant(groupVariants[0]);
+          setSelectedSize(groupVariants[0].id);
+        }
       }
       
     } catch (error) {
@@ -223,23 +227,16 @@ const PublicProductPage = () => {
     if (variant) {
       setSelectedVariant(variant);
       setSelectedSize(variantId);
-      setActiveImageIndex(0); // Reset to first image when variant changes
     }
   };
 
   const handleAddToCart = () => {
-    if (!selectedSize) {
-      toast.error(isMultipack ? t('please_select_color', 'Vänligen välj en färg') : t('please_select_size', 'Vänligen välj en storlek'));
-      return;
-    }
-
-    const selectedVariant = variants.find(v => v.id === selectedSize);
     if (!selectedVariant) {
-      toast.error(isMultipack ? t('invalid_color_selected', 'Ogiltig färg vald') : t('invalid_size_selected', 'Ogiltig storlek vald'));
+      toast.error(t('please_select_size', 'Vänligen välj en storlek'));
       return;
     }
-
-    addToCart(selectedVariant, quantity, isMultipack ? selectedVariant.color : selectedVariant.size);
+    
+    addToCart(selectedVariant, quantity);
     toast.success(t('product_added_to_cart_product_page', 'Produkt tillagd i varukorgen'));
   };
 
@@ -250,17 +247,19 @@ const PublicProductPage = () => {
     }).format(price);
   };
 
-  // Get all available images for the product (B2C ONLY for consumer shop)
   const getProductImages = (product) => {
     const images = [];
     
-    // B2C images only (lifestyle images for consumers)
-    if (product.b2cImageUrl) images.push(product.b2cImageUrl);
+    // Add B2C images first
+    if (product.b2cImageUrl) {
+      images.push(product.b2cImageUrl);
+    }
+    
     if (product.b2cImageGallery && product.b2cImageGallery.length > 0) {
       images.push(...product.b2cImageGallery);
     }
     
-    // If no B2C images, use generated consumer-focused image
+    // Fallback to generated image if no B2C images
     if (images.length === 0) {
       images.push(getProductImage(product));
     }
@@ -268,14 +267,11 @@ const PublicProductPage = () => {
     return images;
   };
 
-  // Get product description - prefer B2C description
   const getB2cDescription = (product) => {
-    if (product.descriptions?.b2c) return product.descriptions.b2c;
-    if (product.description) return product.description;
-    return '';
+    // Use the useContentTranslation hook to safely get the description
+    return getContentValue(product.descriptions?.b2c) || '';
   };
 
-  // Get color from product color field
   const getProductColor = (product) => {
     return product.color || 'Standard';
   };
@@ -287,36 +283,8 @@ const PublicProductPage = () => {
     const content = groupContent[contentField];
     if (!content) return '';
     
-    // CRITICAL: Triple safety checks to prevent React Error #31
-    // Check if content is null or undefined
-    if (content === null || content === undefined) return '';
-    
-    // If it's a string, return it directly
-    if (typeof content === 'string') {
-      return content;
-    }
-    
-    // If it's an object (multilingual), get the appropriate language
-    if (typeof content === 'object' && content !== null) {
-      // Try to get Swedish first, then English UK, then English US
-      const swedishValue = content['sv-SE'];
-      const englishGBValue = content['en-GB'];
-      const englishUSValue = content['en-US'];
-      
-      // Ensure we return a string, never an object
-      if (typeof swedishValue === 'string') return swedishValue;
-      if (typeof englishGBValue === 'string') return englishGBValue;
-      if (typeof englishUSValue === 'string') return englishUSValue;
-      
-      // Find any available string value
-      const stringValue = Object.values(content).find(val => typeof val === 'string' && val && val.length > 0);
-      
-      // Final safety: convert to string and fallback to empty string
-      return String(stringValue || '');
-    }
-    
-    // Final safety: convert anything else to string
-    return String(content || '');
+    // Use the useContentTranslation hook to safely get the content value
+    return getContentValue(content);
   };
 
   if (loading) {
