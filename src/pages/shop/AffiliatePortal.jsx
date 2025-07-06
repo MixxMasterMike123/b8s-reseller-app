@@ -272,7 +272,7 @@ const AffiliatePortal = () => {
       <ShopNavigation />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">{t('affiliate_portal_welcome', 'Välkommen')} {affiliateData.name}!</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('affiliate_portal_welcome', 'Välkommen {{name}}!', { name: affiliateData.name })}</h1>
           <p className="mt-2 text-gray-600">{t('affiliate_portal_dashboard', 'Din affiliate-instrumentpanel')}</p>
         </header>
 
