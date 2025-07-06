@@ -7,6 +7,7 @@ import { getProductUrl } from '../../utils/productUrls';
 import toast from 'react-hot-toast';
 import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useContentTranslation } from '../../hooks/useContentTranslation';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
 import ReviewsSection from '../../components/ReviewsSection';
@@ -14,7 +15,8 @@ import { getRandomReviews } from '../../utils/trustpilotAPI';
 import SeoHreflang from '../../components/shop/SeoHreflang';
 
 const PublicStorefront = () => {
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
+  const { getContentValue } = useContentTranslation();
   const [products, setProducts] = useState([]);
   const [groupedProducts, setGroupedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -64,8 +66,12 @@ const PublicStorefront = () => {
         });
       });
       
-      // Sort products alphabetically
-      productList.sort((a, b) => a.name.localeCompare(b.name));
+      // Sort products alphabetically using the translated name
+      productList.sort((a, b) => {
+        const nameA = getContentValue(a.name, 'sv-SE');
+        const nameB = getContentValue(b.name, 'sv-SE');
+        return nameA.localeCompare(nameB, currentLanguage);
+      });
       setProducts(productList);
       
       // Group products dynamically by their group field
@@ -86,19 +92,19 @@ const PublicStorefront = () => {
     
     products.forEach(product => {
       // Use the group field, skip products without groups
-      const group = product.group;
-      if (!group) return;
+      const groupName = getContentValue(product.group);
+      if (!groupName) return;
       
-      if (!productGroups[group]) {
-        productGroups[group] = {
-          groupName: group,
+      if (!productGroups[groupName]) {
+        productGroups[groupName] = {
+          groupName: groupName,
           products: [],
           representativeProduct: product,
-          isMultipack: group.includes('multipack') || group.includes('3-pack')
+          isMultipack: groupName.includes('multipack') || groupName.includes('3-pack')
         };
       }
       
-      productGroups[group].products.push(product);
+      productGroups[groupName].products.push(product);
     });
     
     // Return array of product groups with their variants
@@ -133,7 +139,7 @@ const PublicStorefront = () => {
               id: p.id,
               size: p.size || 'Standard',
               price: p.b2cPrice || p.basePrice,
-              name: p.name
+              name: getContentValue(p.name)
             }))
           }))
         };
@@ -166,7 +172,7 @@ const PublicStorefront = () => {
               id: p.id,
               size: p.size || 'Standard',
               price: p.b2cPrice || p.basePrice,
-              name: p.name
+              name: getContentValue(p.name)
             }))
           }))
         };
@@ -183,7 +189,8 @@ const PublicStorefront = () => {
 
   const addToCart = (product) => {
     // TODO: Implement cart functionality
-    toast.success(t('product_added_to_cart', '{{name}} tillagd i varukorgen!', { name: product.name }));
+    const productName = getContentValue(product.name);
+    toast.success(t('product_added_to_cart', '{{name}} tillagd i varukorgen!', { name: productName }));
   };
 
   // Get the best available image for B2C display

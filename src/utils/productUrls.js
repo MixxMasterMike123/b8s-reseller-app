@@ -19,10 +19,23 @@ export const slugToProductMap = {
   '3pack': '3-pack'
 };
 
+// Simple helper to safely get content from multilingual fields without using hooks
+const safeGetContent = (field) => {
+  if (!field) return '';
+  if (typeof field === 'string') return field;
+  if (typeof field === 'object') {
+    // A simplified, non-hook version of getContentValue
+    // Prioritize Swedish, then English, then take any available.
+    return field['sv-SE'] || field['en-GB'] || field['en-US'] || Object.values(field)[0] || '';
+  }
+  return '';
+};
+
 // Generate clean product URL from product data
 export const getProductSlug = (product) => {
+  const productName = safeGetContent(product.name);
   // For multipacks, use 3pack slug
-  if (product.name?.includes('3-pack') || product.name?.includes('multipack')) {
+  if (productName.includes('3-pack') || productName.includes('multipack')) {
     return '3pack';
   }
   
@@ -32,7 +45,7 @@ export const getProductSlug = (product) => {
   }
   
   // Fallback: extract color from name
-  const name = product.name || '';
+  const name = safeGetContent(product.name) || '';
   for (const [color, slug] of Object.entries(productSlugMap)) {
     if (name.includes(color)) {
       return slug;
