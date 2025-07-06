@@ -130,14 +130,28 @@ const ShoppingCart = () => {
                       
                       <div className="flex-grow">
                         <h3 className="text-lg font-semibold text-gray-900">{itemName}</h3>
-                        {item.size && (
-                          <p className="text-gray-600">{t('size_label', 'Storlek: {{size}}', { size: item.size })}</p>
-                        )}
-                        <p className="text-blue-600 font-semibold">{formatPrice(item.price)}</p>
+                        <div className="mt-1 space-y-1 text-sm text-gray-600">
+                          {item.color && (
+                            <p>
+                              {t('color_label', 'Färg: {{color}}', { color: item.color })}
+                            </p>
+                          )}
+                          {item.size && (
+                            <p>
+                              {t('size_label', 'Storlek: {{size}}', { size: item.size })}
+                            </p>
+                          )}
+                          {item.sku && (
+                            <p>
+                              {t('sku_label', 'Art.nr: {{sku}}', { sku: item.sku })}
+                            </p>
+                          )}
+                        </div>
+                        <p className="mt-2 font-semibold text-blue-600">{formatPrice(item.price)}</p>
                       </div>
 
                       <div className="flex items-center space-x-4">
-                        <div className="flex items-center border border-gray-300 rounded-lg">
+                        <div className="flex items-center rounded-lg border border-gray-300">
                           <button
                             onClick={() => handleQuantityChange(item.id, item.size, item.quantity - 1)}
                             className="px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors"
