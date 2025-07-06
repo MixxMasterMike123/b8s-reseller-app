@@ -72,34 +72,21 @@ const AffiliatePortal = () => {
 
   // Generate affiliate link based on selection
   const generateAffiliateLink = (productPath = '') => {
-    if (!affiliateData?.affiliateCode) return '';
-    
     const baseUrl = 'https://shop.b8shield.com';
-    // Get the country code from the language code (e.g., 'en-US' -> 'us', 'en-GB' -> 'gb', 'sv-SE' -> 'se')
-    const countryCode = (affiliateData.preferredLang || 'sv-SE').split('-')[1].toLowerCase();
-    
-    return `${baseUrl}/${countryCode}/?ref=${affiliateData.affiliateCode}`;
+    const path = productPath ? `/${productPath}` : '';
+    return `${baseUrl}${path}?ref=${affiliateData?.affiliateCode || ''}`;
   };
 
   // Generate QR Code
-  const generateQRCode = async (url) => {
+  const generateQRCode = async (link) => {
+    setGeneratingQR(true);
     try {
-      setGeneratingQR(true);
-      const qrDataUrl = await QRCode.toDataURL(url, {
-        width: 200,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        }
-      });
-      setQrCodeDataUrl(qrDataUrl);
-    } catch (error) {
-      console.error('Error generating QR code:', error);
+      const url = await QRCode.toDataURL(link);
+      setQrCodeDataUrl(url);
+    } catch (err) {
       toast.error(t('affiliate_portal_qr_error', 'Kunde inte generera QR-kod'));
-    } finally {
-      setGeneratingQR(false);
     }
+    setGeneratingQR(false);
   };
 
   // Handle link generation
@@ -118,12 +105,13 @@ const AffiliatePortal = () => {
   };
 
   // Copy link to clipboard
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text).then(() => {
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
       toast.success(t('affiliate_portal_link_copied', 'Länk kopierad!'));
-    }).catch(() => {
-      toast.error(t('affiliate_portal_copy_error', 'Kunde inte kopiera länk'));
-    });
+    } catch (err) {
+      toast.error(t('affiliate_portal_copy_error', 'Kunde inte kopiera länken'));
+    }
   };
 
   // Download QR code
@@ -168,6 +156,14 @@ const AffiliatePortal = () => {
   useEffect(() => {
     fetchAffiliateData();
   }, [fetchAffiliateData, currentUser]);
+
+  useEffect(() => {
+    if (affiliateData?.affiliateCode) {
+      const link = generateAffiliateLink();
+      setGeneratedLink(link);
+      generateQRCode(link);
+    }
+  }, [affiliateData]);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(amount);
@@ -327,6 +323,28 @@ const AffiliatePortal = () => {
                         {t('affiliate_portal_copy', 'Kopiera')}
                       </button>
                     </div>
+
+                    {/* QR Code Section */}
+                    {qrCodeDataUrl && (
+                      <div className="mt-6">
+                        <h3 className="text-lg font-medium text-gray-800 mb-2">{t('affiliate_portal_qr_code', 'QR-kod för din länk')}</h3>
+                        <div className="flex items-center gap-4">
+                          <img src={qrCodeDataUrl} alt="QR Code" className="w-32 h-32" />
+                          <button
+                            onClick={() => {
+                              const link = document.createElement('a');
+                              link.href = qrCodeDataUrl;
+                              link.download = 'affiliate-qr-code.png';
+                              link.click();
+                            }}
+                            className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
+                          >
+                            <ArrowDownTrayIcon className="h-5 w-5" />
+                            {t('affiliate_portal_download_qr', 'Ladda ner QR-kod')}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </main>
 
