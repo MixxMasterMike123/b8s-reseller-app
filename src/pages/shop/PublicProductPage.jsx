@@ -232,6 +232,7 @@ const PublicProductPage = () => {
   };
 
   const handleAddToCart = () => {
+    console.log('[PublicProductPage] handleAddToCart CLICKED!');
     if (!selectedVariant) {
       toast.error(t('please_select_size', 'Vänligen välj en storlek'));
       return;
