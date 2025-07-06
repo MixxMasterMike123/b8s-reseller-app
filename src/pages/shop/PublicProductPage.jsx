@@ -284,7 +284,19 @@ const PublicProductPage = () => {
     if (!content) return '';
     
     // Use the useContentTranslation hook to safely get the content value
-    return getContentValue(content);
+    const translatedContent = getContentValue(content);
+    
+    // Additional safety check: ensure we always return a string
+    if (typeof translatedContent === 'string') {
+      return translatedContent;
+    } else if (typeof translatedContent === 'object' && translatedContent !== null) {
+      // If it's still an object, try to extract the current language
+      const currentLang = currentLanguage || 'sv-SE';
+      return translatedContent[currentLang] || translatedContent['sv-SE'] || translatedContent['en-GB'] || translatedContent['en-US'] || '';
+    } else {
+      // Final fallback: convert to string
+      return String(translatedContent || '');
+    }
   };
 
   if (loading) {
@@ -330,7 +342,7 @@ const PublicProductPage = () => {
       />
       
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <ShopNavigation breadcrumb={currentProduct?.name || t('product_loading', 'Laddar produkt...')} />
+        <ShopNavigation breadcrumb={getContentValue(currentProduct?.name) || t('product_loading', 'Laddar produkt...')} />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col lg:flex-row gap-16">
@@ -352,7 +364,7 @@ const PublicProductPage = () => {
                       >
                         <img
                           src={image}
-                          alt={`${currentProduct.name} ${index + 1}`}
+                          alt={`${getContentValue(currentProduct.name)} ${index + 1}`}
                           className="w-full h-full object-cover"
                         />
                       </button>
@@ -365,7 +377,7 @@ const PublicProductPage = () => {
                   <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden">
                     <img
                       src={productImages[activeImageIndex]}
-                      alt={currentProduct.name}
+                      alt={getContentValue(currentProduct.name)}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -378,7 +390,7 @@ const PublicProductPage = () => {
               {/* Product Title */}
               <div>
                 <h1 className="text-3xl font-medium text-gray-900 mb-2">
-                  {currentProduct.name}
+                  {getContentValue(currentProduct.name)}
                 </h1>
                 <p className="text-lg text-gray-600 mb-4">
                   {getB2cDescription(currentProduct) || `B8Shield ${productColor} - ${currentProduct.size || 'Standard'}`}
@@ -642,7 +654,7 @@ const PublicProductPage = () => {
         isOpen={sizeGuideModalOpen}
         onClose={() => setSizeGuideModalOpen(false)}
         sizeGuideContent={getGroupContentValue('sizeGuide')}
-        productName={currentProduct.name}
+        productName={getContentValue(currentProduct.name)}
       />
     </>
   );

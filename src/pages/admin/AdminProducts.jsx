@@ -128,8 +128,8 @@ function AdminProducts() {
       
       // Sort products by name (default sorting)
       productsData.sort((a, b) => {
-        const nameA = (a.name || '').toLowerCase();
-        const nameB = (b.name || '').toLowerCase();
+        const nameA = (getContentValue(a.name) || '').toLowerCase();
+        const nameB = (getContentValue(b.name) || '').toLowerCase();
         return nameA.localeCompare(nameB);
       });
       
@@ -648,6 +648,9 @@ function AdminProducts() {
       // Update the gallery in the product data
       finalProductData.b2cImageGallery = updatedGallery;
       
+      // Ensure name is always a multilingual object
+      finalProductData.name = typeof finalProductData.name === 'string' ? { 'sv-SE': finalProductData.name } : finalProductData.name;
+      
       if (!selectedProduct) {
         // Adding new product
         finalProductData.createdAt = serverTimestamp();
@@ -951,12 +954,20 @@ function AdminProducts() {
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                       Produktnamn *
                     </label>
+                    <ContentLanguageIndicator 
+                      contentField={formData.name}
+                      label="Produktnamn"
+                      className="mb-2"
+                    />
                     <input
                       type="text"
                       id="name"
                       name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
+                      value={getContentValue(formData.name)}
+                      onChange={e => setFormData({
+                        ...formData,
+                        name: setContentValue(formData.name, e.target.value)
+                      })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                       required
                     />
@@ -1869,7 +1880,7 @@ function AdminProducts() {
                             {(product.imageUrl || product.b2bImageUrl || product.b2cImageUrl) ? (
                               <img 
                                 src={product.imageUrl || product.b2bImageUrl || product.b2cImageUrl} 
-                                alt={product.name} 
+                                alt={getContentValue(product.name)} 
                                 className="w-16 h-16 mr-4 object-cover rounded-md border border-gray-200 flex-shrink-0"
                               />
                             ) : (
@@ -1878,7 +1889,7 @@ function AdminProducts() {
                               </div>
                             )}
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm font-medium text-gray-900 mb-1">{product.name}</div>
+                              <div className="text-sm font-medium text-gray-900 mb-1">{getContentValue(product.name)}</div>
                               <div className="text-xs text-gray-500 mb-1">SKU: <span className="font-mono">{product.sku || 'Ej angivet'}</span></div>
                               <div className="flex flex-wrap gap-2 text-xs">
                                 {product.size && (
