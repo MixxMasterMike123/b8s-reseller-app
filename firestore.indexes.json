@@ -49,6 +49,22 @@
         { "fieldPath": "uploadedAt", "order": "DESCENDING" },
         { "fieldPath": "__name__", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "affiliateClicks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "affiliateCode", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "affiliateCode", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
