@@ -157,7 +157,26 @@ export const getProductsInGroup = async (groupId) => {
       });
     });
     
-    return products.sort((a, b) => a.name.localeCompare(b.name));
+    // SAFER SORT: Support multilingual name objects (sv-SE, en-GB, en-US)
+    const getNameString = (nameObj) => {
+      if (!nameObj) return '';
+      if (typeof nameObj === 'string') return nameObj;
+      if (typeof nameObj === 'object') {
+        // Prefer Swedish, then any available language
+        return (
+          nameObj['sv-SE'] ||
+          Object.values(nameObj).find((v) => typeof v === 'string' && v.trim()) ||
+          ''
+        );
+      }
+      return '';
+    };
+    
+    return products.sort((a, b) => {
+      const nameA = getNameString(a.name).toLowerCase();
+      const nameB = getNameString(b.name).toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
   } catch (error) {
     console.error('Error getting products in group:', error);
     throw error;

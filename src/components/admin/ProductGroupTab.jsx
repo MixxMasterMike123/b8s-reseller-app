@@ -75,7 +75,16 @@ const ProductGroupTab = ({ productGroup, onContentChange, onGroupContentUpdate }
     
     try {
       const products = await getProductsInGroup(productGroup);
-      setProductsInGroup(products);
+      
+      // Safely sort products by name using the content translation hook
+      // This replicates the working pattern from AdminProducts.jsx list view
+      const sortedProducts = [...products].sort((a, b) => {
+        const nameA = (getContentValue(a.name) || '').toLowerCase();
+        const nameB = (getContentValue(b.name) || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+
+      setProductsInGroup(sortedProducts);
     } catch (error) {
       console.error('Error loading products in group:', error);
     }
@@ -264,7 +273,7 @@ const ProductGroupTab = ({ productGroup, onContentChange, onGroupContentUpdate }
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {productsInGroup.map((product) => (
               <div key={product.id} className="bg-white rounded border px-3 py-2">
-                <p className="text-sm font-medium text-gray-900">{product.name}</p>
+                <p className="text-sm font-medium text-gray-900">{getContentValue(product.name)}</p>
                 <p className="text-xs text-gray-500">
                   {product.color} • {product.size}
                 </p>
