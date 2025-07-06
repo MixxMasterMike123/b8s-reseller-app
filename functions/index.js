@@ -536,7 +536,7 @@ exports.processB2COrderCompletion = functions
       }
 
     const orderData = orderSnap.data();
-      const { affiliateCode } = orderData;
+      const { affiliateCode, discountCode } = orderData;
 
       if (!affiliateCode) {
         console.log('No affiliate code found for order, skipping commission.');
@@ -583,6 +583,19 @@ exports.processB2COrderCompletion = functions
                 orderId: orderId,
             commissionAmount: commissionAmount
           });
+      }
+
+      // Determine attribution method for analytics
+      let attributionMethod = null;
+      if (orderData.affiliateClickId) {
+        attributionMethod = 'server';
+      } else if (affiliateCode) {
+        attributionMethod = 'cookie';
+      } else if (discountCode) {
+        attributionMethod = 'discount';
+      }
+      if (attributionMethod) {
+        await orderRef.update({ attributionMethod });
       }
 
       console.log(`Successfully processed affiliate commission for order ${orderId}`);
@@ -2102,7 +2115,7 @@ exports.processB2COrderCompletionHttp = functions
       }
 
       const orderData = orderSnap.data();
-      const { affiliateCode } = orderData;
+      const { affiliateCode, discountCode } = orderData;
 
       if (!affiliateCode) {
         console.log('No affiliate code found for order, skipping commission.');
@@ -2149,6 +2162,19 @@ exports.processB2COrderCompletionHttp = functions
             orderId: orderId,
             commissionAmount: commissionAmount
           });
+      }
+
+      // Determine attribution method for analytics
+      let attributionMethod = null;
+      if (orderData.affiliateClickId) {
+        attributionMethod = 'server';
+      } else if (affiliateCode) {
+        attributionMethod = 'cookie';
+      } else if (discountCode) {
+        attributionMethod = 'discount';
+      }
+      if (attributionMethod) {
+        await orderRef.update({ attributionMethod });
       }
 
       console.log(`Successfully processed affiliate commission for order ${orderId}`);
