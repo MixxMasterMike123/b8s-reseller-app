@@ -1,112 +1,113 @@
 // Product URL utilities for clean, SEO-friendly URLs
 
-// Map product colors/groups to clean URL slugs
-export const productSlugMap = {
-  'Transparent': 'transparent',
-  'Röd': 'rod', 
-  'Fluorescerande': 'fluorescerande',
-  'Glitter': 'glitter',
-  '3-pack': '3pack',
-  'multipack': '3pack'
-};
-
-// Reverse map for resolving slugs back to product names
-export const slugToProductMap = {
-  'transparent': 'Transparent',
-  'rod': 'Röd',
-  'fluorescerande': 'Fluorescerande', 
-  'glitter': 'Glitter',
-  '3pack': '3-pack'
-};
-
-// Simple helper to safely get content from multilingual fields without using hooks
+// Helper to safely get content from multilingual fields without using hooks
 const safeGetContent = (field) => {
   if (!field) return '';
   if (typeof field === 'string') return field;
-  if (typeof field === 'object') {
+  if (typeof field === 'object' && field !== null) {
     // A simplified, non-hook version of getContentValue
     // Prioritize Swedish, then English, then take any available.
     return field['sv-SE'] || field['en-GB'] || field['en-US'] || Object.values(field)[0] || '';
   }
-  return '';
+  return String(field);
 };
 
-// Generate clean product URL from product data
-export const getProductSlug = (product) => {
-  const productName = safeGetContent(product.name);
-  // For multipacks, use 3pack slug
-  if (productName.includes('3-pack') || productName.includes('multipack')) {
-    return '3pack';
-  }
-  
-  // For individual products, use color-based slug
-  if (product.color && productSlugMap[product.color]) {
-    return productSlugMap[product.color];
-  }
-  
-  // Fallback: extract color from name
-  const name = safeGetContent(product.name) || '';
-  for (const [color, slug] of Object.entries(productSlugMap)) {
-    if (name.includes(color)) {
-      return slug;
-    }
-  }
-  
-  // Ultimate fallback: use product ID (should not happen with proper data)
-  return product.id;
+// Helper to create a URL-friendly slug from a string
+const slugify = (str) => {
+  if (!str) return '';
+  return str
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')           // Replace spaces with -
+    .replace(/[åä]/g, 'a')          // Replace Swedish characters
+    .replace(/ö/g, 'o')
+    .replace(/&/g, '-and-')         // Replace & with 'and'
+    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+    .replace(/\-\-+/g, '-');        // Replace multiple - with single -
 };
 
-// Generate full product URL
+/**
+ * NEW DYNAMIC SLUG GENERATOR
+ * Generates a unique, SEO-friendly slug for a specific product variant.
+ * Format: [name-size]_[sku]
+ * Example: b8shield-vasskydd-6_B8S-6-GL
+ */
+export const getVariantProductSlug = (product) => {
+  if (!product || !product.sku) {
+    console.error("Cannot generate slug for product without SKU:", product);
+    return product?.id || 'invalid-product';
+  }
+
+  const name = safeGetContent(product.name) || 'product';
+  const size = product.size || '';
+
+  // Create the human-readable part from name and size.
+  const seoPart = slugify(`${name} ${size}`);
+  
+  // Combine with the unique SKU, which is the key for database lookups.
+  return `${seoPart}_${product.sku}`;
+};
+
+/**
+ * Extracts the SKU from a dynamic variant slug.
+ * This is the reverse of getVariantProductSlug.
+ */
+export const getSkuFromSlug = (slug) => {
+  if (!slug || !slug.includes('_')) return null;
+  const parts = slug.split('_');
+  return parts[parts.length - 1];
+};
+
+
+// Generate full product URL using the new dynamic slug
 export const getProductUrl = (product) => {
-  const slug = getProductSlug(product);
+  const slug = getVariantProductSlug(product);
   
-  // Get current country from URL path
-  const pathname = window.location.pathname;
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '/se';
   const segments = pathname.split('/').filter(Boolean);
-  const countryCode = segments[0] || 'se'; // Default to 'se' if no country in path
+  const countryCode = segments[0] || 'se';
   
   return `/${countryCode}/product/${slug}`;
 };
 
-// Get product description for SEO
-export const getProductSeoDescription = (slug) => {
-  const descriptions = {
-    'transparent': 'B8Shield Transparent - Diskret vasskydd för klart vatten. Förhindrar fastnade fiskedrag.',
-    'rod': 'B8Shield Röd - Vasskydd för mörkt vatten. Perfekt för gäddfiske och djupa vatten.',
-    'fluorescerande': 'B8Shield Fluorescerande - Vasskydd för djupt vatten. Extra synligt för bättre resultat.',
-    'glitter': 'B8Shield Glitter - Vasskydd för extra synlighet. Attraktiv glitterfinish.',
-    '3pack': 'B8Shield 3-pack - Komplett startpaket med alla storlekar (2mm, 4mm, 6mm).'
-  };
-  
-  return descriptions[slug] || 'B8Shield - Professionellt vasskydd för fiske';
-};
-
-// Get product title for SEO
-export const getProductSeoTitle = (slug) => {
-  const titles = {
-    'transparent': 'B8Shield Transparent - Diskret Vasskydd',
-    'rod': 'B8Shield Röd - Vasskydd för Mörkt Vatten',
-    'fluorescerande': 'B8Shield Fluorescerande - Vasskydd för Djupt Vatten',
-    'glitter': 'B8Shield Glitter - Vasskydd med Extra Synlighet',
-    '3pack': 'B8Shield 3-pack - Komplett Startpaket'
-  };
-  
-  return titles[slug] || 'B8Shield - Professionellt Vasskydd';
-};
-
 // Generate country-aware URL for B2C shop links
 export const getCountryAwareUrl = (path) => {
-  // Get current country from URL path
-  const pathname = window.location.pathname;
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '/se';
   const segments = pathname.split('/').filter(Boolean);
-  const countryCode = segments[0] || 'se'; // Default to 'se' if no country in path
+  const countryCode = segments[0] || 'se';
   
-  // Remove leading slash if present
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
   
-  // Return URL with country code
   return `/${countryCode}${cleanPath ? `/${cleanPath}` : ''}`;
 };
+
+
+/**
+ * DYNAMIC SEO TITLE GENERATOR
+ * Generates a descriptive title from the product object.
+ */
+export const getProductSeoTitle = (product) => {
+  if (!product) return 'B8Shield - Professionellt Vasskydd';
+  const name = safeGetContent(product.name);
+  const size = product.size ? ` - ${product.size}` : '';
+  return `${name}${size} | B8Shield Vasskydd`;
+};
+
+/**
+ * DYNAMIC SEO DESCRIPTION GENERATOR
+ * Generates a descriptive meta description from the product object.
+ */
+export const getProductSeoDescription = (product) => {
+  if (!product) return 'B8Shield är det ultimata vasskyddet för sportfiskare. Skydda dina fiskedrag och fånga mer fisk. Finns i flera färger och storlekar.';
+  
+  const name = safeGetContent(product.name);
+  const description = safeGetContent(product.descriptions?.b2c) || `Köp ${name}. Skyddar dina fiskedrag från att fastna i vass och annan undervattensvegetation. Perfekt för svenska förhållanden.`;
+  
+  // Truncate to a reasonable length for meta descriptions
+  return description.length > 160 ? description.substring(0, 157) + '...' : description;
+};
+
 
 /**
  * Generates an affiliate link with the correct language parameter based on affiliate's preferred language
@@ -116,8 +117,6 @@ export const getCountryAwareUrl = (path) => {
  * @returns {string} The complete affiliate link
  */
 export const generateAffiliateLink = (affiliateCode, preferredLang, productPath = '') => {
-  // Convert DB language code to URL segment by taking everything after - and converting to lowercase
-  // Default to 'se' if no valid language code is found
   const urlLang = preferredLang?.split('-')[1]?.toLowerCase() || 'se';
   
   const baseUrl = 'https://shop.b8shield.com';

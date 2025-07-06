@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getProductImage } from '../../utils/productImages';
-import { slugToProductMap, getProductSeoTitle, getProductSeoDescription, getCountryAwareUrl } from '../../utils/productUrls';
+import { 
+  getSkuFromSlug, 
+  getProductUrl, 
+  getProductSeoTitle, 
+  getProductSeoDescription, 
+  getCountryAwareUrl 
+} from '../../utils/productUrls';
 import toast from 'react-hot-toast';
 import { generateProductSchema } from '../../utils/productFeed';
 import { useCart } from '../../contexts/CartContext';
@@ -16,143 +22,63 @@ import SizeGuideModal from '../../components/SizeGuideModal';
 import ReviewsSection from '../../components/ReviewsSection';
 import { getReviewStats } from '../../utils/trustpilotAPI';
 import SeoHreflang from '../../components/shop/SeoHreflang';
+import { Helmet } from 'react-helmet';
 
 const PublicProductPage = () => {
   const { slug } = useParams();
-  const [searchParams] = useSearchParams();
-  const colorParam = searchParams.get('color');
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { getContentValue } = useContentTranslation();
   
   const [product, setProduct] = useState(null);
   const [variants, setVariants] = useState([]);
-  const [selectedVariant, setSelectedVariant] = useState(null);
-  const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [groupContent, setGroupContent] = useState(null);
   const [groupContentLoading, setGroupContentLoading] = useState(false);
   const [sizeGuideModalOpen, setSizeGuideModalOpen] = useState(false);
-  const [reviewCount, setReviewCount] = useState(16); // Default fallback
-  const { addToCart, cart } = useCart();
-
-  // Calculate total items in cart
-  const cartItemCount = cart.items.reduce((total, item) => total + item.quantity, 0);
+  const [reviewCount, setReviewCount] = useState(16);
+  const { addToCart } = useCart();
 
   useEffect(() => {
     if (slug) {
-      loadProduct();
+      loadProductAndVariants();
     }
   }, [slug]);
 
-  // Load review count
-  useEffect(() => {
-    const loadReviewCount = async () => {
-      try {
-        const stats = await getReviewStats();
-        setReviewCount(stats.totalReviews);
-      } catch (error) {
-        console.error('Error loading review count:', error);
-        // Keep default fallback value of 16
-      }
-    };
-
-    loadReviewCount();
-  }, []);
-
-  const loadGroupContent = async (groupId) => {
-    if (!groupId) return;
-    
-    try {
-      setGroupContentLoading(true);
-      const content = await getProductGroupContent(groupId);
-      setGroupContent(content);
-    } catch (error) {
-      console.error('Error loading group content:', error);
-      // Don't show error toast as this is optional content
-    } finally {
-      setGroupContentLoading(false);
-    }
-  };
-
-  const loadProduct = async () => {
+  const loadProductAndVariants = async () => {
     try {
       setLoading(true);
       
-      // Convert slug to product color/type
-      const productColor = slugToProductMap[slug];
-      if (!productColor) {
+      const sku = getSkuFromSlug(slug);
+      if (!sku) {
         toast.error(t('product_not_found', 'Produkten hittades inte'));
+        navigate(getCountryAwareUrl(''));
         return;
       }
       
-      // Find products matching the slug
-      let productsQuery;
-      if (slug === '3pack') {
-        // For 3-pack, find multipack products by checking if name contains "3-pack"
-        productsQuery = query(
-          collection(db, 'products'),
-          where('isActive', '==', true),
-          where('availability.b2c', '==', true)
-        );
-      } else {
-        // For individual products, find by color
-        productsQuery = query(
-          collection(db, 'products'),
-          where('isActive', '==', true),
-          where('availability.b2c', '==', true),
-          where('color', '==', productColor)
-        );
-      }
-      
-      const productsSnapshot = await getDocs(productsQuery);
-      
-      let filteredProducts = [];
-      productsSnapshot.forEach((doc) => {
-        const productData = { id: doc.id, ...doc.data() };
-        
-        if (slug === '3pack') {
-          const productName = getContentValue(productData.name);
-          // For 3-pack, filter products that contain "3-pack" in the name
-          if (productName && productName.includes('3-pack')) {
-            filteredProducts.push(productData);
-          }
-        } else {
-          // For individual products, all products match the color query
-          filteredProducts.push(productData);
-        }
-      });
-      
-      if (filteredProducts.length === 0) {
+      const productsRef = collection(db, 'products');
+      const q = query(productsRef, where('sku', '==', sku), where('isActive', '==', true), where('availability.b2c', '==', true));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
         toast.error(t('product_not_found', 'Produkten hittades inte'));
+        navigate(getCountryAwareUrl(''));
         return;
       }
-      
-      // Get the first product as the main product
-      const mainProduct = filteredProducts[0];
+
+      const mainProduct = { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() };
       setProduct(mainProduct);
-      
+
       // Load group content if product has a group
       if (mainProduct.group) {
         loadGroupContent(mainProduct.group);
       }
       
-      // Use the group field to find all variants in the same group
+      // Load all other variants in the same group for the selection UI
       const productGroup = mainProduct.group;
-      if (!productGroup) {
-        // If no group, just show this single product
-        setVariants([mainProduct]);
-        setSelectedVariant(mainProduct);
-        setSelectedSize(mainProduct.id);
-        return;
-      }
-      
-      // Check if this is a multipack product
-      const isMultipack = productGroup.includes('multipack') || productGroup.includes('3-pack');
-      
-      if (isMultipack) {
-        // For multipacks: load all products in the same group (different colors)
+      if (productGroup) {
         const variantsQuery = query(
           collection(db, 'products'),
           where('isActive', '==', true),
@@ -161,59 +87,21 @@ const PublicProductPage = () => {
         );
         
         const variantsSnapshot = await getDocs(variantsQuery);
-        const groupVariants = [];
-        
-        variantsSnapshot.forEach((doc) => {
-          const data = { id: doc.id, ...doc.data() };
-          groupVariants.push(data);
-        });
-        
-        // Sort by color for multipacks
-        groupVariants.sort((a, b) => {
-          const colorOrder = ['Transparent', 'Röd', 'Fluorescerande', 'Glitter'];
-          const aIndex = colorOrder.indexOf(a.color || 'Standard');
-          const bIndex = colorOrder.indexOf(b.color || 'Standard');
-          return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
-        });
-        
-        setVariants(groupVariants);
-        
-        // The mainProduct is the specific variant the user landed on.
-        // It should be the default selection.
-        setSelectedVariant(mainProduct);
-        setSelectedSize(mainProduct.id);
-      } else {
-        // For individual products: load all products in the same group with the same color
-        const variantsQuery = query(
-          collection(db, 'products'),
-          where('isActive', '==', true),
-          where('availability.b2c', '==', true),
-          where('group', '==', productGroup),
-          where('color', '==', mainProduct.color)
-        );
-        
-        const variantsSnapshot = await getDocs(variantsQuery);
-        const groupVariants = [];
-        
-        variantsSnapshot.forEach((doc) => {
-          const data = { id: doc.id, ...doc.data() };
-          groupVariants.push(data);
-        });
-        
-        // Sort by size (convert size to number for proper sorting)
-        groupVariants.sort((a, b) => {
-          const aSize = parseInt(a.size) || 0;
-          const bSize = parseInt(b.size) || 0;
-          return aSize - bSize;
-        });
-        
-        setVariants(groupVariants);
-        
-        // Set the first variant as selected
-        if (groupVariants.length > 0) {
-          setSelectedVariant(groupVariants[0]);
-          setSelectedSize(groupVariants[0].id);
+        const groupVariants = variantsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Sort variants
+        const isMultipack = productGroup.includes('multipack') || productGroup.includes('3-pack');
+        if (isMultipack) {
+            groupVariants.sort((a, b) => {
+                const colorOrder = ['Transparent', 'Röd', 'Fluorescerande', 'Glitter'];
+                return colorOrder.indexOf(a.color) - colorOrder.indexOf(b.color);
+            });
+        } else {
+            groupVariants.sort((a, b) => (parseInt(a.size) || 0) - (parseInt(b.size) || 0));
         }
+        setVariants(groupVariants);
+      } else {
+        setVariants([mainProduct]);
       }
       
     } catch (error) {
@@ -224,83 +112,49 @@ const PublicProductPage = () => {
     }
   };
 
-  const handleSizeChange = (variantId) => {
-    const variant = variants.find(v => v.id === variantId);
-    if (variant) {
-      setSelectedVariant(variant);
-      setSelectedSize(variantId);
+  const loadGroupContent = async (groupId) => {
+    if (!groupId) return;
+    try {
+      setGroupContentLoading(true);
+      const content = await getProductGroupContent(groupId);
+      setGroupContent(content);
+    } catch (error) {
+      console.error('Error loading group content:', error);
+    } finally {
+      setGroupContentLoading(false);
     }
   };
+
+  useEffect(() => {
+    const fetchReviewCount = async () => {
+      try {
+        const stats = await getReviewStats();
+        setReviewCount(stats.totalReviews);
+      } catch (error) {
+        console.error('Error loading review count:', error);
+      }
+    };
+    fetchReviewCount();
+  }, []);
 
   const handleAddToCart = () => {
-    if (!selectedVariant) {
-      toast.error(t('please_select_size', 'Vänligen välj en storlek'));
-      return;
-    }
-    
-    addToCart(selectedVariant, quantity);
+    if (!product) return;
+    addToCart(product, quantity);
     toast.success(t('product_added_to_cart_product_page', 'Produkt tillagd i varukorgen'));
   };
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('sv-SE', {
-      style: 'currency',
-      currency: 'SEK'
-    }).format(price);
+  
+  // SEO and rendering helpers
+  const getB2cDescription = (p) => getContentValue(p?.descriptions?.b2c) || '';
+  const getProductColor = (p) => p?.color || 'Standard';
+  const getProductImages = (p) => {
+      if (!p) return [];
+      const images = [];
+      if (p.b2cImageUrl) images.push(p.b2cImageUrl);
+      if (p.b2cImageGallery?.length) images.push(...p.b2cImageGallery);
+      if (images.length === 0) images.push(getProductImage(p));
+      return images;
   };
-
-  const getProductImages = (product) => {
-    const images = [];
-    
-    // Add B2C images first
-    if (product.b2cImageUrl) {
-      images.push(product.b2cImageUrl);
-    }
-    
-    if (product.b2cImageGallery && product.b2cImageGallery.length > 0) {
-      images.push(...product.b2cImageGallery);
-    }
-    
-    // Fallback to generated image if no B2C images
-    if (images.length === 0) {
-      images.push(getProductImage(product));
-    }
-    
-    return images;
-  };
-
-  const getB2cDescription = (product) => {
-    // Use the useContentTranslation hook to safely get the description
-    return getContentValue(product.descriptions?.b2c) || '';
-  };
-
-  const getProductColor = (product) => {
-    return product.color || 'Standard';
-  };
-
-  // Helper function to get group content value with multilingual support
-  const getGroupContentValue = (contentField) => {
-    if (!groupContent || !contentField) return '';
-    
-    const content = groupContent[contentField];
-    if (!content) return '';
-    
-    // Use the useContentTranslation hook to safely get the content value
-    const translatedContent = getContentValue(content);
-    
-    // Additional safety check: ensure we always return a string
-    if (typeof translatedContent === 'string') {
-      return translatedContent;
-    } else if (typeof translatedContent === 'object' && translatedContent !== null) {
-      // If it's still an object, try to extract the current language
-      const currentLang = currentLanguage || 'sv-SE';
-      return translatedContent[currentLang] || translatedContent['sv-SE'] || translatedContent['en-GB'] || translatedContent['en-US'] || '';
-    } else {
-      // Final fallback: convert to string
-      return String(translatedContent || '');
-    }
-  };
-
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
@@ -325,26 +179,20 @@ const PublicProductPage = () => {
     );
   }
 
-  const currentProduct = selectedVariant || product;
-  const productImages = getProductImages(currentProduct);
-  const productColor = getProductColor(currentProduct);
-  
-  // Check if this is a multipack product
+  const productImages = getProductImages(product);
   const isMultipack = product?.group?.includes('multipack') || product?.group?.includes('3-pack');
 
   return (
     <>
+      <Helmet>
+        <title>{getProductSeoTitle(product)}</title>
+        <meta name="description" content={getProductSeoDescription(product)} />
+        <script type="application/ld+json">{JSON.stringify(generateProductSchema(product))}</script>
+      </Helmet>
       <SeoHreflang />
-      {/* Schema.org structured data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(generateProductSchema(currentProduct))
-        }}
-      />
       
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <ShopNavigation breadcrumb={getContentValue(currentProduct?.name) || t('product_loading', 'Laddar produkt...')} />
+        <ShopNavigation breadcrumb={getContentValue(product?.name)} />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col lg:flex-row gap-16">
@@ -366,7 +214,7 @@ const PublicProductPage = () => {
                       >
                         <img
                           src={image}
-                          alt={`${getContentValue(currentProduct.name)} ${index + 1}`}
+                          alt={`${getContentValue(product.name)} ${index + 1}`}
                           className="w-full h-full object-cover"
                         />
                       </button>
@@ -379,7 +227,7 @@ const PublicProductPage = () => {
                   <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden">
                     <img
                       src={productImages[activeImageIndex]}
-                      alt={getContentValue(currentProduct.name)}
+                      alt={getContentValue(product.name)}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -392,15 +240,18 @@ const PublicProductPage = () => {
               {/* Product Title */}
               <div>
                 <h1 className="text-3xl font-medium text-gray-900 mb-2">
-                  {getContentValue(currentProduct.name)}
+                  {getContentValue(product.name)}
                 </h1>
                 <p className="text-lg text-gray-600 mb-4">
-                  {getB2cDescription(currentProduct) || `B8Shield ${productColor} - ${currentProduct.size || 'Standard'}`}
+                  {getB2cDescription(product) || `B8Shield ${getProductColor(product)} - ${product.size || 'Standard'}`}
                 </p>
 
               {/* Price */}
                 <div className="text-2xl font-medium text-gray-900 mb-6">
-                  {formatPrice(currentProduct.b2cPrice || currentProduct.basePrice)}
+                  {new Intl.NumberFormat('sv-SE', {
+                    style: 'currency',
+                    currency: 'SEK'
+                  }).format(product.b2cPrice || product.basePrice)}
                 </div>
               </div>
 
@@ -411,10 +262,7 @@ const PublicProductPage = () => {
                     {isMultipack ? t('select_color', 'Välj färg') : t('select_size', 'Välj storlek')}
                   </h3>
                   {!isMultipack && (
-                    <button 
-                      onClick={() => setSizeGuideModalOpen(true)}
-                      className="text-sm text-gray-500 hover:text-gray-700 underline"
-                    >
+                    <button onClick={() => setSizeGuideModalOpen(true)} className="text-sm text-gray-500 hover:text-gray-700 underline">
                       {t('size_guide_link', 'Storleksguide')}
                     </button>
                   )}
@@ -422,11 +270,11 @@ const PublicProductPage = () => {
                 
                 <div className="grid grid-cols-3 gap-2">
                   {variants.map((variant) => (
-                    <button
+                    <Link
                       key={variant.id}
-                      onClick={() => handleSizeChange(variant.id)}
+                      to={getProductUrl(variant)}
                       className={`py-4 px-4 text-center border rounded-md transition-all ${
-                        selectedSize === variant.id
+                        product.id === variant.id
                           ? 'border-black bg-black text-white'
                           : 'border-gray-300 hover:border-gray-400'
                       }`}
@@ -434,17 +282,16 @@ const PublicProductPage = () => {
                       <div className="text-sm font-medium">
                         {isMultipack ? (variant.color || 'Standard') : (variant.size || 'Standard')}
                       </div>
-                    </button>
+                    </Link>
                   ))}
                 </div>
-                </div>
+              </div>
                 
               {/* Add to Cart */}
               <div className="space-y-4">
                 <button
                   onClick={handleAddToCart}
-                  disabled={!selectedSize}
-                  className="w-full bg-black text-white py-4 px-8 rounded-full text-base font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-black text-white py-4 px-8 rounded-full text-base font-medium hover:bg-gray-800 transition-colors"
                 >
                   {t('add_to_shopping_bag', 'Lägg i shoppingbagen')}
                 </button>
@@ -471,14 +318,14 @@ const PublicProductPage = () => {
                 </h2>
                 <div className="prose prose-sm max-w-none text-gray-600">
                   <p>
-                    {getB2cDescription(currentProduct) || 
-                     t('product_detailed_description', 'B8Shield {{color}} i storlek {{size}} ger dig det ultimata skyddet för dina fiskedrag. Denna högkvalitativa produkt är utvecklad för att hålla i många år av intensivt fiske, oavsett väderförhållanden. Perfekt för både nybörjare och erfarna fiskare som vill skydda sina värdefulla fiskedrag från skador.', { color: productColor, size: currentProduct.size || 'Standard' })}
+                    {getB2cDescription(product) || 
+                     t('product_detailed_description', 'B8Shield {{color}} i storlek {{size}} ger dig det ultimata skyddet för dina fiskedrag. Denna högkvalitativa produkt är utvecklad för att hålla i många år av intensivt fiske, oavsett väderförhållanden. Perfekt för både nybörjare och erfarna fiskare som vill skydda sina värdefulla fiskedrag från skador.', { color: getProductColor(product), size: product.size || 'Standard' })}
                   </p>
                   
                   <ul className="mt-4 space-y-2">
-                    <li>• {t('product_color_shown', 'Färg som visas: {{color}}', { color: productColor })}</li>
-                    <li>• {t('product_size_spec', 'Storlek: {{size}}', { size: currentProduct.size || 'Standard' })}</li>
-                    <li>• {t('product_style_spec', 'Stil: {{sku}}', { sku: currentProduct.sku || 'B8S-001' })}</li>
+                    <li>• {t('product_color_shown', 'Färg som visas: {{color}}', { color: getProductColor(product) })}</li>
+                    <li>• {t('product_size_spec', 'Storlek: {{size}}', { size: product.size || 'Standard' })}</li>
+                    <li>• {t('product_style_spec', 'Stil: {{sku}}', { sku: product.sku || 'B8S-001' })}</li>
                   </ul>
                 </div>
               </div>
@@ -501,10 +348,10 @@ const PublicProductPage = () => {
                         {t('loading_group_content', 'Laddar information...')}
                       </p>
                     ) : (
-                      getGroupContentValue('sizeAndFit') ? (
+                      groupContent?.sizeAndFit ? (
                         <div 
                           className="prose prose-sm max-w-none"
-                          dangerouslySetInnerHTML={{ __html: getGroupContentValue('sizeAndFit') }}
+                          dangerouslySetInnerHTML={{ __html: groupContent.sizeAndFit }}
                         />
                       ) : (
                         <div className="space-y-3">
@@ -540,10 +387,10 @@ const PublicProductPage = () => {
                         {t('loading_group_content', 'Laddar information...')}
                       </p>
                     ) : (
-                      getGroupContentValue('shippingReturns') ? (
+                      groupContent?.shippingReturns ? (
                         <div 
                           className="prose prose-sm max-w-none"
-                          dangerouslySetInnerHTML={{ __html: getGroupContentValue('shippingReturns') }}
+                          dangerouslySetInnerHTML={{ __html: groupContent.shippingReturns }}
                         />
                       ) : (
                         <div className="space-y-3">
@@ -581,10 +428,10 @@ const PublicProductPage = () => {
                         {t('loading_group_content', 'Laddar information...')}
                       </p>
                     ) : (
-                      getGroupContentValue('howItsMade') ? (
+                      groupContent?.howItsMade ? (
                         <div 
                           className="prose prose-sm max-w-none"
-                          dangerouslySetInnerHTML={{ __html: getGroupContentValue('howItsMade') }}
+                          dangerouslySetInnerHTML={{ __html: groupContent.howItsMade }}
                         />
                       ) : (
                         <div className="space-y-3">
@@ -626,7 +473,7 @@ const PublicProductPage = () => {
                 </details>
 
                 {/* Additional Product Info */}
-              {currentProduct.descriptions?.b2cMoreInfo && (
+                {product.descriptions?.b2cMoreInfo && (
                   <details className="group">
                     <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 px-4 -mx-4 rounded-lg">
                       <span className="text-base font-medium text-gray-900">{t('more_product_information', 'Mer produktinformation')}</span>
@@ -637,12 +484,12 @@ const PublicProductPage = () => {
                     <div className="pb-4 px-4 -mx-4 text-sm text-gray-600">
                       <div 
                         className="prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: currentProduct.descriptions.b2cMoreInfo }}
+                      dangerouslySetInnerHTML={{ __html: product.descriptions.b2cMoreInfo }}
                     />
                   </div>
                   </details>
                 )}
-                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -655,8 +502,8 @@ const PublicProductPage = () => {
       <SizeGuideModal 
         isOpen={sizeGuideModalOpen}
         onClose={() => setSizeGuideModalOpen(false)}
-        sizeGuideContent={getGroupContentValue('sizeGuide')}
-        productName={getContentValue(currentProduct.name)}
+        sizeGuideContent={groupContent?.sizeGuide ? getContentValue(groupContent.sizeGuide) : ''}
+        productName={getContentValue(product?.name)}
       />
     </>
   );
