@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getProductImage } from '../../utils/productImages';
 import { 
@@ -40,6 +40,7 @@ const PublicProductPage = () => {
   const [sizeGuideModalOpen, setSizeGuideModalOpen] = useState(false);
   const [reviewCount, setReviewCount] = useState(16);
   const { addToCart } = useCart();
+  const [redirected, setRedirected] = useState(false);
 
   useEffect(() => {
     if (slug) {
@@ -155,6 +156,34 @@ const PublicProductPage = () => {
       return images;
   };
   
+  useEffect(() => {
+    // After group content and product are loaded, redirect if needed
+    if (!redirected && groupContent?.defaultProductId && product && product.id !== groupContent.defaultProductId) {
+      const preferredId = groupContent.defaultProductId;
+      const preferredVariant = variants.find(v => v.id === preferredId);
+      const handleRedirect = async () => {
+        let preferredProductData = preferredVariant;
+        if (!preferredProductData) {
+          // Fetch from Firestore if not in variants yet
+          try {
+            const docSnap = await getDoc(doc(db, 'products', preferredId));
+            if (docSnap.exists()) {
+              preferredProductData = { id: docSnap.id, ...docSnap.data() };
+            }
+          } catch (err) {
+            console.error('Failed to fetch preferred product variant', err);
+          }
+        }
+        if (preferredProductData) {
+          const url = getProductUrl(preferredProductData);
+          setRedirected(true);
+          navigate(url, { replace: true });
+        }
+      };
+      handleRedirect();
+    }
+  }, [groupContent, product, variants, redirected, navigate]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
