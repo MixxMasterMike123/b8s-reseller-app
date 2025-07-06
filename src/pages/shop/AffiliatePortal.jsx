@@ -226,14 +226,18 @@ const AffiliatePortal = () => {
   ];
 
   /* -------------------- Profile editing -------------------- */
-  const [profileForm, setProfileForm] = useState({ name: '', preferredLang: 'sv-SE', paymentMethod: 'bank', paymentDetails: '' });
+  const [profileForm, setProfileForm] = useState({ name: '', preferredLang: 'sv-SE', phone: '', address1: '', address2: '', city: '', postalCode: '', country: '' });
   useEffect(() => {
     if (affiliateData) {
       setProfileForm({
         name: affiliateData.name || '',
         preferredLang: affiliateData.preferredLang || 'sv-SE',
-        paymentMethod: affiliateData.paymentInfo?.method || 'bank',
-        paymentDetails: affiliateData.paymentInfo?.details || ''
+        phone: affiliateData.phone || '',
+        address1: affiliateData.address1 || '',
+        address2: affiliateData.address2 || '',
+        city: affiliateData.city || '',
+        postalCode: affiliateData.postalCode || '',
+        country: affiliateData.country || ''
       });
     }
   }, [affiliateData]);
@@ -250,14 +254,16 @@ const AffiliatePortal = () => {
       await updateDoc(docRef, {
         name: profileForm.name,
         preferredLang: profileForm.preferredLang,
-        paymentInfo: {
-          method: profileForm.paymentMethod,
-          details: profileForm.paymentDetails
-        },
+        phone: profileForm.phone,
+        address1: profileForm.address1,
+        address2: profileForm.address2,
+        city: profileForm.city,
+        postalCode: profileForm.postalCode,
+        country: profileForm.country,
         updatedAt: new Date()
       });
       toast.success(t('affiliate_profile_saved', 'Profil uppdaterad'));
-      setAffiliateData(prev => ({ ...prev, name: profileForm.name, preferredLang: profileForm.preferredLang, paymentInfo: { method: profileForm.paymentMethod, details: profileForm.paymentDetails } }));
+      setAffiliateData(prev => ({ ...prev, ...profileForm }));
     } catch (err) {
       console.error('Failed saving profile', err);
       toast.error(t('affiliate_profile_save_error', 'Kunde inte spara profilen'));
@@ -377,20 +383,40 @@ const AffiliatePortal = () => {
               </select>
             </div>
 
-            {/* Payment Method */}
+            {/* Phone */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_payment_method', 'Utbetalningsmetod')}</label>
-              <select name="paymentMethod" value={profileForm.paymentMethod} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2">
-                <option value="bank">Bankkonto</option>
-                <option value="swish">Swish</option>
-                <option value="paypal">PayPal</option>
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_phone', 'Telefonnummer')}</label>
+              <input name="phone" value={profileForm.phone} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2" />
             </div>
 
-            {/* Payment Details */}
+            {/* Address 1 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_payment_details', 'Betalningsdetaljer')}</label>
-              <textarea name="paymentDetails" rows="3" value={profileForm.paymentDetails} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_address1', 'Adressrad 1')}</label>
+              <input name="address1" value={profileForm.address1} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2" />
+            </div>
+
+            {/* Address 2 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_address2', 'Adressrad 2')}</label>
+              <input name="address2" value={profileForm.address2} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2" />
+            </div>
+
+            {/* City */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_city', 'Stad')}</label>
+              <input name="city" value={profileForm.city} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2" />
+            </div>
+
+            {/* Postal Code */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_postal', 'Postnummer')}</label>
+              <input name="postalCode" value={profileForm.postalCode} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2" />
+            </div>
+
+            {/* Country */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_country', 'Land')}</label>
+              <input name="country" value={profileForm.country} onChange={handleProfileChange} className="w-full border-gray-300 rounded-lg px-4 py-2" />
             </div>
 
             <button onClick={saveProfile} className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
