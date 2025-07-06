@@ -112,6 +112,17 @@ const ProductGroupTab = ({ productGroup, onContentChange, onGroupContentUpdate }
     }
   };
 
+  const handleDefaultProductSelect = (productId) => {
+    const updatedContent = {
+      ...groupContent,
+      defaultProductId: productId
+    };
+    setGroupContent(updatedContent);
+    if (onGroupContentUpdate) {
+      onGroupContentUpdate(updatedContent);
+    }
+  };
+
   const quillModules = {
     toolbar: [
       [{ 'header': [1, 2, 3, false] }],
@@ -272,11 +283,21 @@ const ProductGroupTab = ({ productGroup, onContentChange, onGroupContentUpdate }
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {productsInGroup.map((product) => (
-              <div key={product.id} className="bg-white rounded border px-3 py-2">
-                <p className="text-sm font-medium text-gray-900">{getContentValue(product.name)}</p>
-                <p className="text-xs text-gray-500">
-                  {product.color} • {product.size}
-                </p>
+              <div key={product.id} className="bg-white rounded border px-3 py-2 flex items-start gap-2">
+                <input
+                  type="radio"
+                  name="defaultProduct"
+                  className="mt-1 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  checked={groupContent.defaultProductId === product.id}
+                  onChange={() => handleDefaultProductSelect(product.id)}
+                  title={t('default_product_tooltip', 'Markera som standardprodukt')}
+                />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{getContentValue(product.name)}</p>
+                  <p className="text-xs text-gray-500">
+                    {product.color} • {product.size}
+                  </p>
+                </div>
               </div>
             ))}
           </div>

@@ -191,7 +191,8 @@ export const getDefaultGroupContent = () => ({
   sizeAndFit: '',
   shippingReturns: '',
   howItsMade: '',
-  groupName: ''
+  groupName: '',
+  defaultProductId: '' // preferred product for storefront default
 });
 
 /**
