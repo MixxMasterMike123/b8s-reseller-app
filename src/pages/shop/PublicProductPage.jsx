@@ -113,8 +113,9 @@ const PublicProductPage = () => {
         const productData = { id: doc.id, ...doc.data() };
         
         if (slug === '3pack') {
+          const productName = getContentValue(productData.name);
           // For 3-pack, filter products that contain "3-pack" in the name
-          if (productData.name && productData.name.includes('3-pack')) {
+          if (productName && productName.includes('3-pack')) {
             filteredProducts.push(productData);
           }
         } else {
