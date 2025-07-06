@@ -55,7 +55,7 @@ const CustomerLogin = ({ onLoginSuccess }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <ShopNavigation breadcrumb={t('breadcrumb_login', 'Logga in')} />
+      {!onLoginSuccess && <ShopNavigation breadcrumb={t('breadcrumb_login', 'Logga in')} />}
       
       <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex justify-end mb-4">

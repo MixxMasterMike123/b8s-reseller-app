@@ -93,4 +93,23 @@ export const getCountryAwareUrl = (path) => {
   
   // Return URL with country code
   return `/${countryCode}${cleanPath ? `/${cleanPath}` : ''}`;
+};
+
+/**
+ * Generates an affiliate link with the correct language parameter based on affiliate's preferred language
+ * @param {string} affiliateCode - The affiliate's unique code
+ * @param {string} preferredLang - The affiliate's preferred language from DB (e.g., 'en-GB', 'en-US')
+ * @param {string} [productPath] - Optional product path to append
+ * @returns {string} The complete affiliate link
+ */
+export const generateAffiliateLink = (affiliateCode, preferredLang, productPath = '') => {
+  // Convert DB language code to URL segment by taking everything after - and converting to lowercase
+  // Default to 'se' if no valid language code is found
+  const urlLang = preferredLang?.split('-')[1]?.toLowerCase() || 'se';
+  
+  const baseUrl = 'https://shop.b8shield.com';
+  const langPath = `/${urlLang}`;
+  const path = productPath ? `/${productPath}` : '';
+  
+  return `${baseUrl}${langPath}${path}?ref=${affiliateCode}`;
 }; 

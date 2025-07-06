@@ -20,6 +20,7 @@ import {
   BookOpenIcon,
   PresentationChartBarIcon
 } from '@heroicons/react/24/outline';
+import { generateAffiliateLink } from '../../utils/productUrls';
 
 const AffiliatePortal = () => {
   const { currentUser } = useSimpleAuth();
@@ -71,10 +72,8 @@ const AffiliatePortal = () => {
   ];
 
   // Generate affiliate link based on selection
-  const generateAffiliateLink = (productPath = '') => {
-    const baseUrl = 'https://shop.b8shield.com';
-    const path = productPath ? `/${productPath}` : '';
-    return `${baseUrl}${path}?ref=${affiliateData?.affiliateCode || ''}`;
+  const generateLink = (productPath = '') => {
+    return generateAffiliateLink(affiliateData?.affiliateCode, affiliateData?.preferredLang, productPath);
   };
 
   // Generate QR Code
@@ -93,7 +92,7 @@ const AffiliatePortal = () => {
   const handleGenerateLink = () => {
     const selectedGroup = productGroups.find(group => group.id === selectedProduct);
     const productPath = selectedGroup ? selectedGroup.path : '';
-    const link = generateAffiliateLink(productPath);
+    const link = generateLink(productPath);
     
     setGeneratedLink(link);
     
@@ -159,7 +158,7 @@ const AffiliatePortal = () => {
 
   useEffect(() => {
     if (affiliateData?.affiliateCode) {
-      const link = generateAffiliateLink();
+      const link = generateLink();
       setGeneratedLink(link);
       generateQRCode(link);
     }
@@ -231,21 +230,19 @@ const AffiliatePortal = () => {
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <ShopNavigation />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+        <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">{t('affiliate_portal_title', 'Affiliate Portal')}</h1>
-            <p className="text-gray-600 mb-8">{t('affiliate_portal_login_prompt', 'Vänligen logga in för att se din instrumentpanel.')}</p>
-            <div className="max-w-md mx-auto">
-                <CustomerLogin onLoginSuccess={() => fetchAffiliateData()} />
-            </div>
+            <p className="text-gray-600 mb-8">{t('affiliate_portal_login_prompt', 'Please log in to see your dashboard.')}</p>
+            <CustomerLogin onLoginSuccess={() => fetchAffiliateData()} />
             <p className="mt-8">
-                {t('affiliate_portal_not_affiliate', 'Inte en affiliate än?')}{' '}
-                <Link to="/affiliate-registration" className="font-medium text-blue-600 hover:text-blue-800">
-                    {t('affiliate_portal_apply_here', 'Ansök här!')}
-                </Link>
+              {t('affiliate_portal_not_affiliate', 'Not an affiliate yet?')}{' '}
+              <Link to="/affiliate-registration" className="font-medium text-blue-600 hover:text-blue-800">
+                {t('affiliate_portal_apply_here', 'Apply here!')}
+              </Link>
             </p>
+          </div>
         </div>
-        <ShopFooter />
       </div>
     );
   }
@@ -273,7 +270,7 @@ const AffiliatePortal = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">{t('affiliate_portal_welcome', 'Välkommen {{name}}!', { name: affiliateData.name })}</h1>
-          <p className="mt-2 text-gray-600">{t('affiliate_portal_dashboard', 'Din affiliate-instrumentpanel')}</p>
+          <p className="mt-2 text-gray-600">{t('affiliate_portal_dashboard_subtitle', 'Din affiliate-instrumentpanel')}</p>
         </header>
 
         <div className="flex flex-col md:flex-row gap-6">
