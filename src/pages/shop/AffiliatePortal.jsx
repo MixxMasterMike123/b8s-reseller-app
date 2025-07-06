@@ -248,7 +248,8 @@ const AffiliatePortal = () => {
     );
   }
 
-  const affiliateLink = `https://shop.b8shield.com/?ref=${affiliateData.affiliateCode}`;
+  // Use the same link generation function for the main UI
+  const affiliateLink = generateAffiliateLink();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
