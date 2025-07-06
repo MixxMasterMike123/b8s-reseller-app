@@ -14,8 +14,9 @@ const AffiliateTracker = () => {
       if (refCode) {
         console.log(`🔗 New affiliate code detected from URL: ${refCode}`);
         
-        // Check if there's an existing affiliate code
-        const existingAffiliateRef = localStorage.getItem('b8s_affiliate_ref');
+        // Read existing code from either storage
+        const existingAffiliateRef =
+          localStorage.getItem('b8s_affiliate_ref') || sessionStorage.getItem('b8s_affiliate_ref');
         let existingCode = null;
         
         if (existingAffiliateRef) {
@@ -48,11 +49,31 @@ const AffiliateTracker = () => {
           }
         }
         
+        // Determine if we have marketing/statistics consent from Cookiebot
+        const hasConsent =
+          window.Cookiebot?.consent?.marketing || window.Cookiebot?.consent?.statistics;
+
+        // Choose storage based on consent
+        const storage = hasConsent ? localStorage : sessionStorage;
+
         // Always store the new affiliate code (with "last ref wins" principle)
         const expiry = new Date().getTime() + 30 * 24 * 60 * 60 * 1000; // 30 days
         const affiliateInfo = { code: refCode.toUpperCase(), expiry: expiry };
-        localStorage.setItem('b8s_affiliate_ref', JSON.stringify(affiliateInfo));
-        console.log(`✅ Stored affiliate code: ${refCode.toUpperCase()}`);
+        storage.setItem('b8s_affiliate_ref', JSON.stringify(affiliateInfo));
+        console.log(`✅ Stored affiliate code (${hasConsent ? 'permanent' : 'session'}): ${refCode.toUpperCase()}`);
+
+        // If consent not yet given, migrate to localStorage when it is granted later
+        if (!hasConsent) {
+          const migrateOnConsent = () => {
+            if (window.Cookiebot?.consent?.marketing || window.Cookiebot?.consent?.statistics) {
+              localStorage.setItem('b8s_affiliate_ref', sessionStorage.getItem('b8s_affiliate_ref'));
+              sessionStorage.removeItem('b8s_affiliate_ref');
+              window.removeEventListener('CookieConsentDeclaration', migrateOnConsent);
+              console.log('🔄 Migrated affiliate ref to localStorage after consent');
+            }
+          };
+          window.addEventListener('CookieConsentDeclaration', migrateOnConsent);
+        }
 
         // Call a cloud function to log the click (fire and forget)
         try {
@@ -62,7 +83,7 @@ const AffiliateTracker = () => {
           // Store the click ID if returned
           if (result.data && result.data.clickId) {
             affiliateInfo.clickId = result.data.clickId;
-            localStorage.setItem('b8s_affiliate_ref', JSON.stringify(affiliateInfo));
+            storage.setItem('b8s_affiliate_ref', JSON.stringify(affiliateInfo));
             console.log(`📊 Click logged for affiliate code: ${refCode}, ID: ${result.data.clickId}`);
           } else {
             console.log(`📊 Click logged for affiliate code: ${refCode}`);
