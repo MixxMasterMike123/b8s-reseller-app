@@ -247,10 +247,19 @@ export const CartProvider = ({ children }) => {
       const newItems = [...prevCart.items];
 
       if (existingItemIndex > -1) {
-        // Update quantity if item exists
+        // Update quantity and refresh data if item exists
+        const existingItem = newItems[existingItemIndex];
         newItems[existingItemIndex] = {
-          ...newItems[existingItemIndex],
-          quantity: newItems[existingItemIndex].quantity + quantity
+          // Overwrite with fresh product data to prevent stale fields
+          id: product.id,
+          name: product.name,
+          price: product.b2cPrice || product.basePrice,
+          image: product.b2cImageUrl || product.imageUrl,
+          sku: product.sku,
+          color: product.color,
+          size: product.size,
+          // And update the quantity
+          quantity: existingItem.quantity + quantity
         };
       } else {
         // Add new item
