@@ -357,13 +357,13 @@ const AffiliatePortal = () => {
 
             {/* Email (read-only) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_email', 'Email')}</label>
               <input type="email" value={affiliateData?.email || ''} disabled className="w-full bg-gray-100 border-gray-300 rounded-lg px-4 py-2" />
             </div>
 
             {/* Affiliate Code (read-only) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Affiliate-kod</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_code', 'Affiliate-kod')}</label>
               <input type="text" value={affiliateData?.affiliateCode || ''} disabled className="w-full bg-gray-100 border-gray-300 rounded-lg px-4 py-2" />
             </div>
 
@@ -377,9 +377,9 @@ const AffiliatePortal = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_language', 'Föredraget språk')}</label>
               <select name="preferredLang" value={profileForm.preferredLang} onChange={handleProfileChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50">
-                <option value="sv-SE">Svenska</option>
-                <option value="en-GB">English (UK)</option>
-                <option value="en-US">English (US)</option>
+                <option value="sv-SE">{t('lang_swedish', 'Svenska')}</option>
+                <option value="en-GB">{t('lang_english_uk', 'English (UK)')}</option>
+                <option value="en-US">{t('lang_english_us', 'English (US)')}</option>
               </select>
             </div>
 
