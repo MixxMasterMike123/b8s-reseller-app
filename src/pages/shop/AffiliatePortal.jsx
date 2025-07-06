@@ -93,16 +93,16 @@ const AffiliatePortal = () => {
   const handleGenerateLink = () => {
     const selectedGroup = productGroups.find(group => group.id === selectedProduct);
     const productPath = selectedGroup ? selectedGroup.path : '';
-    const link = generateLink(productPath);
+    const newLink = generateLink(productPath);
     
-    setGeneratedLink(link);
-    
-    if (linkType === 'qr') {
-      generateQRCode(link);
-    } else {
-      setQrCodeDataUrl('');
-    }
+    setGeneratedLink(newLink);
   };
+
+  useEffect(() => {
+    if (generatedLink) {
+      generateQRCode(generatedLink);
+    }
+  }, [generatedLink]);
 
   // Copy link to clipboard
   const copyToClipboard = async (text) => {
@@ -161,7 +161,6 @@ const AffiliatePortal = () => {
     if (affiliateData?.affiliateCode) {
       const link = generateLink();
       setGeneratedLink(link);
-      generateQRCode(link);
     }
   }, [affiliateData]);
 
