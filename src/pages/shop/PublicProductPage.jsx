@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getProductImage } from '../../utils/productImages';
@@ -27,6 +27,7 @@ import { Helmet } from 'react-helmet';
 const PublicProductPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const { getContentValue } = useContentTranslation();
   
@@ -158,7 +159,7 @@ const PublicProductPage = () => {
   
   useEffect(() => {
     // After group content and product are loaded, redirect if needed
-    if (!redirected && groupContent?.defaultProductId && product && product.id !== groupContent.defaultProductId) {
+    if (!redirected && !location.state?.skipPreferredRedirect && groupContent?.defaultProductId && product && product.id !== groupContent.defaultProductId) {
       const preferredId = groupContent.defaultProductId;
       const preferredVariant = variants.find(v => v.id === preferredId);
       const handleRedirect = async () => {
@@ -182,7 +183,7 @@ const PublicProductPage = () => {
       };
       handleRedirect();
     }
-  }, [groupContent, product, variants, redirected, navigate]);
+  }, [groupContent, product, variants, redirected, navigate, location.state]);
 
   if (loading) {
     return (
@@ -302,6 +303,7 @@ const PublicProductPage = () => {
                     <Link
                       key={variant.id}
                       to={getProductUrl(variant)}
+                      state={{ skipPreferredRedirect: true }}
                       className={`py-4 px-4 text-center border rounded-md transition-all ${
                         product.id === variant.id
                           ? 'border-black bg-black text-white'
