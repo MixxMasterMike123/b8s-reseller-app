@@ -80,6 +80,18 @@ const ShopNavigation = ({ breadcrumb }) => {
           </Link>
           <div className="flex items-center ml-4 space-x-4">
             <CountrySwitcher />
+            {affiliateData && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600">{affiliateData.name}</span>
+                <button
+                  onClick={handleAffiliateLogout}
+                  className="p-1 text-gray-500 hover:text-red-600 transition-colors"
+                  title={t('nav_logout', 'Logga ut')}
+                >
+                  <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
