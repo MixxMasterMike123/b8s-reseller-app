@@ -9,6 +9,7 @@ const templates = {
   orderDelivered: require('./orderDelivered'),
   orderCancelled: require('./orderCancelled'),
   orderConfirmed: require('./orderConfirmed'),
+  welcomeCredentials: require('./welcomeCredentials'),
   // future templates will be added here
 };
 
