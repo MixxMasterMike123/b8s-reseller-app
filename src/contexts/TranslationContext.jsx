@@ -6,6 +6,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { db } from '../firebase/config';
 import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
+import LoaderOverlay from '../components/LoaderOverlay';
 
 const TranslationContext = createContext();
 
@@ -153,14 +154,10 @@ export const TranslationProvider = ({ children }) => {
     isLanguageSupported
   };
 
-  if (loading) {
-    // Optionally render a minimal loading indicator
-    return null; // or <div className="w-full h-screen" />
-  }
-
   return (
     <TranslationContext.Provider value={value}>
       {children}
+      <LoaderOverlay isVisible={loading} />
     </TranslationContext.Provider>
   );
 };
