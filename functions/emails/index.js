@@ -8,6 +8,7 @@ const templates = {
   orderProcessing: require('./orderProcessing'),
   orderDelivered: require('./orderDelivered'),
   orderCancelled: require('./orderCancelled'),
+  orderConfirmed: require('./orderConfirmed'),
   // future templates will be added here
 };
 

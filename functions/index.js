@@ -68,7 +68,8 @@ const getEmailTemplate = (status, orderData, userData) => {
     processing: 'orderProcessing',
     shipped: 'orderShipped',
     delivered: 'orderDelivered',
-    cancelled: 'orderCancelled'
+    cancelled: 'orderCancelled',
+    confirmed: 'orderConfirmed'
   };
 
   const type = statusMap[status] || 'orderProcessing';
