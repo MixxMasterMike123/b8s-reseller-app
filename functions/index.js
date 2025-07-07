@@ -52,12 +52,19 @@ admin.initializeApp();
 const db = getFirestore('b8s-reseller-db');
 db.settings({ ignoreUndefinedProperties: true });
 
-// Create transporter for sending emails using Gmail SMTP
+// Read SMTP credentials from Firebase Functions runtime config (set via
+//   firebase functions:config:set smtp.host="send.one.com" smtp.port="587" smtp.user="info@jphinnovation.se" smtp.pass="YOUR_SMTP_PASSWORD"
+// )
+const functionsConfig = functions.config();
+const smtpCfg = functionsConfig.smtp || {};
+
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: smtpCfg.host || 'send.one.com',
+  port: Number(smtpCfg.port) || 587,
+  secure: false, // STARTTLS will be used automatically
   auth: {
-    user: "b8shield.reseller@gmail.com",
-    pass: "lgpz rkhx isnt fqcg",
+    user: smtpCfg.user || 'info@jphinnovation.se',
+    pass: smtpCfg.pass || '', // empty string prevents crash if not set; will throw on first send
   },
 });
 
@@ -1643,7 +1650,7 @@ exports.sendStatusUpdateHttp = functions.https.onRequest(async (req, res) => {
     
     // Customer status update email
     const customerEmail = {
-      from: afterData.source === 'b2c' ? EMAIL_FROM.b2c : EMAIL_FROM.b2b,
+      from: orderData.source === 'b2c' ? EMAIL_FROM.b2c : EMAIL_FROM.b2b,
       to: userData.email,
       subject: template.subject,
       text: template.text,
