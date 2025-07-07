@@ -53,8 +53,8 @@ const ShopNavigation = ({ breadcrumb }) => {
     <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link to={getCountryAwareUrl('')} className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            B8Shield™
+          <Link to={getCountryAwareUrl('')} className="flex items-center">
+            <img src="/images/B8S_full_logo.svg" alt="B8Shield" className="h-8 w-auto" />
           </Link>
           
           {/* Breadcrumb */}
