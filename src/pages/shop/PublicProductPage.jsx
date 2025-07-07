@@ -218,6 +218,15 @@ const PublicProductPage = () => {
       <Helmet>
         <title>{getProductSeoTitle(product)}</title>
         <meta name="description" content={getProductSeoDescription(product)} />
+        <meta property="og:type" content="product" />
+        <meta property="og:title" content={getProductSeoTitle(product)} />
+        <meta property="og:description" content={getProductSeoDescription(product)} />
+        <meta property="og:image" content={productImages[0]} />
+        <meta property="og:url" content={window.location.href} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={getProductSeoTitle(product)} />
+        <meta name="twitter:description" content={getProductSeoDescription(product)} />
+        <meta name="twitter:image" content={productImages[0]} />
         <script type="application/ld+json">{JSON.stringify(generateProductSchema(product))}</script>
       </Helmet>
       <SeoHreflang />
