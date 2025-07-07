@@ -42,18 +42,6 @@ const SocialShare = ({ url, title, image }) => {
     const platform = platforms[platformKey];
     if (!platform) return;
 
-    // Try Web Share API first for all keys
-    if (navigator.share) {
-      navigator
-        .share({
-          title: title,
-          text: title,
-          url,
-        })
-        .catch(() => {});
-      return;
-    }
-
     if (platform.getShareUrl) {
       const shareUrl = platform.getShareUrl(url, { title, image });
       window.open(shareUrl, '_blank', 'noopener,noreferrer');
