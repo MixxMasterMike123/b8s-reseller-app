@@ -452,23 +452,7 @@ exports.sendOrderConfirmationEmails = functions.firestore
 
       let customerEmail;
       let customerName;
-      let adminEmailDetails = {
-        subject: `New B2C Order Received: ${orderData.orderNumber}`,
-        body: `
-          <div style="font-family: Arial, sans-serif;">
-            <h2>New B2C Guest Order Received</h2>
-            <p><strong>Order Number:</strong> ${orderData.orderNumber}</p>
-            <p><strong>Customer:</strong> ${orderData.customerInfo.firstName} ${orderData.customerInfo.lastName}</p>
-            <p><strong>Email:</strong> ${orderData.customerInfo.email}</p>
-            <h3>Order Details:</h3>
-            <ul>
-              ${orderData.items.map(item => `<li>${item.name} - ${item.quantity} pcs @ ${item.price} SEK</li>`).join('')}
-            </ul>
-            <p><strong>Total Amount:</strong> ${orderData.total} SEK</p>
-            ${orderData.affiliateCode ? `<p><strong>Affiliate Code:</strong> ${orderData.affiliateCode}</p>` : ''}
-          </div>
-        `
-      };
+      const adminTemplate = getEmail('adminB2COrderNotification', 'sv-SE', { orderData });
 
       // Handle B2C (guest or simple auth user) vs B2B (full auth user)
       if (orderData.source === 'b2c') {
@@ -477,8 +461,8 @@ exports.sendOrderConfirmationEmails = functions.firestore
         
         // If a B2C user is logged in, add that to the admin email
         if(orderData.userId) {
-           adminEmailDetails.subject = `New B2C Order (Logged-in User): ${orderData.orderNumber}`;
-           adminEmailDetails.body += `<p><strong>User ID:</strong> ${orderData.userId}</p>`;
+           adminTemplate.subject = `New B2C Order (Logged-in User): ${orderData.orderNumber}`;
+           adminTemplate.html += `<p><strong>User ID:</strong> ${orderData.userId}</p>`;
         }
       
       } else { // Legacy or B2B order
@@ -496,8 +480,8 @@ exports.sendOrderConfirmationEmails = functions.firestore
           customerEmail = userData.email;
           customerName = userData.contactPerson || userData.companyName;
           
-          adminEmailDetails.subject = `New B2B Order Received: ${orderData.orderNumber}`;
-          adminEmailDetails.body = `
+          adminTemplate.subject = `New B2B Order Received: ${orderData.orderNumber}`;
+          adminTemplate.html = `
             <div style="font-family: Arial, sans-serif;">
               <h2>New B2B Order Received</h2>
               <p><strong>Order Number:</strong> ${orderData.orderNumber}</p>
@@ -551,8 +535,8 @@ exports.sendOrderConfirmationEmails = functions.firestore
       const adminMailOptions = {
         from: '"B8Shield" <b8shield.reseller@gmail.com>',
         to: "b8shield.reseller@gmail.com", // Admin's email address
-        subject: adminEmailDetails.subject,
-        html: adminEmailDetails.body,
+        subject: adminTemplate.subject,
+        html: adminTemplate.html,
       };
       
       await transporter.sendMail(adminMailOptions);
