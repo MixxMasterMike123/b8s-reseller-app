@@ -53,7 +53,7 @@ export const TranslationProvider = ({ children }) => {
   console.log(`🌍 MAIN APP: Component initializing with language: ${initialLanguage}`);
   const [currentLanguage, setCurrentLanguage] = useState(initialLanguage);
   const [translations, setTranslations] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Load translations for a specific language
   const loadTranslations = async (languageCode) => {
@@ -152,6 +152,11 @@ export const TranslationProvider = ({ children }) => {
     getAvailableLanguages,
     isLanguageSupported
   };
+
+  if (loading) {
+    // Optionally render a minimal loading indicator
+    return null; // or <div className="w-full h-screen" />
+  }
 
   return (
     <TranslationContext.Provider value={value}>
