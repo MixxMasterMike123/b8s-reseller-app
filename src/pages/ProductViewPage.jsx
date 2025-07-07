@@ -9,6 +9,20 @@ import AppLayout from '../components/layout/AppLayout';
 import ProductMenu from '../components/ProductMenu';
 import toast from 'react-hot-toast';
 
+// Global helper to extract string from multilingual name objects
+const getNameString = (nameObj) => {
+  if (!nameObj) return '';
+  if (typeof nameObj === 'string') return nameObj;
+  if (typeof nameObj === 'object') {
+    return (
+      nameObj['sv-SE'] ||
+      Object.values(nameObj).find((v) => typeof v === 'string' && v.trim()) ||
+      ''
+    );
+  }
+  return '';
+};
+
 function ProductViewPage() {
   const { currentUser, isAdmin } = useAuth();
   const { t } = useTranslation();
@@ -38,20 +52,6 @@ function ProductViewPage() {
             });
           }
         });
-
-        // Helper to extract string from multilingual name objects
-        const getNameString = (nameObj) => {
-          if (!nameObj) return '';
-          if (typeof nameObj === 'string') return nameObj;
-          if (typeof nameObj === 'object') {
-            return (
-              nameObj['sv-SE'] ||
-              Object.values(nameObj).find((v) => typeof v === 'string' && v.trim()) ||
-              ''
-            );
-          }
-          return '';
-        };
 
         // Sort products by name (case-insensitive)
         productsData.sort((a, b) => {
