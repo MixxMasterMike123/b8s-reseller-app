@@ -208,7 +208,7 @@ exports.approveAffiliate = functions.https.onCall(async (data, context) => {
     });
 
     const welcomeEmail = {
-      from: '"B8Shield" <b8shield.reseller@gmail.com>',
+      from: EMAIL_FROM.affiliate,
       to: appData.email,
       subject: affiliateTemplate.subject,
       html: affiliateTemplate.html
@@ -515,7 +515,7 @@ exports.sendOrderConfirmationEmails = functions.firestore
         
         if (customerTemplate) {
             const mailOptions = {
-              from: '"B8Shield" <b8shield.reseller@gmail.com>',
+              from: orderData.source === 'b2c' ? EMAIL_FROM.b2c : EMAIL_FROM.b2b,
               to: customerEmail,
               subject: customerTemplate.subject,
               text: customerTemplate.text,
@@ -533,8 +533,8 @@ exports.sendOrderConfirmationEmails = functions.firestore
 
       // 2. Send email to admin
       const adminMailOptions = {
-        from: '"B8Shield" <b8shield.reseller@gmail.com>',
-        to: "b8shield.reseller@gmail.com", // Admin's email address
+        from: EMAIL_FROM.system,
+        to: "info@jphinnovation.se", // Admin's email address
         subject: adminTemplate.subject,
         html: adminTemplate.html,
       };
@@ -561,7 +561,7 @@ exports.sendUserActivationEmail = functions.firestore
       // Check if user was activated
       if (!beforeData.isActive && afterData.isActive) {
         const email = {
-          from: `"B8Shield" <info@b8shield.com>`,
+          from: EMAIL_FROM.b2b,
           to: afterData.email,
           subject: "Ditt B8Shield-konto är nu aktivt",
           text: `
@@ -636,7 +636,7 @@ exports.sendOrderStatusUpdateEmail = functions.firestore
 
         // Email to user
         const email = {
-          from: `"B8Shield" <info@b8shield.com>`,
+          from: afterData.source === 'b2c' ? EMAIL_FROM.b2c : EMAIL_FROM.b2b,
           to: userData.email,
           subject: template.subject,
           text: template.text,
@@ -649,7 +649,7 @@ exports.sendOrderStatusUpdateEmail = functions.firestore
         // Also notify admin for important status changes
         if (['shipped', 'delivered', 'cancelled'].includes(afterData.status)) {
           const adminEmail = {
-            from: `"B8Shield System" <info@b8shield.com>`,
+            from: EMAIL_FROM.system,
             to: "micke.ohlen@gmail.com",
             subject: `Order Status Update: ${afterData.orderNumber}`,
             text: `
@@ -1544,7 +1544,7 @@ exports.sendOrderConfirmationHttp = functions.https.onRequest(async (req, res) =
     const adminTemplate2 = getEmail('b2bOrderConfirmationAdmin', 'sv-SE', { userData, orderData, orderSummary, totalAmount });
 
     const customerEmail = {
-      from: `"B8Shield" <info@b8shield.com>`,
+      from: orderData.source === 'b2c' ? EMAIL_FROM.b2c : EMAIL_FROM.b2b,
       to: userData.email,
       subject: customerTemplate.subject,
       text: customerTemplate.text,
@@ -1552,7 +1552,7 @@ exports.sendOrderConfirmationHttp = functions.https.onRequest(async (req, res) =
     };
 
     const adminEmail = {
-      from: `"B8Shield System" <info@b8shield.com>`,
+      from: EMAIL_FROM.system,
       to: "micke.ohlen@gmail.com",
       subject: adminTemplate2.subject,
       text: adminTemplate2.text,
@@ -1643,7 +1643,7 @@ exports.sendStatusUpdateHttp = functions.https.onRequest(async (req, res) => {
     
     // Customer status update email
     const customerEmail = {
-      from: `"B8Shield" <info@b8shield.com>`,
+      from: afterData.source === 'b2c' ? EMAIL_FROM.b2c : EMAIL_FROM.b2b,
       to: userData.email,
       subject: template.subject,
       text: template.text,
@@ -1656,7 +1656,7 @@ exports.sendStatusUpdateHttp = functions.https.onRequest(async (req, res) => {
     // Also notify admin for important status changes
     if (['shipped', 'delivered', 'cancelled'].includes(newStatus)) {
       const adminEmail = {
-        from: `"B8Shield System" <info@b8shield.com>`,
+        from: EMAIL_FROM.system,
         to: "micke.ohlen@gmail.com",
         subject: `Order Status Update: ${orderData.orderNumber}`,
         text: `
@@ -3217,7 +3217,7 @@ exports.sendCustomerWelcomeEmail = functions.https.onCall(async (data, context) 
     const emailTemplate = getWelcomeEmailTemplate(customerData, temporaryPassword);
     
     const mailOptions = {
-      from: "B8Shield Team <b8shield.reseller@gmail.com>",
+      from: EMAIL_FROM.affiliate,
       to: customerData.email,
       subject: emailTemplate.subject,
       text: emailTemplate.text,
@@ -3577,3 +3577,10 @@ exports.toggleCustomerActiveStatus = functions.https.onCall(async (data, context
     throw new functions.https.HttpsError('internal', `Kunde inte uppdatera kundstatus: ${error.message}`);
   }
 });
+
+const EMAIL_FROM = {
+  b2b: '"B8Shield Återförsäljarportal" <info@jphinnovation.se>',
+  affiliate: '"B8Shield Affiliate Program" <info@jphinnovation.se>',
+  b2c: '"B8Shield Shop" <info@jphinnovation.se>',
+  system: '"B8Shield System" <info@jphinnovation.se>',
+};
