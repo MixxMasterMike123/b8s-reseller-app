@@ -5,6 +5,7 @@ import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/TranslationContext';
 import { SmartProductDescription } from '../components/SmartContent';
+import getContentValue from '../utils/contentValueHelper';
 import AppLayout from '../components/layout/AppLayout';
 import ProductMenu from '../components/ProductMenu';
 import toast from 'react-hot-toast';
@@ -39,10 +40,24 @@ function ProductViewPage() {
           }
         });
 
-        // Sort products by name (default sorting)
+        // Helper to extract string from multilingual name objects
+        const getNameString = (nameObj) => {
+          if (!nameObj) return '';
+          if (typeof nameObj === 'string') return nameObj;
+          if (typeof nameObj === 'object') {
+            return (
+              nameObj['sv-SE'] ||
+              Object.values(nameObj).find((v) => typeof v === 'string' && v.trim()) ||
+              ''
+            );
+          }
+          return '';
+        };
+
+        // Sort products by name (case-insensitive)
         productsData.sort((a, b) => {
-          const nameA = (a.name || '').toLowerCase();
-          const nameB = (b.name || '').toLowerCase();
+          const nameA = getNameString(a.name).toLowerCase();
+          const nameB = getNameString(b.name).toLowerCase();
           return nameA.localeCompare(nameB);
         });
 
