@@ -14,6 +14,8 @@ const ReviewsSection = ({
   const { t, currentLanguage } = useTranslation();
   const [displayMode, setDisplayMode] = useState('manual');
   const [trustpilotFailed, setTrustpilotFailed] = useState(false);
+  const [allReviews, setAllReviews] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
@@ -33,12 +35,13 @@ const ReviewsSection = ({
         const all = await getAllReviews();
         const langFiltered = all.filter(r => r.lang === getLang());
         const shuffled = [...langFiltered].sort(() => 0.5 - Math.random());
-        const randomReviews = shuffled.slice(0, 3);
 
         const avgRating = await getAverageRating();
         const stats = await getReviewStats();
 
-        setReviews(randomReviews);
+        setAllReviews(shuffled);
+        setCurrentIndex(0);
+        setReviews(shuffled.slice(0, 3));
         setAverageRating(avgRating);
         setTotalReviews(stats.totalReviews);
       } catch (error) {
@@ -49,8 +52,6 @@ const ReviewsSection = ({
     };
     loadReviews();
   }, [currentLanguage]);
-
-  const allReviews = [...manualReviews, ...reviews];
 
   const renderStars = (rating) => {
     return (
@@ -214,17 +215,24 @@ const ReviewsSection = ({
             {t('reviews_leave_review', 'Lämna en recension')}
           </a>
           <button 
-            onClick={async () => {
+            onClick={() => {
+              if (allReviews.length <= 3) return; // nothing to cycle
               setLoading(true);
-              const all = await getAllReviews();
-              const langFiltered = all.filter(r => r.lang === getLang());
-              const shuffled = [...langFiltered].sort(() => 0.5 - Math.random());
-              const newReviews = shuffled.slice(0, 3);
-              // Small delay for a smoother UX
-              setTimeout(() => {
-                setReviews(newReviews);
+
+              // Calculate next index
+              const nextIndex = currentIndex + 3;
+              if (nextIndex + 3 <= allReviews.length) {
+                setCurrentIndex(nextIndex);
+                setReviews(allReviews.slice(nextIndex, nextIndex + 3));
                 setLoading(false);
-              }, 200);
+              } else {
+                // Reshuffle to get fresh order and start over
+                const reshuffled = [...allReviews].sort(() => 0.5 - Math.random());
+                setAllReviews(reshuffled);
+                setCurrentIndex(0);
+                setReviews(reshuffled.slice(0, 3));
+                setLoading(false);
+              }
             }}
             className="inline-flex items-center justify-center bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
           >
