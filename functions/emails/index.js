@@ -4,6 +4,10 @@
 
 const templates = {
   orderShipped: require('./orderShipped'),
+  orderPending: require('./orderPending'),
+  orderProcessing: require('./orderProcessing'),
+  orderDelivered: require('./orderDelivered'),
+  orderCancelled: require('./orderCancelled'),
   // future templates will be added here
 };
 
