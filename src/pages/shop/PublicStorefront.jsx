@@ -230,7 +230,7 @@ const PublicStorefront = () => {
               <img
                 src="/images/badge_of_honor_b8s.svg"
                 alt={t('hero_innovation_badge_alt', 'Innovation from Sweden badge')}
-                className="h-12 w-auto mx-auto mb-8 drop-shadow-lg"
+                className="h-24 w-auto mx-auto mb-8 drop-shadow-lg"
               />
               
               <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white mb-6 drop-shadow-lg">
