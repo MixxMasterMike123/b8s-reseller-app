@@ -278,9 +278,6 @@ const PublicStorefront = () => {
                 >
                   {t('hero_shop_now_button', 'Handla nu')}
                 </button>
-                <button className="border-2 border-white/70 text-white px-8 py-4 rounded-full text-lg font-semibold hover:border-white hover:bg-white/10 transition-all duration-300 backdrop-blur-sm">
-                  {t('hero_read_more_button', 'Läs mer')}
-                </button>
               </div>
             </div>
           </div>
