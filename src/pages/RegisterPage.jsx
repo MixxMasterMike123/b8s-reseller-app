@@ -67,7 +67,9 @@ const RegisterPage = () => {
         deliveryCountry: sameAsCompanyAddress ? (data.country || t('register.default_country', 'Sverige')) : data.deliveryCountry,
         sameAsCompanyAddress: sameAsCompanyAddress,
         role: 'reseller',
+        preferredLang: currentLanguage,
         active: false, // Account will need to be activated by admin
+        isActive: false, // Legacy field
       };
       
       // Register with Firebase

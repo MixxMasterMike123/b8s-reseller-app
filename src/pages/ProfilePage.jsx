@@ -34,6 +34,7 @@ const ProfilePage = () => {
     deliveryPostalCode: '',
     deliveryCountry: 'Sverige',
     sameAsCompanyAddress: true,
+    preferredLang: 'sv-SE',
     newPassword: '',
     confirmPassword: '',
   });
@@ -72,6 +73,7 @@ const ProfilePage = () => {
             deliveryPostalCode: data.deliveryPostalCode || '',
             deliveryCountry: data.deliveryCountry || 'Sverige',
             sameAsCompanyAddress: data.sameAsCompanyAddress !== false,
+            preferredLang: data.preferredLang || 'sv-SE',
           }));
         } else {
           console.log('No user found in named database, creating profile');
@@ -86,6 +88,7 @@ const ProfilePage = () => {
             active: true,
             isActive: true,
             sameAsCompanyAddress: true,
+            preferredLang: 'sv-SE',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           };
@@ -107,6 +110,7 @@ const ProfilePage = () => {
             phoneNumber: '',
             address: '',
             sameAsCompanyAddress: true,
+            preferredLang: 'sv-SE',
           }));
           
           toast.success(t('profile.profile_created', 'Profile created. Please update your information.'));
@@ -202,6 +206,7 @@ const ProfilePage = () => {
         deliveryPostalCode: sameAsCompanyAddress ? formData.postalCode : formData.deliveryPostalCode,
         deliveryCountry: sameAsCompanyAddress ? formData.country : formData.deliveryCountry,
         sameAsCompanyAddress: sameAsCompanyAddress,
+        preferredLang: formData.preferredLang,
       };
       
       // Use AuthContext method for updating
@@ -291,6 +296,22 @@ const ProfilePage = () => {
                     <div>
                       <p className="text-sm md:text-sm text-gray-500 mb-1">{t('profile.phone', 'Telefon')}</p>
                       <p className="font-medium text-base">{userData?.phone || t('profile.not_specified', 'Ej angivet')}</p>
+                    </div>
+                    <div>
+                      <label htmlFor="preferredLang" className="block text-base md:text-sm font-medium text-gray-700 mb-2 md:mb-1">
+                        {t('profile.preferred_language', 'Föredraget språk')}
+                      </label>
+                      <select
+                        name="preferredLang"
+                        id="preferredLang"
+                        value={formData.preferredLang}
+                        onChange={handleChange}
+                        className="block w-full border border-gray-300 rounded-md shadow-sm py-3 md:py-2 px-4 md:px-3 text-base focus:outline-none focus:ring-blue-500 focus:border-blue-500 min-h-[48px] md:min-h-0"
+                      >
+                        <option value="sv-SE">{t('lang_swedish', 'Svenska')}</option>
+                        <option value="en-GB">{t('lang_english_uk', 'English (UK)')}</option>
+                        <option value="en-US">{t('lang_english_us', 'English (US)')}</option>
+                      </select>
                     </div>
                     <div>
                       <p className="text-sm md:text-sm text-gray-500 mb-1">{t('profile.org_number', 'Organisationsnummer')}</p>

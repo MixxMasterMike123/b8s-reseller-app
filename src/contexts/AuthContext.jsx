@@ -113,6 +113,11 @@ export function AuthProvider({ children }) {
               const data = userDoc.data();
               setUserData(data);
               setIsAdmin(data.role === 'admin');
+
+              // Store preferred language for TranslationContext
+              if (data.preferredLang) {
+                localStorage.setItem('b8shield-language', data.preferredLang);
+              }
             } else {
               console.error('User document not found in Firestore');
             }

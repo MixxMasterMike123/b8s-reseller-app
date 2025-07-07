@@ -88,7 +88,8 @@ const AdminUserEdit = () => {
     marginal: 40,
     role: 'user',
     active: true,
-    notes: ''
+    notes: '',
+    preferredLang: 'sv-SE'
   });
   const [errors, setErrors] = useState({});
 
@@ -167,7 +168,8 @@ const AdminUserEdit = () => {
           marginal: foundUser.marginal || 35,
           role: foundUser.role || 'user',
           active: foundUser.active !== undefined ? foundUser.active : true,
-          notes: foundUser.notes || ''
+          notes: foundUser.notes || '',
+          preferredLang: foundUser.preferredLang || 'sv-SE'
         });
         
         // Load customer materials and admin documents
@@ -453,7 +455,8 @@ const AdminUserEdit = () => {
         deliveryPostalCode: formData.sameAsCompanyAddress ? formData.postalCode : formData.deliveryPostalCode,
         deliveryCountry: formData.sameAsCompanyAddress ? formData.country : formData.deliveryCountry,
         sameAsCompanyAddress: formData.sameAsCompanyAddress,
-        notes: formData.notes
+        notes: formData.notes,
+        preferredLang: formData.preferredLang
       });
 
       // Admin-only updates
@@ -754,6 +757,21 @@ const AdminUserEdit = () => {
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   placeholder="08-123 456 78"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="preferredLang" className="block text-sm font-medium text-gray-700 mb-1">Föredraget språk</label>
+                <select
+                  id="preferredLang"
+                  name="preferredLang"
+                  value={formData.preferredLang}
+                  onChange={handleInputChange}
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                  <option value="sv-SE">Svenska</option>
+                  <option value="en-GB">English (UK)</option>
+                  <option value="en-US">English (US)</option>
+                </select>
               </div>
             </div>
           </div>

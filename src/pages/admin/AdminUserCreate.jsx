@@ -41,7 +41,8 @@ const AdminUserCreate = () => {
     marginal: 40, // Default 40% margin
     role: 'user',
     active: true,
-    notes: ''
+    notes: '',
+    preferredLang: 'sv-SE'
   });
 
   // Admin documents state
@@ -183,6 +184,7 @@ const AdminUserCreate = () => {
         deliveryCountry: formData.sameAsCompanyAddress ? formData.country : formData.deliveryCountry,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        preferredLang: formData.preferredLang,
         createdByAdmin: true,
         createdBy: currentUser?.uid
       };
@@ -306,6 +308,23 @@ const AdminUserCreate = () => {
                   placeholder="08-123 456 78"
                 />
                 {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+              </div>
+
+              <div>
+                <label htmlFor="preferredLang" className="block text-sm font-medium text-gray-700 mb-1">
+                  Föredraget språk
+                </label>
+                <select
+                  id="preferredLang"
+                  name="preferredLang"
+                  value={formData.preferredLang}
+                  onChange={handleInputChange}
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                  <option value="sv-SE">Svenska</option>
+                  <option value="en-GB">English (UK)</option>
+                  <option value="en-US">English (US)</option>
+                </select>
               </div>
 
               <div>
