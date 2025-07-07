@@ -258,6 +258,11 @@ const PublicStorefront = () => {
                     ))}
                   </div>
                 </div>
+                {heroReview?.title && (
+                  <h4 className="text-gray-900 font-semibold text-lg mb-2 text-center">
+                    {heroReview.title}
+                  </h4>
+                )}
                 <blockquote className="text-gray-700 italic text-lg">
                   "{heroReview?.text || 'Med B8Shield kunde jag obehindrat fiska på platser som annars hade varit omöjliga, utan att tappa ett enda fiskedrag – otroligt effektivt skydd!'}"
                 </blockquote>
