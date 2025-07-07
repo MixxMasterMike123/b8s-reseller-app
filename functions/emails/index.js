@@ -10,6 +10,8 @@ const templates = {
   orderCancelled: require('./orderCancelled'),
   orderConfirmed: require('./orderConfirmed'),
   welcomeCredentials: require('./welcomeCredentials'),
+  affiliateWelcome: require('./affiliateWelcome'),
+  b2cOrderPending: require('./b2cOrderPending'),
   // future templates will be added here
 };
 

@@ -80,46 +80,12 @@ const getEmailTemplate = (status, orderData, userData) => {
  * TEMPORARY B2C Email Templates until they can be merged with the main one
  */
 const getB2CEmailTemplate = (status, orderData, customerInfo) => {
-  const orderNumber = orderData.orderNumber;
-  const customerName = customerInfo.name;
-  
-  const templates = {
-    pending: {
-      subject: `Tack för din beställning, ${customerName}! (Order ${orderNumber})`,
-      text: `
-        Hej ${customerName},
-        
-        Tack för din beställning från B8Shield! Vi har mottagit din order och kommer att behandla den snarast.
-        
-        Ordernummer: ${orderNumber}
-        Status: Mottagen
-        
-        Du kommer att få ytterligare uppdateringar när din order behandlas och skickas. Du kan se din orderstatus här: ${`${APP_URLS.B2C_SHOP}/order-confirmation/${orderData.id || ''}`}
-        
-        Med vänliga hälsningar,
-        B8Shield Team
-      `,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; padding: 20px;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
-          </div>
-          <h2>Hej ${customerName},</h2>
-          <p>Tack för din beställning! Vi har mottagit din order och kommer att behandla den snarast.</p>
-          <p><strong>Ordernummer:</strong> ${orderNumber}</p>
-          <p><strong>Status:</strong> Mottagen</p>
-          <p>Du kommer att få ett nytt mail när din order har skickats. Du kan se din orderinformation på vår hemsida:</p>
-          <div style="text-align: center; margin: 20px 0;">
-             <a href="${APP_URLS.B2C_SHOP}/order-confirmation/${orderData.id || ''}" style="background-color: #459CA8; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Visa din beställning</a>
-          </div>
-          <p>Med vänliga hälsningar,<br>B8Shield Team</p>
-        </div>
-      `
-    },
-    // Future B2C templates for shipped, etc. can go here
-  };
-  
-  return templates[status] || templates.pending;
+  // only pending for now
+  if (status === 'pending') {
+    return getEmail('b2cOrderPending', customerInfo.preferredLang || 'sv-SE', { orderData, customerInfo });
+  }
+  // fallback to pending
+  return getEmail('b2cOrderPending', customerInfo.preferredLang || 'sv-SE', { orderData, customerInfo });
 };
 
 /**
@@ -233,25 +199,19 @@ exports.approveAffiliate = functions.https.onCall(async (data, context) => {
         </ul>
         <p>Vi rekommenderar starkt att du byter ditt lösenord efter första inloggningen.</p>`;
 
+    const affiliateTemplate = getEmail('affiliateWelcome', appData.preferredLang || 'sv-SE', {
+      appData,
+      affiliateCode,
+      tempPassword,
+      loginInstructions,
+      wasExistingAuthUser
+    });
+
     const welcomeEmail = {
       from: '"B8Shield" <b8shield.reseller@gmail.com>',
       to: appData.email,
-      subject: 'Välkommen till B8Shield Affiliate Program!',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px;">
-          <h2>Grattis, ${appData.name}!</h2>
-          <p>Din ansökan till B8Shields affiliate-program har blivit godkänd.</p>
-          <p>Här är dina inloggningsuppgifter för <a href="${APP_URLS.B2C_SHOP}/affiliate-portal">Affiliate-portalen</a>:</p>
-          ${loginInstructions}
-          <hr>
-          <h3>Din unika affiliatelänk:</h3>
-          <p>Använd denna länk för att tjäna provision på alla köp:</p>
-          <p><strong><a href="${APP_URLS.B2C_SHOP}/?ref=${affiliateCode}">${APP_URLS.B2C_SHOP}/?ref=${affiliateCode}</a></strong></p>
-          <br>
-          <p>Lycka till med försäljningen!</p>
-          <p>Med vänliga hälsningar,<br>B8Shield Team</p>
-        </div>
-      `,
+      subject: affiliateTemplate.subject,
+      html: affiliateTemplate.html
     };
 
     await transporter.sendMail(welcomeEmail);
