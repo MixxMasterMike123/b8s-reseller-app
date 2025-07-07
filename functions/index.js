@@ -1540,89 +1540,23 @@ exports.sendOrderConfirmationHttp = functions.https.onRequest(async (req, res) =
     }
     
     // Customer confirmation email
+    const customerTemplate = getEmail('b2bOrderConfirmationCustomer', 'sv-SE', { userData, orderData, orderSummary, totalAmount });
+    const adminTemplate2 = getEmail('b2bOrderConfirmationAdmin', 'sv-SE', { userData, orderData, orderSummary, totalAmount });
+
     const customerEmail = {
       from: `"B8Shield" <info@b8shield.com>`,
       to: userData.email,
-      subject: `Orderbekräftelse: ${orderData.orderNumber}`,
-      text: `
-        Hej ${userData.contactPerson || userData.companyName},
-        
-        Tack för din beställning! Vi har mottagit din order och kommer att behandla den snarast.
-        
-        Ordernummer: ${orderData.orderNumber}
-        Företag: ${userData.companyName}
-        
-        Orderdetaljer:
-        ${orderSummary}
-        
-        Totalt: ${totalAmount} SEK
-        
-        Du kommer att få ytterligare uppdateringar när din order behandlas.
-        
-        Med vänliga hälsningar,
-        B8Shield Team
-      `,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
-          </div>
-          <h2>Orderbekräftelse</h2>
-          <p>Hej ${userData.contactPerson || userData.companyName},</p>
-          <p>Tack för din beställning! Vi har mottagit din order och kommer att behandla den snarast.</p>
-          
-          <h3>Orderdetaljer:</h3>
-          <p><strong>Ordernummer:</strong> ${orderData.orderNumber}</p>
-          <p><strong>Företag:</strong> ${userData.companyName}</p>
-          
-          <h3>Beställning:</h3>
-          <p>${orderSummary.replace(/\n/g, '<br>')}</p>
-          
-          <p><strong>Totalt: ${totalAmount} SEK</strong></p>
-          
-          <p>Du kommer att få ytterligare uppdateringar när din order behandlas.</p>
-          
-          <p>Med vänliga hälsningar,<br>B8Shield Team</p>
-        </div>
-      `,
+      subject: customerTemplate.subject,
+      text: customerTemplate.text,
+      html: customerTemplate.html,
     };
-    
-    // Admin notification email
+
     const adminEmail = {
       from: `"B8Shield System" <info@b8shield.com>`,
       to: "micke.ohlen@gmail.com",
-      subject: `Ny order: ${orderData.orderNumber}`,
-      text: `
-        En ny order har skapats:
-        
-        Ordernummer: ${orderData.orderNumber}
-        Kund: ${userData.companyName} (${userData.email})
-        Kontaktperson: ${userData.contactPerson}
-        
-        Orderdetaljer:
-        ${orderSummary}
-        
-        Totalt: ${totalAmount} SEK
-      `,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
-          </div>
-          <h2>Ny order mottagen</h2>
-          <p><strong>Ordernummer:</strong> ${orderData.orderNumber}</p>
-          
-          <h3>Kundinformation:</h3>
-          <p><strong>Företag:</strong> ${userData.companyName}</p>
-          <p><strong>E-post:</strong> ${userData.email}</p>
-          <p><strong>Kontaktperson:</strong> ${userData.contactPerson}</p>
-          
-          <h3>Orderdetaljer:</h3>
-          <p>${orderSummary.replace(/\n/g, '<br>')}</p>
-          
-          <p><strong>Totalt: ${totalAmount} SEK</strong></p>
-        </div>
-      `,
+      subject: adminTemplate2.subject,
+      text: adminTemplate2.text,
+      html: adminTemplate2.html,
     };
     
     // Send both emails

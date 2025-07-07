@@ -12,6 +12,9 @@ const templates = {
   welcomeCredentials: require('./welcomeCredentials'),
   affiliateWelcome: require('./affiliateWelcome'),
   b2cOrderPending: require('./b2cOrderPending'),
+  adminB2COrderNotification: require('./adminB2COrderNotification'),
+  b2bOrderConfirmationCustomer: require('./b2bOrderConfirmationCustomer'),
+  b2bOrderConfirmationAdmin: require('./b2bOrderConfirmationAdmin'),
   // future templates will be added here
 };
 
