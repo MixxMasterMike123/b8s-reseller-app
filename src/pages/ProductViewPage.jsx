@@ -5,7 +5,6 @@ import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/TranslationContext';
 import { SmartProductDescription } from '../components/SmartContent';
-import getContentValue from '../utils/contentValueHelper';
 import AppLayout from '../components/layout/AppLayout';
 import ProductMenu from '../components/ProductMenu';
 import toast from 'react-hot-toast';
