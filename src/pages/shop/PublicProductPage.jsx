@@ -23,6 +23,7 @@ import ReviewsSection from '../../components/ReviewsSection';
 import { getReviewStats } from '../../utils/trustpilotAPI';
 import SeoHreflang from '../../components/shop/SeoHreflang';
 import { Helmet } from 'react-helmet';
+import SocialShare from '../../components/shop/SocialShare';
 
 const PublicProductPage = () => {
   const { slug } = useParams();
@@ -331,6 +332,13 @@ const PublicProductPage = () => {
                   {t('favorite_button', 'Favorit ♡')}
                 </button>
               </div>
+
+              {/* Social Share */}
+              <SocialShare
+                url={window.location.href}
+                title={getContentValue(product?.name)}
+                image={getProductImages(product)[0]}
+              />
 
               {/* Payment Options */}
               <div className="border-t pt-6">
