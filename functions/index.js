@@ -9,6 +9,7 @@ const cors = require('cors')({
   credentials: true
 });
 const APP_URLS = require('./config');
+const { getEmail } = require('./emails');
 
 // 🛡️ RATE LIMITING CONFIGURATION
 // Adjust these based on your business needs and customer growth
@@ -1217,7 +1218,7 @@ exports.testOrderUpdate = functions.https.onRequest(async (req, res) => {
     console.log(`Found user: ${userData.email}`);
     
     // Create a test status update email
-    const template = getEmailTemplate('shipped', orderData, userData);
+    const template = getEmail('orderShipped', userData.preferredLang || 'sv-SE', { orderData, userData });
     
     const testEmail = {
       from: `"B8Shield" <info@b8shield.com>`,
