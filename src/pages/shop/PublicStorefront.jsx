@@ -11,7 +11,7 @@ import { useContentTranslation } from '../../hooks/useContentTranslation';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
 import ReviewsSection from '../../components/ReviewsSection';
-import { getRandomReviews } from '../../utils/trustpilotAPI';
+import { getAllReviews } from '../../utils/trustpilotAPI';
 import SeoHreflang from '../../components/shop/SeoHreflang';
 
 const PublicStorefront = () => {
@@ -27,24 +27,19 @@ const PublicStorefront = () => {
     loadHeroReview();
   }, []);
 
-  const loadHeroReview = () => {
+  const loadHeroReview = async () => {
     try {
-      // Get all reviews and exclude Paul W. to avoid confusion with original testimonial
-      const allReviews = getRandomReviews(16); // Get all reviews
-      const filteredReviews = allReviews.filter(review => review.author !== 'Paul W.');
-      
+      const allReviews = await getAllReviews();
+      // Exclude Paul W. to avoid duplicate testimonial
+      const filteredReviews = allReviews.filter(r => r.author !== 'Paul W.');
+
       if (filteredReviews.length > 0) {
-        // Pick a random review from the filtered list
         const randomIndex = Math.floor(Math.random() * filteredReviews.length);
         const selectedReview = filteredReviews[randomIndex];
-        console.log('Hero review loaded:', selectedReview);
         setHeroReview(selectedReview);
-      } else {
-        console.log('No filtered reviews available, using fallback');
       }
-    } catch (error) {
-      console.error('Error loading hero review:', error);
-      // Keep heroReview as null for fallback
+    } catch (err) {
+      console.error('Error loading hero review:', err);
     }
   };
 

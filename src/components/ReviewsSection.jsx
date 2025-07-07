@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import TrustpilotWidget from './TrustpilotWidget';
-import { getRandomReviews, getAverageRating, getReviewStats } from '../utils/trustpilotAPI';
+import { getAverageRating, getReviewStats, getAllReviews } from '../utils/trustpilotAPI';
 import { useTranslation } from '../contexts/TranslationContext';
 
 const ReviewsSection = ({ 
@@ -29,10 +29,15 @@ const ReviewsSection = ({
   useEffect(() => {
     const loadReviews = async () => {
       try {
-        // Get 3 random reviews for display, filtered by language
-        const randomReviews = getRandomReviews(3, getLang());
+        // Load all reviews (CSV or fallback) then pick random ones
+        const all = await getAllReviews();
+        const langFiltered = all.filter(r => r.lang === getLang());
+        const shuffled = [...langFiltered].sort(() => 0.5 - Math.random());
+        const randomReviews = shuffled.slice(0, 3);
+
         const avgRating = await getAverageRating();
         const stats = await getReviewStats();
+
         setReviews(randomReviews);
         setAverageRating(avgRating);
         setTotalReviews(stats.totalReviews);
@@ -209,13 +214,17 @@ const ReviewsSection = ({
             {t('reviews_leave_review', 'Lämna en recension')}
           </a>
           <button 
-            onClick={() => {
+            onClick={async () => {
               setLoading(true);
+              const all = await getAllReviews();
+              const langFiltered = all.filter(r => r.lang === getLang());
+              const shuffled = [...langFiltered].sort(() => 0.5 - Math.random());
+              const newReviews = shuffled.slice(0, 3);
+              // Small delay for a smoother UX
               setTimeout(() => {
-                const newReviews = getRandomReviews(3, getLang());
                 setReviews(newReviews);
                 setLoading(false);
-              }, 500);
+              }, 200);
             }}
             className="inline-flex items-center justify-center bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
           >
