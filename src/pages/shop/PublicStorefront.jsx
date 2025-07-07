@@ -226,10 +226,12 @@ const PublicStorefront = () => {
           
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
             <div className="text-center">
-              <div className="inline-flex items-center px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full text-sm font-medium text-blue-600 border border-blue-200/50 mb-8">
-                <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-                {t('hero_innovation_badge', 'Ny innovation från Sverige')}
-              </div>
+              {/* Badge of Honor */}
+              <img
+                src="/images/badge_of_honor_b8s.svg"
+                alt={t('hero_innovation_badge_alt', 'Innovation from Sweden badge')}
+                className="h-12 w-auto mx-auto mb-8 drop-shadow-lg"
+              />
               
               <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white mb-6 drop-shadow-lg">
                 {t('hero_title_start', 'Fastna')}
