@@ -187,7 +187,7 @@ const ReviewsSection = ({
       <div className="text-center mt-8 space-y-4">
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <a 
-            href="https://www.trustpilot.com/review/shop.b8shield.com"
+            href="https://www.trustpilot.com/review/b8shield.com?languages=all"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center bg-white border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
@@ -198,7 +198,7 @@ const ReviewsSection = ({
             {t('reviews_read_all', 'Läs alla recensioner')}
           </a>
           <a 
-            href="https://www.trustpilot.com/evaluate/shop.b8shield.com"
+            href="https://www.trustpilot.com/evaluate/b8shield.com"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"

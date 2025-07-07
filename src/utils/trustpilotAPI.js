@@ -1,6 +1,8 @@
 // Trustpilot API Integration for B8Shield
 // Fetches real reviews from shop.b8shield.com Trustpilot profile
 
+import { loadReviewsFromCsv } from './csvReviews';
+
 const TRUSTPILOT_CONFIG = {
   DOMAIN: 'shop.b8shield.com',
   BUSINESS_EMAIL: 'info@b8shield.com',
@@ -300,31 +302,25 @@ export const getRandomReviews = (count = 3, lang = 'sv') => {
  * Get all reviews (for main reviews section)
  */
 export const getAllReviews = async () => {
-  // Check cache first
-  if (reviewsCache.isValid()) {
-    return reviewsCache.data;
-  }
+  if (reviewsCache.isValid()) return reviewsCache.data;
 
+  // 1. Try CSV file first
   try {
-    // TODO: When Trustpilot API is set up, fetch real reviews here
-    // const businessUnit = await findBusinessUnit();
-    // if (businessUnit && TRUSTPILOT_CONFIG.BUSINESS_UNIT_ID) {
-    //   const trustpilotReviews = await fetchTrustpilotReviews(TRUSTPILOT_CONFIG.BUSINESS_UNIT_ID);
-    //   const formattedReviews = formatTrustpilotReviews(trustpilotReviews);
-    //   reviewsCache.data = formattedReviews;
-    //   reviewsCache.timestamp = Date.now();
-    //   return formattedReviews;
-    // }
-
-    // For now, return manual reviews
-    const manualReviews = getManualReviews();
-    reviewsCache.data = manualReviews;
-    reviewsCache.timestamp = Date.now();
-    return manualReviews;
-  } catch (error) {
-    console.error('Error fetching reviews:', error);
-    return getManualReviews(); // Fallback to manual reviews
+    const csvReviews = await loadReviewsFromCsv();
+    if (csvReviews?.length) {
+      reviewsCache.data = csvReviews;
+      reviewsCache.timestamp = Date.now();
+      return csvReviews;
+    }
+  } catch (err) {
+    console.warn('CSV reviews not available – falling back to manual reviews', err);
   }
+
+  // 2. Fallback to manual reviews
+  const manualReviews = getManualReviews();
+  reviewsCache.data = manualReviews;
+  reviewsCache.timestamp = Date.now();
+  return manualReviews;
 };
 
 /**

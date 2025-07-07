@@ -12,6 +12,8 @@ const TrustpilotWidget = ({
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(null);
 
+  const REVIEW_URL = 'https://www.trustpilot.com/review/b8shield.com?languages=all';
+
   useEffect(() => {
     // Load Trustpilot widget script
     const script = document.createElement('script');
@@ -61,7 +63,7 @@ const TrustpilotWidget = ({
           data-theme={theme}
         >
           <a 
-            href={`https://www.trustpilot.com/review/${domain}`} 
+            href={REVIEW_URL} 
             target="_blank" 
             rel="noopener noreferrer"
             className="text-blue-600 hover:text-blue-800"
@@ -82,7 +84,7 @@ const TrustpilotWidget = ({
           data-theme={theme}
         >
           <a 
-            href={`https://www.trustpilot.com/review/${domain}`} 
+            href={REVIEW_URL} 
             target="_blank" 
             rel="noopener noreferrer"
             className="text-blue-600 hover:text-blue-800"
