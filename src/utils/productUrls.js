@@ -102,7 +102,11 @@ export const getProductSeoDescription = (product) => {
   if (!product) return 'B8Shield är det ultimata vasskyddet för sportfiskare. Skydda dina fiskedrag och fånga mer fisk. Finns i flera färger och storlekar.';
   
   const name = safeGetContent(product.name);
-  const description = safeGetContent(product.descriptions?.b2c) || `Köp ${name}. Skyddar dina fiskedrag från att fastna i vass och annan undervattensvegetation. Perfekt för svenska förhållanden.`;
+  const primaryDesc = safeGetContent(product.descriptions?.b2c);
+  const fallbackDesc = safeGetContent(product.description);
+  const defaultDesc = `Köp ${name}. Skyddar dina fiskedrag från att fastna i vass och annan undervattensvegetation. Perfekt för svenska förhållanden.`;
+  
+  const description = primaryDesc || fallbackDesc || defaultDesc;
   
   // Truncate to a reasonable length for meta descriptions
   return description.length > 160 ? description.substring(0, 157) + '...' : description;
