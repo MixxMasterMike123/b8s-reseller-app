@@ -527,7 +527,7 @@ const AdminUserEdit = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md">
+      <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-md">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex justify-between items-start">
@@ -1038,7 +1038,7 @@ const AdminUserEdit = () => {
 
         {/* Customer Marketing Materials - Outside form to prevent interference */}
         {isAdmin && (
-          <div className="max-w-4xl mx-auto mt-6 bg-white rounded-lg shadow-md">
+          <div className="max-w-7xl mx-auto mt-6 bg-white rounded-lg shadow-md">
             <div className="bg-purple-50 rounded-lg p-6 border border-purple-200">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-gray-900 flex items-center">
@@ -1206,7 +1206,7 @@ const AdminUserEdit = () => {
 
         {/* Admin Documents - Admin Only, NOT visible to customers */}
         {isAdmin && (
-          <div className="max-w-4xl mx-auto mt-6 bg-white rounded-lg shadow-md">
+          <div className="max-w-7xl mx-auto mt-6 bg-white rounded-lg shadow-md">
             <div className="bg-orange-50 rounded-lg p-6 border border-orange-200">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-gray-900 flex items-center">
