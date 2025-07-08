@@ -9,6 +9,7 @@ import AppLayout from '../../components/layout/AppLayout';
 import OrderStatusMenu from '../../components/OrderStatusMenu';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { useContentTranslation } from '../../hooks/useContentTranslation';
 
 // Add a helper function to parse and display order distribution data
 const getOrderDistribution = (order) => {
@@ -55,6 +56,7 @@ const AdminOrderDetail = () => {
   const [updateStatusLoading, setUpdateStatusLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [fetchAttempted, setFetchAttempted] = useState(false);
+  const { getContentValue } = useContentTranslation();
 
   // Use guest data if it exists, otherwise use fetched user data
   const displayUser = order?.source === 'b2c' ? {
@@ -575,54 +577,61 @@ const AdminOrderDetail = () => {
           </div>
         </div>
 
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800">Order Items</h2>
-          <div className="bg-gray-50 p-4 rounded-lg overflow-x-auto">
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold mb-3 text-gray-800">Order Items</h2>
+          <div className="shadow-sm overflow-hidden border-b border-gray-200 sm:rounded-lg">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead>
+              <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Color</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Product
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Color
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Size
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Quantity
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Price per item
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
-                {order.items && order.items.length > 0 ? (
-                  // Modern order items (both B2B and B2C with individual line items)
-                  order.items.map((item, index) => (
-                    <tr key={index}>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.name}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.color || '-'}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.size || '-'}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.quantity} st</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
-                        {item.price?.toLocaleString('sv-SE', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
-                        })} kr
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  // Legacy B2B order items (fallback for old orders)
-                  getOrderDistribution(order).map((item, index) => (
-                    <tr key={index}>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">B8 Shield</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.color}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.size}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{item.quantity} st</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
-                        {index === 0 && order.prisInfo?.produktPris ? 
-                          `${order.prisInfo.produktPris.toLocaleString('sv-SE', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                          })} kr` : ''}
-                      </td>
-                    </tr>
-                  ))
-                )}
+              <tbody className="bg-white divide-y divide-gray-200">
+                {(order.items && order.items.length > 0 ? order.items : getOrderDistribution(order)).map((item, index) => (
+                  <tr key={index}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                      {getContentValue(item.name) || 'B8 Shield'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {getContentValue(item.color)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {getContentValue(item.size)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {item.quantity} st
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                      {item.price?.toLocaleString('sv-SE', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })} kr
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                      {(item.price * item.quantity).toLocaleString('sv-SE', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })} kr
+                    </td>
+                  </tr>
+                ))}
               </tbody>
               <tfoot>
                 <tr>
