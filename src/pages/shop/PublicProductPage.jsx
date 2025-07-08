@@ -185,7 +185,7 @@ const PublicProductPage = () => {
       handleRedirect();
     }
   }, [groupContent, product, variants, redirected, navigate, location.state]);
-
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
@@ -397,7 +397,7 @@ const PublicProductPage = () => {
                       </p>
                     ) : (
                       groupContent?.sizeAndFit ? (
-                        <div
+                        <div 
                           className="prose prose-sm text-gray-700"
                           dangerouslySetInnerHTML={{ __html: getContentValue(groupContent.sizeAndFit) }}
                         />
@@ -425,7 +425,7 @@ const PublicProductPage = () => {
                       </p>
                     ) : (
                       groupContent?.shippingReturns ? (
-                        <div
+                        <div 
                           className="prose prose-sm text-gray-700"
                           dangerouslySetInnerHTML={{ __html: getContentValue(groupContent.shippingReturns) }}
                         />
@@ -453,7 +453,7 @@ const PublicProductPage = () => {
                       </p>
                     ) : (
                       groupContent?.howItsMade ? (
-                        <div
+                        <div 
                           className="prose prose-sm text-gray-700"
                           dangerouslySetInnerHTML={{ __html: getContentValue(groupContent.howItsMade) }}
                         />
@@ -498,8 +498,8 @@ const PublicProductPage = () => {
                       <div 
                         className="prose prose-sm max-w-none"
                         dangerouslySetInnerHTML={{ __html: getContentValue(product.descriptions.b2cMoreInfo) }}
-                      />
-                    </div>
+                    />
+                  </div>
                   </details>
                 )}
               </div>

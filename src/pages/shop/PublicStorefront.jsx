@@ -32,7 +32,7 @@ const PublicStorefront = () => {
       const allReviews = await getAllReviews();
       // Exclude Paul W. to avoid duplicate testimonial
       const filteredReviews = allReviews.filter(r => r.author !== 'Paul W.');
-
+      
       if (filteredReviews.length > 0) {
         const randomIndex = Math.floor(Math.random() * filteredReviews.length);
         const selectedReview = filteredReviews[randomIndex];

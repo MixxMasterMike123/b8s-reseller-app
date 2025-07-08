@@ -317,10 +317,10 @@ export const getAllReviews = async () => {
   }
 
   // 2. Fallback to manual reviews
-  const manualReviews = getManualReviews();
-  reviewsCache.data = manualReviews;
-  reviewsCache.timestamp = Date.now();
-  return manualReviews;
+    const manualReviews = getManualReviews();
+    reviewsCache.data = manualReviews;
+    reviewsCache.timestamp = Date.now();
+    return manualReviews;
 };
 
 /**

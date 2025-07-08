@@ -1,0 +1,18 @@
+module.exports = ({ orderData }) => {
+  const subject = `New B2C Order Received: ${orderData.orderNumber}`;
+  const body = `
+    <div style="font-family: Arial, sans-serif;">
+      <h2>New B2C Guest Order Received</h2>
+      <p><strong>Order Number:</strong> ${orderData.orderNumber}</p>
+      <p><strong>Customer:</strong> ${orderData.customerInfo.firstName} ${orderData.customerInfo.lastName}</p>
+      <p><strong>Email:</strong> ${orderData.customerInfo.email}</p>
+      <h3>Order Details:</h3>
+      <ul>
+        ${orderData.items.map(item => `<li>${item.name} - ${item.quantity} pcs @ ${item.price} SEK</li>`).join('')}
+      </ul>
+      <p><strong>Total Amount:</strong> ${orderData.total || orderData.totalAmount} SEK</p>
+      ${orderData.affiliateCode ? `<p><strong>Affiliate Code:</strong> ${orderData.affiliateCode}</p>` : ''}
+    </div>
+  `;
+  return { subject, html: body };
+}; 

@@ -55,7 +55,7 @@ const AffiliateTracker = () => {
 
         // Choose storage based on consent
         const storage = hasConsent ? localStorage : sessionStorage;
-
+        
         // Always store the new affiliate code (with "last ref wins" principle)
         const expiry = new Date().getTime() + 30 * 24 * 60 * 60 * 1000; // 30 days
         const affiliateInfo = { code: refCode.toUpperCase(), expiry: expiry };

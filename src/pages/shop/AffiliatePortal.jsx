@@ -565,4 +565,4 @@ const AffiliatePortal = () => {
   );
 };
 
-export default AffiliatePortal;
+export default AffiliatePortal; 

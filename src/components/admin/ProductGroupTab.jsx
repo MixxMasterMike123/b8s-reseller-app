@@ -304,9 +304,9 @@ const ProductGroupTab = ({ productGroup, onContentChange, onGroupContentUpdate }
                 />
                 <div>
                   <p className="text-sm font-medium text-gray-900">{getContentValue(product.name)}</p>
-                  <p className="text-xs text-gray-500">
-                    {product.color} • {product.size}
-                  </p>
+                <p className="text-xs text-gray-500">
+                  {product.color} • {product.size}
+                </p>
                 </div>
               </div>
             ))}
