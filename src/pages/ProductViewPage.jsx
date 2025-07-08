@@ -4,28 +4,16 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/TranslationContext';
+import { useContentTranslation } from '../hooks/useContentTranslation';
 import { SmartProductDescription } from '../components/SmartContent';
 import AppLayout from '../components/layout/AppLayout';
 import ProductMenu from '../components/ProductMenu';
 import toast from 'react-hot-toast';
 
-// Global helper to extract string from multilingual name objects
-const getNameString = (nameObj) => {
-  if (!nameObj) return '';
-  if (typeof nameObj === 'string') return nameObj;
-  if (typeof nameObj === 'object') {
-    return (
-      nameObj['sv-SE'] ||
-      Object.values(nameObj).find((v) => typeof v === 'string' && v.trim()) ||
-      ''
-    );
-  }
-  return '';
-};
-
 function ProductViewPage() {
   const { currentUser, isAdmin } = useAuth();
   const { t } = useTranslation();
+  const { getContentValue } = useContentTranslation();
   const [products, setProducts] = useState([]);
   const [filteredProduct, setFilteredProduct] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -55,8 +43,8 @@ function ProductViewPage() {
 
         // Sort products by name (case-insensitive)
         productsData.sort((a, b) => {
-          const nameA = getNameString(a.name).toLowerCase();
-          const nameB = getNameString(b.name).toLowerCase();
+          const nameA = getContentValue(a.name, 'sv-SE').toLowerCase();
+          const nameB = getContentValue(b.name, 'sv-SE').toLowerCase();
           return nameA.localeCompare(nameB);
         });
 
@@ -211,7 +199,7 @@ function ProductViewPage() {
                 {/* Product Info */}
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">{getNameString(selectedProduct.name)}</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">{getContentValue(selectedProduct.name)}</h2>
                     {/* B2B Technical Description */}
                     <SmartProductDescription 
                       product={selectedProduct}
@@ -233,7 +221,7 @@ function ProductViewPage() {
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <h3 className="text-sm font-medium text-gray-500 mb-1">{t('product_menu.size', 'Storlek')}</h3>
                       <p className="text-lg font-semibold text-gray-900">
-                        {selectedProduct.size || t('profile.not_specified', 'Ej angivet')}
+                        {getContentValue(selectedProduct.size) || t('profile.not_specified', 'Ej angivet')}
                       </p>
                     </div>
 
@@ -285,11 +273,11 @@ function ProductViewPage() {
                         <div className="space-y-3">
                           <img 
                             src={imageUrl} 
-                            alt={getNameString(selectedProduct.name)} 
+                            alt={getContentValue(selectedProduct.name)} 
                             className="w-full h-64 object-contain border border-gray-200 rounded-md bg-white"
                           />
                           <button
-                            onClick={() => handleDownloadImage(imageUrl, getNameString(selectedProduct.name), 'product')}
+                            onClick={() => handleDownloadImage(imageUrl, getContentValue(selectedProduct.name), 'product')}
                             className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                           >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -316,7 +304,7 @@ function ProductViewPage() {
                               className="w-full h-20 object-contain border border-gray-200 rounded bg-white"
                             />
                             <button
-                              onClick={() => handleDownloadImage(selectedProduct.eanImagePngUrl, getNameString(selectedProduct.name), 'ean_png')}
+                              onClick={() => handleDownloadImage(selectedProduct.eanImagePngUrl, getContentValue(selectedProduct.name), 'ean_png')}
                               className="w-full inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                             >
                               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -336,7 +324,7 @@ function ProductViewPage() {
                               className="w-full h-20 object-contain border border-gray-200 rounded bg-white"
                             />
                             <button
-                              onClick={() => handleDownloadImage(selectedProduct.eanImageSvgUrl, getNameString(selectedProduct.name), 'ean_svg')}
+                              onClick={() => handleDownloadImage(selectedProduct.eanImageSvgUrl, getContentValue(selectedProduct.name), 'ean_svg')}
                               className="w-full inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                             >
                               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -358,7 +346,12 @@ function ProductViewPage() {
           <div className="bg-white shadow rounded-lg overflow-hidden">
             <div className="px-4 md:px-6 py-4 border-b border-gray-200">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h2 className="text-lg md:text-lg font-medium text-gray-900">{t('products.available_products', 'Tillgängliga Produkter')}</h2>
+                <h2 className="text-lg md:text-lg font-medium text-gray-900">
+                  {filteredProduct 
+                    ? getContentValue(filteredProduct.name)
+                    : t('products.all_products', 'Alla produkter')
+                  }
+                </h2>
                 <div className="w-full sm:w-64">
                   <ProductMenu 
                     products={products} 
@@ -396,7 +389,7 @@ function ProductViewPage() {
                             return imageUrl ? (
                               <img 
                                 src={imageUrl} 
-                                alt={getNameString(product.name)} 
+                                alt={getContentValue(product.name)} 
                                 className="w-20 h-20 object-cover rounded-lg border border-gray-200"
                               />
                             ) : (
@@ -412,12 +405,12 @@ function ProductViewPage() {
                           <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0">
                               <h3 className="text-base font-semibold text-gray-900 truncate">
-                                {getNameString(product.name)}
+                                {getContentValue(product.name)}
                               </h3>
                               <div className="mt-2 flex flex-wrap gap-2">
                                 {product.size && (
                                   <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
-                                    {product.size}
+                                    {getContentValue(product.size)}
                                   </span>
                                 )}
                                 {product.sku && (
@@ -434,7 +427,7 @@ function ProductViewPage() {
                             <div className="flex flex-wrap gap-4 text-sm">
                               <div className="flex items-center space-x-2">
                                 <span className="text-gray-500">{t('product_menu.size', 'Storlek')}:</span>
-                                <span className="font-medium text-gray-900">{product.size || t('profile.not_specified', 'Ej angivet')}</span>
+                                <span className="font-medium text-gray-900">{getContentValue(product.size) || t('profile.not_specified', 'Ej angivet')}</span>
                               </div>
                               <div className="flex items-center space-x-2">
                                 <span className="text-gray-500">{t('products.price', 'Pris')}:</span>
@@ -515,7 +508,7 @@ function ProductViewPage() {
                               return imageUrl ? (
                                 <img 
                                   src={imageUrl} 
-                                  alt={getNameString(product.name)} 
+                                  alt={getContentValue(product.name)} 
                                   className="w-10 h-10 object-cover rounded-md border border-gray-200 flex-shrink-0"
                                 />
                               ) : (
@@ -527,11 +520,11 @@ function ProductViewPage() {
                               );
                             })()}
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm font-semibold text-gray-900 truncate">{getNameString(product.name)}</div>
+                              <div className="text-sm font-semibold text-gray-900 truncate">{getContentValue(product.name)}</div>
                               <div className="mt-1 flex flex-wrap gap-1">
                                 {product.size && (
                                   <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                    {product.size}
+                                    {getContentValue(product.size)}
                                   </span>
                                 )}
                                 {product.sku && (
@@ -545,7 +538,7 @@ function ProductViewPage() {
                         </td>
                         <td className="px-3 py-4">
                           <div className="space-y-1">
-                            <div className="text-sm text-gray-900">{product.size || t('profile.not_specified', 'Ej angivet')}</div>
+                            <div className="text-sm text-gray-900">{getContentValue(product.size) || t('profile.not_specified', 'Ej angivet')}</div>
                             <div className="text-sm font-semibold text-gray-900">{product.basePrice?.toFixed(2)} SEK</div>
                             <div className="text-xs text-gray-500">{t('products.excl_vat', 'Exkl. moms')}</div>
                           </div>
