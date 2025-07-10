@@ -1,53 +1,100 @@
-// TEMPORARILY DISABLED FOR BATCH 3 TESTING - Conflict with V1 functions
-// All V2 functions disabled to test deployment without conflicts
+// V2 FUNCTIONS BATCH 4 - Direct imports to avoid circular dependencies
 
-// import { onRequest } from 'firebase-functions/v2/https';
-// import { corsHandler } from './protection/cors/cors-handler';
-// import { rateLimiter } from './protection/rate-limiting/rate-limiter';
+import { onRequest } from 'firebase-functions/v2/https';
+import { corsHandler } from './protection/cors/cors-handler';
+import { rateLimiter } from './protection/rate-limiting/rate-limiter';
 
-// Export protection functions
-// export * from './protection/cors/cors-handler';
-// export * from './protection/rate-limiting/rate-limiter';
-// export * from './protection/budget-monitor/budget-monitor';
+// Import affiliate functions directly (avoiding export * circular imports)
+import { logAffiliateClickV2 } from './affiliate/callable/logAffiliateClick';
+import { logAffiliateClickHttpV2 } from './affiliate/http/logAffiliateClickHttp';
+import { processAffiliateConversionV2 } from './affiliate/triggers/processAffiliateConversion';
 
-// Export email functions
-// export * from './email/functions';
+// Import email functions directly (V2 with suffixes to avoid V1 conflicts)
+import { 
+  sendCustomerWelcomeEmail as sendCustomerWelcomeEmailV2,
+  sendAffiliateWelcomeEmail as sendAffiliateWelcomeEmailV2,
+  sendB2BOrderConfirmationAdmin as sendB2BOrderConfirmationAdminV2,
+  sendB2BOrderConfirmationCustomer as sendB2BOrderConfirmationCustomerV2,
+  sendOrderStatusEmail as sendOrderStatusEmailV2,
+  sendB2COrderNotificationAdmin as sendB2COrderNotificationAdminV2,
+  sendB2COrderPendingEmail as sendB2COrderPendingEmailV2,
+  sendOrderConfirmationEmails as sendOrderConfirmationEmailsV2,
+  sendUserActivationEmail as sendUserActivationEmailV2,
+  sendOrderStatusUpdateEmail as sendOrderStatusUpdateEmailV2,
+  updateCustomerEmail as updateCustomerEmailV2,
+  testEmail as testEmailV2,
+  approveAffiliate as approveAffiliateV2
+} from './email/functions';
 
-// Export order processing functions
-// export * from './order-processing/functions';
+// Import order processing functions directly (V2 with suffixes to avoid V1 conflicts)
+import {
+  processB2COrderCompletionHttp as processB2COrderCompletionHttpV2,
+  processB2COrderCompletion as processB2COrderCompletionV2,
+  manualStatusUpdate as manualStatusUpdateV2,
+  testOrderUpdate as testOrderUpdateV2
+} from './order-processing/functions';
 
-// Order status update email
-// export { sendOrderStatusEmail } from './email/functions';
+// Import customer-admin functions directly (V2 with suffixes to avoid V1 conflicts)
+import {
+  deleteCustomerAccount as deleteCustomerAccountV2,
+  toggleCustomerActiveStatus as toggleCustomerActiveStatusV2,
+  createAdminUser as createAdminUserV2,
+  checkNamedDatabase as checkNamedDatabaseV2,
+  debugDatabase as debugDatabaseV2
+} from './customer-admin/functions';
 
-// B2C order emails
-// export { sendB2COrderNotificationAdmin, sendB2COrderPendingEmail } from './email/functions';
+// Re-export affiliate functions individually with V2 names (avoid V1 conflicts)
+export { logAffiliateClickV2, logAffiliateClickHttpV2, processAffiliateConversionV2 };
 
-// Firestore triggers for email notifications
-// export { 
-//   sendOrderConfirmationEmails,
-//   sendUserActivationEmail,
-//   sendOrderStatusUpdateEmail,
-//   testEmail 
-// } from './email/functions';
+// Re-export email functions individually with V2 names (avoid V1 conflicts) 
+export { 
+  sendCustomerWelcomeEmailV2,
+  sendAffiliateWelcomeEmailV2,
+  sendB2BOrderConfirmationAdminV2,
+  sendB2BOrderConfirmationCustomerV2,
+  sendOrderStatusEmailV2,
+  sendB2COrderNotificationAdminV2,
+  sendB2COrderPendingEmailV2,
+  sendOrderConfirmationEmailsV2,
+  sendUserActivationEmailV2,
+  sendOrderStatusUpdateEmailV2,
+  updateCustomerEmailV2,
+  testEmailV2,
+  approveAffiliateV2
+};
 
-// Customer email update
-// export { updateCustomerEmail } from './email/functions';
+// Re-export order processing functions individually with V2 names (avoid V1 conflicts)
+export {
+  processB2COrderCompletionHttpV2,
+  processB2COrderCompletionV2,
+  manualStatusUpdateV2,
+  testOrderUpdateV2
+};
 
-// Example protected HTTP function
-// export const exampleProtectedFunction = onRequest(
-//   { cors: true },
-//   async (request, response) => {
-//     // Apply CORS protection
-//     if (!corsHandler(request, response)) {
-//       return;
-//     }
+// Re-export customer-admin functions individually with V2 names (avoid V1 conflicts)
+export {
+  deleteCustomerAccountV2,
+  toggleCustomerActiveStatusV2,
+  createAdminUserV2,
+  checkNamedDatabaseV2,
+  debugDatabaseV2
+};
 
-//     // Apply rate limiting
-//     if (!await rateLimiter(request, response)) {
-//       return;
-//     }
+// Example protected HTTP function - TESTING
+export const exampleProtectedFunction = onRequest(
+  { cors: true },
+  async (request, response) => {
+    // Apply CORS protection
+    if (!corsHandler(request, response)) {
+      return;
+    }
 
-//     // Function logic here
-//     response.json({ message: 'Protected function executed successfully' });
-//   }
-// ); 
+    // Apply rate limiting
+    if (!await rateLimiter(request, response)) {
+      return;
+    }
+
+    // Function logic here
+    response.json({ message: 'Protected function executed successfully' });
+  }
+); 

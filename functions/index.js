@@ -67,6 +67,8 @@ const getB2CEmailTemplate = (status, orderData, customerInfo) => {
 /**
  * [NEW] Callable function to approve an affiliate application.
  */
+// MIGRATED TO V2: ./src/email/functions.ts
+/*
 exports.approveAffiliate = functions.https.onCall(async (data, context) => {
   // 1. Authentication Check: Ensure the user is an authenticated admin.
   if (!context.auth) {
@@ -202,10 +204,13 @@ exports.approveAffiliate = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('internal', 'An internal error occurred while approving the affiliate.');
   }
 });
+*/
 
 /**
  * [NEW] Callable function to log an affiliate link click.
  */
+// MIGRATED TO V2: ./src/affiliate/callable/logAffiliateClick.ts
+/*
 exports.logAffiliateClick = functions
   .region('us-central1')
   .https.onCall(async (data, context) => {
@@ -264,6 +269,7 @@ exports.logAffiliateClick = functions
       );
   }
 });
+*/
 
 /**
  * [NEW & REFACTORED] This is an HTTP function invoked from the client-side after
@@ -406,12 +412,15 @@ exports.logAffiliateClick = functions
  * It is replaced by the `processB2COrderCompletion` callable function.
  * We are keeping it here but it should be removed later.
  */
+// MIGRATED TO V2: ./src/affiliate/triggers/processAffiliateConversion.ts
+/*
 exports.processAffiliateConversion = functions.firestore
   .document('order-triggers/{orderId}')
   .onCreate(async (snap, context) => {
     console.log(`DEPRECATED trigger fired for ${context.params.orderId}. No action taken.`);
     return null;
   });
+*/
 
 /**
  * Send order confirmation emails when a new order is created
@@ -653,7 +662,9 @@ exports.createTestData = functions.https.onRequest(async (req, res) => {
 //   }
 // });
 
+// MIGRATED TO V2 - debugDatabaseV2 in customer-admin/functions.ts
 // Debug function to check database contents
+/*
 exports.debugDatabase = functions.https.onRequest(async (req, res) => {
   try {
     console.log('Checking database contents...');
@@ -702,6 +713,7 @@ exports.debugDatabase = functions.https.onRequest(async (req, res) => {
     });
   }
 });
+*/
 
 // ===== MIGRATED TO V2 - BATCH 3 =====
 // Manual order status update test function
@@ -1828,6 +1840,8 @@ exports.productFeed = functions.https.onRequest(async (req, res) => {
 /**
  * [NEW] HTTP endpoint for affiliate click logging
  */
+// MIGRATED TO V2: ./src/affiliate/http/logAffiliateClickHttp.ts
+/*
 exports.logAffiliateClickHttp = functions
   .region('us-central1')
   .https.onRequest(async (req, res) => {
@@ -1906,6 +1920,7 @@ exports.logAffiliateClickHttp = functions
       });
   }
 });
+*/
 
 /**
  * [NEW] Claude API Proxy for Writer's Wagon™
@@ -2890,6 +2905,8 @@ exports.updateCustomerEmail = functions.https.onCall(async (data, context) => {
  * Delete Customer Account (Admin Only)
  * This function deletes both Firestore record and Firebase Auth account
  */
+// MIGRATED TO V2 - deleteCustomerAccountV2 in customer-admin/functions.ts
+/*
 exports.deleteCustomerAccount = functions.https.onCall(async (data, context) => {
   // Verify admin authentication
   if (!context.auth || !context.auth.uid) {
@@ -3019,7 +3036,10 @@ exports.deleteCustomerAccount = functions.https.onCall(async (data, context) => 
     throw new functions.https.HttpsError('internal', `Kunde inte ta bort kund: ${error.message}`);
   }
 });
+*/
 
+// MIGRATED TO V2 - toggleCustomerActiveStatusV2 in customer-admin/functions.ts
+/*
 /**
  * Toggle Customer Active Status (Admin Only)
  * This function updates both Firestore and Firebase Auth account status
@@ -3125,5 +3145,6 @@ exports.toggleCustomerActiveStatus = functions.https.onCall(async (data, context
     throw new functions.https.HttpsError('internal', `Kunde inte uppdatera kundstatus: ${error.message}`);
   }
 });
+*/
 
 // EMAIL_FROM definition moved to top of file to fix hoisting issues

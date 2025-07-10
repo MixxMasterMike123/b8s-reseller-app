@@ -1,0 +1,11 @@
+import { logAffiliateClickV2 } from './affiliate/callable/logAffiliateClick';
+import { logAffiliateClickHttpV2 } from './affiliate/http/logAffiliateClickHttp';
+import { processAffiliateConversionV2 } from './affiliate/triggers/processAffiliateConversion';
+import { sendCustomerWelcomeEmail as sendCustomerWelcomeEmailV2, sendAffiliateWelcomeEmail as sendAffiliateWelcomeEmailV2, sendB2BOrderConfirmationAdmin as sendB2BOrderConfirmationAdminV2, sendB2BOrderConfirmationCustomer as sendB2BOrderConfirmationCustomerV2, sendOrderStatusEmail as sendOrderStatusEmailV2, sendB2COrderNotificationAdmin as sendB2COrderNotificationAdminV2, sendB2COrderPendingEmail as sendB2COrderPendingEmailV2, sendOrderConfirmationEmails as sendOrderConfirmationEmailsV2, sendUserActivationEmail as sendUserActivationEmailV2, sendOrderStatusUpdateEmail as sendOrderStatusUpdateEmailV2, updateCustomerEmail as updateCustomerEmailV2, testEmail as testEmailV2, approveAffiliate as approveAffiliateV2 } from './email/functions';
+import { processB2COrderCompletionHttp as processB2COrderCompletionHttpV2, processB2COrderCompletion as processB2COrderCompletionV2, manualStatusUpdate as manualStatusUpdateV2, testOrderUpdate as testOrderUpdateV2 } from './order-processing/functions';
+import { deleteCustomerAccount as deleteCustomerAccountV2, toggleCustomerActiveStatus as toggleCustomerActiveStatusV2, createAdminUser as createAdminUserV2, checkNamedDatabase as checkNamedDatabaseV2, debugDatabase as debugDatabaseV2 } from './customer-admin/functions';
+export { logAffiliateClickV2, logAffiliateClickHttpV2, processAffiliateConversionV2 };
+export { sendCustomerWelcomeEmailV2, sendAffiliateWelcomeEmailV2, sendB2BOrderConfirmationAdminV2, sendB2BOrderConfirmationCustomerV2, sendOrderStatusEmailV2, sendB2COrderNotificationAdminV2, sendB2COrderPendingEmailV2, sendOrderConfirmationEmailsV2, sendUserActivationEmailV2, sendOrderStatusUpdateEmailV2, updateCustomerEmailV2, testEmailV2, approveAffiliateV2 };
+export { processB2COrderCompletionHttpV2, processB2COrderCompletionV2, manualStatusUpdateV2, testOrderUpdateV2 };
+export { deleteCustomerAccountV2, toggleCustomerActiveStatusV2, createAdminUserV2, checkNamedDatabaseV2, debugDatabaseV2 };
+export declare const exampleProtectedFunction: import("firebase-functions/v2/https").HttpsFunction;
