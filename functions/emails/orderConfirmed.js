@@ -18,6 +18,9 @@ module.exports = ({ lang = 'sv-SE', orderData, userData, orderId }) => {
   const contactPerson = userData.contactPerson || userData.companyName || '';
   const customerEmail = userData.email || '';
   const orderUrl = `${APP_URLS.B2B_PORTAL}/orders/${orderId || ''}`;
+  
+  // Calculate total from items if totalAmount is 0 or missing
+  const calculatedTotal = totalAmount > 0 ? totalAmount : items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   const templates = {
     'sv-SE': {
@@ -35,7 +38,7 @@ Företag: ${userData.companyName || 'Ej angett'}
 PRODUKTER:
 ${items.map(item => `- ${getProductName(item, lang)} x ${item.quantity} - ${formatPriceExclVAT(item.price * item.quantity)} (exkl. moms)`).join('\n')}
 
-TOTALT: ${formatPriceExclVAT(totalAmount)} (exkl. moms)
+TOTALT: ${formatPriceExclVAT(calculatedTotal)} (exkl. moms)
 
 Du kommer att få ytterligare uppdateringar när din order behandlas och skickas.
 Följ din order här: ${orderUrl}
@@ -94,7 +97,7 @@ JPH Innovation AB
           </tr>
           <tr>
             <td style="color: #1f2937; font-size: 18px; font-weight: bold; padding: 4px 0;">TOTALT (exkl. moms):</td>
-            <td style="color: #1f2937; font-size: 18px; font-weight: bold; text-align: right; padding: 4px 0;">${formatPriceExclVAT(totalAmount)}</td>
+            <td style="color: #1f2937; font-size: 18px; font-weight: bold; text-align: right; padding: 4px 0;">${formatPriceExclVAT(calculatedTotal)}</td>
           </tr>
           <tr>
             <td colspan="2" style="font-size: 12px; color: #6b7280; padding-top: 8px;">
@@ -133,7 +136,7 @@ Company: ${userData.companyName || 'Not specified'}
 PRODUCTS:
 ${items.map(item => `- ${getProductName(item, lang)} x ${item.quantity} - ${formatPriceExclVAT(item.price * item.quantity)} (excl. VAT)`).join('\n')}
 
-TOTAL: ${formatPriceExclVAT(totalAmount)} (excl. VAT)
+TOTAL: ${formatPriceExclVAT(calculatedTotal)} (excl. VAT)
 
 You will receive further updates as your order progresses and is shipped out.
 Track your order here: ${orderUrl}
@@ -192,7 +195,7 @@ JPH Innovation AB
           </tr>
           <tr>
             <td style="color: #1f2937; font-size: 18px; font-weight: bold; padding: 4px 0;">TOTAL (excl. VAT):</td>
-            <td style="color: #1f2937; font-size: 18px; font-weight: bold; text-align: right; padding: 4px 0;">${formatPriceExclVAT(totalAmount)}</td>
+            <td style="color: #1f2937; font-size: 18px; font-weight: bold; text-align: right; padding: 4px 0;">${formatPriceExclVAT(calculatedTotal)}</td>
           </tr>
           <tr>
             <td colspan="2" style="font-size: 12px; color: #6b7280; padding-top: 8px;">
