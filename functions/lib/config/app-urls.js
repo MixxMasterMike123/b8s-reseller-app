@@ -20,6 +20,6 @@ exports.appUrls = {
         'http://localhost:3000' // Development
     ],
     // User Agent for API calls
-    getUserAgent: () => `B8Shield-FishTrip-Wagon/1.0 (${exports.appUrls.B2B_PORTAL}; info@b8shield.com)`,
+    getUserAgent: () => `B8Shield-FishTrip-Wagon/1.0 (${exports.appUrls.B2B_PORTAL}; info@jphinnovation.se)`,
 };
 //# sourceMappingURL=app-urls.js.map

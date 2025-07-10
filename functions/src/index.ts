@@ -9,8 +9,45 @@ import { logAffiliateClickV2 } from './affiliate/callable/logAffiliateClick';
 import { logAffiliateClickHttpV2 } from './affiliate/http/logAffiliateClickHttp';
 import { processAffiliateConversionV2 } from './affiliate/triggers/processAffiliateConversion';
 
-// Import email functions directly (V2 with suffixes to avoid V1 conflicts)
+// Import email functions directly with original names from email/functions.ts
 import { 
+  sendCustomerWelcomeEmail,
+  sendAffiliateWelcomeEmail,
+  sendB2BOrderConfirmationAdmin,
+  sendB2BOrderConfirmationCustomer,
+  sendOrderStatusEmail,
+  sendB2COrderNotificationAdmin,
+  sendB2COrderPendingEmail,
+  sendOrderConfirmationEmails,
+  sendUserActivationEmail,
+  sendOrderStatusUpdateEmail,
+  updateCustomerEmail,
+  testEmail,
+  approveAffiliate
+} from './email/functions';
+
+// Import order processing functions directly with original names
+import {
+  processB2COrderCompletionHttp,
+  processB2COrderCompletion,
+  manualStatusUpdate,
+  testOrderUpdate
+} from './order-processing/functions';
+
+// Import customer-admin functions directly with original names
+import {
+  deleteCustomerAccount,
+  toggleCustomerActiveStatus,
+  createAdminUser,
+  checkNamedDatabase,
+  debugDatabase
+} from './customer-admin/functions';
+
+// Re-export affiliate functions individually with V2 names (avoid V1 conflicts)
+export { logAffiliateClickV2, logAffiliateClickHttpV2, processAffiliateConversionV2 };
+
+// Re-export email functions individually with V2 names (avoid V1 conflicts) 
+export { 
   sendCustomerWelcomeEmail as sendCustomerWelcomeEmailV2,
   sendAffiliateWelcomeEmail as sendAffiliateWelcomeEmailV2,
   sendB2BOrderConfirmationAdmin as sendB2BOrderConfirmationAdminV2,
@@ -24,60 +61,23 @@ import {
   updateCustomerEmail as updateCustomerEmailV2,
   testEmail as testEmailV2,
   approveAffiliate as approveAffiliateV2
-} from './email/functions';
+};
 
-// Import order processing functions directly (V2 with suffixes to avoid V1 conflicts)
-import {
+// Re-export order processing functions individually with V2 names (avoid V1 conflicts)
+export {
   processB2COrderCompletionHttp as processB2COrderCompletionHttpV2,
   processB2COrderCompletion as processB2COrderCompletionV2,
   manualStatusUpdate as manualStatusUpdateV2,
   testOrderUpdate as testOrderUpdateV2
-} from './order-processing/functions';
+};
 
-// Import customer-admin functions directly (V2 with suffixes to avoid V1 conflicts)
-import {
+// Re-export customer-admin functions individually with V2 names (avoid V1 conflicts)
+export {
   deleteCustomerAccount as deleteCustomerAccountV2,
   toggleCustomerActiveStatus as toggleCustomerActiveStatusV2,
   createAdminUser as createAdminUserV2,
   checkNamedDatabase as checkNamedDatabaseV2,
   debugDatabase as debugDatabaseV2
-} from './customer-admin/functions';
-
-// Re-export affiliate functions individually with V2 names (avoid V1 conflicts)
-export { logAffiliateClickV2, logAffiliateClickHttpV2, processAffiliateConversionV2 };
-
-// Re-export email functions individually with V2 names (avoid V1 conflicts) 
-export { 
-  sendCustomerWelcomeEmailV2,
-  sendAffiliateWelcomeEmailV2,
-  sendB2BOrderConfirmationAdminV2,
-  sendB2BOrderConfirmationCustomerV2,
-  sendOrderStatusEmailV2,
-  sendB2COrderNotificationAdminV2,
-  sendB2COrderPendingEmailV2,
-  sendOrderConfirmationEmailsV2,
-  sendUserActivationEmailV2,
-  sendOrderStatusUpdateEmailV2,
-  updateCustomerEmailV2,
-  testEmailV2,
-  approveAffiliateV2
-};
-
-// Re-export order processing functions individually with V2 names (avoid V1 conflicts)
-export {
-  processB2COrderCompletionHttpV2,
-  processB2COrderCompletionV2,
-  manualStatusUpdateV2,
-  testOrderUpdateV2
-};
-
-// Re-export customer-admin functions individually with V2 names (avoid V1 conflicts)
-export {
-  deleteCustomerAccountV2,
-  toggleCustomerActiveStatusV2,
-  createAdminUserV2,
-  checkNamedDatabaseV2,
-  debugDatabaseV2
 };
 
 // Example protected HTTP function - TESTING

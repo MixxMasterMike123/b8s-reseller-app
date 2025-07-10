@@ -22,7 +22,7 @@ export const appUrls = {
   ] as const,
   
   // User Agent for API calls
-  getUserAgent: () => `B8Shield-FishTrip-Wagon/1.0 (${appUrls.B2B_PORTAL}; info@b8shield.com)`,
+  getUserAgent: () => `B8Shield-FishTrip-Wagon/1.0 (${appUrls.B2B_PORTAL}; info@jphinnovation.se)`,
 } as const;
 
 export type AppUrl = typeof appUrls.CORS_ORIGINS[number]; 

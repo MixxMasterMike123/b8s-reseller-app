@@ -8,5 +8,6 @@ export declare const EMAIL_FROM: {
     readonly system: "\"B8Shield System\" <info@jphinnovation.se>";
     readonly support: "\"B8Shield Support\" <info@jphinnovation.se>";
 };
+export declare const ADMIN_EMAILS = "info@jphinnovation.se, micke.ohlen@gmail.com";
 export declare const createTransporter: () => nodemailer.Transporter<import("nodemailer/lib/smtp-transport").SentMessageInfo, import("nodemailer/lib/smtp-transport").Options>;
 export declare const sendEmail: (emailData: EmailData) => Promise<void>;

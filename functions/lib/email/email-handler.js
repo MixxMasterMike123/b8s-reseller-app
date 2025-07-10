@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendEmail = exports.createTransporter = exports.EMAIL_FROM = exports.db = void 0;
+exports.sendEmail = exports.createTransporter = exports.ADMIN_EMAILS = exports.EMAIL_FROM = exports.db = void 0;
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const nodemailer = __importStar(require("nodemailer"));
@@ -46,6 +46,8 @@ exports.EMAIL_FROM = {
     system: '"B8Shield System" <info@jphinnovation.se>',
     support: '"B8Shield Support" <info@jphinnovation.se>'
 };
+// Admin notification recipients
+exports.ADMIN_EMAILS = 'info@jphinnovation.se, micke.ohlen@gmail.com';
 // Initialize nodemailer transporter
 const createTransporter = () => nodemailer.createTransport({
     host: smtpHost.value(),

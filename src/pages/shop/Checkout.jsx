@@ -17,7 +17,7 @@ import { getCountryAwareUrl } from '../../utils/productUrls';
 const Checkout = () => {
   const { cart, calculateTotals, clearCart } = useCart();
   const { user } = useSimpleAuth();
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const { getContentValue } = useContentTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -134,6 +134,7 @@ const Checkout = () => {
           firstName: shippingInfo.firstName,
           lastName: shippingInfo.lastName,
           marketingOptIn: contactInfo.marketing,
+          preferredLang: currentLanguage, // Store user's language preference
         },
         
         // Shipping address from state
@@ -192,7 +193,7 @@ const Checkout = () => {
       try {
         console.log('Calling post-order processing function...');
         const timestamp = Date.now();
-        const functionUrl = `https://us-central1-b8shield-reseller-app.cloudfunctions.net/processB2COrderCompletionHttp?_=${timestamp}`;
+        const functionUrl = `https://us-central1-b8shield-reseller-app.cloudfunctions.net/processB2COrderCompletionHttpV2?_=${timestamp}`;
         
         const response = await fetch(functionUrl, {
           method: 'POST',

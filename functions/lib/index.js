@@ -12,7 +12,7 @@ const logAffiliateClickHttp_1 = require("./affiliate/http/logAffiliateClickHttp"
 Object.defineProperty(exports, "logAffiliateClickHttpV2", { enumerable: true, get: function () { return logAffiliateClickHttp_1.logAffiliateClickHttpV2; } });
 const processAffiliateConversion_1 = require("./affiliate/triggers/processAffiliateConversion");
 Object.defineProperty(exports, "processAffiliateConversionV2", { enumerable: true, get: function () { return processAffiliateConversion_1.processAffiliateConversionV2; } });
-// Import email functions directly (V2 with suffixes to avoid V1 conflicts)
+// Import email functions directly with original names from email/functions.ts
 const functions_1 = require("./email/functions");
 Object.defineProperty(exports, "sendCustomerWelcomeEmailV2", { enumerable: true, get: function () { return functions_1.sendCustomerWelcomeEmail; } });
 Object.defineProperty(exports, "sendAffiliateWelcomeEmailV2", { enumerable: true, get: function () { return functions_1.sendAffiliateWelcomeEmail; } });
@@ -27,13 +27,13 @@ Object.defineProperty(exports, "sendOrderStatusUpdateEmailV2", { enumerable: tru
 Object.defineProperty(exports, "updateCustomerEmailV2", { enumerable: true, get: function () { return functions_1.updateCustomerEmail; } });
 Object.defineProperty(exports, "testEmailV2", { enumerable: true, get: function () { return functions_1.testEmail; } });
 Object.defineProperty(exports, "approveAffiliateV2", { enumerable: true, get: function () { return functions_1.approveAffiliate; } });
-// Import order processing functions directly (V2 with suffixes to avoid V1 conflicts)
+// Import order processing functions directly with original names
 const functions_2 = require("./order-processing/functions");
 Object.defineProperty(exports, "processB2COrderCompletionHttpV2", { enumerable: true, get: function () { return functions_2.processB2COrderCompletionHttp; } });
 Object.defineProperty(exports, "processB2COrderCompletionV2", { enumerable: true, get: function () { return functions_2.processB2COrderCompletion; } });
 Object.defineProperty(exports, "manualStatusUpdateV2", { enumerable: true, get: function () { return functions_2.manualStatusUpdate; } });
 Object.defineProperty(exports, "testOrderUpdateV2", { enumerable: true, get: function () { return functions_2.testOrderUpdate; } });
-// Import customer-admin functions directly (V2 with suffixes to avoid V1 conflicts)
+// Import customer-admin functions directly with original names
 const functions_3 = require("./customer-admin/functions");
 Object.defineProperty(exports, "deleteCustomerAccountV2", { enumerable: true, get: function () { return functions_3.deleteCustomerAccount; } });
 Object.defineProperty(exports, "toggleCustomerActiveStatusV2", { enumerable: true, get: function () { return functions_3.toggleCustomerActiveStatus; } });

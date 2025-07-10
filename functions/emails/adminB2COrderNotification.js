@@ -8,7 +8,13 @@ module.exports = ({ orderData }) => {
       <p><strong>Email:</strong> ${orderData.customerInfo.email}</p>
       <h3>Order Details:</h3>
       <ul>
-        ${orderData.items.map(item => `<li>${item.name} - ${item.quantity} pcs @ ${item.price} SEK</li>`).join('')}
+        ${orderData.items.map(item => {
+          // Handle multilingual product names
+          const productName = typeof item.name === 'object' 
+            ? (item.name['sv-SE'] || item.name['en-GB'] || item.name['en-US'] || JSON.stringify(item.name))
+            : item.name || 'Unknown Product';
+          return `<li>${productName} - ${item.quantity} pcs @ ${item.price} SEK</li>`;
+        }).join('')}
       </ul>
       <p><strong>Total Amount:</strong> ${orderData.total || orderData.totalAmount} SEK</p>
       ${orderData.affiliateCode ? `<p><strong>Affiliate Code:</strong> ${orderData.affiliateCode}</p>` : ''}

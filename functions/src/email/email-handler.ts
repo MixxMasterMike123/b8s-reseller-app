@@ -26,6 +26,9 @@ export const EMAIL_FROM = {
   support: '"B8Shield Support" <info@jphinnovation.se>'
 } as const;
 
+// Admin notification recipients
+export const ADMIN_EMAILS = 'info@jphinnovation.se, micke.ohlen@gmail.com';
+
 // Initialize nodemailer transporter
 export const createTransporter = () => nodemailer.createTransport({
   host: smtpHost.value(),

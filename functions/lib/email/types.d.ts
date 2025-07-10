@@ -41,6 +41,7 @@ export interface B2CCustomerInfo {
     firstName?: string;
     lastName?: string;
     lang?: string;
+    preferredLang?: string;
 }
 export interface OrderItem {
     name: string;

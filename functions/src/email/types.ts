@@ -47,6 +47,7 @@ export interface B2CCustomerInfo {
   firstName?: string;
   lastName?: string;
   lang?: string;
+  preferredLang?: string;
 }
 
 // Order item structure

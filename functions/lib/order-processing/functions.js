@@ -395,7 +395,7 @@ exports.testOrderUpdate = (0, https_1.onRequest)(async (req, res) => {
         const template = (0, emails_1.getEmail)('orderShipped', userData.preferredLang || 'sv-SE', { orderData, userData });
         const testEmail = {
             to: userData.email,
-            from: `"B8Shield" <info@b8shield.com>`,
+            from: `"B8Shield" <info@jphinnovation.se>`,
             subject: template.subject,
             text: template.text,
             html: template.html,
@@ -403,7 +403,7 @@ exports.testOrderUpdate = (0, https_1.onRequest)(async (req, res) => {
         // Also send to admin
         const adminEmail = {
             to: "micke.ohlen@gmail.com",
-            from: `"B8Shield System" <info@b8shield.com>`,
+            from: `"B8Shield System" <info@jphinnovation.se>`,
             subject: `Manual Test: Order Status Update - ${orderData.orderNumber}`,
             text: `This is a manual test of the order status update email system.\n\nOrder: ${orderData.orderNumber}\nCustomer: ${userData.email}\nTest Status: shipped`,
             html: `<h2>Manual Test: Order Status Update</h2><p>This is a manual test of the order status update email system.</p><p><strong>Order:</strong> ${orderData.orderNumber}</p><p><strong>Customer:</strong> ${userData.email}</p><p><strong>Test Status:</strong> shipped</p>`

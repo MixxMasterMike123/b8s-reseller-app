@@ -1,9 +1,8 @@
-import * as functions from 'firebase-functions';
 import { UserData, OrderData, B2BOrderConfirmationData, CustomerWelcomeData, AffiliateWelcomeData, B2COrderEmailData } from './types';
-export declare const sendCustomerWelcomeEmail: functions.https.CallableFunction<CustomerWelcomeData, any, unknown>;
-export declare const sendAffiliateWelcomeEmail: functions.https.CallableFunction<AffiliateWelcomeData, any, unknown>;
-export declare const sendB2BOrderConfirmationAdmin: functions.https.CallableFunction<B2BOrderConfirmationData, any, unknown>;
-export declare const sendB2BOrderConfirmationCustomer: functions.https.CallableFunction<B2BOrderConfirmationData, any, unknown>;
+export declare const sendCustomerWelcomeEmail: import("firebase-functions/v2/https").CallableFunction<CustomerWelcomeData, any, unknown>;
+export declare const sendAffiliateWelcomeEmail: import("firebase-functions/v2/https").CallableFunction<AffiliateWelcomeData, any, unknown>;
+export declare const sendB2BOrderConfirmationAdmin: import("firebase-functions/v2/https").CallableFunction<B2BOrderConfirmationData, any, unknown>;
+export declare const sendB2BOrderConfirmationCustomer: import("firebase-functions/v2/https").CallableFunction<B2BOrderConfirmationData, any, unknown>;
 interface OrderStatusData extends OrderData {
     trackingNumber?: string;
     carrier?: string;
@@ -13,23 +12,23 @@ interface OrderStatusEmailData {
     orderData: OrderStatusData;
     status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 }
-export declare const sendOrderStatusEmail: functions.https.CallableFunction<OrderStatusEmailData, any, unknown>;
-export declare const sendB2COrderNotificationAdmin: functions.https.CallableFunction<B2COrderEmailData, any, unknown>;
-export declare const sendB2COrderPendingEmail: functions.https.CallableFunction<B2COrderEmailData, any, unknown>;
-export declare const sendOrderConfirmationEmails: functions.CloudFunction<functions.firestore.FirestoreEvent<functions.firestore.QueryDocumentSnapshot | undefined, {
+export declare const sendOrderStatusEmail: import("firebase-functions/v2/https").CallableFunction<OrderStatusEmailData, any, unknown>;
+export declare const sendB2COrderNotificationAdmin: import("firebase-functions/v2/https").CallableFunction<B2COrderEmailData, any, unknown>;
+export declare const sendB2COrderPendingEmail: import("firebase-functions/v2/https").CallableFunction<B2COrderEmailData, any, unknown>;
+export declare const sendOrderConfirmationEmails: import("firebase-functions/core").CloudFunction<import("firebase-functions/v2/firestore").FirestoreEvent<import("firebase-functions/v2/firestore").QueryDocumentSnapshot | undefined, {
     orderId: string;
 }>>;
-export declare const sendUserActivationEmail: functions.CloudFunction<functions.firestore.FirestoreEvent<functions.firestore.Change<functions.firestore.QueryDocumentSnapshot> | undefined, {
+export declare const sendUserActivationEmail: import("firebase-functions/core").CloudFunction<import("firebase-functions/v2/firestore").FirestoreEvent<import("firebase-functions/v2/firestore").Change<import("firebase-functions/v2/firestore").QueryDocumentSnapshot> | undefined, {
     userId: string;
 }>>;
-export declare const sendOrderStatusUpdateEmail: functions.CloudFunction<functions.firestore.FirestoreEvent<functions.firestore.Change<functions.firestore.QueryDocumentSnapshot> | undefined, {
+export declare const sendOrderStatusUpdateEmail: import("firebase-functions/core").CloudFunction<import("firebase-functions/v2/firestore").FirestoreEvent<import("firebase-functions/v2/firestore").Change<import("firebase-functions/v2/firestore").QueryDocumentSnapshot> | undefined, {
     orderId: string;
 }>>;
-export declare const updateCustomerEmail: functions.https.CallableFunction<{
+export declare const updateCustomerEmail: import("firebase-functions/v2/https").CallableFunction<{
     userId: string;
     newEmail: string;
 }, any, unknown>;
-export declare const testEmail: functions.https.HttpsFunction;
+export declare const testEmail: import("firebase-functions/v2/https").HttpsFunction;
 interface AffiliateApplicationData {
     applicationId: string;
     checkoutDiscount?: number;
@@ -45,5 +44,5 @@ interface AffiliateApplicationData {
     message?: string;
     preferredLang?: string;
 }
-export declare const approveAffiliate: functions.https.CallableFunction<AffiliateApplicationData, any, unknown>;
+export declare const approveAffiliate: import("firebase-functions/v2/https").CallableFunction<AffiliateApplicationData, any, unknown>;
 export {};

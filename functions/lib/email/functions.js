@@ -24,7 +24,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.approveAffiliate = exports.testEmail = exports.updateCustomerEmail = exports.sendOrderStatusUpdateEmail = exports.sendUserActivationEmail = exports.sendOrderConfirmationEmails = exports.sendB2COrderPendingEmail = exports.sendB2COrderNotificationAdmin = exports.sendOrderStatusEmail = exports.sendB2BOrderConfirmationCustomer = exports.sendB2BOrderConfirmationAdmin = exports.sendAffiliateWelcomeEmail = exports.sendCustomerWelcomeEmail = void 0;
-const functions = __importStar(require("firebase-functions"));
 const firestore_1 = require("firebase-functions/v2/firestore");
 const https_1 = require("firebase-functions/v2/https");
 const app_1 = require("firebase-admin/app");
@@ -218,7 +217,7 @@ exports.sendB2BOrderConfirmationAdmin = (0, https_1.onCall)(async (request) => {
             totalAmount
         };
         const emailTemplate = (0, emails_1.getEmail)('b2bOrderConfirmationAdmin', 'sv-SE', templateParams);
-        const emailData = createEmailData(email_handler_1.EMAIL_FROM.system, email_handler_1.EMAIL_FROM.system, emailTemplate, templateParams);
+        const emailData = createEmailData(email_handler_1.ADMIN_EMAILS, email_handler_1.EMAIL_FROM.system, emailTemplate, templateParams);
         await (0, email_handler_1.sendEmail)(emailData);
         console.log(`B2B order confirmation sent to admin for order ${orderData.orderNumber}`);
         return { success: true };
@@ -312,7 +311,7 @@ exports.sendB2COrderNotificationAdmin = (0, https_1.onCall)(async (request) => {
             orderData,
             customerInfo
         });
-        const emailData = createEmailData(email_handler_1.EMAIL_FROM.system, email_handler_1.EMAIL_FROM.system, emailTemplate, {
+        const emailData = createEmailData(email_handler_1.ADMIN_EMAILS, email_handler_1.EMAIL_FROM.system, emailTemplate, {
             orderData,
             userData: {
                 email: customerInfo.email,
@@ -361,59 +360,90 @@ exports.sendB2COrderPendingEmail = (0, https_1.onCall)(async (request) => {
         throw new Error('Failed to send B2C order confirmation to customer');
     }
 });
-// Error handling helper
-function handleError(error) {
-    if (error instanceof Error) {
-        throw new functions.https.HttpsError('internal', error.message);
-    }
-    throw new functions.https.HttpsError('internal', 'An unknown error occurred');
-}
 // Send order confirmation emails on order creation
-exports.sendOrderConfirmationEmails = (0, firestore_1.onDocumentCreated)('orders/{orderId}', async (event) => {
+exports.sendOrderConfirmationEmails = (0, firestore_1.onDocumentCreated)({
+    document: 'orders/{orderId}',
+    database: 'b8s-reseller-db'
+}, async (event) => {
     try {
         const orderData = event.data?.data();
         if (!orderData?.orderNumber || !orderData.items || !orderData.items.length) {
             console.error('Invalid order data:', orderData);
             return;
         }
-        // Get user data
-        const userDoc = orderData.userId ? await email_handler_1.db.collection('users').doc(orderData.userId).get() : null;
-        const userData = userDoc?.data();
-        if (!userData?.email) {
-            console.error('User data not found for order:', orderData.orderNumber);
-            return;
+        console.log(`Email trigger fired for order ${orderData.orderNumber} from named database`);
+        let customerEmail = '';
+        let customerName = '';
+        let customerTemplate = null;
+        // Handle B2C (guest or simple auth user) vs B2B (full auth user)
+        if (orderData.source === 'b2c') {
+            // B2C Order - use customerInfo directly
+            customerEmail = orderData.customerInfo?.email || '';
+            customerName = orderData.customerInfo?.firstName || 'Customer';
+            if (customerEmail) {
+                const customerLang = orderData.customerInfo?.preferredLang || 'sv-SE';
+                customerTemplate = (0, emails_1.getEmail)('b2cOrderPending', customerLang, {
+                    orderData,
+                    customerInfo: orderData.customerInfo
+                });
+                console.log(`Using customer language: ${customerLang} for B2C email`);
+            }
+            console.log(`B2C order processed for customer: ${customerEmail}`);
         }
-        // Send confirmation emails
-        const emailTemplate = (0, emails_1.getEmail)('orderConfirmed', userData.preferredLang || 'sv-SE', {
+        else {
+            // B2B Order - lookup user data
+            if (!orderData.userId) {
+                console.error('B2B order missing userId:', orderData.orderNumber);
+                return;
+            }
+            const userDoc = await email_handler_1.db.collection('users').doc(orderData.userId).get();
+            if (!userDoc.exists) {
+                console.error(`B2B user with ID ${orderData.userId} not found for order ${orderData.orderNumber}`);
+                return;
+            }
+            const userData = userDoc.data();
+            customerEmail = userData.email;
+            customerName = userData.contactPerson || userData.companyName || '';
+            customerTemplate = (0, emails_1.getEmail)('orderConfirmed', userData.preferredLang || 'sv-SE', {
+                orderData,
+                userData,
+                customerInfo: orderData.customerInfo
+            });
+            console.log(`B2B order processed for customer: ${customerEmail}`);
+        }
+        // 1. Send email to customer (if email is available and template was generated)
+        if (customerEmail && customerTemplate) {
+            const emailData = createEmailData(customerEmail, orderData.source === 'b2c' ? email_handler_1.EMAIL_FROM.b2c : email_handler_1.EMAIL_FROM.b2b, customerTemplate, {
+                orderData,
+                customerInfo: orderData.customerInfo
+            });
+            await (0, email_handler_1.sendEmail)(emailData);
+            console.log(`Order confirmation email sent to ${customerEmail}`);
+        }
+        else {
+            console.log(`No customer email available or template could not be generated for order ${orderData.orderNumber}. Skipping customer confirmation.`);
+        }
+        // 2. Send admin notification
+        const adminTemplate = (0, emails_1.getEmail)('adminB2COrderNotification', 'sv-SE', {
             orderData,
-            userData,
-            customerInfo: orderData.customerInfo
+            customerInfo: orderData.customerInfo || { email: customerEmail, firstName: customerName }
         });
-        const emailData = createEmailData(userData.email, email_handler_1.EMAIL_FROM.system, emailTemplate, {
+        const adminEmailData = createEmailData(email_handler_1.ADMIN_EMAILS, email_handler_1.EMAIL_FROM.system, adminTemplate, {
             orderData,
-            userData,
-            customerInfo: orderData.customerInfo
-        });
-        await (0, email_handler_1.sendEmail)(emailData);
-        // Send admin notification
-        const adminTemplate = (0, emails_1.getEmail)('orderConfirmed', 'sv-SE', {
-            orderData,
-            userData,
-            customerInfo: orderData.customerInfo
-        });
-        const adminEmailData = createEmailData('info@b8shield.com', email_handler_1.EMAIL_FROM.system, adminTemplate, {
-            orderData,
-            userData,
-            customerInfo: orderData.customerInfo
+            customerInfo: orderData.customerInfo || { email: customerEmail, firstName: customerName }
         });
         await (0, email_handler_1.sendEmail)(adminEmailData);
+        console.log(`Admin notification sent for order ${orderData.orderNumber}`);
     }
     catch (error) {
-        handleError(error);
+        console.error(`Error sending confirmation emails for order ${event.params?.orderId}:`, error);
     }
 });
 // Send email when user is activated
-exports.sendUserActivationEmail = (0, firestore_1.onDocumentUpdated)('users/{userId}', async (event) => {
+exports.sendUserActivationEmail = (0, firestore_1.onDocumentUpdated)({
+    document: 'users/{userId}',
+    database: 'b8s-reseller-db'
+}, async (event) => {
     try {
         const beforeData = event.data?.before.data();
         const afterData = event.data?.after.data();
@@ -466,7 +496,10 @@ exports.sendUserActivationEmail = (0, firestore_1.onDocumentUpdated)('users/{use
     }
 });
 // Send order status update emails
-exports.sendOrderStatusUpdateEmail = (0, firestore_1.onDocumentUpdated)('orders/{orderId}', async (event) => {
+exports.sendOrderStatusUpdateEmail = (0, firestore_1.onDocumentUpdated)({
+    document: 'orders/{orderId}',
+    database: 'b8s-reseller-db'
+}, async (event) => {
     try {
         const beforeData = event.data?.before.data();
         const afterData = event.data?.after.data();
@@ -524,7 +557,7 @@ exports.sendOrderStatusUpdateEmail = (0, firestore_1.onDocumentUpdated)('orders/
             </div>
           `
                 };
-                const adminEmailData = createEmailData("micke.ohlen@gmail.com", email_handler_1.EMAIL_FROM.system, adminTemplate, {
+                const adminEmailData = createEmailData(email_handler_1.ADMIN_EMAILS, email_handler_1.EMAIL_FROM.system, adminTemplate, {
                     orderData: afterData,
                     userData
                 });
@@ -619,7 +652,7 @@ exports.testEmail = (0, https_1.onRequest)(async (req, res) => {
             text: "This is a test email to verify Gmail SMTP integration is working.",
             html: "<h2>Test Email</h2><p>This is a test email to verify Gmail SMTP integration is working.</p>"
         };
-        const emailData = createEmailData("micke.ohlen@gmail.com", `"B8Shield Test" <info@b8shield.com>`, testEmailTemplate, {});
+        const emailData = createEmailData("micke.ohlen@gmail.com", email_handler_1.EMAIL_FROM.system, testEmailTemplate, {});
         await (0, email_handler_1.sendEmail)(emailData);
         console.log('Test email sent successfully');
         res.status(200).json({
