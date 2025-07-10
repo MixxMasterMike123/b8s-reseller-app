@@ -453,12 +453,14 @@ export const sendOrderConfirmationEmails = onDocumentCreated(
   async (event) => {
   try {
     const orderData = event.data?.data() as OrderData;
+    const orderId = event.params?.orderId; // Get the Firebase document ID
+    
     if (!orderData?.orderNumber || !orderData.items || !orderData.items.length) {
       console.error('Invalid order data:', orderData);
       return;
     }
 
-    console.log(`Email trigger fired for order ${orderData.orderNumber} from named database`);
+    console.log(`Email trigger fired for order ${orderData.orderNumber} (ID: ${orderId}) from named database`);
 
     let customerEmail: string = '';
     let customerName: string = '';
@@ -474,7 +476,8 @@ export const sendOrderConfirmationEmails = onDocumentCreated(
         const customerLang = orderData.customerInfo?.preferredLang || 'sv-SE';
         customerTemplate = getEmail('b2cOrderPending', customerLang, {
           orderData,
-          customerInfo: orderData.customerInfo
+          customerInfo: orderData.customerInfo,
+          orderId // Pass the Firebase document ID for order tracking URL
         } as any);
         console.log(`Using customer language: ${customerLang} for B2C email`);
       }
@@ -501,7 +504,8 @@ export const sendOrderConfirmationEmails = onDocumentCreated(
       customerTemplate = getEmail('orderConfirmed', userData.preferredLang || 'sv-SE', {
         orderData,
         userData,
-        customerInfo: orderData.customerInfo
+        customerInfo: orderData.customerInfo,
+        orderId // Pass the Firebase document ID for order tracking URL
       } as any);
 
       console.log(`B2B order processed for customer: ${customerEmail}`);
@@ -528,7 +532,8 @@ export const sendOrderConfirmationEmails = onDocumentCreated(
     // 2. Send admin notification
     const adminTemplate = getEmail('adminB2COrderNotification', 'sv-SE', {
       orderData,
-      customerInfo: orderData.customerInfo || { email: customerEmail, firstName: customerName }
+      customerInfo: orderData.customerInfo || { email: customerEmail, firstName: customerName },
+      orderId // Pass the Firebase document ID for order tracking URL
     } as any);
 
     const adminEmailData = createEmailData(

@@ -18,11 +18,11 @@ function formatPrice(price) {
   return `${price.toFixed(0)} SEK`;
 }
 
-module.exports = ({ lang = 'sv-SE', orderData, customerInfo }) => {
-  const { orderNumber, id, items = [], subtotal = 0, shipping = 0, vat = 0, total = 0, discountAmount = 0, affiliateCode } = orderData;
+module.exports = ({ lang = 'sv-SE', orderData, customerInfo, orderId }) => {
+  const { orderNumber, items = [], subtotal = 0, shipping = 0, vat = 0, total = 0, discountAmount = 0, affiliateCode } = orderData;
   const customerName = customerInfo.firstName + (customerInfo.lastName ? ' ' + customerInfo.lastName : '') || customerInfo.name || 'Kund';
   const segment = segmentFromLang(lang);
-  const orderUrl = `${APP_URLS.B2C_SHOP}/${segment}/order-confirmation/${id || ''}`;
+  const orderUrl = `${APP_URLS.B2C_SHOP}/${segment}/order-confirmation/${orderId || ''}`;
 
   const templates = {
     'sv-SE': {
@@ -72,16 +72,20 @@ JPH Innovation AB
       <h4 style="color: #065f46; margin-top: 0; margin-bottom: 15px;">🛒 DINA PRODUKTER:</h4>
       <div style="background-color: white; border-radius: 4px; padding: 15px;">
         ${items.map(item => `
-          <div style="border-bottom: 1px solid #e5e7eb; padding: 10px 0; display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; flex: 1;">
-              <img src="${item.b2cImageUrl || item.imageUrl || ''}" alt="${getProductName(item, lang)}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; margin-right: 12px; border: 1px solid #e5e7eb;" onerror="this.style.display='none';" />
-              <div style="flex: 1;">
-                <div style="font-weight: bold; color: #1f2937;">${getProductName(item, lang)}</div>
+          <table style="width: 100%; border-bottom: 1px solid #e5e7eb; padding: 10px 0; margin-bottom: 8px;">
+            <tr>
+              <td style="width: 60px; vertical-align: top; padding-right: 12px;">
+                ${item.image ? `<img src="${item.image}" alt="${getProductName(item, lang)}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb; display: block;" />` : ''}
+              </td>
+              <td style="vertical-align: top; padding-right: 12px;">
+                <div style="font-weight: bold; color: #1f2937; margin-bottom: 4px;">${getProductName(item, lang)}</div>
                 <div style="font-size: 14px; color: #6b7280;">Kvantitet: ${item.quantity} st × ${formatPrice(item.price)}</div>
-              </div>
-            </div>
-            <div style="font-weight: bold; color: #1f2937;">${formatPrice(item.price * item.quantity)}</div>
-          </div>
+              </td>
+              <td style="vertical-align: top; text-align: right; white-space: nowrap;">
+                <div style="font-weight: bold; color: #1f2937; font-size: 16px;">${formatPrice(item.price * item.quantity)}</div>
+              </td>
+            </tr>
+          </table>
         `).join('')}
       </div>
     </div>
@@ -89,29 +93,33 @@ JPH Innovation AB
     <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 25px;">
       <h4 style="color: #92400e; margin-top: 0; margin-bottom: 15px;">💰 ORDERSAMMANFATTNING:</h4>
       <div style="background-color: white; border-radius: 4px; padding: 15px;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-          <span style="color: #374151;">Delsumma:</span>
-          <span style="color: #374151; font-weight: bold;">${formatPrice(subtotal)}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-          <span style="color: #374151;">Frakt:</span>
-          <span style="color: #374151; font-weight: bold;">${formatPrice(shipping)}</span>
-        </div>
-        ${discountAmount > 0 ? `
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-          <span style="color: #059669;">Rabatt ${affiliateCode ? '(' + affiliateCode + ')' : ''}:</span>
-          <span style="color: #059669; font-weight: bold;">-${formatPrice(discountAmount)}</span>
-        </div>
-        ` : ''}
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-          <span style="color: #374151;">Moms (25%):</span>
-          <span style="color: #374151; font-weight: bold;">${formatPrice(vat)}</span>
-        </div>
-        <hr style="border: none; border-top: 2px solid #f59e0b; margin: 15px 0;">
-        <div style="display: flex; justify-content: space-between;">
-          <span style="color: #1f2937; font-size: 18px; font-weight: bold;">TOTALT:</span>
-          <span style="color: #1f2937; font-size: 18px; font-weight: bold;">${formatPrice(total)}</span>
-        </div>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr style="margin-bottom: 8px;">
+            <td style="color: #374151; padding: 4px 0;">Delsumma:</td>
+            <td style="color: #374151; font-weight: bold; text-align: right; padding: 4px 0;">${formatPrice(subtotal)}</td>
+          </tr>
+          <tr style="margin-bottom: 8px;">
+            <td style="color: #374151; padding: 4px 0;">Frakt:</td>
+            <td style="color: #374151; font-weight: bold; text-align: right; padding: 4px 0;">${formatPrice(shipping)}</td>
+          </tr>
+          ${discountAmount > 0 ? `
+          <tr style="margin-bottom: 8px;">
+            <td style="color: #059669; padding: 4px 0;">Rabatt ${affiliateCode ? '(' + affiliateCode + ')' : ''}:</td>
+            <td style="color: #059669; font-weight: bold; text-align: right; padding: 4px 0;">-${formatPrice(discountAmount)}</td>
+          </tr>
+          ` : ''}
+          <tr style="margin-bottom: 8px;">
+            <td style="color: #374151; padding: 4px 0;">Moms (25%):</td>
+            <td style="color: #374151; font-weight: bold; text-align: right; padding: 4px 0;">${formatPrice(vat)}</td>
+          </tr>
+          <tr>
+            <td colspan="2" style="border-top: 2px solid #f59e0b; padding: 15px 0 0 0;"></td>
+          </tr>
+          <tr>
+            <td style="color: #1f2937; font-size: 18px; font-weight: bold; padding: 4px 0;">TOTALT:</td>
+            <td style="color: #1f2937; font-size: 18px; font-weight: bold; text-align: right; padding: 4px 0;">${formatPrice(total)}</td>
+          </tr>
+        </table>
       </div>
     </div>
 
@@ -175,16 +183,20 @@ JPH Innovation AB
       <h4 style="color: #065f46; margin-top: 0; margin-bottom: 15px;">🛒 YOUR PRODUCTS:</h4>
       <div style="background-color: white; border-radius: 4px; padding: 15px;">
         ${items.map(item => `
-          <div style="border-bottom: 1px solid #e5e7eb; padding: 10px 0; display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; flex: 1;">
-              <img src="${item.b2cImageUrl || item.imageUrl || ''}" alt="${getProductName(item, lang)}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; margin-right: 12px; border: 1px solid #e5e7eb;" onerror="this.style.display='none';" />
-              <div style="flex: 1;">
-                <div style="font-weight: bold; color: #1f2937;">${getProductName(item, lang)}</div>
+          <table style="width: 100%; border-bottom: 1px solid #e5e7eb; padding: 10px 0; margin-bottom: 8px;">
+            <tr>
+              <td style="width: 60px; vertical-align: top; padding-right: 12px;">
+                ${item.image ? `<img src="${item.image}" alt="${getProductName(item, lang)}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb; display: block;" />` : ''}
+              </td>
+              <td style="vertical-align: top; padding-right: 12px;">
+                <div style="font-weight: bold; color: #1f2937; margin-bottom: 4px;">${getProductName(item, lang)}</div>
                 <div style="font-size: 14px; color: #6b7280;">Quantity: ${item.quantity} pcs × ${formatPrice(item.price)}</div>
-              </div>
-            </div>
-            <div style="font-weight: bold; color: #1f2937;">${formatPrice(item.price * item.quantity)}</div>
-          </div>
+              </td>
+              <td style="vertical-align: top; text-align: right; white-space: nowrap;">
+                <div style="font-weight: bold; color: #1f2937; font-size: 16px;">${formatPrice(item.price * item.quantity)}</div>
+              </td>
+            </tr>
+          </table>
         `).join('')}
       </div>
     </div>
@@ -192,29 +204,33 @@ JPH Innovation AB
     <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 25px;">
       <h4 style="color: #92400e; margin-top: 0; margin-bottom: 15px;">💰 ORDER SUMMARY:</h4>
       <div style="background-color: white; border-radius: 4px; padding: 15px;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-          <span style="color: #374151;">Subtotal:</span>
-          <span style="color: #374151; font-weight: bold;">${formatPrice(subtotal)}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-          <span style="color: #374151;">Shipping:</span>
-          <span style="color: #374151; font-weight: bold;">${formatPrice(shipping)}</span>
-        </div>
-        ${discountAmount > 0 ? `
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-          <span style="color: #059669;">Discount ${affiliateCode ? '(' + affiliateCode + ')' : ''}:</span>
-          <span style="color: #059669; font-weight: bold;">-${formatPrice(discountAmount)}</span>
-        </div>
-        ` : ''}
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-          <span style="color: #374151;">VAT (25%):</span>
-          <span style="color: #374151; font-weight: bold;">${formatPrice(vat)}</span>
-        </div>
-        <hr style="border: none; border-top: 2px solid #f59e0b; margin: 15px 0;">
-        <div style="display: flex; justify-content: space-between;">
-          <span style="color: #1f2937; font-size: 18px; font-weight: bold;">TOTAL:</span>
-          <span style="color: #1f2937; font-size: 18px; font-weight: bold;">${formatPrice(total)}</span>
-        </div>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr style="margin-bottom: 8px;">
+            <td style="color: #374151; padding: 4px 0;">Subtotal:</td>
+            <td style="color: #374151; font-weight: bold; text-align: right; padding: 4px 0;">${formatPrice(subtotal)}</td>
+          </tr>
+          <tr style="margin-bottom: 8px;">
+            <td style="color: #374151; padding: 4px 0;">Shipping:</td>
+            <td style="color: #374151; font-weight: bold; text-align: right; padding: 4px 0;">${formatPrice(shipping)}</td>
+          </tr>
+          ${discountAmount > 0 ? `
+          <tr style="margin-bottom: 8px;">
+            <td style="color: #059669; padding: 4px 0;">Discount ${affiliateCode ? '(' + affiliateCode + ')' : ''}:</td>
+            <td style="color: #059669; font-weight: bold; text-align: right; padding: 4px 0;">-${formatPrice(discountAmount)}</td>
+          </tr>
+          ` : ''}
+          <tr style="margin-bottom: 8px;">
+            <td style="color: #374151; padding: 4px 0;">VAT (25%):</td>
+            <td style="color: #374151; font-weight: bold; text-align: right; padding: 4px 0;">${formatPrice(vat)}</td>
+          </tr>
+          <tr>
+            <td colspan="2" style="border-top: 2px solid #f59e0b; padding: 15px 0 0 0;"></td>
+          </tr>
+          <tr>
+            <td style="color: #1f2937; font-size: 18px; font-weight: bold; padding: 4px 0;">TOTAL:</td>
+            <td style="color: #1f2937; font-size: 18px; font-weight: bold; text-align: right; padding: 4px 0;">${formatPrice(total)}</td>
+          </tr>
+        </table>
       </div>
     </div>
 
@@ -233,6 +249,14 @@ JPH Innovation AB
     }
   };
 
-  const resolvedLang = templates[lang] ? lang : (lang.startsWith('en') ? 'en-GB' : 'sv-SE');
+  // Handle US English the same as UK English  
+  let resolvedLang = lang;
+  if (lang === 'en-US') {
+    resolvedLang = 'en-GB';
+  } else if (!templates[lang]) {
+    resolvedLang = lang.startsWith('en') ? 'en-GB' : 'sv-SE';
+  }
+  
+  console.log(`B2C Email: Input lang=${lang}, resolved to=${resolvedLang}`);
   return templates[resolvedLang];
 }; 
