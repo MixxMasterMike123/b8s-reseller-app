@@ -8,9 +8,9 @@ function getProductName(item, lang) {
   return item.name || 'Okänd produkt';
 }
 
-// Helper function to format price excluding VAT
+// Helper function to format price excluding VAT (B2B requires exact pricing for bookkeeping)
 function formatPriceExclVAT(price) {
-  return `${price.toFixed(0)} SEK`;
+  return `${price.toFixed(2)} SEK`;
 }
 
 module.exports = ({ lang = 'sv-SE', orderData, userData, orderId }) => {
