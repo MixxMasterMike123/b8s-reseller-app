@@ -2,9 +2,48 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
 const { getFirestore, Timestamp, query, where, getDocs, orderBy, limit, FieldValue } = require("firebase-admin/firestore");
-
+const cors = require('cors')({
+  origin: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true
+});
 const APP_URLS = require('./config');
 const { getEmail } = require('./emails');
+
+// 🛡️ RATE LIMITING CONFIGURATION
+// Adjust these based on your business needs and customer growth
+const RATE_LIMITS = {
+  // AI/Content Generation (expensive operations)
+  AI_REQUESTS: {
+    perMinute: 30,      // 30 requests/minute per IP (good for 10-20 active users per IP)
+    windowMs: 60000     // 1 minute window
+  },
+  
+  // Order Processing (business critical)
+  ORDER_PROCESSING: {
+    perWindow: 15,      // 15 orders per 5 minutes per IP (handles bulk customers)
+    windowMs: 300000    // 5 minute window
+  },
+  
+  // Email Sending (spam prevention)
+  EMAIL_SENDING: {
+    perMinute: 20,      // 20 emails/minute per IP (handles status updates)
+    windowMs: 60000     // 1 minute window
+  },
+  
+  // Weather/Data API calls (moderate cost)
+  API_CALLS: {
+    perMinute: 100,     // 100 calls/minute per IP (generous for legitimate use)
+    windowMs: 60000     // 1 minute window
+  }
+};
+
+// Business Scale Recommendations:
+// SMALL (1-50 customers):     Current limits are perfect
+// MEDIUM (50-200 customers):  Increase AI_REQUESTS to 50, ORDER_PROCESSING to 25  
+// LARGE (200+ customers):     Increase AI_REQUESTS to 100, ORDER_PROCESSING to 50
+// Consider moving to per-user limits instead of per-IP for large scale
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -261,137 +300,136 @@ exports.logAffiliateClick = functions
  * [NEW & REFACTORED] This is an HTTP function invoked from the client-side after
  * a successful B2C order creation. Using HTTP instead of Callable for better CORS support.
  */
-// MIGRATED TO V2: processB2COrderCompletion HTTP function
-// exports.processB2COrderCompletion = functions
-//   .runWith({
-//     timeoutSeconds: 60,
-//     memory: '256MB'
-//   })
-//   .region('us-central1')
-//   .https.onRequest(async (req, res) => {
-//     // Enable CORS
-//     res.set('Access-Control-Allow-Origin', APP_URLS.B2C_SHOP);
-//     res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-//     res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-//     res.set('Access-Control-Max-Age', '3600');
-// 
-//     // Handle preflight requests
-//     if (req.method === 'OPTIONS') {
-//       res.status(204).send('');
-//       return;
-//     }
-// 
-//     // Only allow POST
-//     if (req.method !== 'POST') {
-//       res.status(405).send('Method Not Allowed');
-//       return;
-//     }
-// 
-//     try {
-//       const { orderId } = req.body;
-// 
-//       if (!orderId) {
-//         res.status(400).json({ 
-//           success: false, 
-//           error: 'The function must be called with an "orderId".' 
-//         });
-//         return;
-//       }
-// 
-//       console.log(`Processing B2C order completion for orderId: ${orderId}`);
-//       const localDb = db; // Use the correct named database
-// 
-//       // --- Start of Affiliate Conversion Logic ---
-//       const orderRef = localDb.collection('orders').doc(orderId);
-//       const orderSnap = await orderRef.get();
-// 
-//       if (!orderSnap.exists) {
-//         console.error(`Order ${orderId} not found in b8s-reseller-db.`);
-//         res.status(404).json({ 
-//           success: false, 
-//           error: `Order ${orderId} not found in database` 
-//         });
-//         return;
-//       }
-// 
-//       const orderData = orderSnap.data();
-//       const { affiliateCode, discountCode } = orderData;
-// 
-//       if (!affiliateCode) {
-//         console.log('No affiliate code found for order, skipping commission.');
-//         res.json({ success: true, message: 'Order processed (no affiliate)' });
-//         return;
-//       }
-// 
-//       // Get affiliate details
-//       const affiliateSnap = await localDb
-//         .collection('affiliates')
-//         .where('affiliateCode', '==', affiliateCode)
-//         .where('status', '==', 'active')
-//         .limit(1)
-//         .get();
-// 
-//       if (affiliateSnap.empty) {
-//         console.error(`No active affiliate found for code: ${affiliateCode}`);
-//         res.json({ success: true, message: 'Order processed (invalid affiliate)' });
-//         return;
-//       }
-// 
-//       const affiliateDoc = affiliateSnap.docs[0];
-//       const affiliate = affiliateDoc.data();
-// 
-//       // Calculate commission
-//       const orderTotal = orderData.total || 0;
-//       const commissionRate = affiliate.commissionRate || 15; // Default 15%
-//       const commissionAmount = (orderTotal * (commissionRate / 100));
-// 
-//       // Update affiliate stats
-//       await affiliateDoc.ref.update({
-//         'stats.conversions': FieldValue.increment(1),
-//         'stats.totalEarnings': FieldValue.increment(commissionAmount),
-//         'stats.balance': FieldValue.increment(commissionAmount)
-//       });
-// 
-//       // Update the click to mark conversion
-//       if (orderData.affiliateClickId) {
-//         await localDb
-//           .collection('affiliateClicks')
-//           .doc(orderData.affiliateClickId)
-//           .update({
-//             converted: true,
-//             orderId: orderId,
-//             commissionAmount: commissionAmount
-//           });
-//       }
-// 
-//       // Determine attribution method for analytics
-//       let attributionMethod = null;
-//       if (orderData.affiliateClickId) {
-//         attributionMethod = 'server';
-//       } else if (affiliateCode) {
-//         attributionMethod = 'cookie';
-//       } else if (discountCode) {
-//         attributionMethod = 'discount';
-//       }
-//       if (attributionMethod) {
-//         await orderRef.update({ attributionMethod });
-//       }
-// 
-//       console.log(`Successfully processed affiliate commission for order ${orderId}`);
-//       res.json({ 
-//         success: true, 
-//         message: 'Order processed with affiliate commission',
-//         commission: commissionAmount 
-//       });
-// 
-//     } catch (error) {
-//       console.error('Error processing B2C order completion:', error);
-//       res.status(500).json({ 
-//         success: false, 
-//         error: 'Internal server error processing order' 
-//       });
-//     }
-// });
+exports.processB2COrderCompletion = functions
+  .runWith({
+    timeoutSeconds: 60,
+    memory: '256MB'
+  })
+  .region('us-central1')
+  .https.onRequest(async (req, res) => {
+    // Enable CORS
+    res.set('Access-Control-Allow-Origin', APP_URLS.B2C_SHOP);
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.set('Access-Control-Max-Age', '3600');
+
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    // Only allow POST
+    if (req.method !== 'POST') {
+      res.status(405).send('Method Not Allowed');
+      return;
+    }
+
+    try {
+      const { orderId } = req.body;
+
+  if (!orderId) {
+        res.status(400).json({ 
+          success: false, 
+          error: 'The function must be called with an "orderId".' 
+        });
+        return;
+  }
+
+  console.log(`Processing B2C order completion for orderId: ${orderId}`);
+  const localDb = db; // Use the correct named database
+
+  // --- Start of Affiliate Conversion Logic ---
+  const orderRef = localDb.collection('orders').doc(orderId);
+  const orderSnap = await orderRef.get();
+
+  if (!orderSnap.exists) {
+    console.error(`Order ${orderId} not found in b8s-reseller-db.`);
+        res.status(404).json({ 
+          success: false, 
+          error: `Order ${orderId} not found in database` 
+        });
+        return;
+      }
+
+    const orderData = orderSnap.data();
+      const { affiliateCode, discountCode } = orderData;
+
+      if (!affiliateCode) {
+        console.log('No affiliate code found for order, skipping commission.');
+        res.json({ success: true, message: 'Order processed (no affiliate)' });
+        return;
+      }
+
+      // Get affiliate details
+      const affiliateSnap = await localDb
+        .collection('affiliates')
+        .where('affiliateCode', '==', affiliateCode)
+        .where('status', '==', 'active')
+        .limit(1)
+        .get();
+
+      if (affiliateSnap.empty) {
+        console.error(`No active affiliate found for code: ${affiliateCode}`);
+        res.json({ success: true, message: 'Order processed (invalid affiliate)' });
+        return;
+      }
+
+      const affiliateDoc = affiliateSnap.docs[0];
+        const affiliate = affiliateDoc.data();
+
+      // Calculate commission
+      const orderTotal = orderData.total || 0;
+      const commissionRate = affiliate.commissionRate || 15; // Default 15%
+      const commissionAmount = (orderTotal * (commissionRate / 100));
+
+      // Update affiliate stats
+      await affiliateDoc.ref.update({
+        'stats.conversions': FieldValue.increment(1),
+        'stats.totalEarnings': FieldValue.increment(commissionAmount),
+        'stats.balance': FieldValue.increment(commissionAmount)
+      });
+
+      // Update the click to mark conversion
+      if (orderData.affiliateClickId) {
+        await localDb
+          .collection('affiliateClicks')
+          .doc(orderData.affiliateClickId)
+          .update({
+                converted: true,
+                orderId: orderId,
+            commissionAmount: commissionAmount
+          });
+      }
+
+      // Determine attribution method for analytics
+      let attributionMethod = null;
+      if (orderData.affiliateClickId) {
+        attributionMethod = 'server';
+      } else if (affiliateCode) {
+        attributionMethod = 'cookie';
+      } else if (discountCode) {
+        attributionMethod = 'discount';
+      }
+      if (attributionMethod) {
+        await orderRef.update({ attributionMethod });
+      }
+
+      console.log(`Successfully processed affiliate commission for order ${orderId}`);
+      res.json({ 
+        success: true, 
+        message: 'Order processed with affiliate commission',
+        commission: commissionAmount 
+      });
+
+          } catch (error) {
+      console.error('Error processing B2C order completion:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Internal server error processing order' 
+      });
+    }
+});
 
 /**
  * [DEPRECATED] This trigger is no longer reliable due to the named database limitation.
@@ -410,43 +448,294 @@ exports.processAffiliateConversion = functions.firestore
  * NOTE: This trigger may not work reliably with named databases in some Firebase setups.
  * If emails aren't being sent, consider calling sendOrderConfirmationHttp directly from client.
  */
-// MIGRATED TO V2: Email functions
-/*
 exports.sendOrderConfirmationEmails = functions.firestore
   .document("orders/{orderId}")
   .onCreate(async (snapshot, context) => {
-    // ... function implementation ...
+    try {
+      const orderData = snapshot.data();
+      const orderId = context.params.orderId;
+
+      console.log(`Email trigger fired for order ${orderId} from named database`);
+
+      let customerEmail;
+      let customerName;
+      const adminTemplate = getEmail('adminB2COrderNotification', 'sv-SE', { orderData });
+
+      // Handle B2C (guest or simple auth user) vs B2B (full auth user)
+      if (orderData.source === 'b2c') {
+        customerEmail = orderData.customerInfo.email;
+        customerName = orderData.customerInfo.firstName || 'Customer';
+        
+        // If a B2C user is logged in, add that to the admin email
+        if(orderData.userId) {
+           adminTemplate.subject = `New B2C Order (Logged-in User): ${orderData.orderNumber}`;
+           adminTemplate.html += `<p><strong>User ID:</strong> ${orderData.userId}</p>`;
+        }
+      
+      } else { // Legacy or B2B order
+        // Use the named database for B2B user lookup
+        const userSnapshot = await db
+          .collection("users")
+          .doc(orderData.userId)
+          .get();
+
+        if (!userSnapshot.exists) {
+          console.error(`B2B user with ID ${orderData.userId} not found for order ${orderId}.`);
+          // Don't send customer email if we can't find them
+        } else {
+          const userData = userSnapshot.data();
+          customerEmail = userData.email;
+          customerName = userData.contactPerson || userData.companyName;
+          
+          adminTemplate.subject = `New B2B Order Received: ${orderData.orderNumber}`;
+          adminTemplate.html = `
+            <div style="font-family: Arial, sans-serif;">
+              <h2>New B2B Order Received</h2>
+              <p><strong>Order Number:</strong> ${orderData.orderNumber}</p>
+              <p><strong>Company:</strong> ${userData.companyName}</p>
+              <p><strong>Contact:</strong> ${userData.contactPerson}</p>
+              <p><strong>Email:</strong> ${userData.email}</p>
+              <h3>Order Details:</h3>
+              <ul>
+                ${orderData.items.map(item => `<li>${item.name} - ${item.quantity} pcs @ ${item.price} SEK</li>`).join('')}
+              </ul>
+              <p><strong>Total Amount:</strong> ${orderData.totalAmount || orderData.total} SEK</p>
+              ${orderData.affiliateCode ? `<p><strong>Affiliate Code:</strong> ${orderData.affiliateCode}</p>` : ''}
+            </div>
+          `;
+        }
+      }
+
+      // 1. Send email to customer (if email is available)
+      if (customerEmail) {
+        let customerTemplate;
+
+        if (orderData.source === 'b2c') {
+          customerTemplate = getB2CEmailTemplate('pending', orderData, { name: customerName });
+        } else {
+          // For B2B, we need the full userData object for the original template
+          const userSnapshot = await db.collection("users").doc(orderData.userId).get();
+          if (userSnapshot.exists) {
+            customerTemplate = getEmailTemplate('pending', orderData, userSnapshot.data());
+          }
+        }
+        
+        if (customerTemplate) {
+            const mailOptions = {
+              from: orderData.source === 'b2c' ? EMAIL_FROM.b2c : EMAIL_FROM.b2b,
+              to: customerEmail,
+              subject: customerTemplate.subject,
+              text: customerTemplate.text,
+              html: customerTemplate.html,
+            };
+
+            await transporter.sendMail(mailOptions);
+            console.log(`Order confirmation email sent to ${customerEmail}`);
+        } else {
+            console.log(`Could not generate email template for order ${orderId}. Skipping customer confirmation.`);
+        }
+      } else {
+         console.log(`No customer email available for order ${orderId}. Skipping customer confirmation.`);
+      }
+
+      // 2. Send email to admin
+      const adminMailOptions = {
+        from: EMAIL_FROM.system,
+        to: "info@jphinnovation.se", // Admin's email address
+        subject: adminTemplate.subject,
+        html: adminTemplate.html,
+      };
+      
+      await transporter.sendMail(adminMailOptions);
+      console.log(`Admin notification sent for order ${orderId}.`);
+
+    } catch (error) {
+      console.error(`Error sending confirmation emails for order ${context.params.orderId}:`, error);
+    }
   });
-*/
 
 /**
  * Send email to user when their account is activated
  */
-/*
 exports.sendUserActivationEmail = functions.firestore
   .document("users/{userId}")
   .onUpdate(async (change, context) => {
-    // ... function implementation ...
+    try {
+      const beforeData = change.before.data();
+      const afterData = change.after.data();
+      const userId = context.params.userId;
+
+      // Check if user was activated
+      if (!beforeData.isActive && afterData.isActive) {
+        const email = {
+          from: EMAIL_FROM.b2b,
+          to: afterData.email,
+          subject: "Ditt B8Shield-konto är nu aktivt",
+          text: `
+            Hej ${afterData.contactPerson},
+            
+            Ditt B8Shield-konto för ${afterData.companyName} har aktiverats!
+            
+            Du kan nu logga in med ditt användarnamn och lösenord på:
+            ${APP_URLS.B2B_PORTAL}
+            
+            Om du har några frågor, kontakta vår support.
+            
+            Med vänliga hälsningar,
+            B8Shield Team
+          `,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
+              </div>
+              <h2>Hej ${afterData.contactPerson},</h2>
+              
+              <p>Ditt B8Shield-konto för <strong>${afterData.companyName}</strong> har aktiverats!</p>
+              
+              <p>Du kan nu logga in med ditt användarnamn och lösenord på:<br>
+              <a href="${APP_URLS.B2B_PORTAL}">B8Shield Portal</a></p>
+              
+              <p>Om du har några frågor, kontakta vår support.</p>
+              
+              <p>Med vänliga hälsningar,<br>B8Shield Team</p>
+            </div>
+          `,
+        };
+        
+        await transporter.sendMail(email);
+        console.log(`Activation email sent to user ${userId}`);
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("Error sending user activation email:", error);
+      return null;
+    }
   });
-*/
 
 /**
  * Send order status update emails when order status changes
  */
-/*
 exports.sendOrderStatusUpdateEmail = functions.firestore
   .document("orders/{orderId}")
   .onUpdate(async (change, context) => {
-    // ... function implementation ...
-  });
-*/
+    try {
+      const beforeData = change.before.data();
+      const afterData = change.after.data();
+      const orderId = context.params.orderId;
 
-// MIGRATED TO V2: Test email function
-/*
+      // Check if status changed
+      if (beforeData.status !== afterData.status) {
+        // Get user data
+        const userSnapshot = await db
+          .collection("users")
+          .doc(afterData.userId)
+          .get();
+        
+        if (!userSnapshot.exists) {
+          console.error(`User ${afterData.userId} not found for order ${orderId}`);
+          return null;
+        }
+
+        const userData = userSnapshot.data();
+        const template = getEmailTemplate(afterData.status, afterData, userData);
+
+        // Email to user
+        const email = {
+          from: afterData.source === 'b2c' ? EMAIL_FROM.b2c : EMAIL_FROM.b2b,
+          to: userData.email,
+          subject: template.subject,
+          text: template.text,
+          html: template.html,
+        };
+        
+        // Send email to user
+        await transporter.sendMail(email);
+        
+        // Also notify admin for important status changes
+        if (['shipped', 'delivered', 'cancelled'].includes(afterData.status)) {
+          const adminEmail = {
+            from: EMAIL_FROM.system,
+            to: "micke.ohlen@gmail.com",
+            subject: `Order Status Update: ${afterData.orderNumber}`,
+            text: `
+              Order ${afterData.orderNumber} status has been updated to: ${afterData.status}
+              
+              Customer: ${userData.companyName} (${userData.email})
+              Contact: ${userData.contactPerson}
+              
+              ${afterData.trackingNumber ? `Tracking: ${afterData.trackingNumber}` : ''}
+              ${afterData.carrier ? `Carrier: ${afterData.carrier}` : ''}
+            `,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                  <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
+                </div>
+                <h2>Order Status Update</h2>
+                <p><strong>Order:</strong> ${afterData.orderNumber}</p>
+                <p><strong>New Status:</strong> ${afterData.status}</p>
+                
+                <h3>Customer:</h3>
+                <p>${userData.companyName} (${userData.email})<br>
+                Contact: ${userData.contactPerson}</p>
+                
+                ${afterData.trackingNumber ? `<p><strong>Tracking:</strong> ${afterData.trackingNumber}</p>` : ''}
+                ${afterData.carrier ? `<p><strong>Carrier:</strong> ${afterData.carrier}</p>` : ''}
+              </div>
+            `,
+          };
+          
+          await transporter.sendMail(adminEmail);
+        }
+        
+        console.log(`Status update email sent for order ${orderId}: ${beforeData.status} -> ${afterData.status}`);
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("Error sending order status update email:", error);
+      return null;
+    }
+  });
+
+// Test email function
 exports.testEmail = functions.https.onRequest(async (req, res) => {
-  // ... function implementation ...
+  try {
+    console.log('Testing email functionality...');
+    
+    const testEmail = {
+      from: `"B8Shield Test" <info@b8shield.com>`,
+      to: "micke.ohlen@gmail.com",
+      subject: "Test Email from B8Shield Portal",
+      text: "This is a test email to verify Gmail SMTP integration is working.",
+      html: "<h2>Test Email</h2><p>This is a test email to verify Gmail SMTP integration is working.</p>"
+    };
+
+    await transporter.sendMail(testEmail);
+    console.log('Test email sent successfully');
+    
+    res.status(200).json({ 
+      success: true, 
+      message: 'Test email sent successfully',
+      config: {
+        service: 'gmail',
+        from_email: 'b8shield.reseller@gmail.com'
+      }
+    });
+  } catch (error) {
+    console.error('Error sending test email:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      config: {
+        service: 'gmail',
+        from_email: 'b8shield.reseller@gmail.com'
+      }
+    });
+  }
 });
-*/
 
 // Function to create test data in the default database
 exports.createTestData = functions.https.onRequest(async (req, res) => {
@@ -1208,9 +1497,7 @@ exports.emergencyRestore = functions.https.onRequest(async (req, res) => {
   }
 });
 
-// MIGRATED TO V2: HTTP email functions
-// See: src/email/functions.ts
-/*
+// HTTP-triggered email function for order confirmations (called from frontend)
 exports.sendOrderConfirmationHttp = functions.https.onRequest(async (req, res) => {
   try {
     // Enable CORS
@@ -1301,11 +1588,7 @@ exports.sendOrderConfirmationHttp = functions.https.onRequest(async (req, res) =
   }
 });
 
-*/
-
-// MIGRATED TO V2: HTTP email functions
-// See: src/email/functions.ts
-/*
+// HTTP-triggered email function for status updates (called from frontend)
 exports.sendStatusUpdateHttp = functions.https.onRequest(async (req, res) => {
   // 🛡️ EMAIL SPAM PROTECTION: Limit email sending per IP
   const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
@@ -2853,18 +3136,206 @@ async function generateTemporaryPassword() {
  * Send Customer Welcome Email and Create Firebase Auth Account
  * This function is called by admin to activate a customer account
  */
-// MIGRATED TO V2: Customer welcome email function
-/*
 exports.sendCustomerWelcomeEmail = functions.https.onCall(async (data, context) => {
-  // ... function implementation ...
-});
-*/
+  // Verify admin authentication
+  if (!context.auth || !context.auth.uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+  }
 
-// MIGRATED TO V2: Update customer email function
-/*
-exports.updateCustomerEmail = functions.https.onCall(async (data, context) => {
-  // ... function implementation ...
+  try {
+    // Get admin user data to verify permissions
+    const adminDoc = await db.collection('users').doc(context.auth.uid).get();
+    if (!adminDoc.exists || adminDoc.data().role !== 'admin') {
+      throw new functions.https.HttpsError('permission-denied', 'User must be admin');
+    }
+
+    const { customerId } = data;
+    if (!customerId) {
+      throw new functions.https.HttpsError('invalid-argument', 'Customer ID is required');
+    }
+
+    // Get customer data
+    const customerDoc = await db.collection('users').doc(customerId).get();
+    if (!customerDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Customer not found');
+    }
+
+    const customerData = customerDoc.data();
+    
+    // Check if credentials already sent
+    if (customerData.credentialsSent) {
+      throw new functions.https.HttpsError('already-exists', 'Credentials have already been sent to this customer');
+    }
+
+    // Generate temporary password
+    const temporaryPassword = await generateTemporaryPassword();
+
+    // Create or update Firebase Auth account for the customer
+    let authUser;
+    let isExistingUser = false;
+    
+    try {
+      // First, try to get existing user
+      try {
+        authUser = await admin.auth().getUserByEmail(customerData.email);
+        isExistingUser = true;
+        console.log(`Found existing Firebase Auth user for ${customerData.email}`);
+        
+        // Update existing user's password and display name
+        await admin.auth().updateUser(authUser.uid, {
+          password: temporaryPassword,
+          displayName: customerData.contactPerson,
+          emailVerified: true
+        });
+        console.log(`Updated existing user password for ${customerData.email}`);
+        
+      } catch (getUserError) {
+        if (getUserError.code === 'auth/user-not-found') {
+          // User doesn't exist, create new
+          authUser = await admin.auth().createUser({
+            email: customerData.email,
+            password: temporaryPassword,
+            displayName: customerData.contactPerson,
+            emailVerified: true,
+          });
+          console.log(`Created new Firebase Auth user for ${customerData.email}`);
+        } else {
+          throw getUserError;
+        }
+      }
+    } catch (authError) {
+      console.error(`Firebase Auth error for ${customerData.email}:`, authError);
+      throw new functions.https.HttpsError('internal', `Failed to setup auth account: ${authError.message}`);
+    }
+
+    // Update customer document with activation info
+    await db.collection('users').doc(customerId).update({
+      credentialsSent: true,
+      credentialsSentAt: Timestamp.now(),
+      credentialsSentBy: context.auth.uid,
+      temporaryPassword: temporaryPassword, // Store for admin reference (consider encryption in production)
+      firebaseAuthUid: authUser.uid,
+      requiresPasswordChange: true,
+      active: true, // Activate the account
+      updatedAt: Timestamp.now()
+    });
+
+    // Prepare and send welcome email
+    const emailTemplate = getWelcomeEmailTemplate(customerData, temporaryPassword);
+    
+    const mailOptions = {
+      from: EMAIL_FROM.affiliate,
+      to: customerData.email,
+      subject: emailTemplate.subject,
+      text: emailTemplate.text,
+      html: emailTemplate.html,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    console.log(`Welcome email sent successfully to ${customerData.email} for customer ${customerId} (${isExistingUser ? 'existing' : 'new'} user)`);
+
+    return {
+      success: true,
+      message: isExistingUser 
+        ? 'Welcome email sent and existing customer account updated successfully' 
+        : 'Welcome email sent and new customer account created successfully',
+      customerId: customerId,
+      email: customerData.email,
+      temporaryPassword: temporaryPassword, // Return for admin reference
+      isExistingUser: isExistingUser,
+      authAction: isExistingUser ? 'updated' : 'created'
+    };
+
+  } catch (error) {
+    console.error('Error in sendCustomerWelcomeEmail:', error);
+    
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    
+    throw new functions.https.HttpsError('internal', `Failed to send welcome email: ${error.message}`);
+  }
 });
+
+// Update customer email (admin only)
+exports.updateCustomerEmail = functions.https.onCall(async (data, context) => {
+  // Verify if the caller is authenticated
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Måste vara inloggad');
+  }
+
+  // Get admin status from named database (using the same db instance as the rest of the file)
+  const callerDoc = await db
+    .collection('users')
+    .doc(context.auth.uid)
+    .get();
+
+  if (!callerDoc.exists || callerDoc.data().role !== 'admin') {
+    throw new functions.https.HttpsError('permission-denied', 'Måste vara administratör');
+  }
+
+  const { userId, newEmail } = data;
+
+  try {
+    // Get customer data from Firestore
+    const customerDoc = await db.collection('users').doc(userId).get();
+    if (!customerDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Kunden kunde inte hittas');
+    }
+    
+    const customerData = customerDoc.data();
+    
+    // Check if Firebase Auth account exists, if not create one
+    let authUser;
+    try {
+      // Try to get existing auth user by the current email
+      authUser = await admin.auth().getUserByEmail(customerData.email);
+      console.log(`Found existing Firebase Auth user for ${customerData.email}`);
+      
+      // Update existing user's email
+      await admin.auth().updateUser(authUser.uid, {
+        email: newEmail,
+        emailVerified: false
+      });
+      console.log(`Updated existing user email to ${newEmail}`);
+      
+    } catch (authError) {
+      if (authError.code === 'auth/user-not-found') {
+        // User doesn't exist in Firebase Auth, create new account
+        console.log(`Creating new Firebase Auth account for ${newEmail}`);
+        authUser = await admin.auth().createUser({
+          email: newEmail,
+          displayName: customerData.contactPerson || customerData.companyName,
+          emailVerified: false,
+        });
+        console.log(`Created new Firebase Auth user: ${authUser.uid}`);
+        
+        // Update Firestore with the new auth UID
+        await db.collection('users').doc(userId).update({
+          firebaseAuthUid: authUser.uid,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        
+      } else {
+        throw authError;
+      }
+    }
+
+    // Update email in Firestore
+    await db
+      .collection('users')
+      .doc(userId)
+      .update({
+        email: newEmail,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+    return { 
+      success: true, 
+      message: 'E-post uppdaterad framgångsrikt',
+      authAccountCreated: !authUser.uid // true if we created a new account
+    };
   } catch (error) {
     console.error('Error updating user email:', error);
     if (error.code && error.code.startsWith('auth/')) {

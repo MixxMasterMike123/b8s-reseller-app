@@ -44,9 +44,26 @@ module.exports = ({ lang = 'sv-SE', appData, affiliateCode, tempPassword, loginI
   <p>Good luck with your sales!</p>
   <p>Best regards,<br>The B8Shield Team</p>
 </div>`
+    },
+    'en-US': {
+      subject: 'Welcome to the B8Shield Affiliate Program!',
+      html: `
+<div style="font-family: Arial, sans-serif; max-width: 600px;">
+  <h2>Congratulations, ${appData.name}!</h2>
+  <p>Your application to the B8Shield affiliate program has been approved.</p>
+  <p>Here are your login credentials for the <a href="${portalUrl}">Affiliate Portal</a>:</p>
+  ${loginInstructions}
+  <hr>
+  <h3>Your unique affiliate link:</h3>
+  <p>Use this link to earn commission on all purchases:</p>
+  <p><strong><a href="${referralUrl}">${referralUrl}</a></strong></p>
+  <br>
+  <p>Good luck with your sales!</p>
+  <p>Best regards,<br>The B8Shield Team</p>
+</div>`
     }
   };
 
-  const resolvedLang = templates[lang] ? lang : (lang.startsWith('en') ? 'en-GB' : 'sv-SE');
+  const resolvedLang = templates[lang] ? lang : (lang.startsWith('en') ? (lang === 'en-GB' ? 'en-GB' : 'en-US') : 'sv-SE');
   return templates[resolvedLang];
 }; 
