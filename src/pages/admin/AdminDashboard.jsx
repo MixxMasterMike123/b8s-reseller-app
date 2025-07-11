@@ -8,7 +8,7 @@ import { db } from '../../firebase/config';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import AdminPresence from '../../components/AdminPresence';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+
 
 import { 
   UserGroupIcon, 
@@ -25,7 +25,6 @@ const AdminDashboard = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [testResult, setTestResult] = useState(null);
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeUsers: 0,
@@ -33,18 +32,7 @@ const AdminDashboard = () => {
     recentOrders: []
   });
 
-  const handleTestV2Function = async () => {
-    try {
-      const functions = getFunctions();
-      const testFunction = httpsCallable(functions, 'exampleCallableFunction');
-      const result = await testFunction();
-      setTestResult(result.data);
-      console.log('V2 Function Result:', result.data);
-    } catch (err) {
-      console.error('Error testing V2 function:', err);
-      setTestResult({ error: err.message });
-    }
-  };
+
 
   // Helper function to format Firestore timestamps
   const formatOrderDate = (timestamp) => {
@@ -181,25 +169,7 @@ const AdminDashboard = () => {
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Test V2 Function Section */}
-        <div className="bg-white shadow rounded-lg mb-8">
-          <div className="px-4 py-5 sm:p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Test V2 Function</h2>
-            <button
-              onClick={handleTestV2Function}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Test Callable Function
-            </button>
-            {testResult && (
-              <div className="mt-4">
-                <pre className="bg-gray-50 p-4 rounded-md overflow-auto">
-                  {JSON.stringify(testResult, null, 2)}
-                </pre>
-              </div>
-            )}
-          </div>
-        </div>
+
 
         {/* Breadcrumb */}
         <nav className="mb-8">

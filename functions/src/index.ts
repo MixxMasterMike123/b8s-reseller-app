@@ -31,8 +31,7 @@ import {
 import {
   processB2COrderCompletionHttp,
   processB2COrderCompletion,
-  manualStatusUpdate,
-  testOrderUpdate
+  manualStatusUpdate
 } from './order-processing/functions';
 
 // Import customer-admin functions directly with original names
@@ -69,8 +68,7 @@ export {
 export {
   processB2COrderCompletionHttp as processB2COrderCompletionHttpV2,
   processB2COrderCompletion as processB2COrderCompletionV2,
-  manualStatusUpdate as manualStatusUpdateV2,
-  testOrderUpdate as testOrderUpdateV2
+  manualStatusUpdate as manualStatusUpdateV2
 };
 
 // Re-export customer-admin functions individually with V2 names (avoid V1 conflicts)
