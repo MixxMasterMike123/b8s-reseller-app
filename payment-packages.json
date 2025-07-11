@@ -1,0 +1,39 @@
+{
+  "name": "b8shield-payment-integration-packages",
+  "description": "Required packages for B8Shield payment integration",
+  "frontend_dependencies": {
+    "@stripe/stripe-js": "^2.0.0",
+    "@stripe/react-stripe-js": "^2.0.0"
+  },
+  "backend_dependencies": {
+    "stripe": "^14.0.0",
+    "@klarna/sdk-node": "^2.0.0"
+  },
+  "environment_variables": {
+    "frontend": [
+      "REACT_APP_STRIPE_PUBLIC_KEY"
+    ],
+    "backend": [
+      "STRIPE_SECRET_KEY",
+      "STRIPE_WEBHOOK_SECRET",
+      "KLARNA_USERNAME",
+      "KLARNA_PASSWORD",
+      "KLARNA_ENDPOINT",
+      "SWISH_MERCHANT_ID",
+      "SWISH_CERTIFICATE_PATH",
+      "SWISH_ENDPOINT"
+    ]
+  },
+  "installation_commands": {
+    "frontend": "npm install @stripe/stripe-js @stripe/react-stripe-js",
+    "backend": "cd functions && npm install stripe @klarna/sdk-node"
+  },
+  "firebase_config_commands": [
+    "firebase functions:config:set stripe.public_key=\"pk_test_your_key\"",
+    "firebase functions:config:set stripe.secret_key=\"sk_test_your_key\"",
+    "firebase functions:config:set stripe.webhook_secret=\"whsec_your_secret\"",
+    "firebase functions:config:set klarna.username=\"your_username\"",
+    "firebase functions:config:set klarna.password=\"your_password\"",
+    "firebase functions:config:set swish.merchant_id=\"your_merchant_id\""
+  ]
+} 

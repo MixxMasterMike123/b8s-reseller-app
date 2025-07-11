@@ -8,7 +8,8 @@ import {
   BookOpenIcon,
   PresentationChartBarIcon,
   ChartBarIcon, 
-  SparklesIcon 
+  SparklesIcon,
+  WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline';
 import { db } from '../../firebase/config';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
@@ -20,6 +21,7 @@ import AffiliateSuccessGuide from '../../components/affiliate/AffiliateSuccessGu
 import AffiliateMarketingMaterials from '../../components/AffiliateMarketingMaterials';
 import AffiliateAnalyticsTab from './AffiliateAnalyticsTab';
 import SmartPrice from '../../components/shop/SmartPrice';
+import { diagnoseAffiliateData } from '../../utils/affiliateDebug';
 import toast from 'react-hot-toast';
 import QRCode from 'qrcode';
 
@@ -31,6 +33,10 @@ const AffiliatePortal = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  
+  // Diagnostic state
+  const [diagnosticData, setDiagnosticData] = useState(null);
+  const [diagnosticLoading, setDiagnosticLoading] = useState(false);
   
   // Link Generator State
   const [selectedProduct, setSelectedProduct] = useState('');
@@ -191,6 +197,28 @@ const AffiliatePortal = () => {
     toast.success(t('affiliate_profile_saved', 'Profil sparad!'));
   };
 
+  // Run diagnostic
+  const runDiagnostic = async () => {
+    if (!affiliateData?.affiliateCode) return;
+    
+    setDiagnosticLoading(true);
+    try {
+      const results = await diagnoseAffiliateData(affiliateData.affiliateCode);
+      setDiagnosticData(results);
+      
+      if (results.recommendations.length > 0) {
+        toast.error(`🚨 Found ${results.recommendations.length} issues with your affiliate data`);
+      } else {
+        toast.success('✅ No data issues found!');
+      }
+    } catch (error) {
+      console.error('Diagnostic error:', error);
+      toast.error('Diagnostic failed: ' + error.message);
+    } finally {
+      setDiagnosticLoading(false);
+    }
+  };
+
   const safeGetContentValue = (content) => {
     if (!content) return '';
     
@@ -251,6 +279,11 @@ const AffiliatePortal = () => {
       icon: <ChartBarIcon className="h-5 w-5" />
     },
     {
+      id: 'diagnostic',
+      name: 'Debug',
+      icon: <WrenchScrewdriverIcon className="h-5 w-5" />
+    },
+    {
       id: 'profile',
       name: t('affiliate_portal_tab_profile', 'Profil'),
       icon: <SparklesIcon className="h-5 w-5" />
@@ -286,7 +319,7 @@ const AffiliatePortal = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">{t('affiliate_portal_total_earnings', 'Totala Intäkter')}</span>
-                  <span className="font-bold text-lg text-gray-800">
+                  <span className="font-bold text-lg text-green-600">
                     <SmartPrice 
                       sekPrice={affiliateData.stats.totalEarnings} 
                       variant="compact"
@@ -299,6 +332,111 @@ const AffiliatePortal = () => {
                   {t('affiliate_portal_request_payout', 'Begär utbetalning')}
                 </button>
             </aside>
+          </div>
+        );
+      case 'diagnostic':
+        return (
+          <div className="bg-white p-6 rounded-2xl shadow-lg">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">🔍 Affiliate Data Diagnostic</h2>
+            <p className="text-gray-600 mb-6">
+              This tool helps diagnose inconsistencies between your affiliate overview and analytics data.
+            </p>
+            
+            <button
+              onClick={runDiagnostic}
+              disabled={diagnosticLoading}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {diagnosticLoading ? 'Running Diagnostic...' : 'Run Diagnostic'}
+            </button>
+            
+            {diagnosticData && (
+              <div className="mt-6 space-y-4">
+                {/* Overview */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold mb-2">📊 Data Summary</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <strong>Current Stats (from overview):</strong>
+                      <ul className="mt-1">
+                        <li>Clicks: {diagnosticData.currentStats?.clicks || 0}</li>
+                        <li>Conversions: {diagnosticData.currentStats?.conversions || 0}</li>
+                        <li>Earnings: {diagnosticData.currentStats?.totalEarnings || 0} SEK</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <strong>Calculated from Orders:</strong>
+                      <ul className="mt-1">
+                        <li>Clicks: {diagnosticData.correctStats?.clicks || 0}</li>
+                        <li>Conversions: {diagnosticData.correctStats?.conversions || 0}</li>
+                        <li>Earnings: {diagnosticData.correctStats?.earnings || 0} SEK</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Issues */}
+                {diagnosticData.recommendations.length > 0 && (
+                  <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+                    <h3 className="font-semibold text-red-800 mb-2">🚨 Issues Found</h3>
+                    <ul className="text-sm text-red-700 space-y-1">
+                      {diagnosticData.recommendations.map((rec, index) => (
+                        <li key={index}>• {rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Field Mismatches */}
+                {diagnosticData.fieldMismatches.length > 0 && (
+                  <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                    <h3 className="font-semibold text-yellow-800 mb-2">⚠️ Field Mismatches</h3>
+                    <div className="text-sm text-yellow-700 space-y-2">
+                      {diagnosticData.fieldMismatches.slice(0, 5).map((mismatch, index) => (
+                        <div key={index} className="border-l-2 border-yellow-300 pl-2">
+                          <strong>Order {mismatch.orderNumber || mismatch.orderId.substring(0,8)}:</strong>
+                          <ul className="mt-1">
+                            {mismatch.issues.map((issue, issueIndex) => (
+                              <li key={issueIndex}>• {issue}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                      {diagnosticData.fieldMismatches.length > 5 && (
+                        <p className="text-xs">...and {diagnosticData.fieldMismatches.length - 5} more issues</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Commission Issues */}
+                {diagnosticData.commissionIssues.length > 0 && (
+                  <div className="bg-orange-50 border border-orange-200 p-4 rounded-lg">
+                    <h3 className="font-semibold text-orange-800 mb-2">💰 Commission Issues</h3>
+                    <div className="text-sm text-orange-700 space-y-2">
+                      {diagnosticData.commissionIssues.slice(0, 3).map((issue, index) => (
+                        <div key={index} className="border-l-2 border-orange-300 pl-2">
+                          <strong>Order {issue.orderId.substring(0,8)}:</strong>
+                          <p>Expected: {issue.expectedCommission.toFixed(2)} SEK (from {issue.orderTotal} SEK)</p>
+                          <p>Actual: {issue.actualCommission} SEK</p>
+                        </div>
+                      ))}
+                      {diagnosticData.commissionIssues.length > 3 && (
+                        <p className="text-xs">...and {diagnosticData.commissionIssues.length - 3} more orders missing commission</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Success */}
+                {diagnosticData.recommendations.length === 0 && (
+                  <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+                    <h3 className="font-semibold text-green-800 mb-2">✅ All Good!</h3>
+                    <p className="text-sm text-green-700">No data inconsistencies found in your affiliate system.</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         );
       case 'profile':
@@ -327,29 +465,28 @@ const AffiliatePortal = () => {
             {/* Preferred Language */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_language', 'Föredraget språk')}</label>
-              <select name="preferredLang" value={profileForm.preferredLang} onChange={handleProfileChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50">
-                <option value="sv-SE">{t('lang_swedish', 'Svenska')}</option>
-                <option value="en-GB">{t('lang_english_uk', 'English (UK)')}</option>
-                <option value="en-US">{t('lang_english_us', 'English (US)')}</option>
+              <select
+                name="preferredLang"
+                value={profileForm.preferredLang}
+                onChange={handleProfileChange}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50"
+              >
+                <option value="sv-SE">Svenska</option>
+                <option value="en-GB">English (UK)</option>
+                <option value="en-US">English (US)</option>
               </select>
             </div>
 
             {/* Phone */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_phone', 'Telefonnummer')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_phone', 'Telefon')}</label>
               <input name="phone" value={profileForm.phone} onChange={handleProfileChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50" />
             </div>
 
-            {/* Address 1 */}
+            {/* Address */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_address1', 'Adressrad 1')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_address', 'Adress')}</label>
               <input name="address1" value={profileForm.address1} onChange={handleProfileChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50" />
-            </div>
-
-            {/* Address 2 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_address2', 'Adressrad 2')}</label>
-              <input name="address2" value={profileForm.address2} onChange={handleProfileChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50" />
             </div>
 
             {/* City */}
@@ -422,19 +559,18 @@ const AffiliatePortal = () => {
     );
   }
 
-  if (!affiliateData) {
-     return (
+  if (error || !affiliateData) {
+    return (
       <div className="min-h-screen bg-gray-50">
-        <ShopNavigation />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-          <h1 className="text-2xl font-bold text-red-600">{t('affiliate_portal_no_access', 'Ingen åtkomst')}</h1>
-          <p className="text-gray-700 mt-2">{error || t('affiliate_portal_no_account', "Vi kunde inte hitta ett aktivt affiliate-konto kopplat till din e-post.")}</p>
-          <p className="text-gray-500 text-sm mt-1">{t('affiliate_portal_approval_note', 'Observera: Det kan ta några minuter efter godkännande innan portalen blir aktiv.')}</p>
-          <Link to="/affiliate-registration" className="mt-4 inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-            {t('affiliate_portal_apply_to_become', 'Ansök för att bli Affiliate')}
-          </Link>
+        <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">{t('affiliate_portal_title', 'Affiliate Portal')}</h1>
+            <p className="text-red-600 mb-8">{error}</p>
+            <Link to="/affiliate-registration" className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+              {t('affiliate_portal_apply_now', 'Ansök nu')}
+            </Link>
+          </div>
         </div>
-        <ShopFooter />
       </div>
     );
   }

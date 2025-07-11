@@ -14,6 +14,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode }) => {
   const [loading, setLoading] = useState(true);
   const [clicks, setClicks] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [debugMode, setDebugMode] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -41,8 +42,36 @@ const AffiliateAnalyticsTab = ({ affiliateCode }) => {
       const orderSnap = await getDocs(ordersQuery);
       const orderData = orderSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
+      // 🐛 DEBUG: Log sample order data to understand field structure
+      if (debugMode && orderData.length > 0) {
+        console.log('🔍 AFFILIATE DEBUG - Sample order data:', orderData[0]);
+        console.log('🔍 Available fields:', Object.keys(orderData[0]));
+      }
+
+      // Filter orders by date range (client-side filtering for date range)
+      const filteredOrders = orderData.filter(order => {
+        let orderDate;
+        if (order.createdAt?.seconds) {
+          orderDate = new Date(order.createdAt.seconds * 1000);
+        } else {
+          orderDate = new Date(order.createdAt);
+        }
+        return orderDate >= startDate;
+      });
+
       setClicks(clickData);
-      setOrders(orderData);
+      setOrders(filteredOrders);
+
+      // 🐛 DEBUG: Log data summary
+      if (debugMode) {
+        console.log(`📊 AFFILIATE DEBUG - Data summary:`, {
+          clicks: clickData.length,
+          totalOrders: orderData.length,
+          filteredOrders: filteredOrders.length,
+          dateRange: `${startDate.toLocaleDateString()} - ${new Date().toLocaleDateString()}`
+        });
+      }
+
     } catch (err) {
       console.error('Analytics fetch error', err);
     } finally {
@@ -84,12 +113,44 @@ const AffiliateAnalyticsTab = ({ affiliateCode }) => {
   const totals = useMemo(() => {
     const clicksCnt = clicks.length;
     const convCnt = orders.length;
-    const earnings = orders.reduce((sum, o) => sum + (o.affiliateCommission || 0), 0);
+    
+    // 🔧 FIXED: Use multiple field names for compatibility
+    const earnings = orders.reduce((sum, o) => {
+      // Try affiliateCommission first, then calculate from order total if missing
+      let commission = o.affiliateCommission || 0;
+      
+      // If no commission but has affiliate code, it might be missing - show debug info
+      if (!commission && o.affiliateCode && debugMode) {
+        console.log(`⚠️ Order ${o.id} missing commission - total: ${o.total || o.totalAmount}`);
+      }
+      
+      return sum + commission;
+    }, 0);
+    
     const rate = clicksCnt > 0 ? (convCnt / clicksCnt) * 100 : 0;
+    
+    // 🐛 DEBUG: Log calculation details
+    if (debugMode) {
+      console.log(`📊 AFFILIATE DEBUG - Calculations:`, {
+        clicks: clicksCnt,
+        conversions: convCnt,
+        earnings,
+        rate: rate.toFixed(1),
+        ordersWithCommission: orders.filter(o => o.affiliateCommission > 0).length,
+        ordersWithoutCommission: orders.filter(o => o.affiliateCode && !o.affiliateCommission).length
+      });
+    }
+    
     return { clicksCnt, convCnt, earnings, rate };
-  }, [clicks, orders]);
+  }, [clicks, orders, debugMode]);
 
   const formatCurrency = (amt) => new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(amt);
+
+  // 🔧 FIXED: Get order value using multiple field fallbacks
+  const getOrderValue = (order) => {
+    // Try multiple field names for compatibility
+    return order.total || order.totalAmount || order.subtotal || 0;
+  };
 
   if (loading) {
     return (
@@ -102,19 +163,64 @@ const AffiliateAnalyticsTab = ({ affiliateCode }) => {
 
   return (
     <div className="space-y-8">
-      {/* Range selector */}
-      <div className="flex items-center gap-3">
-        <span className="text-sm text-gray-600">{t('analytics_time_period', 'Tidsperiod')}:</span>
-        <select
-          value={range}
-          onChange={(e) => setRange(Number(e.target.value))}
-          className="border border-gray-300 rounded-md px-3 py-1 text-sm"
+      {/* Range selector with debug toggle */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-600">{t('analytics_time_period', 'Tidsperiod')}:</span>
+          <select
+            value={range}
+            onChange={(e) => setRange(Number(e.target.value))}
+            className="border border-gray-300 rounded-md px-3 py-1 text-sm"
+          >
+            <option value={7}>{t('analytics_days_7', '7 dagar')}</option>
+            <option value={30}>{t('analytics_days_30', '30 dagar')}</option>
+            <option value={90}>{t('analytics_days_90', '90 dagar')}</option>
+          </select>
+        </div>
+        
+        {/* Debug toggle for troubleshooting */}
+        <button
+          onClick={() => setDebugMode(!debugMode)}
+          className={`text-xs px-2 py-1 rounded ${debugMode ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-600'}`}
         >
-          <option value={7}>{t('analytics_days_7', '7 dagar')}</option>
-          <option value={30}>{t('analytics_days_30', '30 dagar')}</option>
-          <option value={90}>{t('analytics_days_90', '90 dagar')}</option>
-        </select>
+          {debugMode ? '🐛 Debug ON' : '🔍 Debug'}
+        </button>
       </div>
+
+      {/* Debug info panel */}
+      {debugMode && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-xs">
+          <h4 className="font-semibold text-yellow-800 mb-2">🐛 Debug Information</h4>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <strong>Data Summary:</strong>
+              <ul className="mt-1 text-yellow-700">
+                <li>Clicks: {clicks.length}</li>
+                <li>Orders: {orders.length}</li>
+                <li>Orders with commission: {orders.filter(o => o.affiliateCommission > 0).length}</li>
+                <li>Orders without commission: {orders.filter(o => o.affiliateCode && !o.affiliateCommission).length}</li>
+              </ul>
+            </div>
+            <div>
+              <strong>Field Usage:</strong>
+              <ul className="mt-1 text-yellow-700">
+                <li>Orders with 'total': {orders.filter(o => o.total).length}</li>
+                <li>Orders with 'totalAmount': {orders.filter(o => o.totalAmount).length}</li>
+                <li>Orders processed: {orders.filter(o => o.conversionProcessed).length}</li>
+              </ul>
+            </div>
+          </div>
+          <button 
+            onClick={() => {
+              console.log('🔍 Full orders data:', orders);
+              console.log('🔍 Full clicks data:', clicks);
+            }}
+            className="mt-2 bg-yellow-200 text-yellow-800 px-2 py-1 rounded text-xs"
+          >
+            Log full data to console
+          </button>
+        </div>
+      )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -129,6 +235,9 @@ const AffiliateAnalyticsTab = ({ affiliateCode }) => {
         <div className="bg-white p-4 rounded-lg shadow text-center">
           <p className="text-xs uppercase text-gray-500">{t('analytics_earnings', 'Intäkter')}</p>
           <p className="text-2xl font-semibold">{formatCurrency(totals.earnings)}</p>
+          {debugMode && totals.earnings === 0 && totals.convCnt > 0 && (
+            <p className="text-xs text-red-600 mt-1">⚠️ No earnings calculated</p>
+          )}
         </div>
         <div className="bg-white p-4 rounded-lg shadow text-center">
           <p className="text-xs uppercase text-gray-500">{t('analytics_conversion_rate', 'Konverteringsgrad')}</p>
@@ -164,17 +273,46 @@ const AffiliateAnalyticsTab = ({ affiliateCode }) => {
                 <th className="px-3 py-2">{t('analytics_order_id', 'Order #')}</th>
                 <th className="px-3 py-2">{t('analytics_order_value', 'Ordervärde')}</th>
                 <th className="px-3 py-2">{t('analytics_commission', 'Provision')}</th>
+                {debugMode && (
+                  <>
+                    <th className="px-3 py-2 text-xs">Status</th>
+                    <th className="px-3 py-2 text-xs">Fields</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody>
               {orders.slice(0,20).map(o => {
                 const created = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000) : new Date(o.createdAt);
+                const orderValue = getOrderValue(o);
+                const commission = o.affiliateCommission || 0;
+                
                 return (
                   <tr key={o.id} className="border-t">
                     <td className="px-3 py-1">{created.toLocaleDateString('sv-SE')}</td>
-                    <td className="px-3 py-1 font-mono">{o.id.substring(0,8)}…</td>
-                    <td className="px-3 py-1">{formatCurrency(o.totalAmount || 0)}</td>
-                    <td className="px-3 py-1">{formatCurrency(o.affiliateCommission || 0)}</td>
+                    <td className="px-3 py-1 font-mono">{o.orderNumber || o.id.substring(0,8)}…</td>
+                    <td className="px-3 py-1">
+                      {formatCurrency(orderValue)}
+                      {debugMode && orderValue === 0 && (
+                        <span className="text-red-500 text-xs ml-1">⚠️</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-1">
+                      {formatCurrency(commission)}
+                      {debugMode && commission === 0 && o.affiliateCode && (
+                        <span className="text-red-500 text-xs ml-1">⚠️ Missing</span>
+                      )}
+                    </td>
+                    {debugMode && (
+                      <>
+                        <td className="px-3 py-1 text-xs">
+                          {o.conversionProcessed ? '✅ Processed' : '❌ Not processed'}
+                        </td>
+                        <td className="px-3 py-1 text-xs">
+                          {o.total ? 'total' : o.totalAmount ? 'totalAmount' : 'none'}
+                        </td>
+                      </>
+                    )}
                   </tr>
                 );
               })}
