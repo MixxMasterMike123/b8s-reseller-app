@@ -293,13 +293,23 @@ export const LanguageCurrencyProvider = ({ children }) => {
   // Timeout fallback for when no redirect happens
   useEffect(() => {
     if (!urlCountryCode && typeof window !== 'undefined' && window.location.hostname === 'shop.b8shield.com') {
-      const timeoutId = setTimeout(() => {
-        console.log('🕐 No redirect after 2 seconds, using Swedish defaults');
-        updateLanguageAndCurrency('sv-SE', 'SEK', 'timeout-fallback', 'SE');
-        setIsLoading(false);
-      }, 2000);
+      // Double check that we're actually at the root path before setting timeout
+      const pathname = window.location.pathname;
+      const segments = pathname.split('/').filter(Boolean);
+      const hasCountryInPath = segments.length > 0 && segments[0].length === 2;
       
-      return () => clearTimeout(timeoutId);
+      if (!hasCountryInPath) {
+        console.log('🕐 Setting timeout for geo-redirect fallback');
+        const timeoutId = setTimeout(() => {
+          console.log('🕐 No redirect after 2 seconds, using Swedish defaults');
+          updateLanguageAndCurrency('sv-SE', 'SEK', 'timeout-fallback', 'SE');
+          setIsLoading(false);
+        }, 2000);
+        
+        return () => clearTimeout(timeoutId);
+      } else {
+        console.log('🌍 Country detected in path but not in params yet, waiting for router...');
+      }
     }
   }, [urlCountryCode, updateLanguageAndCurrency]);
 
