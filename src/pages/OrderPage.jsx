@@ -238,6 +238,7 @@ const OrderPage = () => {
         orderNumber: generateOrderNumber(),
         source: 'b2b',
         userId: currentUser.uid,
+        userEmail: currentUser.email,
         status: 'pending',
         items: items,
         

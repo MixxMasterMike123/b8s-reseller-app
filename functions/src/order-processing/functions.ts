@@ -381,8 +381,10 @@ export const manualStatusUpdate = onRequest(async (req, res) => {
   try {
     console.log('Manual status update test...');
     
-    // Get the first order
-    const ordersSnapshot = await db.collection('orders').limit(1).get();
+    // Get an order with a known valid userId (for testing email functionality)
+    const ordersSnapshot = await db.collection('orders')
+      .where('userId', 'in', ['9AudFilG8VeYHcFnKgUtQkByAmn1', 'hC7lYEBKFBcg8y36s0wzJ0onSqt1', 'hCu3TDpe5XZ0adTp5eGLpGxDvL13'])
+      .limit(1).get();
     
     if (ordersSnapshot.empty) {
       res.status(404).json({ 
@@ -433,8 +435,10 @@ export const testOrderUpdate = onRequest(async (req, res) => {
   try {
     console.log('Testing order status update email...');
     
-    // Get the first order from Firestore
-    const ordersSnapshot = await db.collection('orders').limit(1).get();
+    // Get an order with a known valid userId (for testing email functionality)
+    const ordersSnapshot = await db.collection('orders')
+      .where('userId', 'in', ['9AudFilG8VeYHcFnKgUtQkByAmn1', 'hC7lYEBKFBcg8y36s0wzJ0onSqt1', 'hCu3TDpe5XZ0adTp5eGLpGxDvL13'])
+      .limit(1).get();
     
     if (ordersSnapshot.empty) {
       res.status(404).json({ 

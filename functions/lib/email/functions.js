@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.approveAffiliate = exports.testEmail = exports.updateCustomerEmail = exports.sendOrderStatusUpdateEmail = exports.sendUserActivationEmail = exports.sendOrderConfirmationEmails = exports.sendB2COrderPendingEmail = exports.sendB2COrderNotificationAdmin = exports.sendOrderStatusEmail = exports.sendB2BOrderConfirmationCustomer = exports.sendB2BOrderConfirmationAdmin = exports.sendAffiliateWelcomeEmail = exports.sendCustomerWelcomeEmail = void 0;
+exports.sendStatusUpdateHttp = exports.approveAffiliate = exports.testEmail = exports.updateCustomerEmail = exports.sendOrderStatusUpdateEmail = exports.sendUserActivationEmail = exports.sendOrderConfirmationEmails = exports.sendB2COrderPendingEmail = exports.sendB2COrderNotificationAdmin = exports.sendOrderStatusEmail = exports.sendB2BOrderConfirmationCustomer = exports.sendB2BOrderConfirmationAdmin = exports.sendAffiliateWelcomeEmail = exports.sendCustomerWelcomeEmail = void 0;
 const firestore_1 = require("firebase-functions/v2/firestore");
 const https_1 = require("firebase-functions/v2/https");
 const app_1 = require("firebase-admin/app");
@@ -799,6 +799,110 @@ exports.approveAffiliate = (0, https_1.onCall)(async (request) => {
     catch (error) {
         console.error('Error approving affiliate:', error);
         throw new Error('Failed to approve affiliate');
+    }
+});
+// HTTP endpoint for sending order status update emails (called from frontend)
+exports.sendStatusUpdateHttp = (0, https_1.onRequest)({
+    cors: true,
+    region: 'us-central1',
+    memory: '256MiB',
+    timeoutSeconds: 60
+}, async (request, response) => {
+    try {
+        console.log('HTTP status update request received');
+        if (request.method !== 'POST') {
+            response.status(405).json({ success: false, error: 'Method not allowed' });
+            return;
+        }
+        const { orderId, orderData, userData, oldStatus, newStatus } = request.body;
+        if (!orderId || !orderData || !userData || !newStatus) {
+            response.status(400).json({
+                success: false,
+                error: 'Missing required data: orderId, orderData, userData, newStatus'
+            });
+            return;
+        }
+        console.log(`Sending status update emails for order ${orderId}: ${oldStatus} -> ${newStatus}`);
+        // Map status to correct email template name
+        const getTemplateNameForStatus = (status) => {
+            switch (status) {
+                case 'pending': return 'orderPending';
+                case 'confirmed': return 'orderConfirmed';
+                case 'processing': return 'orderProcessing';
+                case 'shipped': return 'orderShipped';
+                case 'delivered': return 'orderDelivered';
+                case 'cancelled': return 'orderCancelled';
+                default: return 'orderConfirmed'; // fallback
+            }
+        };
+        // Get email template for the new status
+        const templateName = getTemplateNameForStatus(newStatus);
+        const template = (0, emails_1.getEmail)(templateName, userData.preferredLang || 'sv-SE', {
+            userData,
+            orderData: { ...orderData, status: newStatus },
+            status: newStatus
+        });
+        // Customer status update email
+        const customerEmailData = createEmailData(userData.email, orderData.source === 'b2c' ? email_handler_1.EMAIL_FROM.b2c : email_handler_1.EMAIL_FROM.b2b, template, {
+            userData,
+            orderData: { ...orderData, status: newStatus },
+            status: newStatus
+        });
+        // Send customer email
+        await (0, email_handler_1.sendEmail)(customerEmailData);
+        // Also notify admin for important status changes
+        if (['shipped', 'delivered', 'cancelled'].includes(newStatus)) {
+            const adminTemplate = {
+                subject: `Order Status Update: ${orderData.orderNumber}`,
+                text: `
+            Order ${orderData.orderNumber} status has been updated to: ${newStatus}
+            
+            Customer: ${userData.companyName} (${userData.email})
+            Contact: ${userData.contactPerson}
+            
+            ${orderData.trackingNumber ? `Tracking: ${orderData.trackingNumber}` : ''}
+            ${orderData.carrier ? `Carrier: ${orderData.carrier}` : ''}
+          `,
+                html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <img src="${app_urls_1.appUrls.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
+              </div>
+              <h2>Order Status Update</h2>
+              <p><strong>Order:</strong> ${orderData.orderNumber}</p>
+              <p><strong>New Status:</strong> ${newStatus}</p>
+              
+              <h3>Customer:</h3>
+              <p>${userData.companyName} (${userData.email})<br>
+              Contact: ${userData.contactPerson}</p>
+              
+              ${orderData.trackingNumber ? `<p><strong>Tracking:</strong> ${orderData.trackingNumber}</p>` : ''}
+              ${orderData.carrier ? `<p><strong>Carrier:</strong> ${orderData.carrier}</p>` : ''}
+            </div>
+          `,
+            };
+            const adminEmailData = createEmailData(email_handler_1.ADMIN_EMAILS, email_handler_1.EMAIL_FROM.system, adminTemplate, {
+                userData,
+                orderData: { ...orderData, status: newStatus },
+                status: newStatus
+            });
+            await (0, email_handler_1.sendEmail)(adminEmailData);
+        }
+        console.log(`Status update emails sent for order ${orderId}: ${oldStatus} -> ${newStatus}`);
+        response.status(200).json({
+            success: true,
+            message: 'Status update emails sent successfully',
+            orderId: orderId,
+            orderNumber: orderData.orderNumber,
+            status: newStatus
+        });
+    }
+    catch (error) {
+        console.error('Error sending status update emails:', error);
+        response.status(500).json({
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        });
     }
 });
 //# sourceMappingURL=functions.js.map

@@ -273,7 +273,11 @@ const AdminOrders = () => {
                               {order.companyName || `${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''}`.trim() || 'Gäst'}
                             </div>
                             <div className="text-xs text-gray-500">
-                              {order.customerInfo?.email || 'Ingen e-post'}
+                              {/* B2C orders have customerInfo.email, B2B orders have userEmail or need lookup via userId */}
+                              {order.source === 'b2c' 
+                                ? (order.customerInfo?.email || 'Ingen e-post')
+                                : (order.userEmail || 'B2B kund - se detaljer')
+                              }
                             </div>
                           </div>
                         </div>

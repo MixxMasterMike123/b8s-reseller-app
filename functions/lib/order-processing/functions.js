@@ -317,8 +317,10 @@ exports.processB2COrderCompletion = (0, https_1.onCall)({
 exports.manualStatusUpdate = (0, https_1.onRequest)(async (req, res) => {
     try {
         console.log('Manual status update test...');
-        // Get the first order
-        const ordersSnapshot = await email_handler_1.db.collection('orders').limit(1).get();
+        // Get an order with a known valid userId (for testing email functionality)
+        const ordersSnapshot = await email_handler_1.db.collection('orders')
+            .where('userId', 'in', ['9AudFilG8VeYHcFnKgUtQkByAmn1', 'hC7lYEBKFBcg8y36s0wzJ0onSqt1', 'hCu3TDpe5XZ0adTp5eGLpGxDvL13'])
+            .limit(1).get();
         if (ordersSnapshot.empty) {
             res.status(404).json({
                 success: false,
@@ -361,8 +363,10 @@ exports.manualStatusUpdate = (0, https_1.onRequest)(async (req, res) => {
 exports.testOrderUpdate = (0, https_1.onRequest)(async (req, res) => {
     try {
         console.log('Testing order status update email...');
-        // Get the first order from Firestore
-        const ordersSnapshot = await email_handler_1.db.collection('orders').limit(1).get();
+        // Get an order with a known valid userId (for testing email functionality)
+        const ordersSnapshot = await email_handler_1.db.collection('orders')
+            .where('userId', 'in', ['9AudFilG8VeYHcFnKgUtQkByAmn1', 'hC7lYEBKFBcg8y36s0wzJ0onSqt1', 'hCu3TDpe5XZ0adTp5eGLpGxDvL13'])
+            .limit(1).get();
         if (ordersSnapshot.empty) {
             res.status(404).json({
                 success: false,

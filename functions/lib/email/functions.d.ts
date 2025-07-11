@@ -45,4 +45,5 @@ interface AffiliateApplicationData {
     preferredLang?: string;
 }
 export declare const approveAffiliate: import("firebase-functions/v2/https").CallableFunction<AffiliateApplicationData, any, unknown>;
+export declare const sendStatusUpdateHttp: import("firebase-functions/v2/https").HttpsFunction;
 export {};

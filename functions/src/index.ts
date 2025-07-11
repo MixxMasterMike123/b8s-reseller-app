@@ -23,7 +23,8 @@ import {
   sendOrderStatusUpdateEmail,
   updateCustomerEmail,
   testEmail,
-  approveAffiliate
+  approveAffiliate,
+  sendStatusUpdateHttp
 } from './email/functions';
 
 // Import order processing functions directly with original names
@@ -60,7 +61,8 @@ export {
   sendOrderStatusUpdateEmail as sendOrderStatusUpdateEmailV2,
   updateCustomerEmail as updateCustomerEmailV2,
   testEmail as testEmailV2,
-  approveAffiliate as approveAffiliateV2
+  approveAffiliate as approveAffiliateV2,
+  sendStatusUpdateHttp as sendStatusUpdateHttpV2
 };
 
 // Re-export order processing functions individually with V2 names (avoid V1 conflicts)

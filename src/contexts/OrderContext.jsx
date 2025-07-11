@@ -648,7 +648,7 @@ export const OrderProvider = ({ children }) => {
             contactPerson: 'Unknown'
           };
           
-          const response = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/sendStatusUpdateHttp', {
+          const response = await fetch('https://sendstatusupdatehttpv2-csdvvcrpzq-uc.a.run.app', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

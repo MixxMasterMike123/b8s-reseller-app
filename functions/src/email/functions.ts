@@ -1042,3 +1042,134 @@ export const approveAffiliate = onCall<AffiliateApplicationData>(async (request)
     throw new Error('Failed to approve affiliate');
   }
 }); 
+
+// HTTP endpoint for sending order status update emails (called from frontend)
+export const sendStatusUpdateHttp = onRequest(
+  {
+    cors: true,
+    region: 'us-central1',
+    memory: '256MiB',
+    timeoutSeconds: 60
+  },
+  async (request, response) => {
+    try {
+      console.log('HTTP status update request received');
+
+      if (request.method !== 'POST') {
+        response.status(405).json({ success: false, error: 'Method not allowed' });
+        return;
+      }
+
+      const { orderId, orderData, userData, oldStatus, newStatus } = request.body;
+
+      if (!orderId || !orderData || !userData || !newStatus) {
+        response.status(400).json({
+          success: false,
+          error: 'Missing required data: orderId, orderData, userData, newStatus'
+        });
+        return;
+      }
+
+      console.log(`Sending status update emails for order ${orderId}: ${oldStatus} -> ${newStatus}`);
+
+      // Map status to correct email template name
+      const getTemplateNameForStatus = (status: string): string => {
+        switch (status) {
+          case 'pending': return 'orderPending';
+          case 'confirmed': return 'orderConfirmed';
+          case 'processing': return 'orderProcessing';
+          case 'shipped': return 'orderShipped';
+          case 'delivered': return 'orderDelivered';
+          case 'cancelled': return 'orderCancelled';
+          default: return 'orderConfirmed'; // fallback
+        }
+      };
+
+      // Get email template for the new status
+      const templateName = getTemplateNameForStatus(newStatus);
+      const template = getEmail(templateName, userData.preferredLang || 'sv-SE', {
+        userData,
+        orderData: { ...orderData, status: newStatus },
+        status: newStatus
+      } as any);
+
+      // Customer status update email
+      const customerEmailData = createEmailData(
+        userData.email,
+        orderData.source === 'b2c' ? EMAIL_FROM.b2c : EMAIL_FROM.b2b,
+        template,
+        {
+          userData,
+          orderData: { ...orderData, status: newStatus },
+          status: newStatus
+        }
+      );
+
+      // Send customer email
+      await sendEmail(customerEmailData);
+
+      // Also notify admin for important status changes
+      if (['shipped', 'delivered', 'cancelled'].includes(newStatus)) {
+        const adminTemplate = {
+          subject: `Order Status Update: ${orderData.orderNumber}`,
+          text: `
+            Order ${orderData.orderNumber} status has been updated to: ${newStatus}
+            
+            Customer: ${userData.companyName} (${userData.email})
+            Contact: ${userData.contactPerson}
+            
+            ${orderData.trackingNumber ? `Tracking: ${orderData.trackingNumber}` : ''}
+            ${orderData.carrier ? `Carrier: ${orderData.carrier}` : ''}
+          `,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <img src="${appUrls.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
+              </div>
+              <h2>Order Status Update</h2>
+              <p><strong>Order:</strong> ${orderData.orderNumber}</p>
+              <p><strong>New Status:</strong> ${newStatus}</p>
+              
+              <h3>Customer:</h3>
+              <p>${userData.companyName} (${userData.email})<br>
+              Contact: ${userData.contactPerson}</p>
+              
+              ${orderData.trackingNumber ? `<p><strong>Tracking:</strong> ${orderData.trackingNumber}</p>` : ''}
+              ${orderData.carrier ? `<p><strong>Carrier:</strong> ${orderData.carrier}</p>` : ''}
+            </div>
+          `,
+        };
+
+        const adminEmailData = createEmailData(
+          ADMIN_EMAILS,
+          EMAIL_FROM.system,
+          adminTemplate as EmailTemplate,
+          {
+            userData,
+            orderData: { ...orderData, status: newStatus },
+            status: newStatus
+          }
+        );
+
+        await sendEmail(adminEmailData);
+      }
+
+      console.log(`Status update emails sent for order ${orderId}: ${oldStatus} -> ${newStatus}`);
+
+      response.status(200).json({
+        success: true,
+        message: 'Status update emails sent successfully',
+        orderId: orderId,
+        orderNumber: orderData.orderNumber,
+        status: newStatus
+      });
+
+    } catch (error: unknown) {
+      console.error('Error sending status update emails:', error);
+      response.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+); 
