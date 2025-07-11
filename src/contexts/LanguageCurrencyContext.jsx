@@ -51,6 +51,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
   const [market, setMarket] = useState('primary');
   const [isLoading, setIsLoading] = useState(true);
   const [manualOverride, setManualOverride] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
 
   // Get existing contexts
   const { changeLanguage: setTranslationLanguage } = useTranslation();
@@ -119,39 +120,45 @@ export const LanguageCurrencyProvider = ({ children }) => {
    * Initialize from URL country code with international support
    */
   const initializeFromUrlCountry = useCallback(async (countryCode) => {
-    if (!countryCode) {
-      console.log('🌍 LanguageCurrency: No country code provided');
+    if (!countryCode || isInitializing) {
+      console.log('🌍 LanguageCurrency: No country code provided or already initializing');
       return false;
     }
     
-    const code = countryCode.toLowerCase();
-    console.log(`🌍 LanguageCurrency: Initializing from URL country: ${code}`);
+    setIsInitializing(true);
     
-    // Get country configuration
-    const countryConfig = getCountryConfig(code);
-    
-    if (!countryConfig) {
-      console.log(`❓ Unknown country: ${code}, using default`);
-      await updateLanguageAndCurrency('sv-SE', 'SEK', 'unknown-country-fallback', 'SE');
+    try {
+      const code = countryCode.toLowerCase();
+      console.log(`🌍 LanguageCurrency: Initializing from URL country: ${code}`);
+      
+      // Get country configuration
+      const countryConfig = getCountryConfig(code);
+      
+      if (!countryConfig) {
+        console.log(`❓ Unknown country: ${code}, using default`);
+        await updateLanguageAndCurrency('sv-SE', 'SEK', 'unknown-country-fallback', 'SE');
+        return true;
+      }
+      
+      // Get optimal language for this country
+      const optimalLanguage = await getOptimalLanguageForCountry(code);
+      const currency = countryConfig.currency;
+      const isSupported = countryConfig.isSupported;
+      
+      console.log(`🌍 Country ${code}: ${optimalLanguage} + ${currency} (${isSupported ? 'supported' : 'unsupported'})`);
+      
+      await updateLanguageAndCurrency(
+        optimalLanguage, 
+        currency, 
+        'url-country', 
+        code.toUpperCase()
+      );
+      
       return true;
+    } finally {
+      setIsInitializing(false);
     }
-    
-    // Get optimal language for this country
-    const optimalLanguage = await getOptimalLanguageForCountry(code);
-    const currency = countryConfig.currency;
-    const isSupported = countryConfig.isSupported;
-    
-    console.log(`🌍 Country ${code}: ${optimalLanguage} + ${currency} (${isSupported ? 'supported' : 'unsupported'})`);
-    
-    await updateLanguageAndCurrency(
-      optimalLanguage, 
-      currency, 
-      'url-country', 
-      code.toUpperCase()
-    );
-    
-    return true;
-  }, [updateLanguageAndCurrency]);
+  }, [updateLanguageAndCurrency, isInitializing]);
 
   /**
    * Manual language selection with URL country awareness
@@ -303,21 +310,17 @@ export const LanguageCurrencyProvider = ({ children }) => {
     initialize();
   }, [urlCountryCode, initializeFromUrlCountry, updateLanguageAndCurrency, getCountryFromPath]);
 
-  // Re-detect when URL country changes
+  // Re-detect when URL country changes (only when URL params change)
   useEffect(() => {
-    const countryFromParams = urlCountryCode;
-    const countryFromPath = getCountryFromPath();
-    const detectedCountry = countryFromParams || countryFromPath;
-    
-    if (detectedCountry) {
-      console.log(`🔄 URL country changed to: ${detectedCountry} (from ${countryFromParams ? 'params' : 'path'})`);
-      initializeFromUrlCountry(detectedCountry);
+    if (urlCountryCode && !isLoading && !isInitializing) {
+      console.log(`🔄 URL params changed to: ${urlCountryCode}`);
+      initializeFromUrlCountry(urlCountryCode);
     }
-  }, [urlCountryCode, initializeFromUrlCountry, getCountryFromPath]);
+  }, [urlCountryCode, isLoading, isInitializing, initializeFromUrlCountry]);
 
   // Timeout fallback for when no redirect happens
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.hostname === 'shop.b8shield.com') {
+    if (typeof window !== 'undefined' && window.location.hostname === 'shop.b8shield.com' && !isInitializing) {
       // Check if we have country from either params or path
       const countryFromParams = urlCountryCode;
       const countryFromPath = getCountryFromPath();
@@ -326,9 +329,11 @@ export const LanguageCurrencyProvider = ({ children }) => {
       if (!hasCountry) {
         console.log('🕐 Setting timeout for geo-redirect fallback');
         const timeoutId = setTimeout(() => {
-          console.log('🕐 No redirect after 2 seconds, using Swedish defaults');
-          updateLanguageAndCurrency('sv-SE', 'SEK', 'timeout-fallback', 'SE');
-          setIsLoading(false);
+          if (!isInitializing) {
+            console.log('🕐 No redirect after 2 seconds, using Swedish defaults');
+            updateLanguageAndCurrency('sv-SE', 'SEK', 'timeout-fallback', 'SE');
+            setIsLoading(false);
+          }
         }, 2000);
         
         return () => clearTimeout(timeoutId);
@@ -336,7 +341,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
         console.log(`🌍 Country detected: ${hasCountry} (from ${countryFromParams ? 'params' : 'path'}), no timeout needed`);
       }
     }
-  }, [urlCountryCode, updateLanguageAndCurrency, getCountryFromPath]);
+  }, [urlCountryCode, updateLanguageAndCurrency, getCountryFromPath, isInitializing]);
 
   // Context value
   const contextValue = {

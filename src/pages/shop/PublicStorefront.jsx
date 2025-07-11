@@ -27,7 +27,7 @@ const PublicStorefront = () => {
   useEffect(() => {
     loadProducts();
     loadHeroReview();
-  }, []);
+  }, [currentLanguage]); // Reload when language changes
 
   const loadHeroReview = async () => {
     try {
@@ -65,14 +65,23 @@ const PublicStorefront = () => {
       
       // Sort products alphabetically using the translated name
       productList.sort((a, b) => {
-        const nameA = getContentValue(a.name, 'sv-SE') || a.name || '';
-        const nameB = getContentValue(b.name, 'sv-SE') || b.name || '';
+        // Use current language for content retrieval, with multiple fallbacks
+        let nameA, nameB;
+        
+        try {
+          nameA = getContentValue(a.name, currentLanguage) || getContentValue(a.name) || a.name || '';
+          nameB = getContentValue(b.name, currentLanguage) || getContentValue(b.name) || b.name || '';
+        } catch (error) {
+          // If getContentValue fails, use raw name
+          nameA = a.name || '';
+          nameB = b.name || '';
+        }
         
         // Ensure we have strings for comparison
         const safeNameA = typeof nameA === 'string' ? nameA : String(nameA || '');
         const safeNameB = typeof nameB === 'string' ? nameB : String(nameB || '');
         
-        return safeNameA.localeCompare(safeNameB, currentLanguage);
+        return safeNameA.localeCompare(safeNameB, currentLanguage || 'en');
       });
       setProducts(productList);
       
