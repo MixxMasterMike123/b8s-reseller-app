@@ -99,6 +99,23 @@ export const LanguageCurrencyProvider = ({ children }) => {
   }, [safeSetTranslationLanguage]);
 
   /**
+   * Get country from URL path (fallback when useParams() is slow)
+   */
+  const getCountryFromPath = useCallback(() => {
+    if (typeof window === 'undefined') return null;
+    
+    const pathname = window.location.pathname;
+    const segments = pathname.split('/').filter(Boolean);
+    const countryCode = segments[0];
+    
+    if (countryCode && countryCode.length === 2) {
+      return countryCode.toLowerCase();
+    }
+    
+    return null;
+  }, []);
+
+  /**
    * Initialize from URL country code with international support
    */
   const initializeFromUrlCountry = useCallback(async (countryCode) => {
@@ -259,10 +276,14 @@ export const LanguageCurrencyProvider = ({ children }) => {
       if (typeof window !== 'undefined' && window.location.hostname === 'shop.b8shield.com') {
         console.log('🛒 Initializing enhanced language/currency for international e-commerce...');
         
-        // Initialize from URL country if available
-        if (urlCountryCode) {
-          console.log(`🌍 LanguageCurrency: URL country detected: ${urlCountryCode}`);
-          await initializeFromUrlCountry(urlCountryCode);
+        // Try to get country from URL params first, then fallback to path parsing
+        const countryFromParams = urlCountryCode;
+        const countryFromPath = getCountryFromPath();
+        const detectedCountry = countryFromParams || countryFromPath;
+        
+        if (detectedCountry) {
+          console.log(`🌍 LanguageCurrency: Country detected: ${detectedCountry} (from ${countryFromParams ? 'params' : 'path'})`);
+          await initializeFromUrlCountry(detectedCountry);
         } else {
           console.log('🌍 LanguageCurrency: No URL country, waiting for geo-redirect...');
           // Don't set defaults immediately - wait for potential redirect
@@ -280,25 +301,29 @@ export const LanguageCurrencyProvider = ({ children }) => {
     };
     
     initialize();
-  }, [urlCountryCode, initializeFromUrlCountry, updateLanguageAndCurrency]);
+  }, [urlCountryCode, initializeFromUrlCountry, updateLanguageAndCurrency, getCountryFromPath]);
 
   // Re-detect when URL country changes
   useEffect(() => {
-    if (urlCountryCode) {
-      console.log(`🔄 URL country changed to: ${urlCountryCode}`);
-      initializeFromUrlCountry(urlCountryCode);
+    const countryFromParams = urlCountryCode;
+    const countryFromPath = getCountryFromPath();
+    const detectedCountry = countryFromParams || countryFromPath;
+    
+    if (detectedCountry) {
+      console.log(`🔄 URL country changed to: ${detectedCountry} (from ${countryFromParams ? 'params' : 'path'})`);
+      initializeFromUrlCountry(detectedCountry);
     }
-  }, [urlCountryCode, initializeFromUrlCountry]);
+  }, [urlCountryCode, initializeFromUrlCountry, getCountryFromPath]);
 
   // Timeout fallback for when no redirect happens
   useEffect(() => {
-    if (!urlCountryCode && typeof window !== 'undefined' && window.location.hostname === 'shop.b8shield.com') {
-      // Double check that we're actually at the root path before setting timeout
-      const pathname = window.location.pathname;
-      const segments = pathname.split('/').filter(Boolean);
-      const hasCountryInPath = segments.length > 0 && segments[0].length === 2;
+    if (typeof window !== 'undefined' && window.location.hostname === 'shop.b8shield.com') {
+      // Check if we have country from either params or path
+      const countryFromParams = urlCountryCode;
+      const countryFromPath = getCountryFromPath();
+      const hasCountry = countryFromParams || countryFromPath;
       
-      if (!hasCountryInPath) {
+      if (!hasCountry) {
         console.log('🕐 Setting timeout for geo-redirect fallback');
         const timeoutId = setTimeout(() => {
           console.log('🕐 No redirect after 2 seconds, using Swedish defaults');
@@ -308,10 +333,10 @@ export const LanguageCurrencyProvider = ({ children }) => {
         
         return () => clearTimeout(timeoutId);
       } else {
-        console.log('🌍 Country detected in path but not in params yet, waiting for router...');
+        console.log(`🌍 Country detected: ${hasCountry} (from ${countryFromParams ? 'params' : 'path'}), no timeout needed`);
       }
     }
-  }, [urlCountryCode, updateLanguageAndCurrency]);
+  }, [urlCountryCode, updateLanguageAndCurrency, getCountryFromPath]);
 
   // Context value
   const contextValue = {

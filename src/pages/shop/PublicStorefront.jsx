@@ -67,7 +67,12 @@ const PublicStorefront = () => {
       productList.sort((a, b) => {
         const nameA = getContentValue(a.name, 'sv-SE') || a.name || '';
         const nameB = getContentValue(b.name, 'sv-SE') || b.name || '';
-        return nameA.localeCompare(nameB, currentLanguage);
+        
+        // Ensure we have strings for comparison
+        const safeNameA = typeof nameA === 'string' ? nameA : String(nameA || '');
+        const safeNameB = typeof nameB === 'string' ? nameB : String(nameB || '');
+        
+        return safeNameA.localeCompare(safeNameB, currentLanguage);
       });
       setProducts(productList);
       
