@@ -2,19 +2,30 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useLanguageCurrency } from '../../contexts/LanguageCurrencyContext';
+import SmartPrice from '../../components/shop/SmartPrice';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend
 } from 'recharts';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats }) => {
+const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData }) => {
   const { t } = useTranslation();
+  const { selectLanguage } = useLanguageCurrency();
   const [range, setRange] = useState(30); // days
   const [loading, setLoading] = useState(true);
   const [clicks, setClicks] = useState([]);
   const [orders, setOrders] = useState([]);
   const [debugMode, setDebugMode] = useState(false);
+
+  // Set user's preferred language if available
+  useEffect(() => {
+    if (affiliateData?.preferredLang && selectLanguage) {
+      selectLanguage(affiliateData.preferredLang);
+      console.log(`🌍 Analytics: Using affiliate preferred language: ${affiliateData.preferredLang}`);
+    }
+  }, [affiliateData?.preferredLang, selectLanguage]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -62,7 +73,8 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats }) => {
           chartOrders: filteredOrders.length,
           affiliateStatsClicks: affiliateStats?.clicks,
           affiliateStatsConversions: affiliateStats?.conversions,
-          affiliateStatsEarnings: affiliateStats?.totalEarnings
+          affiliateStatsEarnings: affiliateStats?.totalEarnings,
+          userPreferredLang: affiliateData?.preferredLang
         });
       }
 
@@ -121,14 +133,13 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats }) => {
         conversions: convCnt,
         earnings,
         rate: rate.toFixed(1),
-        source: 'affiliate.stats (reliable)'
+        source: 'affiliate.stats (reliable)',
+        preferredLang: affiliateData?.preferredLang
       });
     }
     
     return { clicksCnt, convCnt, earnings, rate };
-  }, [affiliateStats, debugMode]);
-
-  const formatCurrency = (amt) => new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(amt);
+  }, [affiliateStats, debugMode, affiliateData?.preferredLang]);
 
   // Get order value for recent orders table
   const getOrderValue = (order) => {
@@ -161,15 +172,24 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats }) => {
           </select>
         </div>
         
-        <button
-          onClick={() => setDebugMode(!debugMode)}
-          className={`text-xs px-2 py-1 rounded ${debugMode ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}
-        >
-          {debugMode ? '✅ Reliable Data' : '🔍 Debug'}
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Language indicator */}
+          {affiliateData?.preferredLang && (
+            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+              {affiliateData.preferredLang}
+            </span>
+          )}
+          
+          <button
+            onClick={() => setDebugMode(!debugMode)}
+            className={`text-xs px-2 py-1 rounded ${debugMode ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}
+          >
+            {debugMode ? '✅ Reliable Data' : '🔍 Debug'}
+          </button>
+        </div>
       </div>
 
-      {/* 🎯 MAIN STATS: Now uses affiliate.stats (same as Overview) */}
+      {/* 🎯 MAIN STATS: Now uses affiliate.stats with SmartPrice conversion */}
       <div className="grid grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
           <div className="text-3xl font-bold text-blue-600">{totals.clicksCnt}</div>
@@ -180,7 +200,13 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats }) => {
           <div className="text-sm text-gray-600 mt-1">{t('analytics_conversions', 'CONVERSIONS')}</div>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
-          <div className="text-3xl font-bold text-green-600">{formatCurrency(totals.earnings)}</div>
+          <div className="text-3xl font-bold text-green-600">
+            <SmartPrice 
+              sekPrice={totals.earnings} 
+              size="large"
+              showOriginal={false}
+            />
+          </div>
           <div className="text-sm text-gray-600 mt-1">{t('analytics_earnings', 'EARNINGS')}</div>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
@@ -193,9 +219,10 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats }) => {
       {debugMode && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-xs">
           <h4 className="font-semibold text-green-800 mb-2">✅ Reliable Data Source</h4>
-          <div className="text-green-700">
+          <div className="text-green-700 space-y-1">
             <p><strong>Main Statistics:</strong> Using affiliate.stats (same as Overview tab)</p>
             <p><strong>Chart Data:</strong> Using filtered collections for daily trends</p>
+            <p><strong>Currency Conversion:</strong> Using SmartPrice with preferred language ({affiliateData?.preferredLang || 'not set'})</p>
             <p><strong>Data Consistency:</strong> Main numbers now match Overview tab perfectly</p>
           </div>
         </div>
@@ -248,13 +275,21 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats }) => {
                     <td className="px-3 py-1">{created.toLocaleDateString('sv-SE')}</td>
                     <td className="px-3 py-1 font-mono">{o.orderNumber || o.id.substring(0,8)}…</td>
                     <td className="px-3 py-1">
-                      {formatCurrency(orderValue)}
+                      <SmartPrice 
+                        sekPrice={orderValue} 
+                        size="small"
+                        showOriginal={false}
+                      />
                       {debugMode && orderValue === 0 && (
                         <span className="text-red-500 text-xs ml-1">⚠️</span>
                       )}
                     </td>
                     <td className="px-3 py-1">
-                      {formatCurrency(commission)}
+                      <SmartPrice 
+                        sekPrice={commission} 
+                        size="small"
+                        showOriginal={false}
+                      />
                       {debugMode && commission === 0 && o.affiliateCode && (
                         <span className="text-red-500 text-xs ml-1">⚠️ Missing</span>
                       )}

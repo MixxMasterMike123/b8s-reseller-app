@@ -589,6 +589,7 @@ const AffiliatePortal = () => {
           <AffiliateAnalyticsTab 
             affiliateCode={affiliateData.affiliateCode}
             affiliateStats={affiliateData.stats}
+            affiliateData={affiliateData}
           />
         );
       default:
