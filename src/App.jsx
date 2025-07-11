@@ -12,8 +12,7 @@ import { httpsCallable } from 'firebase/functions';
 // 🚂 WAGON SYSTEM: Single connection point
 import wagonRegistry from './wagons/WagonRegistry.js';
 
-// Country Router for B2C Shop
-import CountryRouter from './components/shop/CountryRouter';
+// B2C Shop Components
 import CookiebotCMP from './components/shop/CookiebotCMP';
 
 // B2B Reseller Portal Components (existing)
@@ -50,6 +49,8 @@ import Checkout from './pages/shop/Checkout';
 import CustomerAccount from './pages/shop/CustomerAccount';
 import CustomerLogin from './pages/shop/CustomerLogin';
 import CustomerRegister from './pages/shop/CustomerRegister';
+import GeoRedirect from './components/shop/GeoRedirect';
+import CountryRouteValidator from './components/shop/CountryRouteValidator';
 
 // Legal & Compliance Pages
 import PrivacyPolicy from './pages/shop/PrivacyPolicy';
@@ -163,94 +164,32 @@ function App() {
           
           <Routes>
           {appMode === 'shop' ? (
-            // B2C Shop Routes with Country-Based Routing
+            // B2C Shop Routes - Universal Country Support for International E-commerce
             <>
-              {/* Credential pages - stay at root for simplicity */}
+              {/* Root redirect - geo-detection will handle initial redirect */}
+              <Route path="/" element={<GeoRedirect />} />
+              
+              {/* Credential pages - country-neutral for simplicity */}
               <Route path="/login" element={<CustomerLogin />} />
               <Route path="/register" element={<CustomerRegister />} />
               
-              {/* Country-based routes */}
-              <Route path="/se/*" element={
-                <CountryRouter>
-                  <Routes>
-                    <Route path="/" element={<PublicStorefront />} />
-                    <Route path="/product/:slug" element={<PublicProductPage />} />
-                    <Route path="/cart" element={<ShoppingCart />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
-                    <Route path="/account" element={<CustomerAccount />} />
-                    
-                    {/* Legal & Compliance Pages */}
-                    <Route path="/privacy" element={<PrivacyPolicy />} />
-                    <Route path="/terms" element={<TermsOfService />} />
-                    <Route path="/returns" element={<ReturnPolicy />} />
-                    <Route path="/cookies" element={<CookiePolicy />} />
-                    <Route path="/shipping" element={<ShippingInfo />} />
-                    
-                    {/* Affiliate Program */}
-                    <Route path="/affiliate-registration" element={<AffiliateRegistration />} />
-                    <Route path="/affiliate-portal" element={<AffiliatePortal />} />
-                    
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </CountryRouter>
-              } />
+              {/* Universal Country Routes - Supports any country code */}
+              <Route path="/:countryCode" element={<CountryRouteValidator><PublicStorefront /></CountryRouteValidator>} />
+              <Route path="/:countryCode/product/:slug" element={<CountryRouteValidator><PublicProductPage /></CountryRouteValidator>} />
+              <Route path="/:countryCode/cart" element={<CountryRouteValidator><ShoppingCart /></CountryRouteValidator>} />
+              <Route path="/:countryCode/checkout" element={<CountryRouteValidator><Checkout /></CountryRouteValidator>} />
+              <Route path="/:countryCode/order-confirmation/:orderId" element={<CountryRouteValidator><OrderConfirmation /></CountryRouteValidator>} />
+              <Route path="/:countryCode/account" element={<CountryRouteValidator><CustomerAccount /></CountryRouteValidator>} />
+              <Route path="/:countryCode/privacy" element={<CountryRouteValidator><PrivacyPolicy /></CountryRouteValidator>} />
+              <Route path="/:countryCode/terms" element={<CountryRouteValidator><TermsOfService /></CountryRouteValidator>} />
+              <Route path="/:countryCode/returns" element={<CountryRouteValidator><ReturnPolicy /></CountryRouteValidator>} />
+              <Route path="/:countryCode/cookies" element={<CountryRouteValidator><CookiePolicy /></CountryRouteValidator>} />
+              <Route path="/:countryCode/shipping" element={<CountryRouteValidator><ShippingInfo /></CountryRouteValidator>} />
+              <Route path="/:countryCode/affiliate-registration" element={<CountryRouteValidator><AffiliateRegistration /></CountryRouteValidator>} />
+              <Route path="/:countryCode/affiliate-portal" element={<CountryRouteValidator><AffiliatePortal /></CountryRouteValidator>} />
               
-              <Route path="/gb/*" element={
-                <CountryRouter>
-                  <Routes>
-                    <Route path="/" element={<PublicStorefront />} />
-                    <Route path="/product/:slug" element={<PublicProductPage />} />
-                    <Route path="/cart" element={<ShoppingCart />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
-                    <Route path="/account" element={<CustomerAccount />} />
-                    
-                    {/* Legal & Compliance Pages */}
-                    <Route path="/privacy" element={<PrivacyPolicy />} />
-                    <Route path="/terms" element={<TermsOfService />} />
-                    <Route path="/returns" element={<ReturnPolicy />} />
-                    <Route path="/cookies" element={<CookiePolicy />} />
-                    <Route path="/shipping" element={<ShippingInfo />} />
-                    
-                    {/* Affiliate Program */}
-                    <Route path="/affiliate-registration" element={<AffiliateRegistration />} />
-                    <Route path="/affiliate-portal" element={<AffiliatePortal />} />
-                    
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </CountryRouter>
-              } />
-              
-              <Route path="/us/*" element={
-                <CountryRouter>
-                  <Routes>
-                    <Route path="/" element={<PublicStorefront />} />
-                    <Route path="/product/:slug" element={<PublicProductPage />} />
-                    <Route path="/cart" element={<ShoppingCart />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
-                    <Route path="/account" element={<CustomerAccount />} />
-                    
-                    {/* Legal & Compliance Pages */}
-                    <Route path="/privacy" element={<PrivacyPolicy />} />
-                    <Route path="/terms" element={<TermsOfService />} />
-                    <Route path="/returns" element={<ReturnPolicy />} />
-                    <Route path="/cookies" element={<CookiePolicy />} />
-                    <Route path="/shipping" element={<ShippingInfo />} />
-                    
-                    {/* Affiliate Program */}
-                    <Route path="/affiliate-registration" element={<AffiliateRegistration />} />
-                    <Route path="/affiliate-portal" element={<AffiliatePortal />} />
-                    
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </CountryRouter>
-              } />
-              
-              {/* Redirect root to default country */}
-              <Route path="/" element={<Navigate to="/se" replace />} />
-              <Route path="*" element={<Navigate to="/se" replace />} />
+              {/* Catch-all redirect to geo-detection */}
+              <Route path="*" element={<GeoRedirect />} />
             </>
           ) : (
             // B2B Reseller Portal Routes (existing)
@@ -404,7 +343,7 @@ function App() {
                 </AdminRoute>
               } />
 
-              {/* 🚂 WAGON SYSTEM: Auto-generated wagon routes */}
+              {/* �� WAGON SYSTEM: Auto-generated wagon routes */}
               {wagonRoutes.map(({ path, component: Component, adminOnly, private: isPrivate, wagonId }) => (
                 <Route 
                   key={`${wagonId}-${path}`} 

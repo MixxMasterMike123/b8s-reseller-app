@@ -5,17 +5,22 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from './TranslationContext';
 import { useSimpleAuth } from './SimpleAuthContext'; // B2C auth context
 import { 
-  detectLanguageAndCurrency, 
-  getAvailableLanguages,
-  getCurrencyForLanguage,
-  getLanguageCurrencyDisplay,
-  storeUserPreferences,
-  getStoredUserPreferences,
-  isValidLanguageCurrencyPair
-} from '../utils/geoLanguageCurrency.js';
+  getCountryConfig,
+  isCountrySupported,
+  getCurrencyCode,
+  getCurrencySymbol,
+  getLanguageForCountry,
+  DEFAULT_COUNTRY,
+  FALLBACK_LANGUAGE
+} from '../utils/internationalCountries';
+import { 
+  getOptimalLanguageForCountry,
+  checkTranslationExists 
+} from '../utils/translationDetection';
 import { convertPrice } from '../utils/priceConversion.js';
 
 const LanguageCurrencyContext = createContext();
@@ -32,9 +37,12 @@ export const useLanguageCurrency = () => {
 };
 
 /**
- * Language + Currency Provider Component
+ * Enhanced Language + Currency Provider for International E-commerce
  */
 export const LanguageCurrencyProvider = ({ children }) => {
+  // Get country from URL params
+  const { countryCode: urlCountryCode } = useParams();
+  
   // State management
   const [language, setLanguage] = useState('sv-SE');
   const [currency, setCurrency] = useState('SEK');
@@ -45,132 +53,158 @@ export const LanguageCurrencyProvider = ({ children }) => {
   const [manualOverride, setManualOverride] = useState(false);
 
   // Get existing contexts
-  const { setLanguage: setTranslationLanguage } = useTranslation();
+  const { changeLanguage: setTranslationLanguage } = useTranslation();
   const { currentUser } = useSimpleAuth(); // B2C user context
 
   /**
-   * Updates both language and currency state
+   * Safely updates translation language with error checking
    */
-  const updateLanguageAndCurrency = useCallback((newLanguage, newCurrency, source = 'manual') => {
+  const safeSetTranslationLanguage = useCallback(async (language) => {
+    try {
+      if (typeof setTranslationLanguage === 'function') {
+        console.log('🔤 Updating translation language to:', language);
+        await setTranslationLanguage(language);
+      } else {
+        console.warn('⚠️ setTranslationLanguage is not available:', typeof setTranslationLanguage);
+      }
+    } catch (error) {
+      console.error('❌ Error setting translation language:', error);
+    }
+  }, [setTranslationLanguage]);
+
+  /**
+   * Updates both language and currency state with international support
+   */
+  const updateLanguageAndCurrency = useCallback(async (newLanguage, newCurrency, source = 'manual', detectedCountry = null) => {
     console.log('🔄 Updating language and currency:', newLanguage, '+', newCurrency, 'from', source);
     
-    // Validate the combination
-    if (!isValidLanguageCurrencyPair(newLanguage, newCurrency)) {
-      console.warn('⚠️ Invalid language/currency pair:', newLanguage, newCurrency);
-      return false;
-    }
-
     // Update local state
     setLanguage(newLanguage);
     setCurrency(newCurrency);
     setDetectionSource(source);
+    setCountryDetected(detectedCountry);
+    setMarket(detectedCountry === 'se' ? 'primary' : 'secondary');
     
-    // Update translation context
-    setTranslationLanguage(newLanguage);
+    // Update translation context safely
+    await safeSetTranslationLanguage(newLanguage);
     
     // Store preferences if manual
     if (source === 'manual' || source === 'user-selection') {
-      storeUserPreferences(newLanguage, newCurrency);
+      localStorage.setItem('user-language-preference', newLanguage);
+      localStorage.setItem('user-currency-preference', newCurrency);
       setManualOverride(true);
     }
     
     return true;
-  }, [setTranslationLanguage]);
+  }, [safeSetTranslationLanguage]);
 
   /**
-   * Detects and sets optimal language and currency
+   * Initialize from URL country code with international support
    */
-  const detectAndSetLanguageCurrency = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      console.log('🔍 Starting language and currency detection...');
-      
-      // Check for stored user preferences first
-      const storedPrefs = getStoredUserPreferences();
-      
-      // Prepare detection options
-      const options = {
-        userPreferredLang: currentUser?.preferredLang || null,
-        manualLanguage: storedPrefs?.language || null,
-        manualCurrency: storedPrefs?.currency || null,
-        respectUserPreferences: true
-      };
-      
-      console.log('🔍 Detection options:', options);
-      
-      // Perform detection
-      const detection = detectLanguageAndCurrency(options);
-      
-      console.log('✅ Detection result:', detection);
-      
-      // Update state
-      setLanguage(detection.language);
-      setCurrency(detection.currency);
-      setDetectionSource(detection.source);
-      setCountryDetected(detection.countryDetected);
-      setMarket(detection.market);
-      setManualOverride(detection.source.includes('manual') || detection.source.includes('user'));
-      
-      // Update translation context
-      setTranslationLanguage(detection.language);
-      
-    } catch (error) {
-      console.error('❌ Error in language/currency detection:', error);
-      
-      // Fallback to Swedish
-      setLanguage('sv-SE');
-      setCurrency('SEK');
-      setDetectionSource('error-fallback');
-      setTranslationLanguage('sv-SE');
-      
-    } finally {
-      setIsLoading(false);
+  const initializeFromUrlCountry = useCallback(async (countryCode) => {
+    if (!countryCode) {
+      console.log('🌍 LanguageCurrency: No country code provided');
+      return false;
     }
-  }, [currentUser, setTranslationLanguage]);
+    
+    const code = countryCode.toLowerCase();
+    console.log(`🌍 LanguageCurrency: Initializing from URL country: ${code}`);
+    
+    // Get country configuration
+    const countryConfig = getCountryConfig(code);
+    
+    if (!countryConfig) {
+      console.log(`❓ Unknown country: ${code}, using default`);
+      await updateLanguageAndCurrency('sv-SE', 'SEK', 'unknown-country-fallback', 'SE');
+      return true;
+    }
+    
+    // Get optimal language for this country
+    const optimalLanguage = await getOptimalLanguageForCountry(code);
+    const currency = countryConfig.currency;
+    const isSupported = countryConfig.isSupported;
+    
+    console.log(`🌍 Country ${code}: ${optimalLanguage} + ${currency} (${isSupported ? 'supported' : 'unsupported'})`);
+    
+    await updateLanguageAndCurrency(
+      optimalLanguage, 
+      currency, 
+      'url-country', 
+      code.toUpperCase()
+    );
+    
+    return true;
+  }, [updateLanguageAndCurrency]);
 
   /**
-   * Manual language selection (currency follows)
+   * Manual language selection with URL country awareness
    */
-  const selectLanguage = useCallback((newLanguage) => {
-    const newCurrency = getCurrencyForLanguage(newLanguage);
-    const success = updateLanguageAndCurrency(newLanguage, newCurrency, 'user-selection');
+  const selectLanguage = useCallback(async (newLanguage) => {
+    console.log('👤 Manual language selection:', newLanguage);
+    
+    // If we have a URL country, get its currency
+    let targetCurrency = 'SEK';
+    if (urlCountryCode) {
+      targetCurrency = getCurrencyCode(urlCountryCode) || 'SEK';
+    } else {
+      // Map language to default currency
+      const languageCurrencyMap = {
+        'sv-SE': 'SEK',
+        'en-GB': 'EUR',
+        'en-US': 'USD'
+      };
+      targetCurrency = languageCurrencyMap[newLanguage] || 'SEK';
+    }
+    
+    const success = await updateLanguageAndCurrency(
+      newLanguage, 
+      targetCurrency, 
+      'user-selection',
+      urlCountryCode?.toUpperCase() || countryDetected
+    );
     
     if (success) {
-      console.log('👤 User selected language:', newLanguage, '→ currency:', newCurrency);
+      console.log('✅ Language selection successful:', newLanguage, '→', targetCurrency);
     }
     
     return success;
-  }, [updateLanguageAndCurrency]);
+  }, [urlCountryCode, countryDetected, updateLanguageAndCurrency]);
 
   /**
    * Manual currency selection (keeps current language)
    */
-  const selectCurrency = useCallback((newCurrency) => {
-    const success = updateLanguageAndCurrency(language, newCurrency, 'user-selection');
+  const selectCurrency = useCallback(async (newCurrency) => {
+    const success = await updateLanguageAndCurrency(
+      language, 
+      newCurrency, 
+      'user-selection',
+      countryDetected
+    );
     
     if (success) {
       console.log('👤 User selected currency:', newCurrency);
     }
     
     return success;
-  }, [language, updateLanguageAndCurrency]);
+  }, [language, countryDetected, updateLanguageAndCurrency]);
 
   /**
    * Reset to geo-detected defaults
    */
-  const resetToGeoDefaults = useCallback(() => {
+  const resetToGeoDefaults = useCallback(async () => {
     // Clear stored preferences
     if (typeof window !== 'undefined') {
       localStorage.removeItem('user-language-preference');
       localStorage.removeItem('user-currency-preference');
-      localStorage.removeItem('user-preferences-timestamp');
     }
     
     setManualOverride(false);
     
-    // Re-detect
-    detectAndSetLanguageCurrency();
-  }, [detectAndSetLanguageCurrency]);
+    // Re-initialize from URL
+    if (urlCountryCode) {
+      await initializeFromUrlCountry(urlCountryCode);
+    }
+  }, [urlCountryCode, initializeFromUrlCountry]);
 
   /**
    * Converts a SEK price to current currency
@@ -208,39 +242,50 @@ export const LanguageCurrencyProvider = ({ children }) => {
     return {
       language,
       currency,
-      display: getLanguageCurrencyDisplay(language, currency),
+      currencySymbol: getCurrencySymbol(countryDetected?.toLowerCase() || 'se'),
       detectionSource,
       countryDetected,
       market,
       isManual: manualOverride,
-      availableLanguages: getAvailableLanguages()
+      isSupported: urlCountryCode ? isCountrySupported(urlCountryCode) : true,
+      countryConfig: urlCountryCode ? getCountryConfig(urlCountryCode) : null
     };
-  }, [language, currency, detectionSource, countryDetected, market, manualOverride]);
+  }, [language, currency, detectionSource, countryDetected, market, manualOverride, urlCountryCode]);
 
   // Initial detection on mount
   useEffect(() => {
-    // Only run on B2C shop domain
-    if (typeof window !== 'undefined' && window.location.hostname === 'shop.b8shield.com') {
-      console.log('🛒 Initializing language/currency detection for B2C shop...');
-      detectAndSetLanguageCurrency();
-    } else {
-      // B2B portal - set Swedish immediately
-      console.log('🏠 B2B portal detected - using Swedish');
-      setLanguage('sv-SE');
-      setCurrency('SEK');
-      setDetectionSource('b2b-portal');
-      setTranslationLanguage('sv-SE');
+    const initialize = async () => {
+      // Only run on B2C shop domain
+      if (typeof window !== 'undefined' && window.location.hostname === 'shop.b8shield.com') {
+        console.log('🛒 Initializing enhanced language/currency for international e-commerce...');
+        
+        // Initialize from URL country if available
+        if (urlCountryCode) {
+          console.log(`🌍 LanguageCurrency: URL country detected: ${urlCountryCode}`);
+          await initializeFromUrlCountry(urlCountryCode);
+        } else {
+          console.log('🌍 LanguageCurrency: No URL country, using default');
+          await updateLanguageAndCurrency('sv-SE', 'SEK', 'default-fallback', 'SE');
+        }
+      } else {
+        // B2B portal - set Swedish immediately
+        console.log('🏠 B2B portal detected - using Swedish');
+        await updateLanguageAndCurrency('sv-SE', 'SEK', 'b2b-portal', 'SE');
+      }
+      
       setIsLoading(false);
-    }
-  }, []); // Run once on mount
+    };
+    
+    initialize();
+  }, [urlCountryCode, initializeFromUrlCountry, updateLanguageAndCurrency]);
 
-  // Re-detect when user changes (login/logout)
+  // Re-detect when URL country changes
   useEffect(() => {
-    if (!isLoading && currentUser?.preferredLang) {
-      console.log('👤 User logged in with preferred language:', currentUser.preferredLang);
-      detectAndSetLanguageCurrency();
+    if (!isLoading && urlCountryCode) {
+      console.log(`🔄 URL country changed to: ${urlCountryCode}`);
+      initializeFromUrlCountry(urlCountryCode);
     }
-  }, [currentUser?.preferredLang, detectAndSetLanguageCurrency, isLoading]);
+  }, [urlCountryCode, isLoading, initializeFromUrlCountry]);
 
   // Context value
   const contextValue = {
@@ -258,12 +303,15 @@ export const LanguageCurrencyProvider = ({ children }) => {
     selectCurrency,
     resetToGeoDefaults,
     updateLanguageAndCurrency,
-    detectAndSetLanguageCurrency,
     
     // Utilities
     convertSEKPrice,
     getDisplayInfo,
-    availableLanguages: getAvailableLanguages(),
+    
+    // International support
+    urlCountryCode,
+    countryConfig: urlCountryCode ? getCountryConfig(urlCountryCode) : null,
+    isCountrySupported: urlCountryCode ? isCountrySupported(urlCountryCode) : true,
     
     // Computed properties
     isShopDomain: typeof window !== 'undefined' && window.location.hostname === 'shop.b8shield.com',

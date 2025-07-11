@@ -79,11 +79,10 @@ const ProductGroupTab = ({ productGroup, onContentChange, onGroupContentUpdate }
     try {
       const products = await getProductsInGroup(productGroup);
       
-      // Safely sort products by name using the content translation hook
-      // This replicates the working pattern from AdminProducts.jsx list view
+      // Sort products by name for consistent display
       const sortedProducts = [...products].sort((a, b) => {
-        const nameA = (getContentValue(a.name) || '').toLowerCase();
-        const nameB = (getContentValue(b.name) || '').toLowerCase();
+        const nameA = getContentValue(a.name) || a.name || '';
+        const nameB = getContentValue(b.name) || b.name || '';
         return nameA.localeCompare(nameB);
       });
 

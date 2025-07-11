@@ -41,10 +41,10 @@ function ProductViewPage() {
           }
         });
 
-        // Sort products by name (case-insensitive)
+        // Sort products alphabetically
         productsData.sort((a, b) => {
-          const nameA = getContentValue(a.name, 'sv-SE').toLowerCase();
-          const nameB = getContentValue(b.name, 'sv-SE').toLowerCase();
+          const nameA = getContentValue(a.name) || a.name || '';
+          const nameB = getContentValue(b.name) || b.name || '';
           return nameA.localeCompare(nameB);
         });
 

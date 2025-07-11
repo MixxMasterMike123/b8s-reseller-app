@@ -3,7 +3,7 @@
  * Handles language switching, translation loading, and fallback logic
  */
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { db } from '../firebase/config';
 import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import LoaderOverlay from '../components/LoaderOverlay';
@@ -17,7 +17,7 @@ const AVAILABLE_LANGUAGES = [
   { code: 'en-US', name: 'English (US)', flag: '🇺🇸' }
 ];
 
-// Initialize language synchronously from localStorage
+// Initialize language synchronously from localStorage and URL
 const getInitialLanguage = () => {
   try {
     // Check URL parameters first
@@ -29,7 +29,40 @@ const getInitialLanguage = () => {
       return urlLang;
     }
     
-    // Check localStorage
+    // For B2C shop, detect language from URL country path with international support
+    if (typeof window !== 'undefined' && window.location.hostname === 'shop.b8shield.com') {
+      const pathname = window.location.pathname;
+      const segments = pathname.split('/').filter(Boolean);
+      const countryCode = segments[0];
+      
+      if (countryCode) {
+        // Import international country utilities
+        const { getCountryConfig } = require('../utils/internationalCountries');
+        const { getOptimalLanguageForCountry } = require('../utils/translationDetection');
+        
+        const countryConfig = getCountryConfig(countryCode);
+        
+        if (countryConfig) {
+          // For supported countries, use their configured language
+          if (countryConfig.isSupported) {
+            console.log(`🌍 MAIN APP: Supported country ${countryCode} → ${countryConfig.language}`);
+            return countryConfig.language;
+          } else {
+            // For unsupported countries, use English fallback
+            console.log(`🌍 MAIN APP: Unsupported country ${countryCode} → en-GB (fallback)`);
+            return 'en-GB';
+          }
+        } else {
+          console.log(`🌍 MAIN APP: Unknown country ${countryCode} → waiting for validation`);
+          return null; // Will trigger country validation
+        }
+      }
+      
+      console.log(`🌍 MAIN APP: B2C shop detected but no country in URL path: ${pathname}`);
+      return null; // Will trigger geo-redirect
+    }
+    
+    // Check localStorage for B2B
     const savedLang = localStorage.getItem('b8shield-language');
     console.log(`🌍 MAIN APP: Checking localStorage 'b8shield-language':`, savedLang);
     console.log(`🌍 MAIN APP: Available languages:`, AVAILABLE_LANGUAGES.map(l => l.code));
@@ -40,7 +73,7 @@ const getInitialLanguage = () => {
       console.log(`🌍 MAIN APP: Saved language not found or unsupported: ${savedLang}`);
     }
     
-    // Default to Swedish
+    // Default to Swedish for B2B
     console.log(`🌍 MAIN APP: Initial language defaulted to: sv-SE`);
     return 'sv-SE';
   } catch (error) {
@@ -55,9 +88,10 @@ export const TranslationProvider = ({ children }) => {
   const [currentLanguage, setCurrentLanguage] = useState(initialLanguage);
   const [translations, setTranslations] = useState({});
   const [loading, setLoading] = useState(true);
+  const [waitingForGeo, setWaitingForGeo] = useState(initialLanguage === null);
 
   // Load translations for a specific language
-  const loadTranslations = async (languageCode) => {
+  const loadTranslations = useCallback(async (languageCode) => {
     setLoading(true);
     try {
       // Load from Firebase for all languages including Swedish
@@ -68,6 +102,22 @@ export const TranslationProvider = ({ children }) => {
       
       if (querySnapshot.empty) {
         console.log(`⚠️ No translations found in ${collectionName}`);
+        
+        // If requested language is not Swedish and not found, try English fallback
+        if (languageCode !== 'sv-SE' && languageCode !== 'en-GB') {
+          console.log(`🔄 Attempting English fallback for missing ${languageCode}`);
+          await loadTranslations('en-GB');
+          return;
+        }
+        
+        // If English also fails, try Swedish
+        if (languageCode === 'en-GB') {
+          console.log(`🔄 English translations missing, falling back to Swedish`);
+          await loadTranslations('sv-SE');
+          return;
+        }
+        
+        // If Swedish fails too, use empty translations
         setTranslations({});
         return;
       }
@@ -85,22 +135,40 @@ export const TranslationProvider = ({ children }) => {
       
     } catch (error) {
       console.error('Error loading translations:', error);
-      setTranslations({});
+      
+      // Smart error fallback
+      if (languageCode !== 'sv-SE') {
+        console.log(`🔄 Error loading ${languageCode}, trying Swedish fallback`);
+        await loadTranslations('sv-SE');
+      } else {
+        setTranslations({});
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  // Change language
-  const changeLanguage = async (languageCode) => {
+  // Change language with enhanced validation
+  const changeLanguage = useCallback(async (languageCode) => {
+    console.log(`🔄 TranslationProvider: Changing language to ${languageCode} (current: ${currentLanguage})`);
+    
+    // Validate language code
+    if (!AVAILABLE_LANGUAGES.some(lang => lang.code === languageCode)) {
+      console.warn(`⚠️ Unsupported language: ${languageCode}, falling back to en-GB`);
+      languageCode = 'en-GB';
+    }
+    
     if (languageCode !== currentLanguage) {
       setCurrentLanguage(languageCode);
+      setWaitingForGeo(false); // Geo-detection completed
       await loadTranslations(languageCode);
       
       // Store preference in localStorage
       localStorage.setItem('b8shield-language', languageCode);
+      
+      console.log(`✅ Language changed to: ${languageCode}`);
     }
-  };
+  }, [currentLanguage, loadTranslations]);
 
   // Get translated string with fallback and variable interpolation
   const t = (key, fallback = '', variables = {}) => {
@@ -131,23 +199,68 @@ export const TranslationProvider = ({ children }) => {
 
   // Load translations for the initial language
   useEffect(() => {
+    let timeoutId;
+    
     const initializeTranslations = async () => {
       try {
-        console.log(`🌍 Loading translations for initial language: ${currentLanguage}`);
-        await loadTranslations(currentLanguage);
+        // If waiting for geo-detection, set up timeout fallback
+        if (waitingForGeo) {
+          console.log(`🌍 TranslationProvider: Waiting for geo-detection to complete...`);
+          
+          // Set timeout fallback - if geo-detection takes too long, load English
+          timeoutId = setTimeout(() => {
+            console.log(`⏰ TranslationProvider: Geo-detection timeout, loading English fallback`);
+            changeLanguage('en-GB');
+          }, 5000); // 5 second timeout for international users
+          
+          return; // Don't load translations yet
+        }
+        
+        // Load translations for known language
+        if (currentLanguage) {
+          console.log(`🌍 Loading translations for initial language: ${currentLanguage}`);
+          
+          // For B2C shop with country in URL, do additional validation
+          if (typeof window !== 'undefined' && window.location.hostname === 'shop.b8shield.com') {
+            const pathname = window.location.pathname;
+            const segments = pathname.split('/').filter(Boolean);
+            const countryCode = segments[0];
+            
+            if (countryCode) {
+              // Dynamic import to avoid circular dependency
+              const { getOptimalLanguageForCountry } = await import('../utils/translationDetection');
+              const optimalLanguage = await getOptimalLanguageForCountry(countryCode);
+              
+              if (optimalLanguage !== currentLanguage) {
+                console.log(`🔄 TranslationProvider: URL country ${countryCode} suggests ${optimalLanguage} instead of ${currentLanguage}`);
+                await changeLanguage(optimalLanguage);
+                return;
+              }
+            }
+          }
+          
+          await loadTranslations(currentLanguage);
+        }
       } catch (error) {
         console.error('Translation initialization failed:', error);
-        await loadTranslations('sv-SE');
+        await loadTranslations('en-GB'); // Fallback to English for international users
       }
     };
 
     initializeTranslations();
-  }, []);
+    
+    // Cleanup timeout on unmount or dependency change
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [currentLanguage, waitingForGeo, changeLanguage, loadTranslations]);
 
   const value = {
     currentLanguage,
     translations,
-    loading,
+    loading: loading || waitingForGeo,
     changeLanguage,
     t,
     getAvailableLanguages,
@@ -157,7 +270,7 @@ export const TranslationProvider = ({ children }) => {
   return (
     <TranslationContext.Provider value={value}>
       {children}
-      <LoaderOverlay isVisible={loading} />
+      <LoaderOverlay isVisible={loading || waitingForGeo} />
     </TranslationContext.Provider>
   );
 };

@@ -65,8 +65,8 @@ const PublicStorefront = () => {
       
       // Sort products alphabetically using the translated name
       productList.sort((a, b) => {
-        const nameA = getContentValue(a.name, 'sv-SE');
-        const nameB = getContentValue(b.name, 'sv-SE');
+        const nameA = getContentValue(a.name, 'sv-SE') || a.name || '';
+        const nameB = getContentValue(b.name, 'sv-SE') || b.name || '';
         return nameA.localeCompare(nameB, currentLanguage);
       });
       setProducts(productList);

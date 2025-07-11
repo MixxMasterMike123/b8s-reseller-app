@@ -73,13 +73,25 @@ export const getProductUrl = (product) => {
 
 // Generate country-aware URL for B2C shop links
 export const getCountryAwareUrl = (path) => {
+  // Get current country from URL path
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '/se';
   const segments = pathname.split('/').filter(Boolean);
   const countryCode = segments[0] || 'se';
   
+  // Validate country code
+  const validCountries = ['se', 'gb', 'us'];
+  const currentCountry = validCountries.includes(countryCode) ? countryCode : 'se';
+  
+  // Clean the input path
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
   
-  return `/${countryCode}${cleanPath ? `/${cleanPath}` : ''}`;
+  // For empty paths, return country root
+  if (!cleanPath || cleanPath === '') {
+    return `/${currentCountry}`;
+  }
+  
+  // Return country-prefixed URL
+  return `/${currentCountry}/${cleanPath}`;
 };
 
 

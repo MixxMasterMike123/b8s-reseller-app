@@ -126,10 +126,10 @@ function AdminProducts() {
         }
       });
       
-      // Sort products by name (default sorting)
+      // Sort products alphabetically
       productsData.sort((a, b) => {
-        const nameA = (getContentValue(a.name) || '').toLowerCase();
-        const nameB = (getContentValue(b.name) || '').toLowerCase();
+        const nameA = getContentValue(a.name) || a.name || '';
+        const nameB = getContentValue(b.name) || b.name || '';
         return nameA.localeCompare(nameB);
       });
       
