@@ -6,7 +6,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useTranslation } from './TranslationContext';
-import { useAuth } from './SimpleAuthContext'; // B2C auth context
+import { useSimpleAuth } from './SimpleAuthContext'; // B2C auth context
 import { 
   detectLanguageAndCurrency, 
   getAvailableLanguages,
@@ -46,7 +46,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
 
   // Get existing contexts
   const { setLanguage: setTranslationLanguage } = useTranslation();
-  const { user } = useAuth(); // B2C user context
+  const { currentUser } = useSimpleAuth(); // B2C user context
 
   /**
    * Updates both language and currency state
@@ -90,7 +90,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
       
       // Prepare detection options
       const options = {
-        userPreferredLang: user?.preferredLang || null,
+        userPreferredLang: currentUser?.preferredLang || null,
         manualLanguage: storedPrefs?.language || null,
         manualCurrency: storedPrefs?.currency || null,
         respectUserPreferences: true
@@ -126,7 +126,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [user, setTranslationLanguage]);
+  }, [currentUser, setTranslationLanguage]);
 
   /**
    * Manual language selection (currency follows)
@@ -236,11 +236,11 @@ export const LanguageCurrencyProvider = ({ children }) => {
 
   // Re-detect when user changes (login/logout)
   useEffect(() => {
-    if (!isLoading && user?.preferredLang) {
-      console.log('👤 User logged in with preferred language:', user.preferredLang);
+    if (!isLoading && currentUser?.preferredLang) {
+      console.log('👤 User logged in with preferred language:', currentUser.preferredLang);
       detectAndSetLanguageCurrency();
     }
-  }, [user?.preferredLang, detectAndSetLanguageCurrency, isLoading]);
+  }, [currentUser?.preferredLang, detectAndSetLanguageCurrency, isLoading]);
 
   // Context value
   const contextValue = {
