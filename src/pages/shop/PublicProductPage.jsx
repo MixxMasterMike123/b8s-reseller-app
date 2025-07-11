@@ -25,6 +25,7 @@ import { getReviewStats } from '../../utils/trustpilotAPI';
 import SeoHreflang from '../../components/shop/SeoHreflang';
 import { Helmet } from 'react-helmet';
 import SocialShare from '../../components/shop/SocialShare';
+import SmartPrice from '../../components/shop/SmartPrice';
 
 const PublicProductPage = () => {
   const { slug } = useParams();
@@ -289,10 +290,12 @@ const PublicProductPage = () => {
 
               {/* Price */}
                 <div className="text-2xl font-medium text-gray-900 mb-6">
-                  {new Intl.NumberFormat('sv-SE', {
-                    style: 'currency',
-                    currency: 'SEK'
-                  }).format(product.b2cPrice || product.basePrice)}
+                  <SmartPrice 
+                    sekPrice={product.b2cPrice || product.basePrice} 
+                    variant="large"
+                    showOriginal={false}
+                    className="text-2xl font-medium text-gray-900"
+                  />
                 </div>
               </div>
 

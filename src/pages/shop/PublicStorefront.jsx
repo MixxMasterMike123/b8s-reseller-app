@@ -14,6 +14,7 @@ import ShopFooter from '../../components/shop/ShopFooter';
 import ReviewsSection from '../../components/ReviewsSection';
 import { getAllReviews } from '../../utils/trustpilotAPI';
 import SeoHreflang from '../../components/shop/SeoHreflang';
+import SmartPrice from '../../components/shop/SmartPrice';
 
 const PublicStorefront = () => {
   const { t, currentLanguage } = useTranslation();
@@ -84,103 +85,28 @@ const PublicStorefront = () => {
 
   // Dynamically group products by their group field
   const groupProductsByGroup = (products) => {
-    const productGroups = {};
+    const grouped = {};
     
     products.forEach(product => {
-      // Use the group field, skip products without groups
-      const groupName = getContentValue(product.group);
-      if (!groupName) return;
-      
-      if (!productGroups[groupName]) {
-        productGroups[groupName] = {
-          groupName: groupName,
-          products: [],
-          representativeProduct: product,
-          isMultipack: groupName.includes('multipack') || groupName.includes('3-pack')
+      const groupKey = product.group || 'default';
+      if (!grouped[groupKey]) {
+        grouped[groupKey] = {
+          groupName: groupKey,
+          colorVariants: [],
+          isMultipack: false
         };
       }
-      
-      productGroups[groupName].products.push(product);
+      grouped[groupKey].colorVariants.push(product);
     });
-    
-    // Return array of product groups with their variants
-    return Object.values(productGroups).map(group => {
-      if (group.isMultipack) {
-        // For multipacks: group by color, show one card per color
-        const colorVariants = {};
-        
-        group.products.forEach(product => {
-          const color = product.color || 'Standard';
-          if (!colorVariants[color]) {
-            colorVariants[color] = {
-              color: color,
-              products: [],
-              representativeProduct: product
-            };
-          }
-          colorVariants[color].products.push(product);
-        });
-        
-        // Return the group with color variants (one card per color)
-        return {
-          ...group.representativeProduct,
-          groupName: group.groupName,
-          isMultipack: true,
-          colorVariants: Object.values(colorVariants).map(colorGroup => ({
-            ...colorGroup.representativeProduct,
-            colorVariant: colorGroup.color,
-            variants: colorGroup.products,
-            availableColors: [colorGroup.color], // Single color for multipack
-            availableSizes: colorGroup.products.map(p => ({
-              id: p.id,
-              size: p.size || 'Standard',
-              price: p.b2cPrice || p.basePrice,
-              name: getContentValue(p.name)
-            }))
-          }))
-        };
-      } else {
-        // For individual products: group by color, then show size variants
-        const colorVariants = {};
-        
-        group.products.forEach(product => {
-          const color = product.color || 'Standard';
-          if (!colorVariants[color]) {
-            colorVariants[color] = {
-              color: color,
-              products: [],
-              representativeProduct: product
-            };
-          }
-          colorVariants[color].products.push(product);
-        });
-        
-        // Return the group with color variants
-        return {
-          ...group.representativeProduct,
-          groupName: group.groupName,
-          isMultipack: false,
-          colorVariants: Object.values(colorVariants).map(colorGroup => ({
-            ...colorGroup.representativeProduct,
-            colorVariant: colorGroup.color,
-            variants: colorGroup.products,
-            availableSizes: colorGroup.products.map(p => ({
-              id: p.id,
-              size: p.size || 'Standard',
-              price: p.b2cPrice || p.basePrice,
-              name: getContentValue(p.name)
-            }))
-          }))
-        };
-      }
-    });
-  };
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('sv-SE', {
-      style: 'currency',
-      currency: 'SEK'
-    }).format(price);
+    // Mark multipack groups (those with "3pack" or "pack" in the name)
+    Object.keys(grouped).forEach(groupKey => {
+      if (groupKey.toLowerCase().includes('3pack') || groupKey.toLowerCase().includes('pack')) {
+        grouped[groupKey].isMultipack = true;
+      }
+    });
+
+    return Object.values(grouped);
   };
 
   const addToCart = (product) => {
@@ -352,10 +278,14 @@ const PublicStorefront = () => {
                               {t('product_3pack_info', 'Innehåller alla storlekar (2mm, 4mm, 6mm) • {{count}} färger', { count: productGroup.colorVariants.length })}
                             </p>
                             
-                            {/* Price */}
-                            <p className="text-base font-medium text-gray-900 pt-1">
-                              {formatPrice(representativeVariant.b2cPrice || representativeVariant.basePrice)}
-                            </p>
+                            {/* Price - Now with intelligent currency conversion */}
+                            <div className="pt-1">
+                              <SmartPrice 
+                                sekPrice={representativeVariant.b2cPrice || representativeVariant.basePrice} 
+                                variant="compact"
+                                showOriginal={false}
+                              />
+                            </div>
                           </div>
                         </div>
                       </Link>
@@ -406,10 +336,14 @@ const PublicStorefront = () => {
                                 : t('product_single_size', '1 storlek')}
                             </p>
                             
-                            {/* Price */}
-                            <p className="text-base font-medium text-gray-900 pt-1">
-                              {formatPrice(colorVariant.b2cPrice || colorVariant.basePrice)}
-                            </p>
+                            {/* Price - Now with intelligent currency conversion */}
+                            <div className="pt-1">
+                              <SmartPrice 
+                                sekPrice={colorVariant.b2cPrice || colorVariant.basePrice} 
+                                variant="compact"
+                                showOriginal={false}
+                              />
+                            </div>
                           </div>
                         </div>
                       </Link>

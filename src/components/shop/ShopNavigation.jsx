@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
-import CountrySwitcher from './CountrySwitcher';
+import LanguageCurrencySelector from './LanguageCurrencySelector';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -79,7 +79,8 @@ const ShopNavigation = ({ breadcrumb }) => {
             )}
           </Link>
           <div className="flex items-center ml-4 space-x-4">
-            <CountrySwitcher />
+            {/* Upgraded to intelligent Language + Currency selector */}
+            <LanguageCurrencySelector size="small" />
             {affiliateData && (
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600">{affiliateData.name}</span>

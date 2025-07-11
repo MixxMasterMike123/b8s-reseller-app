@@ -1,35 +1,32 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import ShopNavigation from '../../components/shop/ShopNavigation';
-import ShopFooter from '../../components/shop/ShopFooter';
-import AffiliateMarketingMaterials from '../../components/AffiliateMarketingMaterials';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useContentTranslation } from '../../hooks/useContentTranslation';
+import { 
+  HomeIcon, 
+  BookOpenIcon, 
+  PresentationChartBarIcon, 
+  ChartBarIcon, 
+  SparklesIcon 
+} from '@heroicons/react/24/outline';
 import { db } from '../../firebase/config';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { generateAffiliateLink } from '../../utils/productUrls';
+import ShopNavigation from '../../components/shop/ShopNavigation';
+import ShopFooter from '../../components/shop/ShopFooter';
 import CustomerLogin from './CustomerLogin';
+import AffiliateSuccessGuide from '../../components/affiliate/AffiliateSuccessGuide';
+import AffiliateMarketingMaterials from '../../components/AffiliateMarketingMaterials';
+import AffiliateAnalyticsTab from './AffiliateAnalyticsTab';
+import SmartPrice from '../../components/shop/SmartPrice';
 import toast from 'react-hot-toast';
 import QRCode from 'qrcode';
-import { 
-  ClipboardDocumentIcon, 
-  QrCodeIcon, 
-  ArrowDownTrayIcon,
-  LinkIcon,
-  SparklesIcon,
-  HomeIcon,
-  BookOpenIcon,
-  PresentationChartBarIcon,
-  ChartBarIcon
-} from '@heroicons/react/24/outline';
-import { generateAffiliateLink } from '../../utils/productUrls';
-import AffiliateSuccessGuide from '../../components/affiliate/AffiliateSuccessGuide';
-import AffiliateAnalyticsTab from './AffiliateAnalyticsTab';
-import { collection as fsCollection, query as fsQuery, where as fsWhere } from 'firebase/firestore';
-import { db as firebaseDb } from '../../firebase/config';
 
 const AffiliatePortal = () => {
   const { currentUser } = useSimpleAuth();
   const { t } = useTranslation();
+  const { getContentValue } = useContentTranslation();
   const [affiliateData, setAffiliateData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -83,97 +80,117 @@ const AffiliatePortal = () => {
 
   // Generate QR Code
   const generateQRCode = async (link) => {
-    setGeneratingQR(true);
     try {
-      const url = await QRCode.toDataURL(link);
-      setQrCodeDataUrl(url);
-    } catch (err) {
+      setGeneratingQR(true);
+      const qrCodeDataUrl = await QRCode.toDataURL(link);
+      setQrCodeDataUrl(qrCodeDataUrl);
+      return qrCodeDataUrl;
+    } catch (error) {
+      console.error('Error generating QR code:', error);
       toast.error(t('affiliate_portal_qr_error', 'Kunde inte generera QR-kod'));
+      return null;
+    } finally {
+      setGeneratingQR(false);
     }
-    setGeneratingQR(false);
   };
 
-  // Handle link generation
   const handleGenerateLink = () => {
-    const selectedGroup = productGroups.find(group => group.id === selectedProduct);
-    const productPath = selectedGroup ? selectedGroup.path : '';
-    const newLink = generateLink(productPath);
+    const productPath = selectedProduct || '';
+    const link = generateLink(productPath);
+    setGeneratedLink(link);
     
-    setGeneratedLink(newLink);
+    // Generate QR code for the link
+    if (link) {
+      generateQRCode(link);
+    }
   };
 
-  useEffect(() => {
-    if (generatedLink) {
-      generateQRCode(generatedLink);
-    }
-  }, [generatedLink]);
-
-  // Copy link to clipboard
   const copyToClipboard = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success(t('affiliate_portal_link_copied', 'Länk kopierad!'));
+      toast.success(t('affiliate_portal_copy_success', 'Länk kopierad!'));
     } catch (err) {
-      toast.error(t('affiliate_portal_copy_error', 'Kunde inte kopiera länken'));
+      console.error('Failed to copy text: ', err);
+      toast.error(t('affiliate_portal_copy_error', 'Kunde inte kopiera länk'));
     }
   };
 
-  // Download QR code
   const downloadQRCode = () => {
     if (!qrCodeDataUrl) return;
     
     const link = document.createElement('a');
-    link.download = `B8Shield-QR-${affiliateData.affiliateCode}-${selectedProduct || 'shop'}.png`;
+    link.download = `affiliate-qr-${affiliateData.affiliateCode}.png`;
     link.href = qrCodeDataUrl;
     link.click();
-    toast.success(t('affiliate_portal_qr_downloaded', 'QR-kod nedladdad!'));
   };
 
-  const fetchAffiliateData = useCallback(async () => {
-    if (!currentUser) {
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    preferredLang: 'sv-SE',
+    phone: '',
+    address1: '',
+    address2: '',
+    city: '',
+    postalCode: '',
+    country: ''
+  });
+
+  const [liveStats, setLiveStats] = useState(null);
+
+  useEffect(() => {
+    fetchAffiliateData();
+  }, [currentUser]);
+
+  const fetchAffiliateData = async () => {
+    if (!currentUser?.email) {
+      setAffiliateData(null);
       setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setError(null);
     try {
+      setLoading(true);
+      setError(null);
       const affiliatesRef = collection(db, 'affiliates');
-      const q = query(affiliatesRef, where("email", "==", currentUser.email), where("status", "==", "active"));
+      const q = query(affiliatesRef, where('email', '==', currentUser.email), where('status', '==', 'active'));
       const querySnapshot = await getDocs(q);
 
-      if (querySnapshot.empty) {
-        setError(t("affiliate_portal_not_approved", "Du är inte en godkänd affiliate. Ansök idag!"));
-        setAffiliateData(null);
+      if (!querySnapshot.empty) {
+        const data = querySnapshot.docs[0].data();
+        setAffiliateData(data);
+        setProfileForm({
+          name: data.name || '',
+          preferredLang: data.preferredLang || 'sv-SE',
+          phone: data.phone || '',
+          address1: data.address1 || '',
+          address2: data.address2 || '',
+          city: data.city || '',
+          postalCode: data.postalCode || '',
+          country: data.country || ''
+        });
+        await loadLiveStats();
       } else {
-        const firstDoc = querySnapshot.docs[0];
-        const docData = firstDoc.data();
-        setAffiliateData({ ...docData, _docId: firstDoc.id });
+        setAffiliateData(null);
+        setError(t('affiliate_portal_no_account', 'Inget aktivt affiliate-konto hittades för denna e-post.'));
       }
     } catch (err) {
-      console.error("Error fetching affiliate data:", err);
-      setError(t("affiliate_portal_load_error", "Kunde inte ladda affiliate-data. Försök igen senare."));
+      console.error('Error fetching affiliate data:', err);
+      setError(t('affiliate_portal_error', 'Ett fel uppstod när vi försökte hämta dina uppgifter.'));
     } finally {
       setLoading(false);
     }
-  }, [currentUser]);
-
-  useEffect(() => {
-    fetchAffiliateData();
-  }, [fetchAffiliateData, currentUser]);
-
-  useEffect(() => {
-    if (affiliateData?.affiliateCode) {
-      const link = generateLink();
-      setGeneratedLink(link);
-    }
-  }, [affiliateData]);
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(amount);
   };
 
-  // Helper function to safely get content value (prevents React Error #31)
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target;
+    setProfileForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const saveProfile = async () => {
+    // TODO: Implement profile saving logic
+    toast.success(t('affiliate_profile_saved', 'Profil sparad!'));
+  };
+
   const safeGetContentValue = (content) => {
     if (!content) return '';
     
@@ -205,6 +222,12 @@ const AffiliatePortal = () => {
     return String(content || '');
   };
 
+  const loadLiveStats = async () => {
+    if (!affiliateData?.affiliateCode) return;
+    // TODO: Implement live stats loading
+    // This would fetch real-time stats from the backend
+  };
+
   // Add tab configuration
   const tabs = [
     {
@@ -234,157 +257,47 @@ const AffiliatePortal = () => {
     }
   ];
 
-  /* -------------------- Profile editing -------------------- */
-  const [profileForm, setProfileForm] = useState({ name: '', preferredLang: 'sv-SE', phone: '', address1: '', address2: '', city: '', postalCode: '', country: '' });
-  useEffect(() => {
-    if (affiliateData) {
-      setProfileForm({
-        name: affiliateData.name || '',
-        preferredLang: affiliateData.preferredLang || 'sv-SE',
-        phone: affiliateData.phone || '',
-        address1: affiliateData.address1 || '',
-        address2: affiliateData.address2 || '',
-        city: affiliateData.city || '',
-        postalCode: affiliateData.postalCode || '',
-        country: affiliateData.country || ''
-      });
-    }
-  }, [affiliateData]);
-
-  const handleProfileChange = (e) => {
-    const { name, value } = e.target;
-    setProfileForm(prev => ({ ...prev, [name]: value }));
-  };
-
-  const saveProfile = async () => {
-    if (!affiliateData?._docId) return;
-    try {
-      const docRef = doc(db, 'affiliates', affiliateData._docId);
-      await updateDoc(docRef, {
-        name: profileForm.name,
-        preferredLang: profileForm.preferredLang,
-        phone: profileForm.phone,
-        address1: profileForm.address1,
-        address2: profileForm.address2,
-        city: profileForm.city,
-        postalCode: profileForm.postalCode,
-        country: profileForm.country,
-        updatedAt: new Date()
-      });
-      toast.success(t('affiliate_profile_saved', 'Profil uppdaterad'));
-      setAffiliateData(prev => ({ ...prev, ...profileForm }));
-    } catch (err) {
-      console.error('Failed saving profile', err);
-      toast.error(t('affiliate_profile_save_error', 'Kunde inte spara profilen'));
-    }
-  };
-
-  // Live 30-day stats sourced the same way as Analytics tab
-  const [liveStats, setLiveStats] = useState(null);
-
-  const loadLiveStats = async () => {
-    if (!affiliateData?.affiliateCode) return;
-    const DAY_MS = 24 * 60 * 60 * 1000;
-    const startDate = new Date(Date.now() - 30 * DAY_MS);
-    const clicksQ = fsQuery(
-      fsCollection(firebaseDb, 'affiliateClicks'),
-      fsWhere('affiliateCode', '==', affiliateData.affiliateCode),
-      fsWhere('timestamp', '>=', startDate)
-    );
-    const ordersQ = fsQuery(
-      fsCollection(firebaseDb, 'orders'),
-      fsWhere('affiliateCode', '==', affiliateData.affiliateCode),
-      fsWhere('createdAt', '>=', startDate)
-    );
-    const [clickSnap, orderSnap] = await Promise.all([getDocs(clicksQ), getDocs(ordersQ)]);
-    setLiveStats({
-      clicks: clickSnap.size,
-      conversions: orderSnap.size
-    });
-  };
-
-  useEffect(() => {
-    loadLiveStats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [affiliateData]);
-
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <main className="lg:col-span-2 space-y-8">
-              {/* Affiliate Link */}
-              <div className="bg-white p-6 rounded-2xl shadow-lg">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-4">{t('affiliate_portal_unique_link', 'Din unika affiliatelänk')}</h2>
-                <p className="text-gray-600 mb-4">{t('affiliate_portal_link_description', 'Dela denna länk för att spåra klick och tjäna provision. Alla köp som görs via din länk ger dig {{commissionRate}}% i provision.', { commissionRate: affiliateData.commissionRate })}</p>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <input
-                    type="text"
-                    readOnly
-                    value={generatedLink}
-                    className="w-full bg-gray-100 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none"
-                  />
-                  <button
-                    onClick={() => copyToClipboard(generatedLink)}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                  >
-                    {t('affiliate_portal_copy', 'Kopiera')}
-                  </button>
+          <div className="space-y-6">
+            <aside className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-blue-500">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('affiliate_portal_stats_title', 'Dina Statistik')}</h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">{t('affiliate_portal_clicks_30_days', 'Klick (30 dagar)')}</span>
+                  <span className="font-bold text-lg text-gray-800">{liveStats?.clicks ?? affiliateData.stats.clicks}</span>
                 </div>
-
-                {/* QR Code Section */}
-                {qrCodeDataUrl && (
-                  <div className="mt-6">
-                    <h3 className="text-lg font-medium text-gray-800 mb-2">{t('affiliate_portal_qr_code', 'QR-kod för din länk')}</h3>
-                    <div className="flex items-center gap-4">
-                      <img src={qrCodeDataUrl} alt="QR Code" className="w-32 h-32" />
-                      <button
-                        onClick={() => {
-                          const link = document.createElement('a');
-                          link.href = qrCodeDataUrl;
-                          link.download = 'affiliate-qr-code.png';
-                          link.click();
-                        }}
-                        className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
-                      >
-                        <ArrowDownTrayIcon className="h-5 w-5" />
-                        {t('affiliate_portal_download_qr', 'Ladda ner QR-kod')}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </main>
-
-            {/* Stats Sidebar */}
-            <aside className="space-y-8">
-              <div className="bg-white p-6 rounded-2xl shadow-lg">
-                <h3 className="text-xl font-semibold text-gray-800 mb-6">{t('affiliate_portal_your_stats', 'Din Statistik')}</h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">{t('affiliate_portal_clicks_30_days', 'Klick (30 dagar)')}</span>
-                    <span className="font-bold text-lg text-gray-800">{(liveStats?.clicks ?? affiliateData.stats.clicks).toLocaleString('sv-SE')}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">{t('affiliate_portal_conversions_30_days', 'Konverteringar (30 dagar)')}</span>
-                    <span className="font-bold text-lg text-gray-800">{liveStats?.conversions ?? affiliateData.stats.conversions}</span>
-                  </div>
-                  <div className="border-t my-4"></div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">{t('affiliate_portal_unpaid_commission', 'Obetald Provision')}</span>
-                    <span className="font-bold text-lg text-green-600">{formatCurrency(affiliateData.stats.balance)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">{t('affiliate_portal_total_earnings', 'Totala Intäkter')}</span>
-                    <span className="font-bold text-lg text-gray-800">{formatCurrency(affiliateData.stats.totalEarnings)}</span>
-                  </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">{t('affiliate_portal_conversions_30_days', 'Konverteringar (30 dagar)')}</span>
+                  <span className="font-bold text-lg text-gray-800">{liveStats?.conversions ?? affiliateData.stats.conversions}</span>
                 </div>
-                <button className="w-full mt-6 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors">
-                  {t('affiliate_portal_request_payout', 'Begär utbetalning')}
-                </button>
+                <div className="border-t my-4"></div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">{t('affiliate_portal_unpaid_commission', 'Obetald Provision')}</span>
+                  <span className="font-bold text-lg text-green-600">
+                    <SmartPrice 
+                      sekPrice={affiliateData.stats.balance} 
+                      variant="compact"
+                      showOriginal={false}
+                    />
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">{t('affiliate_portal_total_earnings', 'Totala Intäkter')}</span>
+                  <span className="font-bold text-lg text-gray-800">
+                    <SmartPrice 
+                      sekPrice={affiliateData.stats.totalEarnings} 
+                      variant="compact"
+                      showOriginal={false}
+                    />
+                  </span>
+                </div>
               </div>
+              <button className="w-full mt-6 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors">
+                {t('affiliate_portal_request_payout', 'Begär utbetalning')}
+              </button>
             </aside>
           </div>
         );

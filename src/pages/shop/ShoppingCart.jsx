@@ -10,6 +10,7 @@ import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
 import SeoHreflang from '../../components/shop/SeoHreflang';
 import { getCountryAwareUrl } from '../../utils/productUrls';
+import SmartPrice from '../../components/shop/SmartPrice';
 
 const ShoppingCart = () => {
   const { cart, updateQuantity, removeFromCart, updateShippingCountry, calculateTotals, applyDiscountCode, removeDiscount } = useCart();
@@ -43,21 +44,11 @@ const ShoppingCart = () => {
   }
   
   // Calculate total items in cart
-  const cartItemCount = cart.items.reduce((total, item) => total + item.quantity, 0);
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('sv-SE', {
-      style: 'currency',
-      currency: 'SEK',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(price);
-  };
+  const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
   const handleQuantityChange = (productId, newQuantity) => {
     if (newQuantity < 1) {
       removeFromCart(productId);
-      toast.success(t('product_removed_from_cart', 'Produkt borttagen från varukorgen'));
     } else {
       updateQuantity(productId, newQuantity);
     }
@@ -65,7 +56,6 @@ const ShoppingCart = () => {
 
   const handleRemove = (productId) => {
     removeFromCart(productId);
-    toast.success(t('product_removed_from_cart', 'Produkt borttagen från varukorgen'));
   };
 
   const handleCountryChange = (event) => {
@@ -73,24 +63,18 @@ const ShoppingCart = () => {
   };
 
   const handleApplyDiscount = async () => {
-    if (!discountCodeInput.trim()) {
-      toast.error(t('please_enter_discount_code', 'Vänligen ange en rabattkod.'));
-      return;
-    }
-    const result = await applyDiscountCode(discountCodeInput);
-    if (result.success) {
-      toast.success(result.message);
-      setDiscountCodeInput('');
-    } else {
-      toast.error(result.message);
+    if (!discountCodeInput.trim()) return;
+    
+    try {
+      await applyDiscountCode(discountCodeInput.trim());
+      toast.success(t('discount_code_applied', 'Rabattkod applicerad!'));
+    } catch (error) {
+      console.error('Error applying discount code:', error);
+      toast.error(t('invalid_discount_code', 'Ogiltig rabattkod'));
     }
   };
 
   const handleCheckout = () => {
-    if (cart.items.length === 0) {
-      toast.error(t('cart_is_empty', 'Din varukorg är tom'));
-      return;
-    }
     navigate(getCountryAwareUrl('checkout'));
   };
 
@@ -150,7 +134,14 @@ const ShoppingCart = () => {
                             </p>
                           )}
                         </div>
-                        <p className="mt-2 font-semibold text-blue-600">{formatPrice(item.price)}</p>
+                        <div className="mt-2">
+                          <SmartPrice 
+                            sekPrice={item.price} 
+                            variant="compact"
+                            showOriginal={false}
+                            className="font-semibold text-blue-600"
+                          />
+                        </div>
                       </div>
 
                       <div className="flex items-center space-x-4">
@@ -246,7 +237,11 @@ const ShoppingCart = () => {
                   <div className="space-y-3">
                     <div className="flex justify-between text-gray-700">
                       <span>{t('subtotal', 'Delsumma')}</span>
-                      <span>{formatPrice(subtotal)}</span>
+                      <SmartPrice 
+                        sekPrice={subtotal} 
+                        variant="compact"
+                        showOriginal={false}
+                      />
                     </div>
 
                     {discountAmount > 0 && (
@@ -254,13 +249,23 @@ const ShoppingCart = () => {
                          <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-1 rounded-full">
                            {t('affiliate_discount_label', 'Affiliate rabatt, {{percentage}}%', { percentage: discountPercentage })}
                          </span>
-                         <span className="text-green-600 font-semibold">- {formatPrice(discountAmount)}</span>
+                         <span className="text-green-600 font-semibold">
+                           - <SmartPrice 
+                             sekPrice={discountAmount} 
+                             variant="compact"
+                             showOriginal={false}
+                           />
+                         </span>
                        </div>
                     )}
 
                     <div className="flex justify-between text-gray-700">
                       <span>{t('shipping_cost_label', 'Frakt ({{country}})', { country: getCountryName(cart.shippingCountry) })}</span>
-                      <span>{formatPrice(shipping)}</span>
+                      <SmartPrice 
+                        sekPrice={shipping} 
+                        variant="compact"
+                        showOriginal={false}
+                      />
                     </div>
                   </div>
 
@@ -269,17 +274,17 @@ const ShoppingCart = () => {
                   <div className="space-y-1">
                     <div className="flex justify-between font-bold text-gray-900 text-xl">
                       <span>{t('total', 'Totalt')}</span>
-                      <span>{formatPrice(total)}</span>
+                      <SmartPrice 
+                        sekPrice={total} 
+                        variant="large"
+                        showOriginal={false}
+                        className="font-bold text-xl"
+                      />
                     </div>
                     <div className="flex justify-end text-sm text-gray-500">
                       <span>
                         {t('vat_included', 'Varav Moms (25%) {{amount}}', {
-                          amount: new Intl.NumberFormat('sv-SE', {
-                            style: 'currency',
-                            currency: 'SEK',
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          }).format(vat)
+                          amount: vat // We'll handle VAT conversion in the translation
                         })}
                       </span>
                     </div>

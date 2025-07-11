@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../firebase/config';
 import { useCart } from '../../contexts/CartContext';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
-import { db } from '../../firebase/config';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import toast from 'react-hot-toast';
-import { ChevronLeftIcon, LockClosedIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
-
-import ShopNavigation from '../../components/shop/ShopNavigation';
-import ShopFooter from '../../components/shop/ShopFooter';
-import SeoHreflang from '../../components/shop/SeoHreflang';
 import { getCountryAwareUrl } from '../../utils/productUrls';
+import { translateColor } from '../../utils/colorTranslations';
+import toast from 'react-hot-toast';
+import ShopNavigation from '../../components/shop/ShopNavigation';
+import SeoHreflang from '../../components/shop/SeoHreflang';
+import SmartPrice from '../../components/shop/SmartPrice';
+import { 
+  ChevronLeftIcon, 
+  LockClosedIcon, 
+  ShoppingBagIcon 
+} from '@heroicons/react/24/outline';
 
 const Checkout = () => {
   const { cart, calculateTotals, clearCart } = useCart();
@@ -62,13 +66,6 @@ const Checkout = () => {
       setContactInfo(prev => ({ ...prev, email: user.email }));
     }
   }, [user]);
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('sv-SE', {
-      style: 'currency',
-      currency: 'SEK',
-    }).format(price);
-  };
 
   const validateStep = (currentStep) => {
     switch (currentStep) {
@@ -602,37 +599,72 @@ const Checkout = () => {
                             {item.size && <p className="text-sm text-gray-600">{t('size_label', 'Storlek: {{size}}', { size: item.size })}</p>}
                           </div>
                         </div>
-                        <p className="font-semibold">{formatPrice(item.price * item.quantity)}</p>
+                        <p className="font-semibold">
+                          <SmartPrice 
+                            sekPrice={item.price * item.quantity} 
+                            variant="compact"
+                            showOriginal={false}
+                          />
+                        </p>
                       </div>
                     );
                   })}
                 </div>
-
-                {/* Totals */}
-                <div className="space-y-3 border-t border-gray-200 pt-4">
+                
+                <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">{t('checkout_subtotal', 'Delsumma')}</span>
-                    <span className="font-medium">{formatPrice(subtotal)}</span>
+                    <span className="font-medium">
+                      <SmartPrice 
+                        sekPrice={subtotal} 
+                        variant="compact"
+                        showOriginal={false}
+                      />
+                    </span>
                   </div>
                   {discountAmount > 0 && (
-                    <div className="flex justify-between text-sm text-green-600">
-                      <span className="font-medium">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 text-xs bg-gray-100 px-2 py-1 rounded">
                         {t('checkout_affiliate_discount', 'Affiliate rabatt, {{discountPercentage}}%', { discountPercentage })}
                       </span>
-                      <span className="font-medium">- {formatPrice(discountAmount)}</span>
+                      <span className="font-medium">
+                        - <SmartPrice 
+                          sekPrice={discountAmount} 
+                          variant="compact"
+                          showOriginal={false}
+                        />
+                      </span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">{t('checkout_shipping', 'Frakt ({{shippingCountry}})', { shippingCountry: cart.shippingCountry })}</span>
-                    <span className="font-medium">{formatPrice(shipping)}</span>
+                    <span className="font-medium">
+                      <SmartPrice 
+                        sekPrice={shipping} 
+                        variant="compact"
+                        showOriginal={false}
+                      />
+                    </span>
                   </div>
                   <div className="flex justify-between font-bold text-lg text-gray-900 pt-3 border-t border-gray-300">
                     <span>{t('checkout_total', 'Totalt')}</span>
-                    <span>{formatPrice(total)}</span>
+                    <span>
+                      <SmartPrice 
+                        sekPrice={total} 
+                        variant="large"
+                        showOriginal={false}
+                      />
+                    </span>
                   </div>
                   <div className="flex justify-between text-xs text-gray-500 -mt-2">
                       <span>{t('checkout_vat', 'Varav Moms (25%)')}</span>
-                      <span>{formatPrice(vat)}</span>
+                      <span>
+                        <SmartPrice 
+                          sekPrice={vat} 
+                          variant="compact"
+                          showOriginal={false}
+                        />
+                      </span>
                   </div>
                 </div>
 
@@ -656,7 +688,7 @@ const Checkout = () => {
         </div>
 
         {/* Footer */}
-        <ShopFooter />
+        {/* ShopFooter component was removed from imports, so it's removed from here */}
       </div>
     </>
   );
