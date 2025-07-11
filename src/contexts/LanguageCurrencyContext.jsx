@@ -83,6 +83,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
     // Update local state
     setLanguage(newLanguage);
     setCurrency(newCurrency);
+    console.log(`💱 Currency state updated to: ${newCurrency}`);
     setDetectionSource(source);
     setCountryDetected(detectedCountry);
     setMarket(detectedCountry === 'se' ? 'primary' : 'secondary');
@@ -97,6 +98,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
       setManualOverride(true);
     }
     
+    console.log(`✅ Language/Currency update complete: ${newLanguage} + ${newCurrency}`);
     return true;
   }, [safeSetTranslationLanguage]);
 
@@ -179,15 +181,19 @@ export const LanguageCurrencyProvider = ({ children }) => {
     let targetCurrency = 'SEK';
     if (urlCountryCode) {
       targetCurrency = getCurrencyCode(urlCountryCode) || 'SEK';
+      console.log(`🔍 URL country ${urlCountryCode} → currency: ${targetCurrency}`);
     } else {
       // Map language to default currency
       const languageCurrencyMap = {
         'sv-SE': 'SEK',
-        'en-GB': 'EUR',
+        'en-GB': 'GBP',  // 🇬🇧 Fixed: GB should use GBP, not EUR
         'en-US': 'USD'
       };
       targetCurrency = languageCurrencyMap[newLanguage] || 'SEK';
+      console.log(`🔍 Fallback mapping ${newLanguage} → currency: ${targetCurrency}`);
     }
+    
+    console.log(`🎯 selectLanguage: ${newLanguage} + ${targetCurrency} (from ${urlCountryCode ? 'URL' : 'mapping'})`);
     
     const success = await updateLanguageAndCurrency(
       newLanguage, 
@@ -244,7 +250,10 @@ export const LanguageCurrencyProvider = ({ children }) => {
    */
   const convertSEKPrice = useCallback(async (sekPrice) => {
     try {
+      console.log(`💰 Converting ${sekPrice} SEK to ${currency}`);
+      
       if (currency === 'SEK') {
+        console.log(`💰 No conversion needed: ${sekPrice} SEK`);
         return {
           originalPrice: sekPrice,
           convertedPrice: sekPrice,
@@ -254,9 +263,12 @@ export const LanguageCurrencyProvider = ({ children }) => {
         };
       }
       
-      return await convertPrice(sekPrice, currency);
+      console.log(`💰 Converting ${sekPrice} SEK → ${currency}...`);
+      const result = await convertPrice(sekPrice, currency);
+      console.log(`💰 Conversion result:`, result);
+      return result;
     } catch (error) {
-      console.error('Error converting price:', error);
+      console.error('💰 Error converting price:', error);
       return {
         originalPrice: sekPrice,
         convertedPrice: sekPrice,
@@ -309,8 +321,13 @@ export const LanguageCurrencyProvider = ({ children }) => {
             
             console.log(`🎯 Direct load: ${language} + ${currency} (supported)`);
             await updateLanguageAndCurrency(language, currency, 'supported-country-fast', detectedCountry.toUpperCase());
+            
+            // Force a small delay to ensure React state updates are processed
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
             setIsInitialized(true);
             setIsLoading(false);
+            console.log(`⚡ FAST PATH COMPLETE: ${language} + ${currency} → Ready for price conversion`);
             return; // Skip all complex logic
           }
           
@@ -339,27 +356,36 @@ export const LanguageCurrencyProvider = ({ children }) => {
 
   // Re-detect when URL country changes (only when URL params change)
   useEffect(() => {
-    if (urlCountryCode && !isInitializing) {
-      console.log(`🔄 URL params changed to: ${urlCountryCode}`);
-      
-      // **FAST PATH FOR SUPPORTED COUNTRIES** ⚡
-      const countryConfig = getCountryConfig(urlCountryCode.toLowerCase());
-      if (countryConfig && countryConfig.isSupported) {
-        console.log(`⚡ FAST PATH: URL change to supported country ${urlCountryCode} → direct update`);
-        const language = countryConfig.language;
-        const currency = countryConfig.currency;
+    const handleUrlChange = async () => {
+      if (urlCountryCode && !isInitializing) {
+        console.log(`🔄 URL params changed to: ${urlCountryCode}`);
         
-        console.log(`🎯 Direct update: ${language} + ${currency} (supported)`);
-        updateLanguageAndCurrency(language, currency, 'supported-country-fast', urlCountryCode.toUpperCase());
-        setIsInitialized(true);
-        return; // Skip complex logic
+        // **FAST PATH FOR SUPPORTED COUNTRIES** ⚡
+        const countryConfig = getCountryConfig(urlCountryCode.toLowerCase());
+        if (countryConfig && countryConfig.isSupported) {
+          console.log(`⚡ FAST PATH: URL change to supported country ${urlCountryCode} → direct update`);
+          const language = countryConfig.language;
+          const currency = countryConfig.currency;
+          
+          console.log(`🎯 Direct update: ${language} + ${currency} (supported)`);
+          await updateLanguageAndCurrency(language, currency, 'supported-country-fast', urlCountryCode.toUpperCase());
+          
+          // Force a small delay to ensure React state updates are processed
+          await new Promise(resolve => setTimeout(resolve, 50));
+          
+          setIsInitialized(true);
+          console.log(`⚡ URL FAST PATH COMPLETE: ${language} + ${currency} → Ready for price conversion`);
+          return; // Skip complex logic
+        }
+        
+        // **COMPLEX PATH FOR UNSUPPORTED COUNTRIES** 🔄
+        console.log(`🔄 COMPLEX PATH: URL change to unsupported country ${urlCountryCode} → complex logic`);
+        setIsInitialized(false);
+        initializeFromUrlCountry(urlCountryCode);
       }
-      
-      // **COMPLEX PATH FOR UNSUPPORTED COUNTRIES** 🔄
-      console.log(`🔄 COMPLEX PATH: URL change to unsupported country ${urlCountryCode} → complex logic`);
-      setIsInitialized(false);
-      initializeFromUrlCountry(urlCountryCode);
-    }
+    };
+    
+    handleUrlChange();
   }, [urlCountryCode, isInitializing]); // Allow re-initialization when URL changes
 
   // Timeout fallback for when no redirect happens (ONLY for unsupported countries)
@@ -393,9 +419,14 @@ export const LanguageCurrencyProvider = ({ children }) => {
               console.log(`⚡ TIMEOUT FAST PATH: Detected supported country ${finalHasCountry} during timeout`);
               const language = countryConfig.language;
               const currency = countryConfig.currency;
-              updateLanguageAndCurrency(language, currency, 'supported-country-timeout', finalHasCountry.toUpperCase());
-              setIsInitialized(true);
-              setIsLoading(false);
+              (async () => {
+                await updateLanguageAndCurrency(language, currency, 'supported-country-timeout', finalHasCountry.toUpperCase());
+                // Force a small delay to ensure React state updates are processed
+                await new Promise(resolve => setTimeout(resolve, 50));
+                setIsInitialized(true);
+                setIsLoading(false);
+                console.log(`⚡ TIMEOUT FAST PATH COMPLETE: ${language} + ${currency} → Ready for price conversion`);
+              })();
             } else {
               console.log(`🔄 TIMEOUT COMPLEX: Detected unsupported country ${finalHasCountry} during timeout`);
               initializeFromUrlCountry(finalHasCountry);
