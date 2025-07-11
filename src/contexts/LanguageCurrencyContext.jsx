@@ -264,8 +264,11 @@ export const LanguageCurrencyProvider = ({ children }) => {
           console.log(`🌍 LanguageCurrency: URL country detected: ${urlCountryCode}`);
           await initializeFromUrlCountry(urlCountryCode);
         } else {
-          console.log('🌍 LanguageCurrency: No URL country, using default');
-          await updateLanguageAndCurrency('sv-SE', 'SEK', 'default-fallback', 'SE');
+          console.log('🌍 LanguageCurrency: No URL country, waiting for geo-redirect...');
+          // Don't set defaults immediately - wait for potential redirect
+          // Just set loading state
+          setIsLoading(true);
+          return; // Exit early, don't set defaults
         }
       } else {
         // B2B portal - set Swedish immediately
@@ -281,11 +284,24 @@ export const LanguageCurrencyProvider = ({ children }) => {
 
   // Re-detect when URL country changes
   useEffect(() => {
-    if (!isLoading && urlCountryCode) {
+    if (urlCountryCode) {
       console.log(`🔄 URL country changed to: ${urlCountryCode}`);
       initializeFromUrlCountry(urlCountryCode);
     }
-  }, [urlCountryCode, isLoading, initializeFromUrlCountry]);
+  }, [urlCountryCode, initializeFromUrlCountry]);
+
+  // Timeout fallback for when no redirect happens
+  useEffect(() => {
+    if (!urlCountryCode && typeof window !== 'undefined' && window.location.hostname === 'shop.b8shield.com') {
+      const timeoutId = setTimeout(() => {
+        console.log('🕐 No redirect after 2 seconds, using Swedish defaults');
+        updateLanguageAndCurrency('sv-SE', 'SEK', 'timeout-fallback', 'SE');
+        setIsLoading(false);
+      }, 2000);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [urlCountryCode, updateLanguageAndCurrency]);
 
   // Context value
   const contextValue = {

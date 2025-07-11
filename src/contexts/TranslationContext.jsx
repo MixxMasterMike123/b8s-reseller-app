@@ -36,26 +36,17 @@ const getInitialLanguage = () => {
       const countryCode = segments[0];
       
       if (countryCode) {
-        // Import international country utilities
-        const { getCountryConfig } = require('../utils/internationalCountries');
-        const { getOptimalLanguageForCountry } = require('../utils/translationDetection');
+        // Simple country-to-language mapping to avoid require() issues
+        const countryLanguageMap = {
+          'se': 'sv-SE',
+          'gb': 'en-GB',
+          'us': 'en-US',
+          'uk': 'en-GB'
+        };
         
-        const countryConfig = getCountryConfig(countryCode);
-        
-        if (countryConfig) {
-          // For supported countries, use their configured language
-          if (countryConfig.isSupported) {
-            console.log(`🌍 MAIN APP: Supported country ${countryCode} → ${countryConfig.language}`);
-            return countryConfig.language;
-          } else {
-            // For unsupported countries, use English fallback
-            console.log(`🌍 MAIN APP: Unsupported country ${countryCode} → en-GB (fallback)`);
-            return 'en-GB';
-          }
-        } else {
-          console.log(`🌍 MAIN APP: Unknown country ${countryCode} → waiting for validation`);
-          return null; // Will trigger country validation
-        }
+        const detectedLanguage = countryLanguageMap[countryCode.toLowerCase()] || 'en-GB';
+        console.log(`🌍 MAIN APP: Country ${countryCode} → ${detectedLanguage}`);
+        return detectedLanguage;
       }
       
       console.log(`🌍 MAIN APP: B2C shop detected but no country in URL path: ${pathname}`);
