@@ -173,24 +173,55 @@ const LanguageCurrencySelector = () => {
             onClick={() => setIsOpen(false)}
           />
           
-          {/* Dropdown */}
-          <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-y-auto">
-            <div className="p-4 border-b border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">
+          {/* Dropdown - Compact Design */}
+          <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+            {/* Header */}
+            <div className="px-3 py-2 border-b border-gray-100 bg-gray-50">
+              <h3 className="text-xs font-semibold text-gray-900 mb-1">
                 Choose Country & Language
               </h3>
               <p className="text-xs text-gray-500">
-                {currentCountryData.name} • {displayInfo.detectionSource} • {displayInfo.isSupported ? 'Native' : 'English fallback'}
+                {currentCountryData.name} • {displayInfo.detectionSource}
               </p>
             </div>
             
-            <div className="py-2">
-              <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
-                Supported Languages
+            {/* Current Selection (at top) */}
+            {availableOptions.some(option => option.isFallback) && (
+              <div className="py-1">
+                <div className="px-3 py-1 text-xs font-medium text-green-600 bg-green-50 border-b border-green-100">
+                  ✓ Current Selection
+                </div>
+                
+                {availableOptions.filter(option => option.isFallback).map((option) => {
+                  const countryConfig = getCountryConfig(option.countryCode);
+                  
+                  return (
+                    <div
+                      key={`${option.countryCode}-current`}
+                      className="w-full flex items-center px-3 py-2 bg-green-50 border-b border-green-100"
+                    >
+                      <span className="text-base mr-2">{getCountryFlag(option.countryCode)}</span>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-green-900">{option.name}</div>
+                        <div className="text-xs text-green-700">
+                          English interface • {countryConfig?.currency || 'Unknown'} pricing
+                        </div>
+                      </div>
+                      <CheckIcon className="h-4 w-4 text-green-600" />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            
+            {/* Other Language Options */}
+            <div className="py-1">
+              <div className="px-3 py-1 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                Other Languages
               </div>
               
               {availableOptions.filter(option => !option.isFallback).map((option) => {
-                const isSelected = option.countryCode === urlCountryCode && option.language === language;
+                const isSelected = option.countryCode === urlCountryCode && option.language === language && !availableOptions.some(opt => opt.isFallback);
                 const countryConfig = getCountryConfig(option.countryCode);
                 
                 return (
@@ -198,14 +229,14 @@ const LanguageCurrencySelector = () => {
                     key={`${option.countryCode}-${option.language}`}
                     onClick={() => handleCountrySelection(option.countryCode, option.language)}
                     className={`
-                      w-full flex items-center px-4 py-3 text-left hover:bg-gray-50
+                      w-full flex items-center px-3 py-2 text-left hover:bg-gray-50 transition-colors
                       ${isSelected ? 'bg-blue-50 text-blue-900' : 'text-gray-700'}
                     `}
                   >
-                    <span className="text-lg mr-3">{getCountryFlag(option.countryCode)}</span>
+                    <span className="text-base mr-2">{getCountryFlag(option.countryCode)}</span>
                     <div className="flex-1">
-                      <div className="font-medium">{option.name}</div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm font-medium">{option.name}</div>
+                      <div className="text-xs text-gray-500">
                         {countryConfig?.name || 'Unknown'} • {countryConfig?.currency || 'Unknown'}
                       </div>
                     </div>
@@ -215,50 +246,12 @@ const LanguageCurrencySelector = () => {
                   </button>
                 );
               })}
-              
-              {/* Show current country if it's using fallback */}
-              {availableOptions.some(option => option.isFallback) && (
-                <>
-                  <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide border-t border-gray-100 mt-2">
-                    Your Country (English Interface)
-                  </div>
-                  
-                  {availableOptions.filter(option => option.isFallback).map((option) => {
-                    const isSelected = option.countryCode === urlCountryCode;
-                    const countryConfig = getCountryConfig(option.countryCode);
-                    
-                    return (
-                      <button
-                        key={`${option.countryCode}-fallback`}
-                        onClick={() => handleCountrySelection(option.countryCode, option.language)}
-                        className={`
-                          w-full flex items-center px-4 py-3 text-left hover:bg-gray-50
-                          ${isSelected ? 'bg-orange-50 text-orange-900' : 'text-gray-700'}
-                        `}
-                      >
-                        <span className="text-lg mr-3">{getCountryFlag(option.countryCode)}</span>
-                        <div className="flex-1">
-                          <div className="font-medium">{option.name}</div>
-                          <div className="text-sm text-gray-500">
-                            English interface • {countryConfig?.currency || 'Unknown'} pricing
-                          </div>
-                        </div>
-                        {isSelected && (
-                          <CheckIcon className="h-4 w-4 text-orange-600" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </>
-              )}
             </div>
             
-            <div className="p-3 border-t border-gray-100 bg-gray-50">
-              <p className="text-xs text-gray-600 mb-2">
-                🌍 International E-commerce • 200+ Countries Supported
-              </p>
-              <p className="text-xs text-gray-500">
-                Language: {getLanguageName(language)} • Currency: {currency} • Market: {displayInfo.market}
+            {/* Footer - Compact Info */}
+            <div className="px-3 py-2 border-t border-gray-100 bg-gray-50">
+              <p className="text-xs text-gray-600">
+                🌍 International E-commerce • 200+ Countries
               </p>
             </div>
           </div>
