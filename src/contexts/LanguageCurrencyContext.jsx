@@ -52,6 +52,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [manualOverride, setManualOverride] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Get existing contexts
   const { changeLanguage: setTranslationLanguage } = useTranslation();
@@ -102,7 +103,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
   /**
    * Get country from URL path (fallback when useParams() is slow)
    */
-  const getCountryFromPath = useCallback(() => {
+  const getCountryFromPath = () => {
     if (typeof window === 'undefined') return null;
     
     const pathname = window.location.pathname;
@@ -114,7 +115,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
     }
     
     return null;
-  }, []);
+  };
 
   /**
    * Initialize from URL country code with international support
@@ -137,6 +138,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
       if (!countryConfig) {
         console.log(`❓ Unknown country: ${code}, using default`);
         await updateLanguageAndCurrency('sv-SE', 'SEK', 'unknown-country-fallback', 'SE');
+        setIsInitialized(true);
         return true;
       }
       
@@ -154,11 +156,12 @@ export const LanguageCurrencyProvider = ({ children }) => {
         code.toUpperCase()
       );
       
+      setIsInitialized(true);
       return true;
     } finally {
       setIsInitializing(false);
     }
-  }, [updateLanguageAndCurrency, isInitializing]);
+  }, [isInitializing]); // Removed updateLanguageAndCurrency dependency
 
   /**
    * Manual language selection with URL country awareness
@@ -278,6 +281,11 @@ export const LanguageCurrencyProvider = ({ children }) => {
 
   // Initial detection on mount
   useEffect(() => {
+    // Only run if not already initialized and not currently initializing
+    if (isInitialized || isInitializing) {
+      return;
+    }
+    
     const initialize = async () => {
       // Only run on B2C shop domain
       if (typeof window !== 'undefined' && window.location.hostname === 'shop.b8shield.com') {
@@ -302,25 +310,32 @@ export const LanguageCurrencyProvider = ({ children }) => {
         // B2B portal - set Swedish immediately
         console.log('🏠 B2B portal detected - using Swedish');
         await updateLanguageAndCurrency('sv-SE', 'SEK', 'b2b-portal', 'SE');
+        setIsInitialized(true);
       }
       
       setIsLoading(false);
     };
     
     initialize();
-  }, [urlCountryCode, initializeFromUrlCountry, updateLanguageAndCurrency, getCountryFromPath]);
+  }, [urlCountryCode, isInitialized, isInitializing]); // Simplified dependencies
 
   // Re-detect when URL country changes (only when URL params change)
   useEffect(() => {
-    if (urlCountryCode && !isLoading && !isInitializing) {
+    if (urlCountryCode && isInitialized && !isInitializing) {
       console.log(`🔄 URL params changed to: ${urlCountryCode}`);
+      // Reset initialization state and re-initialize
+      setIsInitialized(false);
       initializeFromUrlCountry(urlCountryCode);
     }
-  }, [urlCountryCode, isLoading, isInitializing, initializeFromUrlCountry]);
+  }, [urlCountryCode, isInitialized, isInitializing]); // Removed callback dependency
 
   // Timeout fallback for when no redirect happens
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.hostname === 'shop.b8shield.com' && !isInitializing) {
+    if (typeof window !== 'undefined' && 
+        window.location.hostname === 'shop.b8shield.com' && 
+        !isInitializing && 
+        !isInitialized) {
+      
       // Check if we have country from either params or path
       const countryFromParams = urlCountryCode;
       const countryFromPath = getCountryFromPath();
@@ -329,9 +344,10 @@ export const LanguageCurrencyProvider = ({ children }) => {
       if (!hasCountry) {
         console.log('🕐 Setting timeout for geo-redirect fallback');
         const timeoutId = setTimeout(() => {
-          if (!isInitializing) {
+          if (!isInitializing && !isInitialized) {
             console.log('🕐 No redirect after 2 seconds, using Swedish defaults');
             updateLanguageAndCurrency('sv-SE', 'SEK', 'timeout-fallback', 'SE');
+            setIsInitialized(true);
             setIsLoading(false);
           }
         }, 2000);
@@ -341,7 +357,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
         console.log(`🌍 Country detected: ${hasCountry} (from ${countryFromParams ? 'params' : 'path'}), no timeout needed`);
       }
     }
-  }, [urlCountryCode, updateLanguageAndCurrency, getCountryFromPath, isInitializing]);
+  }, [urlCountryCode, isInitializing, isInitialized]); // Simplified dependencies
 
   // Context value
   const contextValue = {
@@ -349,6 +365,8 @@ export const LanguageCurrencyProvider = ({ children }) => {
     language,
     currency,
     isLoading,
+    isInitialized,
+    isInitializing,
     detectionSource,
     countryDetected,
     market,
