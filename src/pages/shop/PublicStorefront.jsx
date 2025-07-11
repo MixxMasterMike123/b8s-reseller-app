@@ -15,6 +15,7 @@ import ReviewsSection from '../../components/ReviewsSection';
 import { getAllReviews } from '../../utils/trustpilotAPI';
 import SeoHreflang from '../../components/shop/SeoHreflang';
 import SmartPrice from '../../components/shop/SmartPrice';
+import { getProductGroupContent } from '../../utils/productGroups';
 
 const PublicStorefront = () => {
   const { t, currentLanguage } = useTranslation();
@@ -69,12 +70,12 @@ const PublicStorefront = () => {
         let nameA, nameB;
         
         try {
-          nameA = getContentValue(a.name, currentLanguage) || getContentValue(a.name) || a.name || '';
-          nameB = getContentValue(b.name, currentLanguage) || getContentValue(b.name) || b.name || '';
+          nameA = getContentValue(a.name, currentLanguage) || getContentValue(a.name) || getContentValue(a.name || '') || '';
+          nameB = getContentValue(b.name, currentLanguage) || getContentValue(b.name) || getContentValue(b.name || '') || '';
         } catch (error) {
-          // If getContentValue fails, use raw name
-          nameA = a.name || '';
-          nameB = b.name || '';
+          // If getContentValue fails, use safe string conversion
+          nameA = String(a.name || '');
+          nameB = String(b.name || '');
         }
         
         // Ensure we have strings for comparison
@@ -85,8 +86,8 @@ const PublicStorefront = () => {
       });
       setProducts(productList);
       
-      // Group products dynamically by their group field
-      const grouped = groupProductsByGroup(productList);
+      // Group products dynamically by their group field and load representative products
+      const grouped = await groupProductsByGroup(productList);
       setGroupedProducts(grouped);
       
     } catch (error) {
@@ -97,28 +98,62 @@ const PublicStorefront = () => {
     }
   };
 
-  // Dynamically group products by their group field
-  const groupProductsByGroup = (products) => {
+  // Dynamically group products by their group field and load representative products
+  const groupProductsByGroup = async (products) => {
     const grouped = {};
     
+    // First, group all products by their group field
     products.forEach(product => {
       const groupKey = product.group || 'default';
       if (!grouped[groupKey]) {
         grouped[groupKey] = {
           groupName: groupKey,
-          colorVariants: [],
+          allProducts: [],
+          representativeProduct: null,
           isMultipack: false
         };
       }
-      grouped[groupKey].colorVariants.push(product);
+      grouped[groupKey].allProducts.push(product);
     });
 
-    // Mark multipack groups (those with "3pack" or "pack" in the name)
-    Object.keys(grouped).forEach(groupKey => {
+    // For each group, determine the representative product
+    const groupPromises = Object.keys(grouped).map(async (groupKey) => {
+      const group = grouped[groupKey];
+      
+      // Mark multipack groups
       if (groupKey.toLowerCase().includes('3pack') || groupKey.toLowerCase().includes('pack')) {
-        grouped[groupKey].isMultipack = true;
+        group.isMultipack = true;
       }
+
+      try {
+        // Load group content to get defaultProductId
+        const groupContent = await getProductGroupContent(groupKey);
+        
+        if (groupContent && groupContent.defaultProductId) {
+          // Use the admin-selected default product
+          const defaultProduct = group.allProducts.find(p => p.id === groupContent.defaultProductId);
+          if (defaultProduct) {
+            group.representativeProduct = defaultProduct;
+            console.log(`✅ Using admin-selected default for group ${groupKey}:`, defaultProduct.id);
+          } else {
+            console.warn(`⚠️ Admin-selected default product ${groupContent.defaultProductId} not found in group ${groupKey}, using first product`);
+            group.representativeProduct = group.allProducts[0];
+          }
+        } else {
+          // No default set, use first product in group
+          group.representativeProduct = group.allProducts[0];
+          console.log(`🔄 No default set for group ${groupKey}, using first product:`, group.allProducts[0]?.id);
+        }
+      } catch (error) {
+        console.warn(`⚠️ Failed to load group content for ${groupKey}, using first product:`, error);
+        group.representativeProduct = group.allProducts[0];
+      }
+
+      return group;
     });
+
+    // Wait for all group content to load
+    await Promise.all(groupPromises);
 
     return Object.values(grouped);
   };
@@ -142,8 +177,9 @@ const PublicStorefront = () => {
 
   // Get product description - prefer B2C description
   const getB2cProductDescription = (product) => {
-    if (product.descriptions?.b2c) return product.descriptions.b2c;
-    if (product.description) return product.description;
+    // 🚨 CRITICAL: Always use getContentValue() for multilingual content to prevent React Error #31
+    if (product.descriptions?.b2c) return getContentValue(product.descriptions.b2c);
+    if (product.description) return getContentValue(product.description);
     return t('product_description_fallback', 'B8Shield {{color}} - Vasskydd som förhindrar att dina fiskedrag fastnar', { color: product.colorVariant || '' });
   };
 
@@ -248,121 +284,99 @@ const PublicStorefront = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {groupedProducts.map((productGroup, groupIndex) => {
-                  if (productGroup.isMultipack) {
-                    // For multipacks: show only ONE card representing the entire group
-                    const representativeVariant = productGroup.colorVariants[0]; // Use first color as representative
-                    const productUrl = getProductUrl(representativeVariant);
-                    return (
-                      <Link
-                        key={`${productGroup.groupName}-multipack-${groupIndex}`}
-                        to={productUrl}
-                        className="group block"
-                      >
-                        <div className="bg-white">
-                          {/* Product Image */}
-                          <div className="relative aspect-square bg-gray-50 mb-4 overflow-hidden">
-                            <img
-                              src={getB2cProductImage(representativeVariant)}
-                              alt={`B8Shield 3-pack`}
-                              className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
-                            />
-                            
-                            {/* Sustainable Material Badge */}
-                            <div className="absolute top-3 left-3">
-                              <span className="bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded text-[11px]">
-                                {t('sustainable_materials_badge', 'Hållbara material')}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Product Info */}
-                          <div className="space-y-1">
-                            {/* Product Name */}
-                            <h3 className="text-base font-medium text-gray-900 leading-tight">
-                              {t('product_name_3pack', 'B8Shield 3-pack')}
-                            </h3>
-                            
-                            {/* Product Description */}
-                            <p className="text-sm text-gray-600 leading-tight">
-                              {t('product_description_3pack', 'Vasskydd 3-pack för olika fiskemiljöer')}
-                            </p>
-                            
-                            {/* Variant Info */}
-                            <p className="text-sm text-gray-500">
-                              {t('product_3pack_info', 'Innehåller alla storlekar (2mm, 4mm, 6mm) • {{count}} färger', { count: productGroup.colorVariants.length })}
-                            </p>
-                            
-                            {/* Price - Now with intelligent currency conversion */}
-                            <div className="pt-1">
-                              <SmartPrice 
-                                sekPrice={representativeVariant.b2cPrice || representativeVariant.basePrice} 
-                                variant="compact"
-                                showOriginal={false}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  } else {
-                    // For individual products: show one card per color variant
-                    return productGroup.colorVariants?.map((colorVariant, colorIndex) => {
-                      const productUrl = getProductUrl(colorVariant);
-                      return (
-                      <Link
-                        key={`${productGroup.groupName}-${colorVariant.colorVariant}-${colorIndex}`}
-                        to={productUrl}
-                        className="group block"
-                      >
-                        <div className="bg-white">
-                          {/* Product Image */}
-                          <div className="relative aspect-square bg-gray-50 mb-4 overflow-hidden">
-                            <img
-                              src={getB2cProductImage(colorVariant)}
-                              alt={`B8Shield ${colorVariant.colorVariant}`}
-                              className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
-                            />
-                            
-                            {/* Sustainable Material Badge */}
-                            <div className="absolute top-3 left-3">
-                              <span className="bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded text-[11px]">
-                                {t('sustainable_materials_badge', 'Hållbara material')}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Product Info */}
-                          <div className="space-y-1">
-                            {/* Product Name */}
-                            <h3 className="text-base font-medium text-gray-900 leading-tight">
-                              {t('product_name_individual', 'B8Shield {{color}}', { color: translateColor(colorVariant.colorVariant, t) })}
-                            </h3>
-                            
-                            {/* Product Description */}
-                            <p className="text-sm text-gray-600 leading-tight">
-                              {t('product_description_individual', 'Vasskydd som förhindrar fastnade fiskedrag')}
-                            </p>
-                            
-                            {/* Variant Info */}
-                            <p className="text-sm text-gray-500">
-                              {colorVariant.availableSizes?.length > 1 
-                                ? t('product_multiple_sizes', '{{count}} storlekar', { count: colorVariant.availableSizes.length })
-                                : t('product_single_size', '1 storlek')}
-                            </p>
-                            
-                            {/* Price - Now with intelligent currency conversion */}
-                            <div className="pt-1">
-                              <SmartPrice 
-                                sekPrice={colorVariant.b2cPrice || colorVariant.basePrice} 
-                                variant="compact"
-                                showOriginal={false}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-                    )}) || [];
+                  // For ALL product groups: show only ONE card using the representative product
+                  const representativeProduct = productGroup.representativeProduct;
+                  if (!representativeProduct) {
+                    console.warn(`⚠️ No representative product found for group ${productGroup.groupName}`);
+                    return null;
                   }
+                  
+                  const productUrl = getProductUrl(representativeProduct);
+                  const isMultipack = productGroup.isMultipack;
+                  const variantCount = productGroup.allProducts.length;
+                  
+                  return (
+                    <Link
+                      key={`${productGroup.groupName}-${groupIndex}`}
+                      to={productUrl}
+                      className="group block"
+                    >
+                      <div className="bg-white">
+                        {/* Product Image */}
+                        <div className="relative aspect-square bg-gray-50 mb-4 overflow-hidden">
+                          <img
+                            src={getB2cProductImage(representativeProduct)}
+                            alt={`B8Shield ${isMultipack ? '3-pack' : productGroup.groupName}`}
+                            className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+                          />
+                          
+                          {/* Sustainable Material Badge */}
+                          <div className="absolute top-3 left-3">
+                            <span className="bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded text-[11px]">
+                              {t('sustainable_materials_badge', 'Hållbara material')}
+                            </span>
+                          </div>
+
+                          {/* Variant Count Badge */}
+                          {variantCount > 1 && (
+                            <div className="absolute top-3 right-3">
+                              <span className="bg-blue-500 text-white text-xs font-medium px-2 py-1 rounded text-[11px]">
+                                {t('variant_count_badge', '{{count}} varianter', { count: variantCount })}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Product Info */}
+                        <div className="space-y-1">
+                          {/* Product Name */}
+                          <h3 className="text-base font-medium text-gray-900 leading-tight">
+                            {isMultipack 
+                              ? t('product_name_3pack', 'B8Shield 3-pack')
+                              : (() => {
+                                  // 🚨 CRITICAL: Ensure we never render an object - prevent React Error #31
+                                  const productName = getContentValue(representativeProduct.name);
+                                  return typeof productName === 'string' && productName 
+                                    ? productName 
+                                    : t('product_name_fallback', 'B8Shield {{group}}', { group: productGroup.groupName });
+                                })()
+                            }
+                          </h3>
+                          
+                          {/* Product Description */}
+                          <p className="text-sm text-gray-600 leading-tight">
+                            {isMultipack 
+                              ? t('product_description_3pack', 'Vasskydd 3-pack för olika fiskemiljöer')
+                              : (() => {
+                                  // 🚨 CRITICAL: Ensure we never render an object - prevent React Error #31
+                                  const description = getB2cProductDescription(representativeProduct);
+                                  return typeof description === 'string' ? description : t('product_description_fallback', 'B8Shield vasskydd');
+                                })()
+                            }
+                          </p>
+                          
+                          {/* Variant Info */}
+                          <p className="text-sm text-gray-500">
+                            {isMultipack 
+                              ? t('product_3pack_info', 'Innehåller alla storlekar (2mm, 4mm, 6mm) • {{count}} färger', { count: variantCount })
+                              : variantCount > 1 
+                                ? t('product_group_variants', '{{count}} färger och storlekar', { count: variantCount })
+                                : t('product_single_variant', 'En variant tillgänglig')
+                            }
+                          </p>
+                          
+                          {/* Price - Now with intelligent currency conversion */}
+                          <div className="pt-1">
+                            <SmartPrice 
+                              sekPrice={representativeProduct.b2cPrice || representativeProduct.basePrice} 
+                              variant="compact"
+                              showOriginal={false}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  );
                 })}
               </div>
             )}
