@@ -1,7 +1,10 @@
 /**
- * Currency Detection Service
+ * Currency Detection Service for B2C Shop
  * Detects user's preferred currency based on CloudFlare geo-targeting, 
  * language preferences, and fallback logic
+ * 
+ * ONLY ACTIVE FOR: shop.b8shield.com
+ * (B2B portal partner.b8shield.com always uses SEK)
  */
 
 // Country to currency mapping
@@ -100,6 +103,18 @@ export const getCloudFlareCountry = () => {
  */
 export const detectCurrency = (userLanguage = null, manualOverride = null) => {
   try {
+    // Check if we're on the B2C shop domain
+    const isShopDomain = typeof window !== 'undefined' && 
+                        window.location.hostname === 'shop.b8shield.com';
+    
+    // If not on shop domain, always return SEK (B2B portal)
+    if (!isShopDomain) {
+      console.log('🏠 Currency: B2B portal - using SEK');
+      return 'SEK';
+    }
+    
+    console.log('🛒 Currency: B2C shop - detecting currency...');
+    
     // 1. Manual override takes highest priority
     if (manualOverride && isValidCurrency(manualOverride)) {
       console.log('💰 Currency: Manual override ->', manualOverride);

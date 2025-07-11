@@ -1,7 +1,7 @@
 "use strict";
 // V2 FUNCTIONS BATCH 4 - Direct imports to avoid circular dependencies
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.exampleProtectedFunction = exports.debugDatabaseV2 = exports.checkNamedDatabaseV2 = exports.createAdminUserV2 = exports.toggleCustomerActiveStatusV2 = exports.deleteCustomerAccountV2 = exports.manualStatusUpdateV2 = exports.processB2COrderCompletionV2 = exports.processB2COrderCompletionHttpV2 = exports.sendStatusUpdateHttpV2 = exports.approveAffiliateV2 = exports.testEmailV2 = exports.updateCustomerEmailV2 = exports.sendOrderStatusUpdateEmailV2 = exports.sendUserActivationEmailV2 = exports.sendOrderConfirmationEmailsV2 = exports.sendB2COrderPendingEmailV2 = exports.sendB2COrderNotificationAdminV2 = exports.sendOrderStatusEmailV2 = exports.sendB2BOrderConfirmationCustomerV2 = exports.sendB2BOrderConfirmationAdminV2 = exports.sendAffiliateWelcomeEmailV2 = exports.sendCustomerWelcomeEmailV2 = exports.processAffiliateConversionV2 = exports.logAffiliateClickHttpV2 = exports.logAffiliateClickV2 = void 0;
+exports.exampleProtectedFunction = exports.debugDatabaseV2 = exports.checkNamedDatabaseV2 = exports.createAdminUserV2 = exports.toggleCustomerActiveStatusV2 = exports.deleteCustomerAccountV2 = exports.testGeoHeadersV2 = exports.getGeoDataV2 = exports.manualStatusUpdateV2 = exports.processB2COrderCompletionV2 = exports.processB2COrderCompletionHttpV2 = exports.sendStatusUpdateHttpV2 = exports.approveAffiliateV2 = exports.testEmailV2 = exports.updateCustomerEmailV2 = exports.sendOrderStatusUpdateEmailV2 = exports.sendUserActivationEmailV2 = exports.sendOrderConfirmationEmailsV2 = exports.sendB2COrderPendingEmailV2 = exports.sendB2COrderNotificationAdminV2 = exports.sendOrderStatusEmailV2 = exports.sendB2BOrderConfirmationCustomerV2 = exports.sendB2BOrderConfirmationAdminV2 = exports.sendAffiliateWelcomeEmailV2 = exports.sendCustomerWelcomeEmailV2 = exports.processAffiliateConversionV2 = exports.logAffiliateClickHttpV2 = exports.logAffiliateClickV2 = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const cors_handler_1 = require("./protection/cors/cors-handler");
 const rate_limiter_1 = require("./protection/rate-limiting/rate-limiter");
@@ -33,13 +33,17 @@ const functions_2 = require("./order-processing/functions");
 Object.defineProperty(exports, "processB2COrderCompletionHttpV2", { enumerable: true, get: function () { return functions_2.processB2COrderCompletionHttp; } });
 Object.defineProperty(exports, "processB2COrderCompletionV2", { enumerable: true, get: function () { return functions_2.processB2COrderCompletion; } });
 Object.defineProperty(exports, "manualStatusUpdateV2", { enumerable: true, get: function () { return functions_2.manualStatusUpdate; } });
+// Import geo functions for B2C shop currency detection
+const functions_3 = require("./geo/functions");
+Object.defineProperty(exports, "getGeoDataV2", { enumerable: true, get: function () { return functions_3.getGeoData; } });
+Object.defineProperty(exports, "testGeoHeadersV2", { enumerable: true, get: function () { return functions_3.testGeoHeaders; } });
 // Import customer-admin functions directly with original names
-const functions_3 = require("./customer-admin/functions");
-Object.defineProperty(exports, "deleteCustomerAccountV2", { enumerable: true, get: function () { return functions_3.deleteCustomerAccount; } });
-Object.defineProperty(exports, "toggleCustomerActiveStatusV2", { enumerable: true, get: function () { return functions_3.toggleCustomerActiveStatus; } });
-Object.defineProperty(exports, "createAdminUserV2", { enumerable: true, get: function () { return functions_3.createAdminUser; } });
-Object.defineProperty(exports, "checkNamedDatabaseV2", { enumerable: true, get: function () { return functions_3.checkNamedDatabase; } });
-Object.defineProperty(exports, "debugDatabaseV2", { enumerable: true, get: function () { return functions_3.debugDatabase; } });
+const functions_4 = require("./customer-admin/functions");
+Object.defineProperty(exports, "deleteCustomerAccountV2", { enumerable: true, get: function () { return functions_4.deleteCustomerAccount; } });
+Object.defineProperty(exports, "toggleCustomerActiveStatusV2", { enumerable: true, get: function () { return functions_4.toggleCustomerActiveStatus; } });
+Object.defineProperty(exports, "createAdminUserV2", { enumerable: true, get: function () { return functions_4.createAdminUser; } });
+Object.defineProperty(exports, "checkNamedDatabaseV2", { enumerable: true, get: function () { return functions_4.checkNamedDatabase; } });
+Object.defineProperty(exports, "debugDatabaseV2", { enumerable: true, get: function () { return functions_4.debugDatabase; } });
 // Example protected HTTP function - TESTING
 exports.exampleProtectedFunction = (0, https_1.onRequest)({ cors: true }, async (request, response) => {
     // Apply CORS protection

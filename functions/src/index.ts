@@ -34,6 +34,12 @@ import {
   manualStatusUpdate
 } from './order-processing/functions';
 
+// Import geo functions for B2C shop currency detection
+import {
+  getGeoData,
+  testGeoHeaders
+} from './geo/functions';
+
 // Import customer-admin functions directly with original names
 import {
   deleteCustomerAccount,
@@ -69,6 +75,12 @@ export {
   processB2COrderCompletionHttp as processB2COrderCompletionHttpV2,
   processB2COrderCompletion as processB2COrderCompletionV2,
   manualStatusUpdate as manualStatusUpdateV2
+};
+
+// Re-export geo functions for B2C shop currency detection
+export {
+  getGeoData as getGeoDataV2,
+  testGeoHeaders as testGeoHeadersV2
 };
 
 // Re-export customer-admin functions individually with V2 names (avoid V1 conflicts)
