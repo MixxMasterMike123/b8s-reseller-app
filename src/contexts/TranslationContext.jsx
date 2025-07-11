@@ -114,7 +114,7 @@ export const TranslationProvider = ({ children }) => {
         console.log(`🔄 Error loading ${languageCode}, trying Swedish fallback`);
         await loadTranslations('sv-SE');
       } else {
-        setTranslations({});
+      setTranslations({});
       }
     } finally {
       setLoading(false);
@@ -184,12 +184,12 @@ export const TranslationProvider = ({ children }) => {
         
         // Load translations for known language
         if (currentLanguage) {
-          console.log(`🌍 Loading translations for initial language: ${currentLanguage}`);
+        console.log(`🌍 Loading translations for initial language: ${currentLanguage}`);
           
           // For B2C shop, let LanguageCurrencyContext handle country detection
           // TranslationContext just loads translations for the requested language
           
-          await loadTranslations(currentLanguage);
+        await loadTranslations(currentLanguage);
         }
       } catch (error) {
         console.error('Translation initialization failed:', error);

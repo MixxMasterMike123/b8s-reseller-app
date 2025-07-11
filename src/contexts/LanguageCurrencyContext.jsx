@@ -299,6 +299,23 @@ export const LanguageCurrencyProvider = ({ children }) => {
         
         if (detectedCountry && !isInitialized) {
           console.log(`🌍 LanguageCurrency: Country detected: ${detectedCountry} (from ${countryFromParams ? 'params' : 'path'})`);
+          
+          // **FAST PATH FOR SUPPORTED COUNTRIES** ⚡
+          const countryConfig = getCountryConfig(detectedCountry.toLowerCase());
+          if (countryConfig && countryConfig.isSupported) {
+            console.log(`⚡ FAST PATH: Supported country ${detectedCountry} → direct initialization`);
+            const language = countryConfig.language;
+            const currency = countryConfig.currency;
+            
+            console.log(`🎯 Direct load: ${language} + ${currency} (supported)`);
+            await updateLanguageAndCurrency(language, currency, 'supported-country-fast', detectedCountry.toUpperCase());
+            setIsInitialized(true);
+            setIsLoading(false);
+            return; // Skip all complex logic
+          }
+          
+          // **COMPLEX PATH FOR UNSUPPORTED COUNTRIES** 🔄
+          console.log(`🔄 COMPLEX PATH: Unsupported country ${detectedCountry} → using complex logic`);
           await initializeFromUrlCountry(detectedCountry);
         } else if (!detectedCountry && !isInitialized) {
           console.log('🌍 LanguageCurrency: No URL country, waiting for geo-redirect...');
@@ -324,13 +341,28 @@ export const LanguageCurrencyProvider = ({ children }) => {
   useEffect(() => {
     if (urlCountryCode && !isInitializing) {
       console.log(`🔄 URL params changed to: ${urlCountryCode}`);
-      // Reset initialization state and re-initialize
+      
+      // **FAST PATH FOR SUPPORTED COUNTRIES** ⚡
+      const countryConfig = getCountryConfig(urlCountryCode.toLowerCase());
+      if (countryConfig && countryConfig.isSupported) {
+        console.log(`⚡ FAST PATH: URL change to supported country ${urlCountryCode} → direct update`);
+        const language = countryConfig.language;
+        const currency = countryConfig.currency;
+        
+        console.log(`🎯 Direct update: ${language} + ${currency} (supported)`);
+        updateLanguageAndCurrency(language, currency, 'supported-country-fast', urlCountryCode.toUpperCase());
+        setIsInitialized(true);
+        return; // Skip complex logic
+      }
+      
+      // **COMPLEX PATH FOR UNSUPPORTED COUNTRIES** 🔄
+      console.log(`🔄 COMPLEX PATH: URL change to unsupported country ${urlCountryCode} → complex logic`);
       setIsInitialized(false);
       initializeFromUrlCountry(urlCountryCode);
     }
   }, [urlCountryCode, isInitializing]); // Allow re-initialization when URL changes
 
-  // Timeout fallback for when no redirect happens
+  // Timeout fallback for when no redirect happens (ONLY for unsupported countries)
   useEffect(() => {
     if (typeof window !== 'undefined' && 
         window.location.hostname === 'shop.b8shield.com' && 
@@ -342,7 +374,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
       const hasCountry = countryFromParams || countryFromPath;
       
       if (!hasCountry) {
-        console.log('🕐 Setting timeout for geo-redirect fallback');
+        console.log('🕐 Setting timeout for geo-redirect fallback (unsupported countries only)');
         const timeoutId = setTimeout(() => {
           // Double-check that no country was detected during timeout
           const finalCountryFromParams = urlCountryCode;
@@ -355,8 +387,19 @@ export const LanguageCurrencyProvider = ({ children }) => {
             setIsInitialized(true);
             setIsLoading(false);
           } else if (finalHasCountry && !isInitialized) {
-            console.log(`🔄 Country detected during timeout: ${finalHasCountry}, initializing...`);
-            initializeFromUrlCountry(finalHasCountry);
+            // Check if it's a supported country before using complex logic
+            const countryConfig = getCountryConfig(finalHasCountry.toLowerCase());
+            if (countryConfig && countryConfig.isSupported) {
+              console.log(`⚡ TIMEOUT FAST PATH: Detected supported country ${finalHasCountry} during timeout`);
+              const language = countryConfig.language;
+              const currency = countryConfig.currency;
+              updateLanguageAndCurrency(language, currency, 'supported-country-timeout', finalHasCountry.toUpperCase());
+              setIsInitialized(true);
+              setIsLoading(false);
+            } else {
+              console.log(`🔄 TIMEOUT COMPLEX: Detected unsupported country ${finalHasCountry} during timeout`);
+              initializeFromUrlCountry(finalHasCountry);
+            }
           }
         }, 2000);
         

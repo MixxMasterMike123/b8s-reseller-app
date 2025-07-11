@@ -4,9 +4,9 @@ import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { 
-  HomeIcon, 
-  BookOpenIcon, 
-  PresentationChartBarIcon, 
+  HomeIcon,
+  BookOpenIcon,
+  PresentationChartBarIcon,
   ChartBarIcon, 
   SparklesIcon 
 } from '@heroicons/react/24/outline';
@@ -81,7 +81,7 @@ const AffiliatePortal = () => {
   // Generate QR Code
   const generateQRCode = async (link) => {
     try {
-      setGeneratingQR(true);
+    setGeneratingQR(true);
       const qrCodeDataUrl = await QRCode.toDataURL(link);
       setQrCodeDataUrl(qrCodeDataUrl);
       return qrCodeDataUrl;
@@ -264,18 +264,18 @@ const AffiliatePortal = () => {
           <div className="space-y-6">
             <aside className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-blue-500">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('affiliate_portal_stats_title', 'Dina Statistik')}</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">{t('affiliate_portal_clicks_30_days', 'Klick (30 dagar)')}</span>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">{t('affiliate_portal_clicks_30_days', 'Klick (30 dagar)')}</span>
                   <span className="font-bold text-lg text-gray-800">{liveStats?.clicks ?? affiliateData.stats.clicks}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">{t('affiliate_portal_conversions_30_days', 'Konverteringar (30 dagar)')}</span>
-                  <span className="font-bold text-lg text-gray-800">{liveStats?.conversions ?? affiliateData.stats.conversions}</span>
-                </div>
-                <div className="border-t my-4"></div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">{t('affiliate_portal_unpaid_commission', 'Obetald Provision')}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">{t('affiliate_portal_conversions_30_days', 'Konverteringar (30 dagar)')}</span>
+                    <span className="font-bold text-lg text-gray-800">{liveStats?.conversions ?? affiliateData.stats.conversions}</span>
+                  </div>
+                  <div className="border-t my-4"></div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">{t('affiliate_portal_unpaid_commission', 'Obetald Provision')}</span>
                   <span className="font-bold text-lg text-green-600">
                     <SmartPrice 
                       sekPrice={affiliateData.stats.balance} 
@@ -283,9 +283,9 @@ const AffiliatePortal = () => {
                       showOriginal={false}
                     />
                   </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">{t('affiliate_portal_total_earnings', 'Totala Intäkter')}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">{t('affiliate_portal_total_earnings', 'Totala Intäkter')}</span>
                   <span className="font-bold text-lg text-gray-800">
                     <SmartPrice 
                       sekPrice={affiliateData.stats.totalEarnings} 
@@ -293,11 +293,11 @@ const AffiliatePortal = () => {
                       showOriginal={false}
                     />
                   </span>
+                  </div>
                 </div>
-              </div>
-              <button className="w-full mt-6 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors">
-                {t('affiliate_portal_request_payout', 'Begär utbetalning')}
-              </button>
+                <button className="w-full mt-6 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors">
+                  {t('affiliate_portal_request_payout', 'Begär utbetalning')}
+                </button>
             </aside>
           </div>
         );
