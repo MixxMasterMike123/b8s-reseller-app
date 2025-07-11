@@ -6,9 +6,14 @@ import { RATE_LIMITS } from '../config/rate-limits';
 import { sendEmail, db } from '../email/email-handler';
 import { getEmail } from '../../emails';
 
-// Global type declarations for rate limiting
+// Global type declarations for enhanced rate limiting
 declare global {
   var orderRateLimit: Map<string, number[]>;
+  var bulkModeTracker: Map<string, { 
+    enabled: boolean; 
+    enabledAt: number; 
+    requestTimes: number[]; 
+  }>;
 }
 
 // Types for order processing
@@ -41,6 +46,98 @@ interface UserData {
 }
 
 /**
+ * Enhanced rate limiting with bulk operation detection
+ */
+const checkRateLimit = (clientIP: string): { allowed: boolean; bulkMode: boolean; message?: string } => {
+  const now = Date.now();
+  
+  // Initialize tracking maps if needed
+  if (!global.orderRateLimit) global.orderRateLimit = new Map();
+  if (!global.bulkModeTracker) global.bulkModeTracker = new Map();
+  
+  // Get current tracking data
+  const ipOrders = global.orderRateLimit.get(clientIP) || [];
+  const bulkTracker = global.bulkModeTracker.get(clientIP) || { 
+    enabled: false, 
+    enabledAt: 0, 
+    requestTimes: [] 
+  };
+  
+  // Clean up old requests
+  const recentOrders = ipOrders.filter((time: number) => now - time < RATE_LIMITS.ORDER_PROCESSING.windowMs);
+  
+  // Update request times for bulk detection
+  bulkTracker.requestTimes.push(now);
+  bulkTracker.requestTimes = bulkTracker.requestTimes.filter(
+    time => now - time < RATE_LIMITS.ORDER_PROCESSING.BULK_MODE.BULK_DETECTION.timeWindow
+  );
+  
+  // Check if bulk mode should be enabled
+  if (!bulkTracker.enabled && 
+      bulkTracker.requestTimes.length >= RATE_LIMITS.ORDER_PROCESSING.BULK_MODE.BULK_DETECTION.rapidRequests) {
+    bulkTracker.enabled = true;
+    bulkTracker.enabledAt = now;
+    console.log(`🔄 Bulk mode enabled for IP ${clientIP} - detected ${bulkTracker.requestTimes.length} rapid requests`);
+  }
+  
+  // Check if bulk mode should be disabled (timeout)
+  if (bulkTracker.enabled && 
+      now - bulkTracker.enabledAt > RATE_LIMITS.ORDER_PROCESSING.BULK_MODE.BULK_DETECTION.maxBulkDuration) {
+    bulkTracker.enabled = false;
+    bulkTracker.enabledAt = 0;
+    console.log(`⏰ Bulk mode disabled for IP ${clientIP} - timeout after 30 minutes`);
+  }
+  
+  // Apply appropriate rate limits
+  let maxRequests: number;
+  let windowMs: number;
+  let mode: string;
+  
+  if (bulkTracker.enabled) {
+    // Use bulk mode limits
+    maxRequests = RATE_LIMITS.ORDER_PROCESSING.BULK_MODE.perWindow;
+    windowMs = RATE_LIMITS.ORDER_PROCESSING.BULK_MODE.windowMs;
+    mode = 'bulk';
+    
+    // Filter requests based on bulk window
+    const bulkRecentOrders = ipOrders.filter((time: number) => now - time < windowMs);
+    
+    if (bulkRecentOrders.length >= maxRequests) {
+      return {
+        allowed: false,
+        bulkMode: true,
+        message: `Bulk mode: ${maxRequests} orders per ${Math.ceil(windowMs/60000)} minutes limit reached`
+      };
+    }
+  } else {
+    // Use normal mode limits
+    maxRequests = RATE_LIMITS.ORDER_PROCESSING.perWindow;
+    windowMs = RATE_LIMITS.ORDER_PROCESSING.windowMs;
+    mode = 'normal';
+    
+    if (recentOrders.length >= maxRequests) {
+      return {
+        allowed: false,
+        bulkMode: false,
+        message: `Normal mode: ${maxRequests} orders per ${Math.ceil(windowMs/60000)} minutes limit reached`
+      };
+    }
+  }
+  
+  // Update tracking
+  recentOrders.push(now);
+  global.orderRateLimit.set(clientIP, recentOrders);
+  global.bulkModeTracker.set(clientIP, bulkTracker);
+  
+  console.log(`📦 Order processing request from IP: ${clientIP} (${recentOrders.length}/${maxRequests} in ${Math.ceil(windowMs/60000)} min, ${mode} mode)`);
+  
+  return {
+    allowed: true,
+    bulkMode: bulkTracker.enabled
+  };
+};
+
+/**
  * [V2] HTTP endpoint for B2C order processing with affiliate commission handling
  */
 export const processB2COrderCompletionHttp = onRequest(
@@ -50,34 +147,24 @@ export const processB2COrderCompletionHttp = onRequest(
     region: 'us-central1'
   },
   async (req, res) => {
-    // 🛡️ ORDER SPAM PROTECTION: Limit order processing per IP
+    // 🛡️ ENHANCED ORDER PROTECTION: Smart rate limiting with bulk detection
     const clientIP = req.ip || req.connection?.remoteAddress || 'unknown';
-    const now = Date.now();
-    const windowMs = RATE_LIMITS.ORDER_PROCESSING.windowMs;
-    const maxOrders = RATE_LIMITS.ORDER_PROCESSING.perWindow;
+    const rateCheck = checkRateLimit(clientIP);
     
-    if (!global.orderRateLimit) global.orderRateLimit = new Map();
-    
-    const ipOrders = global.orderRateLimit.get(clientIP) || [];
-    const recentOrders = ipOrders.filter((time: number) => now - time < windowMs);
-    
-    if (recentOrders.length >= maxOrders) {
-      console.warn(`🚫 Order spam detected from IP: ${clientIP}`);
+    if (!rateCheck.allowed) {
+      console.warn(`🚫 Rate limit exceeded for IP: ${clientIP} - ${rateCheck.message}`);
       res.status(429).json({ 
         success: false,
-        error: 'Order processing limit reached. Please wait 5 minutes before placing more orders.',
-        retryAfter: Math.ceil(windowMs / 1000),
-        limit: maxOrders,
-        window: '5 minutes'
+        error: rateCheck.message || 'Rate limit exceeded',
+        retryAfter: rateCheck.bulkMode ? 600 : 300, // 10 min for bulk, 5 min for normal
+        bulkMode: rateCheck.bulkMode
       });
       return;
     }
     
-    // Track this order request
-    recentOrders.push(now);
-    global.orderRateLimit.set(clientIP, recentOrders);
-    
-    console.log(`📦 Order processing request from IP: ${clientIP} (${recentOrders.length}/${maxOrders} in ${Math.ceil(windowMs/60000)} min)`);
+    if (rateCheck.bulkMode) {
+      console.log(`🔄 Processing in bulk mode for IP: ${clientIP}`);
+    }
 
     // Enable CORS with more permissive settings for testing
     res.set('Access-Control-Allow-Origin', '*');
@@ -155,15 +242,29 @@ export const processB2COrderCompletionHttp = onRequest(
       const commissionRate = affiliate.commissionRate || 15; // Default 15%
       const commissionAmount = (orderTotal * (commissionRate / 100));
 
+      console.log(`Commission calculation for order ${orderId}: ${orderTotal} * ${commissionRate}% = ${commissionAmount}`);
+
       // Update affiliate stats
+      console.log(`Updating affiliate stats for ${affiliateDoc.id}`);
       await affiliateDoc.ref.update({
         'stats.conversions': FieldValue.increment(1),
         'stats.totalEarnings': FieldValue.increment(commissionAmount),
         'stats.balance': FieldValue.increment(commissionAmount)
       });
 
+      // Update the order with commission information (CRITICAL FIX)
+      console.log(`Updating order ${orderId} with commission ${commissionAmount}`);
+      await orderRef.update({ 
+        affiliateCommission: commissionAmount, 
+        affiliateId: affiliateDoc.id,
+        conversionProcessed: true,
+        conversionProcessedAt: FieldValue.serverTimestamp()
+      });
+      console.log(`Successfully updated order ${orderId} with commission data`);
+
       // Update the click to mark conversion
       if (orderData.affiliateClickId) {
+        console.log(`Updating affiliate click ${orderData.affiliateClickId}`);
         await localDb
           .collection('affiliateClicks')
           .doc(orderData.affiliateClickId)

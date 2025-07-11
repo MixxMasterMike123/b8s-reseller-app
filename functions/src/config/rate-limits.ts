@@ -5,10 +5,21 @@ export const RATE_LIMITS = {
     windowMs: 60000     // 1 minute window
   },
   
-  // Order Processing (business critical)
+  // Order Processing (business critical) - Enhanced with bulk support
   ORDER_PROCESSING: {
-    perWindow: 15,      // 15 orders per 5 minutes per IP (handles bulk customers)
-    windowMs: 300000    // 5 minute window
+    perWindow: 15,      // 15 orders per 5 minutes per IP (normal operations)
+    windowMs: 300000,   // 5 minute window
+    // Bulk operation limits (for affiliate commission fixes, etc.)
+    BULK_MODE: {
+      perWindow: 50,    // 50 orders per 10 minutes for bulk operations
+      windowMs: 600000, // 10 minute window
+      // Detection criteria for bulk operations
+      BULK_DETECTION: {
+        rapidRequests: 5,     // 5+ requests within 30 seconds = bulk mode
+        timeWindow: 30000,    // 30 second detection window
+        maxBulkDuration: 1800000 // 30 minutes max bulk mode duration
+      }
+    }
   },
   
   // Email Sending (spam prevention)

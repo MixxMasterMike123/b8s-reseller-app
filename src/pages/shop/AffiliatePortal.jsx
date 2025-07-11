@@ -21,7 +21,7 @@ import AffiliateSuccessGuide from '../../components/affiliate/AffiliateSuccessGu
 import AffiliateMarketingMaterials from '../../components/AffiliateMarketingMaterials';
 import AffiliateAnalyticsTab from './AffiliateAnalyticsTab';
 import SmartPrice from '../../components/shop/SmartPrice';
-import { diagnoseAffiliateData } from '../../utils/affiliateDebug';
+import { diagnoseAffiliateData, testCommissionProcessing, fixMissingCommissions, fixMissingCommissionsIntelligent } from '../../utils/affiliateDebug';
 import toast from 'react-hot-toast';
 import QRCode from 'qrcode';
 
@@ -35,9 +35,10 @@ const AffiliatePortal = () => {
   const [activeTab, setActiveTab] = useState('overview');
   
   // Diagnostic state
-  const [diagnosticData, setDiagnosticData] = useState(null);
   const [diagnosticLoading, setDiagnosticLoading] = useState(false);
-  
+  const [diagnosticResult, setDiagnosticResult] = useState(null); // New state for enhanced diagnostic results
+  const [diagnosticData, setDiagnosticData] = useState(null);
+
   // Link Generator State
   const [selectedProduct, setSelectedProduct] = useState('');
   const [linkType, setLinkType] = useState('standard');
@@ -279,7 +280,7 @@ const AffiliatePortal = () => {
       icon: <ChartBarIcon className="h-5 w-5" />
     },
     {
-      id: 'diagnostic',
+      id: 'debug',
       name: 'Debug',
       icon: <WrenchScrewdriverIcon className="h-5 w-5" />
     },
@@ -334,105 +335,164 @@ const AffiliatePortal = () => {
             </aside>
           </div>
         );
-      case 'diagnostic':
+      case 'debug':
         return (
           <div className="bg-white p-6 rounded-2xl shadow-lg">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">🔍 Affiliate Data Diagnostic</h2>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">🔧 Affiliate System Diagnostics</h2>
             <p className="text-gray-600 mb-6">
-              This tool helps diagnose inconsistencies between your affiliate overview and analytics data.
+              Run comprehensive diagnostics to identify and fix affiliate system issues.
             </p>
             
-            <button
-              onClick={runDiagnostic}
-              disabled={diagnosticLoading}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              {diagnosticLoading ? 'Running Diagnostic...' : 'Run Diagnostic'}
-            </button>
+            <div className="space-y-4">
+              <button
+                onClick={runDiagnostic}
+                disabled={diagnosticLoading}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 mr-4"
+              >
+                {diagnosticLoading ? 'Running Diagnostic...' : '🔍 Run Full System Diagnostic'}
+              </button>
+              
+              <button
+                onClick={async () => {
+                  setDiagnosticLoading(true);
+                  try {
+                    const result = await fixMissingCommissions();
+                    console.log('✅ Bulk commission fix completed:', result);
+                    setDiagnosticData(prev => ({
+                      ...prev,
+                      bulkFixResult: result
+                    }));
+                  } catch (error) {
+                    console.error('❌ Error in bulk commission fix:', error);
+                  } finally {
+                    setDiagnosticLoading(false);
+                  }
+                }}
+                disabled={diagnosticLoading}
+                className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 disabled:opacity-50 mr-4"
+              >
+                {diagnosticLoading ? 'Fixing Commissions...' : '🔧 Fix Missing Commissions (Fast)'}
+              </button>
+              
+              <button
+                onClick={async () => {
+                  setDiagnosticLoading(true);
+                  try {
+                    const result = await fixMissingCommissionsIntelligent();
+                    console.log('✅ Intelligent bulk commission fix completed:', result);
+                    setDiagnosticData(prev => ({
+                      ...prev,
+                      intelligentFixResult: result
+                    }));
+                  } catch (error) {
+                    console.error('❌ Error in intelligent bulk commission fix:', error);
+                  } finally {
+                    setDiagnosticLoading(false);
+                  }
+                }}
+                disabled={diagnosticLoading}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
+              >
+                {diagnosticLoading ? 'Processing Intelligently...' : '🧠 Fix Missing Commissions (Intelligent)'}
+              </button>
+            </div>
             
-            {diagnosticData && (
-              <div className="mt-6 space-y-4">
-                {/* Overview */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-semibold mb-2">📊 Data Summary</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <strong>Current Stats (from overview):</strong>
-                      <ul className="mt-1">
-                        <li>Clicks: {diagnosticData.currentStats?.clicks || 0}</li>
-                        <li>Conversions: {diagnosticData.currentStats?.conversions || 0}</li>
-                        <li>Earnings: {diagnosticData.currentStats?.totalEarnings || 0} SEK</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <strong>Calculated from Orders:</strong>
-                      <ul className="mt-1">
-                        <li>Clicks: {diagnosticData.correctStats?.clicks || 0}</li>
-                        <li>Conversions: {diagnosticData.correctStats?.conversions || 0}</li>
-                        <li>Earnings: {diagnosticData.correctStats?.earnings || 0} SEK</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
+            <div className="mt-6 text-sm text-gray-600 space-y-2">
+              <p>• <strong>Full System Diagnostic:</strong> Analyzes all affiliate data for inconsistencies</p>
+              <p>• <strong>Fast Fix:</strong> Processes all orders quickly (may hit rate limits)</p>
+              <p>• <strong>Intelligent Fix:</strong> Processes orders in batches with delays (respects rate limits)</p>
+            </div>
 
-                {/* Issues */}
-                {diagnosticData.recommendations.length > 0 && (
-                  <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
-                    <h3 className="font-semibold text-red-800 mb-2">🚨 Issues Found</h3>
-                    <ul className="text-sm text-red-700 space-y-1">
-                      {diagnosticData.recommendations.map((rec, index) => (
-                        <li key={index}>• {rec}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Field Mismatches */}
-                {diagnosticData.fieldMismatches.length > 0 && (
-                  <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-                    <h3 className="font-semibold text-yellow-800 mb-2">⚠️ Field Mismatches</h3>
-                    <div className="text-sm text-yellow-700 space-y-2">
-                      {diagnosticData.fieldMismatches.slice(0, 5).map((mismatch, index) => (
-                        <div key={index} className="border-l-2 border-yellow-300 pl-2">
-                          <strong>Order {mismatch.orderNumber || mismatch.orderId.substring(0,8)}:</strong>
-                          <ul className="mt-1">
-                            {mismatch.issues.map((issue, issueIndex) => (
-                              <li key={issueIndex}>• {issue}</li>
-                            ))}
-                          </ul>
+            {/* Enhanced Diagnostic Results */}
+            {diagnosticResult && (
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-semibold text-gray-900 mb-2">Diagnostic Results:</h4>
+                
+                {diagnosticResult.testType === 'commission_processing' && (
+                  <div className="space-y-2">
+                    <div className={`p-3 rounded-lg ${diagnosticResult.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      <div className="font-medium">
+                        {diagnosticResult.success ? '✅ Commission Processing Test' : '❌ Commission Processing Failed'}
+                      </div>
+                      <div className="text-sm mt-1">
+                        Order ID: {diagnosticResult.testOrderId}
+                      </div>
+                      {diagnosticResult.success && (
+                        <div className="text-sm mt-1">
+                          Commission Added: {diagnosticResult.commissionAdded ? 'Yes' : 'No'}
+                          {diagnosticResult.commissionAmount && (
+                            <> (${diagnosticResult.commissionAmount.toFixed(2)})</>
+                          )}
                         </div>
-                      ))}
-                      {diagnosticData.fieldMismatches.length > 5 && (
-                        <p className="text-xs">...and {diagnosticData.fieldMismatches.length - 5} more issues</p>
                       )}
                     </div>
+                    {diagnosticResult.error && (
+                      <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
+                        Error: {diagnosticResult.error}
+                      </div>
+                    )}
                   </div>
                 )}
-
-                {/* Commission Issues */}
-                {diagnosticData.commissionIssues.length > 0 && (
-                  <div className="bg-orange-50 border border-orange-200 p-4 rounded-lg">
-                    <h3 className="font-semibold text-orange-800 mb-2">💰 Commission Issues</h3>
-                    <div className="text-sm text-orange-700 space-y-2">
-                      {diagnosticData.commissionIssues.slice(0, 3).map((issue, index) => (
-                        <div key={index} className="border-l-2 border-orange-300 pl-2">
-                          <strong>Order {issue.orderId.substring(0,8)}:</strong>
-                          <p>Expected: {issue.expectedCommission.toFixed(2)} SEK (from {issue.orderTotal} SEK)</p>
-                          <p>Actual: {issue.actualCommission} SEK</p>
+                
+                {diagnosticResult.testType === 'bulk_commission_fix' && (
+                  <div className="space-y-2">
+                    <div className={`p-3 rounded-lg ${diagnosticResult.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      <div className="font-medium">
+                        {diagnosticResult.success ? '✅ Bulk Commission Fix' : '❌ Bulk Fix Failed'}
+                      </div>
+                      {diagnosticResult.success && (
+                        <div className="text-sm mt-1">
+                          Orders Processed: {diagnosticResult.ordersProcessed}
                         </div>
-                      ))}
-                      {diagnosticData.commissionIssues.length > 3 && (
-                        <p className="text-xs">...and {diagnosticData.commissionIssues.length - 3} more orders missing commission</p>
                       )}
                     </div>
+                    {diagnosticResult.results && (
+                      <div className="text-sm">
+                        <div className="font-medium mb-1">Results:</div>
+                        {diagnosticResult.results.map((result, index) => (
+                          <div key={index} className={`p-2 rounded ${result.success ? 'bg-green-50' : 'bg-red-50'}`}>
+                            Order {result.orderId}: {result.success ? 'Fixed' : `Failed - ${result.error}`}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
-
-                {/* Success */}
-                {diagnosticData.recommendations.length === 0 && (
-                  <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-                    <h3 className="font-semibold text-green-800 mb-2">✅ All Good!</h3>
-                    <p className="text-sm text-green-700">No data inconsistencies found in your affiliate system.</p>
+                
+                {!diagnosticResult.testType && (
+                  <div className="space-y-2">
+                    <div className={`p-3 rounded-lg ${diagnosticResult.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      <div className="font-medium">
+                        {diagnosticResult.success ? '✅ System Check Passed' : '❌ Issues Found'}
+                      </div>
+                    </div>
+                    
+                    {diagnosticResult.issues && diagnosticResult.issues.length > 0 && (
+                      <div className="space-y-1">
+                        <div className="font-medium text-sm">Issues Found:</div>
+                        {diagnosticResult.issues.map((issue, index) => (
+                          <div key={index} className={`text-sm p-2 rounded ${
+                            issue.severity === 'critical' ? 'bg-red-100 text-red-700' : 
+                            issue.severity === 'warning' ? 'bg-yellow-100 text-yellow-700' : 
+                            'bg-blue-100 text-blue-700'
+                          }`}>
+                            <span className="font-medium">{issue.type}:</span> {issue.message}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {diagnosticResult.summary && (
+                      <div className="text-sm">
+                        <div className="font-medium mb-1">Summary:</div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>Total Clicks: {diagnosticResult.summary.totalClicks}</div>
+                          <div>Total Orders: {diagnosticResult.summary.totalOrders}</div>
+                          <div>Current Stats: ${diagnosticResult.summary.currentStats.toFixed(2)}</div>
+                          <div>Calculated Stats: ${diagnosticResult.summary.calculatedStats.toFixed(2)}</div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -525,7 +585,12 @@ const AffiliatePortal = () => {
           </div>
         );
       case 'analytics':
-        return <AffiliateAnalyticsTab affiliateCode={affiliateData.affiliateCode} />;
+        return (
+          <AffiliateAnalyticsTab 
+            affiliateCode={affiliateData.affiliateCode}
+            affiliateStats={affiliateData.stats}
+          />
+        );
       default:
         return null;
     }

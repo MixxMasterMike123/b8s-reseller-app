@@ -6,6 +6,15 @@ export declare const RATE_LIMITS: {
     readonly ORDER_PROCESSING: {
         readonly perWindow: 15;
         readonly windowMs: 300000;
+        readonly BULK_MODE: {
+            readonly perWindow: 50;
+            readonly windowMs: 600000;
+            readonly BULK_DETECTION: {
+                readonly rapidRequests: 5;
+                readonly timeWindow: 30000;
+                readonly maxBulkDuration: 1800000;
+            };
+        };
     };
     readonly EMAIL_SENDING: {
         readonly perMinute: 20;

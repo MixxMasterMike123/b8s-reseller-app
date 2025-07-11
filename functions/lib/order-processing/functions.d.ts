@@ -1,6 +1,11 @@
 import * as functions from 'firebase-functions';
 declare global {
     var orderRateLimit: Map<string, number[]>;
+    var bulkModeTracker: Map<string, {
+        enabled: boolean;
+        enabledAt: number;
+        requestTimes: number[];
+    }>;
 }
 interface OrderProcessingData {
     orderId: string;

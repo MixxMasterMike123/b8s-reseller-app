@@ -7,10 +7,21 @@ exports.RATE_LIMITS = {
         perMinute: 30,
         windowMs: 60000 // 1 minute window
     },
-    // Order Processing (business critical)
+    // Order Processing (business critical) - Enhanced with bulk support
     ORDER_PROCESSING: {
         perWindow: 15,
-        windowMs: 300000 // 5 minute window
+        windowMs: 300000,
+        // Bulk operation limits (for affiliate commission fixes, etc.)
+        BULK_MODE: {
+            perWindow: 50,
+            windowMs: 600000,
+            // Detection criteria for bulk operations
+            BULK_DETECTION: {
+                rapidRequests: 5,
+                timeWindow: 30000,
+                maxBulkDuration: 1800000 // 30 minutes max bulk mode duration
+            }
+        }
     },
     // Email Sending (spam prevention)
     EMAIL_SENDING: {

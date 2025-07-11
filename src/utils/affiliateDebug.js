@@ -4,7 +4,7 @@
  */
 
 import { db } from '../firebase/config';
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, limit, getDoc, doc } from 'firebase/firestore';
 
 export const diagnoseAffiliateData = async (affiliateCode) => {
   console.log(`🔍 AFFILIATE DEBUG: Starting diagnosis for ${affiliateCode}`);
@@ -266,5 +266,269 @@ export const debugAffiliateOrder = async (orderId) => {
   } catch (error) {
     console.error(`❌ Error debugging order:`, error);
     return { error: error.message };
+  }
+}; 
+
+/**
+ * Test commission processing manually for specific orders
+ * This helps diagnose why the Firebase Function isn't working
+ */
+export const testCommissionProcessing = async (orderId) => {
+  try {
+    console.log(`🔧 Testing commission processing for order: ${orderId}`);
+    
+    // Get order data
+    const orderDoc = await getDoc(doc(db, 'orders', orderId));
+    if (!orderDoc.exists()) {
+      console.error(`❌ Order ${orderId} not found`);
+      return { success: false, error: 'Order not found' };
+    }
+    
+    const orderData = orderDoc.data();
+    console.log(`📦 Order data:`, {
+      id: orderId,
+      affiliateCode: orderData.affiliateCode,
+      total: orderData.total,
+      subtotal: orderData.subtotal,
+      totalAmount: orderData.totalAmount,
+      affiliateCommission: orderData.affiliateCommission,
+      conversionProcessed: orderData.conversionProcessed
+    });
+    
+    if (!orderData.affiliateCode) {
+      console.log(`⚠️ No affiliate code found for order ${orderId}`);
+      return { success: false, error: 'No affiliate code' };
+    }
+    
+    // Get affiliate data
+    const affiliatesQuery = query(
+      collection(db, 'affiliates'),
+      where('affiliateCode', '==', orderData.affiliateCode),
+      where('status', '==', 'active')
+    );
+    
+    const affiliateSnapshot = await getDocs(affiliatesQuery);
+    if (affiliateSnapshot.empty) {
+      console.error(`❌ No active affiliate found for code: ${orderData.affiliateCode}`);
+      return { success: false, error: 'Affiliate not found' };
+    }
+    
+    const affiliateDoc = affiliateSnapshot.docs[0];
+    const affiliateData = affiliateDoc.data();
+    console.log(`👤 Affiliate data:`, {
+      id: affiliateDoc.id,
+      name: affiliateData.name,
+      affiliateCode: affiliateData.affiliateCode,
+      status: affiliateData.status,
+      commissionRate: affiliateData.commissionRate,
+      stats: affiliateData.stats
+    });
+    
+    // Calculate commission
+    const orderAmount = orderData.total || orderData.subtotal || orderData.totalAmount || 0;
+    const commissionRate = (affiliateData.commissionRate || 15) / 100;
+    const commissionAmount = orderAmount * commissionRate;
+    
+    console.log(`💰 Commission calculation:`, {
+      orderAmount,
+      commissionRate: affiliateData.commissionRate || 15,
+      commissionAmount
+    });
+    
+    // Test the Firebase Function call
+    console.log(`🔄 Testing Firebase Function call...`);
+    const functionUrl = `https://us-central1-b8shield-reseller-app.cloudfunctions.net/processB2COrderCompletionHttpV2`;
+    
+    try {
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+        body: JSON.stringify({ orderId }),
+      });
+      
+      const result = await response.json();
+      console.log(`🔧 Firebase Function response:`, result);
+      
+      if (response.ok) {
+        console.log(`✅ Function call successful`);
+        
+        // Check if order was updated
+        const updatedOrderDoc = await getDoc(doc(db, 'orders', orderId));
+        const updatedOrderData = updatedOrderDoc.data();
+        
+        console.log(`📦 Updated order data:`, {
+          affiliateCommission: updatedOrderData.affiliateCommission,
+          conversionProcessed: updatedOrderData.conversionProcessed,
+          conversionProcessedAt: updatedOrderData.conversionProcessedAt
+        });
+        
+        return { 
+          success: true, 
+          functionResult: result,
+          commissionAdded: updatedOrderData.affiliateCommission > 0,
+          commissionAmount: updatedOrderData.affiliateCommission
+        };
+      } else {
+        console.error(`❌ Function call failed:`, result);
+        return { success: false, error: result.error || 'Function call failed' };
+      }
+    } catch (error) {
+      console.error(`❌ Error calling Firebase Function:`, error);
+      return { success: false, error: error.message };
+    }
+    
+  } catch (error) {
+    console.error(`❌ Error in testCommissionProcessing:`, error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Process missing commissions for all orders that need it
+ * This is a bulk fix for the commission processing issue
+ */
+export const fixMissingCommissions = async () => {
+  try {
+    console.log(`🔧 Starting bulk commission fix...`);
+    
+    // Get all orders with affiliate codes but no commission
+    const ordersQuery = query(
+      collection(db, 'orders'),
+      where('affiliateCode', '!=', null)
+    );
+    
+    const ordersSnapshot = await getDocs(ordersQuery);
+    const ordersToFix = [];
+    
+    ordersSnapshot.forEach(doc => {
+      const orderData = doc.data();
+      if (!orderData.affiliateCommission || orderData.affiliateCommission === 0) {
+        ordersToFix.push({ id: doc.id, ...orderData });
+      }
+    });
+    
+    console.log(`📊 Found ${ordersToFix.length} orders needing commission fixes`);
+    
+    const results = [];
+    
+    for (const order of ordersToFix) {
+      console.log(`🔄 Processing order ${order.id}...`);
+      const result = await testCommissionProcessing(order.id);
+      results.push({ orderId: order.id, ...result });
+      
+      // Add a small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    console.log(`✅ Bulk commission fix completed. Results:`, results);
+    
+    return {
+      success: true,
+      ordersProcessed: ordersToFix.length,
+      results
+    };
+    
+  } catch (error) {
+    console.error(`❌ Error in fixMissingCommissions:`, error);
+    return { success: false, error: error.message };
+  }
+}; 
+
+/**
+ * Intelligent bulk commission fix that respects rate limits
+ * Processes orders in batches with delays to avoid rate limiting
+ */
+export const fixMissingCommissionsIntelligent = async () => {
+  try {
+    console.log('🔧 Starting intelligent bulk commission fix...');
+    
+    const orders = await getDocs(query(collection(db, 'orders'), where('affiliateCode', '!=', null)));
+    const ordersNeedingFix = [];
+    
+    // Find orders that need commission fixes
+    orders.forEach(doc => {
+      const order = doc.data();
+      if (order.affiliateCode && !order.affiliateCommission) {
+        ordersNeedingFix.push({ id: doc.id, ...order });
+      }
+    });
+    
+    console.log(`📊 Found ${ordersNeedingFix.length} orders needing commission fixes`);
+    
+    if (ordersNeedingFix.length === 0) {
+      return { success: true, message: 'No orders need commission fixes', processedCount: 0 };
+    }
+    
+    // Process in batches of 10 with 30-second delays
+    const BATCH_SIZE = 10;
+    const DELAY_BETWEEN_BATCHES = 30000; // 30 seconds
+    const results = [];
+    
+    for (let i = 0; i < ordersNeedingFix.length; i += BATCH_SIZE) {
+      const batch = ordersNeedingFix.slice(i, i + BATCH_SIZE);
+      const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+      const totalBatches = Math.ceil(ordersNeedingFix.length / BATCH_SIZE);
+      
+      console.log(`🔄 Processing batch ${batchNumber}/${totalBatches} (${batch.length} orders)...`);
+      
+      // Process batch with small delays between requests
+      for (let j = 0; j < batch.length; j++) {
+        const order = batch[j];
+        
+        try {
+          console.log(`  📦 Processing order ${j+1}/${batch.length}: ${order.id}`);
+          
+          // Small delay between individual requests (2 seconds)
+          if (j > 0) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+          
+          const result = await testCommissionProcessing(order.id);
+          results.push(result);
+          
+          if (result.success) {
+            console.log(`  ✅ Successfully processed order ${order.id}`);
+          } else {
+            console.log(`  ❌ Failed to process order ${order.id}: ${result.error}`);
+          }
+        } catch (error) {
+          console.error(`  ❌ Error processing order ${order.id}:`, error);
+          results.push({ 
+            success: false, 
+            orderId: order.id, 
+            error: error.message 
+          });
+        }
+      }
+      
+      // Wait between batches (except for the last batch)
+      if (i + BATCH_SIZE < ordersNeedingFix.length) {
+        console.log(`⏱️  Waiting ${DELAY_BETWEEN_BATCHES/1000} seconds before next batch...`);
+        await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
+      }
+    }
+    
+    // Summary
+    const successful = results.filter(r => r.success).length;
+    const failed = results.filter(r => !r.success).length;
+    
+    console.log(`✅ Intelligent bulk commission fix completed!`);
+    console.log(`📊 Results: ${successful} successful, ${failed} failed out of ${ordersNeedingFix.length} orders`);
+    
+    return {
+      success: true,
+      message: `Processed ${ordersNeedingFix.length} orders in ${Math.ceil(ordersNeedingFix.length / BATCH_SIZE)} batches`,
+      processedCount: successful,
+      failedCount: failed,
+      totalCount: ordersNeedingFix.length,
+      results: results
+    };
+    
+  } catch (error) {
+    console.error('❌ Error in intelligent bulk commission fix:', error);
+    return { success: false, error: error.message };
   }
 }; 

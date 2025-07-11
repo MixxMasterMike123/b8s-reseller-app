@@ -8,7 +8,7 @@ import {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-const AffiliateAnalyticsTab = ({ affiliateCode }) => {
+const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats }) => {
   const { t } = useTranslation();
   const [range, setRange] = useState(30); // days
   const [loading, setLoading] = useState(true);
@@ -21,7 +21,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode }) => {
     try {
       const startDate = new Date(Date.now() - range * DAY_MS);
 
-      // Fetch clicks (timestamp is a Firestore Timestamp)
+      // Fetch clicks for chart only (not for totals)
       const clicksQuery = query(
         collection(db, 'affiliateClicks'),
         where('affiliateCode', '==', affiliateCode),
@@ -32,7 +32,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode }) => {
       const clickSnap = await getDocs(clicksQuery);
       const clickData = clickSnap.docs.map(d => d.data());
 
-      // Fetch orders – createdAt might be a string, so we fetch latest 500 and filter client-side
+      // Fetch orders for chart only (not for totals)
       const ordersQuery = query(
         collection(db, 'orders'),
         where('affiliateCode', '==', affiliateCode),
@@ -42,13 +42,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode }) => {
       const orderSnap = await getDocs(ordersQuery);
       const orderData = orderSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      // 🐛 DEBUG: Log sample order data to understand field structure
-      if (debugMode && orderData.length > 0) {
-        console.log('🔍 AFFILIATE DEBUG - Sample order data:', orderData[0]);
-        console.log('🔍 Available fields:', Object.keys(orderData[0]));
-      }
-
-      // Filter orders by date range (client-side filtering for date range)
+      // Filter orders by date range (for chart only)
       const filteredOrders = orderData.filter(order => {
         let orderDate;
         if (order.createdAt?.seconds) {
@@ -62,13 +56,13 @@ const AffiliateAnalyticsTab = ({ affiliateCode }) => {
       setClicks(clickData);
       setOrders(filteredOrders);
 
-      // 🐛 DEBUG: Log data summary
       if (debugMode) {
-        console.log(`📊 AFFILIATE DEBUG - Data summary:`, {
-          clicks: clickData.length,
-          totalOrders: orderData.length,
-          filteredOrders: filteredOrders.length,
-          dateRange: `${startDate.toLocaleDateString()} - ${new Date().toLocaleDateString()}`
+        console.log(`📊 AFFILIATE ANALYTICS - Chart data:`, {
+          chartClicks: clickData.length,
+          chartOrders: filteredOrders.length,
+          affiliateStatsClicks: affiliateStats?.clicks,
+          affiliateStatsConversions: affiliateStats?.conversions,
+          affiliateStatsEarnings: affiliateStats?.totalEarnings
         });
       }
 
@@ -84,7 +78,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [range]);
 
-  // Aggregate daily counts
+  // Aggregate daily counts for chart only
   const chartData = useMemo(() => {
     const map = {};
     const add = (dateKey, field) => {
@@ -110,45 +104,34 @@ const AffiliateAnalyticsTab = ({ affiliateCode }) => {
     return arr;
   }, [clicks, orders]);
 
+  // 🎯 SIMPLIFIED: Use affiliate.stats as source of truth
   const totals = useMemo(() => {
-    const clicksCnt = clicks.length;
-    const convCnt = orders.length;
-    
-    // 🔧 FIXED: Use multiple field names for compatibility
-    const earnings = orders.reduce((sum, o) => {
-      // Try affiliateCommission first, then calculate from order total if missing
-      let commission = o.affiliateCommission || 0;
-      
-      // If no commission but has affiliate code, it might be missing - show debug info
-      if (!commission && o.affiliateCode && debugMode) {
-        console.log(`⚠️ Order ${o.id} missing commission - total: ${o.total || o.totalAmount}`);
-      }
-      
-      return sum + commission;
-    }, 0);
-    
+    if (!affiliateStats) {
+      return { clicksCnt: 0, convCnt: 0, earnings: 0, rate: 0 };
+    }
+
+    const clicksCnt = affiliateStats.clicks || 0;
+    const convCnt = affiliateStats.conversions || 0;
+    const earnings = affiliateStats.totalEarnings || 0;
     const rate = clicksCnt > 0 ? (convCnt / clicksCnt) * 100 : 0;
     
-    // 🐛 DEBUG: Log calculation details
     if (debugMode) {
-      console.log(`📊 AFFILIATE DEBUG - Calculations:`, {
+      console.log(`📊 AFFILIATE ANALYTICS - Using affiliate.stats:`, {
         clicks: clicksCnt,
         conversions: convCnt,
         earnings,
         rate: rate.toFixed(1),
-        ordersWithCommission: orders.filter(o => o.affiliateCommission > 0).length,
-        ordersWithoutCommission: orders.filter(o => o.affiliateCode && !o.affiliateCommission).length
+        source: 'affiliate.stats (reliable)'
       });
     }
     
     return { clicksCnt, convCnt, earnings, rate };
-  }, [clicks, orders, debugMode]);
+  }, [affiliateStats, debugMode]);
 
   const formatCurrency = (amt) => new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(amt);
 
-  // 🔧 FIXED: Get order value using multiple field fallbacks
+  // Get order value for recent orders table
   const getOrderValue = (order) => {
-    // Try multiple field names for compatibility
     return order.total || order.totalAmount || order.subtotal || 0;
   };
 
@@ -178,72 +161,45 @@ const AffiliateAnalyticsTab = ({ affiliateCode }) => {
           </select>
         </div>
         
-        {/* Debug toggle for troubleshooting */}
         <button
           onClick={() => setDebugMode(!debugMode)}
-          className={`text-xs px-2 py-1 rounded ${debugMode ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-600'}`}
+          className={`text-xs px-2 py-1 rounded ${debugMode ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}
         >
-          {debugMode ? '🐛 Debug ON' : '🔍 Debug'}
+          {debugMode ? '✅ Reliable Data' : '🔍 Debug'}
         </button>
+      </div>
+
+      {/* 🎯 MAIN STATS: Now uses affiliate.stats (same as Overview) */}
+      <div className="grid grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
+          <div className="text-3xl font-bold text-blue-600">{totals.clicksCnt}</div>
+          <div className="text-sm text-gray-600 mt-1">{t('analytics_clicks', 'CLICKS')}</div>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
+          <div className="text-3xl font-bold text-orange-600">{totals.convCnt}</div>
+          <div className="text-sm text-gray-600 mt-1">{t('analytics_conversions', 'CONVERSIONS')}</div>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
+          <div className="text-3xl font-bold text-green-600">{formatCurrency(totals.earnings)}</div>
+          <div className="text-sm text-gray-600 mt-1">{t('analytics_earnings', 'EARNINGS')}</div>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
+          <div className="text-3xl font-bold text-purple-600">{totals.rate.toFixed(1)}%</div>
+          <div className="text-sm text-gray-600 mt-1">{t('analytics_conversion_rate', 'CONVERSION RATE')}</div>
+        </div>
       </div>
 
       {/* Debug info panel */}
       {debugMode && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-xs">
-          <h4 className="font-semibold text-yellow-800 mb-2">🐛 Debug Information</h4>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <strong>Data Summary:</strong>
-              <ul className="mt-1 text-yellow-700">
-                <li>Clicks: {clicks.length}</li>
-                <li>Orders: {orders.length}</li>
-                <li>Orders with commission: {orders.filter(o => o.affiliateCommission > 0).length}</li>
-                <li>Orders without commission: {orders.filter(o => o.affiliateCode && !o.affiliateCommission).length}</li>
-              </ul>
-            </div>
-            <div>
-              <strong>Field Usage:</strong>
-              <ul className="mt-1 text-yellow-700">
-                <li>Orders with 'total': {orders.filter(o => o.total).length}</li>
-                <li>Orders with 'totalAmount': {orders.filter(o => o.totalAmount).length}</li>
-                <li>Orders processed: {orders.filter(o => o.conversionProcessed).length}</li>
-              </ul>
-            </div>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-xs">
+          <h4 className="font-semibold text-green-800 mb-2">✅ Reliable Data Source</h4>
+          <div className="text-green-700">
+            <p><strong>Main Statistics:</strong> Using affiliate.stats (same as Overview tab)</p>
+            <p><strong>Chart Data:</strong> Using filtered collections for daily trends</p>
+            <p><strong>Data Consistency:</strong> Main numbers now match Overview tab perfectly</p>
           </div>
-          <button 
-            onClick={() => {
-              console.log('🔍 Full orders data:', orders);
-              console.log('🔍 Full clicks data:', clicks);
-            }}
-            className="mt-2 bg-yellow-200 text-yellow-800 px-2 py-1 rounded text-xs"
-          >
-            Log full data to console
-          </button>
         </div>
       )}
-
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow text-center">
-          <p className="text-xs uppercase text-gray-500">{t('analytics_clicks', 'Klick')}</p>
-          <p className="text-2xl font-semibold">{totals.clicksCnt}</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow text-center">
-          <p className="text-xs uppercase text-gray-500">{t('analytics_conversions', 'Konverteringar')}</p>
-          <p className="text-2xl font-semibold">{totals.convCnt}</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow text-center">
-          <p className="text-xs uppercase text-gray-500">{t('analytics_earnings', 'Intäkter')}</p>
-          <p className="text-2xl font-semibold">{formatCurrency(totals.earnings)}</p>
-          {debugMode && totals.earnings === 0 && totals.convCnt > 0 && (
-            <p className="text-xs text-red-600 mt-1">⚠️ No earnings calculated</p>
-          )}
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow text-center">
-          <p className="text-xs uppercase text-gray-500">{t('analytics_conversion_rate', 'Konverteringsgrad')}</p>
-          <p className="text-2xl font-semibold">{totals.rate.toFixed(1)}%</p>
-        </div>
-      </div>
 
       {/* Chart */}
       <div className="bg-white p-4 rounded-lg shadow">
