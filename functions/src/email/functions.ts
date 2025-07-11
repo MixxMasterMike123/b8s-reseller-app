@@ -488,8 +488,8 @@ export const sendOrderConfirmationEmails = onDocumentCreated(
       // B2B Order - lookup user data
       if (!orderData.userId) {
         console.error('B2B order missing userId:', orderData.orderNumber);
-        return;
-      }
+      return;
+    }
 
       const userDoc = await db.collection('users').doc(orderData.userId).get();
       if (!userDoc.exists) {
@@ -502,8 +502,8 @@ export const sendOrderConfirmationEmails = onDocumentCreated(
       customerName = userData.contactPerson || userData.companyName || '';
 
       customerTemplate = getEmail('orderConfirmed', userData.preferredLang || 'sv-SE', {
-        orderData,
-        userData,
+      orderData,
+      userData,
         customerInfo: orderData.customerInfo,
         orderId // Pass the Firebase document ID for order tracking URL
       } as any);
@@ -523,7 +523,7 @@ export const sendOrderConfirmationEmails = onDocumentCreated(
         }
       );
 
-      await sendEmail(emailData);
+    await sendEmail(emailData);
       console.log(`Order confirmation email sent to ${customerEmail}`);
     } else {
       console.log(`No customer email available or template could not be generated for order ${orderData.orderNumber}. Skipping customer confirmation.`);

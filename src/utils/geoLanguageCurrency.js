@@ -63,7 +63,16 @@ const AVAILABLE_LANGUAGES = [
  */
 export const getCloudFlareCountry = () => {
   try {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === 'undefined') {
+      console.log('🌍 CloudFlare: Not in browser environment');
+      return null;
+    }
+    
+    console.log('🌍 CloudFlare Detection Debug:');
+    console.log('  - window.CF_COUNTRY:', window.CF_COUNTRY);
+    console.log('  - window.CF_GEO_LOADED:', window.CF_GEO_LOADED);
+    console.log('  - Current hostname:', window.location.hostname);
+    console.log('  - User agent:', navigator.userAgent.substring(0, 50) + '...');
     
     // Check CloudFlare injected data (from Worker)
     if (window.CF_COUNTRY && window.CF_GEO_LOADED) {
@@ -71,8 +80,15 @@ export const getCloudFlareCountry = () => {
       return window.CF_COUNTRY;
     }
     
+    // Check if CF_COUNTRY exists but CF_GEO_LOADED doesn't
+    if (window.CF_COUNTRY) {
+      console.log('🌍 CloudFlare country detected (no geo loaded flag):', window.CF_COUNTRY);
+      return window.CF_COUNTRY;
+    }
+    
     // Fallback: Check cached country
     const cached = localStorage.getItem('cf-country');
+    console.log('🌍 Cached country check:', cached);
     if (cached) {
       console.log('🌍 Using cached country:', cached);
       return cached;
@@ -80,9 +96,15 @@ export const getCloudFlareCountry = () => {
     
     // Ultimate fallback: timezone detection
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    console.log('🌍 Browser timezone:', timezone);
     const timezoneCountryMap = {
       'Europe/Stockholm': 'SE',
       'Europe/London': 'GB',
+      'Europe/Berlin': 'DE',
+      'Europe/Paris': 'FR',
+      'Europe/Rome': 'IT',
+      'Europe/Madrid': 'ES',
+      'Europe/Amsterdam': 'NL',
       'America/New_York': 'US',
       'America/Los_Angeles': 'US',
       'America/Chicago': 'US'
@@ -91,9 +113,12 @@ export const getCloudFlareCountry = () => {
     const country = timezoneCountryMap[timezone];
     if (country) {
       console.log('🌍 Country from timezone:', country);
+      // Cache the timezone-detected country
+      localStorage.setItem('cf-country', country);
       return country;
     }
     
+    console.log('🌍 No country detected from any method');
     return null;
   } catch (error) {
     console.warn('Error getting CloudFlare country:', error);
@@ -122,6 +147,14 @@ export const detectLanguageAndCurrency = (options = {}) => {
     // Check if we're on the B2C shop domain
     const isShopDomain = typeof window !== 'undefined' && 
                         window.location.hostname === 'shop.b8shield.com';
+    
+    console.log('🔍 Detection Debug:', {
+      isShopDomain,
+      hostname: typeof window !== 'undefined' ? window.location.hostname : 'server',
+      userPreferredLang,
+      manualLanguage,
+      manualCurrency
+    });
     
     // If not on shop domain, always return Swedish (B2B portal)
     if (!isShopDomain) {
@@ -164,31 +197,37 @@ export const detectLanguageAndCurrency = (options = {}) => {
     
     // 3. Geo-based detection
     const country = getCloudFlareCountry();
+    console.log('🌍 Detected country:', country);
     
-    if (country) {
+    // TEMPORARY DEBUG: Force Germany detection for testing
+    // TODO: Remove this after CloudFlare Worker is fixed
+    const testCountry = country || 'DE'; // Force DE if no country detected
+    console.log('🧪 DEBUG: Using country for detection:', testCountry);
+    
+    if (testCountry) {
       // Check primary markets first
-      if (PRIMARY_MARKETS[country]) {
-        const market = PRIMARY_MARKETS[country];
-        console.log('🎯 Primary market detected:', country, '→', market.language, '+', market.currency);
+      if (PRIMARY_MARKETS[testCountry]) {
+        const market = PRIMARY_MARKETS[testCountry];
+        console.log('🎯 Primary market detected:', testCountry, '→', market.language, '+', market.currency);
         return {
           language: market.language,
           currency: market.currency,
-          source: 'geo-primary',
-          countryDetected: country,
+          source: country ? 'geo-primary' : 'debug-primary',
+          countryDetected: testCountry,
           market: 'primary',
           countryName: market.name
         };
       }
       
       // Check secondary markets
-      if (SECONDARY_MARKETS[country]) {
-        const market = SECONDARY_MARKETS[country];
-        console.log('🌍 Secondary market detected:', country, '→', market.language, '+', market.currency);
+      if (SECONDARY_MARKETS[testCountry]) {
+        const market = SECONDARY_MARKETS[testCountry];
+        console.log('🌍 Secondary market detected:', testCountry, '→', market.language, '+', market.currency);
         return {
           language: market.language,
           currency: market.currency,
-          source: 'geo-secondary',
-          countryDetected: country,
+          source: country ? 'geo-secondary' : 'debug-secondary',
+          countryDetected: testCountry,
           market: 'secondary',
           countryName: market.name
         };
@@ -196,21 +235,22 @@ export const detectLanguageAndCurrency = (options = {}) => {
       
       // Unknown country - use English + try to detect currency
       const detectedCurrency = detectCurrency(null, null);
-      console.log('❓ Unknown country:', country, '→ en-GB +', detectedCurrency);
+      console.log('❓ Unknown country:', testCountry, '→ en-GB +', detectedCurrency);
       return {
         language: 'en-GB',
         currency: detectedCurrency,
-        source: 'geo-unknown',
-        countryDetected: country,
+        source: country ? 'geo-unknown' : 'debug-unknown',
+        countryDetected: testCountry,
         market: 'unknown'
       };
     }
     
     // 4. Browser language fallback
     const browserLang = navigator.language || navigator.userLanguage;
+    console.log('🌐 Browser language fallback:', browserLang);
     if (LANGUAGE_CURRENCY_MAP[browserLang]) {
       const currency = LANGUAGE_CURRENCY_MAP[browserLang];
-      console.log('🌐 Browser language:', browserLang, '+', currency);
+      console.log('🌐 Browser language matched:', browserLang, '+', currency);
       return {
         language: browserLang,
         currency: currency,

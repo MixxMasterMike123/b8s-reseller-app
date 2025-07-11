@@ -50,8 +50,8 @@ JPH Innovation AB
       html: `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px;">
   <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <div style="text-align: center; margin-bottom: 30px;">
-      <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
+  <div style="text-align: center; margin-bottom: 30px;">
+    <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
     </div>
     <h2 style="color: #1f2937; margin-bottom: 20px;">Hej ${contactPerson},</h2>
     <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">Din order har nu bekräftats och kommer att behandlas inom kort.</p>
@@ -148,8 +148,8 @@ JPH Innovation AB
       html: `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px;">
   <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <div style="text-align: center; margin-bottom: 30px;">
-      <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
+  <div style="text-align: center; margin-bottom: 30px;">
+    <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
     </div>
     <h2 style="color: #1f2937; margin-bottom: 20px;">Hello ${contactPerson},</h2>
     <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">Your order has been confirmed and will be processed shortly.</p>
