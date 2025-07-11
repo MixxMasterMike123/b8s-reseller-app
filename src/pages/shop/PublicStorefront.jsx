@@ -4,6 +4,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getProductImage } from '../../utils/productImages';
 import { getProductUrl } from '../../utils/productUrls';
+import { translateColor } from '../../utils/colorTranslations';
 import toast from 'react-hot-toast';
 import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
@@ -390,7 +391,7 @@ const PublicStorefront = () => {
                           <div className="space-y-1">
                             {/* Product Name */}
                             <h3 className="text-base font-medium text-gray-900 leading-tight">
-                              {t('product_name_individual', 'B8Shield {{color}}', { color: colorVariant.colorVariant })}
+                              {t('product_name_individual', 'B8Shield {{color}}', { color: translateColor(colorVariant.colorVariant, t) })}
                             </h3>
                             
                             {/* Product Description */}

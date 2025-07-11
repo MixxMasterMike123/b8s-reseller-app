@@ -16,6 +16,7 @@ import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { getProductGroupContent } from '../../utils/productGroups';
+import { translateColor } from '../../utils/colorTranslations';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
 import SizeGuideModal from '../../components/SizeGuideModal';
@@ -148,7 +149,7 @@ const PublicProductPage = () => {
   
   // SEO and rendering helpers
   const getB2cDescription = (p) => getContentValue(p?.descriptions?.b2c) || '';
-  const getProductColor = (p) => p?.color || 'Standard';
+  const getProductColor = (p) => translateColor(p?.color, t) || 'Standard';
   const getProductImages = (p) => {
       if (!p) return [];
       const images = [];
@@ -321,7 +322,7 @@ const PublicProductPage = () => {
                       }`}
                     >
                       <div className="text-sm font-medium">
-                        {isMultipack ? (variant.color || 'Standard') : (variant.size || 'Standard')}
+                        {isMultipack ? translateColor(variant.color, t) || 'Standard' : (variant.size || 'Standard')}
                       </div>
                     </Link>
                   ))}

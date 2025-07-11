@@ -4,6 +4,7 @@ import { useCart } from '../../contexts/CartContext';
 import { SHIPPING_COSTS } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
+import { translateColor } from '../../utils/colorTranslations';
 import toast from 'react-hot-toast';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
@@ -135,7 +136,7 @@ const ShoppingCart = () => {
                         <div className="mt-1 space-y-1 text-sm text-gray-600">
                           {item.color && (
                             <p>
-                              {t('color_label', 'Färg: {{color}}', { color: item.color })}
+                              {t('color_label', 'Färg: {{color}}', { color: translateColor(item.color, t) })}
                             </p>
                           )}
                           {item.size && (

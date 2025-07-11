@@ -435,3 +435,7 @@
 "analytics_order_id","Order #","Order #","Order #"
 "analytics_order_value","Ordervärde","Order value","Order value"
 "analytics_commission","Provision","Commission","Commission"
+"color_transparent","Transparent","Transparent","Transparent","B2C product - color name","Pending","","","Translation for Transparent color"
+"color_röd","Röd","Red","Red","B2C product - color name","Pending","","","Translation for Röd (Red) color"
+"color_fluorescerande","Fluorescerande","Fluorescent","Fluorescent","B2C product - color name","Pending","","","Translation for Fluorescerande (Fluorescent) color"
+"color_glitter","Glitter","Glitter","Glitter","B2C product - color name","Pending","","","Translation for Glitter color"
