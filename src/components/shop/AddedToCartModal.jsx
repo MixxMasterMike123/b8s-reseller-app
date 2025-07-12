@@ -38,7 +38,7 @@ const AddedToCartModal = ({ isVisible, onClose, addedItem, cartCount }) => {
       `}>
         <div className="bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
           {/* Mobile content - same as before */}
-          <MobileContent addedItem={addedItem} onClose={onClose} t={t} getTotalItems={getTotalItems} />
+          <MobileContent addedItem={addedItem} onClose={onClose} t={t} getTotalItems={getTotalItems} isVisible={isVisible} />
         </div>
       </div>
 
@@ -63,7 +63,7 @@ const AddedToCartModal = ({ isVisible, onClose, addedItem, cartCount }) => {
 };
 
 // Mobile content component
-const MobileContent = ({ addedItem, onClose, t, getTotalItems }) => (
+const MobileContent = ({ addedItem, onClose, t, getTotalItems, isVisible }) => (
   <>
     {/* Header */}
     <div className="bg-green-50 border-b border-green-200 px-4 py-3">
@@ -92,26 +92,26 @@ const MobileContent = ({ addedItem, onClose, t, getTotalItems }) => (
         <div className="flex-shrink-0">
           <img
             src={addedItem.image || '/images/B8S_logo.png'}
-            alt={addedItem.name}
+            alt={String(addedItem.name || 'Product')}
             className="w-16 h-16 object-cover rounded-lg border border-gray-200"
           />
         </div>
         
         <div className="flex-1 min-w-0">
           <h3 className="font-medium text-gray-900 truncate">
-            {addedItem.name}
+            {String(addedItem.name || 'Product')}
           </h3>
           
           <div className="mt-1 space-y-1">
             {addedItem.color && (
               <p className="text-sm text-gray-600">
-                {t('color', 'Color')}: {addedItem.color}
+                {t('color', 'Color')}: {String(addedItem.color)}
               </p>
             )}
             
             {addedItem.size && (
               <p className="text-sm text-gray-600">
-                {t('size', 'Size')}: {addedItem.size}
+                {t('size', 'Size')}: {String(addedItem.size)}
               </p>
             )}
             
@@ -120,7 +120,7 @@ const MobileContent = ({ addedItem, onClose, t, getTotalItems }) => (
             </p>
             
             <p className="font-medium text-gray-900">
-              {addedItem.formattedPrice}
+              {String(addedItem.formattedPrice || addedItem.price)}
             </p>
           </div>
         </div>
@@ -195,17 +195,17 @@ const DesktopContent = ({ addedItem, onClose, t, getTotalItems }) => (
         <div className="flex-shrink-0">
           <img
             src={addedItem.image || '/images/B8S_logo.png'}
-            alt={addedItem.name}
+            alt={String(addedItem.name || 'Product')}
             className="w-12 h-12 object-cover rounded border border-gray-200"
           />
         </div>
         
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-medium text-gray-900 truncate">
-            {addedItem.name}
+            {String(addedItem.name || 'Product')}
           </h3>
           <p className="text-xs text-gray-600 mt-1">
-            {addedItem.quantity} × {addedItem.formattedPrice}
+            {addedItem.quantity} × {String(addedItem.formattedPrice || addedItem.price)}
           </p>
         </div>
       </div>
