@@ -10,7 +10,7 @@ const AddedToCartModal = ({ isVisible, onClose, addedItem, cartCount }) => {
   const { t } = useTranslation();
   const { getContentValue } = useContentTranslation();
   const { getTotalItems } = useCart();
-  
+
   useEffect(() => {
     if (isVisible) {
       // Auto-dismiss after 5 seconds
@@ -26,226 +26,208 @@ const AddedToCartModal = ({ isVisible, onClose, addedItem, cartCount }) => {
 
   return (
     <>
-      {/* Mobile: Full backdrop */}
+      {/* Mobile: Full backdrop overlay */}
       <div 
-        className="fixed inset-0 bg-black bg-opacity-25 z-40 transition-opacity duration-300 md:hidden"
+        className="fixed inset-0 bg-black bg-opacity-25 z-50 transition-opacity duration-300 md:hidden"
         onClick={onClose}
       />
       
-      {/* Mobile: Slide up from bottom */}
+      {/* Mobile: Nike-style modal sliding up from bottom */}
       <div className={`
         fixed z-50 md:hidden
-        bottom-0 left-0 right-0 p-4
+        bottom-0 left-0 right-0 p-6
         transform transition-all duration-300 ease-out
         ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}
       `}>
-        <div className="bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
-          {/* Mobile content - same as before */}
-          <MobileContent addedItem={addedItem} onClose={onClose} t={t} getTotalItems={getTotalItems} isVisible={isVisible} getContentValue={getContentValue} />
+        <div className="bg-white rounded-t-2xl shadow-2xl overflow-hidden">
+          <MobileNikeContent 
+            addedItem={addedItem} 
+            onClose={onClose} 
+            t={t} 
+            getTotalItems={getTotalItems} 
+            getContentValue={getContentValue}
+          />
         </div>
       </div>
 
-      {/* Desktop: Small modal connected to cart icon */}
+      {/* Desktop: Nike-style positioned modal */}
       <div className={`
         hidden md:block fixed z-50 
-        top-16 right-4 w-80
+        top-20 right-6 w-96
         transform transition-all duration-200 ease-out
         ${isVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-2 opacity-0 scale-95'}
       `}>
         
         {/* Arrow pointing to cart icon */}
-        <div className="absolute -top-2 right-8 w-4 h-4 bg-white border-l border-t border-gray-200 transform rotate-45"></div>
+        <div className="absolute -top-2 right-8 w-4 h-4 bg-white border-l border-t border-gray-200 transform rotate-45 shadow-sm"></div>
         
-        {/* Desktop modal content */}
-        <div className="bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
-          <DesktopContent addedItem={addedItem} onClose={onClose} t={t} getTotalItems={getTotalItems} getContentValue={getContentValue} />
+        {/* Desktop Nike modal content */}
+        <div className="bg-white rounded-lg shadow-2xl border border-gray-100 overflow-hidden">
+          <DesktopNikeContent 
+            addedItem={addedItem} 
+            onClose={onClose} 
+            t={t} 
+            getTotalItems={getTotalItems} 
+            getContentValue={getContentValue}
+          />
         </div>
       </div>
     </>
   );
 };
 
-// Mobile content component
-const MobileContent = ({ addedItem, onClose, t, getTotalItems, isVisible, getContentValue }) => (
+// Mobile Nike-style content (clean and minimal)
+const MobileNikeContent = ({ addedItem, onClose, t, getTotalItems, getContentValue }) => (
   <>
-    {/* Header */}
-    <div className="bg-green-50 border-b border-green-200 px-4 py-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-            <CheckIcon className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-medium text-green-800">
-            {t('added_to_cart', 'Added to Cart')}
-          </span>
+    {/* Nike-style header */}
+    <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+      <div className="flex items-center space-x-3">
+        <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+          <CheckIcon className="w-4 h-4 text-white" />
         </div>
-        
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <XMarkIcon className="w-5 h-5" />
-        </button>
+        <h3 className="text-lg font-medium text-gray-900">
+          {t('added_to_cart', 'Added to Cart')}
+        </h3>
       </div>
+      
+      <button
+        onClick={onClose}
+        className="text-gray-400 hover:text-gray-600 transition-colors"
+      >
+        <XMarkIcon className="w-6 h-6" />
+      </button>
     </div>
     
-    {/* Product Details */}
-    <div className="p-4">
+    {/* Nike-style product info */}
+    <div className="px-6 py-6">
       <div className="flex space-x-4">
         <div className="flex-shrink-0">
           <img
             src={addedItem.image || '/images/B8S_logo.png'}
             alt={getContentValue(addedItem.name) || 'Product'}
-            className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+            className="w-20 h-20 object-cover rounded-lg"
           />
         </div>
         
-        <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-gray-900 truncate">
+        <div className="flex-1 space-y-2">
+          <h4 className="font-medium text-gray-900 text-base leading-tight">
             {getContentValue(addedItem.name) || 'Product'}
-          </h3>
+          </h4>
           
-          <div className="mt-1 space-y-1">
+          <div className="space-y-1 text-sm text-gray-600">
             {addedItem.color && (
-              <p className="text-sm text-gray-600">
-                {t('color', 'Color')}: {getContentValue(addedItem.color)}
-              </p>
+              <p>{getContentValue(addedItem.color)}</p>
             )}
-            
             {addedItem.size && (
-              <p className="text-sm text-gray-600">
-                {t('size', 'Size')}: {getContentValue(addedItem.size)}
-              </p>
+              <p>Size {getContentValue(addedItem.size)}</p>
             )}
-            
-            <p className="text-sm text-gray-600">
-              {t('quantity', 'Quantity')}: {addedItem.quantity}
-            </p>
-            
-            <div className="font-medium text-gray-900">
-              <SmartPrice 
-                sekPrice={addedItem.price} 
-                size="small"
-                className="font-medium text-gray-900"
-              />
-            </div>
+            <p>Quantity {addedItem.quantity}</p>
           </div>
-        </div>
-      </div>
-    </div>
-    
-    {/* Action Buttons */}
-    <div className="bg-gray-50 px-4 py-3 border-t border-gray-200">
-      <div className="flex space-x-3">
-        <button
-          onClick={() => {
-            onClose();
-            window.location.href = `/${window.location.pathname.split('/')[1]}/cart`;
-          }}
-          className="flex-1 bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center space-x-2"
-        >
-          <ShoppingBagIcon className="w-4 h-4" />
-          <span>
-            {t('view_cart_count', 'View Cart ({{count}})', { count: getTotalItems() })}
-          </span>
-        </button>
-        
-        <button
-          onClick={() => {
-            onClose();
-            window.location.href = `/${window.location.pathname.split('/')[1]}/checkout`;
-          }}
-          className="flex-1 bg-black text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-800 transition-colors"
-        >
-          {t('checkout', 'Checkout')}
-        </button>
-      </div>
-    </div>
-    
-    {/* Progress Bar */}
-    <div className="h-1 bg-gray-200">
-      <div 
-        className="h-full bg-green-500 transition-all duration-5000 ease-linear"
-        style={{ width: isVisible ? '0%' : '100%' }}
-      />
-    </div>
-  </>
-);
-
-// Desktop content component - more compact
-const DesktopContent = ({ addedItem, onClose, t, getTotalItems, getContentValue }) => (
-  <>
-    {/* Compact header */}
-    <div className="bg-green-50 px-4 py-2 border-b border-green-200">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-            <CheckIcon className="w-3 h-3 text-white" />
-          </div>
-          <span className="text-sm font-medium text-green-800">
-            {t('added_to_cart', 'Added to Cart')}
-          </span>
-        </div>
-        
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <XMarkIcon className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-    
-    {/* Compact product details */}
-    <div className="p-3">
-      <div className="flex space-x-3">
-        <div className="flex-shrink-0">
-          <img
-            src={addedItem.image || '/images/B8S_logo.png'}
-            alt={getContentValue(addedItem.name) || 'Product'}
-            className="w-12 h-12 object-cover rounded border border-gray-200"
-          />
-        </div>
-        
-        <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-medium text-gray-900 truncate">
-            {getContentValue(addedItem.name) || 'Product'}
-          </h3>
-          <div className="text-xs text-gray-600 mt-1 flex items-center gap-1">
-            <span>{addedItem.quantity} ×</span>
+          
+          <div className="font-medium text-gray-900">
             <SmartPrice 
               sekPrice={addedItem.price} 
-              size="small"
-              className="text-xs text-gray-600"
+              size="normal"
             />
           </div>
         </div>
       </div>
     </div>
     
-    {/* Compact action buttons */}
-    <div className="bg-gray-50 px-3 py-2 border-t border-gray-200">
-      <div className="flex space-x-2">
-        <button
-          onClick={() => {
-            onClose();
-            window.location.href = `/${window.location.pathname.split('/')[1]}/cart`;
-          }}
-          className="flex-1 bg-white border border-gray-300 rounded px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors text-center"
-        >
-          {t('view_cart_count', 'Cart ({{count}})', { count: getTotalItems() })}
-        </button>
-        
-        <button
-          onClick={() => {
-            onClose();
-            window.location.href = `/${window.location.pathname.split('/')[1]}/checkout`;
-          }}
-          className="flex-1 bg-black text-white rounded px-3 py-1.5 text-xs font-medium hover:bg-gray-800 transition-colors text-center"
-        >
-          {t('checkout', 'Checkout')}
-        </button>
+    {/* Nike-style single action button */}
+    <div className="px-6 pb-6">
+      <button
+        onClick={() => {
+          onClose();
+          window.location.href = `/${window.location.pathname.split('/')[1]}/cart`;
+        }}
+        className="w-full bg-black text-white rounded-full py-4 text-base font-medium hover:bg-gray-800 transition-colors"
+      >
+        {t('view_cart_count', 'View Cart ({{count}})', { count: getTotalItems() })}
+      </button>
+    </div>
+  </>
+);
+
+// Desktop Nike-style content (matches Nike's exact layout)
+const DesktopNikeContent = ({ addedItem, onClose, t, getTotalItems, getContentValue }) => (
+  <>
+    {/* Nike-style header with green success */}
+    <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <div className="flex items-center space-x-3">
+        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+          <CheckIcon className="w-3 h-3 text-white" />
+        </div>
+        <span className="font-medium text-gray-900">
+          {t('added_to_cart', 'Added to Cart')}
+        </span>
       </div>
+      
+      <button
+        onClick={onClose}
+        className="text-gray-400 hover:text-gray-600 transition-colors"
+      >
+        <XMarkIcon className="w-5 h-5" />
+      </button>
+    </div>
+    
+    {/* Nike-style product display */}
+    <div className="p-6">
+      <div className="flex space-x-4">
+        <div className="flex-shrink-0">
+          <img
+            src={addedItem.image || '/images/B8S_logo.png'}
+            alt={getContentValue(addedItem.name) || 'Product'}
+            className="w-20 h-20 object-cover rounded-lg"
+          />
+        </div>
+        
+        <div className="flex-1 space-y-2">
+          <h4 className="font-medium text-gray-900 leading-tight">
+            {getContentValue(addedItem.name) || 'Product'}
+          </h4>
+          
+          <div className="space-y-1 text-sm text-gray-600">
+            {addedItem.color && (
+              <p>{getContentValue(addedItem.color)}</p>
+            )}
+            {addedItem.size && (
+              <p>Size {getContentValue(addedItem.size)}</p>
+            )}
+            <p>Quantity {addedItem.quantity}</p>
+          </div>
+          
+          <div className="font-medium text-gray-900">
+            <SmartPrice 
+              sekPrice={addedItem.price} 
+              size="normal"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    {/* Nike-style dual action buttons */}
+    <div className="px-6 pb-6 space-y-3">
+      <button
+        onClick={() => {
+          onClose();
+          window.location.href = `/${window.location.pathname.split('/')[1]}/cart`;
+        }}
+        className="w-full border-2 border-gray-200 text-gray-900 rounded-full py-3 text-sm font-medium hover:border-gray-300 transition-colors"
+      >
+        {t('view_cart_count', 'View Cart ({{count}})', { count: getTotalItems() })}
+      </button>
+      
+      <button
+        onClick={() => {
+          onClose();
+          window.location.href = `/${window.location.pathname.split('/')[1]}/checkout`;
+        }}
+        className="w-full bg-black text-white rounded-full py-3 text-sm font-medium hover:bg-gray-800 transition-colors"
+      >
+        {t('checkout', 'Checkout')}
+      </button>
     </div>
   </>
 );
