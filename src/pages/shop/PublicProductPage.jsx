@@ -58,6 +58,9 @@ const PublicProductPage = () => {
   } = useCart();
   const [redirected, setRedirected] = useState(false);
 
+  // Calculate productImages early to avoid temporal dead zone issues
+  const productImages = getProductImages(product);
+
   useEffect(() => {
     if (slug) {
       loadProductAndVariants();
@@ -95,7 +98,7 @@ const PublicProductPage = () => {
       container.addEventListener('scroll', handleImageScroll);
       return () => container.removeEventListener('scroll', handleImageScroll);
     }
-  }, [productImages.length]);
+  }, [productImages.length, product]);
 
   const loadProductAndVariants = async () => {
     try {
@@ -257,7 +260,6 @@ const PublicProductPage = () => {
     );
   }
 
-  const productImages = getProductImages(product);
   const isMultipack = product?.group?.includes('multipack') || product?.group?.includes('3-pack');
 
   return (
