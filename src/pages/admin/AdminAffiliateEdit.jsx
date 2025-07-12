@@ -262,7 +262,7 @@ const AdminAffiliateEdit = () => {
   const handleApprove = async () => {
     const toastId = toast.loading('Godkänner affiliate...');
     try {
-      const approveAffiliate = httpsCallable(functions, 'approveAffiliate');
+      const approveAffiliate = httpsCallable(functions, 'approveAffiliateV2');
       const applicationData = {
         applicationId: id,
         name: data.name,

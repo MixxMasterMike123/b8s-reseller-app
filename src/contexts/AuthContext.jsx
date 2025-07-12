@@ -593,7 +593,7 @@ export function AuthProvider({ children }) {
         // Real Firebase: Call the cloud function
         if (!isAdmin) throw new Error('Unauthorized - Admin access required');
         
-        const sendWelcomeEmail = httpsCallable(functions, 'sendCustomerWelcomeEmail');
+        const sendWelcomeEmail = httpsCallable(functions, 'sendCustomerWelcomeEmailV2');
         const result = await sendWelcomeEmail({ customerId });
         
         const data = result.data;
@@ -644,7 +644,7 @@ export function AuthProvider({ children }) {
         // Real Firebase: Call the cloud function
         if (!isAdmin) throw new Error('Unauthorized - Admin access required');
         
-        const deleteCustomer = httpsCallable(functions, 'deleteCustomerAccount');
+        const deleteCustomer = httpsCallable(functions, 'deleteCustomerAccountV2');
         const result = await deleteCustomer({ customerId });
         
         const data = result.data;
@@ -690,7 +690,7 @@ export function AuthProvider({ children }) {
         // Real Firebase: Use the enhanced cloud function that handles both Firestore and Auth
         if (!isAdmin) throw new Error('Unauthorized');
         
-        const toggleStatus = httpsCallable(functions, 'toggleCustomerActiveStatus');
+        const toggleStatus = httpsCallable(functions, 'toggleCustomerActiveStatusV2');
         const result = await toggleStatus({ customerId: userId, activeStatus });
         
         const data = result.data;

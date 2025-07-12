@@ -67,7 +67,7 @@ const AffiliateTracker = () => {
 
         // Call a cloud function to log the click (fire and forget)
         try {
-          const logClick = httpsCallable(functions, 'logAffiliateClick');
+          const logClick = httpsCallable(functions, 'logAffiliateClickV2');
           const result = await logClick({ affiliateCode: refCode });
           
           // Store the click ID if returned

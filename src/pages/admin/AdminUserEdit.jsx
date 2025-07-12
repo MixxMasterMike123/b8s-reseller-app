@@ -480,7 +480,7 @@ const AdminUserEdit = () => {
         if (emailChanged) {
           try {
             // Call the cloud function to update email
-            const updateEmail = httpsCallable(functions, 'updateCustomerEmail');
+            const updateEmail = httpsCallable(functions, 'updateCustomerEmailV2');
             await updateEmail({ userId, newEmail: formData.email });
             toast.success('E-post uppdaterad framgångsrikt');
           } catch (error) {
