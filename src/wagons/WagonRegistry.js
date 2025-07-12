@@ -9,15 +9,54 @@ class WagonRegistry {
     this.wagons = new Map(); // Only enabled wagons
     this.allWagons = new Map(); // All discovered wagons (enabled + disabled)
     this.initialized = false;
+    this.isDiscovering = false; // Prevent concurrent discovery
+  }
+
+  /**
+   * PERFORMANCE OPTIMIZATION: Check if wagon discovery is needed
+   * Skip discovery for B2C mode since wagons are primarily B2B/admin tools
+   */
+  shouldDiscoverWagons() {
+    // Check if we're on B2C shop domain
+    const isB2CShop = typeof window !== 'undefined' && 
+                     window.location.hostname === 'shop.b8shield.com';
+    
+    // Check URL path for admin routes
+    const isAdminRoute = typeof window !== 'undefined' && 
+                        window.location.pathname.startsWith('/admin');
+    
+    // Check if we're in an environment where wagons would be used
+    const needsWagons = !isB2CShop || isAdminRoute;
+    
+    if (!needsWagons) {
+      console.log('⚡ B8Shield Train: Skipping wagon discovery for B2C mode (performance optimization)');
+      return false;
+    }
+    
+    return true;
   }
 
   /**
    * Auto-discover and register all wagons
    * This is the ONLY method the core app needs to call
+   * PERFORMANCE OPTIMIZED: Only runs when wagons are actually needed
    */
   async discoverWagons() {
     if (this.initialized) return;
-
+    
+    // Check if discovery is needed (performance optimization)
+    if (!this.shouldDiscoverWagons()) {
+      this.initialized = true; // Mark as initialized to prevent future attempts
+      return;
+    }
+    
+    // Prevent concurrent discovery
+    if (this.isDiscovering) {
+      console.log('🚂 B8Shield Train: Already discovering wagons, skipping...');
+      return;
+    }
+    
+    this.isDiscovering = true;
     console.log('🚂 B8Shield Train: Discovering wagons...');
 
     try {
@@ -42,6 +81,18 @@ class WagonRegistry {
       
     } catch (error) {
       console.error('❌ B8Shield Train: Wagon discovery failed:', error);
+    } finally {
+      this.isDiscovering = false;
+    }
+  }
+
+  /**
+   * PERFORMANCE OPTIMIZATION: Lazy wagon discovery
+   * Only discovers wagons when they're actually requested
+   */
+  async ensureWagonsDiscovered() {
+    if (!this.initialized && !this.isDiscovering) {
+      await this.discoverWagons();
     }
   }
 
@@ -83,82 +134,81 @@ class WagonRegistry {
    */
   validateWagon(manifest) {
     const required = ['id', 'name', 'version', 'type', 'enabled'];
-    return required.every(field => manifest.hasOwnProperty(field));
+    
+    for (const field of required) {
+      if (!manifest[field]) {
+        console.error(`❌ Missing required field '${field}' in wagon manifest`);
+        return false;
+      }
+    }
+
+    // ID validation
+    if (!/^[a-z0-9-]+$/.test(manifest.id)) {
+      console.error(`❌ Invalid wagon ID format: ${manifest.id}`);
+      return false;
+    }
+
+    // Version validation
+    if (!/^\d+\.\d+\.\d+$/.test(manifest.version)) {
+      console.error(`❌ Invalid version format: ${manifest.version}`);
+      return false;
+    }
+
+    return true;
   }
 
   /**
-   * Get all registered wagons (enabled only)
+   * Get wagon by ID
    */
-  getWagons() {
-    return Array.from(this.wagons.values());
+  getWagon(wagonId) {
+    return this.wagons.get(wagonId);
   }
 
   /**
-   * Get ALL discovered wagons (enabled + disabled) - for admin purposes
+   * Get all wagons (enabled only)
    */
   getAllWagons() {
-    return Array.from(this.allWagons.values());
+    return this.allWagons;
   }
 
   /**
-   * Get wagon by ID (enabled only)
+   * Check if wagon exists and is enabled
    */
-  getWagon(id) {
-    return this.wagons.get(id);
+  hasWagon(wagonId) {
+    return this.wagons.has(wagonId);
   }
 
   /**
-   * Get any wagon by ID (enabled or disabled) - for admin purposes
+   * Get wagon service/API
    */
-  getAnyWagon(id) {
-    return this.allWagons.get(id);
-  }
-
-  /**
-   * Check if wagon is enabled for specific user
-   */
-  async isWagonEnabledForUser(wagonId, userId) {
-    if (!userId) return false;
+  getWagonService(wagonId, serviceName) {
+    const wagon = this.getWagon(wagonId);
+    if (!wagon || !wagon.services) return null;
     
-    try {
-      // First check if wagon exists (including disabled ones for admin purposes)
-      const wagon = this.allWagons.get(wagonId);
-      if (!wagon) {
-        return false; // Wagon doesn't exist
-      }
-      
-      // Check manifest enabled status
-      if (!wagon.manifest.enabled) {
-        return false; // Wagon is disabled in manifest
-      }
-      
-      // Then check user-specific settings
-      const userWagonDoc = await getDoc(doc(db, 'userWagonSettings', userId));
-      
-      if (!userWagonDoc.exists()) {
-        return true; // Default to enabled if no specific settings
-      }
-      
-      const userSettings = userWagonDoc.data();
-      const wagonSetting = userSettings.wagons?.[wagonId];
-      
-      if (!wagonSetting) {
-        return true; // Default to enabled if no specific setting for this wagon
-      }
-      
-      return wagonSetting.enabled === true;
-      
-    } catch (error) {
-      console.error(`Error checking wagon permissions for user ${userId}:`, error);
-      return false; // Err on the side of caution
-    }
+    return wagon.services[serviceName];
+  }
+
+  /**
+   * Get wagon statistics
+   */
+  getStats() {
+    return {
+      total: this.allWagons.size,
+      enabled: this.wagons.size,
+      disabled: this.allWagons.size - this.wagons.size,
+      initialized: this.initialized,
+      isDiscovering: this.isDiscovering
+    };
   }
 
   /**
    * Get all admin menu items from wagons (with user permission check)
    * Core app calls this to build navigation
+   * PERFORMANCE OPTIMIZED: Only discovers wagons when needed
    */
   async getAdminMenuItems(userId = null) {
+    await this.ensureWagonsDiscovered();
+    
     const menuItems = [];
     
     for (const wagon of this.wagons.values()) {
@@ -181,50 +231,37 @@ class WagonRegistry {
   }
 
   /**
-   * Get all admin menu items from wagons (legacy sync version)
-   * Core app calls this to build navigation
+   * Check if wagon is enabled for specific user
    */
-  getAdminMenuItemsSync() {
-    const menuItems = [];
+  async isWagonEnabledForUser(wagonId, userId) {
+    if (!userId) return false;
     
-    for (const wagon of this.wagons.values()) {
-      if (wagon.manifest.adminMenu) {
-        menuItems.push({
-          ...wagon.manifest.adminMenu,
-          wagonId: wagon.manifest.id,
-          component: wagon.AdminComponent
-        });
-      }
+    try {
+      const settingsDoc = await getDoc(doc(db, 'settings', 'wagonUsers'));
+      const settings = settingsDoc.data();
+      
+      if (!settings || !settings.userSettings) return true; // Default: enabled
+      
+      const userSettings = settings.userSettings[userId];
+      if (!userSettings || !userSettings.wagons) return true; // Default: enabled
+      
+      const wagonSetting = userSettings.wagons[wagonId];
+      return wagonSetting !== false; // Default: enabled unless explicitly disabled
+      
+    } catch (error) {
+      console.warn('Error checking wagon user settings:', error);
+      return true; // Default: enabled on error
     }
-
-    return menuItems.sort((a, b) => (a.order || 999) - (b.order || 999));
-  }
-
-  /**
-   * Get all user menu items from wagons (for regular user navigation)
-   * Core app calls this to build regular user navigation
-   */
-  getUserMenuItemsSync() {
-    const menuItems = [];
-    
-    for (const wagon of this.wagons.values()) {
-      if (wagon.manifest.userMenu) {
-        menuItems.push({
-          ...wagon.manifest.userMenu,
-          wagonId: wagon.manifest.id,
-          component: wagon.components[wagon.manifest.routes?.[0]?.component]
-        });
-      }
-    }
-
-    return menuItems.sort((a, b) => (a.order || 999) - (b.order || 999));
   }
 
   /**
    * Get all routes from wagons
    * Core app calls this to register routes
+   * PERFORMANCE OPTIMIZED: Only discovers wagons when needed
    */
-  getRoutes() {
+  async getRoutes() {
+    await this.ensureWagonsDiscovered();
+    
     const routes = [];
     
     for (const wagon of this.wagons.values()) {
@@ -245,8 +282,11 @@ class WagonRegistry {
   /**
    * Get routes for specific user (with permission checking)
    * App.jsx can call this to register routes based on user permissions
+   * PERFORMANCE OPTIMIZED: Only discovers wagons when needed
    */
   async getRoutesForUser(userId) {
+    await this.ensureWagonsDiscovered();
+    
     const routes = [];
     
     for (const wagon of this.wagons.values()) {
@@ -269,101 +309,36 @@ class WagonRegistry {
   }
 
   /**
-   * Get integration hooks for existing pages
-   * Allows wagons to add buttons/panels to existing admin pages
+   * Get all wagons for admin management
+   * Used by AdminSettings to show all wagons (enabled + disabled)
    */
-  getIntegrationHooks(hookPoint) {
-    const hooks = [];
-    
-    for (const wagon of this.wagons.values()) {
-      if (wagon.manifest.integrations?.[hookPoint]) {
-        const integration = wagon.manifest.integrations[hookPoint];
-        hooks.push({
-          ...integration,
-          wagonId: wagon.manifest.id,
-          component: wagon.components[integration.component]
-        });
-      }
-    }
-
-    return hooks;
+  async getAllWagonsForAdmin() {
+    await this.ensureWagonsDiscovered();
+    return this.allWagons;
   }
 
   /**
-   * Get available services/utilities from wagons
-   * Allows wagons to expose functionality to other wagons
+   * Force wagon discovery (for testing/debugging)
    */
-  getWagonService(wagonId, serviceName) {
-    const wagon = this.wagons.get(wagonId);
-    return wagon?.services?.[serviceName];
+  async forceDiscoverWagons() {
+    this.initialized = false;
+    this.isDiscovering = false;
+    this.wagons.clear();
+    this.allWagons.clear();
+    await this.discoverWagons();
   }
 
   /**
-   * Check if specific wagon is available
+   * Clear all wagons (for testing)
    */
-  hasWagon(id) {
-    return this.wagons.has(id);
-  }
-
-  /**
-   * Get wagons by type
-   */
-  getWagonsByType(type) {
-    return Array.from(this.wagons.values())
-      .filter(wagon => wagon.manifest.type === type);
-  }
-
-  /**
-   * Get wagon statistics
-   */
-  getStats() {
-    const stats = {
-      total: this.allWagons.size, // Total discovered wagons
-      active: this.wagons.size,   // Only enabled wagons
-      byType: {},
-      byStatus: { enabled: 0, disabled: 0 }
-    };
-
-    for (const wagon of this.allWagons.values()) {
-      // Count by type
-      const type = wagon.manifest.type;
-      stats.byType[type] = (stats.byType[type] || 0) + 1;
-
-      // Count by status
-      if (wagon.manifest.enabled) {
-        stats.byStatus.enabled++;
-      } else {
-        stats.byStatus.disabled++;
-      }
-    }
-
-    return stats;
-  }
-
-  /**
-   * Disconnect wagon (for development/testing)
-   */
-  disconnectWagon(id) {
-    const success = this.wagons.delete(id);
-    if (success) {
-      console.log(`🔌 Disconnected wagon: ${id}`);
-    }
-    return success;
-  }
-
-  /**
-   * Reset registry (for development/testing)
-   */
-  reset() {
+  clearWagons() {
     this.wagons.clear();
     this.allWagons.clear();
     this.initialized = false;
-    console.log('🔄 Wagon registry reset');
+    this.isDiscovering = false;
   }
 }
 
-// Create singleton instance
+// Export singleton instance
 const wagonRegistry = new WagonRegistry();
-
-export default wagonRegistry;
-export { WagonRegistry }; 
+export default wagonRegistry; 

@@ -14,8 +14,23 @@ import { db } from '../firebase/config';
 // Product Groups collection for B2C shared content
 const PRODUCT_GROUPS_COLLECTION = 'productGroups';
 
+// PERFORMANCE OPTIMIZATION: Cache product group content to prevent duplicate Firebase calls
+const productGroupCache = new Map();
+const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes (shorter than translations since this changes more frequently)
+
+// Generate cache key for product group
+const getCacheKey = (groupId) => {
+  return `productGroup_${groupId}`;
+};
+
+// Check if cached result is still valid
+const isCacheValid = (cacheEntry) => {
+  return cacheEntry && (Date.now() - cacheEntry.timestamp) < CACHE_DURATION;
+};
+
 /**
  * Get product group content by group ID
+ * PERFORMANCE OPTIMIZED: Caches results to prevent duplicate Firebase calls
  */
 export const getProductGroupContent = async (groupId) => {
   if (!groupId) {
@@ -25,6 +40,15 @@ export const getProductGroupContent = async (groupId) => {
   
   console.log('🔍 getProductGroupContent called for:', groupId);
   
+  // Check cache first
+  const cacheKey = getCacheKey(groupId);
+  const cached = productGroupCache.get(cacheKey);
+  
+  if (isCacheValid(cached)) {
+    console.log(`📋 Using cached product group content for: ${groupId}`);
+    return cached.result;
+  }
+  
   try {
     const docRef = doc(db, PRODUCT_GROUPS_COLLECTION, groupId);
     console.log('📄 Document path:', docRef.path);
@@ -32,17 +56,25 @@ export const getProductGroupContent = async (groupId) => {
     const docSnap = await getDoc(docRef);
     console.log('📄 Document exists:', docSnap.exists());
     
+    let result = null;
     if (docSnap.exists()) {
       const data = docSnap.data();
       console.log('📄 Document data:', data);
-      return {
+      result = {
         id: docSnap.id,
         ...data
       };
+    } else {
+      console.log('📄 No document found for group:', groupId);
     }
     
-    console.log('📄 No document found for group:', groupId);
-    return null;
+    // Cache the result (even if null)
+    productGroupCache.set(cacheKey, {
+      result,
+      timestamp: Date.now()
+    });
+    
+    return result;
   } catch (error) {
     console.error('❌ Error getting product group content:', error);
     console.error('❌ Error details:', {
@@ -56,6 +88,7 @@ export const getProductGroupContent = async (groupId) => {
 
 /**
  * Create or update product group content
+ * PERFORMANCE OPTIMIZATION: Clears cache when content is updated
  */
 export const saveProductGroupContent = async (groupId, groupData, currentUserUid) => {
   if (!groupId) throw new Error('Group ID is required');
@@ -99,6 +132,11 @@ export const saveProductGroupContent = async (groupId, groupData, currentUserUid
       await setDoc(docRef, finalData);
       console.log('✅ Document created successfully');
     }
+    
+    // Clear cache for this group since content was updated
+    const cacheKey = getCacheKey(groupId);
+    productGroupCache.delete(cacheKey);
+    console.log(`🗑️ Cleared cache for group: ${groupId}`);
     
     return true;
   } catch (error) {
@@ -209,4 +247,28 @@ export const validateGroupContent = (groupData) => {
   // Add more validation rules as needed
   
   return errors;
+};
+
+/**
+ * Clear product group cache (useful for testing or manual refresh)
+ */
+export const clearProductGroupCache = () => {
+  productGroupCache.clear();
+  console.log('📋 Product group cache cleared');
+};
+
+/**
+ * Get cache statistics (for debugging)
+ */
+export const getProductGroupCacheStats = () => {
+  const now = Date.now();
+  const entries = Array.from(productGroupCache.entries());
+  
+  return {
+    totalEntries: entries.length,
+    validEntries: entries.filter(([_, value]) => isCacheValid(value)).length,
+    expiredEntries: entries.filter(([_, value]) => !isCacheValid(value)).length,
+    oldestEntry: entries.length > 0 ? Math.min(...entries.map(([_, value]) => value.timestamp)) : null,
+    cacheAge: entries.length > 0 ? now - Math.min(...entries.map(([_, value]) => value.timestamp)) : 0
+  };
 }; 

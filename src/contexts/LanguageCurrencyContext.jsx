@@ -21,7 +21,7 @@ import {
   getOptimalLanguageForCountry,
   checkTranslationExists 
 } from '../utils/translationDetection';
-import { convertPrice } from '../utils/priceConversion.js';
+import { convertPrice, convertPriceSmart } from '../utils/priceConversion.js';
 
 const LanguageCurrencyContext = createContext();
 
@@ -246,11 +246,11 @@ export const LanguageCurrencyProvider = ({ children }) => {
   }, [urlCountryCode, initializeFromUrlCountry]);
 
   /**
-   * Converts a SEK price to current currency
+   * Converts a SEK price to current currency (SMART conversion with .99 psychological pricing)
    */
   const convertSEKPrice = useCallback(async (sekPrice) => {
     try {
-      console.log(`💰 Converting ${sekPrice} SEK to ${currency}`);
+      console.log(`💰 Converting ${sekPrice} SEK to ${currency} (SMART .99 pricing)`);
       
       if (currency === 'SEK') {
         console.log(`💰 No conversion needed: ${sekPrice} SEK`);
@@ -263,9 +263,44 @@ export const LanguageCurrencyProvider = ({ children }) => {
         };
       }
       
-      console.log(`💰 Converting ${sekPrice} SEK → ${currency}...`);
+      console.log(`💰 Converting ${sekPrice} SEK → ${currency} (SMART)...`);
+      const result = await convertPriceSmart(sekPrice, currency);
+      console.log(`💰 SMART conversion result:`, result);
+      return result;
+    } catch (error) {
+      console.error('💰 Error converting price:', error);
+      return {
+        originalPrice: sekPrice,
+        convertedPrice: sekPrice,
+        formatted: `${sekPrice.toFixed(2)} kr`,
+        currency: 'SEK',
+        exchangeRate: 1.0,
+        error: error.message
+      };
+    }
+  }, [currency]);
+
+  /**
+   * Converts a SEK price to current currency (EXACT conversion for commissions/calculations)
+   */
+  const convertSEKPriceExact = useCallback(async (sekPrice) => {
+    try {
+      console.log(`💰 Converting ${sekPrice} SEK to ${currency} (EXACT)`);
+      
+      if (currency === 'SEK') {
+        console.log(`💰 No conversion needed: ${sekPrice} SEK`);
+        return {
+          originalPrice: sekPrice,
+          convertedPrice: sekPrice,
+          formatted: `${sekPrice.toFixed(2)} kr`,
+          currency: 'SEK',
+          exchangeRate: 1.0
+        };
+      }
+      
+      console.log(`💰 Converting ${sekPrice} SEK → ${currency} (EXACT)...`);
       const result = await convertPrice(sekPrice, currency);
-      console.log(`💰 Conversion result:`, result);
+      console.log(`💰 EXACT conversion result:`, result);
       return result;
     } catch (error) {
       console.error('💰 Error converting price:', error);
@@ -413,6 +448,8 @@ export const LanguageCurrencyProvider = ({ children }) => {
             setIsInitialized(true);
             setIsLoading(false);
           } else if (finalHasCountry && !isInitialized) {
+            // Country was detected during timeout - process it immediately
+            console.log('🔄 TIMEOUT COMPLEX: Detected country during timeout - processing immediately');
             // Check if it's a supported country before using complex logic
             const countryConfig = getCountryConfig(finalHasCountry.toLowerCase());
             if (countryConfig && countryConfig.isSupported) {
@@ -462,6 +499,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
     
     // Utilities
     convertSEKPrice,
+    convertSEKPriceExact,
     getDisplayInfo,
     
     // International support

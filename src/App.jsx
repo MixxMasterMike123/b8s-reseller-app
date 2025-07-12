@@ -125,8 +125,8 @@ function App() {
       // Discover and connect all wagons
       await wagonRegistry.discoverWagons();
       
-      // Get wagon routes for the current app mode
-      const routes = wagonRegistry.getRoutes();
+      // Get wagon routes for the current app mode (FIX: await the async function)
+      const routes = await wagonRegistry.getRoutes();
       const filteredRoutes = routes.filter(route => {
         // Add all routes for B2B app (admin and user routes)
         return appMode === 'reseller';

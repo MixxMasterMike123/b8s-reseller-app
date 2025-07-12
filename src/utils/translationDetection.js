@@ -16,6 +16,14 @@ let translationCache = {};
 let lastCacheUpdate = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+// PERFORMANCE OPTIMIZATION: Only check for languages that actually exist
+// This prevents 14 unnecessary Firebase queries for languages that don't exist
+const ACTUALLY_AVAILABLE_LANGUAGES = [
+  'sv-SE', // Swedish - Primary language
+  'en-GB', // English UK - Secondary language
+  'en-US'  // English US - Secondary language
+];
+
 /**
  * Check if a specific language has translations in Firebase
  */
@@ -40,6 +48,7 @@ export const checkTranslationExists = async (languageCode) => {
 
 /**
  * Get all available translation languages from Firebase
+ * PERFORMANCE OPTIMIZED: Only checks languages that actually exist
  */
 export const getAvailableTranslations = async () => {
   const now = Date.now();
@@ -54,29 +63,11 @@ export const getAvailableTranslations = async () => {
   
   const availableLanguages = [];
   
-  // Check each supported language
-  const languagesToCheck = [
-    'sv-SE', // Swedish
-    'en-GB', // English UK  
-    'en-US', // English US
-    'de-DE', // German
-    'fr-FR', // French
-    'es-ES', // Spanish
-    'it-IT', // Italian
-    'da-DK', // Danish
-    'no-NO', // Norwegian
-    'fi-FI', // Finnish
-    'pl-PL', // Polish
-    'nl-NL', // Dutch
-    'pt-PT', // Portuguese
-    'ru-RU', // Russian
-    'ja-JP', // Japanese
-    'ko-KR', // Korean
-    'zh-CN'  // Chinese Simplified
-  ];
+  // ⚡ PERFORMANCE OPTIMIZATION: Only check languages we know exist
+  // This reduces Firebase queries from 17 to 3, saving ~14 unnecessary database calls
   
   // Check each language in parallel for performance
-  const checks = languagesToCheck.map(async (lang) => {
+  const checks = ACTUALLY_AVAILABLE_LANGUAGES.map(async (lang) => {
     const exists = await checkTranslationExists(lang);
     if (exists) {
       return lang;
@@ -91,7 +82,7 @@ export const getAvailableTranslations = async () => {
   translationCache.languages = availableLanguages;
   lastCacheUpdate = now;
   
-  console.log(`✅ Available translations detected:`, availableLanguages);
+  console.log(`✅ Available translations detected: (${availableLanguages.length})`, availableLanguages);
   return availableLanguages;
 };
 
@@ -138,33 +129,18 @@ export const checkDynamicLanguageSupport = async (countryCode) => {
   
   const code = countryCode.toLowerCase();
   
-  // Map country codes to potential language codes
-  const countryLanguageMap = {
-    'de': 'de-DE',
-    'fr': 'fr-FR', 
-    'es': 'es-ES',
-    'it': 'it-IT',
-    'pt': 'pt-PT',
-    'nl': 'nl-NL',
-    'pl': 'pl-PL',
-    'ru': 'ru-RU',
-    'dk': 'da-DK',
-    'no': 'no-NO',
-    'fi': 'fi-FI',
-    'jp': 'ja-JP',
-    'kr': 'ko-KR',
-    'cn': 'zh-CN',
-    'br': 'pt-BR' // Brazilian Portuguese
-  };
+  // ⚡ PERFORMANCE OPTIMIZATION: Only check for languages that might actually exist
+  // Skip this check for now since we only have 3 languages
+  const potentialLanguages = [];
   
-  const potentialLanguage = countryLanguageMap[code];
-  
-  if (potentialLanguage) {
-    const hasTranslations = await checkTranslationExists(potentialLanguage);
-    
-    if (hasTranslations) {
-      console.log(`🚀 Dynamic language support detected: ${code} → ${potentialLanguage}`);
-      return potentialLanguage;
+  // If we add more languages in the future, add them to ACTUALLY_AVAILABLE_LANGUAGES first
+  for (const lang of potentialLanguages) {
+    if (ACTUALLY_AVAILABLE_LANGUAGES.includes(lang)) {
+      const hasTranslations = await checkTranslationExists(lang);
+      if (hasTranslations) {
+        console.log(`🚀 Dynamic language support detected: ${code} → ${lang}`);
+        return lang;
+      }
     }
   }
   
@@ -244,26 +220,6 @@ export const getLanguageSwitcherOptions = async (currentCountry = 'se') => {
   if (availableTranslations.includes('en-US')) {
     options.push({ countryCode: 'us', language: 'en-US', name: 'English (US)', flag: '🇺🇸' });
   }
-  
-  // Add dynamic language options
-  const dynamicLanguageMap = {
-    'de-DE': { countryCode: 'de', name: 'Deutsch', flag: '🇩🇪' },
-    'fr-FR': { countryCode: 'fr', name: 'Français', flag: '🇫🇷' },
-    'es-ES': { countryCode: 'es', name: 'Español', flag: '🇪🇸' },
-    'it-IT': { countryCode: 'it', name: 'Italiano', flag: '🇮🇹' },
-    'da-DK': { countryCode: 'dk', name: 'Dansk', flag: '🇩🇰' },
-    'no-NO': { countryCode: 'no', name: 'Norsk', flag: '🇳🇴' },
-    'fi-FI': { countryCode: 'fi', name: 'Suomi', flag: '🇫🇮' }
-  };
-  
-  availableTranslations.forEach(lang => {
-    if (dynamicLanguageMap[lang]) {
-      options.push({
-        ...dynamicLanguageMap[lang],
-        language: lang
-      });
-    }
-  });
   
   // Add current country if not already included and not in main options
   if (currentCountry && !options.find(opt => opt.countryCode === currentCountry.toLowerCase())) {

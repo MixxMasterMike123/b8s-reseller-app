@@ -29,9 +29,40 @@ const getInitialLanguage = () => {
       return urlLang;
     }
     
-    // For B2C shop, let LanguageCurrencyContext handle country detection
+    // For B2C shop, check if we already have a country in the URL path
     if (typeof window !== 'undefined' && window.location.hostname === 'shop.b8shield.com') {
-      console.log(`🌍 MAIN APP: B2C shop detected - waiting for LanguageCurrencyContext to provide language`);
+      const pathname = window.location.pathname;
+      const segments = pathname.split('/').filter(Boolean);
+      const countryCode = segments[0];
+      
+      // If we have a country code in URL, map it to language immediately
+      if (countryCode && countryCode.length === 2) {
+        const countryLanguageMap = {
+          'se': 'sv-SE',
+          'gb': 'en-GB', 
+          'us': 'en-US',
+          // For unsupported countries, use English as fallback
+        };
+        
+        const mappedLanguage = countryLanguageMap[countryCode.toLowerCase()];
+        if (mappedLanguage) {
+          console.log(`🌍 B2C: Country ${countryCode} → ${mappedLanguage} (from URL path)`);
+          return mappedLanguage;
+        } else {
+          console.log(`🌍 B2C: Unsupported country ${countryCode} → en-GB (fallback)`);
+          return 'en-GB';
+        }
+      }
+      
+      // Check localStorage for previously detected language (to handle page refreshes)
+      const savedLang = localStorage.getItem('b8shield-language');
+      if (savedLang && AVAILABLE_LANGUAGES.some(lang => lang.code === savedLang)) {
+        console.log(`🌍 B2C: Using saved language: ${savedLang} (from localStorage)`);
+        return savedLang;
+      }
+      
+      // Only return null if we truly have no information (initial page load without country)
+      console.log(`🌍 B2C: No country in URL, waiting for geo-detection...`);
       return null; // Will wait for LanguageCurrencyContext to set the language
     }
     
@@ -184,20 +215,22 @@ export const TranslationProvider = ({ children }) => {
         
         // Load translations for known language
         if (currentLanguage) {
-        console.log(`🌍 Loading translations for initial language: ${currentLanguage}`);
-          
-          // For B2C shop, let LanguageCurrencyContext handle country detection
-          // TranslationContext just loads translations for the requested language
-          
-        await loadTranslations(currentLanguage);
+          console.log(`🌍 Loading translations for initial language: ${currentLanguage}`);
+          await loadTranslations(currentLanguage);
         }
       } catch (error) {
         console.error('Translation initialization failed:', error);
-        await loadTranslations('en-GB'); // Fallback to English for international users
+        // Only fallback to English if we don't have a current language
+        if (!currentLanguage) {
+          await loadTranslations('en-GB'); // Fallback to English for international users
+        }
       }
     };
 
-    initializeTranslations();
+    // Only initialize if we have a language or are not waiting for geo-detection
+    if (currentLanguage || !waitingForGeo) {
+      initializeTranslations();
+    }
     
     // Cleanup timeout on unmount or dependency change
     return () => {
@@ -205,7 +238,7 @@ export const TranslationProvider = ({ children }) => {
         clearTimeout(timeoutId);
       }
     };
-  }, [currentLanguage, waitingForGeo, changeLanguage, loadTranslations]);
+  }, [currentLanguage, waitingForGeo, loadTranslations]); // Removed changeLanguage from dependencies to prevent loops
 
   const value = {
     currentLanguage,
