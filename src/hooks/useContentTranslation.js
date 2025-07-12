@@ -11,6 +11,9 @@ import { useTranslation } from '../contexts/TranslationContext';
 export const useContentTranslation = () => {
   const { currentLanguage } = useTranslation();
   
+  // Safety check: Fallback to Swedish if currentLanguage is not yet initialized
+  const safeCurrentLanguage = currentLanguage || 'sv-SE';
+  
   /**
    * Get the value for a content field in the current language
    * @param {Object} contentField - The multilingual content field object
@@ -28,8 +31,8 @@ export const useContentTranslation = () => {
     // If it's already a multilingual object
     if (typeof contentField === 'object') {
       // Try current language first
-      if (contentField[currentLanguage]) {
-        return contentField[currentLanguage];
+      if (contentField[safeCurrentLanguage]) {
+        return contentField[safeCurrentLanguage];
       }
       
       // Fall back to fallback language
@@ -56,14 +59,14 @@ export const useContentTranslation = () => {
   const setContentValue = (contentField, value) => {
     // If contentField is null/undefined, create new object
     if (!contentField) {
-      return { [currentLanguage]: value };
+      return { [safeCurrentLanguage]: value };
     }
     
     // If it's a simple string (backward compatibility), convert to multilingual
     if (typeof contentField === 'string') {
       return {
         'sv-SE': contentField, // Preserve original Swedish text
-        [currentLanguage]: value
+        [safeCurrentLanguage]: value
       };
     }
     
@@ -71,11 +74,11 @@ export const useContentTranslation = () => {
     if (typeof contentField === 'object') {
       return {
         ...contentField,
-        [currentLanguage]: value
+        [safeCurrentLanguage]: value
       };
     }
     
-    return { [currentLanguage]: value };
+    return { [safeCurrentLanguage]: value };
   };
   
   /**
@@ -100,11 +103,11 @@ export const useContentTranslation = () => {
     if (!contentField) return false;
     
     if (typeof contentField === 'string') {
-      return currentLanguage === 'sv-SE' && contentField.length > 0;
+      return safeCurrentLanguage === 'sv-SE' && contentField.length > 0;
     }
     
     if (typeof contentField === 'object') {
-      return !!(contentField[currentLanguage] && contentField[currentLanguage].length > 0);
+      return !!(contentField[safeCurrentLanguage] && contentField[safeCurrentLanguage].length > 0);
     }
     
     return false;
@@ -140,12 +143,12 @@ export const useContentTranslation = () => {
     const completion = getCompletionStatus(contentField);
     
     return {
-      currentLanguage,
+      currentLanguage: safeCurrentLanguage,
       hasContent,
       completion,
       isEmpty: !hasContent,
-      isTranslated: currentLanguage !== 'sv-SE' && hasContent,
-      needsTranslation: currentLanguage !== 'sv-SE' && !hasContent
+      isTranslated: safeCurrentLanguage !== 'sv-SE' && hasContent,
+      needsTranslation: safeCurrentLanguage !== 'sv-SE' && !hasContent
     };
   };
 

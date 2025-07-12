@@ -57,12 +57,12 @@ const PublicStorefront = () => {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const q = query(
+      const productsQuery = query(
         collection(db, 'products'),
         where('isActive', '==', true),
         where('availability.b2c', '==', true) // Only show B2C available products
       );
-      const querySnapshot = await getDocs(q);
+      const querySnapshot = await getDocs(productsQuery);
       
       const productList = [];
       querySnapshot.forEach((doc) => {

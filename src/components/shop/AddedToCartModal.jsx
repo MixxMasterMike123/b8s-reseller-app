@@ -7,9 +7,14 @@ import { useContentTranslation } from '../../hooks/useContentTranslation';
 import SmartPrice from './SmartPrice';
 
 const AddedToCartModal = ({ isVisible, onClose, addedItem, cartCount }) => {
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const { getContentValue } = useContentTranslation();
   const { getTotalItems } = useCart();
+
+  // Safety check: Don't render if translation context is not initialized
+  if (!currentLanguage) {
+    return null;
+  }
 
   useEffect(() => {
     if (isVisible) {

@@ -58,6 +58,16 @@ const PublicProductPage = () => {
   } = useCart();
   const [redirected, setRedirected] = useState(false);
 
+  // Helper function - declared early to avoid temporal dead zone
+  const getProductImages = (p) => {
+    if (!p) return [];
+    const images = [];
+    if (p.b2cImageUrl) images.push(p.b2cImageUrl);
+    if (p.b2cImageGallery?.length) images.push(...p.b2cImageGallery);
+    if (images.length === 0) images.push(getProductImage(p));
+    return images;
+  };
+
   // Calculate productImages early to avoid temporal dead zone issues
   const productImages = getProductImages(product);
 
@@ -112,8 +122,8 @@ const PublicProductPage = () => {
       }
       
       const productsRef = collection(db, 'products');
-      const q = query(productsRef, where('sku', '==', sku), where('isActive', '==', true), where('availability.b2c', '==', true));
-      const querySnapshot = await getDocs(q);
+      const productQuery = query(productsRef, where('sku', '==', sku), where('isActive', '==', true), where('availability.b2c', '==', true));
+      const querySnapshot = await getDocs(productQuery);
 
       if (querySnapshot.empty) {
         console.error('Product not found: no matching documents', sku);
@@ -199,14 +209,6 @@ const PublicProductPage = () => {
   // SEO and rendering helpers
   const getB2cDescription = (p) => getContentValue(p?.descriptions?.b2c) || '';
   const getProductColor = (p) => translateColor(p?.color, t) || 'Standard';
-  const getProductImages = (p) => {
-      if (!p) return [];
-      const images = [];
-      if (p.b2cImageUrl) images.push(p.b2cImageUrl);
-      if (p.b2cImageGallery?.length) images.push(...p.b2cImageGallery);
-      if (images.length === 0) images.push(getProductImage(p));
-      return images;
-  };
   
   useEffect(() => {
     // After group content and product are loaded, redirect if needed

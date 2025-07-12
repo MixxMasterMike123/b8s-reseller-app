@@ -193,8 +193,8 @@ export const CartProvider = ({ children }) => {
 
     try {
       const affiliatesRef = collection(db, 'affiliates');
-      const q = query(affiliatesRef, where("affiliateCode", "==", trimmedCode), where("status", "==", "active"));
-      const querySnapshot = await getDocs(q);
+      const affiliateQuery = query(affiliatesRef, where("affiliateCode", "==", trimmedCode), where("status", "==", "active"));
+      const querySnapshot = await getDocs(affiliateQuery);
 
       if (querySnapshot.empty) {
         setCart(prev => ({ ...prev, discountCode: null, discountAmount: 0, discountPercentage: 0, affiliateClickId: null }));

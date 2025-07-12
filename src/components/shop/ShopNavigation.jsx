@@ -30,8 +30,8 @@ const ShopNavigation = ({ breadcrumb }) => {
       }
       try {
         const affiliatesRef = collection(db, 'affiliates');
-        const q = query(affiliatesRef, where('email', '==', currentUser.email), where('status', '==', 'active'));
-        const querySnapshot = await getDocs(q);
+            const affiliateQuery = query(affiliatesRef, where('email', '==', currentUser.email), where('status', '==', 'active'));
+    const querySnapshot = await getDocs(affiliateQuery);
         if (!querySnapshot.empty) {
           setAffiliateData(querySnapshot.docs[0].data());
         } else {
