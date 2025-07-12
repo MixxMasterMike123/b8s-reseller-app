@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { getCountryAwareUrl } from '../../utils/productUrls';
 import { useTranslation } from '../../contexts/TranslationContext';
+import LanguageCurrencySelector from './LanguageCurrencySelector';
 
 const ShopFooter = () => {
   const { t } = useTranslation();
@@ -119,12 +120,17 @@ const ShopFooter = () => {
 
         {/* Bottom Section */}
         <div className="border-t border-gray-800 mt-8 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
+          <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
             <div className="text-gray-400 text-sm">
               <p>{t('footer_copyright', '© {{year}} JPH Innovation AB. Alla rättigheter förbehållna.', { year: currentYear })}</p>
             </div>
             
-            <div className="flex items-center space-x-6 mt-4 md:mt-0">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              {/* Nike-style Language/Currency Selector */}
+              <div className="flex items-center">
+                <LanguageCurrencySelector />
+              </div>
+              
               {/* Trust Badges */}
               <div className="flex items-center space-x-2 text-xs text-gray-400">
                 <span className="bg-green-600 text-white px-2 py-1 rounded">
