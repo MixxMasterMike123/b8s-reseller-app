@@ -238,7 +238,7 @@ export const TranslationProvider = ({ children }) => {
         clearTimeout(timeoutId);
       }
     };
-  }, [currentLanguage, waitingForGeo, loadTranslations]); // Removed changeLanguage from dependencies to prevent loops
+  }, [currentLanguage, waitingForGeo]); // FIXED: Removed loadTranslations from dependencies to prevent loops
 
   const value = {
     currentLanguage,

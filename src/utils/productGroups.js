@@ -16,6 +16,7 @@ const PRODUCT_GROUPS_COLLECTION = 'productGroups';
 
 // PERFORMANCE OPTIMIZATION: Cache product group content to prevent duplicate Firebase calls
 const productGroupCache = new Map();
+const pendingRequests = new Map(); // ADDED: Prevent race conditions
 const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes (shorter than translations since this changes more frequently)
 
 // Generate cache key for product group
@@ -49,41 +50,58 @@ export const getProductGroupContent = async (groupId) => {
     return cached.result;
   }
   
-  try {
-    const docRef = doc(db, PRODUCT_GROUPS_COLLECTION, groupId);
-    console.log('📄 Document path:', docRef.path);
-    
-    const docSnap = await getDoc(docRef);
-    console.log('📄 Document exists:', docSnap.exists());
-    
-    let result = null;
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      console.log('📄 Document data:', data);
-      result = {
-        id: docSnap.id,
-        ...data
-      };
-    } else {
-      console.log('📄 No document found for group:', groupId);
-    }
-    
-    // Cache the result (even if null)
-    productGroupCache.set(cacheKey, {
-      result,
-      timestamp: Date.now()
-    });
-    
-    return result;
-  } catch (error) {
-    console.error('❌ Error getting product group content:', error);
-    console.error('❌ Error details:', {
-      message: error.message,
-      code: error.code,
-      groupId
-    });
-    throw error;
+  // ADDED: Check if request is already pending to prevent race conditions
+  if (pendingRequests.has(groupId)) {
+    console.log(`📋 Waiting for pending product group request: ${groupId}`);
+    return await pendingRequests.get(groupId);
   }
+  
+  // Create pending request promise
+  const requestPromise = (async () => {
+    try {
+      const docRef = doc(db, PRODUCT_GROUPS_COLLECTION, groupId);
+      console.log('📄 Document path:', docRef.path);
+      
+      const docSnap = await getDoc(docRef);
+      console.log('📄 Document exists:', docSnap.exists());
+      
+      let result = null;
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        console.log('📄 Document data:', data);
+        result = {
+          id: docSnap.id,
+          ...data
+        };
+      } else {
+        console.log('📄 No document found for group:', groupId);
+      }
+      
+      // Cache the result (even if null)
+      productGroupCache.set(cacheKey, {
+        result,
+        timestamp: Date.now()
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Error getting product group content:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        code: error.code,
+        groupId
+      });
+      throw error;
+    } finally {
+      // Remove pending request
+      pendingRequests.delete(groupId);
+    }
+  })();
+  
+  // Store pending request
+  pendingRequests.set(groupId, requestPromise);
+  
+  return await requestPromise;
 };
 
 /**
