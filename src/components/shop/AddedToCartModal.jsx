@@ -3,9 +3,11 @@ import { XMarkIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
 import { CheckIcon } from '@heroicons/react/24/solid';
 import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useContentTranslation } from '../../hooks/useContentTranslation';
 
 const AddedToCartModal = ({ isVisible, onClose, addedItem, cartCount }) => {
   const { t } = useTranslation();
+  const { getContentValue } = useContentTranslation();
   const { getTotalItems } = useCart();
   
   useEffect(() => {
@@ -38,7 +40,7 @@ const AddedToCartModal = ({ isVisible, onClose, addedItem, cartCount }) => {
       `}>
         <div className="bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
           {/* Mobile content - same as before */}
-          <MobileContent addedItem={addedItem} onClose={onClose} t={t} getTotalItems={getTotalItems} isVisible={isVisible} />
+          <MobileContent addedItem={addedItem} onClose={onClose} t={t} getTotalItems={getTotalItems} isVisible={isVisible} getContentValue={getContentValue} />
         </div>
       </div>
 
@@ -55,7 +57,7 @@ const AddedToCartModal = ({ isVisible, onClose, addedItem, cartCount }) => {
         
         {/* Desktop modal content */}
         <div className="bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
-          <DesktopContent addedItem={addedItem} onClose={onClose} t={t} getTotalItems={getTotalItems} />
+          <DesktopContent addedItem={addedItem} onClose={onClose} t={t} getTotalItems={getTotalItems} getContentValue={getContentValue} />
         </div>
       </div>
     </>
@@ -63,7 +65,7 @@ const AddedToCartModal = ({ isVisible, onClose, addedItem, cartCount }) => {
 };
 
 // Mobile content component
-const MobileContent = ({ addedItem, onClose, t, getTotalItems, isVisible }) => (
+const MobileContent = ({ addedItem, onClose, t, getTotalItems, isVisible, getContentValue }) => (
   <>
     {/* Header */}
     <div className="bg-green-50 border-b border-green-200 px-4 py-3">
@@ -92,26 +94,26 @@ const MobileContent = ({ addedItem, onClose, t, getTotalItems, isVisible }) => (
         <div className="flex-shrink-0">
           <img
             src={addedItem.image || '/images/B8S_logo.png'}
-            alt={String(addedItem.name || 'Product')}
+            alt={getContentValue(addedItem.name) || 'Product'}
             className="w-16 h-16 object-cover rounded-lg border border-gray-200"
           />
         </div>
         
         <div className="flex-1 min-w-0">
           <h3 className="font-medium text-gray-900 truncate">
-            {String(addedItem.name || 'Product')}
+            {getContentValue(addedItem.name) || 'Product'}
           </h3>
           
           <div className="mt-1 space-y-1">
             {addedItem.color && (
               <p className="text-sm text-gray-600">
-                {t('color', 'Color')}: {String(addedItem.color)}
+                {t('color', 'Color')}: {getContentValue(addedItem.color)}
               </p>
             )}
             
             {addedItem.size && (
               <p className="text-sm text-gray-600">
-                {t('size', 'Size')}: {String(addedItem.size)}
+                {t('size', 'Size')}: {getContentValue(addedItem.size)}
               </p>
             )}
             
@@ -120,7 +122,7 @@ const MobileContent = ({ addedItem, onClose, t, getTotalItems, isVisible }) => (
             </p>
             
             <p className="font-medium text-gray-900">
-              {String(addedItem.formattedPrice || addedItem.price)}
+              {getContentValue(addedItem.formattedPrice) || addedItem.formattedPrice || addedItem.price}
             </p>
           </div>
         </div>
@@ -166,7 +168,7 @@ const MobileContent = ({ addedItem, onClose, t, getTotalItems, isVisible }) => (
 );
 
 // Desktop content component - more compact
-const DesktopContent = ({ addedItem, onClose, t, getTotalItems }) => (
+const DesktopContent = ({ addedItem, onClose, t, getTotalItems, getContentValue }) => (
   <>
     {/* Compact header */}
     <div className="bg-green-50 px-4 py-2 border-b border-green-200">
@@ -195,17 +197,17 @@ const DesktopContent = ({ addedItem, onClose, t, getTotalItems }) => (
         <div className="flex-shrink-0">
           <img
             src={addedItem.image || '/images/B8S_logo.png'}
-            alt={String(addedItem.name || 'Product')}
+            alt={getContentValue(addedItem.name) || 'Product'}
             className="w-12 h-12 object-cover rounded border border-gray-200"
           />
         </div>
         
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-medium text-gray-900 truncate">
-            {String(addedItem.name || 'Product')}
+            {getContentValue(addedItem.name) || 'Product'}
           </h3>
           <p className="text-xs text-gray-600 mt-1">
-            {addedItem.quantity} × {String(addedItem.formattedPrice || addedItem.price)}
+            {addedItem.quantity} × {getContentValue(addedItem.formattedPrice) || addedItem.formattedPrice || addedItem.price}
           </p>
         </div>
       </div>
