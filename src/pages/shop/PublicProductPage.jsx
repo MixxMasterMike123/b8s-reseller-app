@@ -10,7 +10,7 @@ import {
   getProductSeoDescription, 
   getCountryAwareUrl 
 } from '../../utils/productUrls';
-import toast from 'react-hot-toast';
+// Toast notifications removed - using AddedToCartModal for user feedback
 import { generateProductSchema } from '../../utils/productFeed';
 import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
@@ -65,7 +65,7 @@ const PublicProductPage = () => {
       
       const sku = getSkuFromSlug(slug);
       if (!sku) {
-        toast.error(t('product_not_found', 'Produkten hittades inte'));
+        console.error('Product not found: invalid slug', slug);
         navigate(getCountryAwareUrl(''));
         return;
       }
@@ -75,7 +75,7 @@ const PublicProductPage = () => {
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
-        toast.error(t('product_not_found', 'Produkten hittades inte'));
+        console.error('Product not found: no matching documents', sku);
         navigate(getCountryAwareUrl(''));
         return;
       }
@@ -118,7 +118,7 @@ const PublicProductPage = () => {
       
     } catch (error) {
       console.error('Error loading product:', error);
-      toast.error(t('error_loading_product', 'Kunde inte ladda produkten'));
+      // Navigation error - handled by redirecting to home
     } finally {
       setLoading(false);
     }
@@ -152,7 +152,7 @@ const PublicProductPage = () => {
   const handleAddToCart = () => {
     if (!product) return;
     addToCart(product, quantity);
-    toast.success(t('product_added_to_cart_product_page', 'Produkt tillagd i varukorgen'));
+    // Success feedback now handled by AddedToCartModal
   };
   
   // SEO and rendering helpers

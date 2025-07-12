@@ -5,7 +5,7 @@ import { db } from '../../firebase/config';
 import { getProductImage } from '../../utils/productImages';
 import { getProductUrl } from '../../utils/productUrls';
 import { translateColor } from '../../utils/colorTranslations';
-import toast from 'react-hot-toast';
+// Toast notifications removed - using AddedToCartModal for user feedback
 import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
@@ -100,7 +100,7 @@ const PublicStorefront = () => {
       
     } catch (error) {
       console.error('Error loading products:', error);
-      toast.error(t('error_loading_products', 'Kunde inte ladda produkter'));
+      // Product loading error - handled by showing empty state
     } finally {
       setLoading(false);
     }
@@ -168,7 +168,7 @@ const PublicStorefront = () => {
 
   const addToCart = (product) => {
     addToCartContext(product);
-    toast.success(t('product_added_to_cart', '{{name}} tillagd i varukorgen!', { name: getContentValue(product.name) }));
+    // Success feedback now handled by AddedToCartModal
   };
 
   // Get the best available image for B2C display

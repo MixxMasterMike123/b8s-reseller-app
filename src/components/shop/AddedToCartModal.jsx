@@ -4,6 +4,7 @@ import { CheckIcon } from '@heroicons/react/24/solid';
 import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
+import SmartPrice from './SmartPrice';
 
 const AddedToCartModal = ({ isVisible, onClose, addedItem, cartCount }) => {
   const { t } = useTranslation();
@@ -121,9 +122,13 @@ const MobileContent = ({ addedItem, onClose, t, getTotalItems, isVisible, getCon
               {t('quantity', 'Quantity')}: {addedItem.quantity}
             </p>
             
-            <p className="font-medium text-gray-900">
-              {getContentValue(addedItem.formattedPrice) || addedItem.formattedPrice || addedItem.price}
-            </p>
+            <div className="font-medium text-gray-900">
+              <SmartPrice 
+                sekPrice={addedItem.price} 
+                size="small"
+                className="font-medium text-gray-900"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -206,9 +211,14 @@ const DesktopContent = ({ addedItem, onClose, t, getTotalItems, getContentValue 
           <h3 className="text-sm font-medium text-gray-900 truncate">
             {getContentValue(addedItem.name) || 'Product'}
           </h3>
-          <p className="text-xs text-gray-600 mt-1">
-            {addedItem.quantity} × {getContentValue(addedItem.formattedPrice) || addedItem.formattedPrice || addedItem.price}
-          </p>
+          <div className="text-xs text-gray-600 mt-1 flex items-center gap-1">
+            <span>{addedItem.quantity} ×</span>
+            <SmartPrice 
+              sekPrice={addedItem.price} 
+              size="small"
+              className="text-xs text-gray-600"
+            />
+          </div>
         </div>
       </div>
     </div>
