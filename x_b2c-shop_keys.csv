@@ -449,3 +449,7 @@
 "quantity","Antal","Quantity","Quantity","B2C modal - product attribute","Pending","","","Quantity attribute in cart modal"
 "view_cart_count","Visa varukorg ({{count}})","View Cart ({{count}})","View Cart ({{count}})","B2C modal - button text","Pending","","","View cart button with count"
 "checkout","Kassa","Checkout","Checkout","B2C modal - button text","Pending","","","Checkout button text"
+"nav_search","Sök","Search","Search","B2C navigation - search icon tooltip","Pending","","","Tooltip for search icon in navigation"
+"nav_profile","Profil","Profile","Profile","B2C navigation - profile icon tooltip","Pending","","","Tooltip for profile icon in navigation"
+"search_coming_soon","Sökfunktion kommer snart!","Search function coming soon!","Search function coming soon!","B2C navigation - search placeholder message","Pending","","","Placeholder message for search functionality"
+"profile_coming_soon","Profil kommer snart!","Profile coming soon!","Profile coming soon!","B2C navigation - profile placeholder message","Pending","","","Placeholder message for profile functionality"

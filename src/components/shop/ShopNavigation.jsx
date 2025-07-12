@@ -4,7 +4,12 @@ import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { 
+  ArrowRightOnRectangleIcon,
+  ShoppingBagIcon,
+  MagnifyingGlassIcon,
+  UserIcon
+} from '@heroicons/react/24/outline';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { db } from '../../firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -69,18 +74,50 @@ const ShopNavigation = ({ breadcrumb }) => {
             )}
           </div>
           
-          <Link to={getCountryAwareUrl('cart')} className="text-gray-700 hover:text-blue-600 transition-colors font-medium relative">
-            {t('nav_cart', 'Varukorg')}
-            {cartItemCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {cartItemCount}
-              </span>
-            )}
-          </Link>
-          <div className="flex items-center ml-4 space-x-4">
+          {/* Right side icons */}
+          <div className="flex items-center space-x-4">
+            {/* Search Icon - Placeholder for future implementation */}
+            <button 
+              className="p-2 text-gray-700 hover:text-blue-600 transition-colors"
+              title={t('nav_search', 'Sök')}
+              onClick={() => {
+                // TODO: Implement search functionality
+                toast.success(t('search_coming_soon', 'Sökfunktion kommer snart!'));
+              }}
+            >
+              <MagnifyingGlassIcon className="h-6 w-6" />
+            </button>
+
+            {/* Profile Icon - Placeholder for future implementation */}
+            <button 
+              className="p-2 text-gray-700 hover:text-blue-600 transition-colors"
+              title={t('nav_profile', 'Profil')}
+              onClick={() => {
+                // TODO: Implement profile functionality
+                toast.success(t('profile_coming_soon', 'Profil kommer snart!'));
+              }}
+            >
+              <UserIcon className="h-6 w-6" />
+            </button>
+
+            {/* Shopping Cart Icon */}
+            <Link 
+              to={getCountryAwareUrl('cart')} 
+              className="p-2 text-gray-700 hover:text-blue-600 transition-colors relative"
+              title={t('nav_cart', 'Varukorg')}
+            >
+              <ShoppingBagIcon className="h-6 w-6" />
+              {cartItemCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                  {cartItemCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Affiliate Logout */}
             {affiliateData && (
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">{affiliateData.name}</span>
+              <div className="flex items-center space-x-2 ml-2">
+                <span className="hidden sm:inline text-sm text-gray-600">{affiliateData.name}</span>
                 <button
                   onClick={handleAffiliateLogout}
                   className="p-1 text-gray-500 hover:text-red-600 transition-colors"
