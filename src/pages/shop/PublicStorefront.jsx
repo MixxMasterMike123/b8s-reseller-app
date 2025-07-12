@@ -16,10 +16,18 @@ import { getAllReviews } from '../../utils/trustpilotAPI';
 import SeoHreflang from '../../components/shop/SeoHreflang';
 import SmartPrice from '../../components/shop/SmartPrice';
 import { getProductGroupContent } from '../../utils/productGroups';
+import AddedToCartModal from '../../components/shop/AddedToCartModal';
 
 const PublicStorefront = () => {
   const { t, currentLanguage } = useTranslation();
   const { getContentValue } = useContentTranslation();
+  const { 
+    addToCart: addToCartContext, 
+    isAddedToCartModalVisible, 
+    hideAddedToCartModal, 
+    lastAddedItem,
+    getTotalItems 
+  } = useCart();
   const [products, setProducts] = useState([]);
   const [groupedProducts, setGroupedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -159,9 +167,8 @@ const PublicStorefront = () => {
   };
 
   const addToCart = (product) => {
-    // TODO: Implement cart functionality
-    const productName = getContentValue(product.name);
-    toast.success(t('product_added_to_cart', '{{name}} tillagd i varukorgen!', { name: productName }));
+    addToCartContext(product);
+    toast.success(t('product_added_to_cart', '{{name}} tillagd i varukorgen!', { name: getContentValue(product.name) }));
   };
 
   // Get the best available image for B2C display
@@ -461,6 +468,15 @@ const PublicStorefront = () => {
 
         {/* Footer */}
         <ShopFooter />
+
+        {isAddedToCartModalVisible && lastAddedItem && (
+          <AddedToCartModal 
+            isVisible={isAddedToCartModalVisible}
+            onClose={hideAddedToCartModal}
+            addedItem={lastAddedItem}
+            cartCount={getTotalItems()}
+          />
+        )}
       </div>
     </>
   );

@@ -39,6 +39,10 @@ export const CartProvider = ({ children }) => {
     return initialCart;
   });
 
+  // Modal state for "Added to Cart" modal
+  const [isAddedToCartModalVisible, setIsAddedToCartModalVisible] = useState(false);
+  const [lastAddedItem, setLastAddedItem] = useState(null);
+
   useEffect(() => {
     localStorage.setItem('b8shield_cart', JSON.stringify(cart));
   }, [cart]);
@@ -130,6 +134,22 @@ export const CartProvider = ({ children }) => {
     return SHIPPING_COSTS.NORDIC.countries.includes(country)
       ? SHIPPING_COSTS.NORDIC.cost
       : SHIPPING_COSTS.INTERNATIONAL.cost;
+  };
+
+  // Get total number of items in cart
+  const getTotalItems = () => {
+    return cart.items.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  // Modal functions
+  const showAddedToCartModal = (item) => {
+    setLastAddedItem(item);
+    setIsAddedToCartModalVisible(true);
+  };
+
+  const hideAddedToCartModal = () => {
+    setIsAddedToCartModalVisible(false);
+    setLastAddedItem(null);
   };
 
   // Calculate cart totals based on VAT-inclusive prices
@@ -245,6 +265,7 @@ export const CartProvider = ({ children }) => {
       );
 
       const newItems = [...prevCart.items];
+      let addedItem = null;
 
       if (existingItemIndex > -1) {
         // Update quantity and refresh data if item exists
@@ -261,9 +282,14 @@ export const CartProvider = ({ children }) => {
           // And update the quantity
           quantity: existingItem.quantity + quantity
         };
+        addedItem = {
+          ...newItems[existingItemIndex],
+          quantity: quantity, // Show only the quantity that was just added
+          formattedPrice: `${product.b2cPrice || product.basePrice} kr`
+        };
       } else {
         // Add new item
-        newItems.push({
+        const newItem = {
           id: product.id,
           name: product.name,
           price: product.b2cPrice || product.basePrice,
@@ -272,8 +298,18 @@ export const CartProvider = ({ children }) => {
           color: product.color,
           size: product.size,
           quantity
-        });
+        };
+        newItems.push(newItem);
+        addedItem = {
+          ...newItem,
+          formattedPrice: `${product.b2cPrice || product.basePrice} kr`
+        };
       }
+
+      // Show the "Added to Cart" modal
+      setTimeout(() => {
+        showAddedToCartModal(addedItem);
+      }, 100); // Small delay to ensure state is updated
 
       return {
         ...prevCart,
@@ -334,7 +370,12 @@ export const CartProvider = ({ children }) => {
     calculateTotals,
     applyDiscountCode,
     removeDiscount,
-    SHIPPING_COSTS
+    getTotalItems,
+    SHIPPING_COSTS,
+    isAddedToCartModalVisible,
+    showAddedToCartModal,
+    hideAddedToCartModal,
+    lastAddedItem
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

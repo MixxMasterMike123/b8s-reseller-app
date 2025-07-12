@@ -26,6 +26,7 @@ import SeoHreflang from '../../components/shop/SeoHreflang';
 import { Helmet } from 'react-helmet';
 import SocialShare from '../../components/shop/SocialShare';
 import SmartPrice from '../../components/shop/SmartPrice';
+import AddedToCartModal from '../../components/shop/AddedToCartModal';
 
 const PublicProductPage = () => {
   const { slug } = useParams();
@@ -43,7 +44,13 @@ const PublicProductPage = () => {
   const [groupContentLoading, setGroupContentLoading] = useState(false);
   const [sizeGuideModalOpen, setSizeGuideModalOpen] = useState(false);
   const [reviewCount, setReviewCount] = useState(16);
-  const { addToCart } = useCart();
+  const { 
+    addToCart,
+    isAddedToCartModalVisible, 
+    hideAddedToCartModal, 
+    lastAddedItem,
+    getTotalItems 
+  } = useCart();
   const [redirected, setRedirected] = useState(false);
 
   useEffect(() => {
@@ -521,6 +528,14 @@ const PublicProductPage = () => {
         onClose={() => setSizeGuideModalOpen(false)}
         sizeGuideContent={groupContent?.sizeGuide ? getContentValue(groupContent.sizeGuide) : ''}
         productName={getContentValue(product?.name)}
+      />
+
+      {/* Added to Cart Modal */}
+      <AddedToCartModal 
+        isVisible={isAddedToCartModalVisible}
+        onClose={hideAddedToCartModal}
+        addedItem={lastAddedItem}
+        cartCount={getTotalItems()}
       />
     </>
   );
