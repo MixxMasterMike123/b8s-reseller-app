@@ -233,6 +233,9 @@ const AdminB2CCustomers = () => {
                     <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Registrerad
                     </th>
+                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Åtgärder
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -285,6 +288,24 @@ const AdminB2CCustomers = () => {
                       
                       <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(customer.createdAt)}
+                      </td>
+                      
+                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <Link
+                            to={`/admin/b2c-customers/${customer.id}`}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            Redigera
+                          </Link>
+                          <span className="text-gray-300">|</span>
+                          <Link
+                            to={`/admin/b2c-customers/${customer.id}/orders`}
+                            className="text-green-600 hover:text-green-900"
+                          >
+                            Ordrar ({customer.stats?.totalOrders || 0})
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}
