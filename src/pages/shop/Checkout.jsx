@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase/config';
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { db, auth } from '../../firebase/config';
 import { useCart } from '../../contexts/CartContext';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
@@ -30,7 +31,8 @@ const Checkout = () => {
   // Form data
   const [contactInfo, setContactInfo] = useState({
     email: user?.email || '',
-    marketing: false
+    marketing: false,
+    password: ''  // Add password field to state
   });
 
   const [shippingInfo, setShippingInfo] = useState({
@@ -121,6 +123,89 @@ const Checkout = () => {
       const freshTotals = calculateTotals();
       const orderNumber = generateOrderNumber();
 
+      // Create B2C customer account if password provided
+      let b2cCustomerId = null;
+      let b2cCustomerAuthId = null;
+      
+      if (contactInfo.password && contactInfo.password.trim().length > 0) {
+        try {
+          console.log('Creating B2C customer account for:', contactInfo.email);
+          
+          // Check if customer already exists in b2cCustomers collection
+          const existingCustomerQuery = query(
+            collection(db, 'b2cCustomers'),
+            where('email', '==', contactInfo.email)
+          );
+          const existingCustomerSnapshot = await getDocs(existingCustomerQuery);
+          
+          if (!existingCustomerSnapshot.empty) {
+            // Customer already exists - use existing customer
+            const existingCustomer = existingCustomerSnapshot.docs[0];
+            b2cCustomerId = existingCustomer.id;
+            b2cCustomerAuthId = existingCustomer.data().firebaseAuthUid;
+            console.log('Using existing B2C customer:', b2cCustomerId);
+          } else {
+            // Create new Firebase Auth account
+            const userCredential = await createUserWithEmailAndPassword(
+              auth, 
+              contactInfo.email, 
+              contactInfo.password
+            );
+            b2cCustomerAuthId = userCredential.user.uid;
+            console.log('Created Firebase Auth account:', b2cCustomerAuthId);
+            
+            // Create B2C customer document
+            const customerData = {
+              email: contactInfo.email,
+              firstName: shippingInfo.firstName,
+              lastName: shippingInfo.lastName,
+              phone: '', // Not collected in checkout yet
+              
+              // Address info
+              address: shippingInfo.address,
+              apartment: shippingInfo.apartment || '',
+              city: shippingInfo.city,
+              postalCode: shippingInfo.postalCode,
+              country: shippingInfo.country,
+              
+              // Account info
+              firebaseAuthUid: b2cCustomerAuthId,
+              emailVerified: false,
+              marketingConsent: contactInfo.marketing,
+              
+              // Analytics
+              stats: {
+                totalOrders: 0,
+                totalSpent: 0,
+                averageOrderValue: 0,
+                lastOrderDate: null,
+                firstOrderDate: serverTimestamp()
+              },
+              
+              // Metadata
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+              lastLoginAt: null,
+              
+              // Integration
+              preferredLang: currentLanguage,
+              customerSegment: 'new',
+              source: 'b2c_checkout'
+            };
+            
+            const customerDocRef = await addDoc(collection(db, 'b2cCustomers'), customerData);
+            b2cCustomerId = customerDocRef.id;
+            console.log('Created B2C customer document:', b2cCustomerId);
+            
+            toast.success(t('checkout_account_created', 'Konto skapat! Du kan nu logga in med ditt lösenord.'), { duration: 5000 });
+          }
+        } catch (customerError) {
+          console.error('Error creating B2C customer account:', customerError);
+          // Don't fail the order if customer creation fails
+          toast.error(t('checkout_account_error', 'Kunde inte skapa konto, men din beställning behandlas.'), { duration: 5000 });
+        }
+      }
+
       const orderData = {
         orderNumber,
         source: 'b2c',
@@ -178,6 +263,13 @@ const Checkout = () => {
         
         // User reference (if logged in)
         ...(user && { userId: user.uid, userEmail: user.email }),
+        
+        // B2C Customer reference (if account created)
+        ...(b2cCustomerId && { 
+          b2cCustomerId: b2cCustomerId,
+          b2cCustomerAuthId: b2cCustomerAuthId,
+          hasAccount: true 
+        }),
       };
 
       console.log("Submitting the following order data to Firestore:", orderData);
@@ -333,6 +425,21 @@ const Checkout = () => {
                         placeholder={t('checkout_email_placeholder', 'din@epost.se')}
                         required
                       />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {t('checkout_password_label', 'Lösenord (valfritt)')}
+                      </label>
+                      <input
+                        type="password"
+                        value={contactInfo.password}
+                        onChange={(e) => setContactInfo({...contactInfo, password: e.target.value})}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder={t('checkout_password_placeholder', 'Lägg till ett lösenord för att skydda din kontoinformation')}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        {t('checkout_password_hint', 'Lägg till ett lösenord för att skydda din kontoinformation. Detta gör det enklare att logga in på ditt konto i framtida beställningar.')}
+                      </p>
                     </div>
                     <div className="flex items-center">
                       <input

@@ -121,7 +121,7 @@ const AdminAffiliateEdit = () => {
 
   const fetchAffiliateStats = async (affiliateCode) => {
     try {
-      // Get recent orders with this affiliate code
+      // Get recent orders with this affiliate code (for detailed list display)
       const ordersRef = collection(db, 'orders');
       const q = query(ordersRef, where('affiliateCode', '==', affiliateCode));
       const orderSnap = await getDocs(q);
@@ -130,23 +130,27 @@ const AdminAffiliateEdit = () => {
         ...doc.data()
       })).filter(order => order.status !== 'cancelled'); // Only count non-cancelled orders
 
-      // Get click data
+      // Get click data for unique clicks calculation
       const clicksRef = collection(db, 'affiliateClicks');
       const clicksQuery = query(clicksRef, where('affiliateCode', '==', affiliateCode));
       const clicksSnap = await getDocs(clicksQuery);
       const clicks = clicksSnap.docs.map(doc => doc.data());
 
-      // Calculate unique clicks by IP
+      // Calculate unique clicks by IP (for additional insight)
       const uniqueClicks = new Set(clicks.map(c => c.ipAddress)).size;
-      const totalClicks = clicks.length;
-      const totalOrders = orders.length;
+
+      // 🎯 USE AFFILIATE.STATS AS AUTHORITATIVE SOURCE (same as affiliate portal)
+      const affiliateStats = data?.stats || {};
+      const totalClicks = affiliateStats.clicks || 0;
+      const totalOrders = affiliateStats.conversions || 0;
+      const totalEarnings = affiliateStats.totalEarnings || 0;
 
       setRecentOrders(orders);
       setAffiliateStats({
         totalClicks,
         uniqueClicks,
         totalOrders,
-        totalEarnings: data?.stats?.totalEarnings || 0,
+        totalEarnings,
         conversionRate: totalClicks > 0 ? ((totalOrders / totalClicks) * 100).toFixed(1) : '0.0'
       });
     } catch (error) {

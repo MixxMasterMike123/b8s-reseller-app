@@ -143,6 +143,12 @@ const AppLayout = ({ children }) => {
       description: t('nav.admin_customers_desc', 'Hantera användare'),
     },
     {
+      name: t('nav.admin_b2c_customers', 'B2C Kunder'),
+      path: '/admin/b2c-customers',
+      icon: UsersIcon,
+      description: t('nav.admin_b2c_customers_desc', 'Hantera konsumentkunder'),
+    },
+    {
       name: t('nav.admin_orders', 'Ordrar'),
       path: '/admin/orders',
       icon: ClipboardDocumentListIcon,

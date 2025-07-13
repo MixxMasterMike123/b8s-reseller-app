@@ -33,6 +33,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminUserCreate from './pages/admin/AdminUserCreate';
 import AdminUserEdit from './pages/admin/AdminUserEdit';
+import AdminB2CCustomers from './pages/admin/AdminB2CCustomers';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminOrderDetail from './pages/admin/AdminOrderDetail';
 import AdminProducts from './pages/admin/AdminProducts';
@@ -268,6 +269,12 @@ function App() {
               <Route path="/admin/users/:userId/edit" element={
                 <AdminRoute>
                   <AdminUserEdit />
+                </AdminRoute>
+              } />
+              
+              <Route path="/admin/b2c-customers" element={
+                <AdminRoute>
+                  <AdminB2CCustomers />
                 </AdminRoute>
               } />
               
