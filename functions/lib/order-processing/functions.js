@@ -172,6 +172,24 @@ exports.processB2COrderCompletionHttp = (0, https_1.onRequest)({
         }
         const orderData = orderSnap.data();
         const { affiliateCode, discountCode } = orderData;
+        // --- Update B2C Customer Statistics ---
+        if (orderData.b2cCustomerId && orderData.total) {
+            console.log(`Updating B2C customer stats for customer: ${orderData.b2cCustomerId}`);
+            try {
+                const customerRef = localDb.collection('b2cCustomers').doc(orderData.b2cCustomerId);
+                await customerRef.update({
+                    'stats.totalOrders': firestore_1.FieldValue.increment(1),
+                    'stats.totalSpent': firestore_1.FieldValue.increment(orderData.total),
+                    'stats.lastOrderDate': firestore_1.FieldValue.serverTimestamp(),
+                    'updatedAt': firestore_1.FieldValue.serverTimestamp()
+                });
+                console.log(`Successfully updated customer stats for ${orderData.b2cCustomerId}`);
+            }
+            catch (customerError) {
+                console.error(`Error updating customer stats:`, customerError);
+                // Don't fail the whole process if customer stats update fails
+            }
+        }
         if (!affiliateCode) {
             console.log('No affiliate code found for order, skipping commission.');
             res.json({ success: true, message: 'Order processed (no affiliate)' });

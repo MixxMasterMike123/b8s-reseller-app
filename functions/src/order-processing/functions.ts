@@ -36,6 +36,8 @@ interface OrderData {
   trackingNumber?: string;
   carrier?: string;
   customerInfo?: any;
+  b2cCustomerId?: string;
+  b2cCustomerAuthId?: string;
 }
 
 interface UserData {
@@ -213,6 +215,24 @@ export const processB2COrderCompletionHttp = onRequest(
 
       const orderData = orderSnap.data() as OrderData;
       const { affiliateCode, discountCode } = orderData;
+
+      // --- Update B2C Customer Statistics ---
+      if (orderData.b2cCustomerId && orderData.total) {
+        console.log(`Updating B2C customer stats for customer: ${orderData.b2cCustomerId}`);
+        try {
+          const customerRef = localDb.collection('b2cCustomers').doc(orderData.b2cCustomerId);
+          await customerRef.update({
+            'stats.totalOrders': FieldValue.increment(1),
+            'stats.totalSpent': FieldValue.increment(orderData.total),
+            'stats.lastOrderDate': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp()
+          });
+          console.log(`Successfully updated customer stats for ${orderData.b2cCustomerId}`);
+        } catch (customerError) {
+          console.error(`Error updating customer stats:`, customerError);
+          // Don't fail the whole process if customer stats update fails
+        }
+      }
 
       if (!affiliateCode) {
         console.log('No affiliate code found for order, skipping commission.');
