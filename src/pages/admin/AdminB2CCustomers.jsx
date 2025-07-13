@@ -220,34 +220,6 @@ const AdminB2CCustomers = () => {
           </div>
         </div>
 
-        {/* Statistics */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{customers.length}</div>
-              <div className="text-sm text-blue-600">Totala Kunder</div>
-            </div>
-            <div className="bg-green-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">
-                {customers.filter(c => c.marketingConsent).length}
-              </div>
-              <div className="text-sm text-green-600">Godkänt Marknadsföring</div>
-            </div>
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">
-                {customers.filter(c => (c.stats?.totalOrders || 0) > 0).length}
-              </div>
-              <div className="text-sm text-purple-600">Med Ordrar</div>
-            </div>
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-yellow-600">
-                {formatCurrency(customers.reduce((sum, c) => sum + (c.stats?.totalSpent || 0), 0))}
-              </div>
-              <div className="text-sm text-yellow-600">Total Försäljning</div>
-            </div>
-          </div>
-        </div>
-
         {/* Customer List */}
         <div className="p-6">
           {loading ? (
