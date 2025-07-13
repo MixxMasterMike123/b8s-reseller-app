@@ -21,7 +21,7 @@ import {
 
 const Checkout = () => {
   const { cart, calculateTotals, clearCart } = useCart();
-  const { user } = useSimpleAuth();
+  const { currentUser } = useSimpleAuth();
   const { t, currentLanguage } = useTranslation();
   const { getContentValue } = useContentTranslation();
   const navigate = useNavigate();
@@ -31,7 +31,7 @@ const Checkout = () => {
 
   // Form data
   const [contactInfo, setContactInfo] = useState({
-    email: user?.email || '',
+    email: currentUser?.email || '',
     marketing: false,
     password: ''  // Add password field to state
   });
@@ -65,16 +65,16 @@ const Checkout = () => {
 
   useEffect(() => {
     // Load customer profile data if user is logged in
-    if (user?.uid) {
+    if (currentUser?.uid) {
       loadCustomerProfile();
     }
-  }, [user]);
+  }, [currentUser]);
 
   const loadCustomerProfile = async () => {
     try {
       setLoadingProfile(true);
       const customersRef = collection(db, 'b2cCustomers');
-      const customerQuery = query(customersRef, where('firebaseAuthUid', '==', user.uid));
+      const customerQuery = query(customersRef, where('firebaseAuthUid', '==', currentUser.uid));
       const customerSnapshot = await getDocs(customerQuery);
       
       if (!customerSnapshot.empty) {
@@ -84,7 +84,7 @@ const Checkout = () => {
         // Pre-fill contact information
         setContactInfo(prev => ({
           ...prev,
-          email: customerData.email || user.email || '',
+          email: customerData.email || currentUser.email || '',
           marketing: customerData.marketingConsent || false
         }));
         
@@ -104,12 +104,12 @@ const Checkout = () => {
         toast.success(t('checkout_profile_loaded', 'Dina uppgifter har fyllts i automatiskt'));
       } else {
         // If no customer profile exists, just pre-fill email
-        setContactInfo(prev => ({ ...prev, email: user.email || '' }));
+        setContactInfo(prev => ({ ...prev, email: currentUser.email || '' }));
       }
     } catch (error) {
       console.error('Error loading customer profile:', error);
       // Fallback to just pre-filling email
-      setContactInfo(prev => ({ ...prev, email: user.email || '' }));
+      setContactInfo(prev => ({ ...prev, email: currentUser.email || '' }));
     } finally {
       setLoadingProfile(false);
     }
@@ -346,7 +346,7 @@ const Checkout = () => {
         }),
         
         // User reference (if logged in)
-        ...(user && { userId: user.uid, userEmail: user.email }),
+        ...(currentUser && { userId: currentUser.uid, userEmail: currentUser.email }),
         
         // B2C Customer reference (if account created)
         ...(b2cCustomerId && { 
@@ -500,7 +500,7 @@ const Checkout = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         {t('checkout_email_label', 'E-postadress *')}
-                        {user && contactInfo.email && (
+                        {currentUser && contactInfo.email && (
                           <span className="ml-2 text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
                             {t('checkout_from_account', 'från ditt konto')}
                           </span>
