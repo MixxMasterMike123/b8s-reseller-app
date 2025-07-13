@@ -95,7 +95,10 @@ const AdminB2CCustomers = () => {
       
       const accountOrdersSnapshot = await getDocs(ordersWithAccountQuery);
       accountOrdersSnapshot.forEach(doc => {
-        orders.push(doc.data());
+        orders.push({
+          id: doc.id,
+          ...doc.data()
+        });
       });
       
       // Query 2: Orders by email (guest orders) - only if customer email exists
@@ -108,7 +111,10 @@ const AdminB2CCustomers = () => {
         
         const emailOrdersSnapshot = await getDocs(ordersWithEmailQuery);
         emailOrdersSnapshot.forEach(doc => {
-          const orderData = doc.data();
+          const orderData = {
+            id: doc.id,
+            ...doc.data()
+          };
           // Only add if not already in orders array (avoid duplicates)
           if (!orders.some(order => order.id === orderData.id)) {
             orders.push(orderData);
@@ -120,6 +126,13 @@ const AdminB2CCustomers = () => {
       const totalOrders = orders.length;
       const totalSpent = orders.reduce((sum, order) => sum + (order.total || 0), 0);
       const averageOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
+      
+      console.log(`📊 Customer ${customer.email} stats:`, {
+        totalOrders,
+        totalSpent,
+        orderIds: orders.map(o => o.id),
+        orderTotals: orders.map(o => ({ id: o.id, total: o.total }))
+      });
       
       // Find latest order date
       let lastOrderDate = null;
