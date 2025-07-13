@@ -426,21 +426,7 @@ const Checkout = () => {
                         required
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {t('checkout_password_label', 'Lösenord (valfritt)')}
-                      </label>
-                      <input
-                        type="password"
-                        value={contactInfo.password}
-                        onChange={(e) => setContactInfo({...contactInfo, password: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder={t('checkout_password_placeholder', 'Lägg till ett lösenord för att skydda din kontoinformation')}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        {t('checkout_password_hint', 'Lägg till ett lösenord för att skydda din kontoinformation. Detta gör det enklare att logga in på ditt konto i framtida beställningar.')}
-                      </p>
-                    </div>
+
                     <div className="flex items-center">
                       <input
                         type="checkbox"
@@ -583,9 +569,38 @@ const Checkout = () => {
                     </div>
                   </div>
 
+                  {/* Optional Account Creation */}
+                  <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center mt-0.5">
+                        <LockClosedIcon className="w-3 h-3 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-sm font-medium text-blue-900 mb-2">
+                          {t('checkout_save_info_title', 'Spara dina uppgifter för framtida beställningar')}
+                        </h3>
+                        <p className="text-sm text-blue-700 mb-3">
+                          {t('checkout_save_info_description', 'Lägg till ett lösenord för att skapa ett konto och göra framtida beställningar snabbare.')}
+                        </p>
+                        <div>
+                          <label className="block text-sm font-medium text-blue-800 mb-2">
+                            {t('checkout_password_optional', 'Lösenord (valfritt)')}
+                          </label>
+                          <input
+                            type="password"
+                            value={contactInfo.password}
+                            onChange={(e) => setContactInfo({...contactInfo, password: e.target.value})}
+                            className="w-full px-3 py-2 border border-blue-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                            placeholder={t('checkout_password_placeholder', 'Minst 6 tecken')}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <button
                     onClick={handleNextStep}
-                    className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                    className="mt-6 w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                   >
                     {t('checkout_continue_payment', 'Fortsätt till betalning')}
                   </button>
