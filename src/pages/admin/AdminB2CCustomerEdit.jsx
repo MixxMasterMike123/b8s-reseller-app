@@ -785,25 +785,29 @@ const AdminB2CCustomerEdit = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white p-4 rounded-lg shadow-sm">
               <div className="text-2xl font-bold text-blue-600">
-                {customer.stats?.totalOrders || 0}
+                {customerOrders.length}
               </div>
               <div className="text-sm text-gray-600">Totala ordrar</div>
             </div>
             <div className="bg-white p-4 rounded-lg shadow-sm">
               <div className="text-2xl font-bold text-green-600">
-                {formatCurrency(customer.stats?.totalSpent || 0)}
+                {formatCurrency(customerOrders.reduce((sum, order) => sum + (order.total || 0), 0))}
               </div>
               <div className="text-sm text-gray-600">Total spenderat</div>
             </div>
             <div className="bg-white p-4 rounded-lg shadow-sm">
               <div className="text-2xl font-bold text-purple-600">
-                {formatCurrency(customer.stats?.averageOrderValue || 0)}
+                {formatCurrency(customerOrders.length > 0 ? customerOrders.reduce((sum, order) => sum + (order.total || 0), 0) / customerOrders.length : 0)}
               </div>
               <div className="text-sm text-gray-600">Genomsnittlig order</div>
             </div>
             <div className="bg-white p-4 rounded-lg shadow-sm">
               <div className="text-2xl font-bold text-orange-600">
-                {formatDate(customer.stats?.lastOrderDate)}
+                {formatDate(customerOrders.length > 0 ? customerOrders.reduce((latest, order) => {
+                  if (!order.createdAt) return latest;
+                  const orderDate = order.createdAt.seconds ? new Date(order.createdAt.seconds * 1000) : new Date(order.createdAt);
+                  return (!latest || orderDate > latest) ? orderDate : latest;
+                }, null) : null)}
               </div>
               <div className="text-sm text-gray-600">Senaste order</div>
             </div>
