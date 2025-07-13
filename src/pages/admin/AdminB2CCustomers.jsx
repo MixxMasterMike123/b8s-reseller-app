@@ -13,6 +13,12 @@ const AdminB2CCustomers = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [segmentFilter, setSegmentFilter] = useState('all');
+  const [stats, setStats] = useState({
+    totalCustomers: 0,
+    marketingConsent: 0,
+    withOrders: 0,
+    totalSales: 0
+  });
 
   useEffect(() => {
     const fetchB2CCustomers = async () => {
@@ -38,6 +44,19 @@ const AdminB2CCustomers = () => {
         console.log(`Fetched ${customersList.length} B2C customers`);
         setCustomers(customersList);
         setFilteredCustomers(customersList);
+        
+        // Calculate statistics
+        const totalCustomers = customersList.length;
+        const marketingConsent = customersList.filter(c => c.marketingConsent).length;
+        const withOrders = customersList.filter(c => (c.stats?.totalOrders || 0) > 0).length;
+        const totalSales = customersList.reduce((sum, c) => sum + (c.stats?.totalSpent || 0), 0);
+        
+        setStats({
+          totalCustomers,
+          marketingConsent,
+          withOrders,
+          totalSales
+        });
       } catch (error) {
         console.error('Error fetching B2C customers:', error);
         toast.error('Kunde inte hämta B2C-kunder');
@@ -143,6 +162,28 @@ const AdminB2CCustomers = () => {
             >
               Tillbaka till Admin
             </Link>
+          </div>
+        </div>
+
+        {/* Statistics Cards */}
+        <div className="p-6 border-b border-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-blue-50 rounded-lg p-4">
+              <div className="text-2xl font-bold text-blue-600">{stats.totalCustomers}</div>
+              <div className="text-sm text-blue-600">Totala Kunder</div>
+            </div>
+            <div className="bg-green-50 rounded-lg p-4">
+              <div className="text-2xl font-bold text-green-600">{stats.marketingConsent}</div>
+              <div className="text-sm text-green-600">Godkänt Marknadsföring</div>
+            </div>
+            <div className="bg-purple-50 rounded-lg p-4">
+              <div className="text-2xl font-bold text-purple-600">{stats.withOrders}</div>
+              <div className="text-sm text-purple-600">Med Ordrar</div>
+            </div>
+            <div className="bg-yellow-50 rounded-lg p-4">
+              <div className="text-2xl font-bold text-yellow-600">{formatCurrency(stats.totalSales)}</div>
+              <div className="text-sm text-yellow-600">Total Försäljning</div>
+            </div>
           </div>
         </div>
 
