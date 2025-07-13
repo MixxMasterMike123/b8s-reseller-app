@@ -108,8 +108,7 @@ const AdminB2CCustomerEdit = () => {
       
       const ordersQuery = query(
         collection(db, 'orders'),
-        where('b2cCustomerId', '==', customerId),
-        orderBy('createdAt', 'desc')
+        where('b2cCustomerId', '==', customerId)
       );
       
       const ordersSnapshot = await getDocs(ordersQuery);
