@@ -88,17 +88,14 @@ const ShopNavigation = ({ breadcrumb }) => {
               <MagnifyingGlassIcon className="h-6 w-6" />
             </button>
 
-            {/* Profile Icon - Placeholder for future implementation */}
-            <button 
+            {/* Profile Icon - Links to account or login */}
+            <Link 
+              to={currentUser ? "/account" : "/login"}
               className="p-2 text-gray-700 hover:text-blue-600 transition-colors"
-              title={t('nav_profile', 'Profil')}
-              onClick={() => {
-                // TODO: Implement profile functionality
-                toast.success(t('profile_coming_soon', 'Profil kommer snart!'));
-              }}
+              title={currentUser ? t('nav_my_account', 'Mitt konto') : t('nav_login', 'Logga in')}
             >
               <UserIcon className="h-6 w-6" />
-            </button>
+            </Link>
 
             {/* Shopping Cart Icon */}
             <Link 

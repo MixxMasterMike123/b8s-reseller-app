@@ -363,6 +363,8 @@
 "order_status_processing","Bearbetas","Processing","Processing","B2C account - order status processing","Pending","","","Order status processing"
 "order_status_pending","Väntar","Pending","Pending","B2C account - order status pending","Pending","","","Order status pending"
 "order_status_cancelled","Avbruten","Cancelled","Cancelled","B2C account - order status cancelled","Pending","","","Order status cancelled"
+"nav_my_account","Mitt konto","My account","My account","B2C navigation - my account","Pending","","","My account navigation title"
+"nav_login","Logga in","Log in","Log in","B2C navigation - login","Pending","","","Login navigation title"
 "customer_account_back_to_shop","Tillbaka till butiken","Back to shop","Back to shop","B2C customer account - navigation link","Pending","","","Back to shop navigation link"
 "affiliate_reg_required_fields","Vänligen fyll i alla obligatoriska fält.","Please fill in all required fields.","Please fill in all required fields.","B2C affiliate registration - validation error","Pending","","","Required fields validation error"
 "affiliate_reg_success","Tack för din ansökan! Vi återkommer inom kort.","Thank you for your application! We'll get back to you shortly.","Thank you for your application! We'll get back to you shortly.","B2C affiliate registration - success message","Pending","","","Application submission success message"
