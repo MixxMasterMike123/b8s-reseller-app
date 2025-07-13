@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import toast from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
@@ -21,7 +21,7 @@ const AdminB2CCustomers = () => {
   });
 
   useEffect(() => {
-    const fetchB2CCustomers = async () => {
+    const fetchB2CCustomersAndCalculateStats = async () => {
       try {
         setLoading(true);
         console.log('Fetching B2C customers from b2cCustomers collection...');
@@ -42,14 +42,26 @@ const AdminB2CCustomers = () => {
         });
         
         console.log(`Fetched ${customersList.length} B2C customers`);
-        setCustomers(customersList);
-        setFilteredCustomers(customersList);
         
-        // Calculate statistics
-        const totalCustomers = customersList.length;
-        const marketingConsent = customersList.filter(c => c.marketingConsent).length;
-        const withOrders = customersList.filter(c => (c.stats?.totalOrders || 0) > 0).length;
-        const totalSales = customersList.reduce((sum, c) => sum + (c.stats?.totalSpent || 0), 0);
+        // Calculate real-time stats from actual orders for each customer
+        const customersWithRealStats = await Promise.all(
+          customersList.map(async (customer) => {
+            const realStats = await calculateCustomerRealStats(customer);
+            return {
+              ...customer,
+              realStats // Add real-time calculated stats
+            };
+          })
+        );
+        
+        setCustomers(customersWithRealStats);
+        setFilteredCustomers(customersWithRealStats);
+        
+        // Calculate overall statistics from real-time data
+        const totalCustomers = customersWithRealStats.length;
+        const marketingConsent = customersWithRealStats.filter(c => c.marketingConsent).length;
+        const withOrders = customersWithRealStats.filter(c => (c.realStats?.totalOrders || 0) > 0).length;
+        const totalSales = customersWithRealStats.reduce((sum, c) => sum + (c.realStats?.totalSpent || 0), 0);
         
         setStats({
           totalCustomers,
@@ -57,6 +69,8 @@ const AdminB2CCustomers = () => {
           withOrders,
           totalSales
         });
+        
+        console.log(`Calculated real-time stats: ${withOrders} customers with orders, ${totalSales.toFixed(2)} SEK total sales`);
       } catch (error) {
         console.error('Error fetching B2C customers:', error);
         toast.error('Kunde inte hämta B2C-kunder');
@@ -65,8 +79,76 @@ const AdminB2CCustomers = () => {
       }
     };
 
-    fetchB2CCustomers();
+    fetchB2CCustomersAndCalculateStats();
   }, []);
+
+  // Calculate real-time customer statistics from orders (both account and guest orders)
+  const calculateCustomerRealStats = async (customer) => {
+    try {
+      const orders = [];
+      
+      // Query 1: Orders with b2cCustomerId (account orders)
+      const ordersWithAccountQuery = query(
+        collection(db, 'orders'),
+        where('b2cCustomerId', '==', customer.id)
+      );
+      
+      const accountOrdersSnapshot = await getDocs(ordersWithAccountQuery);
+      accountOrdersSnapshot.forEach(doc => {
+        orders.push(doc.data());
+      });
+      
+      // Query 2: Orders by email (guest orders) - only if customer email exists
+      if (customer.email) {
+        const ordersWithEmailQuery = query(
+          collection(db, 'orders'),
+          where('source', '==', 'b2c'),
+          where('customerInfo.email', '==', customer.email)
+        );
+        
+        const emailOrdersSnapshot = await getDocs(ordersWithEmailQuery);
+        emailOrdersSnapshot.forEach(doc => {
+          const orderData = doc.data();
+          // Only add if not already in orders array (avoid duplicates)
+          if (!orders.some(order => order.id === orderData.id)) {
+            orders.push(orderData);
+          }
+        });
+      }
+      
+      // Calculate stats from all orders
+      const totalOrders = orders.length;
+      const totalSpent = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+      const averageOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
+      
+      // Find latest order date
+      let lastOrderDate = null;
+      orders.forEach(order => {
+        if (order.createdAt?.seconds) {
+          const orderDate = new Date(order.createdAt.seconds * 1000);
+          if (!lastOrderDate || orderDate > lastOrderDate) {
+            lastOrderDate = orderDate;
+          }
+        }
+      });
+      
+      return {
+        totalOrders,
+        totalSpent,
+        averageOrderValue,
+        lastOrderDate
+      };
+      
+    } catch (error) {
+      console.error(`Error calculating real stats for customer ${customer.id}:`, error);
+      return {
+        totalOrders: 0,
+        totalSpent: 0,
+        averageOrderValue: 0,
+        lastOrderDate: null
+      };
+    }
+  };
 
   useEffect(() => {
     // Filter customers based on search term and segment filter
@@ -114,8 +196,8 @@ const AdminB2CCustomers = () => {
       customer.city || '',
       customer.country || '',
       customer.marketingConsent ? 'Ja' : 'Nej',
-      customer.stats?.totalOrders || 0,
-      customer.stats?.totalSpent || 0,
+      customer.realStats?.totalOrders || 0,
+      customer.realStats?.totalSpent || 0,
       formatDate(customer.createdAt)
     ]);
 
@@ -283,8 +365,8 @@ const AdminB2CCustomers = () => {
                       </td>
                       
                       <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div>{customer.stats?.totalOrders || 0} ordrar</div>
-                        <div className="text-gray-500">{formatCurrency(customer.stats?.totalSpent || 0)}</div>
+                        <div>{customer.realStats?.totalOrders || 0} ordrar</div>
+                        <div className="text-gray-500">{formatCurrency(customer.realStats?.totalSpent || 0)}</div>
                       </td>
                       
                       <td className="px-4 md:px-6 py-4 whitespace-nowrap">
@@ -316,7 +398,7 @@ const AdminB2CCustomers = () => {
                             to={`/admin/b2c-customers/${customer.id}/orders`}
                             className="text-green-600 hover:text-green-900"
                           >
-                            Ordrar ({customer.stats?.totalOrders || 0})
+                            Ordrar ({customer.realStats?.totalOrders || 0})
                           </Link>
                         </div>
                       </td>
