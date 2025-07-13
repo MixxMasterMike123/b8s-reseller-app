@@ -60,6 +60,21 @@ export function SimpleAuthContextProvider({ children }) {
     }
   }
 
+  // Register a new user
+  async function register(email, password) {
+    try {
+      setError('');
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      toast.success('Account created successfully');
+      return userCredential.user;
+    } catch (error) {
+      console.error('Registration error:', error);
+      setError(error.message);
+      toast.error('Registration failed: ' + error.message);
+      throw error;
+    }
+  }
+
   // Reset password
   async function resetPassword(email) {
     try {
@@ -81,6 +96,7 @@ export function SimpleAuthContextProvider({ children }) {
     loading,
     error,
     login,
+    register,
     logout,
     resetPassword
   };

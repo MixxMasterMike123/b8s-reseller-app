@@ -51,6 +51,7 @@ import Checkout from './pages/shop/Checkout';
 import CustomerAccount from './pages/shop/CustomerAccount';
 import CustomerLogin from './pages/shop/CustomerLogin';
 import CustomerRegister from './pages/shop/CustomerRegister';
+import ForgotPassword from './pages/shop/ForgotPassword';
 import GeoRedirect from './components/shop/GeoRedirect';
 import CountryRouteValidator from './components/shop/CountryRouteValidator';
 
@@ -174,6 +175,7 @@ function App() {
               {/* Credential pages - country-neutral for simplicity */}
               <Route path="/login" element={<CustomerLogin />} />
               <Route path="/register" element={<CustomerRegister />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               
               {/* Universal Country Routes - Supports any country code */}
               <Route path="/:countryCode" element={<CountryRouteValidator><PublicStorefront /></CountryRouteValidator>} />
@@ -182,6 +184,7 @@ function App() {
               <Route path="/:countryCode/checkout" element={<CountryRouteValidator><Checkout /></CountryRouteValidator>} />
               <Route path="/:countryCode/order-confirmation/:orderId" element={<CountryRouteValidator><OrderConfirmation /></CountryRouteValidator>} />
               <Route path="/:countryCode/account" element={<CountryRouteValidator><CustomerAccount /></CountryRouteValidator>} />
+              <Route path="/account" element={<CustomerAccount />} />
               <Route path="/:countryCode/privacy" element={<CountryRouteValidator><PrivacyPolicy /></CountryRouteValidator>} />
               <Route path="/:countryCode/terms" element={<CountryRouteValidator><TermsOfService /></CountryRouteValidator>} />
               <Route path="/:countryCode/returns" element={<CountryRouteValidator><ReturnPolicy /></CountryRouteValidator>} />
