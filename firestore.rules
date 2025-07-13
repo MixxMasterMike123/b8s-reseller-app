@@ -63,8 +63,15 @@ service cloud.firestore {
     // Orders collection
     match /orders/{orderId} {
       // Users can read their own orders, admins can read all orders
+      // B2C customers can read their orders if they match the b2cCustomerId
       allow read: if isActiveUser() && (
         resource.data.userId == request.auth.uid || isAdmin()
+      ) || (
+        isAuthenticated() && 
+        resource.data.source == 'b2c' && 
+        'b2cCustomerId' in resource.data &&
+        exists(/databases/$(database)/documents/b2cCustomers/$(resource.data.b2cCustomerId)) &&
+        get(/databases/$(database)/documents/b2cCustomers/$(resource.data.b2cCustomerId)).data.firebaseAuthUid == request.auth.uid
       );
       // Active users can create orders for themselves (B2B).
       // Guests or B2C users can create orders if the source is 'b2c'. If a userId is included, it must match the authenticated user.

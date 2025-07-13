@@ -26,6 +26,7 @@ const Checkout = () => {
   const { getContentValue } = useContentTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(false);
   const [step, setStep] = useState('contact'); // 'contact', 'shipping', 'payment'
 
   // Form data
@@ -63,11 +64,56 @@ const Checkout = () => {
   };
 
   useEffect(() => {
-    // Auto-fill email if user is logged in
-    if (user?.email && !contactInfo.email) {
-      setContactInfo(prev => ({ ...prev, email: user.email }));
+    // Load customer profile data if user is logged in
+    if (user?.uid) {
+      loadCustomerProfile();
     }
   }, [user]);
+
+  const loadCustomerProfile = async () => {
+    try {
+      setLoadingProfile(true);
+      const customersRef = collection(db, 'b2cCustomers');
+      const customerQuery = query(customersRef, where('firebaseAuthUid', '==', user.uid));
+      const customerSnapshot = await getDocs(customerQuery);
+      
+      if (!customerSnapshot.empty) {
+        const customerDoc = customerSnapshot.docs[0];
+        const customerData = customerDoc.data();
+        
+        // Pre-fill contact information
+        setContactInfo(prev => ({
+          ...prev,
+          email: customerData.email || user.email || '',
+          marketing: customerData.marketingConsent || false
+        }));
+        
+        // Pre-fill shipping information
+        setShippingInfo(prev => ({
+          ...prev,
+          firstName: customerData.firstName || '',
+          lastName: customerData.lastName || '',
+          address: customerData.address || '',
+          apartment: customerData.apartment || '',
+          postalCode: customerData.postalCode || '',
+          city: customerData.city || '',
+          country: customerData.country || 'SE'
+        }));
+        
+        console.log('Customer profile loaded and form pre-filled:', customerData);
+        toast.success(t('checkout_profile_loaded', 'Dina uppgifter har fyllts i automatiskt'));
+      } else {
+        // If no customer profile exists, just pre-fill email
+        setContactInfo(prev => ({ ...prev, email: user.email || '' }));
+      }
+    } catch (error) {
+      console.error('Error loading customer profile:', error);
+      // Fallback to just pre-filling email
+      setContactInfo(prev => ({ ...prev, email: user.email || '' }));
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
 
   const validateStep = (currentStep) => {
     switch (currentStep) {
@@ -454,6 +500,11 @@ const Checkout = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         {t('checkout_email_label', 'E-postadress *')}
+                        {user && contactInfo.email && (
+                          <span className="ml-2 text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                            {t('checkout_from_account', 'från ditt konto')}
+                          </span>
+                        )}
                       </label>
                       <input
                         type="email"

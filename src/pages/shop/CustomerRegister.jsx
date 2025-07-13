@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { sendEmailVerification } from 'firebase/auth';
 import { db } from '../../firebase/config';
 import toast from 'react-hot-toast';
 import ShopNavigation from '../../components/shop/ShopNavigation';
@@ -102,6 +103,15 @@ const CustomerRegister = () => {
       // 1. Create Firebase Auth account
       const userCredential = await register(formData.email, formData.password);
       const firebaseUser = userCredential;
+      
+      // 2. Send email verification
+      try {
+        await sendEmailVerification(firebaseUser);
+        console.log('Verification email sent to:', firebaseUser.email);
+      } catch (verificationError) {
+        console.error('Error sending verification email:', verificationError);
+        // Don't fail registration if verification email fails
+      }
 
       // 2. Create B2C customer document
       const customerData = {

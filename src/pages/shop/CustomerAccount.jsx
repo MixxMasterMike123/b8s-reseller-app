@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { updatePassword, sendEmailVerification } from 'firebase/auth';
@@ -26,6 +27,7 @@ import {
 const CustomerAccount = () => {
   const { currentUser, logout } = useSimpleAuth();
   const { t } = useTranslation();
+  const { getContentValue } = useContentTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [customerData, setCustomerData] = useState(null);
@@ -73,14 +75,31 @@ const CustomerAccount = () => {
 
   const loadOrders = async () => {
     try {
+      // First get the B2C customer ID
+      const customersRef = collection(db, 'b2cCustomers');
+      const customerQuery = query(customersRef, where('firebaseAuthUid', '==', currentUser.uid));
+      const customerSnapshot = await getDocs(customerQuery);
+      
+      if (customerSnapshot.empty) {
+        console.log('No B2C customer found for user:', currentUser.uid);
+        setOrders([]);
+        return;
+      }
+      
+      const customerId = customerSnapshot.docs[0].id;
+      console.log('Found B2C customer ID:', customerId);
+      
+      // Now query orders using the B2C customer ID
       const ordersRef = collection(db, 'orders');
-      const ordersQuery = query(ordersRef, where('source', '==', 'b2c'), where('userId', '==', currentUser.uid));
+      const ordersQuery = query(ordersRef, where('source', '==', 'b2c'), where('b2cCustomerId', '==', customerId));
       const ordersSnapshot = await getDocs(ordersQuery);
       
       const ordersData = ordersSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+      
+      console.log('Found orders for customer:', ordersData.length, 'orders');
       
       // Sort by creation date (newest first)
       ordersData.sort((a, b) => {
@@ -580,7 +599,11 @@ const CustomerAccount = () => {
                             </span>
                             <span>•</span>
                             <span className="ml-2">
-                              {order.items.map(item => item.name).join(', ')}
+                              {order.items.map(item => {
+                                // Safe extraction of multilingual content
+                                const itemName = getContentValue(item.name);
+                                return typeof itemName === 'string' ? itemName : String(itemName || item.name || '');
+                              }).join(', ')}
                             </span>
                           </div>
                         </div>

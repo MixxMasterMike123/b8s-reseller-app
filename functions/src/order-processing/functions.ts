@@ -234,6 +234,66 @@ export const processB2COrderCompletionHttp = onRequest(
         }
       }
 
+      // --- Send B2C Order Confirmation Emails ---
+      console.log(`Sending B2C order confirmation emails for order ${orderId}`);
+      try {
+        const customerEmail = orderData.customerInfo?.email;
+        const customerLang = orderData.customerInfo?.preferredLang || 'sv-SE';
+        
+        if (customerEmail) {
+          // Send customer confirmation email
+          console.log(`Sending customer confirmation email to ${customerEmail}`);
+          
+          // Get email template
+          const { getEmail } = require('../../emails');
+          const customerTemplate = getEmail('b2cOrderPending', customerLang, {
+            orderData,
+            customerInfo: orderData.customerInfo,
+            orderId
+          });
+          
+          // Send customer email using sendEmail function
+          const { sendEmail, EMAIL_FROM } = require('../email/email-handler');
+          const customerEmailData = {
+            to: customerEmail,
+            from: EMAIL_FROM.b2c,
+            subject: customerTemplate.subject,
+            html: customerTemplate.html,
+            text: customerTemplate.text
+          };
+          
+          await sendEmail(customerEmailData);
+          console.log(`✅ Customer confirmation email sent to ${customerEmail}`);
+          
+          // Send admin notification email
+          console.log('Sending admin notification email');
+          const adminTemplate = getEmail('adminB2COrderNotification', 'sv-SE', {
+            orderData,
+            customerInfo: orderData.customerInfo,
+            orderId
+          });
+          
+          const { ADMIN_EMAILS } = require('../email/email-handler');
+          const adminEmailData = {
+            to: ADMIN_EMAILS,
+            from: EMAIL_FROM.system,
+            subject: adminTemplate.subject,
+            html: adminTemplate.html,
+            text: adminTemplate.text
+          };
+          
+          await sendEmail(adminEmailData);
+          console.log(`✅ Admin notification email sent for order ${orderData.orderNumber}`);
+          
+        } else {
+          console.warn(`No customer email found for order ${orderId}, skipping customer confirmation`);
+        }
+        
+      } catch (emailError) {
+        console.error(`Error sending B2C order emails for order ${orderId}:`, emailError);
+        // Don't fail the whole process if emails fail - log error and continue
+      }
+
       if (!affiliateCode) {
         console.log('No affiliate code found for order, skipping commission.');
         res.json({ success: true, message: 'Order processed (no affiliate)' });
