@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendStatusUpdateHttp = exports.approveAffiliate = exports.testEmail = exports.updateCustomerEmail = exports.sendOrderStatusUpdateEmail = exports.sendUserActivationEmail = exports.sendOrderConfirmationEmails = exports.sendB2COrderPendingEmail = exports.sendB2COrderNotificationAdmin = exports.sendOrderStatusEmail = exports.sendB2BOrderConfirmationCustomer = exports.sendB2BOrderConfirmationAdmin = exports.sendAffiliateWelcomeEmail = exports.sendCustomerWelcomeEmail = void 0;
+exports.sendVerificationEmail = exports.sendStatusUpdateHttp = exports.approveAffiliate = exports.testEmail = exports.updateCustomerEmail = exports.sendOrderStatusUpdateEmail = exports.sendUserActivationEmail = exports.sendOrderConfirmationEmails = exports.sendB2COrderPendingEmail = exports.sendB2COrderNotificationAdmin = exports.sendOrderStatusEmail = exports.sendB2BOrderConfirmationCustomer = exports.sendB2BOrderConfirmationAdmin = exports.sendAffiliateWelcomeEmail = exports.sendCustomerWelcomeEmail = void 0;
 const firestore_1 = require("firebase-functions/v2/firestore");
 const https_1 = require("firebase-functions/v2/https");
 const app_1 = require("firebase-admin/app");
@@ -903,6 +903,102 @@ exports.sendStatusUpdateHttp = (0, https_1.onRequest)({
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error'
         });
+    }
+});
+/**
+ * Send email verification to a B2C customer (Admin only)
+ */
+exports.sendVerificationEmail = (0, https_1.onCall)({
+    timeoutSeconds: 60,
+    memory: '256MiB',
+    region: 'us-central1'
+}, async (request) => {
+    const { auth, data } = request;
+    // Verify admin authentication
+    if (!auth?.uid) {
+        throw new https_1.HttpsError('unauthenticated', 'Must be authenticated');
+    }
+    // Get admin user data to verify admin role
+    const adminDoc = await email_handler_1.db.collection('users').doc(auth.uid).get();
+    if (!adminDoc.exists || adminDoc.data()?.role !== 'admin') {
+        throw new https_1.HttpsError('permission-denied', 'Admin access required');
+    }
+    const { email } = data;
+    if (!email) {
+        throw new https_1.HttpsError('invalid-argument', 'Email is required');
+    }
+    try {
+        console.log(`Admin ${auth.uid} requesting email verification for customer: ${email}`);
+        // Find the customer in Firebase Auth by email
+        const admin = require('firebase-admin');
+        const userRecord = await admin.auth().getUserByEmail(email);
+        if (!userRecord) {
+            throw new https_1.HttpsError('not-found', 'Customer not found in authentication system');
+        }
+        if (userRecord.emailVerified) {
+            throw new https_1.HttpsError('failed-precondition', 'Email is already verified');
+        }
+        // Generate email verification link
+        const actionCodeSettings = {
+            url: 'https://shop.b8shield.com/__/auth/action',
+            handleCodeInApp: true
+        };
+        const verificationLink = await admin.auth().generateEmailVerificationLink(email, actionCodeSettings);
+        // Send email using the existing email system
+        const customerName = userRecord.displayName || 'Kund';
+        const emailData = {
+            to: email,
+            from: email_handler_1.EMAIL_FROM.b2c,
+            subject: 'Verifiera din e-postadress - B8Shield',
+            html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px;">
+            <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <img src="https://firebasestorage.googleapis.com/v0/b/b8shield-reseller-app.firebasestorage.app/o/images%2FB8S_logo.png?alt=media" alt="B8Shield" style="max-width: 200px; height: auto;">
+              </div>
+              <h2 style="color: #1f2937; margin-bottom: 20px;">Hej ${customerName},</h2>
+              <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">
+                Klicka på länken nedan för att verifiera din e-postadress och aktivera ditt B8Shield-konto:
+              </p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${verificationLink}" style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                  Verifiera e-postadress
+                </a>
+              </div>
+              <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+                Om du inte kan klicka på knappen, kopiera och klistra in denna länk i din webbläsare:<br>
+                <a href="${verificationLink}" style="color: #2563eb; word-break: break-all;">${verificationLink}</a>
+              </p>
+              <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
+                <p style="color: #6b7280; font-size: 14px; margin: 0;">
+                  Med vänliga hälsningar,<br><strong>B8Shield Team</strong><br>JPH Innovation AB
+                </p>
+              </div>
+            </div>
+          </div>
+        `,
+            text: `
+Hej ${customerName},
+
+Klicka på länken nedan för att verifiera din e-postadress:
+${verificationLink}
+
+Med vänliga hälsningar,
+B8Shield Team
+JPH Innovation AB
+        `
+        };
+        await (0, email_handler_1.sendEmail)(emailData);
+        console.log(`✅ Email verification sent to ${email} by admin ${auth.uid}`);
+        return {
+            success: true,
+            message: 'Email verification sent successfully'
+        };
+    }
+    catch (error) {
+        console.error('Error sending verification email:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        throw new https_1.HttpsError('internal', `Failed to send verification email: ${errorMessage}`);
     }
 });
 //# sourceMappingURL=functions.js.map

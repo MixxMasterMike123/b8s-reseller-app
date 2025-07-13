@@ -24,7 +24,8 @@ import {
   updateCustomerEmail,
   testEmail,
   approveAffiliate,
-  sendStatusUpdateHttp
+  sendStatusUpdateHttp,
+  sendVerificationEmail
 } from './email/functions';
 
 // Import order processing functions directly with original names
@@ -52,7 +53,7 @@ import {
 // Re-export affiliate functions individually with V2 names (avoid V1 conflicts)
 export { logAffiliateClickV2, logAffiliateClickHttpV2, processAffiliateConversionV2 };
 
-// Re-export email functions individually with V2 names (avoid V1 conflicts) 
+// Re-export email functions individually with V2 names (avoid V1 conflicts)
 export { 
   sendCustomerWelcomeEmail as sendCustomerWelcomeEmailV2,
   sendAffiliateWelcomeEmail as sendAffiliateWelcomeEmailV2,
@@ -67,7 +68,8 @@ export {
   updateCustomerEmail as updateCustomerEmailV2,
   testEmail as testEmailV2,
   approveAffiliate as approveAffiliateV2,
-  sendStatusUpdateHttp as sendStatusUpdateHttpV2
+  sendStatusUpdateHttp as sendStatusUpdateHttpV2,
+  sendVerificationEmail as sendVerificationEmailV2
 };
 
 // Re-export order processing functions individually with V2 names (avoid V1 conflicts)

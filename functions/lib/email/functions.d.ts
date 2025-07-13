@@ -46,4 +46,11 @@ interface AffiliateApplicationData {
 }
 export declare const approveAffiliate: import("firebase-functions/v2/https").CallableFunction<AffiliateApplicationData, any, unknown>;
 export declare const sendStatusUpdateHttp: import("firebase-functions/v2/https").HttpsFunction;
+/**
+ * Send email verification to a B2C customer (Admin only)
+ */
+export declare const sendVerificationEmail: import("firebase-functions/v2/https").CallableFunction<any, Promise<{
+    success: boolean;
+    message: string;
+}>, unknown>;
 export {};

@@ -73,6 +73,14 @@
         { "fieldPath": "b2cCustomerId", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "source", "order": "ASCENDING" },
+        { "fieldPath": "customerInfo.email", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

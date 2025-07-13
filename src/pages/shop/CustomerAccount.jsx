@@ -75,7 +75,7 @@ const CustomerAccount = () => {
 
   const loadOrders = async () => {
     try {
-      // First get the B2C customer ID
+      // First get the B2C customer ID and email
       const customersRef = collection(db, 'b2cCustomers');
       const customerQuery = query(customersRef, where('firebaseAuthUid', '==', currentUser.uid));
       const customerSnapshot = await getDocs(customerQuery);
@@ -87,29 +87,57 @@ const CustomerAccount = () => {
       }
       
       const customerId = customerSnapshot.docs[0].id;
+      const customerData = customerSnapshot.docs[0].data();
+      const customerEmail = customerData?.email;
+      
       console.log('Found B2C customer ID:', customerId);
+      console.log('Customer email:', customerEmail);
       
-      // Now query orders using the B2C customer ID
-      const ordersRef = collection(db, 'orders');
-      const ordersQuery = query(ordersRef, where('source', '==', 'b2c'), where('b2cCustomerId', '==', customerId));
-      const ordersSnapshot = await getDocs(ordersQuery);
+      const orders = [];
       
-      const ordersData = ordersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      // Query 1: Orders with b2cCustomerId (account orders)
+      const ordersWithAccountQuery = query(
+        collection(db, 'orders'),
+        where('source', '==', 'b2c'),
+        where('b2cCustomerId', '==', customerId)
+      );
       
-      console.log('Found orders for customer:', ordersData.length, 'orders');
+      const accountOrdersSnapshot = await getDocs(ordersWithAccountQuery);
+      accountOrdersSnapshot.forEach(doc => {
+        orders.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+      
+      // Query 2: Orders by email (guest orders) - only if customer email exists
+      if (customerEmail) {
+        const ordersWithEmailQuery = query(
+          collection(db, 'orders'),
+          where('source', '==', 'b2c'),
+          where('customerInfo.email', '==', customerEmail)
+        );
+        
+        const emailOrdersSnapshot = await getDocs(ordersWithEmailQuery);
+        emailOrdersSnapshot.forEach(doc => {
+          const orderData = { id: doc.id, ...doc.data() };
+          // Only add if not already in orders array (avoid duplicates)
+          if (!orders.some(order => order.id === orderData.id)) {
+            orders.push(orderData);
+          }
+        });
+      }
       
       // Sort by creation date (newest first)
-      ordersData.sort((a, b) => {
+      orders.sort((a, b) => {
         if (a.createdAt?.seconds && b.createdAt?.seconds) {
           return b.createdAt.seconds - a.createdAt.seconds;
         }
         return 0;
       });
       
-      setOrders(ordersData);
+      console.log('Found total orders for customer:', orders.length, 'orders');
+      setOrders(orders);
     } catch (error) {
       console.error('Error loading orders:', error);
       toast.error(t('customer_account_error_loading_orders', 'Kunde inte ladda orderhistorik'));

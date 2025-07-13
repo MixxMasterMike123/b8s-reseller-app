@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { collection, doc, getDoc, updateDoc, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { db } from '../../firebase/config';
+import { db, functions } from '../../firebase/config';
+import { httpsCallable } from 'firebase/functions';
 import { toast } from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
 import { format } from 'date-fns';
@@ -16,7 +17,8 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   TrashIcon,
-  EyeIcon
+  EyeIcon,
+  PaperAirplaneIcon
 } from '@heroicons/react/24/outline';
 
 const AdminB2CCustomerEdit = () => {
@@ -106,18 +108,56 @@ const AdminB2CCustomerEdit = () => {
       setOrdersLoading(true);
       console.log('Loading orders for B2C customer:', customerId);
       
-      const ordersQuery = query(
+      // First, get customer email to search for orders by email as well
+      const customerDoc = await getDoc(doc(db, 'b2cCustomers', customerId));
+      const customerData = customerDoc.data();
+      const customerEmail = customerData?.email;
+      
+      console.log('Customer email:', customerEmail);
+      
+      const orders = [];
+      
+      // Query 1: Orders with b2cCustomerId (account orders)
+      const ordersWithAccountQuery = query(
         collection(db, 'orders'),
         where('b2cCustomerId', '==', customerId)
       );
       
-      const ordersSnapshot = await getDocs(ordersQuery);
-      const orders = ordersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const accountOrdersSnapshot = await getDocs(ordersWithAccountQuery);
+      accountOrdersSnapshot.forEach(doc => {
+        orders.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
       
-      console.log(`Found ${orders.length} orders for customer`);
+      // Query 2: Orders by email (guest orders) - only if customer email exists
+      if (customerEmail) {
+        const ordersWithEmailQuery = query(
+          collection(db, 'orders'),
+          where('source', '==', 'b2c'),
+          where('customerInfo.email', '==', customerEmail)
+        );
+        
+        const emailOrdersSnapshot = await getDocs(ordersWithEmailQuery);
+        emailOrdersSnapshot.forEach(doc => {
+          const orderData = { id: doc.id, ...doc.data() };
+          // Only add if not already in orders array (avoid duplicates)
+          if (!orders.some(order => order.id === orderData.id)) {
+            orders.push(orderData);
+          }
+        });
+      }
+      
+      // Sort by creation date (newest first)
+      orders.sort((a, b) => {
+        if (a.createdAt?.seconds && b.createdAt?.seconds) {
+          return b.createdAt.seconds - a.createdAt.seconds;
+        }
+        return 0;
+      });
+      
+      console.log(`Found ${orders.length} total orders for customer (account + email)`);
       setCustomerOrders(orders);
       
     } catch (error) {
@@ -268,6 +308,22 @@ const AdminB2CCustomerEdit = () => {
     }
   };
 
+  const handleSendVerificationEmail = async () => {
+    if (!customer) return;
+
+    try {
+      setSaving(true);
+      const sendVerificationEmail = httpsCallable(functions, 'sendVerificationEmailV2');
+      await sendVerificationEmail({ email: customer.email });
+      toast.success('Verifieringsmejl skickat till kunden!');
+    } catch (error) {
+      console.error('Error sending verification email:', error);
+      toast.error(`Kunde inte skicka verifieringsmejl: ${error.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <AppLayout>
@@ -315,9 +371,29 @@ const AdminB2CCustomerEdit = () => {
                     <span className="text-sm font-medium text-green-800">E-post verifierad</span>
                   </div>
                 ) : (
-                  <div className="flex items-center px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <XCircleIcon className="h-5 w-5 text-yellow-600 mr-2" />
-                    <span className="text-sm font-medium text-yellow-800">E-post ej verifierad</span>
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <XCircleIcon className="h-5 w-5 text-yellow-600 mr-2" />
+                      <span className="text-sm font-medium text-yellow-800">E-post ej verifierad</span>
+                    </div>
+                    <button
+                      onClick={handleSendVerificationEmail}
+                      disabled={saving}
+                      className="inline-flex items-center px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="Skicka verifieringsmejl till kunden"
+                    >
+                      {saving ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Skickar...
+                        </>
+                      ) : (
+                        <>
+                          <PaperAirplaneIcon className="h-4 w-4 mr-2" />
+                          Skicka verifiering
+                        </>
+                      )}
+                    </button>
                   </div>
                 )}
               </div>
