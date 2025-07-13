@@ -536,7 +536,7 @@ const AdminB2CCustomerEdit = () => {
             <h3 className="text-lg font-medium text-gray-900 mb-4">
               Kundinställningar
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex items-center">
                 <input
                   type="checkbox"
@@ -579,6 +579,23 @@ const AdminB2CCustomerEdit = () => {
                   <option value="new">Ny Kund</option>
                   <option value="repeat">Återkommande Kund</option>
                   <option value="vip">VIP Kund</option>
+                </select>
+              </div>
+              
+              <div>
+                <label htmlFor="preferredLang" className="block text-sm font-medium text-gray-700 mb-1">
+                  Föredragen språk
+                </label>
+                <select
+                  id="preferredLang"
+                  name="preferredLang"
+                  value={formData.preferredLang}
+                  onChange={handleInputChange}
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                  <option value="sv-SE">Svenska (SE)</option>
+                  <option value="en-US">English (US)</option>
+                  <option value="en-GB">English (UK)</option>
                 </select>
               </div>
             </div>

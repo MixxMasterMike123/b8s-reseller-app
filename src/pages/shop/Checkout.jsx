@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from '../../firebase/config';
 import { useCart } from '../../contexts/CartContext';
@@ -201,10 +201,48 @@ const Checkout = () => {
           }
         } catch (customerError) {
           console.error('Error creating B2C customer account:', customerError);
-          // Don't fail the order if customer creation fails
-          toast.error(t('checkout_account_error', 'Kunde inte skapa konto, men din beställning behandlas.'), { duration: 5000 });
+          
+          // Handle the case where email already exists in Firebase Auth
+          if (customerError.code === 'auth/email-already-in-use') {
+            console.log('Email already exists in Firebase Auth, attempting to link to existing account...');
+            
+            try {
+              // Try to find existing B2C customer record by email
+              const existingCustomerQuery = query(
+                collection(db, 'b2cCustomers'),
+                where('email', '==', contactInfo.email)
+              );
+              const existingCustomerSnapshot = await getDocs(existingCustomerQuery);
+              
+              if (!existingCustomerSnapshot.empty) {
+                // B2C customer record exists - use it and update preferred language
+                const existingCustomer = existingCustomerSnapshot.docs[0];
+                b2cCustomerId = existingCustomer.id;
+                b2cCustomerAuthId = existingCustomer.data().firebaseAuthUid;
+                
+                // Update preferred language to reflect current language choice
+                await updateDoc(doc(db, 'b2cCustomers', b2cCustomerId), {
+                  preferredLang: currentLanguage,
+                  updatedAt: serverTimestamp()
+                });
+                
+                console.log('Linked to existing B2C customer and updated preferred language:', b2cCustomerId, currentLanguage);
+                toast.success(t('checkout_existing_account', 'Länkad till ditt befintliga konto.'), { duration: 5000 });
+              } else {
+                // Email exists in Firebase Auth but no B2C customer record - this shouldn't happen but handle it
+                console.log('Email exists in Firebase Auth but no B2C customer record found');
+                toast.error(t('checkout_account_conflict', 'E-postadressen är redan registrerad. Vänligen kontakta support.'), { duration: 5000 });
+              }
+            } catch (linkError) {
+              console.error('Error linking to existing account:', linkError);
+              toast.error(t('checkout_account_error', 'Kunde inte skapa konto, men din beställning behandlas.'), { duration: 5000 });
+            }
+          } else {
+            // Other errors (not email-already-in-use)
+            toast.error(t('checkout_account_error', 'Kunde inte skapa konto, men din beställning behandlas.'), { duration: 5000 });
+          }
         }
-      }
+        }
 
       const orderData = {
         orderNumber,
