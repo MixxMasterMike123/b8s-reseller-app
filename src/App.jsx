@@ -52,6 +52,7 @@ import CustomerAccount from './pages/shop/CustomerAccount';
 import CustomerLogin from './pages/shop/CustomerLogin';
 import CustomerRegister from './pages/shop/CustomerRegister';
 import ForgotPassword from './pages/shop/ForgotPassword';
+import EmailVerificationHandler from './pages/shop/EmailVerificationHandler';
 import GeoRedirect from './components/shop/GeoRedirect';
 import CountryRouteValidator from './components/shop/CountryRouteValidator';
 
@@ -177,6 +178,9 @@ function App() {
               <Route path="/register" element={<CustomerRegister />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               
+              {/* Firebase Auth Action Handler - Email Verification */}
+              <Route path="/__/auth/action" element={<EmailVerificationHandler />} />
+              
               {/* Universal Country Routes - Supports any country code */}
               <Route path="/:countryCode" element={<CountryRouteValidator><PublicStorefront /></CountryRouteValidator>} />
               <Route path="/:countryCode/product/:slug" element={<CountryRouteValidator><PublicProductPage /></CountryRouteValidator>} />
@@ -202,6 +206,9 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              
+              {/* Firebase Auth Action Handler - Email Verification */}
+              <Route path="/__/auth/action" element={<EmailVerificationHandler />} />
               
               <Route path="/" element={
                 <PrivateRoute>

@@ -8,7 +8,7 @@ import { getFunctions } from 'firebase/functions';
 // For development, we'll use the API key directly here to ensure it works
 const firebaseConfig = {
   apiKey: "AIzaSyCsYgMVRlipm-PxsHPZOxew5tqcZ_3Kccw",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "b8shield-reseller-app.firebaseapp.com",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "shop.b8shield.com",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "b8shield-reseller-app",
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "b8shield-reseller-app.firebasestorage.app",
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "996315128348",

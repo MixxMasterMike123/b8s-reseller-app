@@ -8,7 +8,8 @@ import {
   updatePassword as firebaseUpdatePassword,
   updateEmail
 } from 'firebase/auth';
-import { auth } from '../firebase/config';
+import { auth, db } from '../firebase/config';
+import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
 const SimpleAuthContext = createContext();
@@ -22,11 +23,45 @@ export function SimpleAuthContextProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Update B2C customer email verification status
+  const updateB2CCustomerEmailStatus = async (user) => {
+    if (!user) return;
+    
+    try {
+      console.log('Updating B2C customer email verification status:', user.emailVerified);
+      
+      // Find the B2C customer document
+      const customersQuery = query(
+        collection(db, 'b2cCustomers'),
+        where('firebaseAuthUid', '==', user.uid)
+      );
+      
+      const snapshot = await getDocs(customersQuery);
+      
+      if (!snapshot.empty) {
+        const customerDoc = snapshot.docs[0];
+        await updateDoc(customerDoc.ref, {
+          emailVerified: user.emailVerified,
+          updatedAt: new Date()
+        });
+        
+        console.log('B2C customer email verification status updated successfully');
+      }
+    } catch (error) {
+      console.error('Error updating B2C customer email verification status:', error);
+    }
+  };
+
   // Handle auth state changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       setLoading(false);
+      
+      // Update B2C customer verification status when user state changes
+      if (user) {
+        await updateB2CCustomerEmailStatus(user);
+      }
     });
 
     return unsubscribe;
@@ -98,7 +133,8 @@ export function SimpleAuthContextProvider({ children }) {
     login,
     register,
     logout,
-    resetPassword
+    resetPassword,
+    updateB2CCustomerEmailStatus
   };
 
   return (
