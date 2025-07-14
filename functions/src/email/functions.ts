@@ -20,6 +20,12 @@ import {
   B2COrderEmailData
 } from './types';
 
+// Add email validation function at the top of the file
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
 // Get Firebase Auth from already initialized app
 const auth = getAuth(getApp());
 
@@ -513,6 +519,12 @@ export const sendOrderConfirmationEmails = onDocumentCreated(
 
     // 1. Send email to customer (if email is available and template was generated)
     if (customerEmail && customerTemplate) {
+      // Validate email address before sending
+      if (!isValidEmail(customerEmail)) {
+        console.error(`Invalid customer email address: ${customerEmail} for order ${orderData.orderNumber}`);
+        return; // Skip sending email but don't fail the entire process
+      }
+
       const emailData = createEmailData(
         customerEmail,
         orderData.source === 'b2c' ? EMAIL_FROM.b2c : EMAIL_FROM.b2b,
@@ -523,7 +535,7 @@ export const sendOrderConfirmationEmails = onDocumentCreated(
         }
       );
 
-    await sendEmail(emailData);
+      await sendEmail(emailData);
       console.log(`Order confirmation email sent to ${customerEmail}`);
     } else {
       console.log(`No customer email available or template could not be generated for order ${orderData.orderNumber}. Skipping customer confirmation.`);
@@ -1062,15 +1074,74 @@ export const sendStatusUpdateHttp = onRequest(
 
       const { orderId, orderData, userData, oldStatus, newStatus } = request.body;
 
-      if (!orderId || !orderData || !userData || !newStatus) {
+      if (!orderId || !orderData || !newStatus) {
         response.status(400).json({
           success: false,
-          error: 'Missing required data: orderId, orderData, userData, newStatus'
+          error: 'Missing required data: orderId, orderData, newStatus'
         });
         return;
       }
 
       console.log(`Sending status update emails for order ${orderId}: ${oldStatus} -> ${newStatus}`);
+
+      // Determine customer email and info based on order source (B2C vs B2B)
+      let customerEmail: string = '';
+      let customerLang: string = 'sv-SE';
+      let customerName: string = '';
+      let templateParams: any = {};
+
+      if (orderData.source === 'b2c') {
+        // B2C Order - use customerInfo from order
+        customerEmail = orderData.customerInfo?.email || '';
+        customerName = orderData.customerInfo?.firstName || 'Customer';
+        customerLang = orderData.customerInfo?.preferredLang || 'sv-SE';
+        
+        // Create mock userData for B2C orders
+        templateParams = {
+          userData: {
+            email: customerEmail,
+            companyName: customerName,
+            contactPerson: customerName,
+            preferredLang: customerLang
+          },
+          orderData: { ...orderData, status: newStatus },
+          customerInfo: orderData.customerInfo,
+          status: newStatus
+        };
+        
+        console.log(`B2C order status update for customer: ${customerEmail}`);
+      } else {
+        // B2B Order - use userData passed from frontend
+        if (!userData) {
+          response.status(400).json({
+            success: false,
+            error: 'userData is required for B2B orders'
+          });
+          return;
+        }
+        
+        customerEmail = userData.email;
+        customerName = userData.contactPerson || userData.companyName || '';
+        customerLang = userData.preferredLang || 'sv-SE';
+        
+        templateParams = {
+          userData,
+          orderData: { ...orderData, status: newStatus },
+          status: newStatus
+        };
+        
+        console.log(`B2B order status update for customer: ${customerEmail}`);
+      }
+
+      // Validate email address before proceeding
+      if (!customerEmail || !isValidEmail(customerEmail)) {
+        console.error(`Invalid email address for customer: ${customerEmail}`);
+        response.status(400).json({
+          success: false,
+          error: 'Invalid email address'
+        });
+        return;
+      }
 
       // Map status to correct email template name
       const getTemplateNameForStatus = (status: string): string => {
@@ -1087,22 +1158,14 @@ export const sendStatusUpdateHttp = onRequest(
 
       // Get email template for the new status
       const templateName = getTemplateNameForStatus(newStatus);
-      const template = getEmail(templateName, userData.preferredLang || 'sv-SE', {
-        userData,
-        orderData: { ...orderData, status: newStatus },
-        status: newStatus
-      } as any);
+      const template = getEmail(templateName, customerLang, templateParams);
 
       // Customer status update email
       const customerEmailData = createEmailData(
-        userData.email,
+        customerEmail,
         orderData.source === 'b2c' ? EMAIL_FROM.b2c : EMAIL_FROM.b2b,
         template,
-        {
-          userData,
-          orderData: { ...orderData, status: newStatus },
-          status: newStatus
-        }
+        templateParams
       );
 
       // Send customer email
@@ -1115,8 +1178,8 @@ export const sendStatusUpdateHttp = onRequest(
           text: `
             Order ${orderData.orderNumber} status has been updated to: ${newStatus}
             
-            Customer: ${userData.companyName} (${userData.email})
-            Contact: ${userData.contactPerson}
+            Customer: ${customerName} (${customerEmail})
+            ${orderData.source === 'b2b' ? `Contact: ${userData?.contactPerson || ''}` : ''}
             
             ${orderData.trackingNumber ? `Tracking: ${orderData.trackingNumber}` : ''}
             ${orderData.carrier ? `Carrier: ${orderData.carrier}` : ''}
@@ -1131,8 +1194,8 @@ export const sendStatusUpdateHttp = onRequest(
               <p><strong>New Status:</strong> ${newStatus}</p>
               
               <h3>Customer:</h3>
-              <p>${userData.companyName} (${userData.email})<br>
-              Contact: ${userData.contactPerson}</p>
+              <p>${customerName} (${customerEmail})<br>
+              ${orderData.source === 'b2b' ? `Contact: ${userData?.contactPerson || ''}` : ''}</p>
               
               ${orderData.trackingNumber ? `<p><strong>Tracking:</strong> ${orderData.trackingNumber}</p>` : ''}
               ${orderData.carrier ? `<p><strong>Carrier:</strong> ${orderData.carrier}</p>` : ''}
@@ -1145,9 +1208,9 @@ export const sendStatusUpdateHttp = onRequest(
           EMAIL_FROM.system,
           adminTemplate as EmailTemplate,
           {
-            userData,
             orderData: { ...orderData, status: newStatus },
-            status: newStatus
+            userData: templateParams.userData,
+            customerInfo: orderData.customerInfo
           }
         );
 
