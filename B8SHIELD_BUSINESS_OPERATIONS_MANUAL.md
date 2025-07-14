@@ -94,12 +94,27 @@ När ni har mer data, kör denna query för att få verkliga siffror:
 
 ### 💰 The Revenue Share Model
 
+**Flexibel System:** Både commission rate och customer discount kan justeras individuellt för varje affiliate via admin interface.
+
 #### Commission Structure - Strategic Thinking
 **Inte bara provision - det är partnership management:**
 
 - **Commission Rate**: 15% standard (kan justeras per affiliate)
-- **Customer Discount**: 10% (ger customer value, driver conversion)
-- **Our Net**: Fortfarande 75% av full profit efter affiliate cost
+- **Customer Discount**: 10% standard (kan justeras per affiliate)
+- **Our Net**: Varierar baserat på commission + discount settings per affiliate
+
+#### 🎯 Pro Tip: Strategic Rate Management
+**High-Value Affiliates:**
+- Higher commission (20%+) for proven performers
+- Lower customer discount (5-8%) to maintain margins
+
+**New/Testing Affiliates:**
+- Standard commission (15%) until proven
+- Higher customer discount (12-15%) to drive initial conversions
+
+**Volume Affiliates:**
+- Lower commission (10-12%) för volume deals
+- Standard discount (10%) för consistency
 
 #### Affiliate Lifecycle Management
 
