@@ -21,13 +21,21 @@ import {
 
 const Checkout = () => {
   const { cart, calculateTotals, clearCart } = useCart();
-  const { currentUser } = useSimpleAuth();
+  const { currentUser, login } = useSimpleAuth();
   const { t, currentLanguage } = useTranslation();
   const { getContentValue } = useContentTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [step, setStep] = useState('contact'); // 'contact', 'shipping', 'payment'
+  
+  // Login modal state
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginCredentials, setLoginCredentials] = useState({
+    email: '',
+    password: ''
+  });
+  const [loginLoading, setLoginLoading] = useState(false);
 
   // Form data
   const [contactInfo, setContactInfo] = useState({
@@ -112,6 +120,30 @@ const Checkout = () => {
       setContactInfo(prev => ({ ...prev, email: currentUser.email || '' }));
     } finally {
       setLoadingProfile(false);
+    }
+  };
+
+  const handleCheckoutLogin = async (e) => {
+    e.preventDefault();
+    setLoginLoading(true);
+    
+    try {
+      await login(loginCredentials.email, loginCredentials.password);
+      toast.success(t('checkout_login_success', 'Inloggning lyckades! Dina uppgifter fylls i automatiskt.'));
+      setShowLoginModal(false);
+      
+      // Clear login form
+      setLoginCredentials({
+        email: '',
+        password: ''
+      });
+      
+      // Customer profile will be loaded automatically by the useEffect watching currentUser
+    } catch (error) {
+      console.error('Checkout login error:', error);
+      toast.error(t('checkout_login_error', 'Inloggningsfel. Kontrollera dina uppgifter och försök igen.'));
+    } finally {
+      setLoginLoading(false);
     }
   };
 
@@ -514,6 +546,25 @@ const Checkout = () => {
                         placeholder={t('checkout_email_placeholder', 'din@epost.se')}
                         required
                       />
+                      
+                      {/* Login option for non-logged-in users */}
+                      {!currentUser && (
+                        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-sm text-blue-800 mb-2">
+                            {t('checkout_has_account', 'Har du redan ett konto?')}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setShowLoginModal(true)}
+                            className="text-blue-600 hover:text-blue-700 font-medium text-sm underline"
+                          >
+                            {t('checkout_login_to_account', 'Logga in på ditt konto')}
+                          </button>
+                          <p className="text-xs text-blue-600 mt-1">
+                            {t('checkout_login_benefit', 'Få alla dina uppgifter automatiskt ifyllda')}
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center">
@@ -903,6 +954,97 @@ const Checkout = () => {
         {/* Footer */}
         {/* ShopFooter component was removed from imports, so it's removed from here */}
       </div>
+      
+      {/* Login Modal */}
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">
+                {t('checkout_login_title', 'Logga in på ditt konto')}
+              </h2>
+              <button
+                onClick={() => setShowLoginModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-4">
+              {t('checkout_login_description', 'Logga in för att få alla dina uppgifter automatiskt ifyllda.')}
+            </p>
+            
+            <form onSubmit={handleCheckoutLogin} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('checkout_login_email', 'E-postadress')}
+                </label>
+                <input
+                  type="email"
+                  value={loginCredentials.email}
+                  onChange={(e) => setLoginCredentials({...loginCredentials, email: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder={t('checkout_login_email_placeholder', 'din@epost.se')}
+                  required
+                  disabled={loginLoading}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('checkout_login_password', 'Lösenord')}
+                </label>
+                <input
+                  type="password"
+                  value={loginCredentials.password}
+                  onChange={(e) => setLoginCredentials({...loginCredentials, password: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder={t('checkout_login_password_placeholder', 'Ditt lösenord')}
+                  required
+                  disabled={loginLoading}
+                />
+              </div>
+              
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowLoginModal(false)}
+                  className="flex-1 px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+                  disabled={loginLoading}
+                >
+                  {t('checkout_login_cancel', 'Avbryt')}
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  disabled={loginLoading}
+                >
+                  {loginLoading ? t('checkout_login_loading', 'Loggar in...') : t('checkout_login_submit', 'Logga in')}
+                </button>
+              </div>
+            </form>
+            
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-600 text-center">
+                {t('checkout_login_forgot', 'Glömt lösenordet?')}{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowLoginModal(false);
+                    navigate(getCountryAwareUrl('/customer-forgot-password'));
+                  }}
+                  className="text-blue-600 hover:text-blue-700 underline"
+                >
+                  {t('checkout_login_reset', 'Återställ här')}
+                </button>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
