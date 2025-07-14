@@ -75,6 +75,7 @@ import AdminAffiliateEdit from './pages/admin/AdminAffiliateEdit';
 import AdminAffiliateAnalytics from './pages/admin/AdminAffiliateAnalytics';
 import AdminAffiliatePayout from './pages/admin/AdminAffiliatePayout';
 import AffiliateTracker from './components/AffiliateTracker';
+import ScrollToTop from './components/ScrollToTop';
 
 // Order Confirmation
 import OrderConfirmation from './pages/shop/OrderConfirmation';
@@ -155,6 +156,7 @@ function App() {
 
   const content = (
     <Router>
+      <ScrollToTop />
       {appMode === 'shop' && <CookiebotCMP />}
       <AffiliateTracker /> 
       <ConditionalTranslationProvider appMode={appMode}>
