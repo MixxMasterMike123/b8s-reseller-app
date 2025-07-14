@@ -8,7 +8,8 @@ import {
   ArrowRightOnRectangleIcon,
   ShoppingBagIcon,
   MagnifyingGlassIcon,
-  UserIcon
+  UserIcon,
+  ChevronDownIcon
 } from '@heroicons/react/24/outline';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { db } from '../../firebase/config';
@@ -22,6 +23,7 @@ const ShopNavigation = ({ breadcrumb }) => {
   const navigate = useNavigate();
   const { currentUser, logout } = useSimpleAuth();
   const [affiliateData, setAffiliateData] = useState(null);
+  const [showLoginDropdown, setShowLoginDropdown] = useState(false);
   
   // Calculate total items in cart
   const cartItemCount = cart.items.reduce((total, item) => total + item.quantity, 0);
@@ -52,6 +54,17 @@ const ShopNavigation = ({ breadcrumb }) => {
     await logout();
     navigate(getCountryAwareUrl(''));
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.login-dropdown')) {
+        setShowLoginDropdown(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   return (
     <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50">
@@ -128,14 +141,66 @@ const ShopNavigation = ({ breadcrumb }) => {
                 </button>
               </div>
             ) : (
-              /* Login Link for Non-authenticated Users */
-              <Link 
-                to={getCountryAwareUrl('login')}
-                className="p-2 text-gray-700 hover:text-blue-600 transition-colors"
-                title={t('nav_login', 'Logga in')}
-              >
-                <UserIcon className="h-6 w-6" />
-              </Link>
+              /* Smart Login Dropdown for Non-authenticated Users */
+              <div className="relative login-dropdown">
+                <button
+                  onClick={() => setShowLoginDropdown(!showLoginDropdown)}
+                  onMouseEnter={() => setShowLoginDropdown(true)}
+                  className="flex items-center p-2 text-gray-700 hover:text-blue-600 transition-colors"
+                  title={t('nav_login', 'Logga in')}
+                >
+                  <UserIcon className="h-6 w-6" />
+                  <ChevronDownIcon className="h-3 w-3 ml-1 hidden sm:block" />
+                </button>
+
+                {/* Login Dropdown Menu */}
+                {showLoginDropdown && (
+                  <div 
+                    className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+                    onMouseLeave={() => setShowLoginDropdown(false)}
+                  >
+                    <div className="py-2">
+                      <Link
+                        to={getCountryAwareUrl('login')}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors"
+                        onClick={() => setShowLoginDropdown(false)}
+                      >
+                        <UserIcon className="h-4 w-4 mr-3" />
+                        {t('nav_login_customer', 'Logga in som kund')}
+                      </Link>
+                      
+                      <Link
+                        to={getCountryAwareUrl('affiliate-login')}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors"
+                        onClick={() => setShowLoginDropdown(false)}
+                      >
+                        <div className="h-4 w-4 mr-3 flex items-center justify-center">
+                          <span className="text-green-500 text-xs">●</span>
+                        </div>
+                        {t('nav_login_affiliate', 'Logga in som affiliate')}
+                      </Link>
+                    </div>
+                    
+                    {/* Footer with registration links */}
+                    <div className="border-t border-gray-100 py-2">
+                      <Link
+                        to={getCountryAwareUrl('register')}
+                        className="block px-4 py-2 text-xs text-gray-500 hover:text-blue-600 transition-colors"
+                        onClick={() => setShowLoginDropdown(false)}
+                      >
+                        {t('nav_register_customer', 'Skapa kundkonto')}
+                      </Link>
+                      <Link
+                        to={getCountryAwareUrl('affiliate-registration')}
+                        className="block px-4 py-2 text-xs text-gray-500 hover:text-blue-600 transition-colors"
+                        onClick={() => setShowLoginDropdown(false)}
+                      >
+                        {t('nav_register_affiliate', 'Ansök som affiliate')}
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Shopping Cart Icon */}
