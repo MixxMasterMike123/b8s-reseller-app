@@ -88,14 +88,55 @@ const ShopNavigation = ({ breadcrumb }) => {
               <MagnifyingGlassIcon className="h-6 w-6" />
             </button>
 
-            {/* Profile Icon - Links to account or login */}
-            <Link 
-              to={currentUser ? "/account" : "/login"}
-              className="p-2 text-gray-700 hover:text-blue-600 transition-colors"
-              title={currentUser ? t('nav_my_account', 'Mitt konto') : t('nav_login', 'Logga in')}
-            >
-              <UserIcon className="h-6 w-6" />
-            </Link>
+            {/* Smart User Profile Section */}
+            {currentUser ? (
+              <div className="flex items-center space-x-2">
+                {/* User Account Link */}
+                <Link 
+                  to={affiliateData ? getCountryAwareUrl('affiliate-portal') : getCountryAwareUrl('account')}
+                  className="p-2 text-gray-700 hover:text-blue-600 transition-colors"
+                  title={affiliateData ? t('nav_affiliate_portal', 'Affiliate Portal') : t('nav_my_account', 'Mitt konto')}
+                >
+                  <UserIcon className="h-6 w-6" />
+                </Link>
+
+                {/* User Name Display */}
+                <div className="flex items-center space-x-2">
+                  <span className="hidden sm:inline text-sm text-gray-600 max-w-[120px] truncate">
+                    {affiliateData ? affiliateData.name : (currentUser.displayName || currentUser.email?.split('@')[0])}
+                  </span>
+                  <span className="sm:hidden text-xs text-gray-500 max-w-[60px] truncate">
+                    {affiliateData ? affiliateData.name : (currentUser.displayName || currentUser.email?.split('@')[0])}
+                  </span>
+                  
+                  {/* Status Indicators */}
+                  {affiliateData && (
+                    <span className="text-green-500 text-xs">●</span>
+                  )}
+                </div>
+
+                {/* Logout Button */}
+                <button
+                  onClick={affiliateData ? handleAffiliateLogout : () => {
+                    logout();
+                    navigate(getCountryAwareUrl(''));
+                  }}
+                  className="p-1 text-gray-500 hover:text-red-600 transition-colors"
+                  title={t('nav_logout', 'Logga ut')}
+                >
+                  <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                </button>
+              </div>
+            ) : (
+              /* Login Link for Non-authenticated Users */
+              <Link 
+                to={getCountryAwareUrl('login')}
+                className="p-2 text-gray-700 hover:text-blue-600 transition-colors"
+                title={t('nav_login', 'Logga in')}
+              >
+                <UserIcon className="h-6 w-6" />
+              </Link>
+            )}
 
             {/* Shopping Cart Icon */}
             <Link 
@@ -110,20 +151,6 @@ const ShopNavigation = ({ breadcrumb }) => {
                 </span>
               )}
             </Link>
-
-            {/* Affiliate Logout */}
-            {affiliateData && (
-              <div className="flex items-center space-x-2 ml-2">
-                <span className="hidden sm:inline text-sm text-gray-600">{affiliateData.name}</span>
-                <button
-                  onClick={handleAffiliateLogout}
-                  className="p-1 text-gray-500 hover:text-red-600 transition-colors"
-                  title={t('nav_logout', 'Logga ut')}
-                >
-                  <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>
