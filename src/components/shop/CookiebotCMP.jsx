@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import CookieBot from 'react-cookiebot';
 
 // Cookiebot Domain Group ID obtained from account setup
@@ -10,7 +10,6 @@ const DOMAIN_GROUP_ID = '51150c10-e895-4814-b11b-04512c3782ed';
  */
 const CookiebotCMP = () => {
   const hasInitialized = useRef(false);
-  const [isReady, setIsReady] = useState(false);
   
   // Optional: hook consent events for future analytics initialisation
   useEffect(() => {
@@ -40,19 +39,6 @@ const CookiebotCMP = () => {
   }
   
   hasInitialized.current = true;
-
-  // Add error boundary for Cookiebot
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsReady(true);
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (!isReady) {
-    return null;
-  }
 
   try {
     return (
