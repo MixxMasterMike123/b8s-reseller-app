@@ -16,7 +16,6 @@ import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/fire
 import { generateAffiliateLink } from '../../utils/productUrls';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
-import CustomerLogin from './CustomerLogin';
 import AffiliateSuccessGuide from '../../components/affiliate/AffiliateSuccessGuide';
 import AffiliateMarketingMaterials from '../../components/AffiliateMarketingMaterials';
 import AffiliateAnalyticsTab from './AffiliateAnalyticsTab';
@@ -606,37 +605,32 @@ const AffiliatePortal = () => {
   }
 
   if (!currentUser) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">{t('affiliate_portal_title', 'Affiliate Portal')}</h1>
-            <p className="text-gray-600 mb-8">{t('affiliate_portal_login_prompt', 'Please log in to see your dashboard.')}</p>
-            <CustomerLogin onLoginSuccess={() => fetchAffiliateData()} />
-            <p className="mt-8">
-              {t('affiliate_portal_not_affiliate', 'Not an affiliate yet?')}{' '}
-              <Link to="/affiliate-registration" className="font-medium text-blue-600 hover:text-blue-800">
-                {t('affiliate_portal_apply_here', 'Apply here!')}
-              </Link>
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+    // Redirect to affiliate login page
+    window.location.href = '/affiliate-login';
+    return null;
   }
 
   if (error || !affiliateData) {
     return (
       <div className="min-h-screen bg-gray-50">
+        <ShopNavigation />
         <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">{t('affiliate_portal_title', 'Affiliate Portal')}</h1>
-            <p className="text-red-600 mb-8">{error}</p>
-            <Link to="/affiliate-registration" className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-              {t('affiliate_portal_apply_now', 'Ansök nu')}
-            </Link>
+            <p className="text-red-600 mb-8">
+              {t('affiliate_portal_no_account', 'Vi kunde inte hitta ett aktivt affiliate-konto kopplat till din e-post.')}
+            </p>
+            <div className="space-y-4">
+              <Link to="/affiliate-registration" className="block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                {t('affiliate_portal_apply_now', 'Ansök nu')}
+              </Link>
+              <Link to="/affiliate-login" className="block text-blue-600 hover:text-blue-800 font-medium">
+                {t('affiliate_portal_try_different_account', 'Prova ett annat konto')}
+              </Link>
+            </div>
           </div>
         </div>
+        <ShopFooter />
       </div>
     );
   }

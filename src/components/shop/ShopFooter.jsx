@@ -73,6 +73,11 @@ const ShopFooter = () => {
                 </Link>
               </li>
               <li>
+                <Link to={getCountryAwareUrl('affiliate-login')} className="text-gray-300 hover:text-white transition-colors">
+                  {t('footer_affiliate_login', 'Affiliate-inloggning')}
+                </Link>
+              </li>
+              <li>
                 <Link to={getCountryAwareUrl('affiliate-portal')} className="text-gray-300 hover:text-white transition-colors">
                   {t('footer_affiliate_portal', 'Affiliate-portal')}
                 </Link>

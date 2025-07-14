@@ -65,6 +65,7 @@ import ShippingInfo from './pages/shop/ShippingInfo';
 
 // Affiliate Program Pages
 import AffiliateRegistration from './pages/shop/AffiliateRegistration';
+import AffiliateLogin from './pages/shop/AffiliateLogin';
 import AffiliatePortal from './pages/shop/AffiliatePortal';
 import AdminAffiliates from './pages/admin/AdminAffiliates';
 import AdminAffiliateEdit from './pages/admin/AdminAffiliateEdit';
@@ -177,6 +178,7 @@ function App() {
               <Route path="/login" element={<CustomerLogin />} />
               <Route path="/register" element={<CustomerRegister />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/affiliate-login" element={<AffiliateLogin />} />
               
               {/* Firebase Auth Action Handler - Email Verification */}
               <Route path="/__/auth/action" element={<EmailVerificationHandler />} />
@@ -195,6 +197,7 @@ function App() {
               <Route path="/:countryCode/cookies" element={<CountryRouteValidator><CookiePolicy /></CountryRouteValidator>} />
               <Route path="/:countryCode/shipping" element={<CountryRouteValidator><ShippingInfo /></CountryRouteValidator>} />
               <Route path="/:countryCode/affiliate-registration" element={<CountryRouteValidator><AffiliateRegistration /></CountryRouteValidator>} />
+              <Route path="/:countryCode/affiliate-login" element={<CountryRouteValidator><AffiliateLogin /></CountryRouteValidator>} />
               <Route path="/:countryCode/affiliate-portal" element={<CountryRouteValidator><AffiliatePortal /></CountryRouteValidator>} />
               
               {/* Catch-all redirect to geo-detection */}
