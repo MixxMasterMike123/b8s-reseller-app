@@ -8,8 +8,7 @@ import {
   BookOpenIcon,
   PresentationChartBarIcon,
   ChartBarIcon, 
-  SparklesIcon,
-  WrenchScrewdriverIcon
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 import { db } from '../../firebase/config';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
@@ -20,7 +19,7 @@ import AffiliateSuccessGuide from '../../components/affiliate/AffiliateSuccessGu
 import AffiliateMarketingMaterials from '../../components/AffiliateMarketingMaterials';
 import AffiliateAnalyticsTab from './AffiliateAnalyticsTab';
 import SmartPrice, { ExactPrice } from '../../components/shop/SmartPrice';
-import { diagnoseAffiliateData, testCommissionProcessing, fixMissingCommissions, fixMissingCommissionsIntelligent } from '../../utils/affiliateDebug';
+
 import toast from 'react-hot-toast';
 import QRCode from 'qrcode';
 
@@ -34,10 +33,7 @@ const AffiliatePortal = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   
-  // Diagnostic state
-  const [diagnosticLoading, setDiagnosticLoading] = useState(false);
-  const [diagnosticResult, setDiagnosticResult] = useState(null); // New state for enhanced diagnostic results
-  const [diagnosticData, setDiagnosticData] = useState(null);
+
 
   // Link Generator State
   const [selectedProduct, setSelectedProduct] = useState('');
@@ -198,27 +194,7 @@ const AffiliatePortal = () => {
     toast.success(t('affiliate_profile_saved', 'Profil sparad!'));
   };
 
-  // Run diagnostic
-  const runDiagnostic = async () => {
-    if (!affiliateData?.affiliateCode) return;
-    
-    setDiagnosticLoading(true);
-    try {
-      const results = await diagnoseAffiliateData(affiliateData.affiliateCode);
-      setDiagnosticData(results);
-      
-      if (results.recommendations.length > 0) {
-        toast.error(`🚨 Found ${results.recommendations.length} issues with your affiliate data`);
-      } else {
-        toast.success('✅ No data issues found!');
-      }
-    } catch (error) {
-      console.error('Diagnostic error:', error);
-      toast.error('Diagnostic failed: ' + error.message);
-    } finally {
-      setDiagnosticLoading(false);
-    }
-  };
+
 
   const safeGetContentValue = (content) => {
     if (!content) return '';
@@ -279,11 +255,7 @@ const AffiliatePortal = () => {
       name: t('affiliate_portal_tab_analytics', 'Analys'),
       icon: <ChartBarIcon className="h-5 w-5" />
     },
-    {
-      id: 'debug',
-      name: 'Debug',
-      icon: <WrenchScrewdriverIcon className="h-5 w-5" />
-    },
+
     {
       id: 'profile',
       name: t('affiliate_portal_tab_profile', 'Profil'),
@@ -402,170 +374,7 @@ const AffiliatePortal = () => {
             </div>
           </div>
         );
-      case 'debug':
-        return (
-          <div className="bg-white p-6 rounded-2xl shadow-lg">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">🔧 Affiliate System Diagnostics</h2>
-            <p className="text-gray-600 mb-6">
-              Run comprehensive diagnostics to identify and fix affiliate system issues.
-            </p>
-            
-            <div className="space-y-4">
-              <button
-                onClick={runDiagnostic}
-                disabled={diagnosticLoading}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 mr-4"
-              >
-                {diagnosticLoading ? 'Running Diagnostic...' : '🔍 Run Full System Diagnostic'}
-              </button>
-              
-              <button
-                onClick={async () => {
-                  setDiagnosticLoading(true);
-                  try {
-                    const result = await fixMissingCommissions();
-                    console.log('✅ Bulk commission fix completed:', result);
-                    setDiagnosticData(prev => ({
-                      ...prev,
-                      bulkFixResult: result
-                    }));
-                  } catch (error) {
-                    console.error('❌ Error in bulk commission fix:', error);
-                  } finally {
-                    setDiagnosticLoading(false);
-                  }
-                }}
-                disabled={diagnosticLoading}
-                className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 disabled:opacity-50 mr-4"
-              >
-                {diagnosticLoading ? 'Fixing Commissions...' : '🔧 Fix Missing Commissions (Fast)'}
-              </button>
-              
-              <button
-                onClick={async () => {
-                  setDiagnosticLoading(true);
-                  try {
-                    const result = await fixMissingCommissionsIntelligent();
-                    console.log('✅ Intelligent bulk commission fix completed:', result);
-                    setDiagnosticData(prev => ({
-                      ...prev,
-                      intelligentFixResult: result
-                    }));
-                  } catch (error) {
-                    console.error('❌ Error in intelligent bulk commission fix:', error);
-                  } finally {
-                    setDiagnosticLoading(false);
-                  }
-                }}
-                disabled={diagnosticLoading}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
-              >
-                {diagnosticLoading ? 'Processing Intelligently...' : '🧠 Fix Missing Commissions (Intelligent)'}
-              </button>
-            </div>
-            
-            <div className="mt-6 text-sm text-gray-600 space-y-2">
-              <p>• <strong>Full System Diagnostic:</strong> Analyzes all affiliate data for inconsistencies</p>
-              <p>• <strong>Fast Fix:</strong> Processes all orders quickly (may hit rate limits)</p>
-              <p>• <strong>Intelligent Fix:</strong> Processes orders in batches with delays (respects rate limits)</p>
-            </div>
 
-            {/* Enhanced Diagnostic Results */}
-            {diagnosticResult && (
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-semibold text-gray-900 mb-2">Diagnostic Results:</h4>
-                
-                {diagnosticResult.testType === 'commission_processing' && (
-                  <div className="space-y-2">
-                    <div className={`p-3 rounded-lg ${diagnosticResult.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      <div className="font-medium">
-                        {diagnosticResult.success ? '✅ Commission Processing Test' : '❌ Commission Processing Failed'}
-                      </div>
-                      <div className="text-sm mt-1">
-                        Order ID: {diagnosticResult.testOrderId}
-                      </div>
-                      {diagnosticResult.success && (
-                        <div className="text-sm mt-1">
-                          Commission Added: {diagnosticResult.commissionAdded ? 'Yes' : 'No'}
-                          {diagnosticResult.commissionAmount && (
-                            <> (${diagnosticResult.commissionAmount.toFixed(2)})</>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    {diagnosticResult.error && (
-                      <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
-                        Error: {diagnosticResult.error}
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {diagnosticResult.testType === 'bulk_commission_fix' && (
-                  <div className="space-y-2">
-                    <div className={`p-3 rounded-lg ${diagnosticResult.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      <div className="font-medium">
-                        {diagnosticResult.success ? '✅ Bulk Commission Fix' : '❌ Bulk Fix Failed'}
-                      </div>
-                      {diagnosticResult.success && (
-                        <div className="text-sm mt-1">
-                          Orders Processed: {diagnosticResult.ordersProcessed}
-                        </div>
-                      )}
-                    </div>
-                    {diagnosticResult.results && (
-                      <div className="text-sm">
-                        <div className="font-medium mb-1">Results:</div>
-                        {diagnosticResult.results.map((result, index) => (
-                          <div key={index} className={`p-2 rounded ${result.success ? 'bg-green-50' : 'bg-red-50'}`}>
-                            Order {result.orderId}: {result.success ? 'Fixed' : `Failed - ${result.error}`}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {!diagnosticResult.testType && (
-                  <div className="space-y-2">
-                    <div className={`p-3 rounded-lg ${diagnosticResult.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      <div className="font-medium">
-                        {diagnosticResult.success ? '✅ System Check Passed' : '❌ Issues Found'}
-                      </div>
-                    </div>
-                    
-                    {diagnosticResult.issues && diagnosticResult.issues.length > 0 && (
-                      <div className="space-y-1">
-                        <div className="font-medium text-sm">Issues Found:</div>
-                        {diagnosticResult.issues.map((issue, index) => (
-                          <div key={index} className={`text-sm p-2 rounded ${
-                            issue.severity === 'critical' ? 'bg-red-100 text-red-700' : 
-                            issue.severity === 'warning' ? 'bg-yellow-100 text-yellow-700' : 
-                            'bg-blue-100 text-blue-700'
-                          }`}>
-                            <span className="font-medium">{issue.type}:</span> {issue.message}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {diagnosticResult.summary && (
-                      <div className="text-sm">
-                        <div className="font-medium mb-1">Summary:</div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>Total Clicks: {diagnosticResult.summary.totalClicks}</div>
-                          <div>Total Orders: {diagnosticResult.summary.totalOrders}</div>
-                          <div>Current Stats: ${diagnosticResult.summary.currentStats.toFixed(2)}</div>
-                          <div>Calculated Stats: ${diagnosticResult.summary.calculatedStats.toFixed(2)}</div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        );
       case 'profile':
         return (
           <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-3xl mx-auto space-y-6">

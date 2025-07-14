@@ -17,7 +17,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
   const [loading, setLoading] = useState(true);
   const [clicks, setClicks] = useState([]);
   const [orders, setOrders] = useState([]);
-  const [debugMode, setDebugMode] = useState(false);
+
 
   // Set user's preferred language if available
   useEffect(() => {
@@ -179,13 +179,6 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
               {affiliateData.preferredLang}
             </span>
           )}
-          
-          <button
-            onClick={() => setDebugMode(!debugMode)}
-            className={`text-xs px-2 py-1 rounded ${debugMode ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}
-          >
-            {debugMode ? '✅ Reliable Data' : '🔍 Debug'}
-          </button>
         </div>
       </div>
 
@@ -256,12 +249,6 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
                 <th className="px-3 py-2">{t('analytics_order_id', 'Order #')}</th>
                 <th className="px-3 py-2">{t('analytics_order_value', 'Ordervärde')}</th>
                 <th className="px-3 py-2">{t('analytics_commission', 'Provision')}</th>
-                {debugMode && (
-                  <>
-                    <th className="px-3 py-2 text-xs">Status</th>
-                    <th className="px-3 py-2 text-xs">Fields</th>
-                  </>
-                )}
               </tr>
             </thead>
             <tbody>
@@ -280,9 +267,6 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
                         size="small"
                         showOriginal={false}
                       />
-                      {debugMode && orderValue === 0 && (
-                        <span className="text-red-500 text-xs ml-1">⚠️</span>
-                      )}
                     </td>
                     <td className="px-3 py-1">
                       <ExactPrice 
@@ -290,20 +274,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
                         size="small"
                         showOriginal={false}
                       />
-                      {debugMode && commission === 0 && o.affiliateCode && (
-                        <span className="text-red-500 text-xs ml-1">⚠️ Missing</span>
-                      )}
                     </td>
-                    {debugMode && (
-                      <>
-                        <td className="px-3 py-1 text-xs">
-                          {o.conversionProcessed ? '✅ Processed' : '❌ Not processed'}
-                        </td>
-                        <td className="px-3 py-1 text-xs">
-                          {o.total ? 'total' : o.totalAmount ? 'totalAmount' : 'none'}
-                        </td>
-                      </>
-                    )}
                   </tr>
                 );
               })}
