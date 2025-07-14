@@ -295,44 +295,111 @@ const AffiliatePortal = () => {
     switch (activeTab) {
       case 'overview':
         return (
-          <div className="space-y-6">
-            <aside className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-blue-500">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('affiliate_portal_stats_title', 'Dina Statistik')}</h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">{t('affiliate_portal_clicks_30_days', 'Klick (30 dagar)')}</span>
-                  <span className="font-bold text-lg text-gray-800">{liveStats?.clicks ?? affiliateData.stats.clicks}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">{t('affiliate_portal_conversions_30_days', 'Konverteringar (30 dagar)')}</span>
-                    <span className="font-bold text-lg text-gray-800">{liveStats?.conversions ?? affiliateData.stats.conversions}</span>
-                  </div>
-                  <div className="border-t my-4"></div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">{t('affiliate_portal_unpaid_commission', 'Obetald Provision')}</span>
-                    <span className="font-bold text-lg text-green-600">
-                      <ExactPrice 
-                        sekPrice={affiliateData.stats.balance} 
-                        size="normal"
-                        showOriginal={false}
-                      />
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">{t('affiliate_portal_total_earnings', 'Totala Intäkter')}</span>
-                    <span className="font-bold text-lg text-green-600">
-                      <ExactPrice 
-                        sekPrice={affiliateData.stats.totalEarnings} 
-                        size="normal"
-                        showOriginal={false}
-                      />
-                    </span>
+          <div className="grid grid-cols-12 gap-6">
+            {/* Main Content Area - Affiliate Link Section */}
+            <div className="col-span-12 lg:col-span-8">
+              <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-green-500">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('affiliate_portal_your_link', 'Din unika affiliatelänk')}</h3>
+                <p className="text-gray-600 mb-4">
+                  {t('affiliate_portal_link_description', 'Använd denna länk för att tjäna provision på alla köp:')}
+                </p>
+                
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <div className="flex items-center justify-between">
+                    <code className="text-sm text-blue-600 font-mono break-all">
+                      {generateLink()}
+                    </code>
+                    <button
+                      onClick={() => copyToClipboard(generateLink())}
+                      className="ml-4 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors flex-shrink-0"
+                    >
+                      {t('affiliate_portal_copy_link', 'Kopiera')}
+                    </button>
                   </div>
                 </div>
-                <button className="w-full mt-6 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors">
+
+                <div className="flex gap-3 mb-4">
+                  <button
+                    onClick={() => {
+                      const link = generateLink();
+                      setGeneratedLink(link);
+                      generateQRCode(link);
+                    }}
+                    className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm"
+                  >
+                    {t('affiliate_portal_generate_qr', 'Generera QR-kod')}
+                  </button>
+                  
+                  <a
+                    href={generateLink()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
+                  >
+                    {t('affiliate_portal_test_link', 'Testa länk')}
+                  </a>
+                </div>
+
+                {/* QR Code Display */}
+                {qrCodeDataUrl && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium text-gray-800 mb-2">{t('affiliate_portal_qr_code', 'QR-kod för din länk')}</h4>
+                        <img src={qrCodeDataUrl} alt="Affiliate QR Code" className="w-32 h-32 border rounded" />
+                      </div>
+                      <button
+                        onClick={downloadQRCode}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                      >
+                        {t('affiliate_portal_download_qr', 'Ladda ner QR')}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Compact Statistics Sidebar */}
+            <div className="col-span-12 lg:col-span-4">
+              <div className="bg-white rounded-2xl shadow-lg p-4 border-l-4 border-blue-500">
+                <h3 className="text-base font-semibold text-gray-800 mb-3">{t('affiliate_portal_stats_title', 'Dina Statistik')}</h3>
+                <div className="space-y-3">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-800">{liveStats?.clicks ?? affiliateData.stats.clicks}</div>
+                    <div className="text-xs text-gray-600">{t('affiliate_portal_clicks_30_days', 'Klick (30 dagar)')}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-800">{liveStats?.conversions ?? affiliateData.stats.conversions}</div>
+                    <div className="text-xs text-gray-600">{t('affiliate_portal_conversions_30_days', 'Konverteringar (30 dagar)')}</div>
+                  </div>
+                  <div className="border-t my-2"></div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-green-600">
+                      <ExactPrice 
+                        sekPrice={affiliateData.stats.balance} 
+                        size="small"
+                        showOriginal={false}
+                      />
+                    </div>
+                    <div className="text-xs text-gray-600">{t('affiliate_portal_unpaid_commission', 'Obetald Provision')}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-green-600">
+                      <ExactPrice 
+                        sekPrice={affiliateData.stats.totalEarnings} 
+                        size="small"
+                        showOriginal={false}
+                      />
+                    </div>
+                    <div className="text-xs text-gray-600">{t('affiliate_portal_total_earnings', 'Totala Intäkter')}</div>
+                  </div>
+                </div>
+                <button className="w-full mt-4 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors text-sm">
                   {t('affiliate_portal_request_payout', 'Begär utbetalning')}
                 </button>
-            </aside>
+              </div>
+            </div>
           </div>
         );
       case 'debug':
@@ -645,9 +712,9 @@ const AffiliatePortal = () => {
           <p className="mt-2 text-gray-600">{t('affiliate_portal_dashboard_subtitle', 'Din affiliate-instrumentpanel')}</p>
         </header>
 
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Left-side Tabs */}
-          <div className="md:w-64 flex-shrink-0">
+        <div className="grid grid-cols-12 gap-6">
+          {/* Left-side Tabs - 2 columns */}
+          <div className="col-span-12 lg:col-span-2">
             <div className="bg-white rounded-lg shadow">
               <nav className="space-y-1 p-4" aria-label="Sidebar">
                 {tabs.map((tab) => (
@@ -657,15 +724,15 @@ const AffiliatePortal = () => {
                     className={`flex items-center px-3 py-2 text-sm font-medium rounded-md w-full ${activeTab === tab.id ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
                   >
                     <span className="mr-3">{tab.icon}</span>
-                    {tab.name}
+                    <span className="hidden lg:inline">{tab.name}</span>
                   </button>
                 ))}
               </nav>
             </div>
           </div>
 
-          {/* Tab Content */}
-          <div className="md:w-2/3">
+          {/* Tab Content - 10 columns */}
+          <div className="col-span-12 lg:col-span-10">
             {renderTabContent()}
           </div>
         </div>
