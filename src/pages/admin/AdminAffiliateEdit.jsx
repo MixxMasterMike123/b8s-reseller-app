@@ -119,8 +119,17 @@ const AdminAffiliateEdit = () => {
     }).format(amount || 0);
   };
 
-  const fetchAffiliateStats = async (affiliateCode) => {
+  const fetchAffiliateStats = async (affiliateCode, affiliateData = null) => {
     try {
+      // Use passed affiliateData or fall back to state (for manual refreshes)
+      const currentAffiliateData = affiliateData || data;
+      
+      console.log(`🔍 Fetching stats for affiliate ${affiliateCode}, data available:`, {
+        hasData: !!currentAffiliateData,
+        hasStats: !!(currentAffiliateData?.stats),
+        stats: currentAffiliateData?.stats
+      });
+      
       // Get recent orders with this affiliate code (for detailed list display)
       const ordersRef = collection(db, 'orders');
       const q = query(ordersRef, where('affiliateCode', '==', affiliateCode));
@@ -140,10 +149,16 @@ const AdminAffiliateEdit = () => {
       const uniqueClicks = new Set(clicks.map(c => c.ipAddress)).size;
 
       // 🎯 USE AFFILIATE.STATS AS AUTHORITATIVE SOURCE (same as affiliate portal)
-      const affiliateStats = data?.stats || {};
-      const totalClicks = affiliateStats.clicks || 0;
-      const totalOrders = affiliateStats.conversions || 0;
-      const totalEarnings = affiliateStats.totalEarnings || 0;
+      const affiliateDbStats = currentAffiliateData?.stats || {};
+      const totalClicks = affiliateDbStats.clicks || 0;
+      const totalOrders = affiliateDbStats.conversions || 0;
+      const totalEarnings = affiliateDbStats.totalEarnings || 0;
+      
+      console.log(`📊 Affiliate ${affiliateCode} stats comparison:`, {
+        fromDatabase: { clicks: affiliateDbStats.clicks, conversions: affiliateDbStats.conversions },
+        fromActualClicks: { totalClicks: clicks.length, uniqueClicks },
+        willDisplay: { totalClicks, totalOrders, uniqueClicks }
+      });
 
       setRecentOrders(orders);
       setAffiliateStats({
@@ -233,7 +248,7 @@ const AdminAffiliateEdit = () => {
               name: affiliateData.name
             });
             
-            await fetchAffiliateStats(affiliateData.affiliateCode);
+            await fetchAffiliateStats(affiliateData.affiliateCode, affiliateData);
             await fetchPayoutHistory(id);
           }
           
