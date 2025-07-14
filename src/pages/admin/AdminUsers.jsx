@@ -15,6 +15,9 @@ const AdminUsers = () => {
   const [roleUpdateLoading, setRoleUpdateLoading] = useState(false);
   const [marginalUpdateLoading, setMarginalUpdateLoading] = useState(false);
   const [editingMarginals, setEditingMarginals] = useState({});
+  
+  // 🆕 ADD: Tab state for separating B2B customers from Admin users
+  const [activeTab, setActiveTab] = useState('customers');
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -35,7 +38,7 @@ const AdminUsers = () => {
   }, [getAllUsers]);
 
   useEffect(() => {
-    // Filter users based on search term and status filter
+    // 🆕 ENHANCE: Filter users based on search term, status filter, AND active tab
     const filtered = users.filter(user => {
       const matchesSearch = 
         user.companyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -47,11 +50,15 @@ const AdminUsers = () => {
         (statusFilter === 'active' && user.active) || 
         (statusFilter === 'inactive' && !user.active);
       
-      return matchesSearch && matchesStatus;
+      // 🆕 ADD: Tab-based filtering (preserves all existing logic)
+      const matchesTab = 
+        activeTab === 'customers' ? user.role !== 'admin' : user.role === 'admin';
+      
+      return matchesSearch && matchesStatus && matchesTab;
     });
     
     setFilteredUsers(filtered);
-  }, [searchTerm, statusFilter, users]);
+  }, [searchTerm, statusFilter, users, activeTab]);
 
 
 
@@ -134,14 +141,16 @@ const AdminUsers = () => {
         {/* Header */}
         <div className="px-4 py-5 border-b border-gray-200 sm:px-6 flex justify-between items-center">
           <h1 className="text-lg leading-6 font-medium text-gray-900">
-            Kundhantering
+            {/* 🆕 ENHANCE: Dynamic header based on active tab */}
+            {activeTab === 'customers' ? 'Kundhantering' : 'Admin Användare'}
           </h1>
           <div className="flex gap-3">
             <Link
               to="/admin/users/create"
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
             >
-              Skapa Ny Kund
+              {/* 🆕 ENHANCE: Dynamic button text based on active tab */}
+              {activeTab === 'customers' ? 'Skapa Ny Kund' : 'Skapa Ny Admin'}
             </Link>
             <Link
               to="/admin"
@@ -152,13 +161,44 @@ const AdminUsers = () => {
           </div>
         </div>
 
+        {/* 🆕 ADD: Tab Navigation */}
+        <div className="border-b border-gray-200">
+          <nav className="px-4 sm:px-6 -mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('customers')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                activeTab === 'customers'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              B2B Kunder ({users.filter(u => u.role !== 'admin').length})
+            </button>
+            <button
+              onClick={() => setActiveTab('admins')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                activeTab === 'admins'
+                  ? 'border-purple-500 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Admin Användare ({users.filter(u => u.role === 'admin').length})
+            </button>
+          </nav>
+        </div>
+
         {/* Filter and search */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="relative flex-1">
               <input
                 type="text"
-                placeholder="Sök efter namn, e-post eller företag..."
+                placeholder={
+                  /* 🆕 ENHANCE: Dynamic placeholder based on active tab */
+                  activeTab === 'customers' 
+                    ? "Sök efter namn, e-post eller företag..." 
+                    : "Sök efter namn, e-post eller admin..."
+                }
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 pl-10 py-2"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -176,9 +216,10 @@ const AdminUsers = () => {
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
-                <option value="all">Alla Kunder</option>
-                <option value="active">Aktiva Kunder</option>
-                <option value="inactive">Inaktiva Kunder</option>
+                {/* 🆕 ENHANCE: Dynamic filter options based on active tab */}
+                <option value="all">{activeTab === 'customers' ? 'Alla Kunder' : 'Alla Admins'}</option>
+                <option value="active">{activeTab === 'customers' ? 'Aktiva Kunder' : 'Aktiva Admins'}</option>
+                <option value="inactive">{activeTab === 'customers' ? 'Inaktiva Kunder' : 'Inaktiva Admins'}</option>
               </select>
             </div>
           </div>
@@ -339,7 +380,13 @@ const AdminUsers = () => {
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-500">Inga kunder hittades som matchar dina kriterier.</p>
+              {/* 🆕 ENHANCE: Dynamic empty state message based on active tab */}
+              <p className="text-gray-500">
+                {activeTab === 'customers' 
+                  ? 'Inga kunder hittades som matchar dina kriterier.' 
+                  : 'Inga admin användare hittades som matchar dina kriterier.'
+                }
+              </p>
             </div>
           )}
         </div>
