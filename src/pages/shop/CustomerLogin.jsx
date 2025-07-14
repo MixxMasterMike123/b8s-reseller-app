@@ -7,7 +7,7 @@ import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
 import ShopCredentialLanguageSwitcher from '../../components/shop/ShopCredentialLanguageSwitcher';
 
-const CustomerLogin = ({ onLoginSuccess }) => {
+const CustomerLogin = ({ onLoginSuccess, hideLanguageSwitcher = false, hideNavigation = false }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -41,16 +41,18 @@ const CustomerLogin = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {!onLoginSuccess && <ShopNavigation breadcrumb={t('breadcrumb_login', 'Logga in')} />}
+    <div className={hideNavigation ? "" : "min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50"}>
+      {!onLoginSuccess && !hideNavigation && <ShopNavigation breadcrumb={t('breadcrumb_login', 'Logga in')} />}
       
-      <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="flex justify-end mb-4">
-          <ShopCredentialLanguageSwitcher
-            currentLanguage={currentLanguage}
-            onLanguageChange={() => {}} // Language change is now handled by translation context
-          />
-        </div>
+      <div className={hideNavigation ? "" : "max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16"}>
+        {!hideLanguageSwitcher && (
+          <div className="flex justify-end mb-4">
+            <ShopCredentialLanguageSwitcher
+              currentLanguage={currentLanguage}
+              onLanguageChange={() => {}} // Language change is now handled by translation context
+            />
+          </div>
+        )}
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             {t('customer_login_title', 'Logga in på ditt konto')}
@@ -126,7 +128,7 @@ const CustomerLogin = ({ onLoginSuccess }) => {
             </Link>
         </div>
       </div>
-      {!onLoginSuccess && <ShopFooter />}
+      {!onLoginSuccess && !hideNavigation && <ShopFooter />}
     </div>
   );
 };

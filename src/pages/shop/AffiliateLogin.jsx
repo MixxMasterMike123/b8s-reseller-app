@@ -14,8 +14,9 @@ const AffiliateLogin = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <ShopNavigation breadcrumb={t('breadcrumb_affiliate_login', 'Affiliate-inloggning')} />
       
-      <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-8">
+      {/* Desktop: Side-by-side layout, Mobile: Stacked */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center mb-12">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             {t('affiliate_login_title', 'Affiliate-inloggning')}
           </h1>
@@ -24,33 +25,66 @@ const AffiliateLogin = () => {
           </p>
         </div>
         
-        {/* Prominent CTA for becoming an affiliate */}
-        <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
-          <div className="text-center">
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              {t('affiliate_login_not_partner_yet', 'Inte partner än?')}
-            </h2>
-            <p className="text-sm text-gray-600 mb-4">
-              {t('affiliate_login_join_program', 'Gå med i vårt affiliate-program och tjäna provision på varje försäljning.')}
-            </p>
-            <Link 
-              to={getCountryAwareUrl('affiliate-registration')} 
-              className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-            >
-              {t('affiliate_login_become_affiliate', 'Bli en B8Shield affiliate')}
-            </Link>
+        {/* Desktop: Two columns, Mobile: Single column */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+          
+          {/* Left Column: CTA for becoming an affiliate */}
+          <div className="lg:pr-8">
+            <div className="p-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 h-full flex flex-col justify-center">
+              <div className="text-center">
+                <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+                  {t('affiliate_login_not_partner_yet', 'Inte partner än?')}
+                </h2>
+                <p className="text-gray-600 mb-8 text-lg">
+                  {t('affiliate_login_join_program', 'Gå med i vårt affiliate-program och tjäna provision på varje försäljning.')}
+                </p>
+                
+                {/* Benefits list */}
+                <div className="text-left mb-8 space-y-3">
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
+                    <span className="text-gray-700">{t('affiliate_login_benefit_commission', 'Tjäna provision på varje försäljning')}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
+                    <span className="text-gray-700">{t('affiliate_login_benefit_materials', 'Få tillgång till marknadsföringsmaterial')}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
+                    <span className="text-gray-700">{t('affiliate_login_benefit_tracking', 'Följ dina resultat i realtid')}</span>
+                  </div>
+                </div>
+                
+                <Link 
+                  to={getCountryAwareUrl('affiliate-registration')} 
+                  className="inline-block bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-lg"
+                >
+                  {t('affiliate_login_become_affiliate', 'Bli en B8Shield affiliate')}
+                </Link>
+              </div>
+            </div>
           </div>
-        </div>
-        
-        <CustomerLogin onLoginSuccess={() => navigate(getCountryAwareUrl('affiliate-portal'))} />
-        
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-600">
-            {t('affiliate_login_not_affiliate', 'Inte en affiliate ännu?')}{' '}
-            <Link to={getCountryAwareUrl('affiliate-registration')} className="font-medium text-blue-600 hover:text-blue-500">
-              {t('affiliate_login_apply_here', 'Ansök här!')}
-            </Link>
-          </p>
+          
+          {/* Right Column: Login form */}
+          <div className="lg:pl-8">
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <CustomerLogin 
+                onLoginSuccess={() => navigate(getCountryAwareUrl('affiliate-portal'))} 
+                hideLanguageSwitcher={true}
+                hideNavigation={true}
+              />
+              
+              <div className="mt-8 text-center">
+                <p className="text-sm text-gray-600">
+                  {t('affiliate_login_not_affiliate', 'Inte en affiliate ännu?')}{' '}
+                  <Link to={getCountryAwareUrl('affiliate-registration')} className="font-medium text-blue-600 hover:text-blue-500">
+                    {t('affiliate_login_apply_here', 'Ansök här!')}
+                  </Link>
+                </p>
+              </div>
+            </div>
+          </div>
+          
         </div>
       </div>
       
