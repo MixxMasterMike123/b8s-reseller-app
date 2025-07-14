@@ -1,12 +1,14 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../contexts/TranslationContext';
 import CustomerLogin from './CustomerLogin';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
+import { getCountryAwareUrl } from '../../utils/productUrls';
 
 const AffiliateLogin = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -22,12 +24,12 @@ const AffiliateLogin = () => {
           </p>
         </div>
         
-        <CustomerLogin onLoginSuccess={() => window.location.href = '/affiliate-portal'} />
+        <CustomerLogin onLoginSuccess={() => navigate(getCountryAwareUrl('affiliate-portal'))} />
         
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-600">
             {t('affiliate_login_not_affiliate', 'Inte en affiliate ännu?')}{' '}
-            <Link to="/affiliate-registration" className="font-medium text-blue-600 hover:text-blue-500">
+            <Link to={getCountryAwareUrl('affiliate-registration')} className="font-medium text-blue-600 hover:text-blue-500">
               {t('affiliate_login_apply_here', 'Ansök här!')}
             </Link>
           </p>
