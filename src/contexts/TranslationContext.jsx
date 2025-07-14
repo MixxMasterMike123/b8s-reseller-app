@@ -91,7 +91,7 @@ export const TranslationProvider = ({ children }) => {
   console.log(`🌍 MAIN APP: Component initializing with language: ${initialLanguage}`);
   const [currentLanguage, setCurrentLanguage] = useState(initialLanguage);
   const [translations, setTranslations] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start as false for better perceived performance
   const [waitingForGeo, setWaitingForGeo] = useState(initialLanguage === null);
 
   // Load translations for a specific language
@@ -213,16 +213,21 @@ export const TranslationProvider = ({ children }) => {
           return; // Don't load translations yet
         }
         
-        // Load translations for known language
+        // Load translations for known language (non-blocking for performance)
         if (currentLanguage) {
           console.log(`🌍 Loading translations for initial language: ${currentLanguage}`);
-          await loadTranslations(currentLanguage);
+          // Make translation loading non-blocking to improve perceived performance
+          loadTranslations(currentLanguage).catch(error => {
+            console.error('Translation loading failed (non-critical):', error);
+          });
         }
       } catch (error) {
         console.error('Translation initialization failed:', error);
         // Only fallback to English if we don't have a current language
         if (!currentLanguage) {
-          await loadTranslations('en-GB'); // Fallback to English for international users
+          loadTranslations('en-GB').catch(err => {
+            console.error('Fallback translation loading failed:', err);
+          });
         }
       }
     };

@@ -88,6 +88,7 @@ export const getAvailableTranslations = async () => {
 
 /**
  * Get optimal language for a country based on available translations
+ * PERFORMANCE OPTIMIZED: Uses static mapping instead of Firebase queries during initialization
  */
 export const getOptimalLanguageForCountry = async (countryCode) => {
   if (!countryCode) {
@@ -102,15 +103,17 @@ export const getOptimalLanguageForCountry = async (countryCode) => {
     return FALLBACK_LANGUAGE;
   }
   
-  // If it's a supported translation country, check if translations exist
+  // PERFORMANCE OPTIMIZATION: Use static mapping for known languages during initialization
+  // This avoids Firebase queries that cause slow loading
   if (countryConfig.isSupported) {
-    const hasTranslations = await checkTranslationExists(countryConfig.language);
+    const staticLanguage = countryConfig.language;
     
-    if (hasTranslations) {
-      console.log(`✅ Country ${code} → ${countryConfig.language} (native translations)`);
-      return countryConfig.language;
+    // Only check these languages that we know exist
+    if (ACTUALLY_AVAILABLE_LANGUAGES.includes(staticLanguage)) {
+      console.log(`✅ Country ${code} → ${staticLanguage} (static mapping)`);
+      return staticLanguage;
     } else {
-      console.log(`⚠️ Country ${code} configured for ${countryConfig.language} but translations missing → fallback to ${FALLBACK_LANGUAGE}`);
+      console.log(`⚠️ Country ${code} configured for ${staticLanguage} but not in available languages → fallback to ${FALLBACK_LANGUAGE}`);
       return FALLBACK_LANGUAGE;
     }
   }

@@ -113,8 +113,8 @@ const GeoRedirect = () => {
       }
     };
 
-    // Add small delay to ensure CloudFlare data is loaded (reduced for better UX)
-    const timeoutId = setTimeout(performAdvancedGeoDetection, 50);
+    // Immediate geo-detection for better performance
+    const timeoutId = setTimeout(performAdvancedGeoDetection, 10);
     
     return () => clearTimeout(timeoutId);
   }, []);
