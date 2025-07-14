@@ -435,7 +435,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
       const hasCountry = countryFromParams || countryFromPath;
       
       if (!hasCountry) {
-        console.log('🕐 Setting timeout for geo-redirect fallback (unsupported countries only)');
+        console.log('🕐 Setting timeout for geo-redirect fallback (reduced to 500ms for better UX)');
         const timeoutId = setTimeout(() => {
           // Double-check that no country was detected during timeout
           const finalCountryFromParams = urlCountryCode;
@@ -443,7 +443,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
           const finalHasCountry = finalCountryFromParams || finalCountryFromPath;
           
           if (!finalHasCountry && !isInitialized) {
-            console.log('🕐 No redirect after 2 seconds, using Swedish defaults');
+            console.log('🕐 No redirect after 500ms, using Swedish defaults');
             updateLanguageAndCurrency('sv-SE', 'SEK', 'timeout-fallback', 'SE');
             setIsInitialized(true);
             setIsLoading(false);
@@ -469,7 +469,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
               initializeFromUrlCountry(finalHasCountry);
             }
           }
-        }, 2000);
+        }, 500); // Reduced from 2000ms to 500ms for better UX
         
         return () => clearTimeout(timeoutId);
       } else {
