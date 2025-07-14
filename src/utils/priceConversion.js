@@ -213,29 +213,91 @@ const getCountryForCurrency = (currency) => {
   return currencyCountryMap[currency] || 'se';
 };
 
+// PERFORMANCE OPTIMIZATION: Use fallback rates immediately for fast loading
+const FALLBACK_EXCHANGE_RATES = {
+  'SEK': 1.0,      // Base currency
+  'EUR': 0.08973,  // 1 SEK = 0.08973 EUR (Finland)
+  'USD': 0.10492,  // 1 SEK = 0.10492 USD  
+  'GBP': 0.07749,  // 1 SEK = 0.07749 GBP
+  'BRL': 0.58047,  // 1 SEK = 0.58047 BRL
+  'NOK': 1.1543,   // 1 SEK = 1.1543 NOK
+  'DKK': 0.6691,   // 1 SEK = 0.6691 DKK
+  'CHF': 0.0947,   // 1 SEK = 0.0947 CHF
+  'JPY': 16.25,    // 1 SEK = 16.25 JPY
+  'CNY': 0.761,    // 1 SEK = 0.761 CNY
+  'INR': 8.95,     // 1 SEK = 8.95 INR
+  'MXN': 2.13      // 1 SEK = 2.13 MXN
+};
+
 /**
- * Fetch exchange rate from API
+ * Fetch exchange rate from API with immediate fallback for performance
  * @param {string} targetCurrency - Target currency code
  * @returns {Promise<number>} Exchange rate
  */
 const fetchExchangeRate = async (targetCurrency) => {
-  // Make API call to ExchangeRate-API.com
-  const response = await fetch(`https://api.exchangerate-api.com/v4/latest/SEK`);
-  
-  if (!response.ok) {
-    throw new Error(`Exchange rate API error: ${response.status}`);
+  // PERFORMANCE OPTIMIZATION: Return fallback rate immediately for fast loading
+  const fallbackRate = FALLBACK_EXCHANGE_RATES[targetCurrency];
+  if (fallbackRate) {
+    console.log(`💱 Using fallback exchange rate for ${targetCurrency}: ${fallbackRate} (instant)`);
+    
+    // Update rate in background (non-blocking)
+    updateExchangeRateInBackground(targetCurrency).catch(error => {
+      console.warn(`Background exchange rate update failed for ${targetCurrency}:`, error);
+    });
+    
+    return fallbackRate;
   }
 
-  const data = await response.json();
-  console.log('💱 Exchange rates fetched from ExchangeRate-API.com');
-
-  const exchangeRate = data.rates[targetCurrency];
+  // If no fallback rate available, make API call
+  console.log(`💱 No fallback rate for ${targetCurrency}, making API call...`);
   
-  if (!exchangeRate) {
-    throw new Error(`Exchange rate not found for ${targetCurrency}`);
-  }
+  try {
+    const response = await fetch(`https://api.exchangerate-api.com/v4/latest/SEK`);
+    
+    if (!response.ok) {
+      throw new Error(`Exchange rate API error: ${response.status}`);
+    }
 
-  return exchangeRate;
+    const data = await response.json();
+    console.log('💱 Exchange rates fetched from ExchangeRate-API.com');
+
+    const exchangeRate = data.rates[targetCurrency];
+    
+    if (!exchangeRate) {
+      throw new Error(`Exchange rate not found for ${targetCurrency}`);
+    }
+
+    return exchangeRate;
+  } catch (error) {
+    console.error(`Exchange rate API failed for ${targetCurrency}:`, error);
+    // Return 1.0 as last resort
+    return 1.0;
+  }
+};
+
+/**
+ * Update exchange rate in background (non-blocking)
+ * @param {string} targetCurrency - Target currency code
+ */
+const updateExchangeRateInBackground = async (targetCurrency) => {
+  try {
+    const response = await fetch(`https://api.exchangerate-api.com/v4/latest/SEK`);
+    
+    if (!response.ok) {
+      throw new Error(`Exchange rate API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const exchangeRate = data.rates[targetCurrency];
+    
+    if (exchangeRate) {
+      console.log(`💱 Background update: ${targetCurrency} rate updated to ${exchangeRate}`);
+      // Update fallback rates for next time
+      FALLBACK_EXCHANGE_RATES[targetCurrency] = exchangeRate;
+    }
+  } catch (error) {
+    console.warn(`Background exchange rate update failed for ${targetCurrency}:`, error);
+  }
 };
 
 /**
