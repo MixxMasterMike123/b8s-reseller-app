@@ -161,7 +161,7 @@ const ShopNavigation = ({ breadcrumb }) => {
                   >
                     <div className="py-2">
                       <Link
-                        to={getCountryAwareUrl('login')}
+                        to="/login"
                         className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors"
                         onClick={() => setShowLoginDropdown(false)}
                       >
@@ -170,7 +170,7 @@ const ShopNavigation = ({ breadcrumb }) => {
                       </Link>
                       
                       <Link
-                        to={getCountryAwareUrl('affiliate-login')}
+                        to="/affiliate-login"
                         className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors"
                         onClick={() => setShowLoginDropdown(false)}
                       >
@@ -184,14 +184,14 @@ const ShopNavigation = ({ breadcrumb }) => {
                     {/* Footer with registration links */}
                     <div className="border-t border-gray-100 py-2">
                       <Link
-                        to={getCountryAwareUrl('register')}
+                        to="/register"
                         className="block px-4 py-2 text-xs text-gray-500 hover:text-blue-600 transition-colors"
                         onClick={() => setShowLoginDropdown(false)}
                       >
                         {t('nav_register_customer', 'Skapa kundkonto')}
                       </Link>
                       <Link
-                        to={getCountryAwareUrl('affiliate-registration')}
+                        to="/affiliate-registration"
                         className="block px-4 py-2 text-xs text-gray-500 hover:text-blue-600 transition-colors"
                         onClick={() => setShowLoginDropdown(false)}
                       >
