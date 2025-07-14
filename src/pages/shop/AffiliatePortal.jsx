@@ -13,7 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { db } from '../../firebase/config';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
-import { generateAffiliateLink } from '../../utils/productUrls';
+import { generateAffiliateLink, getCountryAwareUrl } from '../../utils/productUrls';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
 import AffiliateSuccessGuide from '../../components/affiliate/AffiliateSuccessGuide';
@@ -28,6 +28,7 @@ const AffiliatePortal = () => {
   const { currentUser } = useSimpleAuth();
   const { t } = useTranslation();
   const { getContentValue } = useContentTranslation();
+  const navigate = useNavigate();
   const [affiliateData, setAffiliateData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -606,7 +607,7 @@ const AffiliatePortal = () => {
 
   if (!currentUser) {
     // Redirect to affiliate login page
-    window.location.href = '/affiliate-login';
+    navigate(getCountryAwareUrl('affiliate-login'));
     return null;
   }
 
@@ -621,10 +622,10 @@ const AffiliatePortal = () => {
               {t('affiliate_portal_no_account', 'Vi kunde inte hitta ett aktivt affiliate-konto kopplat till din e-post.')}
             </p>
             <div className="space-y-4">
-              <Link to="/affiliate-registration" className="block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+              <Link to={getCountryAwareUrl('affiliate-registration')} className="block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
                 {t('affiliate_portal_apply_now', 'Ansök nu')}
               </Link>
-              <Link to="/affiliate-login" className="block text-blue-600 hover:text-blue-800 font-medium">
+              <Link to={getCountryAwareUrl('affiliate-login')} className="block text-blue-600 hover:text-blue-800 font-medium">
                 {t('affiliate_portal_try_different_account', 'Prova ett annat konto')}
               </Link>
             </div>
