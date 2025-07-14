@@ -24,6 +24,24 @@ const AffiliateLogin = () => {
           </p>
         </div>
         
+        {/* Prominent CTA for becoming an affiliate */}
+        <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
+          <div className="text-center">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              {t('affiliate_login_not_partner_yet', 'Inte partner än?')}
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+              {t('affiliate_login_join_program', 'Gå med i vårt affiliate-program och tjäna provision på varje försäljning.')}
+            </p>
+            <Link 
+              to={getCountryAwareUrl('affiliate-registration')} 
+              className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            >
+              {t('affiliate_login_become_affiliate', 'Bli en B8Shield affiliate')}
+            </Link>
+          </div>
+        </div>
+        
         <CustomerLogin onLoginSuccess={() => navigate(getCountryAwareUrl('affiliate-portal'))} />
         
         <div className="mt-8 text-center">

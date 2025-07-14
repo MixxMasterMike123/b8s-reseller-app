@@ -601,3 +601,6 @@
 "affiliate_login_apply_here","Ansök här!","Apply here!","Apply here!","B2C affiliate login - apply link","Complete","","","Link text to affiliate registration"
 "footer_affiliate_login","Affiliate-inloggning","Affiliate Login","Affiliate Login","B2C footer - affiliate login link","Complete","","","Footer link to affiliate login page"
 "affiliate_portal_try_different_account","Prova ett annat konto","Try a different account","Try a different account","B2C affiliate portal - try different account","Complete","","","Link text to try logging in with different account"
+"affiliate_login_not_partner_yet","Inte partner än?","Not a partner yet?","Not a partner yet?","B2C affiliate login - CTA heading","Complete","","","Heading for affiliate registration call-to-action"
+"affiliate_login_join_program","Gå med i vårt affiliate-program och tjäna provision på varje försäljning.","Join our affiliate program and earn commission on every sale.","Join our affiliate program and earn commission on every sale.","B2C affiliate login - CTA description","Complete","","","Description for affiliate program benefits"
+"affiliate_login_become_affiliate","Bli en B8Shield affiliate","Become a B8Shield affiliate","Become a B8Shield affiliate","B2C affiliate login - CTA button","Complete","","","Button text for becoming an affiliate"
