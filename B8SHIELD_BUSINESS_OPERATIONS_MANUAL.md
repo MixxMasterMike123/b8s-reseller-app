@@ -33,7 +33,7 @@ B8Shield har byggt en **dual-platform arkitektur** som ger oss konkurrensfördel
 - **Gemensam Backend**: En databas, dubbla intäktsströmmar
 
 ### 💡 Strategiska Fördelar
-**Kostnadsbesparing:** Istället för separata Shopify/WooCommerce-lösningar (30.000+ SEK/år) kör vi allt på en Firebase-plattform.
+**Kostnadsbesparing:** Istället för separata Shopify/WooCommerce-lösningar, allt på en Firebase-plattform.
 
 **Datasyn:** All data flödar genom samma system - från B2B-marginal till B2C-försäljning.
 
@@ -70,16 +70,23 @@ Vi följer en **kontrollerad aktiveringsprocess**:
 ### 👤 B2C Konsumenter (Shop)
 
 #### Guest vs Account Orders
-**Business Insight:** 60% av B2C-kunder handlar som gäst första gången. Vårt system:
+**Technical Capability:** Vårt system hanterar både gäst- och kontobeställningar intelligent:
 - Sparar **all** data även för gästbeställningar  
 - Kopplar senare kontoregistrering till historik via email
 - Inga "förlorade" kunder i systemet
+- **Analytics Opportunity:** Vi kan mäta guest-to-account conversion när vi har mer data
 
 #### Customer Journey Mapping
 **Checkout-to-Account Conversion:**
 - Erbjud kontoskapande i kassan (inte obligatoriskt)
 - Email-verifiering skickas automatiskt
 - Customer kan se orderhistorik även för gamla gästbeställningar
+
+**🎯 Pro Tip: Future Analytics**
+När ni har mer data, kör denna query för att få verkliga siffror:
+- **Guest orders**: Ordrar utan `b2cCustomerId` men med `customerInfo.email`
+- **Account orders**: Ordrar med `b2cCustomerId`
+- **Conversion rate**: Customers som först handlade som gäst, sedan skapade konto
 
 ---
 
@@ -262,6 +269,14 @@ När product price/specs change, all related materials get flagged för update.
 ## 7. Analytics & Business Intelligence
 
 ### 📊 Key Performance Indicators
+
+#### 📋 Data vs Industry Benchmarks
+**Viktigt:** B8Shield's B2C-plattform är relativt ny. Många insights i denna manual baseras på:
+- **Teknisk kapacitet** (vad systemet kan mäta)
+- **Industry standards** (allmänna e-handelstrender)  
+- **Best practices** (vad som fungerar för andra)
+
+**Rekommendation:** Bygg era egna benchmarks över tid istället för att förlita er på externa statistik.
 
 #### Customer Metrics That Matter
 **B2B Health Indicators:**
