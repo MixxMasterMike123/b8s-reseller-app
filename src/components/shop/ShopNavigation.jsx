@@ -180,6 +180,24 @@ const ShopNavigation = ({ breadcrumb }) => {
                         {t('nav_login_affiliate', 'Logga in som affiliate')}
                       </Link>
                     </div>
+                    
+                    {/* Footer with registration links */}
+                    <div className="border-t border-gray-100 py-2">
+                      <Link
+                        to="/register"
+                        className="block px-4 py-2 text-xs text-gray-500 hover:text-blue-600 transition-colors"
+                        onClick={() => setShowLoginDropdown(false)}
+                      >
+                        {t('nav_register_customer', 'Skapa kundkonto')}
+                      </Link>
+                      <Link
+                        to={getCountryAwareUrl('affiliate-registration')}
+                        className="block px-4 py-2 text-xs text-gray-500 hover:text-blue-600 transition-colors"
+                        onClick={() => setShowLoginDropdown(false)}
+                      >
+                        {t('nav_register_affiliate', 'Ansök som affiliate')}
+                      </Link>
+                    </div>
                   </div>
                 )}
               </div>
