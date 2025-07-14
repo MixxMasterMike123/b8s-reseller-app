@@ -67,16 +67,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
       setClicks(clickData);
       setOrders(filteredOrders);
 
-      if (debugMode) {
-        console.log(`📊 AFFILIATE ANALYTICS - Chart data:`, {
-          chartClicks: clickData.length,
-          chartOrders: filteredOrders.length,
-          affiliateStatsClicks: affiliateStats?.clicks,
-          affiliateStatsConversions: affiliateStats?.conversions,
-          affiliateStatsEarnings: affiliateStats?.totalEarnings,
-          userPreferredLang: affiliateData?.preferredLang
-        });
-      }
+      // Chart data loaded successfully
 
     } catch (err) {
       console.error('Analytics fetch error', err);
@@ -127,19 +118,10 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
     const earnings = affiliateStats.totalEarnings || 0;
     const rate = clicksCnt > 0 ? (convCnt / clicksCnt) * 100 : 0;
     
-    if (debugMode) {
-      console.log(`📊 AFFILIATE ANALYTICS - Using affiliate.stats:`, {
-        clicks: clicksCnt,
-        conversions: convCnt,
-        earnings,
-        rate: rate.toFixed(1),
-        source: 'affiliate.stats (reliable)',
-        preferredLang: affiliateData?.preferredLang
-      });
-    }
+    // Using reliable affiliate.stats data
     
     return { clicksCnt, convCnt, earnings, rate };
-  }, [affiliateStats, debugMode, affiliateData?.preferredLang]);
+  }, [affiliateStats, affiliateData?.preferredLang]);
 
   // Get order value for recent orders table
   const getOrderValue = (order) => {
@@ -208,18 +190,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
         </div>
       </div>
 
-      {/* Debug info panel */}
-      {debugMode && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-xs">
-          <h4 className="font-semibold text-green-800 mb-2">✅ Reliable Data Source</h4>
-          <div className="text-green-700 space-y-1">
-            <p><strong>Main Statistics:</strong> Using affiliate.stats (same as Overview tab)</p>
-            <p><strong>Chart Data:</strong> Using filtered collections for daily trends</p>
-            <p><strong>Currency Conversion:</strong> Using SmartPrice with preferred language ({affiliateData?.preferredLang || 'not set'})</p>
-            <p><strong>Data Consistency:</strong> Main numbers now match Overview tab perfectly</p>
-          </div>
-        </div>
-      )}
+      {/* Debug panel removed for production */}
 
       {/* Chart */}
       <div className="bg-white p-4 rounded-lg shadow">
