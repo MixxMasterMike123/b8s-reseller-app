@@ -1,33 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDownIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { useTranslation } from '../../contexts/TranslationContext';
 
 const ShopCredentialLanguageSwitcher = ({ currentLanguage, onLanguageChange }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const { changeLanguage, getAvailableLanguages } = useTranslation();
   
-  const languages = [
-    { code: 'sv-SE', name: 'Svenska', flag: '🇸🇪' },
-    { code: 'en-GB', name: 'English (UK)', flag: '🇬🇧' },
-    { code: 'en-US', name: 'English (US)', flag: '🇺🇸' }
-  ];
-
+  const languages = getAvailableLanguages();
   const currentLang = languages.find(lang => lang.code === currentLanguage) || languages[0];
 
-  const handleLanguageChange = (languageCode) => {
-    // Store in unified key (shared with main app)
-    localStorage.setItem('b8shield-language', languageCode);
-    // Also store in credential-specific key for backward compatibility
-    localStorage.setItem('b8shield-credential-language', languageCode);
-    
-    // Store in cookie for 30 days (unified key)
-    const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + 30);
-    document.cookie = `b8shield-language=${languageCode}; expires=${expiryDate.toUTCString()}; path=/`;
-    // Also set credential-specific cookie for backward compatibility
-    document.cookie = `b8shield-credential-language=${languageCode}; expires=${expiryDate.toUTCString()}; path=/`;
-    
-    onLanguageChange(languageCode);
-    setIsOpen(false);
-    window.location.reload(); // Force reload to update translation context
+  const handleLanguageChange = async (languageCode) => {
+    try {
+      // Use the translation context's changeLanguage function
+      await changeLanguage(languageCode);
+      
+      // Also store in credential-specific key for backward compatibility
+      localStorage.setItem('b8shield-credential-language', languageCode);
+      
+      // Set credential-specific cookie for backward compatibility
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 30);
+      document.cookie = `b8shield-credential-language=${languageCode}; expires=${expiryDate.toUTCString()}; path=/`;
+      
+      // Update parent component state
+      onLanguageChange(languageCode);
+      setIsOpen(false);
+    } catch (error) {
+      console.error('Error changing language:', error);
+    }
   };
 
   // Close dropdown when clicking outside
@@ -49,23 +49,24 @@ const ShopCredentialLanguageSwitcher = ({ currentLanguage, onLanguageChange }) =
       >
         <span className="text-lg">{currentLang.flag}</span>
         <span>{currentLang.name}</span>
-        <ChevronDownIcon className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDownIcon className="h-4 w-4" />
       </button>
+      
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-50">
           <div className="py-1">
             {languages.map((language) => (
               <button
                 key={language.code}
                 onClick={() => handleLanguageChange(language.code)}
-                className={`w-full text-left px-4 py-2 text-sm flex items-center space-x-3 hover:bg-gray-50 ${
-                  currentLanguage === language.code ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center space-x-3 ${
+                  language.code === currentLanguage ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
                 }`}
               >
                 <span className="text-lg">{language.flag}</span>
-                <span className="flex-1">{language.name}</span>
-                {currentLanguage === language.code && (
-                  <CheckIcon className="h-4 w-4 text-blue-600" />
+                <span>{language.name}</span>
+                {language.code === currentLanguage && (
+                  <CheckIcon className="h-4 w-4 ml-auto text-blue-600" />
                 )}
               </button>
             ))}

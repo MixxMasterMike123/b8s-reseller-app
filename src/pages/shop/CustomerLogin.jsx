@@ -13,22 +13,9 @@ const CustomerLogin = ({ onLoginSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useSimpleAuth();
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // Read from unified key first, then credential-specific key, then default to Swedish
-  const getInitialLanguage = () => {
-    const unifiedLang = localStorage.getItem('b8shield-language');
-    if (unifiedLang) return unifiedLang;
-    
-    const credentialLang = localStorage.getItem('b8shield-credential-language');
-    if (credentialLang) return credentialLang;
-    
-    return 'sv-SE';
-  };
-  
-  const [currentLanguage, setCurrentLanguage] = useState(getInitialLanguage());
 
   const from = location.state?.from?.pathname || "/affiliate-portal";
 
@@ -61,7 +48,7 @@ const CustomerLogin = ({ onLoginSuccess }) => {
         <div className="flex justify-end mb-4">
           <ShopCredentialLanguageSwitcher
             currentLanguage={currentLanguage}
-            onLanguageChange={setCurrentLanguage}
+            onLanguageChange={() => {}} // Language change is now handled by translation context
           />
         </div>
         <div>
