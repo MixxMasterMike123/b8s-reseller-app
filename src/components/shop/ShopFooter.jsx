@@ -1,12 +1,47 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getCountryAwareUrl } from '../../utils/productUrls';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
+import { db } from '../../firebase/config';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import LanguageCurrencySelector from './LanguageCurrencySelector';
 
 const ShopFooter = () => {
   const { t } = useTranslation();
+  const { currentUser } = useSimpleAuth();
+  const [isActiveAffiliate, setIsActiveAffiliate] = useState(false);
+  const [affiliateCheckLoading, setAffiliateCheckLoading] = useState(false);
   const currentYear = new Date().getFullYear();
+
+  // Check if current user is an active affiliate
+  useEffect(() => {
+    const checkAffiliateStatus = async () => {
+      if (!currentUser?.email) {
+        setIsActiveAffiliate(false);
+        return;
+      }
+      
+      try {
+        setAffiliateCheckLoading(true);
+        const affiliatesRef = collection(db, 'affiliates');
+        const affiliateQuery = query(
+          affiliatesRef, 
+          where('email', '==', currentUser.email), 
+          where('status', '==', 'active')
+        );
+        const querySnapshot = await getDocs(affiliateQuery);
+        setIsActiveAffiliate(!querySnapshot.empty);
+      } catch (error) {
+        console.error('Error checking affiliate status:', error);
+        setIsActiveAffiliate(false);
+      } finally {
+        setAffiliateCheckLoading(false);
+      }
+    };
+
+    checkAffiliateStatus();
+  }, [currentUser]);
 
   return (
     <footer className="bg-gray-900 text-white">
@@ -78,8 +113,26 @@ const ShopFooter = () => {
                 </Link>
               </li>
               <li>
-                <Link to={getCountryAwareUrl('affiliate-portal')} className="text-gray-300 hover:text-white transition-colors">
-                  {t('footer_affiliate_portal', 'Affiliate-portal')}
+                <Link 
+                  to={getCountryAwareUrl(isActiveAffiliate ? 'affiliate-portal' : 'affiliate-login')} 
+                  className="text-gray-300 hover:text-white transition-colors flex items-center"
+                >
+                  {affiliateCheckLoading ? (
+                    <>
+                      <span className="animate-spin rounded-full h-3 w-3 border border-gray-400 border-t-transparent mr-2"></span>
+                      {t('footer_affiliate_checking', 'Kontrollerar...')}
+                    </>
+                  ) : (
+                    <>
+                      {isActiveAffiliate ? 
+                        t('footer_affiliate_portal', 'Affiliate-portal') : 
+                        t('footer_affiliate_login', 'Affiliate-inloggning')
+                      }
+                      {isActiveAffiliate && (
+                        <span className="ml-2 text-green-400 text-xs">●</span>
+                      )}
+                    </>
+                  )}
                 </Link>
               </li>
               <li>
