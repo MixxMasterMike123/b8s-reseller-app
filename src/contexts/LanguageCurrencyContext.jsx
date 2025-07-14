@@ -59,13 +59,16 @@ export const LanguageCurrencyProvider = ({ children }) => {
   const { currentUser } = useSimpleAuth(); // B2C user context
 
   /**
-   * Safely updates translation language with error checking
+   * Safely updates translation language with error checking (NON-BLOCKING)
    */
-  const safeSetTranslationLanguage = useCallback(async (language) => {
+  const safeSetTranslationLanguage = useCallback((language) => {
     try {
       if (typeof setTranslationLanguage === 'function') {
-        console.log('🔤 Updating translation language to:', language);
-        await setTranslationLanguage(language);
+        console.log('🔤 Updating translation language to:', language, '(non-blocking)');
+        // Make translation loading non-blocking for performance
+        setTranslationLanguage(language).catch(error => {
+          console.error('❌ Error setting translation language (non-critical):', error);
+        });
       } else {
         console.warn('⚠️ setTranslationLanguage is not available:', typeof setTranslationLanguage);
       }
@@ -75,9 +78,9 @@ export const LanguageCurrencyProvider = ({ children }) => {
   }, [setTranslationLanguage]);
 
   /**
-   * Updates both language and currency state with international support
+   * Updates both language and currency state with international support (NON-BLOCKING)
    */
-  const updateLanguageAndCurrency = useCallback(async (newLanguage, newCurrency, source = 'manual', detectedCountry = null) => {
+  const updateLanguageAndCurrency = useCallback((newLanguage, newCurrency, source = 'manual', detectedCountry = null) => {
     console.log('🔄 Updating language and currency:', newLanguage, '+', newCurrency, 'from', source);
     
     // Update local state
@@ -88,8 +91,8 @@ export const LanguageCurrencyProvider = ({ children }) => {
     setCountryDetected(detectedCountry);
     setMarket(detectedCountry === 'se' ? 'primary' : 'secondary');
     
-    // Update translation context safely
-    await safeSetTranslationLanguage(newLanguage);
+    // Update translation context safely (non-blocking)
+    safeSetTranslationLanguage(newLanguage);
     
     // Store preferences if manual
     if (source === 'manual' || source === 'user-selection') {
@@ -122,7 +125,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
   /**
    * Initialize from URL country code with international support
    */
-  const initializeFromUrlCountry = useCallback(async (countryCode) => {
+  const initializeFromUrlCountry = useCallback((countryCode) => {
     if (!countryCode) {
       console.log('🌍 LanguageCurrency: No country code provided');
       return false;
@@ -145,19 +148,19 @@ export const LanguageCurrencyProvider = ({ children }) => {
       
       if (!countryConfig) {
         console.log(`❓ Unknown country: ${code}, using default`);
-        await updateLanguageAndCurrency('sv-SE', 'SEK', 'unknown-country-fallback', 'SE');
+        updateLanguageAndCurrency('sv-SE', 'SEK', 'unknown-country-fallback', 'SE');
         setIsInitialized(true);
         return true;
       }
       
       // Get optimal language for this country
-      const optimalLanguage = await getOptimalLanguageForCountry(code);
+      const optimalLanguage = getOptimalLanguageForCountry(code);
       const currency = countryConfig.currency;
       const isSupported = countryConfig.isSupported;
       
       console.log(`🌍 Country ${code}: ${optimalLanguage} + ${currency} (${isSupported ? 'supported' : 'unsupported'})`);
       
-      await updateLanguageAndCurrency(
+      updateLanguageAndCurrency(
         optimalLanguage, 
         currency, 
         'url-country', 
@@ -174,7 +177,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
   /**
    * Manual language selection with URL country awareness
    */
-  const selectLanguage = useCallback(async (newLanguage) => {
+  const selectLanguage = useCallback((newLanguage) => {
     console.log('👤 Manual language selection:', newLanguage);
     
     // If we have a URL country, get its currency
@@ -195,7 +198,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
     
     console.log(`🎯 selectLanguage: ${newLanguage} + ${targetCurrency} (from ${urlCountryCode ? 'URL' : 'mapping'})`);
     
-    const success = await updateLanguageAndCurrency(
+    const success = updateLanguageAndCurrency(
       newLanguage, 
       targetCurrency, 
       'user-selection',
@@ -212,8 +215,8 @@ export const LanguageCurrencyProvider = ({ children }) => {
   /**
    * Manual currency selection (keeps current language)
    */
-  const selectCurrency = useCallback(async (newCurrency) => {
-    const success = await updateLanguageAndCurrency(
+  const selectCurrency = useCallback((newCurrency) => {
+    const success = updateLanguageAndCurrency(
       language, 
       newCurrency, 
       'user-selection',
@@ -355,7 +358,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
             const currency = countryConfig.currency;
             
             console.log(`🎯 Direct load: ${language} + ${currency} (supported)`);
-            await updateLanguageAndCurrency(language, currency, 'supported-country-fast', detectedCountry.toUpperCase());
+            updateLanguageAndCurrency(language, currency, 'supported-country-fast', detectedCountry.toUpperCase());
             
             // Force a small delay to ensure React state updates are processed
             await new Promise(resolve => setTimeout(resolve, 10));
@@ -379,7 +382,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
       } else {
         // B2B portal - set Swedish immediately
         console.log('🏠 B2B portal detected - using Swedish');
-        await updateLanguageAndCurrency('sv-SE', 'SEK', 'b2b-portal', 'SE');
+        updateLanguageAndCurrency('sv-SE', 'SEK', 'b2b-portal', 'SE');
         setIsInitialized(true);
       }
       
@@ -403,7 +406,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
           const currency = countryConfig.currency;
           
           console.log(`🎯 Direct update: ${language} + ${currency} (supported)`);
-          await updateLanguageAndCurrency(language, currency, 'supported-country-fast', urlCountryCode.toUpperCase());
+          updateLanguageAndCurrency(language, currency, 'supported-country-fast', urlCountryCode.toUpperCase());
           
           // Force a small delay to ensure React state updates are processed
           await new Promise(resolve => setTimeout(resolve, 10));
@@ -456,14 +459,13 @@ export const LanguageCurrencyProvider = ({ children }) => {
               console.log(`⚡ TIMEOUT FAST PATH: Detected supported country ${finalHasCountry} during timeout`);
               const language = countryConfig.language;
               const currency = countryConfig.currency;
-              (async () => {
-                await updateLanguageAndCurrency(language, currency, 'supported-country-timeout', finalHasCountry.toUpperCase());
-                // Force a small delay to ensure React state updates are processed
-                await new Promise(resolve => setTimeout(resolve, 10));
+              updateLanguageAndCurrency(language, currency, 'supported-country-timeout', finalHasCountry.toUpperCase());
+              // Force a small delay to ensure React state updates are processed
+              setTimeout(() => {
                 setIsInitialized(true);
                 setIsLoading(false);
                 console.log(`⚡ TIMEOUT FAST PATH COMPLETE: ${language} + ${currency} → Ready for price conversion`);
-              })();
+              }, 10);
             } else {
               console.log(`🔄 TIMEOUT COMPLEX: Detected unsupported country ${finalHasCountry} during timeout`);
               initializeFromUrlCountry(finalHasCountry);

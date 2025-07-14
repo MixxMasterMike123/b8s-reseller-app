@@ -90,7 +90,7 @@ export const getAvailableTranslations = async () => {
  * Get optimal language for a country based on available translations
  * PERFORMANCE OPTIMIZED: Uses static mapping instead of Firebase queries during initialization
  */
-export const getOptimalLanguageForCountry = async (countryCode) => {
+export const getOptimalLanguageForCountry = (countryCode) => {
   if (!countryCode) {
     return FALLBACK_LANGUAGE;
   }

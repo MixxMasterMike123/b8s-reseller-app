@@ -70,7 +70,7 @@ const GeoRedirect = () => {
         
         if (isSupported) {
           // Supported country - verify translations exist
-          const optimalLanguage = await getOptimalLanguageForCountry(detectedCountry);
+          const optimalLanguage = getOptimalLanguageForCountry(detectedCountry);
           
           if (optimalLanguage === countryConfig.language) {
             detectionReason = `Supported country with native translations (${countryConfig.language})`;
@@ -92,7 +92,7 @@ const GeoRedirect = () => {
           reason: detectionReason,
           countryConfig,
           isSupported,
-          optimalLanguage: await getOptimalLanguageForCountry(detectedCountry)
+          optimalLanguage: getOptimalLanguageForCountry(detectedCountry)
         });
         
         console.log(`🎯 GeoRedirect: Final decision → /${finalCountry}/ (${detectionReason})`);
