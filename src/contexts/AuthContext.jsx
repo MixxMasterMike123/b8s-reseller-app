@@ -22,6 +22,7 @@ import { httpsCallable } from 'firebase/functions';
 import { auth, db, isDemoMode, functions } from '../firebase/config';
 import toast from 'react-hot-toast';
 import { onNewB2BCustomer } from '../wagons/dining-wagon/utils/customerStatusAutomation';
+import { addAdminUID, removeAdminUID } from '../utils/adminUIDManager';
 
 const AuthContext = createContext();
 
@@ -405,13 +406,30 @@ export function AuthProvider({ children }) {
     try {
       if (isDemoMode) {
         // Demo mode: mock user role update
+        let currentUser = null;
         setDemoUsers(users => 
-          users.map(user => 
-            user.id === userId 
-              ? { ...user, role: newRole, updatedAt: new Date().toISOString() } 
-              : user
-          )
+          users.map(user => {
+            if (user.id === userId) {
+              currentUser = user;
+              return { ...user, role: newRole, updatedAt: new Date().toISOString() };
+            }
+            return user;
+          })
         );
+        
+        // Demo mode adminUIDs sync
+        if (currentUser) {
+          const oldRole = currentUser.role;
+          const userEmail = currentUser.email;
+          
+          if (oldRole !== 'admin' && newRole === 'admin') {
+            console.log(`📝 Demo: Adding ${userEmail} to adminUIDs collection`);
+            await addAdminUID(userId, userEmail, 'admin');
+          } else if (oldRole === 'admin' && newRole !== 'admin') {
+            console.log(`📝 Demo: Removing ${userEmail} from adminUIDs collection`);
+            await removeAdminUID(userId);
+          }
+        }
         
         toast.success(`User role updated to ${newRole} successfully (Demo Mode)`);
         return true;
@@ -419,18 +437,38 @@ export function AuthProvider({ children }) {
         // Real Firebase user role update
         if (!isAdmin) throw new Error('Unauthorized');
         
+        // Get current user data to check for role change
         const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
+        
+        if (!userDoc.exists()) {
+          throw new Error('User not found');
+        }
+        
+        const currentUserData = userDoc.data();
+        const oldRole = currentUserData.role;
+        const userEmail = currentUserData.email;
+        
+        // Update user role in Firestore
         await updateDoc(userRef, {
           role: newRole,
           updatedAt: new Date().toISOString()
         });
         
-
+        // Sync adminUIDs collection based on role change
+        if (oldRole !== 'admin' && newRole === 'admin') {
+          console.log(`🔧 Adding ${userEmail} to adminUIDs collection`);
+          await addAdminUID(userId, userEmail, 'admin');
+        } else if (oldRole === 'admin' && newRole !== 'admin') {
+          console.log(`🔧 Removing ${userEmail} from adminUIDs collection`);
+          await removeAdminUID(userId);
+        }
         
         toast.success(`User role updated to ${newRole} successfully`);
         return true;
       }
     } catch (error) {
+      console.error('❌ Failed to update user role:', error);
       toast.error('Failed to update user role');
       throw error;
     }
