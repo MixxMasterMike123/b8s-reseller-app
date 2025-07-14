@@ -625,5 +625,3 @@
 "checkout_login_error","Inloggningsfel. Kontrollera dina uppgifter och försök igen.","Login error. Please check your details and try again.","Login error. Please check your details and try again.","B2C checkout - login error message","Complete","","","Error message when login fails"
 "nav_login_customer","Logga in som kund","Log in as customer","Log in as customer","B2C navigation - customer login option","Complete","","","Customer login option in navigation dropdown"
 "nav_login_affiliate","Logga in som affiliate","Log in as affiliate","Log in as affiliate","B2C navigation - affiliate login option","Complete","","","Affiliate login option in navigation dropdown"
-"nav_register_customer","Skapa kundkonto","Create customer account","Create customer account","B2C navigation - customer registration link","Complete","","","Customer registration link in navigation dropdown"
-"nav_register_affiliate","Ansök som affiliate","Apply as affiliate","Apply as affiliate","B2C navigation - affiliate registration link","Complete","","","Affiliate registration link in navigation dropdown"
