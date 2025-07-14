@@ -19,7 +19,7 @@ import ShopFooter from '../../components/shop/ShopFooter';
 import AffiliateSuccessGuide from '../../components/affiliate/AffiliateSuccessGuide';
 import AffiliateMarketingMaterials from '../../components/AffiliateMarketingMaterials';
 import AffiliateAnalyticsTab from './AffiliateAnalyticsTab';
-import SmartPrice from '../../components/shop/SmartPrice';
+import SmartPrice, { ExactPrice } from '../../components/shop/SmartPrice';
 import { diagnoseAffiliateData, testCommissionProcessing, fixMissingCommissions, fixMissingCommissionsIntelligent } from '../../utils/affiliateDebug';
 import toast from 'react-hot-toast';
 import QRCode from 'qrcode';
@@ -310,23 +310,23 @@ const AffiliatePortal = () => {
                   <div className="border-t my-4"></div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">{t('affiliate_portal_unpaid_commission', 'Obetald Provision')}</span>
-                  <span className="font-bold text-lg text-green-600">
-                    <SmartPrice 
-                      sekPrice={affiliateData.stats.balance} 
-                      variant="compact"
-                      showOriginal={false}
-                    />
-                  </span>
+                    <span className="font-bold text-lg text-green-600">
+                      <ExactPrice 
+                        sekPrice={affiliateData.stats.balance} 
+                        size="normal"
+                        showOriginal={false}
+                      />
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">{t('affiliate_portal_total_earnings', 'Totala Intäkter')}</span>
-                  <span className="font-bold text-lg text-green-600">
-                    <SmartPrice 
-                      sekPrice={affiliateData.stats.totalEarnings} 
-                      variant="compact"
-                      showOriginal={false}
-                    />
-                  </span>
+                    <span className="font-bold text-lg text-green-600">
+                      <ExactPrice 
+                        sekPrice={affiliateData.stats.totalEarnings} 
+                        size="normal"
+                        showOriginal={false}
+                      />
+                    </span>
                   </div>
                 </div>
                 <button className="w-full mt-6 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors">

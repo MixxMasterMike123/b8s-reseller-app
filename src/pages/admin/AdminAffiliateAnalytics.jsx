@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
 import { db } from '../../firebase/config';
-import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, where, getDoc, doc } from 'firebase/firestore';
 import { 
   ChartBarIcon, 
   ArrowTrendingUpIcon, 
@@ -13,6 +13,8 @@ import {
   ComputerDesktopIcon,
   ArrowLeftIcon
 } from '@heroicons/react/24/outline';
+import { calculateCommission } from '../../utils/affiliateCalculations';
+import toast from 'react-hot-toast';
 
 const AdminAffiliateAnalytics = () => {
   const [affiliates, setAffiliates] = useState([]);
@@ -20,6 +22,8 @@ const AdminAffiliateAnalytics = () => {
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30'); // days
   const [selectedMetric, setSelectedMetric] = useState('revenue');
+  const [verifying, setVerifying] = useState(false);
+  const [verificationResults, setVerificationResults] = useState({});
 
   useEffect(() => {
     fetchAnalyticsData();
@@ -187,6 +191,88 @@ const AdminAffiliateAnalytics = () => {
       other: 'Övrigt'
     };
     return labels[source] || source;
+  };
+
+  const verifyEarnings = async (affiliateId) => {
+    setVerifying(true);
+    try {
+      // Fetch orders for this affiliate
+      const ordersQuery = query(
+        collection(db, 'orders'),
+        where('affiliateId', '==', affiliateId)
+      );
+      const ordersSnapshot = await getDocs(ordersQuery);
+      
+      // Get affiliate data for commission rate
+      const affiliateDoc = await getDoc(doc(db, 'affiliates', affiliateId));
+      const affiliateData = affiliateDoc.data();
+      
+      let oldMethodTotal = 0;
+      let newMethodTotal = 0;
+      const orderDetails = [];
+      
+      ordersSnapshot.forEach(orderDoc => {
+        const order = orderDoc.data();
+        
+        // Skip cancelled orders
+        if (order.status === 'cancelled') return;
+        
+        // Old method: total * commission rate
+        const oldCommission = (order.total || order.subtotal || 0) * ((affiliateData.commissionRate || 15) / 100);
+        oldMethodTotal += oldCommission;
+        
+        // New method: using centralized calculation
+        try {
+          const { commission: newCommission } = calculateCommission(order, affiliateData);
+          newMethodTotal += newCommission;
+          
+          orderDetails.push({
+            orderId: orderDoc.id,
+            orderNumber: order.orderNumber,
+            total: order.total || order.subtotal || 0,
+            subtotal: order.subtotal || 0,
+            shipping: order.shipping || 0,
+            discountAmount: order.discountAmount || 0,
+            oldCommission,
+            newCommission,
+            difference: newCommission - oldCommission,
+            storedCommission: order.affiliateCommission || 0
+          });
+        } catch (error) {
+          console.error('Error calculating new commission for order:', orderDoc.id, error);
+          orderDetails.push({
+            orderId: orderDoc.id,
+            error: error.message,
+            oldCommission,
+            newCommission: 0,
+            difference: -oldCommission
+          });
+        }
+      });
+      
+      const currentStored = affiliateData.stats?.totalEarnings || 0;
+      
+      setVerificationResults(prev => ({
+        ...prev,
+        [affiliateId]: {
+          currentStored,
+          oldMethodTotal,
+          newMethodTotal,
+          oldVsStoredDiff: oldMethodTotal - currentStored,
+          newVsStoredDiff: newMethodTotal - currentStored,
+          newVsOldDiff: newMethodTotal - oldMethodTotal,
+          orderCount: orderDetails.length,
+          orderDetails: orderDetails.slice(0, 10) // Show first 10 for performance
+        }
+      }));
+      
+      toast.success('Verification complete');
+    } catch (error) {
+      console.error('Error verifying earnings:', error);
+      toast.error('Failed to verify earnings');
+    } finally {
+      setVerifying(false);
+    }
   };
 
   if (loading) {
@@ -403,6 +489,9 @@ const AdminAffiliateAnalytics = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Obetalt
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Verifiera
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -440,6 +529,106 @@ const AdminAffiliateAnalytics = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
                       {formatCurrency(affiliate.currentBalance)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button 
+                        onClick={() => verifyEarnings(affiliate.id)} 
+                        disabled={verifying}
+                        className="text-sm text-blue-600 hover:text-blue-900"
+                      >
+                        {verifying ? 'Verifying...' : 'Verify'}
+                      </button>
+                      {verificationResults[affiliate.id] && (
+                        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                          <h4 className="font-semibold text-blue-900 mb-2">Earnings Verification Results</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div>
+                              <p className="font-medium text-gray-700">Current Stored:</p>
+                              <p className="text-lg font-bold text-gray-900">
+                                {verificationResults[affiliate.id].currentStored?.toFixed(2)} SEK
+                              </p>
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-700">Old Method (Total × Rate):</p>
+                              <p className="text-lg font-bold text-blue-600">
+                                {verificationResults[affiliate.id].oldMethodTotal?.toFixed(2)} SEK
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Diff: {verificationResults[affiliate.id].oldVsStoredDiff > 0 ? '+' : ''}
+                                {verificationResults[affiliate.id].oldVsStoredDiff?.toFixed(2)} SEK
+                              </p>
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-700">New Method (Correct Order):</p>
+                              <p className="text-lg font-bold text-green-600">
+                                {verificationResults[affiliate.id].newMethodTotal?.toFixed(2)} SEK
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Total → -Shipping → -Discount → -VAT → Commission
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Diff: {verificationResults[affiliate.id].newVsStoredDiff > 0 ? '+' : ''}
+                                {verificationResults[affiliate.id].newVsStoredDiff?.toFixed(2)} SEK
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-3 pt-3 border-t border-blue-200">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-600">
+                                Orders analyzed: {verificationResults[affiliate.id].orderCount}
+                              </span>
+                              <span className="text-sm font-medium">
+                                New vs Old Method: 
+                                <span className={`ml-1 ${verificationResults[affiliate.id].newVsOldDiff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                  {verificationResults[affiliate.id].newVsOldDiff > 0 ? '+' : ''}
+                                  {verificationResults[affiliate.id].newVsOldDiff?.toFixed(2)} SEK
+                                </span>
+                              </span>
+                            </div>
+                            
+                            {verificationResults[affiliate.id].orderDetails && verificationResults[affiliate.id].orderDetails.length > 0 && (
+                              <details className="mt-3">
+                                <summary className="cursor-pointer text-sm text-blue-600 hover:text-blue-800">
+                                  Show Order Details (first 10)
+                                </summary>
+                                <div className="mt-2 max-h-60 overflow-y-auto">
+                                  <table className="w-full text-xs">
+                                    <thead>
+                                      <tr className="bg-gray-50">
+                                        <th className="px-2 py-1 text-left">Order</th>
+                                        <th className="px-2 py-1 text-right">Total</th>
+                                        <th className="px-2 py-1 text-right">Shipping</th>
+                                        <th className="px-2 py-1 text-right">Discount</th>
+                                        <th className="px-2 py-1 text-right">Old Comm.</th>
+                                        <th className="px-2 py-1 text-right">New Comm.</th>
+                                        <th className="px-2 py-1 text-right">Diff</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {verificationResults[affiliate.id].orderDetails.map((order, idx) => (
+                                        <tr key={idx} className="border-t">
+                                          <td className="px-2 py-1 text-xs text-gray-600">
+                                            {order.orderNumber || order.orderId?.slice(-6)}
+                                          </td>
+                                          <td className="px-2 py-1 text-right">{order.total?.toFixed(0)}</td>
+                                          <td className="px-2 py-1 text-right">{order.shipping?.toFixed(0)}</td>
+                                          <td className="px-2 py-1 text-right">{order.discountAmount?.toFixed(0)}</td>
+                                          <td className="px-2 py-1 text-right">{order.oldCommission?.toFixed(2)}</td>
+                                          <td className="px-2 py-1 text-right">{order.newCommission?.toFixed(2)}</td>
+                                          <td className={`px-2 py-1 text-right ${order.difference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                            {order.difference > 0 ? '+' : ''}{order.difference?.toFixed(2)}
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </details>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}

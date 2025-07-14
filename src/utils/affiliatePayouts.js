@@ -9,7 +9,8 @@ import {
   where, 
   orderBy,
   runTransaction,
-  Timestamp 
+  Timestamp,
+  getDoc
 } from 'firebase/firestore';
 import { 
   getStorage, 
@@ -18,6 +19,7 @@ import {
   getDownloadURL 
 } from 'firebase/storage';
 import { toast } from 'react-hot-toast';
+import { calculateCommission } from './affiliateCalculations';
 
 const storage = getStorage();
 
@@ -61,6 +63,24 @@ export const uploadInvoicePDF = async (file, affiliateId, invoiceNumber) => {
  */
 export const processAffiliatePayout = async (affiliateId, payoutData) => {
   try {
+    const verifyBalance = async () => {
+      const ordersQuery = query(collection(db, 'orders'), where('affiliateId', '==', affiliateId));
+      const ordersSnapshot = await getDocs(ordersQuery);
+      let totalRecalc = 0;
+      ordersSnapshot.forEach(doc => {
+        const order = doc.data();
+        const affiliate = { commissionRate: payoutData.commissionRate }; // Fetch or pass actual
+        totalRecalc += calculateCommission(order, affiliate).commission;
+      });
+      const currentBalance = await getDoc(doc(db, 'affiliates', affiliateId)).then(snap => snap.data().stats.balance);
+      if (Math.abs(totalRecalc - currentBalance) > 0.01) {
+        console.warn(`Discrepancy detected: Recalc ${totalRecalc} vs Stored ${currentBalance}`);
+        // Optionally toast warning
+      }
+      return true; // Proceed anyway
+    };
+    await verifyBalance();
+
     const result = await runTransaction(db, async (transaction) => {
       // Get current affiliate data
       const affiliateRef = doc(db, 'affiliates', affiliateId);

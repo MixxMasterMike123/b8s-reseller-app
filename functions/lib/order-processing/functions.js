@@ -109,6 +109,42 @@ const checkRateLimit = (clientIP) => {
         bulkMode: bulkTracker.enabled
     };
 };
+// Update the local calculateCommission function to fix double deduction bug
+function calculateCommission(orderData, affiliate, vatRate = 0.25) {
+    const orderTotal = orderData.total || orderData.subtotal || 0;
+    const shipping = orderData.shipping || 0;
+    const discountAmount = orderData.discountAmount || 0; // For reporting only
+    const rate = (affiliate.commissionRate || 15) / 100;
+    // Step 1: Deduct shipping from order total (shipping is separate service)
+    // Note: orderTotal already has affiliate discount applied
+    const productValueWithVAT = Math.max(0, orderTotal - shipping);
+    // Step 2: Extract VAT from the remaining product value
+    // Swedish VAT system: VAT-exclusive = VAT-inclusive / 1.25
+    const productValueExcludingVAT = productValueWithVAT / (1 + vatRate);
+    const vatAmount = productValueWithVAT - productValueExcludingVAT;
+    // Step 3: Apply commission rate to the final net product value
+    const commission = Math.round((productValueExcludingVAT * rate) * 100) / 100;
+    return {
+        commission,
+        deductions: {
+            shipping,
+            vat: vatAmount,
+            // Note: discount is already applied in orderTotal, not deducted here
+            discountAmount: discountAmount // For reporting/transparency only
+        },
+        netBase: productValueExcludingVAT,
+        calculationSteps: {
+            orderTotal,
+            afterShipping: productValueWithVAT,
+            productValueExcludingVAT,
+            vatAmount,
+            rate,
+            final: commission,
+            // Include discount info for transparency
+            discountAlreadyApplied: discountAmount
+        }
+    };
+}
 /**
  * [V2] HTTP endpoint for B2C order processing with affiliate commission handling
  */
@@ -261,11 +297,9 @@ exports.processB2COrderCompletionHttp = (0, https_1.onRequest)({
         }
         const affiliateDoc = affiliateSnap.docs[0];
         const affiliate = affiliateDoc.data();
-        // Calculate commission
-        const orderTotal = orderData.total || 0;
-        const commissionRate = affiliate.commissionRate || 15; // Default 15%
-        const commissionAmount = (orderTotal * (commissionRate / 100));
-        console.log(`Commission calculation for order ${orderId}: ${orderTotal} * ${commissionRate}% = ${commissionAmount}`);
+        // Calculate commission using unified function
+        const { commission: commissionAmount } = calculateCommission(orderData, affiliate);
+        console.log(`Commission calculation for order ${orderId}: ${orderData.total} * ${affiliate.commissionRate}% = ${commissionAmount}`);
         // Update affiliate stats
         console.log(`Updating affiliate stats for ${affiliateDoc.id}`);
         await affiliateDoc.ref.update({
@@ -371,11 +405,9 @@ exports.processB2COrderCompletion = (0, https_1.onCall)({
             const affiliate = affiliateDoc.data();
             const affiliateId = affiliateDoc.id;
             console.log(`Found affiliate: ${affiliate.name} (ID: ${affiliateId})`);
-            // Calculate commission - try multiple fields for compatibility
-            const commissionRate = affiliate.commissionRate / 100;
-            const orderAmount = orderData.subtotal || orderData.total || orderData.totalAmount || 0;
-            const commissionAmount = orderAmount * commissionRate;
-            console.log(`Commission calculation: ${orderAmount} * ${commissionRate} = ${commissionAmount}`);
+            // Calculate commission using unified function
+            const { commission: commissionAmount } = calculateCommission(orderData, affiliate);
+            console.log(`Commission calculation: ${orderData.subtotal} * ${affiliate.commissionRate}% = ${commissionAmount}`);
             if (commissionAmount > 0) {
                 try {
                     // Update affiliate stats in a transaction
@@ -447,7 +479,7 @@ exports.processB2COrderCompletion = (0, https_1.onCall)({
                 }
             }
             console.log(`Commission amount is 0 for order ${orderId}, skipping affiliate processing`);
-            return { success: true, message: `Order ${orderId} processed, but no commission (amount: ${orderAmount})` };
+            return { success: true, message: `Order ${orderId} processed, but no commission (amount: ${commissionAmount})` };
         }
         else {
             console.log(`No affiliate code found for order ${orderId}`);

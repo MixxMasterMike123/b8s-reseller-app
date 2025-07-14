@@ -3,7 +3,7 @@ import { collection, query, where, getDocs, orderBy, limit } from 'firebase/fire
 import { db } from '../../firebase/config';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useLanguageCurrency } from '../../contexts/LanguageCurrencyContext';
-import SmartPrice from '../../components/shop/SmartPrice';
+import SmartPrice, { ExactPrice } from '../../components/shop/SmartPrice';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend
 } from 'recharts';
@@ -201,7 +201,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
           <div className="text-3xl font-bold text-green-600">
-            <SmartPrice 
+            <ExactPrice 
               sekPrice={totals.earnings} 
               size="large"
               showOriginal={false}
@@ -285,7 +285,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
                       )}
                     </td>
                     <td className="px-3 py-1">
-                      <SmartPrice 
+                      <ExactPrice 
                         sekPrice={commission} 
                         size="small"
                         showOriginal={false}

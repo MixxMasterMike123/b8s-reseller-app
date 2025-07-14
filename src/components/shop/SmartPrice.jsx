@@ -250,4 +250,163 @@ export const PriceComparison = ({
   );
 };
 
+/**
+ * Exact Price Display Component
+ * Uses exact currency conversion without smart pricing (.99 rounding)
+ * Perfect for affiliate earnings, commissions, and business-critical amounts
+ */
+export const ExactPrice = ({ 
+  sekPrice, 
+  className = '',
+  showOriginal = false,
+  size = 'normal',
+  loading: externalLoading = false
+}) => {
+  const [convertedPrice, setConvertedPrice] = useState(null);
+  const [isConverting, setIsConverting] = useState(false);
+  const [error, setError] = useState(null);
+  
+  const { 
+    convertSEKPriceExact, 
+    isLoading: currencyLoading,
+    isShopDomain 
+  } = useLanguageCurrency();
+
+  // Convert price when currency or sekPrice changes
+  useEffect(() => {
+    const convertExactPrice = async () => {
+      if (!sekPrice || sekPrice <= 0) {
+        setConvertedPrice(null);
+        return;
+      }
+
+      try {
+        setIsConverting(true);
+        setError(null);
+        
+        // Use exact conversion (no smart pricing)
+        const result = await convertSEKPriceExact(sekPrice);
+        setConvertedPrice(result);
+        
+      } catch (err) {
+        console.error('Error converting exact price:', err);
+        setError(err.message);
+        
+        // Fallback to SEK
+        setConvertedPrice({
+          originalPrice: sekPrice,
+          convertedPrice: sekPrice,
+          formatted: `${sekPrice.toFixed(2)} kr`,
+          currency: 'SEK',
+          exchangeRate: 1.0,
+          error: err.message
+        });
+        
+      } finally {
+        setIsConverting(false);
+      }
+    };
+
+    convertExactPrice();
+  }, [sekPrice, convertSEKPriceExact]);
+
+  // Size-specific classes
+  const sizeClasses = {
+    small: {
+      price: 'text-sm font-medium',
+      original: 'text-xs',
+      currency: 'text-xs'
+    },
+    normal: {
+      price: 'text-lg font-semibold',
+      original: 'text-sm',
+      currency: 'text-sm'
+    },
+    large: {
+      price: 'text-2xl font-bold',
+      original: 'text-base',
+      currency: 'text-base'
+    }
+  };
+
+  const currentSize = sizeClasses[size] || sizeClasses.normal;
+
+  // Loading state
+  if (currencyLoading || isConverting || externalLoading) {
+    return (
+      <div className={`${className}`}>
+        <div className={`${currentSize.price} text-gray-400 animate-pulse`}>
+          Loading...
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error && !convertedPrice) {
+    return (
+      <div className={`${className}`}>
+        <div className={`${currentSize.price} text-red-500`}>
+          Price unavailable
+        </div>
+        {showOriginal && (
+          <div className={`${currentSize.original} text-gray-500 mt-1`}>
+            SEK {sekPrice?.toFixed(2)}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // No price provided
+  if (!sekPrice || sekPrice <= 0) {
+    return (
+      <div className={`${className}`}>
+        <div className={`${currentSize.price} text-gray-400`}>
+          Price not available
+        </div>
+      </div>
+    );
+  }
+
+  // No conversion result yet
+  if (!convertedPrice) {
+    return (
+      <div className={`${className}`}>
+        <div className={`${currentSize.price} text-gray-400`}>
+          Calculating...
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${className}`}>
+      {/* Main exact converted price */}
+      <div className={`${currentSize.price} text-gray-900`}>
+        {convertedPrice.formatted}
+      </div>
+      
+      {/* Original SEK price (if different currency and showOriginal is true) */}
+      {showOriginal && convertedPrice.currency !== 'SEK' && (
+        <div className={`${currentSize.original} text-gray-500 mt-1`}>
+          SEK {convertedPrice.originalPrice?.toFixed(2)}
+          {convertedPrice.exchangeRate && (
+            <span className="ml-2 text-xs text-blue-600">
+              (Rate: {convertedPrice.exchangeRate.toFixed(4)})
+            </span>
+          )}
+        </div>
+      )}
+      
+      {/* Error indicator (if conversion had issues but fallback worked) */}
+      {convertedPrice.error && (
+        <div className={`${currentSize.currency} text-orange-500 mt-1`}>
+          ⚠️ Using fallback rate
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default SmartPrice; 

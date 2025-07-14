@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { db } from '../firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import { calculateCommission } from '../utils/affiliateCalculations';
 
 // Shipping cost constants
 export const SHIPPING_COSTS = {
@@ -360,6 +361,14 @@ export const CartProvider = ({ children }) => {
     });
   };
 
+  const previewCommission = (affiliateRate = 15) => {
+    const totals = calculateTotals();
+    const mockOrder = { subtotal: totals.subtotal, discountAmount: totals.discountAmount, shipping: totals.shipping };
+    const mockAffiliate = { commissionRate: affiliateRate };
+    const { commission } = calculateCommission(mockOrder, mockAffiliate);
+    return commission;
+  };
+
   const value = {
     cart,
     addToCart,
@@ -375,7 +384,8 @@ export const CartProvider = ({ children }) => {
     isAddedToCartModalVisible,
     showAddedToCartModal,
     hideAddedToCartModal,
-    lastAddedItem
+    lastAddedItem,
+    previewCommission
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
