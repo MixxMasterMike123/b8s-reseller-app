@@ -159,6 +159,15 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // 🆕 Phase 2: AdminUIDs collection - Parallel admin UID tracking
+    // 🛡️ SAFE: Only admins can access, doesn't affect existing storage rules
+    match /adminUIDs/{adminUID} {
+      // Only existing admins can read admin UID data
+      allow read: if isAdmin();
+      // Only existing admins can write admin UID data  
+      allow write: if isAdmin();
+    }
+
     // Default deny rule for any other collections
     match /{document=**} {
       allow read, write: if false;
