@@ -530,10 +530,10 @@ const AffiliatePortal = () => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center px-3 py-2 text-sm font-medium rounded-md w-full ${activeTab === tab.id ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
+                    className={`flex items-center justify-start px-3 py-2 text-sm font-medium rounded-md w-full text-left ${activeTab === tab.id ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
                   >
-                    <span className="mr-3">{tab.icon}</span>
-                    <span className="hidden lg:inline">{tab.name}</span>
+                    <span className="mr-3 flex-shrink-0">{tab.icon}</span>
+                    <span className="hidden lg:inline text-left">{tab.name}</span>
                   </button>
                 ))}
               </nav>
