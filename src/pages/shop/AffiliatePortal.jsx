@@ -267,206 +267,341 @@ const AffiliatePortal = () => {
     switch (activeTab) {
       case 'overview':
         return (
-          <div className="grid grid-cols-12 gap-6">
-            {/* Main Content Area - Affiliate Link Section */}
-            <div className="col-span-12 lg:col-span-8">
-              <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-green-500">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('affiliate_portal_your_link', 'Din unika affiliatelänk')}</h3>
-                <p className="text-gray-600 mb-4">
-                  {t('affiliate_portal_link_description', 'Använd denna länk för att tjäna provision på alla köp:')}
-                </p>
-                
-                <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                  <div className="flex items-center justify-between">
-                    <code className="text-sm text-blue-600 font-mono break-all">
-                      {generateLink()}
-                    </code>
-                    <button
-                      onClick={() => copyToClipboard(generateLink())}
-                      className="ml-4 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors flex-shrink-0"
-                    >
-                      {t('affiliate_portal_copy_link', 'Kopiera')}
-                    </button>
+          <div className="space-y-4">
+            {/* Mobile-First: Compact Stats Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+              {/* Clicks Card */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3 lg:p-4">
+                <div className="text-center">
+                  <div className="text-xl lg:text-2xl font-bold text-gray-800 mb-1">
+                    {liveStats?.clicks ?? affiliateData.stats.clicks}
+                  </div>
+                  <div className="text-xs lg:text-sm text-gray-600 leading-tight">
+                    {t('affiliate_portal_clicks_30_days', 'Klick (30 dagar)')}
                   </div>
                 </div>
+              </div>
 
-                <div className="flex gap-3 mb-4">
-                  <button
-                    onClick={() => {
-                      const link = generateLink();
-                      setGeneratedLink(link);
-                      generateQRCode(link);
-                    }}
-                    className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm"
-                  >
-                    {t('affiliate_portal_generate_qr', 'Generera QR-kod')}
-                  </button>
-                  
-                  <a
-                    href={generateLink()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
-                  >
-                    {t('affiliate_portal_test_link', 'Testa länk')}
-                  </a>
+              {/* Conversions Card */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3 lg:p-4">
+                <div className="text-center">
+                  <div className="text-xl lg:text-2xl font-bold text-gray-800 mb-1">
+                    {liveStats?.conversions ?? affiliateData.stats.conversions}
+                  </div>
+                  <div className="text-xs lg:text-sm text-gray-600 leading-tight">
+                    {t('affiliate_portal_conversions_30_days', 'Konverteringar (30 dagar)')}
+                  </div>
                 </div>
+              </div>
 
-                {/* QR Code Display */}
-                {qrCodeDataUrl && (
-                  <div className="mt-4 pt-4 border-t">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium text-gray-800 mb-2">{t('affiliate_portal_qr_code', 'QR-kod för din länk')}</h4>
-                        <img src={qrCodeDataUrl} alt="Affiliate QR Code" className="w-32 h-32 border rounded" />
-                      </div>
+              {/* Balance Card */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3 lg:p-4">
+                <div className="text-center">
+                  <div className="text-lg lg:text-xl font-bold text-green-600 mb-1">
+                    <ExactPrice 
+                      sekPrice={affiliateData.stats.balance} 
+                      size="small"
+                      showOriginal={false}
+                    />
+                  </div>
+                  <div className="text-xs lg:text-sm text-gray-600 leading-tight">
+                    {t('affiliate_portal_unpaid_commission', 'Obetald Provision')}
+                  </div>
+                </div>
+              </div>
+
+              {/* Total Earnings Card */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3 lg:p-4">
+                <div className="text-center">
+                  <div className="text-lg lg:text-xl font-bold text-green-600 mb-1">
+                    <ExactPrice 
+                      sekPrice={affiliateData.stats.totalEarnings} 
+                      size="small"
+                      showOriginal={false}
+                    />
+                  </div>
+                  <div className="text-xs lg:text-sm text-gray-600 leading-tight">
+                    {t('affiliate_portal_total_earnings', 'Totala Intäkter')}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile-Optimized Affiliate Link Section */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 lg:p-6">
+              <h3 className="text-base lg:text-lg font-semibold text-gray-800 mb-3">
+                {t('affiliate_portal_your_link', 'Din unika affiliatelänk')}
+              </h3>
+              
+              {/* Compact Link Display */}
+              <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                <div className="flex items-center justify-between gap-2">
+                  <code className="text-xs lg:text-sm text-blue-600 font-mono break-all flex-1 min-w-0">
+                    {generateLink()}
+                  </code>
+                  <button
+                    onClick={() => copyToClipboard(generateLink())}
+                    className="bg-blue-600 text-white px-3 py-2 rounded-md text-xs lg:text-sm hover:bg-blue-700 transition-colors flex-shrink-0"
+                  >
+                    {t('affiliate_portal_copy_link', 'Kopiera')}
+                  </button>
+                </div>
+              </div>
+
+              {/* Mobile-Friendly Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4">
+                <button
+                  onClick={() => {
+                    const link = generateLink();
+                    setGeneratedLink(link);
+                    generateQRCode(link);
+                  }}
+                  className="flex-1 bg-gray-600 text-white px-4 py-2.5 rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+                >
+                  {t('affiliate_portal_generate_qr', 'Generera QR-kod')}
+                </button>
+                
+                <a
+                  href={generateLink()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium text-center"
+                >
+                  {t('affiliate_portal_test_link', 'Testa länk')}
+                </a>
+              </div>
+
+              {/* Compact QR Code Display */}
+              {qrCodeDataUrl && (
+                <div className="border-t pt-4">
+                  <div className="flex flex-col sm:flex-row items-center gap-4">
+                    <div className="flex-shrink-0">
+                      <h4 className="text-sm font-medium text-gray-800 mb-2 text-center sm:text-left">
+                        {t('affiliate_portal_qr_code', 'QR-kod för din länk')}
+                      </h4>
+                      <img 
+                        src={qrCodeDataUrl} 
+                        alt="Affiliate QR Code" 
+                        className="w-24 h-24 lg:w-32 lg:h-32 border rounded mx-auto sm:mx-0" 
+                      />
+                    </div>
+                    <div className="flex-1 text-center sm:text-left">
                       <button
                         onClick={downloadQRCode}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                        className="bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                       >
                         {t('affiliate_portal_download_qr', 'Ladda ner QR')}
                       </button>
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
-            {/* Compact Statistics Sidebar */}
-            <div className="col-span-12 lg:col-span-4">
-              <div className="bg-white rounded-2xl shadow-lg p-4 border-l-4 border-blue-500">
-                <h3 className="text-base font-semibold text-gray-800 mb-3">{t('affiliate_portal_stats_title', 'Dina Statistik')}</h3>
-                <div className="space-y-3">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-800">{liveStats?.clicks ?? affiliateData.stats.clicks}</div>
-                    <div className="text-xs text-gray-600">{t('affiliate_portal_clicks_30_days', 'Klick (30 dagar)')}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-800">{liveStats?.conversions ?? affiliateData.stats.conversions}</div>
-                    <div className="text-xs text-gray-600">{t('affiliate_portal_conversions_30_days', 'Konverteringar (30 dagar)')}</div>
-                  </div>
-                  <div className="border-t my-2"></div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-green-600">
-                      <ExactPrice 
-                        sekPrice={affiliateData.stats.balance} 
-                        size="small"
-                        showOriginal={false}
-                      />
-                    </div>
-                    <div className="text-xs text-gray-600">{t('affiliate_portal_unpaid_commission', 'Obetald Provision')}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-green-600">
-                      <ExactPrice 
-                        sekPrice={affiliateData.stats.totalEarnings} 
-                        size="small"
-                        showOriginal={false}
-                      />
-                    </div>
-                    <div className="text-xs text-gray-600">{t('affiliate_portal_total_earnings', 'Totala Intäkter')}</div>
-                  </div>
-                </div>
-                <button className="w-full mt-4 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors text-sm">
-                  {t('affiliate_portal_request_payout', 'Begär utbetalning')}
-                </button>
-              </div>
+            {/* Mobile-Optimized Payout Button */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+              <button className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
+                {t('affiliate_portal_request_payout', 'Begär utbetalning')}
+              </button>
             </div>
           </div>
         );
 
       case 'profile':
         return (
-          <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-3xl mx-auto space-y-6">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">{t('affiliate_profile_title', 'Din Profil')}</h2>
+          <div className="space-y-4">
+            {/* Mobile-First Profile Form */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 lg:p-6">
+              <h2 className="text-base lg:text-lg font-semibold text-gray-800 mb-4">
+                {t('affiliate_profile_title', 'Din Profil')}
+              </h2>
 
-            {/* Email (read-only) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_email', 'Email')}</label>
-              <input type="email" value={affiliateData?.email || ''} disabled className="w-full bg-gray-100 border-gray-300 rounded-lg px-4 py-2" />
+              <div className="space-y-4">
+                {/* Read-only fields in compact layout */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t('affiliate_profile_email', 'Email')}
+                    </label>
+                    <input 
+                      type="email" 
+                      value={affiliateData?.email || ''} 
+                      disabled 
+                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t('affiliate_profile_code', 'Affiliate-kod')}
+                    </label>
+                    <input 
+                      type="text" 
+                      value={affiliateData?.affiliateCode || ''} 
+                      disabled 
+                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-sm"
+                    />
+                  </div>
+                </div>
+
+                {/* Editable fields */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('affiliate_profile_name', 'Namn')}
+                  </label>
+                  <input 
+                    name="name" 
+                    value={profileForm.name} 
+                    onChange={handleProfileChange} 
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t('affiliate_profile_lang', 'Föredraget språk')}
+                    </label>
+                    <select 
+                      name="preferredLang" 
+                      value={profileForm.preferredLang} 
+                      onChange={handleProfileChange} 
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="sv-SE">Svenska</option>
+                      <option value="en-GB">English (UK)</option>
+                      <option value="en-US">English (US)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t('affiliate_profile_phone', 'Telefon')}
+                    </label>
+                    <input 
+                      name="phone" 
+                      value={profileForm.phone} 
+                      onChange={handleProfileChange} 
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('affiliate_profile_address1', 'Adress')}
+                  </label>
+                  <input 
+                    name="address1" 
+                    value={profileForm.address1} 
+                    onChange={handleProfileChange} 
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('affiliate_profile_address2', 'Adress 2 (valfritt)')}
+                  </label>
+                  <input 
+                    name="address2" 
+                    value={profileForm.address2} 
+                    onChange={handleProfileChange} 
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t('affiliate_profile_city', 'Stad')}
+                    </label>
+                    <input 
+                      name="city" 
+                      value={profileForm.city} 
+                      onChange={handleProfileChange} 
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t('affiliate_profile_postal', 'Postnummer')}
+                    </label>
+                    <input 
+                      name="postalCode" 
+                      value={profileForm.postalCode} 
+                      onChange={handleProfileChange} 
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t('affiliate_profile_country', 'Land')}
+                    </label>
+                    <input 
+                      name="country" 
+                      value={profileForm.country} 
+                      onChange={handleProfileChange} 
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Mobile-Optimized Save Button */}
+                <div className="pt-4 border-t">
+                  <button 
+                    onClick={saveProfile} 
+                    className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm lg:text-base"
+                  >
+                    {t('affiliate_profile_save_button', 'Spara Profil')}
+                  </button>
+                </div>
+              </div>
             </div>
-
-            {/* Affiliate Code (read-only) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_code', 'Affiliate-kod')}</label>
-              <input type="text" value={affiliateData?.affiliateCode || ''} disabled className="w-full bg-gray-100 border-gray-300 rounded-lg px-4 py-2" />
-            </div>
-
-            {/* Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_name', 'Namn')}</label>
-              <input name="name" value={profileForm.name} onChange={handleProfileChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50" />
-            </div>
-
-            {/* Preferred Language */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_language', 'Föredraget språk')}</label>
-              <select
-                name="preferredLang"
-                value={profileForm.preferredLang}
-                onChange={handleProfileChange}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50"
-              >
-                <option value="sv-SE">Svenska</option>
-                <option value="en-GB">English (UK)</option>
-                <option value="en-US">English (US)</option>
-              </select>
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_phone', 'Telefon')}</label>
-              <input name="phone" value={profileForm.phone} onChange={handleProfileChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50" />
-            </div>
-
-            {/* Address */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_address', 'Adress')}</label>
-              <input name="address1" value={profileForm.address1} onChange={handleProfileChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50" />
-            </div>
-
-            {/* City */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_city', 'Stad')}</label>
-              <input name="city" value={profileForm.city} onChange={handleProfileChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50" />
-            </div>
-
-            {/* Postal Code */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_postal', 'Postnummer')}</label>
-              <input name="postalCode" value={profileForm.postalCode} onChange={handleProfileChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50" />
-            </div>
-
-            {/* Country */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('affiliate_profile_country', 'Land')}</label>
-              <input name="country" value={profileForm.country} onChange={handleProfileChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50" />
-            </div>
-
-            <button onClick={saveProfile} className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-              {t('affiliate_profile_save_button', 'Spara Profil')}
-            </button>
           </div>
         );
       case 'success':
-        return <AffiliateSuccessGuide />;
+        return (
+          <div className="space-y-4">
+            {/* Mobile-Optimized Success Guide */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+              <AffiliateSuccessGuide />
+            </div>
+          </div>
+        );
       case 'materials':
         return (
-          <div className="bg-white p-6 rounded-2xl shadow-lg">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">{t('affiliate_portal_marketing_materials', 'Marknadsföringsmaterial')}</h2>
-            <p className="text-gray-600 mb-6">
-              {t('affiliate_portal_materials_description', 'Ladda ner bilder, banners och annonser för att marknadsföra B8Shield effektivt.')}
-            </p>
-            <AffiliateMarketingMaterials affiliateCode={affiliateData.affiliateCode} />
+          <div className="space-y-4">
+            {/* Mobile-First Header */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+              <h2 className="text-base lg:text-lg font-semibold text-gray-800 mb-2">
+                {t('affiliate_portal_marketing_materials', 'Marknadsföringsmaterial')}
+              </h2>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                {t('affiliate_portal_materials_description', 'Ladda ner bilder, banners och annonser för att marknadsföra B8Shield effektivt.')}
+              </p>
+            </div>
+
+            {/* Mobile-Optimized Marketing Materials */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+              <AffiliateMarketingMaterials affiliateCode={affiliateData.affiliateCode} />
+            </div>
           </div>
         );
       case 'analytics':
         return (
-          <AffiliateAnalyticsTab 
-            affiliateCode={affiliateData.affiliateCode}
-            affiliateStats={affiliateData.stats}
-            affiliateData={affiliateData}
-          />
+          <div className="space-y-4">
+            {/* Mobile-Optimized Analytics */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+              <AffiliateAnalyticsTab 
+                affiliateCode={affiliateData.affiliateCode}
+                affiliateStats={affiliateData.stats}
+                affiliateData={affiliateData}
+              />
+            </div>
+          </div>
         );
       default:
         return null;
@@ -515,24 +650,28 @@ const AffiliatePortal = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <ShopNavigation />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">{t('affiliate_portal_welcome', 'Välkommen {{name}}!', { name: affiliateData.name })}</h1>
-          <p className="mt-2 text-gray-600">{t('affiliate_portal_dashboard_subtitle', 'Din affiliate-instrumentpanel')}</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        <header className="mb-6 lg:mb-8">
+          <h1 className="text-xl lg:text-3xl font-bold text-gray-900 mb-2">
+            {t('affiliate_portal_welcome', 'Välkommen {{name}}!', { name: affiliateData.name })}
+          </h1>
+          <p className="text-sm lg:text-base text-gray-600">
+            {t('affiliate_portal_dashboard_subtitle', 'Din affiliate-instrumentpanel')}
+          </p>
         </header>
 
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-12 gap-4 lg:gap-6">
           {/* Left-side Tabs - Mobile: horizontal scroll, Desktop: vertical sidebar */}
           <div className="col-span-12 lg:col-span-3">
-            <div className="bg-white rounded-lg shadow">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100">
               {/* Mobile: Horizontal scrolling tabs */}
               <nav className="lg:hidden overflow-x-auto border-b border-gray-200" aria-label="Sidebar">
-                <div className="flex space-x-2 p-4 min-w-max">
+                <div className="flex space-x-2 p-3 min-w-max">
                   {tabs.map((tab) => (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center justify-center px-4 py-3 text-sm font-bold rounded-lg whitespace-nowrap transition-all duration-200 border ${
+                      className={`flex items-center justify-center px-3 py-2.5 text-sm font-bold rounded-lg whitespace-nowrap transition-all duration-200 border ${
                         activeTab === tab.id 
                           ? 'bg-blue-100 text-blue-900 border-blue-300' 
                           : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50 hover:text-black'
