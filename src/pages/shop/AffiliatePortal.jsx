@@ -328,22 +328,62 @@ const AffiliatePortal = () => {
 
             {/* Mobile-Optimized Affiliate Link Section */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 lg:p-6">
-              <h3 className="text-base lg:text-lg font-semibold text-gray-800 mb-3">
-                {t('affiliate_portal_your_link', 'Din unika affiliatelänk')}
-              </h3>
-              
-              {/* Compact Link Display */}
-              <div className="bg-gray-50 rounded-lg p-3 mb-3">
-                <div className="flex items-center justify-between gap-2">
-                  <code className="text-xs lg:text-sm text-blue-600 font-mono break-all flex-1 min-w-0">
-                    {generateLink()}
-                  </code>
-                  <button
-                    onClick={() => copyToClipboard(generateLink())}
-                    className="bg-blue-600 text-white px-3 py-2 rounded-md text-xs lg:text-sm hover:bg-blue-700 transition-colors flex-shrink-0"
-                  >
-                    {t('affiliate_portal_copy_link', 'Kopiera')}
-                  </button>
+              {/* Primary: Affiliate Code Section */}
+              <div className="mb-6">
+                <h3 className="text-base lg:text-lg font-semibold text-gray-800 mb-2">
+                  {t('affiliate_portal_your_code', 'Din Affiliate-kod')}
+                </h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  {t('affiliate_portal_code_explanation', 'Detta är din unika kod som du kan dela med andra')}
+                  <br />
+                  <span className="text-xs text-gray-500">
+                    {t('affiliate_portal_case_insensitive_note', '💡 Koden fungerar oavsett om den skrivs med stora eller små bokstäver')}
+                  </span>
+                </p>
+                
+                {/* Prominent Code Display */}
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="text-2xl lg:text-3xl font-bold text-blue-800 font-mono">
+                        {affiliateData?.affiliateCode || 'LOADING...'}
+                      </div>
+                      <div className="text-xs text-blue-600 mt-1">
+                        {t('affiliate_portal_code_explanation', 'Din unika kod för att spåra försäljningar')}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard(affiliateData?.affiliateCode || '')}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex-shrink-0"
+                    >
+                      {t('affiliate_portal_copy_code', 'Kopiera kod')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Secondary: Complete Link Section */}
+              <div className="mb-6">
+                <h4 className="text-sm lg:text-base font-medium text-gray-700 mb-2">
+                  {t('affiliate_portal_your_complete_link', 'Din kompletta länk')}
+                </h4>
+                <p className="text-xs text-gray-500 mb-3">
+                  {t('affiliate_portal_link_explanation', 'Detta är den kompletta länken med din kod inbäddad')}
+                </p>
+                
+                {/* Compact Link Display */}
+                <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <code className="text-xs lg:text-sm text-gray-600 font-mono break-all flex-1 min-w-0">
+                      {generateLink()}
+                    </code>
+                    <button
+                      onClick={() => copyToClipboard(generateLink())}
+                      className="bg-gray-600 text-white px-3 py-2 rounded-md text-xs lg:text-sm hover:bg-gray-700 transition-colors flex-shrink-0"
+                    >
+                      {t('affiliate_portal_copy_link', 'Kopiera länk')}
+                    </button>
+                  </div>
                 </div>
               </div>
 

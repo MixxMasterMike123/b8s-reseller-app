@@ -82,3 +82,32 @@ export const compareCalculations = (orderData, affiliateData) => {
       ((newMethod.commission - oldMethod.commission) / oldMethod.commission) * 100 : 0
   };
 }; 
+
+/**
+ * Normalize affiliate code for case-insensitive handling
+ * Converts to uppercase and trims whitespace for consistent database queries
+ * @param {string} code - The affiliate code to normalize
+ * @returns {string} - Normalized affiliate code in uppercase
+ */
+export const normalizeAffiliateCode = (code) => {
+  if (!code || typeof code !== 'string') {
+    return '';
+  }
+  return code.trim().toUpperCase();
+};
+
+/**
+ * Validate affiliate code format
+ * Checks if the code follows the expected pattern (e.g., "NAME-123")
+ * @param {string} code - The affiliate code to validate
+ * @returns {boolean} - True if valid format
+ */
+export const isValidAffiliateCodeFormat = (code) => {
+  if (!code || typeof code !== 'string') {
+    return false;
+  }
+  const normalized = normalizeAffiliateCode(code);
+  // Pattern: 1-8 letters, hyphen, 3 digits (e.g., "EMMA-768", "JOHN-123")
+  const pattern = /^[A-Z]{1,8}-\d{3}$/;
+  return pattern.test(normalized);
+}; 

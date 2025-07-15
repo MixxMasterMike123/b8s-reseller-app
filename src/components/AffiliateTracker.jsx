@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../firebase/config';
+import { normalizeAffiliateCode } from '../utils/affiliateCalculations';
 
 const AffiliateTracker = () => {
   const location = useLocation();
@@ -34,8 +35,9 @@ const AffiliateTracker = () => {
         }
 
         // If this is a different code than what's stored, clear cart discount
-        if (existingCode && existingCode !== refCode.toUpperCase()) {
-          console.log(`🔄 Replacing existing affiliate code ${existingCode} with ${refCode}`);
+        const normalizedRefCode = normalizeAffiliateCode(refCode);
+        if (existingCode && existingCode !== normalizedRefCode) {
+          console.log(`🔄 Replacing existing affiliate code ${existingCode} with ${normalizedRefCode}`);
           
           // Clear cart discount from localStorage to force re-application
           const existingCart = localStorage.getItem('b8shield_cart');
@@ -58,10 +60,11 @@ const AffiliateTracker = () => {
         // This is not subject to cookie consent as it's legitimate business interest
         
         // Always store the new affiliate code (with "last ref wins" principle)
+        const normalizedCode = normalizeAffiliateCode(refCode);
         const expiry = new Date().getTime() + 30 * 24 * 60 * 60 * 1000; // 30 days
-        const affiliateInfo = { code: refCode.toUpperCase(), expiry: expiry };
+        const affiliateInfo = { code: normalizedCode, expiry: expiry };
         localStorage.setItem('b8s_affiliate_ref', JSON.stringify(affiliateInfo));
-        console.log(`✅ Stored affiliate code in localStorage: ${refCode.toUpperCase()}`);
+        console.log(`✅ Stored affiliate code in localStorage: ${normalizedCode}`);
 
         // sessionStorage cleanup already handled above when reading existing ref
 

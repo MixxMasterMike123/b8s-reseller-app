@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { db } from '../firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { calculateCommission } from '../utils/affiliateCalculations';
+import { calculateCommission, normalizeAffiliateCode } from '../utils/affiliateCalculations';
 
 // Shipping cost constants
 export const SHIPPING_COSTS = {
@@ -187,14 +187,14 @@ export const CartProvider = ({ children }) => {
   };
 
   const applyDiscountCode = async (code, options = {}) => {
-    const trimmedCode = code.trim().toUpperCase();
-    if (!trimmedCode) {
+    const normalizedCode = normalizeAffiliateCode(code);
+    if (!normalizedCode) {
       return { success: false, message: 'Ange en kod.' };
     }
 
     try {
       const affiliatesRef = collection(db, 'affiliates');
-      const affiliateQuery = query(affiliatesRef, where("affiliateCode", "==", trimmedCode), where("status", "==", "active"));
+      const affiliateQuery = query(affiliatesRef, where("affiliateCode", "==", normalizedCode), where("status", "==", "active"));
       const querySnapshot = await getDocs(affiliateQuery);
 
       if (querySnapshot.empty) {
@@ -228,7 +228,7 @@ export const CartProvider = ({ children }) => {
 
       setCart(prev => ({
         ...prev,
-        discountCode: trimmedCode,
+        discountCode: normalizedCode,
         discountAmount: roundedDiscount,
         discountPercentage: discountPercentage,
         affiliateClickId: affiliateClickId,
