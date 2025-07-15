@@ -5,8 +5,8 @@ import CookieBot from 'react-cookiebot';
 const DOMAIN_GROUP_ID = '51150c10-e895-4814-b11b-04512c3782ed';
 
 /**
- * Wraps the Cookiebot CMP script and exposes consent change events.
- * Loads only once (React 18 strict-mode safe).
+ * Cookiebot CMP Component
+ * Loads with minimal performance impact
  */
 const CookiebotCMP = () => {
   const hasInitialized = useRef(false);
@@ -17,6 +17,7 @@ const CookiebotCMP = () => {
       // Example: you can initialise Google Analytics here when statistics consent is given
       // if (window.Cookiebot?.consent?.statistics) initGA4();
       // Similarly, marketing pixels etc.
+      console.log('🍪 Cookiebot consent declaration received');
     };
 
     // Add error handling for Cookiebot events
@@ -33,7 +34,7 @@ const CookiebotCMP = () => {
     };
   }, []);
 
-  // PERFORMANCE FIX: Prevent duplicate script loading
+  // Prevent duplicate script loading
   if (hasInitialized.current) {
     return null;
   }

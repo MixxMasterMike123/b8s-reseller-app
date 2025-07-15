@@ -13,6 +13,18 @@ export default defineConfig({
         '.js': 'jsx',
       },
     },
+    // Pre-bundle frequently used dependencies
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@heroicons/react',
+      'firebase/app',
+      'firebase/auth',
+      'firebase/firestore',
+      'firebase/storage',
+      'firebase/functions'
+    ]
   },
   build: {
     // Create hashed filenames for better cache busting
@@ -24,6 +36,24 @@ export default defineConfig({
       }
     },
     // Ensure we never use cached HTML
-    emptyOutDir: true
+    emptyOutDir: true,
+    // Performance optimizations
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: false, // Keep console logs for debugging
+        drop_debugger: true
+      }
+    },
+    // Enable source maps for debugging
+    sourcemap: false,
+    // Optimize chunk size warnings
+    chunkSizeWarningLimit: 1000
+  },
+  // Development server optimizations
+  server: {
+    hmr: {
+      overlay: false // Disable error overlay for better performance
+    }
   }
 }) 

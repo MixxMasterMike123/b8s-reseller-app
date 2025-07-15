@@ -247,7 +247,7 @@ const AffiliatePortal = () => {
     },
     {
       id: 'materials',
-      name: t('affiliate_portal_tab_materials', 'Marknadsföringsmaterial'),
+      name: t('affiliate_portal_tab_materials', 'Material'),
       icon: <PresentationChartBarIcon className="h-5 w-5" />
     },
     {
@@ -522,26 +522,47 @@ const AffiliatePortal = () => {
         </header>
 
         <div className="grid grid-cols-12 gap-6">
-          {/* Left-side Tabs - 2 columns */}
-          <div className="col-span-12 lg:col-span-2">
+          {/* Left-side Tabs - Mobile: horizontal scroll, Desktop: vertical sidebar */}
+          <div className="col-span-12 lg:col-span-3">
             <div className="bg-white rounded-lg shadow">
-              <nav className="space-y-1 p-4" aria-label="Sidebar">
+              {/* Mobile: Horizontal scrolling tabs */}
+              <nav className="lg:hidden overflow-x-auto border-b border-gray-200" aria-label="Sidebar">
+                <div className="flex space-x-2 p-4 min-w-max">
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`flex items-center justify-center px-4 py-3 text-sm font-bold rounded-lg whitespace-nowrap transition-all duration-200 border ${
+                        activeTab === tab.id 
+                          ? 'bg-blue-100 text-blue-900 border-blue-300' 
+                          : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50 hover:text-black'
+                      }`}
+                    >
+                      <span className="mr-2 flex-shrink-0 text-current">{tab.icon}</span>
+                      <span className="font-bold text-current">{tab.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </nav>
+              
+              {/* Desktop: Vertical sidebar */}
+              <nav className="hidden lg:block space-y-1 p-4" aria-label="Sidebar">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center justify-start px-3 py-2 text-sm font-medium rounded-md w-full text-left ${activeTab === tab.id ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
+                    className={`flex items-start justify-start px-3 py-3 text-sm font-medium rounded-md w-full text-left transition-colors ${activeTab === tab.id ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
                   >
-                    <span className="mr-3 flex-shrink-0">{tab.icon}</span>
-                    <span className="hidden lg:inline text-left">{tab.name}</span>
+                    <span className="mr-3 flex-shrink-0 mt-0.5">{tab.icon}</span>
+                    <span className="break-words leading-tight min-w-0 flex-1">{tab.name}</span>
                   </button>
                 ))}
               </nav>
             </div>
           </div>
 
-          {/* Tab Content - 10 columns */}
-          <div className="col-span-12 lg:col-span-10">
+          {/* Tab Content - 9 columns */}
+          <div className="col-span-12 lg:col-span-9">
             {renderTabContent()}
           </div>
         </div>

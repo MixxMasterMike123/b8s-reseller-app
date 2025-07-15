@@ -1,0 +1,92 @@
+{
+  "total": 14,
+  "imported": 0,
+  "skipped": 13,
+  "failed": 1,
+  "details": [
+    {
+      "email": "e.mattsdal@gmail.com",
+      "name": "Emma Mattsdal",
+      "status": "skipped",
+      "reason": "already_exists"
+    },
+    {
+      "email": "kallbergsport@gmail.com",
+      "name": "Bill Kallberg",
+      "status": "skipped",
+      "reason": "already_exists"
+    },
+    {
+      "email": "starynarybach89@gmail.com",
+      "name": "Przemek Kaleta",
+      "status": "skipped",
+      "reason": "already_exists"
+    },
+    {
+      "email": "washi@mail.com",
+      "name": "Wäshi",
+      "status": "skipped",
+      "reason": "already_exists"
+    },
+    {
+      "email": "ozz.duymaz@gmail.com",
+      "name": "Özgur Duymaz",
+      "status": "skipped",
+      "reason": "already_exists"
+    },
+    {
+      "email": "trevynmorris@gmail.com",
+      "name": "Trevyn Morris",
+      "status": "skipped",
+      "reason": "already_exists"
+    },
+    {
+      "email": "jhfiske@hotmail.com",
+      "name": "Jari halkonen",
+      "status": "skipped",
+      "reason": "already_exists"
+    },
+    {
+      "email": "tackleroomsweden@gmail.com",
+      "name": "Mickael Is",
+      "status": "skipped",
+      "reason": "already_exists"
+    },
+    {
+      "email": "bldwnm5@hotmail.com",
+      "name": "Michael Baldwin",
+      "status": "skipped",
+      "reason": "already_exists"
+    },
+    {
+      "email": "ghopkins1974@gmail.com",
+      "name": "Graham Hopkins",
+      "status": "skipped",
+      "reason": "already_exists"
+    },
+    {
+      "email": "info@duymaz.se",
+      "name": "Huseyin Duymaz",
+      "status": "failed",
+      "reason": "auth_creation_failed"
+    },
+    {
+      "email": "info@jphinnovation.se",
+      "name": "Huseyin Duymaz",
+      "status": "skipped",
+      "reason": "already_exists"
+    },
+    {
+      "email": "kent@meteorpr.se",
+      "name": "Kent Lövgren",
+      "status": "skipped",
+      "reason": "already_exists"
+    },
+    {
+      "email": "husse.duymaz@gmail.com",
+      "name": "Huseyin Duymaz",
+      "status": "skipped",
+      "reason": "already_exists"
+    }
+  ]
+}
