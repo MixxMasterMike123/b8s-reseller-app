@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLanguageCurrency } from '../../contexts/LanguageCurrencyContext';
+import { useTranslation } from '../../contexts/TranslationContext';
 
 const SmartPrice = ({ 
   sekPrice, 
@@ -17,6 +18,7 @@ const SmartPrice = ({
   const [convertedPrice, setConvertedPrice] = useState(null);
   const [isConverting, setIsConverting] = useState(false);
   const [error, setError] = useState(null);
+  const { t } = useTranslation();
   
   const { 
     currency, 
@@ -72,7 +74,7 @@ const SmartPrice = ({
     };
 
     convertPrice();
-  }, [sekPrice, currency, convertSEKPrice, isShopDomain]);
+  }, [sekPrice, convertSEKPrice, isShopDomain]);
 
   // Size-specific classes
   const sizeClasses = {
@@ -100,7 +102,7 @@ const SmartPrice = ({
     return (
       <div className={`${className}`}>
         <div className={`${currentSize.price} text-gray-400 animate-pulse`}>
-          Loading price...
+          {t('price_loading', 'Loading price...')}
         </div>
       </div>
     );
@@ -111,7 +113,7 @@ const SmartPrice = ({
     return (
       <div className={`${className}`}>
         <div className={`${currentSize.price} text-red-500`}>
-          Price unavailable
+          {t('price_unavailable', 'Price unavailable')}
         </div>
         {showOriginal && (
           <div className={`${currentSize.original} text-gray-500 mt-1`}>
@@ -127,7 +129,7 @@ const SmartPrice = ({
     return (
       <div className={`${className}`}>
         <div className={`${currentSize.price} text-gray-400`}>
-          Price not available
+          {t('price_not_available', 'Price not available')}
         </div>
       </div>
     );
@@ -138,7 +140,7 @@ const SmartPrice = ({
     return (
       <div className={`${className}`}>
         <div className={`${currentSize.price} text-gray-400`}>
-          Calculating...
+          {t('price_calculating', 'Calculating...')}
         </div>
       </div>
     );
@@ -265,6 +267,7 @@ export const ExactPrice = ({
   const [convertedPrice, setConvertedPrice] = useState(null);
   const [isConverting, setIsConverting] = useState(false);
   const [error, setError] = useState(null);
+  const { t } = useTranslation();
   
   const { 
     convertSEKPriceExact, 
@@ -336,7 +339,7 @@ export const ExactPrice = ({
     return (
       <div className={`${className}`}>
         <div className={`${currentSize.price} text-gray-400 animate-pulse`}>
-          Loading...
+          {t('price_loading', 'Loading...')}
         </div>
       </div>
     );
@@ -347,7 +350,7 @@ export const ExactPrice = ({
     return (
       <div className={`${className}`}>
         <div className={`${currentSize.price} text-red-500`}>
-          Price unavailable
+          {t('price_unavailable', 'Price unavailable')}
         </div>
         {showOriginal && (
           <div className={`${currentSize.original} text-gray-500 mt-1`}>
@@ -363,7 +366,7 @@ export const ExactPrice = ({
     return (
       <div className={`${className}`}>
         <div className={`${currentSize.price} text-gray-400`}>
-          Price not available
+          {t('price_not_available', 'Price not available')}
         </div>
       </div>
     );
@@ -374,7 +377,7 @@ export const ExactPrice = ({
     return (
       <div className={`${className}`}>
         <div className={`${currentSize.price} text-gray-400`}>
-          Calculating...
+          {t('price_calculating', 'Calculating...')}
         </div>
       </div>
     );

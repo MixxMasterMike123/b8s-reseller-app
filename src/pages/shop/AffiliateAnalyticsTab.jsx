@@ -130,23 +130,23 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
-        <span>{t('analytics_loading', 'Laddar analys...')}</span>
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
+        <span className="text-sm">{t('analytics_loading', 'Laddar analys...')}</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {/* Range selector with debug toggle */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-600">{t('analytics_time_period', 'Tidsperiod')}:</span>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Range selector - Mobile optimized */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600 font-medium">{t('analytics_time_period', 'Tidsperiod')}:</span>
           <select
             value={range}
             onChange={(e) => setRange(Number(e.target.value))}
-            className="border border-gray-300 rounded-md px-3 py-1 text-sm"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value={7}>{t('analytics_days_7', '7 dagar')}</option>
             <option value={30}>{t('analytics_days_30', '30 dagar')}</option>
@@ -154,103 +154,158 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
           </select>
         </div>
         
-        <div className="flex items-center gap-2">
-          {/* Language indicator */}
-          {affiliateData?.preferredLang && (
-            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-              {affiliateData.preferredLang}
-            </span>
-          )}
-        </div>
+        {/* Language indicator */}
+        {affiliateData?.preferredLang && (
+          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full self-start sm:self-center">
+            {affiliateData.preferredLang}
+          </span>
+        )}
       </div>
 
-      {/* 🎯 MAIN STATS: Now uses affiliate.stats with SmartPrice conversion */}
-      <div className="grid grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
-          <div className="text-3xl font-bold text-blue-600">{totals.clicksCnt}</div>
-          <div className="text-sm text-gray-600 mt-1">{t('analytics_clicks', 'CLICKS')}</div>
+      {/* 🎯 MAIN STATS: Mobile-first responsive grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg text-center border border-gray-100">
+          <div className="text-2xl sm:text-3xl font-bold text-blue-600">{totals.clicksCnt}</div>
+          <div className="text-xs sm:text-sm text-gray-600 mt-1 font-medium">{t('analytics_clicks', 'Klick')}</div>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
-          <div className="text-3xl font-bold text-orange-600">{totals.convCnt}</div>
-          <div className="text-sm text-gray-600 mt-1">{t('analytics_conversions', 'CONVERSIONS')}</div>
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg text-center border border-gray-100">
+          <div className="text-2xl sm:text-3xl font-bold text-orange-600">{totals.convCnt}</div>
+          <div className="text-xs sm:text-sm text-gray-600 mt-1 font-medium">{t('analytics_conversions', 'Konverteringar')}</div>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
-          <div className="text-3xl font-bold text-green-600">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg text-center border border-gray-100">
+          <div className="text-lg sm:text-2xl lg:text-3xl font-bold text-green-600">
             <ExactPrice 
               sekPrice={totals.earnings} 
               size="large"
               showOriginal={false}
             />
           </div>
-          <div className="text-sm text-gray-600 mt-1">{t('analytics_earnings', 'EARNINGS')}</div>
+          <div className="text-xs sm:text-sm text-gray-600 mt-1 font-medium">{t('analytics_earnings', 'Intäkter')}</div>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
-          <div className="text-3xl font-bold text-purple-600">{totals.rate.toFixed(1)}%</div>
-          <div className="text-sm text-gray-600 mt-1">{t('analytics_conversion_rate', 'CONVERSION RATE')}</div>
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg text-center border border-gray-100">
+          <div className="text-2xl sm:text-3xl font-bold text-purple-600">{totals.rate.toFixed(1)}%</div>
+          <div className="text-xs sm:text-sm text-gray-600 mt-1 font-medium">{t('analytics_conversion_rate', 'Konverteringsgrad')}</div>
         </div>
       </div>
 
-      {/* Debug panel removed for production */}
-
-      {/* Chart */}
-      <div className="bg-white p-4 rounded-lg shadow">
-        <ResponsiveContainer width="100%" height={250}>
-          <LineChart data={chartData} margin={{ top: 10, right: 20, bottom: 0, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dataKey="clicks" stroke="#3b82f6" name={t('analytics_clicks', 'Klick')} />
-            <Line type="monotone" dataKey="conversions" stroke="#10b981" name={t('analytics_conversions', 'Konverteringar')} />
-          </LineChart>
-        </ResponsiveContainer>
+      {/* Chart - Mobile optimized */}
+      <div className="bg-white p-3 sm:p-4 rounded-2xl shadow-lg border border-gray-100">
+        <h3 className="text-lg font-semibold mb-3 text-gray-800">{t('analytics_performance_chart', 'Prestanda över tid')}</h3>
+        <div className="w-full overflow-x-auto">
+          <ResponsiveContainer width="100%" height={200} minWidth={300}>
+            <LineChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis 
+                dataKey="date" 
+                tick={{ fontSize: 11 }} 
+                tickMargin={5}
+                stroke="#666"
+              />
+              <YAxis 
+                tick={{ fontSize: 11 }} 
+                allowDecimals={false}
+                stroke="#666"
+                width={30}
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'white', 
+                  border: '1px solid #e5e7eb', 
+                  borderRadius: '8px',
+                  fontSize: '12px'
+                }}
+              />
+              <Legend wrapperStyle={{ fontSize: '12px' }} />
+              <Line 
+                type="monotone" 
+                dataKey="clicks" 
+                stroke="#3b82f6" 
+                strokeWidth={2}
+                dot={{ fill: '#3b82f6', strokeWidth: 2, r: 3 }}
+                name={t('analytics_clicks', 'Klick')} 
+              />
+              <Line 
+                type="monotone" 
+                dataKey="conversions" 
+                stroke="#10b981" 
+                strokeWidth={2}
+                dot={{ fill: '#10b981', strokeWidth: 2, r: 3 }}
+                name={t('analytics_conversions', 'Konverteringar')} 
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      {/* Orders table */}
-      <div className="bg-white p-4 rounded-lg shadow overflow-x-auto">
-        <h3 className="text-lg font-semibold mb-3">{t('analytics_recent_orders', 'Senaste orders')}</h3>
-        {orders.length === 0 ? (
-          <p className="text-sm text-gray-500">{t('analytics_no_orders', 'Inga ordrar under vald period.')}</p>
-        ) : (
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 text-left">
-                <th className="px-3 py-2">{t('analytics_order_date', 'Datum')}</th>
-                <th className="px-3 py-2">{t('analytics_order_id', 'Order #')}</th>
-                <th className="px-3 py-2">{t('analytics_order_value', 'Ordervärde')}</th>
-                <th className="px-3 py-2">{t('analytics_commission', 'Provision')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.slice(0,20).map(o => {
-                const created = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000) : new Date(o.createdAt);
-                const orderValue = getOrderValue(o);
-                const commission = o.affiliateCommission || 0;
-                
-                return (
-                  <tr key={o.id} className="border-t">
-                    <td className="px-3 py-1">{created.toLocaleDateString('sv-SE')}</td>
-                    <td className="px-3 py-1 font-mono">{o.orderNumber || o.id.substring(0,8)}…</td>
-                    <td className="px-3 py-1">
-                      <SmartPrice 
-                        sekPrice={orderValue} 
-                        size="small"
-                        showOriginal={false}
-                      />
-                    </td>
-                    <td className="px-3 py-1">
-                      <ExactPrice 
-                        sekPrice={commission} 
-                        size="small"
-                        showOriginal={false}
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      {/* Orders table - Mobile optimized */}
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div className="p-3 sm:p-4 border-b border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-800">{t('analytics_recent_orders', 'Senaste ordrar')}</h3>
+        </div>
+        <div className="overflow-x-auto">
+          {orders.length === 0 ? (
+            <div className="p-4 text-center">
+              <p className="text-sm text-gray-500">{t('analytics_no_orders', 'Inga ordrar under vald period.')}</p>
+            </div>
+          ) : (
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('analytics_order_date', 'Datum')}
+                  </th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('analytics_order_id', 'Order #')}
+                  </th>
+                  <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('analytics_order_value', 'Ordervärde')}
+                  </th>
+                  <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('analytics_commission', 'Provision')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {orders.slice(0,10).map(o => {
+                  const created = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000) : new Date(o.createdAt);
+                  const orderValue = getOrderValue(o);
+                  const commission = o.affiliateCommission || 0;
+                  
+                  return (
+                    <tr key={o.id} className="hover:bg-gray-50">
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">
+                        {created.toLocaleDateString('sv-SE')}
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap text-sm font-mono text-gray-600">
+                        {o.orderNumber || `${o.id.substring(0,8)}...`}
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 text-right">
+                        <SmartPrice 
+                          sekPrice={orderValue} 
+                          size="small"
+                          showOriginal={false}
+                        />
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-green-600 text-right font-medium">
+                        <ExactPrice 
+                          sekPrice={commission} 
+                          size="small"
+                          showOriginal={false}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+        {orders.length > 10 && (
+          <div className="px-4 py-3 bg-gray-50 text-center border-t border-gray-200">
+            <p className="text-xs text-gray-500">
+              {t('analytics_showing_recent', 'Visar 10 senaste ordrar av')} {orders.length}
+            </p>
+          </div>
         )}
       </div>
     </div>

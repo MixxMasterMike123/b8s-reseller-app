@@ -24,7 +24,7 @@ import toast from 'react-hot-toast';
 import QRCode from 'qrcode';
 
 const AffiliatePortal = () => {
-  const { currentUser } = useSimpleAuth();
+  const { currentUser, loading: authLoading } = useSimpleAuth();
   const { t } = useTranslation();
   const { getContentValue } = useContentTranslation();
   const navigate = useNavigate();
@@ -608,7 +608,8 @@ const AffiliatePortal = () => {
     }
   };
 
-  if (loading) {
+  // Show loading while auth is being restored or while fetching affiliate data
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>{t('affiliate_portal_loading', 'Laddar portal...')}</p>
@@ -616,7 +617,8 @@ const AffiliatePortal = () => {
     );
   }
 
-  if (!currentUser) {
+  // Only redirect if auth is fully loaded and user is definitely not logged in
+  if (!authLoading && !currentUser) {
     // Redirect to affiliate login page
     navigate(getCountryAwareUrl('affiliate-login'));
     return null;
