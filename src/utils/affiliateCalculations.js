@@ -110,4 +110,106 @@ export const isValidAffiliateCodeFormat = (code) => {
   // Pattern: 1-8 letters, hyphen, 3 digits (e.g., "EMMA-768", "JOHN-123")
   const pattern = /^[A-Z]{1,8}-\d{3}$/;
   return pattern.test(normalized);
+};
+
+/**
+ * Validate custom affiliate code format and uniqueness
+ * Allows simpler, more memorable codes (e.g., "EMMA", "FISHING", "B8SHIELD")
+ * @param {string} code - The affiliate code to validate
+ * @param {string} excludeAffiliateId - Optional affiliate ID to exclude from uniqueness check
+ * @returns {object} - Validation result with success, message, and normalized code
+ */
+export const validateCustomAffiliateCode = async (code, excludeAffiliateId = null) => {
+  const { collection, query, where, getDocs } = await import('firebase/firestore');
+  const { db } = await import('../firebase/config');
+
+  if (!code || typeof code !== 'string') {
+    return { success: false, message: 'Affiliate code is required' };
+  }
+
+  const normalizedCode = normalizeAffiliateCode(code);
+  
+  // Length validation
+  if (normalizedCode.length < 3) {
+    return { success: false, message: 'Affiliate code must be at least 3 characters long' };
+  }
+  
+  if (normalizedCode.length > 20) {
+    return { success: false, message: 'Affiliate code must be 20 characters or less' };
+  }
+
+  // Character validation - allow letters, numbers, and hyphens only
+  const validPattern = /^[A-Z0-9-]+$/;
+  if (!validPattern.test(normalizedCode)) {
+    return { success: false, message: 'Affiliate code can only contain letters, numbers, and hyphens' };
+  }
+
+  // Reserved codes validation
+  const reservedCodes = ['ADMIN', 'SYSTEM', 'TEST', 'B8SHIELD', 'AFFILIATE'];
+  if (reservedCodes.includes(normalizedCode)) {
+    return { success: false, message: 'This affiliate code is reserved and cannot be used' };
+  }
+
+  // Uniqueness check
+  try {
+    const affiliatesRef = collection(db, 'affiliates');
+    const affiliateQuery = query(affiliatesRef, where('affiliateCode', '==', normalizedCode));
+    const querySnapshot = await getDocs(affiliateQuery);
+    
+    if (!querySnapshot.empty) {
+      const existingAffiliate = querySnapshot.docs[0];
+      // If we're excluding an affiliate ID and it matches, that's okay (updating existing)
+      if (excludeAffiliateId && existingAffiliate.id === excludeAffiliateId) {
+        return { success: true, message: 'Code is valid', normalizedCode };
+      }
+      return { success: false, message: 'This affiliate code is already in use' };
+    }
+    
+    return { success: true, message: 'Code is valid', normalizedCode };
+  } catch (error) {
+    console.error('Error checking affiliate code uniqueness:', error);
+    return { success: false, message: 'Error checking code availability' };
+  }
+};
+
+/**
+ * Generate a simple affiliate code from name
+ * Creates memorable codes like "EMMA" instead of "EMMA-768"
+ * @param {string} name - The affiliate's name
+ * @returns {string} - Simple affiliate code
+ */
+export const generateSimpleAffiliateCode = (name) => {
+  if (!name || typeof name !== 'string') {
+    return '';
+  }
+  
+  // Take first name, convert to uppercase, remove non-letters
+  const firstName = name.split(' ')[0].toUpperCase().replace(/[^A-Z]/g, '');
+  
+  // If first name is too short, add first letter of last name
+  if (firstName.length < 3) {
+    const lastName = name.split(' ')[1] || '';
+    const lastNameInitial = lastName.charAt(0).toUpperCase().replace(/[^A-Z]/g, '');
+    return firstName + lastNameInitial;
+  }
+  
+  return firstName;
+};
+
+/**
+ * Generate a random affiliate code (fallback)
+ * Creates codes like "EMMA-123" for when simple codes are taken
+ * @param {string} name - The affiliate's name
+ * @returns {string} - Random affiliate code
+ */
+export const generateRandomAffiliateCode = (name) => {
+  if (!name || typeof name !== 'string') {
+    return '';
+  }
+  
+  // Take first name, convert to uppercase, remove non-letters, limit to 8 chars
+  const namePart = name.split(' ')[0].toUpperCase().replace(/[^A-Z]/g, '').substring(0, 8);
+  const randomPart = Math.floor(100 + Math.random() * 900); // 3-digit random number
+  
+  return `${namePart}-${randomPart}`;
 }; 
