@@ -4,6 +4,7 @@ import { doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs } 
 import { db, functions } from '../../firebase/config';
 import { httpsCallable } from 'firebase/functions';
 import { getAffiliatePayoutHistory, formatCurrency as formatPayoutCurrency, formatDate as formatPayoutDate } from '../../utils/affiliatePayouts';
+import { validateCustomAffiliateCode, generateSimpleAffiliateCode } from '../../utils/affiliateCalculations';
 import toast from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
 import { 
@@ -109,6 +110,8 @@ const AdminAffiliateEdit = () => {
   const [checkoutDiscount, setCheckoutDiscount] = useState('');
   const [status, setStatus] = useState('');
   const [preferredLang, setPreferredLang] = useState('');
+  const [customAffiliateCode, setCustomAffiliateCode] = useState('');
+  const [codeValidationError, setCodeValidationError] = useState('');
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('sv-SE', {
@@ -257,6 +260,7 @@ const AdminAffiliateEdit = () => {
           setCheckoutDiscount(affiliateData.checkoutDiscount?.toString() || '');
           setStatus(affiliateData.status || '');
           setPreferredLang(affiliateData.preferredLang || 'sv-SE');
+          setCustomAffiliateCode(''); // Initialize empty for new custom codes
         } else {
           toast.error('Kunde inte hitta affiliate eller ansökan.');
           navigate('/admin/affiliates');
@@ -322,14 +326,33 @@ const AdminAffiliateEdit = () => {
     const toastId = toast.loading('Sparar ändringar...');
 
     try {
-      const affiliateRef = doc(db, 'affiliates', id);
-      await updateDoc(affiliateRef, {
+      // Validate custom affiliate code if provided
+      if (customAffiliateCode.trim()) {
+        const validationResult = await validateCustomAffiliateCode(customAffiliateCode, id);
+        if (!validationResult.isValid) {
+          setCodeValidationError(validationResult.error);
+          toast.error(`Kunde inte spara: ${validationResult.error}`, { id: toastId });
+          setLoading(false);
+          return;
+        }
+      }
+
+      const updateData = {
         commissionRate: Number(commissionRate),
         checkoutDiscount: Number(checkoutDiscount),
         status: status,
         preferredLang: preferredLang,
         updatedAt: new Date(),
-      });
+      };
+
+      // Only update affiliate code if a new one was provided
+      if (customAffiliateCode.trim()) {
+        updateData.affiliateCode = customAffiliateCode.trim().toUpperCase();
+      }
+
+      const affiliateRef = doc(db, 'affiliates', id);
+      await updateDoc(affiliateRef, updateData);
+      
       toast.success('Ändringar sparade!', { id: toastId });
       setIsEditing(false);
       fetchData();
@@ -580,6 +603,53 @@ const AdminAffiliateEdit = () => {
                             </select>
                           ) : (
                             <StatusBadge status={status} />
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Anpassad Affiliate-kod
+                          </label>
+                          {isEditing ? (
+                            <div>
+                              <div className="flex space-x-2">
+                                <input
+                                  type="text"
+                                  value={customAffiliateCode}
+                                  onChange={(e) => {
+                                    const value = e.target.value.toUpperCase();
+                                    setCustomAffiliateCode(value);
+                                    setCodeValidationError('');
+                                  }}
+                                  placeholder="t.ex. EMMA, FISHING"
+                                  className={`flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
+                                    codeValidationError ? 'border-red-300' : ''
+                                  }`}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const simpleCode = generateSimpleAffiliateCode(data.name);
+                                    setCustomAffiliateCode(simpleCode);
+                                    setCodeValidationError('');
+                                  }}
+                                  className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                                  title="Generera enkel kod från namn"
+                                >
+                                  Auto
+                                </button>
+                              </div>
+                              {codeValidationError && (
+                                <p className="mt-1 text-sm text-red-600">{codeValidationError}</p>
+                              )}
+                              <p className="mt-1 text-xs text-gray-500">
+                                3-20 tecken, endast bokstäver, siffror och bindestreck. Lämna tomt för att behålla nuvarande kod.
+                              </p>
+                            </div>
+                          ) : (
+                            <span className="text-lg font-semibold">
+                              {data.affiliateCode}
+                            </span>
                           )}
                         </div>
 

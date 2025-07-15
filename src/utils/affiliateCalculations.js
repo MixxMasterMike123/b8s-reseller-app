@@ -117,37 +117,37 @@ export const isValidAffiliateCodeFormat = (code) => {
  * Allows simpler, more memorable codes (e.g., "EMMA", "FISHING", "B8SHIELD")
  * @param {string} code - The affiliate code to validate
  * @param {string} excludeAffiliateId - Optional affiliate ID to exclude from uniqueness check
- * @returns {object} - Validation result with success, message, and normalized code
+ * @returns {object} - Validation result with isValid, error, and normalized code
  */
 export const validateCustomAffiliateCode = async (code, excludeAffiliateId = null) => {
   const { collection, query, where, getDocs } = await import('firebase/firestore');
   const { db } = await import('../firebase/config');
 
   if (!code || typeof code !== 'string') {
-    return { success: false, message: 'Affiliate code is required' };
+    return { isValid: false, error: 'Affiliate code is required' };
   }
 
   const normalizedCode = normalizeAffiliateCode(code);
   
   // Length validation
   if (normalizedCode.length < 3) {
-    return { success: false, message: 'Affiliate code must be at least 3 characters long' };
+    return { isValid: false, error: 'Affiliate code must be at least 3 characters long' };
   }
   
   if (normalizedCode.length > 20) {
-    return { success: false, message: 'Affiliate code must be 20 characters or less' };
+    return { isValid: false, error: 'Affiliate code must be 20 characters or less' };
   }
 
   // Character validation - allow letters, numbers, and hyphens only
   const validPattern = /^[A-Z0-9-]+$/;
   if (!validPattern.test(normalizedCode)) {
-    return { success: false, message: 'Affiliate code can only contain letters, numbers, and hyphens' };
+    return { isValid: false, error: 'Affiliate code can only contain letters, numbers, and hyphens' };
   }
 
   // Reserved codes validation
   const reservedCodes = ['ADMIN', 'SYSTEM', 'TEST', 'B8SHIELD', 'AFFILIATE'];
   if (reservedCodes.includes(normalizedCode)) {
-    return { success: false, message: 'This affiliate code is reserved and cannot be used' };
+    return { isValid: false, error: 'This affiliate code is reserved and cannot be used' };
   }
 
   // Uniqueness check
@@ -160,15 +160,15 @@ export const validateCustomAffiliateCode = async (code, excludeAffiliateId = nul
       const existingAffiliate = querySnapshot.docs[0];
       // If we're excluding an affiliate ID and it matches, that's okay (updating existing)
       if (excludeAffiliateId && existingAffiliate.id === excludeAffiliateId) {
-        return { success: true, message: 'Code is valid', normalizedCode };
+        return { isValid: true, error: null, normalizedCode };
       }
-      return { success: false, message: 'This affiliate code is already in use' };
+      return { isValid: false, error: 'This affiliate code is already in use' };
     }
     
-    return { success: true, message: 'Code is valid', normalizedCode };
+    return { isValid: true, error: null, normalizedCode };
   } catch (error) {
     console.error('Error checking affiliate code uniqueness:', error);
-    return { success: false, message: 'Error checking code availability' };
+    return { isValid: false, error: 'Error checking code availability' };
   }
 };
 
