@@ -110,4 +110,20 @@ code {
   .scrollbar-hide::-webkit-scrollbar {
     display: none;  /* Chrome, Safari and Opera */
   }
+  
+  /* Scroll hint animation for mobile tabs */
+  @keyframes scroll-hint {
+    0%, 100% {
+      opacity: 0.3;
+      transform: translateX(0);
+    }
+    50% {
+      opacity: 0.8;
+      transform: translateX(4px);
+    }
+  }
+  
+  .scroll-hint {
+    animation: scroll-hint 2s ease-in-out infinite;
+  }
 } 

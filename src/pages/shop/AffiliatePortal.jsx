@@ -241,21 +241,20 @@ const AffiliatePortal = () => {
       icon: <HomeIcon className="h-5 w-5" />
     },
     {
+      id: 'analytics',
+      name: t('affiliate_portal_tab_analytics', 'Analys'),
+      icon: <ChartBarIcon className="h-5 w-5" />
+    },
+    {
       id: 'success',
       name: t('affiliate_portal_tab_success', 'Success Management'),
       icon: <BookOpenIcon className="h-5 w-5" />
     },
     {
       id: 'materials',
-      name: t('affiliate_portal_tab_materials', 'Material'),
+      name: t('affiliate_portal_tab_materials', 'Marknadsmaterial'),
       icon: <PresentationChartBarIcon className="h-5 w-5" />
     },
-    {
-      id: 'analytics',
-      name: t('affiliate_portal_tab_analytics', 'Analys'),
-      icon: <ChartBarIcon className="h-5 w-5" />
-    },
-
     {
       id: 'profile',
       name: t('affiliate_portal_tab_profile', 'Profil'),
@@ -360,15 +359,6 @@ const AffiliatePortal = () => {
                 >
                   {t('affiliate_portal_generate_qr', 'Generera QR-kod')}
                 </button>
-                
-                <a
-                  href={generateLink()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium text-center"
-                >
-                  {t('affiliate_portal_test_link', 'Testa länk')}
-                </a>
               </div>
 
               {/* Compact QR Code Display */}
@@ -666,25 +656,63 @@ const AffiliatePortal = () => {
           {/* Left-side Tabs - Mobile: horizontal scroll, Desktop: vertical sidebar */}
           <div className="col-span-12 lg:col-span-3">
             <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-              {/* Mobile: Horizontal scrolling tabs */}
-              <nav className="lg:hidden overflow-x-auto border-b border-gray-200" aria-label="Sidebar">
-                <div className="flex space-x-2 p-3 min-w-max">
-                  {tabs.map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center justify-center px-3 py-2.5 text-sm font-bold rounded-lg whitespace-nowrap transition-all duration-200 border ${
-                        activeTab === tab.id 
-                          ? 'bg-blue-100 text-blue-900 border-blue-300' 
-                          : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50 hover:text-black'
-                      }`}
-                    >
-                      <span className="mr-2 flex-shrink-0 text-current">{tab.icon}</span>
-                      <span className="font-bold text-current">{tab.name}</span>
-                    </button>
-                  ))}
+              {/* Mobile: Horizontal scrolling tabs with visual indicators */}
+              <div className="lg:hidden">
+                {/* Tab Counter */}
+                <div className="px-3 pt-3 pb-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500 font-medium">
+                      {tabs.findIndex(tab => tab.id === activeTab) + 1} av {tabs.length}
+                    </span>
+                    <div className="flex space-x-1">
+                      {tabs.map((_, index) => (
+                        <div
+                          key={index}
+                          className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                            index === tabs.findIndex(tab => tab.id === activeTab)
+                              ? 'bg-blue-500'
+                              : 'bg-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </nav>
+                
+                {/* Scrollable Tab Container with Visual Indicators */}
+                <div className="relative">
+                  {/* Left Fade Gradient */}
+                  <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+                  
+                  {/* Right Fade Gradient */}
+                  <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+                  
+                  {/* Scroll Hint Indicator */}
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 z-20 pointer-events-none">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full scroll-hint opacity-60" />
+                  </div>
+                  
+                  {/* Scrollable Tabs */}
+                  <nav className="overflow-x-auto scrollbar-hide border-b border-gray-200" aria-label="Sidebar">
+                    <div className="flex space-x-2 p-3 min-w-max">
+                      {tabs.map((tab) => (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveTab(tab.id)}
+                          className={`flex items-center justify-center px-3 py-2.5 text-xs font-medium rounded-lg whitespace-nowrap transition-all duration-200 border flex-shrink-0 ${
+                            activeTab === tab.id 
+                              ? 'bg-blue-100 text-blue-900 border-blue-300 shadow-sm' 
+                              : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50 hover:text-black'
+                          }`}
+                        >
+                          <span className="mr-2 flex-shrink-0 text-current">{tab.icon}</span>
+                          <span className="font-medium text-current">{tab.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </nav>
+                </div>
+              </div>
               
               {/* Desktop: Vertical sidebar */}
               <nav className="hidden lg:block space-y-1 p-4" aria-label="Sidebar">
