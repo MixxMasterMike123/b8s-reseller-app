@@ -284,21 +284,21 @@ const PublicStorefront = () => {
             {/* Desktop: 4 images in horizontal grid */}
             <div className="hidden md:grid md:grid-cols-4 gap-4">
               {[
-                { src: '/images/b8s_transp_nature.webp', color: 'Transparent' },
-                { src: '/images/b8s_red_nature.webp', color: 'Röd' },
-                { src: '/images/b8s_flour_nature.webp', color: 'Fluorescerande' },
-                { src: '/images/b8s_glitter_nature.webp', color: 'Glitter' }
+                { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent' },
+                { src: '/images/b8s_red_nature.webp', colorKey: 'color_red' },
+                { src: '/images/b8s_flour_nature.webp', colorKey: 'color_fluorescent' },
+                { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter' }
               ].map((image, index) => (
                 <div key={index} className="relative aspect-square bg-gray-900 rounded-lg overflow-hidden group">
                   <img
                     src={image.src}
-                    alt={`B8Shield ${image.color} i naturen`}
+                    alt={`B8Shield ${t(image.colorKey)} i naturen`}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                   {/* Color name pill - Nike style */}
                   <div className="absolute bottom-4 left-4">
                     <span className="bg-white text-black text-sm font-medium px-3 py-1 rounded-full">
-                      {image.color}
+                      {t(image.colorKey)}
                     </span>
                   </div>
                 </div>
@@ -309,23 +309,23 @@ const PublicStorefront = () => {
             <div className="md:hidden">
               <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory">
                 {[
-                  { src: '/images/b8s_transp_nature.webp', color: 'Transparent' },
-                  { src: '/images/b8s_red_nature.webp', color: 'Röd' },
-                  { src: '/images/b8s_flour_nature.webp', color: 'Fluorescerande' },
-                  { src: '/images/b8s_glitter_nature.webp', color: 'Glitter' }
+                  { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent' },
+                  { src: '/images/b8s_red_nature.webp', colorKey: 'color_red' },
+                  { src: '/images/b8s_flour_nature.webp', colorKey: 'color_fluorescent' },
+                  { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter' }
                 ].map((image, index) => (
                   <div key={index} className="relative flex-shrink-0 w-4/5 aspect-square bg-gray-900 rounded-lg overflow-hidden group snap-start">
                     <img
                       src={image.src}
-                      alt={`B8Shield ${image.color} i naturen`}
+                      alt={`B8Shield ${t(image.colorKey)} i naturen`}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                     {/* Color name pill - Nike style */}
                     <div className="absolute bottom-4 left-4">
                       <span className="bg-white text-black text-sm font-medium px-3 py-1 rounded-full">
-                        {image.color}
+                        {t(image.colorKey)}
                       </span>
-                    </div>
+                      </div>
                   </div>
                 ))}
               </div>
