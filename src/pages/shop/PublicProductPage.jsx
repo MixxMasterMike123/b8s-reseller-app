@@ -632,6 +632,26 @@ const PublicProductPage = () => {
                       )}
                     </div>
                   </details>
+
+                  {/* More Information - From Product B2C Content */}
+                  {product?.descriptions?.b2cMoreInfo && (
+                    <details className="group">
+                      <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 px-4 -mx-4 rounded-lg">
+                        <span className="text-base font-medium text-gray-900">
+                          {t('more_product_information', 'Mer produktinformation')}
+                        </span>
+                        <svg className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </summary>
+                      <div className="pb-4 px-4 -mx-4 text-sm text-gray-600">
+                        <div 
+                          className="prose prose-sm text-gray-700"
+                          dangerouslySetInnerHTML={{ __html: getContentValue(product.descriptions.b2cMoreInfo) }}
+                        />
+                      </div>
+                    </details>
+                  )}
                 </div>
 
                 {/* Reviews Section */}
@@ -668,6 +688,7 @@ const PublicProductPage = () => {
           isOpen={sizeGuideModalOpen}
           onClose={() => setSizeGuideModalOpen(false)}
           groupContent={groupContent}
+          productName={getContentValue(product?.name)}
         />
 
         {/* Added to Cart Modal */}
