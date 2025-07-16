@@ -155,11 +155,23 @@ const AdminSettings = () => {
 
   // Check if wagon is enabled for user
   const isWagonEnabledForUser = (userId, wagonId) => {
+    const user = users.find(u => u.id === userId);
+    
+    // Admins get access to all wagons by default
+    if (user?.role === 'admin') {
+      const userSettings = userWagonSettings[userId];
+      if (!userSettings || !userSettings.wagons) return true; // Default enabled for admins
+      
+      const wagonSetting = userSettings.wagons[wagonId];
+      return wagonSetting ? wagonSetting.enabled : true; // Default enabled for admins
+    }
+    
+    // Non-admin users need explicit permission
     const userSettings = userWagonSettings[userId];
-    if (!userSettings || !userSettings.wagons) return true; // Default to enabled
+    if (!userSettings || !userSettings.wagons) return false; // Default disabled for non-admins
     
     const wagonSetting = userSettings.wagons[wagonId];
-    return wagonSetting ? wagonSetting.enabled : true; // Default to enabled
+    return wagonSetting?.enabled === true; // Only enabled if explicitly set to true
   };
 
   // Get wagon status info
@@ -177,7 +189,7 @@ const AdminSettings = () => {
       statusText = 'Inaktiverad i manifest';
     } else if (enabledForUsers === 0) {
       status = 'disabled-users';
-      statusText = 'Inaktiverad för alla användare';
+      statusText = 'Endast admins (säker standard)';
     } else if (enabledForUsers < users.length) {
       status = 'partially-enabled';
       statusText = 'Delvis aktiverad';
@@ -261,6 +273,7 @@ const AdminSettings = () => {
                       </h3>
                       <p className="text-blue-800 mt-1">
                         Aktivera eller inaktivera specifika wagons för individuella användare. 
+                        <strong>Säker standard:</strong> Wagons är inaktiverade för alla användare utom admins. 
                         Systemet hittar automatiskt alla wagons (även inaktiverade). 
                         Wagons som är inaktiverade i manifestet visas men kan inte aktiveras för användare.
                       </p>

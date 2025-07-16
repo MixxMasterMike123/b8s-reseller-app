@@ -231,26 +231,64 @@ class WagonRegistry {
   }
 
   /**
+   * Sync version of getAdminMenuItems (for AppLayout fallback)
+   * Returns all admin menu items without permission checking
+   */
+  getAdminMenuItemsSync() {
+    const menuItems = [];
+    
+    for (const wagon of this.wagons.values()) {
+      if (wagon.manifest.adminMenu) {
+        menuItems.push({
+          ...wagon.manifest.adminMenu,
+          wagonId: wagon.manifest.id,
+          component: wagon.AdminComponent
+        });
+      }
+    }
+
+    return menuItems.sort((a, b) => (a.order || 999) - (b.order || 999));
+  }
+
+  /**
+   * Get user menu items from wagons (for regular user navigation)
+   * Returns empty array for now - wagons are primarily admin tools
+   */
+  getUserMenuItemsSync() {
+    // Wagons are primarily admin tools, so return empty array for regular users
+    return [];
+  }
+
+  /**
    * Check if wagon is enabled for specific user
+   * SECURITY: Wagons are disabled by default, only enabled for admins or explicit settings
    */
   async isWagonEnabledForUser(wagonId, userId) {
     if (!userId) return false;
     
     try {
-      const settingsDoc = await getDoc(doc(db, 'settings', 'wagonUsers'));
+      // First check if user is admin (admins get access to all wagons)
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (userData.role === 'admin') {
+          return true; // Admins get access to all wagons
+        }
+      }
+      
+      // For non-admin users, check explicit wagon settings
+      const settingsDoc = await getDoc(doc(db, 'userWagonSettings', userId));
+      if (!settingsDoc.exists()) return false; // Default: disabled for non-admins
+      
       const settings = settingsDoc.data();
+      if (!settings || !settings.wagons) return false; // Default: disabled
       
-      if (!settings || !settings.userSettings) return true; // Default: enabled
-      
-      const userSettings = settings.userSettings[userId];
-      if (!userSettings || !userSettings.wagons) return true; // Default: enabled
-      
-      const wagonSetting = userSettings.wagons[wagonId];
-      return wagonSetting !== false; // Default: enabled unless explicitly disabled
+      const wagonSetting = settings.wagons[wagonId];
+      return wagonSetting?.enabled === true; // Only enabled if explicitly set to true
       
     } catch (error) {
       console.warn('Error checking wagon user settings:', error);
-      return true; // Default: enabled on error
+      return false; // Default: disabled on error (secure default)
     }
   }
 
