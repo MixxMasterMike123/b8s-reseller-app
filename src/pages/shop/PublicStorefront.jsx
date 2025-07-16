@@ -269,6 +269,70 @@ const PublicStorefront = () => {
           </div>
         </section>
 
+        {/* B8Shields in Nature Section - Nike-inspired design */}
+        <section className="py-16 bg-black">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                {t('b8shields_in_nature_title', 'B8Shields i Naturen')}
+              </h2>
+              <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+                {t('b8shields_in_nature_subtitle', 'Upptäck B8Shield i sina naturliga miljöer')}
+              </p>
+            </div>
+            
+            {/* Desktop: 4 images in horizontal grid */}
+            <div className="hidden md:grid md:grid-cols-4 gap-4">
+              {[
+                { src: '/images/b8s_transp_nature.jpg', color: 'Transparent' },
+                { src: '/images/b8s_red_nature.jpg', color: 'Röd' },
+                { src: '/images/b8s_flour_nature.jpg', color: 'Fluorescerande' },
+                { src: '/images/b8s_glitter_nature.jpg', color: 'Glitter' }
+              ].map((image, index) => (
+                <div key={index} className="relative aspect-square bg-gray-900 rounded-lg overflow-hidden group">
+                  <img
+                    src={image.src}
+                    alt={`B8Shield ${image.color} i naturen`}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  {/* Color name pill - Nike style */}
+                  <div className="absolute bottom-4 left-4">
+                    <span className="bg-white text-black text-sm font-medium px-3 py-1 rounded-full">
+                      {image.color}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Mobile: Horizontal scroll showing 1 and 1/3 images */}
+            <div className="md:hidden">
+              <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory">
+                {[
+                  { src: '/images/b8s_transp_nature.jpg', color: 'Transparent' },
+                  { src: '/images/b8s_red_nature.jpg', color: 'Röd' },
+                  { src: '/images/b8s_flour_nature.jpg', color: 'Fluorescerande' },
+                  { src: '/images/b8s_glitter_nature.jpg', color: 'Glitter' }
+                ].map((image, index) => (
+                  <div key={index} className="relative flex-shrink-0 w-4/5 aspect-square bg-gray-900 rounded-lg overflow-hidden group snap-start">
+                    <img
+                      src={image.src}
+                      alt={`B8Shield ${image.color} i naturen`}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    {/* Color name pill - Nike style */}
+                    <div className="absolute bottom-4 left-4">
+                      <span className="bg-white text-black text-sm font-medium px-3 py-1 rounded-full">
+                        {image.color}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Products Section */}
         <section id="products" className="py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
