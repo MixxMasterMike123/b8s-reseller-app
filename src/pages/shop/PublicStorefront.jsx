@@ -203,9 +203,9 @@ const PublicStorefront = () => {
             <img
               src="/images/Fil-000-222.jpg"
               alt="B8Shield fishing background"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover scale-x-[-1]"
             />
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-900/70 via-indigo-900/60 to-purple-900/70"></div>
+            <div className="absolute inset-0 bg-black/85"></div>
           </div>
           
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
