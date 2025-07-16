@@ -284,10 +284,10 @@ const PublicStorefront = () => {
             {/* Desktop: 4 images in horizontal grid */}
             <div className="hidden md:grid md:grid-cols-4 gap-4">
               {[
-                { src: '/images/b8s_transp_nature.jpg', color: 'Transparent' },
-                { src: '/images/b8s_red_nature.jpg', color: 'Röd' },
-                { src: '/images/b8s_flour_nature.jpg', color: 'Fluorescerande' },
-                { src: '/images/b8s_glitter_nature.jpg', color: 'Glitter' }
+                { src: '/images/b8s_transp_nature.webp', color: 'Transparent' },
+                { src: '/images/b8s_red_nature.webp', color: 'Röd' },
+                { src: '/images/b8s_flour_nature.webp', color: 'Fluorescerande' },
+                { src: '/images/b8s_glitter_nature.webp', color: 'Glitter' }
               ].map((image, index) => (
                 <div key={index} className="relative aspect-square bg-gray-900 rounded-lg overflow-hidden group">
                   <img
@@ -309,10 +309,10 @@ const PublicStorefront = () => {
             <div className="md:hidden">
               <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory">
                 {[
-                  { src: '/images/b8s_transp_nature.jpg', color: 'Transparent' },
-                  { src: '/images/b8s_red_nature.jpg', color: 'Röd' },
-                  { src: '/images/b8s_flour_nature.jpg', color: 'Fluorescerande' },
-                  { src: '/images/b8s_glitter_nature.jpg', color: 'Glitter' }
+                  { src: '/images/b8s_transp_nature.webp', color: 'Transparent' },
+                  { src: '/images/b8s_red_nature.webp', color: 'Röd' },
+                  { src: '/images/b8s_flour_nature.webp', color: 'Fluorescerande' },
+                  { src: '/images/b8s_glitter_nature.webp', color: 'Glitter' }
                 ].map((image, index) => (
                   <div key={index} className="relative flex-shrink-0 w-4/5 aspect-square bg-gray-900 rounded-lg overflow-hidden group snap-start">
                     <img
