@@ -40,10 +40,10 @@ const SizeGuideModal = ({ isOpen, onClose, groupContent, productName }) => {
           
           {/* Content */}
           <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-            {groupContent?.sizeAndFit ? (
+            {groupContent?.sizeGuide ? (
               <div 
                 className="prose prose-sm max-w-none text-gray-600"
-                dangerouslySetInnerHTML={{ __html: getContentValue(groupContent.sizeAndFit) }}
+                dangerouslySetInnerHTML={{ __html: getContentValue(groupContent.sizeGuide) }}
               />
             ) : (
               <p className="text-gray-500 text-center py-8">
