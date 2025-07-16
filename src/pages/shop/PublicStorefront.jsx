@@ -272,24 +272,15 @@ const PublicStorefront = () => {
         {/* B8Shields in Nature Section - Nike-inspired design */}
         <section className="py-16 bg-black">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                {t('b8shields_in_nature_title', 'B8Shields i Naturen')}
-              </h2>
-              <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-                {t('b8shields_in_nature_subtitle', 'Upptäck B8Shield i sina naturliga miljöer')}
-              </p>
-            </div>
-            
             {/* Desktop: 4 images in horizontal grid */}
             <div className="hidden md:grid md:grid-cols-4 gap-4">
               {[
-                { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent' },
-                { src: '/images/b8s_red_nature.webp', colorKey: 'color_red' },
-                { src: '/images/b8s_flour_nature.webp', colorKey: 'color_fluorescent' },
-                { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter' }
+                { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent', productUrl: '/products/b8shield-transparent' },
+                { src: '/images/b8s_red_nature.webp', colorKey: 'color_red', productUrl: '/products/b8shield-red' },
+                { src: '/images/b8s_flour_nature.webp', colorKey: 'color_fluorescent', productUrl: '/products/b8shield-fluorescent' },
+                { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter', productUrl: '/products/b8shield-glitter' }
               ].map((image, index) => (
-                <div key={index} className="relative aspect-square bg-gray-900 rounded-lg overflow-hidden group">
+                <Link key={index} to={image.productUrl} className="relative aspect-square bg-gray-900 rounded-lg overflow-hidden group block">
                   <img
                     src={image.src}
                     alt={`B8Shield ${t(image.colorKey)} i naturen`}
@@ -301,7 +292,7 @@ const PublicStorefront = () => {
                       {t(image.colorKey)}
                     </span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
             
@@ -309,12 +300,12 @@ const PublicStorefront = () => {
             <div className="md:hidden">
               <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory">
                 {[
-                  { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent' },
-                  { src: '/images/b8s_red_nature.webp', colorKey: 'color_red' },
-                  { src: '/images/b8s_flour_nature.webp', colorKey: 'color_fluorescent' },
-                  { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter' }
+                  { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent', productUrl: '/products/b8shield-transparent' },
+                  { src: '/images/b8s_red_nature.webp', colorKey: 'color_red', productUrl: '/products/b8shield-red' },
+                  { src: '/images/b8s_flour_nature.webp', colorKey: 'color_fluorescent', productUrl: '/products/b8shield-fluorescent' },
+                  { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter', productUrl: '/products/b8shield-glitter' }
                 ].map((image, index) => (
-                  <div key={index} className="relative flex-shrink-0 w-4/5 aspect-square bg-gray-900 rounded-lg overflow-hidden group snap-start">
+                  <Link key={index} to={image.productUrl} className="relative flex-shrink-0 w-4/5 aspect-square bg-gray-900 rounded-lg overflow-hidden group snap-start block">
                     <img
                       src={image.src}
                       alt={`B8Shield ${t(image.colorKey)} i naturen`}
@@ -325,8 +316,8 @@ const PublicStorefront = () => {
                       <span className="bg-white text-black text-sm font-medium px-3 py-1 rounded-full">
                         {t(image.colorKey)}
                       </span>
-                      </div>
-                  </div>
+                    </div>
+                  </Link>
                 ))}
               </div>
             </div>
