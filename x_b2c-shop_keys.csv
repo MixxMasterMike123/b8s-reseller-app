@@ -198,6 +198,7 @@
 "order_confirmation_processing","Bearbetar...","Processing...","Processing...","B2C order confirmation - fallback text","Pending","","","Fallback text when date is not available"
 "order_confirmation_loading","Laddar orderbekräftelse...","Loading order confirmation...","Loading order confirmation...","B2C order confirmation - loading state","Pending","","","Loading message for order confirmation"
 "order_confirmation_not_found_title","Order hittades inte","Order not found","Order not found","B2C order confirmation - error title","Pending","","","Title when order is not found"
+"product_choose_button","Välj","Choose","Choose","B2C storefront - product CTA button","Pending","","","Call-to-action button on product cards"
 "affiliate_portal_your_code","Din Affiliate-kod","Your Affiliate Code","Your Affiliate Code","B2C affiliate portal - code section title","Pending","","","Title for affiliate code section"
 "affiliate_portal_code_explanation","Detta är din unika kod som du kan dela med andra","This is your unique code that you can share with others","This is your unique code that you can share with others","B2C affiliate portal - code explanation","Pending","","","Explanation for affiliate code"
 "affiliate_portal_copy_code","Kopiera kod","Copy code","Copy code","B2C affiliate portal - copy code button","Pending","","","Button to copy affiliate code"

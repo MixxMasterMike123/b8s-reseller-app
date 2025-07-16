@@ -380,6 +380,13 @@ const PublicStorefront = () => {
                               showOriginal={false}
                             />
                           </div>
+                          
+                          {/* CTA Button */}
+                          <div className="pt-3">
+                            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center py-2 px-4 rounded-lg font-medium text-sm hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 transform group-hover:scale-105 shadow-md">
+                              {t('product_choose_button', 'Välj')}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </Link>
