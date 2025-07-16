@@ -1,9 +1,11 @@
 import React from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from '../contexts/TranslationContext';
+import { useContentTranslation } from '../hooks/useContentTranslation';
 
 const SizeGuideModal = ({ isOpen, onClose, groupContent, productName }) => {
   const { t } = useTranslation();
+  const { getContentValue } = useContentTranslation();
 
   if (!isOpen) return null;
 
@@ -41,7 +43,7 @@ const SizeGuideModal = ({ isOpen, onClose, groupContent, productName }) => {
             {groupContent?.sizeAndFit ? (
               <div 
                 className="prose prose-sm max-w-none text-gray-600"
-                dangerouslySetInnerHTML={{ __html: groupContent.sizeAndFit }}
+                dangerouslySetInnerHTML={{ __html: getContentValue(groupContent.sizeAndFit) }}
               />
             ) : (
               <p className="text-gray-500 text-center py-8">
