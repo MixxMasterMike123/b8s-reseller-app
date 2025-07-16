@@ -342,10 +342,10 @@ const PublicProductPage = () => {
           </div>
 
           {/* Nike Mobile: Product details below images */}
-          <div className="px-4 py-6 space-y-6">
+          <div className="px-4 py-6 space-y-4">
             {/* Size/Color Selection */}
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-2">
                 <h3 className="text-base font-medium text-gray-900">
                   {isMultipack ? t('select_color', 'Välj färg') : t('select_size', 'Välj storlek')}
                 </h3>
@@ -362,7 +362,7 @@ const PublicProductPage = () => {
                     key={variant.id}
                     to={getProductUrl(variant)}
                     state={{ skipPreferredRedirect: true }}
-                    className={`py-4 px-4 text-center border rounded-lg transition-all ${
+                    className={`py-2 px-3 text-center border rounded-lg transition-all ${
                       product.id === variant.id
                         ? 'border-black bg-black text-white'
                         : 'border-gray-300 hover:border-gray-400'
@@ -377,15 +377,15 @@ const PublicProductPage = () => {
             </div>
                 
             {/* Nike Mobile: Regular Add to Cart button (tracked for visibility) */}
-            <div className="space-y-4" ref={regularButtonRef}>
+            <div className="space-y-3" ref={regularButtonRef}>
               <button
                 onClick={handleAddToCart}
-                className="w-full bg-black text-white py-4 px-8 rounded-full text-base font-medium hover:bg-gray-800 transition-colors"
+                className="w-full bg-black text-white py-3 px-6 rounded-full text-base font-medium hover:bg-gray-800 transition-colors"
               >
                 {t('add_to_shopping_bag', 'Lägg i shoppingbagen')}
               </button>
               
-              <button className="w-full border border-gray-300 py-4 px-8 rounded-full text-base font-medium hover:border-gray-400 transition-colors">
+              <button className="w-full border border-gray-300 py-3 px-6 rounded-full text-base font-medium hover:border-gray-400 transition-colors">
                 {t('favorite_button', 'Favorit ♡')}
               </button>
             </div>
