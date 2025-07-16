@@ -205,7 +205,7 @@ const PublicStorefront = () => {
               alt="B8Shield fishing background"
               className="w-full h-full object-cover scale-x-[-1]"
             />
-            <div className="absolute inset-0 bg-black/85"></div>
+            <div className="absolute inset-0 bg-black/15"></div>
           </div>
           
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
