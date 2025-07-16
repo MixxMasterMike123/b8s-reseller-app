@@ -208,56 +208,27 @@ const PublicStorefront = () => {
             <div className="absolute inset-0 bg-gradient-to-br from-blue-900/70 via-indigo-900/60 to-purple-900/70"></div>
           </div>
           
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
-            <div className="text-center">
-              {/* Badge of Honor */}
-              <img
-                src="/images/badge_of_honor_b8s.svg"
-                alt={t('hero_innovation_badge_alt', 'Innovation from Sweden badge')}
-                className="h-24 w-auto mx-auto mb-8 drop-shadow-lg"
-              />
-              
-              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white mb-6 drop-shadow-lg">
-                {t('hero_title_start', 'Fastna')}
-                <span className="bg-gradient-to-r from-red-400 to-red-500 bg-clip-text text-transparent"> {t('hero_title_middle', 'aldrig')} </span>
-                {t('hero_title_end', 'mer!')}
-              </h1>
-              
-              <p className="text-xl sm:text-2xl text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
-                {t('hero_subtitle', 'B8Shield™ – Vasskydd som förhindrar att dina fiskedrag fastnar i vassen utan att påverka ditt fiske.')}
-              </p>
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
+            {/* Desktop: Column layout */}
+            <div className="hidden lg:flex items-center justify-between">
+              {/* Left Column: Badge and Title */}
+              <div className="flex-1 text-left">
+                <img
+                  src="/images/badge_of_honor_b8s.svg"
+                  alt={t('hero_innovation_badge_alt', 'Innovation from Sweden badge')}
+                  className="h-16 w-auto mb-6 drop-shadow-lg"
+                />
+                
+                <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
+                  {t('hero_title_start', 'Fastna')}
+                  <span className="bg-gradient-to-r from-red-400 to-red-500 bg-clip-text text-transparent"> {t('hero_title_middle', 'aldrig')} </span>
+                  {t('hero_title_end', 'mer!')}
+                </h1>
+                
+                <p className="text-xl text-white/90 mb-6 max-w-lg leading-relaxed drop-shadow-md">
+                  {t('hero_subtitle', 'B8Shield™ – Vasskydd som förhindrar att dina fiskedrag fastnar i vassen utan att påverka ditt fiske.')}
+                </p>
 
-              {/* Social Proof - Dynamic Review */}
-              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 mb-12 max-w-2xl mx-auto border border-white/20 shadow-xl">
-                <div className="flex items-center justify-center mb-4">
-                  <div className="flex text-yellow-400">
-                    {[...Array(5)].map((_, i) => (
-                      <svg 
-                        key={i} 
-                        className={`w-5 h-5 fill-current ${
-                          i < (heroReview?.rating || 5) ? 'text-yellow-400' : 'text-gray-300'
-                        }`} 
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                  </div>
-                </div>
-                {heroReview?.title && (
-                  <h4 className="text-gray-900 font-semibold text-lg mb-2 text-center">
-                    {heroReview.title}
-                  </h4>
-                )}
-                <blockquote className="text-gray-700 italic text-lg">
-                  "{heroReview?.text || 'Med B8Shield kunde jag obehindrat fiska på platser som annars hade varit omöjliga, utan att tappa ett enda fiskedrag – otroligt effektivt skydd!'}"
-                </blockquote>
-                <cite className="text-sm text-gray-500 mt-2 block">
-                  — {heroReview?.author || 'Paul W.'}{heroReview?.location ? `, ${heroReview.location}` : ', Sportfiskarna Sverige'}
-                </cite>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button 
                   onClick={() => document.getElementById('products').scrollIntoView({ behavior: 'smooth' })}
                   className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
@@ -265,6 +236,64 @@ const PublicStorefront = () => {
                   {t('hero_shop_now_button', 'Handla nu')}
                 </button>
               </div>
+
+              {/* Right Column: Social Proof */}
+              <div className="flex-1 flex justify-end">
+                <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 max-w-md border border-white/20 shadow-xl">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="flex text-yellow-400">
+                      {[...Array(5)].map((_, i) => (
+                        <svg 
+                          key={i} 
+                          className={`w-5 h-5 fill-current ${
+                            i < (heroReview?.rating || 5) ? 'text-yellow-400' : 'text-gray-300'
+                          }`} 
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      ))}
+                    </div>
+                  </div>
+                  {heroReview?.title && (
+                    <h4 className="text-gray-900 font-semibold text-lg mb-2 text-center">
+                      {heroReview.title}
+                    </h4>
+                  )}
+                  <blockquote className="text-gray-700 italic text-lg">
+                    "{heroReview?.text || 'Med B8Shield kunde jag obehindrat fiska på platser som annars hade varit omöjliga, utan att tappa ett enda fiskedrag – otroligt effektivt skydd!'}"
+                  </blockquote>
+                  <cite className="text-sm text-gray-500 mt-2 block">
+                    — {heroReview?.author || 'Paul W.'}{heroReview?.location ? `, ${heroReview.location}` : ', Sportfiskarna Sverige'}
+                  </cite>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile: Compact layout without review */}
+            <div className="lg:hidden text-center">
+              <img
+                src="/images/badge_of_honor_b8s.svg"
+                alt={t('hero_innovation_badge_alt', 'Innovation from Sweden badge')}
+                className="h-16 w-auto mx-auto mb-4 drop-shadow-lg"
+              />
+              
+              <h1 className="text-3xl font-bold text-white mb-3 drop-shadow-lg">
+                {t('hero_title_start', 'Fastna')}
+                <span className="bg-gradient-to-r from-red-400 to-red-500 bg-clip-text text-transparent"> {t('hero_title_middle', 'aldrig')} </span>
+                {t('hero_title_end', 'mer!')}
+              </h1>
+              
+              <p className="text-base text-white/90 mb-6 max-w-sm mx-auto leading-relaxed drop-shadow-md">
+                {t('hero_subtitle', 'B8Shield™ – Vasskydd som förhindrar att dina fiskedrag fastnar i vassen utan att påverka ditt fiske.')}
+              </p>
+
+              <button 
+                onClick={() => document.getElementById('products').scrollIntoView({ behavior: 'smooth' })}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-full text-base font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+              >
+                {t('hero_shop_now_button', 'Handla nu')}
+              </button>
             </div>
           </div>
         </section>
