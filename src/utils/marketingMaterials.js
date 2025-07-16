@@ -333,17 +333,17 @@ export const populateFromProducts = async () => {
 // File download helper
 export const downloadFile = async (downloadURL, fileName) => {
   try {
-    const response = await fetch(downloadURL);
-    const blob = await response.blob();
-    
+    // Create a temporary anchor element and trigger download
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
+    link.href = downloadURL;
     link.download = fileName;
+    link.target = '_blank'; // Open in new tab to avoid CORS issues
+    link.rel = 'noopener noreferrer';
+    
+    // Add to DOM, click, and remove
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    URL.revokeObjectURL(link.href);
   } catch (error) {
     console.error('Error downloading file:', error);
     throw error;
