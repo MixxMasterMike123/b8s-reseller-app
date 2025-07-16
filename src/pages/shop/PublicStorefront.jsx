@@ -289,7 +289,7 @@ const PublicStorefront = () => {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                 {groupedProducts.map((productGroup, groupIndex) => {
                   // For ALL product groups: show only ONE card using the representative product
                   const representativeProduct = productGroup.representativeProduct;
@@ -308,9 +308,9 @@ const PublicStorefront = () => {
                       to={productUrl}
                       className="group block"
                     >
-                      <div className="bg-white">
+                      <div className="bg-white h-full flex flex-col">
                         {/* Product Image */}
-                        <div className="relative aspect-square bg-gray-50 mb-4 overflow-hidden">
+                        <div className="relative aspect-square bg-gray-50 overflow-hidden">
                           <img
                             src={getB2cProductImage(representativeProduct)}
                             alt={`B8Shield ${isMultipack ? '3-pack' : productGroup.groupName}`}
@@ -334,10 +334,10 @@ const PublicStorefront = () => {
                           )}
                         </div>
 
-                        {/* Product Info */}
-                        <div className="space-y-1">
+                        {/* Product Info - Flex container for consistent height */}
+                        <div className="flex flex-col flex-1 p-4">
                           {/* Product Name */}
-                          <h3 className="text-base font-medium text-gray-900 leading-tight">
+                          <h3 className="text-base font-medium text-gray-900 leading-tight mb-2">
                             {isMultipack 
                               ? t('product_name_3pack', 'B8Shield 3-pack')
                               : (() => {
@@ -350,8 +350,8 @@ const PublicStorefront = () => {
                             }
                           </h3>
                           
-                          {/* Product Description */}
-                          <p className="text-sm text-gray-600 leading-tight">
+                          {/* Product Description - Much smaller font */}
+                          <p className="text-xs text-gray-600 leading-tight mb-2 flex-1">
                             {isMultipack 
                               ? t('product_description_3pack', 'Vasskydd 3-pack för olika fiskemiljöer')
                               : (() => {
@@ -362,29 +362,32 @@ const PublicStorefront = () => {
                             }
                           </p>
                           
-                          {/* Variant Info */}
-                          <p className="text-sm text-gray-500">
-                            {isMultipack 
-                              ? t('product_3pack_info', 'Innehåller alla storlekar (2mm, 4mm, 6mm) • {{count}} färger', { count: variantCount })
-                              : variantCount > 1 
-                                ? t('product_group_variants', '{{count}} färger och storlekar', { count: variantCount })
-                                : t('product_single_variant', 'En variant tillgänglig')
-                            }
-                          </p>
-                          
-                          {/* Price - Now with intelligent currency conversion */}
-                          <div className="pt-1">
-                            <SmartPrice 
-                              sekPrice={representativeProduct.b2cPrice || representativeProduct.basePrice} 
-                              variant="compact"
-                              showOriginal={false}
-                            />
-                          </div>
-                          
-                          {/* CTA Button */}
-                          <div className="pt-3">
-                            <div className="bg-black text-white text-center py-2 px-4 rounded-full text-sm font-medium hover:bg-gray-800 transition-colors">
-                              {t('product_choose_button', 'Välj')}
+                          {/* Bottom section with price, variants, and CTA */}
+                          <div className="mt-auto space-y-2">
+                            {/* Variant Info */}
+                            <p className="text-xs text-gray-500">
+                              {isMultipack 
+                                ? t('product_3pack_info', 'Innehåller alla storlekar (2mm, 4mm, 6mm) • {{count}} färger', { count: variantCount })
+                                : variantCount > 1 
+                                  ? t('product_group_variants', '{{count}} färger och storlekar', { count: variantCount })
+                                  : t('product_single_variant', 'En variant tillgänglig')
+                              }
+                            </p>
+                            
+                            {/* Price - Now with intelligent currency conversion */}
+                            <div className="text-lg font-medium text-gray-900">
+                              <SmartPrice 
+                                sekPrice={representativeProduct.b2cPrice || representativeProduct.basePrice} 
+                                variant="compact"
+                                showOriginal={false}
+                              />
+                            </div>
+                            
+                            {/* CTA Button */}
+                            <div className="pt-2">
+                              <div className="bg-black text-white text-center py-2 px-4 rounded-full text-sm font-medium hover:bg-gray-800 transition-colors">
+                                {t('product_choose_button', 'Välj')}
+                              </div>
                             </div>
                           </div>
                         </div>
