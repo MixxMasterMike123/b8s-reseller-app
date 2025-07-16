@@ -304,10 +304,10 @@ const PublicStorefront = () => {
             {/* Desktop: 4 images in horizontal grid */}
             <div className="hidden md:grid md:grid-cols-4 gap-4">
               {[
-                { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent', productUrl: '/products/b8shield-transparent' },
-                { src: '/images/b8s_red_nature.webp', colorKey: 'color_red', productUrl: '/products/b8shield-red' },
-                { src: '/images/b8s_flour_nature.webp', colorKey: 'color_fluorescent', productUrl: '/products/b8shield-fluorescent' },
-                { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter', productUrl: '/products/b8shield-glitter' }
+                { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent', productUrl: '/product/b8shield-transparent-4_B8S-4-tr' },
+                { src: '/images/b8s_red_nature.webp', colorKey: 'color_red', productUrl: '/product/b8shield-rod-4_B8S-4-re' },
+                { src: '/images/b8s_flour_nature.webp', colorKey: 'color_fluorescent', productUrl: '/product/b8shield-fluorescerande-4_B8S-4-fl' },
+                { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter', productUrl: '/product/b8shield-glitter-4_B8S-4-gl' }
               ].map((image, index) => (
                 <Link key={index} to={image.productUrl} className="relative aspect-square bg-gray-900 rounded-lg overflow-hidden group block">
                   <img
@@ -329,10 +329,10 @@ const PublicStorefront = () => {
             <div className="md:hidden">
               <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory">
                 {[
-                  { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent', productUrl: '/products/b8shield-transparent' },
-                  { src: '/images/b8s_red_nature.webp', colorKey: 'color_red', productUrl: '/products/b8shield-red' },
-                  { src: '/images/b8s_flour_nature.webp', colorKey: 'color_fluorescent', productUrl: '/products/b8shield-fluorescent' },
-                  { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter', productUrl: '/products/b8shield-glitter' }
+                  { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent', productUrl: '/product/b8shield-transparent-4_B8S-4-tr' },
+                  { src: '/images/b8s_red_nature.webp', colorKey: 'color_red', productUrl: '/product/b8shield-rod-4_B8S-4-re' },
+                  { src: '/images/b8s_flour_nature.webp', colorKey: 'color_fluorescent', productUrl: '/product/b8shield-fluorescerande-4_B8S-4-fl' },
+                  { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter', productUrl: '/product/b8shield-glitter-4_B8S-4-gl' }
                 ].map((image, index) => (
                   <Link key={index} to={image.productUrl} className="relative flex-shrink-0 w-4/5 aspect-square bg-gray-900 rounded-lg overflow-hidden group snap-start block">
                     <img
