@@ -267,24 +267,36 @@ class WagonRegistry {
     if (!userId) return false;
     
     try {
-      // First check if user is admin (admins get access to all wagons)
+      // Check if user is admin first
       const userDoc = await getDoc(doc(db, 'users', userId));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        if (userData.role === 'admin') {
-          return true; // Admins get access to all wagons
-        }
+      if (!userDoc.exists()) return false;
+      
+      const userData = userDoc.data();
+      const isAdmin = userData.role === 'admin';
+      
+      // Check explicit wagon settings for this user
+      const settingsDoc = await getDoc(doc(db, 'userWagonSettings', userId));
+      
+      if (!settingsDoc.exists()) {
+        // No settings exist - use default behavior
+        return isAdmin; // Admins get access by default, non-admins don't
       }
       
-      // For non-admin users, check explicit wagon settings
-      const settingsDoc = await getDoc(doc(db, 'userWagonSettings', userId));
-      if (!settingsDoc.exists()) return false; // Default: disabled for non-admins
-      
       const settings = settingsDoc.data();
-      if (!settings || !settings.wagons) return false; // Default: disabled
+      if (!settings || !settings.wagons) {
+        // No wagon settings - use default behavior
+        return isAdmin; // Admins get access by default, non-admins don't
+      }
       
       const wagonSetting = settings.wagons[wagonId];
-      return wagonSetting?.enabled === true; // Only enabled if explicitly set to true
+      
+      // If explicit setting exists, use it (even for admins)
+      if (wagonSetting !== undefined) {
+        return wagonSetting?.enabled === true;
+      }
+      
+      // No explicit setting - use default behavior
+      return isAdmin; // Admins get access by default, non-admins don't
       
     } catch (error) {
       console.warn('Error checking wagon user settings:', error);
