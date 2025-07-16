@@ -51,14 +51,16 @@ const AdminSettings = () => {
     loadData();
   }, []);
 
-  // Load all users
+  // Load admin users only
   const loadUsers = async () => {
     try {
       const usersSnapshot = await getDocs(collection(db, 'users'));
-      const usersData = usersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const usersData = usersSnapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }))
+        .filter(user => user.role === 'admin'); // Only show admin users
       setUsers(usersData);
     } catch (error) {
       console.error('Error loading users:', error);
@@ -272,8 +274,8 @@ const AdminSettings = () => {
                         Wagon Management System (Autodetect)
                       </h3>
                       <p className="text-blue-800 mt-1">
-                        Aktivera eller inaktivera specifika wagons för individuella användare. 
-                        <strong>Säker standard:</strong> Wagons är inaktiverade för alla användare utom admins. 
+                        Aktivera eller inaktivera specifika wagons för admin-användare. 
+                        <strong>Endast admins visas:</strong> Wagons är strikt för admin-användare endast. 
                         Systemet hittar automatiskt alla wagons (även inaktiverade). 
                         Wagons som är inaktiverade i manifestet visas men kan inte aktiveras för användare.
                       </p>
