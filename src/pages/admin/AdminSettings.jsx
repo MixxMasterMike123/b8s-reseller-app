@@ -36,7 +36,7 @@ const AdminSettings = () => {
         setLoading(true);
         await Promise.all([
           loadUsers(),
-          loadWagons(),
+          loadWagons(), // Now async
           loadUserWagonSettings(),
           loadAppSettings()
         ]);
@@ -67,10 +67,12 @@ const AdminSettings = () => {
   };
 
   // Load available wagons from registry (including disabled ones)
-  const loadWagons = () => {
+  const loadWagons = async () => {
     try {
-      const wagons = wagonRegistry.getAllWagons(); // Get ALL wagons for admin management
-      setAvailableWagons(wagons);
+      await wagonRegistry.ensureWagonsDiscovered();
+      const wagonsMap = wagonRegistry.getAllWagons(); // Get ALL wagons for admin management
+      const wagonsArray = Array.from(wagonsMap.values()); // Convert Map to Array
+      setAvailableWagons(wagonsArray);
     } catch (error) {
       console.error('Error loading wagons:', error);
       throw error;
