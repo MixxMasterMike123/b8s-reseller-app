@@ -639,9 +639,10 @@ function AdminProducts() {
       }
       
       // Handle B2C gallery images (existing + new)
-      let updatedGallery = [...existingB2cGallery]; // Start with existing images
+      // Use the reordered existing gallery from drag-and-drop
+      let updatedGallery = [...existingB2cGallery]; // Start with reordered existing images
       
-      // Upload new B2C gallery images
+      // Upload new B2C gallery images and add them to the end
       if (b2cGalleryFiles.length > 0) {
         console.log(`📤 Uploading ${b2cGalleryFiles.length} new B2C gallery images...`);
         
@@ -660,7 +661,7 @@ function AdminProducts() {
         }
       }
       
-      // Update the gallery in the product data
+      // Update the gallery in the product data with the reordered array
       finalProductData.b2cImageGallery = updatedGallery;
       
       // Ensure name is always a multilingual object
