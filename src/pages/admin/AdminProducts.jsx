@@ -13,6 +13,7 @@ import 'react-quill/dist/quill.snow.css';
 import AppLayout from '../../components/layout/AppLayout';
 import ContentLanguageIndicator from '../../components/ContentLanguageIndicator';
 import ProductGroupTab from '../../components/admin/ProductGroupTab';
+import SortableImageGallery from '../../components/admin/SortableImageGallery';
 import { saveProductGroupContent } from '../../utils/productGroups';
 
 // Maximum size for image files (5MB)
@@ -504,6 +505,20 @@ function AdminProducts() {
     
     // Remove from existing gallery
     setExistingB2cGallery(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Handle reordering of existing B2C gallery images
+  const handleExistingB2cGalleryReorder = (reorderedImages) => {
+    const reorderedUrls = reorderedImages.map(img => img.url);
+    setExistingB2cGallery(reorderedUrls);
+  };
+
+  // Handle reordering of new B2C gallery images
+  const handleNewB2cGalleryReorder = (reorderedImages) => {
+    const reorderedPreviews = reorderedImages.map(img => img.url);
+    const reorderedFiles = reorderedImages.map(img => img.file);
+    setB2cGalleryPreviews(reorderedPreviews);
+    setB2cGalleryFiles(reorderedFiles);
   };
 
   // Delete image from Firebase Storage
@@ -1718,62 +1733,41 @@ function AdminProducts() {
                         className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
                       />
                       
-                      {/* Existing Images */}
+                      {/* Existing Images - Sortable */}
                       {existingB2cGallery.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Befintliga bilder:</h4>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                            {existingB2cGallery.map((imageUrl, index) => (
-                              <div key={`existing-${index}`} className="relative">
-                                <img 
-                                  src={imageUrl} 
-                                  alt={`Befintlig bild ${index + 1}`} 
-                                  className="w-full h-24 object-cover border border-gray-300 rounded-md"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => removeExistingB2cImage(index)}
-                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                                  title="Ta bort denna bild"
-                                >
-                                  ×
-                                </button>
-                                <div className="absolute bottom-1 left-1 bg-blue-500 text-white text-xs px-1 rounded">
-                                  Befintlig
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
+                        <SortableImageGallery
+                          images={existingB2cGallery.map((url, index) => ({
+                            id: `existing-${index}`,
+                            url: url
+                          }))}
+                          onReorder={handleExistingB2cGalleryReorder}
+                          onRemove={(id) => {
+                            const index = parseInt(id.split('-')[1]);
+                            removeExistingB2cImage(index);
+                          }}
+                          label="Befintliga bilder:"
+                          itemLabel="Befintlig"
+                          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4"
+                        />
                       )}
                       
-                      {/* New Images Preview */}
+                      {/* New Images Preview - Sortable */}
                       {b2cGalleryPreviews.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Nya bilder att ladda upp:</h4>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {b2cGalleryPreviews.map((preview, index) => (
-                              <div key={`new-${index}`} className="relative">
-                                <img 
-                                  src={preview} 
-                                  alt={`Ny bild ${index + 1}`} 
-                                  className="w-full h-24 object-cover border border-gray-300 rounded-md"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => removeB2cGalleryImage(index)}
-                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                                  title="Ta bort denna bild"
-                                >
-                                  ×
-                                </button>
-                                <div className="absolute bottom-1 left-1 bg-green-500 text-white text-xs px-1 rounded">
-                                  Ny
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
+                        <SortableImageGallery
+                          images={b2cGalleryPreviews.map((preview, index) => ({
+                            id: `new-${index}`,
+                            url: preview,
+                            file: b2cGalleryFiles[index]
+                          }))}
+                          onReorder={handleNewB2cGalleryReorder}
+                          onRemove={(id) => {
+                            const index = parseInt(id.split('-')[1]);
+                            removeB2cGalleryImage(index);
+                          }}
+                          label="Nya bilder att ladda upp:"
+                          itemLabel="Ny"
+                          className="grid grid-cols-2 md:grid-cols-4 gap-4"
+                        />
                       )}
                     </div>
                     <p className="mt-2 text-xs text-gray-500">
