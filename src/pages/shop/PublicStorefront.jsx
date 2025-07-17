@@ -304,37 +304,21 @@ const PublicStorefront = () => {
             {/* Desktop: 4 images in horizontal grid */}
             <div className="hidden md:grid md:grid-cols-4 gap-4">
               {[
-                { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent', productUrl: '/product/b8shield-transparent-4_B8S-4-tr' },
-                { src: '/images/b8s_red_nature.webp', colorKey: 'color_red', productUrl: '/product/b8shield-rod-4_B8S-4-re' },
-                { src: '/images/b8s_flour_nature.webp', colorKey: 'color_fluorescent', productUrl: '/product/b8shield-fluorescerande-4_B8S-4-fl' },
-                { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter', productUrl: '/product/b8shield-glitter-4_B8S-4-gl' }
-              ].map((image, index) => (
-                <Link key={index} to={image.productUrl} className="relative aspect-square bg-gray-900 rounded-lg overflow-hidden group block">
-                  <img
-                    src={image.src}
-                    alt={`B8Shield ${t(image.colorKey)} i naturen`}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                  {/* Color name pill - Nike style */}
-                  <div className="absolute bottom-4 left-4">
-                    <span className="bg-white text-black text-sm font-medium px-3 py-1 rounded-full">
-                      {t(image.colorKey)}
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-            
-            {/* Mobile: Horizontal scroll showing 1 and 1/3 images */}
-            <div className="md:hidden">
-              <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory">
-                {[
-                  { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent', productUrl: '/product/b8shield-transparent-4_B8S-4-tr' },
-                  { src: '/images/b8s_red_nature.webp', colorKey: 'color_red', productUrl: '/product/b8shield-rod-4_B8S-4-re' },
-                  { src: '/images/b8s_flour_nature.webp', colorKey: 'color_fluorescent', productUrl: '/product/b8shield-fluorescerande-4_B8S-4-fl' },
-                  { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter', productUrl: '/product/b8shield-glitter-4_B8S-4-gl' }
-                ].map((image, index) => (
-                  <Link key={index} to={image.productUrl} className="relative flex-shrink-0 w-4/5 aspect-square bg-gray-900 rounded-lg overflow-hidden group snap-start block">
+                { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent', sku: 'B8S-4-tr' },
+                { src: '/images/b8s_red_nature.webp', colorKey: 'color_red', sku: 'B8S-4-re' },
+                { src: '/images/b8s_flour_nature.webp', colorKey: 'color_fluorescent', sku: 'B8S-4-fl' },
+                { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter', sku: 'B8S-4-gl' }
+              ].map((image, index) => {
+                // Create a product object for getProductUrl function
+                const productObj = {
+                  name: { 'sv-SE': `B8Shield ${t(image.colorKey)}`, 'en-GB': `B8Shield ${t(image.colorKey)}`, 'en-US': `B8Shield ${t(image.colorKey)}` },
+                  size: '4',
+                  sku: image.sku
+                };
+                const productUrl = getProductUrl(productObj);
+                
+                return (
+                  <Link key={index} to={productUrl} className="relative aspect-square bg-gray-900 rounded-lg overflow-hidden group block">
                     <img
                       src={image.src}
                       alt={`B8Shield ${t(image.colorKey)} i naturen`}
@@ -347,7 +331,43 @@ const PublicStorefront = () => {
                       </span>
                     </div>
                   </Link>
-                ))}
+                );
+              })}
+            </div>
+            
+            {/* Mobile: Horizontal scroll showing 1 and 1/3 images */}
+            <div className="md:hidden">
+              <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory">
+                {[
+                  { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent', sku: 'B8S-4-tr' },
+                  { src: '/images/b8s_red_nature.webp', colorKey: 'color_red', sku: 'B8S-4-re' },
+                  { src: '/images/b8s_flour_nature.webp', colorKey: 'color_fluorescent', sku: 'B8S-4-fl' },
+                  { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter', sku: 'B8S-4-gl' }
+                ].map((image, index) => {
+                  // Create a product object for getProductUrl function
+                  const productObj = {
+                    name: { 'sv-SE': `B8Shield ${t(image.colorKey)}`, 'en-GB': `B8Shield ${t(image.colorKey)}`, 'en-US': `B8Shield ${t(image.colorKey)}` },
+                    size: '4',
+                    sku: image.sku
+                  };
+                  const productUrl = getProductUrl(productObj);
+                  
+                  return (
+                    <Link key={index} to={productUrl} className="relative flex-shrink-0 w-4/5 aspect-square bg-gray-900 rounded-lg overflow-hidden group snap-start block">
+                      <img
+                        src={image.src}
+                        alt={`B8Shield ${t(image.colorKey)} i naturen`}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      {/* Color name pill - Nike style */}
+                      <div className="absolute bottom-4 left-4">
+                        <span className="bg-white text-black text-sm font-medium px-3 py-1 rounded-full">
+                          {t(image.colorKey)}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           </div>
