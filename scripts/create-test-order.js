@@ -46,7 +46,7 @@ const testOrders = [
     antalForpackningar: 100,
     color: 'Röd',
     size: 'Storlek 6',
-    marginal: 40,
+    marginal: 35,
     prisInfo: {
       produktPris: 7120,
       totalPris: 7120,

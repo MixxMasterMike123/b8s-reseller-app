@@ -122,7 +122,7 @@ export const useDiningContacts = () => {
         // B2B required fields
         role: 'user',
         active: contactData.status === 'active',
-        marginal: contactData.marginal || 40,
+        marginal: contactData.marginal || 35,
         // CRM fields
         status: contactData.status || 'prospect',
         priority: contactData.priority || 'medium',

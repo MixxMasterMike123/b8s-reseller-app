@@ -41,7 +41,7 @@ const ContactForm = () => {
     notes: '',
     
     // B2B fields (with defaults)
-    marginal: 40,
+    marginal: 35,
     deliveryAddress: '',
     deliveryCity: '',
     deliveryPostalCode: '',

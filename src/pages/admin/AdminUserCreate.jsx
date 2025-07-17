@@ -38,7 +38,7 @@ const AdminUserCreate = () => {
     deliveryPostalCode: '',
     deliveryCountry: 'Sverige',
     sameAsCompanyAddress: true,
-    marginal: 40, // Default 40% margin
+    marginal: 35, // Default 35% margin
     role: 'user',
     active: true,
     notes: '',

@@ -85,7 +85,7 @@ const AdminUserEdit = () => {
     deliveryPostalCode: '',
     deliveryCountry: 'Sverige',
     sameAsCompanyAddress: true,
-    marginal: 40,
+    marginal: 35,
     role: 'user',
     active: true,
     notes: '',
