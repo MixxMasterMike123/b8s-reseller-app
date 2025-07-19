@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.debugDatabase = exports.checkNamedDatabase = exports.createAdminUser = exports.toggleCustomerActiveStatus = exports.deleteCustomerAccount = void 0;
+exports.debugDatabase = exports.checkNamedDatabase = exports.createAdminUser = exports.toggleCustomerActiveStatus = exports.deleteB2CCustomerAccount = exports.deleteCustomerAccount = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
@@ -125,6 +125,139 @@ exports.deleteCustomerAccount = (0, https_1.onCall)(async (request) => {
     catch (error) {
         console.error('Error in deleteCustomerAccount:', error);
         throw new Error(`Kunde inte ta bort kund: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+});
+// Delete B2C Customer Account (Admin Only)
+exports.deleteB2CCustomerAccount = (0, https_1.onCall)(async (request) => {
+    const { auth: userAuth, data } = request;
+    if (!userAuth?.uid) {
+        throw new Error('Måste vara inloggad');
+    }
+    try {
+        // Get admin user data to verify permissions
+        const adminDoc = await email_handler_1.db.collection('users').doc(userAuth.uid).get();
+        if (!adminDoc.exists || adminDoc.data()?.role !== 'admin') {
+            throw new Error('Måste vara administratör');
+        }
+        const { customerId } = data;
+        if (!customerId) {
+            throw new Error('Customer ID krävs');
+        }
+        // Get B2C customer data
+        const customerDoc = await email_handler_1.db.collection('b2cCustomers').doc(customerId).get();
+        if (!customerDoc.exists) {
+            throw new Error('B2C-kunden kunde inte hittas');
+        }
+        const customerData = customerDoc.data();
+        let authDeletionResult = null;
+        // Delete Firebase Auth account if it exists
+        if (customerData.firebaseAuthUid) {
+            try {
+                await auth.deleteUser(customerData.firebaseAuthUid);
+                authDeletionResult = 'deleted_by_uid';
+                console.log(`Deleted Firebase Auth user by UID: ${customerData.firebaseAuthUid}`);
+            }
+            catch (authError) {
+                if (authError.code === 'auth/user-not-found') {
+                    console.log(`Firebase Auth user not found by UID: ${customerData.firebaseAuthUid}`);
+                    authDeletionResult = 'not_found_by_uid';
+                }
+                else {
+                    console.error(`Error deleting Firebase Auth user by UID: ${authError.message}`);
+                    // Continue with email-based deletion attempt
+                }
+            }
+        }
+        // Fallback: try to delete by email if UID deletion failed
+        if (!authDeletionResult || authDeletionResult === 'not_found_by_uid') {
+            try {
+                const authUser = await auth.getUserByEmail(customerData.email);
+                await auth.deleteUser(authUser.uid);
+                authDeletionResult = 'deleted_by_email';
+                console.log(`Deleted Firebase Auth user by email: ${customerData.email}`);
+            }
+            catch (authError) {
+                if (authError.code === 'auth/user-not-found') {
+                    console.log(`Firebase Auth user not found by email: ${customerData.email}`);
+                    authDeletionResult = 'not_found_by_email';
+                }
+                else {
+                    console.error(`Error deleting Firebase Auth user by email: ${authError.message}`);
+                    authDeletionResult = 'error';
+                }
+            }
+        }
+        // Mark orders as orphaned (customer deleted) instead of deleting them
+        let ordersAffected = 0;
+        try {
+            // Find orders with b2cCustomerId
+            const ordersWithAccountQuery = await email_handler_1.db.collection('orders').where('b2cCustomerId', '==', customerId).get();
+            const accountOrderUpdates = ordersWithAccountQuery.docs.map(doc => doc.ref.update({
+                customerDeleted: true,
+                customerDeletedAt: firestore_1.FieldValue.serverTimestamp(),
+                customerDeletedBy: userAuth.uid,
+                updatedAt: firestore_1.FieldValue.serverTimestamp()
+            }));
+            // Find orders by email (guest orders)
+            const ordersWithEmailQuery = await email_handler_1.db.collection('orders')
+                .where('source', '==', 'b2c')
+                .where('customerInfo.email', '==', customerData.email)
+                .get();
+            const emailOrderUpdates = ordersWithEmailQuery.docs.map(doc => doc.ref.update({
+                customerDeleted: true,
+                customerDeletedAt: firestore_1.FieldValue.serverTimestamp(),
+                customerDeletedBy: userAuth.uid,
+                updatedAt: firestore_1.FieldValue.serverTimestamp()
+            }));
+            // Execute all order updates
+            await Promise.all([...accountOrderUpdates, ...emailOrderUpdates]);
+            ordersAffected = ordersWithAccountQuery.size + emailOrderUpdates.length;
+            console.log(`Marked ${ordersAffected} orders as orphaned for B2C customer ${customerId}`);
+        }
+        catch (error) {
+            console.error('Error marking orders as orphaned:', error);
+        }
+        // Create audit log entry
+        try {
+            await email_handler_1.db.collection('auditLogs').add({
+                action: 'delete_b2c_customer',
+                targetId: customerId,
+                targetType: 'b2cCustomer',
+                targetEmail: customerData.email,
+                targetName: `${customerData.firstName} ${customerData.lastName}`,
+                performedBy: userAuth.uid,
+                performedAt: firestore_1.FieldValue.serverTimestamp(),
+                details: {
+                    ordersAffected: ordersAffected,
+                    firebaseAuthDeleted: !!authDeletionResult && authDeletionResult.startsWith('deleted'),
+                    authDeletionMethod: authDeletionResult
+                }
+            });
+            console.log('Audit log entry created for B2C customer deletion');
+        }
+        catch (auditError) {
+            console.warn('Could not create audit log:', auditError);
+            // Continue even if audit logging fails
+        }
+        // Finally, delete the B2C customer document
+        await email_handler_1.db.collection('b2cCustomers').doc(customerId).delete();
+        console.log(`B2C Customer ${customerId} (${customerData.email}) deleted successfully by admin ${userAuth.uid}`);
+        return {
+            success: true,
+            message: 'B2C-kund har tagits bort permanent',
+            customerId: customerId,
+            email: customerData.email,
+            customerName: `${customerData.firstName} ${customerData.lastName}`,
+            deletionResults: {
+                customer: true,
+                ordersAffected: ordersAffected,
+                authAccount: authDeletionResult
+            }
+        };
+    }
+    catch (error) {
+        console.error('Error in deleteB2CCustomerAccount:', error);
+        throw new Error(`Kunde inte ta bort B2C-kund: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 });
 // Toggle Customer Active Status (Admin Only)

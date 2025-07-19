@@ -6,6 +6,7 @@ import { db, functions } from '../../firebase/config';
 import { httpsCallable } from 'firebase/functions';
 import { toast } from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
+import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import {
@@ -32,6 +33,7 @@ const AdminB2CCustomerEdit = () => {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -248,23 +250,21 @@ const AdminB2CCustomerEdit = () => {
     }
   };
 
-  const handleDeleteCustomer = async () => {
+  const handleDeleteCustomer = () => {
     if (!customer) return;
-    
-    const confirmMessage = `ÄR DU ABSOLUT SÄKER på att du vill ta bort B2C-kunden "${customer.firstName} ${customer.lastName}"?\n\n⚠️  DETTA KOMMER ATT:\n• Ta bort kundkontot PERMANENT från systemet\n• Ta bort Firebase Auth-kontot (om det finns)\n• Bevara ordrar för redovisning (markerade som "Kund borttagen")\n\n🚨 DENNA ÅTGÄRD KAN INTE ÅNGRAS!\n\nSkriv "TA BORT" för att bekräfta:`;
-    
-    const userInput = window.prompt(confirmMessage);
-    if (userInput !== 'TA BORT') {
-      toast.info('Borttagning avbruten');
-      return;
-    }
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!customer) return;
     
     try {
       setDeleting(true);
+      setShowDeleteModal(false);
       
       console.log('🗑️ Starting complete deletion of B2C customer:', customerId);
       
-      // Step 2: Call Firebase Function to handle complete deletion
+      // Call Firebase Function to handle complete deletion
       console.log('🔥 Calling Firebase Function for complete B2C customer deletion...');
       try {
         const deleteB2CCustomer = httpsCallable(functions, 'deleteB2CCustomerAccountV2');
@@ -837,6 +837,18 @@ const AdminB2CCustomerEdit = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleConfirmDelete}
+        title="Ta bort B2C-kund"
+        customerName={`${customer?.firstName} ${customer?.lastName}`}
+        customerEmail={customer?.email}
+        confirmationText="TA BORT"
+        loading={deleting}
+      />
     </AppLayout>
   );
 };

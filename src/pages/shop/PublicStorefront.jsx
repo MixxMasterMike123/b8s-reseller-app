@@ -380,7 +380,7 @@ const PublicStorefront = () => {
               <h2 className="text-4xl font-bold text-gray-900 mb-4">
                 {t('products_section_title', 'Våra Produkter')}
               </h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              <p className="text-lg text-gray-600 mx-auto">
                 {t('products_section_subtitle', 'Välj mellan olika färger och storlekar för att passa ditt fiske')}
               </p>
             </div>
