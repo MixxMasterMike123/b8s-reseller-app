@@ -28,6 +28,7 @@ const AdminB2CCustomers = () => {
         
         const customersQuery = query(
           collection(db, 'b2cCustomers'),
+          where('deleted', '!=', true), // Exclude deleted customers
           orderBy('createdAt', 'desc')
         );
         

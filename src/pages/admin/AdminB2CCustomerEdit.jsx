@@ -251,28 +251,36 @@ const AdminB2CCustomerEdit = () => {
   const handleDeleteCustomer = async () => {
     if (!customer) return;
     
-    const confirmMessage = `Är du säker på att du vill ta bort B2C-kunden "${customer.firstName} ${customer.lastName}"?\n\nDetta kommer att:\n• Ta bort kundkontot från systemet\n• Bevara ordrar för redovisning\n\nDenna åtgärd kan INTE ångras!`;
+    const confirmMessage = `ÄR DU ABSOLUT SÄKER på att du vill ta bort B2C-kunden "${customer.firstName} ${customer.lastName}"?\n\n⚠️  DETTA KOMMER ATT:\n• Ta bort kundkontot PERMANENT från systemet\n• Ta bort Firebase Auth-kontot (om det finns)\n• Bevara ordrar för redovisning (markerade som "Kund borttagen")\n\n🚨 DENNA ÅTGÄRD KAN INTE ÅNGRAS!\n\nSkriv "TA BORT" för att bekräfta:`;
     
-    if (!window.confirm(confirmMessage)) {
+    const userInput = window.prompt(confirmMessage);
+    if (userInput !== 'TA BORT') {
+      toast.info('Borttagning avbruten');
       return;
     }
     
     try {
       setDeleting(true);
       
-      // For now, just mark as deleted rather than actually deleting
-      await updateDoc(doc(db, 'b2cCustomers', customerId), {
-        deleted: true,
-        deletedAt: new Date(),
-        updatedAt: new Date()
-      });
+      console.log('🗑️ Starting complete deletion of B2C customer:', customerId);
       
-      toast.success('B2C-kund markerad som borttagen');
+      // Step 2: Call Firebase Function to handle complete deletion
+      console.log('🔥 Calling Firebase Function for complete B2C customer deletion...');
+      try {
+        const deleteB2CCustomer = httpsCallable(functions, 'deleteB2CCustomerAccountV2');
+        const result = await deleteB2CCustomer({ customerId });
+        console.log('✅ Firebase Function completed successfully:', result);
+      } catch (functionError) {
+        console.error('❌ Firebase Function failed:', functionError);
+        throw new Error(`Firebase Function error: ${functionError.message}`);
+      }
+      
+      toast.success(`B2C-kund "${customer.firstName} ${customer.lastName}" har tagits bort permanent`);
       navigate('/admin/b2c-customers');
       
     } catch (error) {
-      console.error('Error deleting B2C customer:', error);
-      toast.error('Kunde inte ta bort kund');
+      console.error('❌ Error deleting B2C customer:', error);
+      toast.error(`Kunde inte ta bort kund: ${error.message}`);
     } finally {
       setDeleting(false);
     }

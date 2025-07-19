@@ -44,6 +44,7 @@ import {
 // Import customer-admin functions directly with original names
 import {
   deleteCustomerAccount,
+  deleteB2CCustomerAccount,
   toggleCustomerActiveStatus,
   createAdminUser,
   checkNamedDatabase,
@@ -88,6 +89,7 @@ export {
 // Re-export customer-admin functions individually with V2 names (avoid V1 conflicts)
 export {
   deleteCustomerAccount as deleteCustomerAccountV2,
+  deleteB2CCustomerAccount as deleteB2CCustomerAccountV2,
   toggleCustomerActiveStatus as toggleCustomerActiveStatusV2,
   createAdminUser as createAdminUserV2,
   checkNamedDatabase as checkNamedDatabaseV2,
