@@ -220,9 +220,9 @@ const PublicStorefront = () => {
                 />
                 
                 <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
-                  {t('hero_title_start', 'Fastna')}
-                  <span className="bg-gradient-to-r from-red-400 to-red-500 bg-clip-text text-transparent"> {t('hero_title_middle', 'aldrig')} </span>
-                  {t('hero_title_end', 'mer!')}
+                  {t('hero_title_start', ' ')}
+                  {/* <span className="bg-gradient-to-r from-red-400 to-red-500 bg-clip-text text-transparent"> {t('hero_title_middle', '')} </span>
+                  {t('hero_title_end', '')} */}
                 </h1>
                 
                 <p className="text-xl text-white/90 mb-6 max-w-lg leading-relaxed drop-shadow-md">
@@ -280,8 +280,8 @@ const PublicStorefront = () => {
               
               <h1 className="text-3xl font-bold text-white mb-3 drop-shadow-lg">
                 {t('hero_title_start', 'Fastna')}
-                <span className="bg-gradient-to-r from-red-400 to-red-500 bg-clip-text text-transparent"> {t('hero_title_middle', 'aldrig')} </span>
-                {t('hero_title_end', 'mer!')}
+                {/* <span className="bg-gradient-to-r from-red-400 to-red-500 bg-clip-text text-transparent"> {t('hero_title_middle', 'aldrig')} </span>
+                {t('hero_title_end', 'mer!')} */}
               </h1>
               
               <p className="text-base text-white/90 mb-6 max-w-sm mx-auto leading-relaxed drop-shadow-md">

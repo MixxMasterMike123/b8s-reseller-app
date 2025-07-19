@@ -600,15 +600,15 @@ const AdminTranslations = () => {
       let importCount = 0;
       
       translations.forEach((translation) => {
-        // Skip rows without translation key or value
+        // Skip rows without translation key, but allow empty values
         const translationKey = translation.key || translation.id;
         const translationValue = languageCode === 'sv-SE'
-          ? (translation['sv-SE'] || translation.swedish)
+          ? (translation['sv-SE'] || translation.swedish || '')
           : languageCode === 'en-GB' 
-          ? (translation['en-GB'] || translation.englishUK)
-          : (translation['en-US'] || translation.englishUS);
+          ? (translation['en-GB'] || translation.englishUK || '')
+          : (translation['en-US'] || translation.englishUS || '');
           
-        if (!translationKey || !translationValue) {
+        if (!translationKey) {
           return;
         }
         
@@ -664,15 +664,15 @@ const AdminTranslations = () => {
       let saveCount = 0;
       
       translations.forEach((translation) => {
-        // Skip rows without translation key or value
+        // Skip rows without translation key, but allow empty values
         const translationKey = translation.key || translation.id;
         const translationValue = languageCode === 'sv-SE'
-          ? (translation['sv-SE'] || translation.swedish)
+          ? (translation['sv-SE'] || translation.swedish || '')
           : languageCode === 'en-GB' 
-          ? (translation['en-GB'] || translation.englishUK)
-          : (translation['en-US'] || translation.englishUS);
+          ? (translation['en-GB'] || translation.englishUK || '')
+          : (translation['en-US'] || translation.englishUS || '');
           
-        if (!translationKey || !translationValue) {
+        if (!translationKey) {
           return;
         }
         
