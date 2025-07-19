@@ -499,33 +499,33 @@ const Checkout = () => {
             <div className="space-y-8">
               
               {/* Progress Steps */}
-              <div className="flex items-center space-x-4 mb-8">
-                <div className={`flex items-center space-x-2 ${step === 'contact' ? 'text-blue-600' : 'text-gray-400'}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+              <div className="flex items-center justify-between mb-6 sm:mb-8 px-2">
+                <div className={`flex flex-col items-center space-y-1 ${step === 'contact' ? 'text-blue-600' : 'text-gray-400'}`}>
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-semibold ${
                     step === 'contact' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
                   }`}>1</div>
-                  <span className="font-medium">{t('checkout_step_contact', 'Kontakt')}</span>
+                  <span className="text-xs sm:text-sm font-medium text-center">{t('checkout_step_contact', 'Kontakt')}</span>
                 </div>
-                <div className="w-8 h-px bg-gray-300"></div>
-                <div className={`flex items-center space-x-2 ${step === 'shipping' ? 'text-blue-600' : 'text-gray-400'}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+                <div className="flex-1 h-px bg-gray-300 mx-2 sm:mx-4"></div>
+                <div className={`flex flex-col items-center space-y-1 ${step === 'shipping' ? 'text-blue-600' : 'text-gray-400'}`}>
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-semibold ${
                     step === 'shipping' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
                   }`}>2</div>
-                  <span className="font-medium">{t('checkout_step_shipping', 'Leverans')}</span>
+                  <span className="text-xs sm:text-sm font-medium text-center">{t('checkout_step_shipping', 'Leverans')}</span>
                 </div>
-                <div className="w-8 h-px bg-gray-300"></div>
-                <div className={`flex items-center space-x-2 ${step === 'payment' ? 'text-blue-600' : 'text-gray-400'}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+                <div className="flex-1 h-px bg-gray-300 mx-2 sm:mx-4"></div>
+                <div className={`flex flex-col items-center space-y-1 ${step === 'payment' ? 'text-blue-600' : 'text-gray-400'}`}>
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-semibold ${
                     step === 'payment' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
                   }`}>3</div>
-                  <span className="font-medium">{t('checkout_step_payment', 'Betalning')}</span>
+                  <span className="text-xs sm:text-sm font-medium text-center">{t('checkout_step_payment', 'Betalning')}</span>
                 </div>
               </div>
 
               {/* Contact Information */}
               {step === 'contact' && (
-                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">
                     {t('checkout_contact_info', 'Kontaktinformation')}
                   </h2>
                   <div className="space-y-4">
@@ -542,7 +542,7 @@ const Checkout = () => {
                         type="email"
                         value={contactInfo.email}
                         onChange={(e) => setContactInfo({...contactInfo, email: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
                         placeholder={t('checkout_email_placeholder', 'din@epost.se')}
                         required
                       />
@@ -567,22 +567,22 @@ const Checkout = () => {
                       )}
                     </div>
 
-                    <div className="flex items-center">
+                    <div className="flex items-start space-x-3">
                       <input
                         type="checkbox"
                         id="marketing"
                         checked={contactInfo.marketing}
                         onChange={(e) => setContactInfo({...contactInfo, marketing: e.target.checked})}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-0.5 flex-shrink-0"
                       />
-                      <label htmlFor="marketing" className="ml-2 text-sm text-gray-700">
+                      <label htmlFor="marketing" className="text-sm text-gray-700 leading-relaxed">
                         {t('checkout_marketing_opt_in', 'Skicka mig nyheter och erbjudanden via e-post')}
                       </label>
                     </div>
                   </div>
                   <button
                     onClick={handleNextStep}
-                    className="mt-6 w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                    className="mt-6 w-full bg-blue-600 text-white px-4 sm:px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-base"
                   >
                     {t('checkout_continue_shipping', 'Fortsätt till leveransadress')}
                   </button>
@@ -591,14 +591,14 @@ const Checkout = () => {
 
               {/* Shipping Information */}
               {step === 'shipping' && (
-                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold text-gray-900">
+                <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+                  <div className="flex items-center justify-between mb-4 sm:mb-6">
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
                       {t('checkout_shipping_address', 'Leveransadress')}
                     </h2>
                     <button
                       onClick={handlePreviousStep}
-                      className="text-blue-600 hover:text-blue-700 font-medium"
+                      className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base"
                     >
                       {t('checkout_change', 'Ändra')}
                     </button>
@@ -606,10 +606,10 @@ const Checkout = () => {
                   
                   <div className="mb-4 p-3 bg-gray-50 rounded-lg border">
                     <div className="text-sm text-gray-600">{t('checkout_contact_label', 'Kontakt')}</div>
-                    <div className="font-medium">{contactInfo.email}</div>
+                    <div className="font-medium text-sm sm:text-base">{contactInfo.email}</div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         {t('checkout_first_name', 'Förnamn *')}
@@ -618,7 +618,7 @@ const Checkout = () => {
                         type="text"
                         value={shippingInfo.firstName}
                         onChange={(e) => setShippingInfo({...shippingInfo, firstName: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
                         required
                       />
                     </div>
@@ -630,7 +630,7 @@ const Checkout = () => {
                         type="text"
                         value={shippingInfo.lastName}
                         onChange={(e) => setShippingInfo({...shippingInfo, lastName: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
                         required
                       />
                     </div>
@@ -644,7 +644,7 @@ const Checkout = () => {
                       type="text"
                       value={shippingInfo.address}
                       onChange={(e) => setShippingInfo({...shippingInfo, address: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
                       placeholder={t('checkout_address_placeholder', 'Gatuadress')}
                       required
                     />
@@ -658,12 +658,12 @@ const Checkout = () => {
                       type="text"
                       value={shippingInfo.apartment}
                       onChange={(e) => setShippingInfo({...shippingInfo, apartment: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
                       placeholder={t('checkout_apartment_placeholder', 'Lägenhetsnummer, våning, etc.')}
                     />
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         {t('checkout_postal_code', 'Postnummer *')}
@@ -672,7 +672,7 @@ const Checkout = () => {
                         type="text"
                         value={shippingInfo.postalCode}
                         onChange={(e) => setShippingInfo({...shippingInfo, postalCode: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
                         placeholder={t('checkout_postal_code_placeholder', '123 45')}
                         required
                       />
@@ -685,7 +685,7 @@ const Checkout = () => {
                         type="text"
                         value={shippingInfo.city}
                         onChange={(e) => setShippingInfo({...shippingInfo, city: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
                         placeholder={t('checkout_city_placeholder', 'Stockholm')}
                         required
                       />
@@ -697,7 +697,7 @@ const Checkout = () => {
                       <select
                         value={shippingInfo.country}
                         onChange={(e) => setShippingInfo({...shippingInfo, country: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
                       >
                         <option value="SE">{t('checkout_country_sweden', 'Sverige')}</option>
                         <option value="NO">{t('checkout_country_norway', 'Norge')}</option>
@@ -731,8 +731,8 @@ const Checkout = () => {
                               type="password"
                               value={contactInfo.password}
                               onChange={(e) => setContactInfo({...contactInfo, password: e.target.value})}
-                              className="w-full px-3 py-2 border border-blue-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                              placeholder={t('checkout_password_placeholder', 'Minst 6 tecken')}
+                              className="w-full px-3 py-2 border border-blue-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+                              placeholder={t('checkout_password_placeholder', 'Ange lösenord för att skapa konto')}
                             />
                           </div>
                         </div>
@@ -742,7 +742,7 @@ const Checkout = () => {
 
                   <button
                     onClick={handleNextStep}
-                    className="mt-6 w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                    className="mt-6 w-full bg-blue-600 text-white px-4 sm:px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-base"
                   >
                     {t('checkout_continue_payment', 'Fortsätt till betalning')}
                   </button>
@@ -840,30 +840,30 @@ const Checkout = () => {
 
             {/* Right Column - Order Summary */}
             <div className="lg:sticky lg:top-8 lg:h-fit">
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">
                   {t('checkout_order_summary', 'Ordersammanfattning')}
                 </h2>
                 
                 {/* Cart Items */}
-                <div className="space-y-4 mb-6">
+                <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
                   {cart.items.map((item) => {
                     const itemName = getContentValue(item.name);
                     return (
                       <div key={`${item.id}-${item.size}`} className="flex items-center justify-between py-2">
                         <div className="flex items-center">
                           <div className="relative">
-                            <img src={item.image} alt={itemName} className="w-16 h-16 object-cover rounded-lg" />
-                            <span className="absolute -top-2 -right-2 bg-gray-800 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
+                            <img src={item.image} alt={itemName} className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg" />
+                            <span className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-gray-800 text-white text-xs rounded-full h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center">
                               {item.quantity}
                             </span>
                           </div>
-                          <div className="ml-4">
-                            <p className="font-semibold">{itemName}</p>
-                            {item.size && <p className="text-sm text-gray-600">{t('size_label', 'Storlek: {{size}}', { size: item.size })}</p>}
+                          <div className="ml-3 sm:ml-4">
+                            <p className="font-semibold text-sm sm:text-base">{itemName}</p>
+                            {item.size && <p className="text-xs sm:text-sm text-gray-600">{t('size_label', 'Storlek: {{size}}', { size: item.size })}</p>}
                           </div>
                         </div>
-                        <p className="font-semibold">
+                        <p className="font-semibold text-sm sm:text-base">
                           <SmartPrice 
                             sekPrice={item.price * item.quantity} 
                             variant="compact"
@@ -876,7 +876,7 @@ const Checkout = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-xs sm:text-sm">
                     <span className="text-gray-600">{t('checkout_subtotal', 'Delsumma')}</span>
                     <span className="font-medium">
                       <SmartPrice 
@@ -887,11 +887,11 @@ const Checkout = () => {
                     </span>
                   </div>
                   {discountAmount > 0 && (
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-xs sm:text-sm">
                       <span className="text-gray-600 text-xs bg-gray-100 px-2 py-1 rounded">
                         {t('checkout_affiliate_discount', 'Affiliate rabatt, {{discountPercentage}}%', { discountPercentage })}
                       </span>
-                      <span className="font-medium">
+                      <span className="font-medium text-green-600">
                         - <SmartPrice 
                           sekPrice={discountAmount} 
                           variant="compact"
@@ -900,7 +900,7 @@ const Checkout = () => {
                       </span>
                     </div>
                   )}
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-xs sm:text-sm">
                     <span className="text-gray-600">{t('checkout_shipping', 'Frakt ({{shippingCountry}})', { shippingCountry: cart.shippingCountry })}</span>
                     <span className="font-medium">
                       <SmartPrice 
@@ -910,17 +910,17 @@ const Checkout = () => {
                       />
                     </span>
                   </div>
-                  <div className="flex justify-between font-bold text-lg text-gray-900 pt-3 border-t border-gray-300">
+                  <div className="flex justify-between font-bold text-base sm:text-lg text-gray-900 pt-2 sm:pt-3 border-t border-gray-300">
                     <span>{t('checkout_total', 'Totalt')}</span>
                     <span>
                       <SmartPrice 
                         sekPrice={total} 
-                        variant="large"
+                        variant="compact"
                         showOriginal={false}
                       />
                     </span>
                   </div>
-                  <div className="flex justify-between text-xs text-gray-500 -mt-2">
+                  <div className="flex justify-between text-xs text-gray-500 -mt-1 sm:-mt-2">
                       <span>{t('checkout_vat', 'Varav Moms (25%)')}</span>
                       <span>
                         <SmartPrice 
@@ -934,8 +934,8 @@ const Checkout = () => {
 
                 {/* Affiliate Info */}
                 {appliedAffiliate && (
-                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="text-sm text-green-800">
+                  <div className="mt-3 sm:mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="text-xs sm:text-sm text-green-800">
                       <div className="font-medium">{t('checkout_affiliate_activated', '🎉 Affiliate-rabatt aktiverad!')}</div>
                       <div className="text-xs mt-1">
                         {t('checkout_affiliate_code', 'Kod: {{code}} • {{discountPercentage}}% rabatt', { 
