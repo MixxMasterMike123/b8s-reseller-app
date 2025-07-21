@@ -490,3 +490,4 @@
 "register.notice.approval_required","När du registrerar dig måste ditt konto godkännas av en administratör innan du kan logga in. Vi kontaktar dig via e-post när ditt konto är aktiverat.","When you register, your account must be approved by an administrator before you can log in. We will contact you via email when your account is activated.","When you register, your account must be approved by an administrator before you can log in. We will contact you via email when your account is activated.","","approved","","",""
 "register.button.creating","Skapar konto...","Creating account...","Creating account...","","approved","","",""
 "register.button.create","Skapa konto","Create account","Create account","","approved","","",""
+"orders.size_coming_soon","kommer inom kort","coming soon","coming soon","","approved","","",""

@@ -23,19 +23,19 @@ const OrderPage = () => {
   const [orderItems, setOrderItems] = useState({
     transparent: {
       active: false,
-      sizes: { 2: 0, 4: 0, 6: 0 }
+      sizes: { '2/0': 0, '1/0': 0, 2: 0, 4: 0, 6: 0 }
     },
     rod: {
       active: false, 
-      sizes: { 2: 0, 4: 0, 6: 0 }
+      sizes: { '2/0': 0, '1/0': 0, 2: 0, 4: 0, 6: 0 }
     },
     fluorescerande: {
       active: false,
-      sizes: { 2: 0, 4: 0, 6: 0 }
+      sizes: { '2/0': 0, '1/0': 0, 2: 0, 4: 0, 6: 0 }
     },
     glitter: {
       active: false,
-      sizes: { 2: 0, 4: 0, 6: 0 }
+      sizes: { '2/0': 0, '1/0': 0, 2: 0, 4: 0, 6: 0 }
     }
   });
 
@@ -140,7 +140,7 @@ const OrderPage = () => {
             orderLines.push({
               colorId,
               colorName: getColorDisplayName(colorId),
-              size: parseInt(size),
+              size: size.toString(),
               quantity
             });
           }
@@ -376,12 +376,19 @@ const OrderPage = () => {
                                             {/* Size Quantity Selectors */}
                       <div className="flex-1">
                         <div className="space-y-4 md:space-y-4 space-y-6">
-                          {[2, 4, 6].map(size => (
+                          {['2/0', '1/0', 2, 4, 6].map(size => {
+                            const isComingSoon = size === '2/0' || size === '1/0';
+                            return (
                             <div key={size} className="md:flex md:items-center md:justify-between md:p-3 p-4 bg-white rounded border border-gray-200 md:space-y-0 space-y-4">
                               <div className="flex-1">
                                 <label className="font-medium text-gray-700 md:text-base text-lg">
                                   {t('orders.size', 'Storlek')} {size}
                                 </label>
+                                {isComingSoon && (
+                                  <p className="text-sm text-gray-500 mt-1">
+                                    {t('orders.size_coming_soon', 'kommer inom kort')}
+                                  </p>
+                                )}
                               </div>
                               
                               {/* Quick quantity buttons - Mobile: 2x2 grid, Desktop: horizontal row */}
@@ -389,15 +396,18 @@ const OrderPage = () => {
                                 {[10, 25, 50, 100].map(qty => (
                                   <button 
                                     key={qty}
-                                    onClick={() => handleQuantityButton(colorId, size, qty)}
+                                    onClick={isComingSoon ? undefined : () => handleQuantityButton(colorId, size, qty)}
+                                    disabled={isComingSoon}
                                     className={`relative md:px-3 md:py-1 px-6 py-3 md:text-sm text-base rounded-lg border-2 transition-all duration-200 font-medium md:min-h-0 min-h-[48px] ${
-                                      colorData.sizes[size] === qty 
-                                        ? 'bg-blue-600 text-white border-blue-600 shadow-lg transform scale-105 font-semibold'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                                      isComingSoon
+                                        ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                                        : colorData.sizes[size] === qty 
+                                          ? 'bg-blue-600 text-white border-blue-600 shadow-lg transform scale-105 font-semibold'
+                                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
                                     }`}
                                   >
                                     {qty}
-                                    {colorData.sizes[size] === qty && (
+                                    {!isComingSoon && colorData.sizes[size] === qty && (
                                       <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                                     )}
                                   </button>
@@ -409,22 +419,25 @@ const OrderPage = () => {
                                 <input
                                   type="number"
                                   min="0"
-                                  placeholder={t('orders.other_quantity', 'Annat antal')}
+                                  disabled={isComingSoon}
+                                  placeholder={isComingSoon ? '' : t('orders.other_quantity', 'Annat antal')}
                                   value={colorData.sizes[size] === 0 ? '' : colorData.sizes[size]}
-                                  onChange={(e) => handleCustomQuantity(colorId, size, e.target.value)}
+                                  onChange={isComingSoon ? undefined : (e) => handleCustomQuantity(colorId, size, e.target.value)}
                                   className={`md:w-16 w-full md:px-2 md:py-1 px-4 py-3 md:text-sm text-base border-2 rounded-lg transition-all duration-200 md:min-h-0 min-h-[48px] ${
-                                    colorData.sizes[size] > 0 && ![10, 25, 50, 100].includes(colorData.sizes[size])
-                                      ? 'border-blue-500 bg-blue-50 text-blue-900 font-semibold shadow-sm'
-                                      : 'border-gray-300 bg-white text-gray-700'
+                                    isComingSoon
+                                      ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                                      : colorData.sizes[size] > 0 && ![10, 25, 50, 100].includes(colorData.sizes[size])
+                                        ? 'border-blue-500 bg-blue-50 text-blue-900 font-semibold shadow-sm'
+                                        : 'border-gray-300 bg-white text-gray-700'
                                   }`}
                                 />
-                                {colorData.sizes[size] > 0 && ![10, 25, 50, 100].includes(colorData.sizes[size]) && (
+                                {!isComingSoon && colorData.sizes[size] > 0 && ![10, 25, 50, 100].includes(colorData.sizes[size]) && (
                                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                                 )}
                               </div>
                                 
                               {/* Clear button - Mobile: positioned better */}
-                              {colorData.sizes[size] > 0 && (
+                              {!isComingSoon && colorData.sizes[size] > 0 && (
                                 <button
                                   onClick={() => updateItemQuantity(colorId, size, 0)}
                                   className="md:px-2 md:py-1 px-4 py-2 md:text-sm text-base text-red-600 hover:text-red-800 md:min-h-0 min-h-[40px] md:w-auto w-full md:mt-0 mt-2 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 hover:border-red-300 transition-colors"
@@ -434,7 +447,7 @@ const OrderPage = () => {
                                 </button>
                               )}
                             </div>
-                          ))}
+                          )})}
                         </div>
                       </div>
           </div>
