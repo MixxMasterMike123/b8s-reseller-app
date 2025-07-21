@@ -264,88 +264,91 @@ const TrainingStepPage = () => {
 
   return (
     <>
-      {/* Mobile-First Training Page Layout */}
+      {/* Mobile Training Page - Matching Original Modal Design */}
       <div className="min-h-screen flex flex-col bg-white">
-        {/* Fixed Header */}
-        <header className="flex-shrink-0 bg-[#459CA8] px-4 py-3 border-b border-gray-200">
+        {/* Header - Matching Original Modal */}
+        <header className="bg-[#459CA8] px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <div className="flex items-center min-w-0 flex-1">
-              <currentSlideData.icon className="h-5 w-5 text-white mr-3 flex-shrink-0" />
-              <div className="min-w-0 flex-1">
-                <h2 className="text-base font-semibold text-white truncate">
+            <div className="flex items-center">
+              <currentSlideData.icon className="h-6 w-6 text-white mr-3" />
+              <div>
+                <h2 className="text-lg font-semibold text-white">
                   {currentSlideData.title}
                 </h2>
-                <p className="text-xs text-white/90 truncate">
+                <p className="text-sm text-white/90">
                   {currentSlideData.subtitle}
                 </p>
               </div>
             </div>
             <button
               onClick={handleClose}
-              className="text-white/70 hover:text-white transition-colors flex-shrink-0 ml-2"
+              className="text-white/70 hover:text-white transition-colors"
             >
-              <XMarkIcon className="h-5 w-5" />
+              <XMarkIcon className="h-6 w-6" />
             </button>
-          </div>
-          
-          {/* Progress Bar */}
-          <div className="mt-3">
-            <div className="flex items-center justify-between text-xs text-white/90 mb-1">
-              <span>{t('training.step_counter', 'Steg {{current}} av {{total}}', { current: currentSlide + 1, total: slides.length })}</span>
-              <span>{Math.round(((currentSlide + 1) / slides.length) * 100)}%</span>
-            </div>
-            <div className="w-full bg-white/20 rounded-full h-2">
-              <div 
-                className="bg-white h-2 rounded-full transition-all duration-300"
-                style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }}
-              />
-            </div>
           </div>
         </header>
 
-        {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto bg-white px-4 py-4 pb-24">
+        {/* Content - Matching Original Modal */}
+        <main className="px-4 sm:px-6 py-4 sm:py-6 flex-grow overflow-y-auto bg-white pb-24">
           {currentSlideData.content}
         </main>
 
-        {/* Sticky Footer */}
-        <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 shadow-lg">
-          <div className="flex items-center justify-between gap-2">
-            <button
-              onClick={handlePrev}
-              disabled={isFirstSlide}
-              className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
-                isFirstSlide
-                  ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-              }`}
-            >
-              <ArrowLeftIcon className="h-4 w-4 mr-1" />
-              <span className="hidden sm:inline">{t('training.previous', 'Föregående')}</span>
-            </button>
-            
-            <div className="flex items-center text-xs text-gray-500 px-2">
-              <ClockIcon className="h-4 w-4 mr-1" />
-              <span>{5 - currentSlide}m</span>
+        {/* Footer - Matching Original Modal */}
+        <footer className="fixed bottom-0 left-0 right-0 px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+          <div className="flex flex-col space-y-3">
+            {/* Step counter and progress bar */}
+            <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+              <span>{t('training.step_counter', 'Steg {{current}} av {{total}}', { current: currentSlide + 1, total: slides.length })}</span>
+              <span>{Math.round(((currentSlide + 1) / slides.length) * 100)}%</span>
             </div>
-            
-            <button
-              onClick={handleNext}
-              className="flex items-center px-4 py-2 bg-[#EE7E31] text-white rounded-lg text-sm font-medium hover:bg-[#EE7E31]/90 transition-colors min-h-[44px]"
-            >
-              {isLastSlide ? (
-                <>
-                  <CheckCircleIcon className="h-4 w-4 mr-1" />
-                  <span>Klar!</span>
-                </>
-              ) : (
-                <>
-                  <span className="hidden sm:inline">{t('training.next', 'Nästa')}</span>
-                  <span className="sm:hidden">→</span>
-                  <ArrowRightIcon className="h-4 w-4 ml-1" />
-                </>
-              )}
-            </button>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-[#459CA8] h-2 rounded-full transition-all duration-300"
+                style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }}
+              />
+            </div>
+
+            {/* Navigation buttons */}
+            <div className="flex items-center justify-between pt-2 gap-2">
+              <button
+                onClick={handlePrev}
+                disabled={isFirstSlide}
+                className={`flex items-center px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
+                  isFirstSlide
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                }`}
+              >
+                <ArrowLeftIcon className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">{t('training.previous', 'Föregående')}</span>
+              </button>
+              
+              <div className="flex items-center text-xs text-gray-500 px-2">
+                <ClockIcon className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">{t('training.time_remaining', '~{{minutes}} min kvar', { minutes: 5 - currentSlide })}</span>
+                <span className="sm:hidden">{5 - currentSlide}m</span>
+              </div>
+              
+              <button
+                onClick={handleNext}
+                className="flex items-center px-4 sm:px-6 py-2 bg-[#EE7E31] text-white rounded-lg text-sm font-medium hover:bg-[#EE7E31]/90 transition-colors min-h-[44px]"
+              >
+                {isLastSlide ? (
+                  <>
+                    <CheckCircleIcon className="h-4 w-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">{t('training.start_selling', 'Börja sälja!')}</span>
+                    <span className="sm:hidden">Klar!</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="hidden sm:inline">{t('training.next', 'Nästa')}</span>
+                    <span className="sm:hidden">→</span>
+                    <ArrowRightIcon className="h-4 w-4 ml-1 sm:ml-2" />
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </footer>
       </div>
