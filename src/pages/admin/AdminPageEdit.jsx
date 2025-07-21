@@ -6,7 +6,8 @@ import {
   CheckIcon,
   DocumentDuplicateIcon,
   GlobeAltIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  PaperClipIcon
 } from '@heroicons/react/24/outline';
 import { doc, getDoc, setDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
 import { db } from '../../firebase/config';
@@ -17,6 +18,9 @@ import AppLayout from '../../components/layout/AppLayout';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { toast } from 'react-hot-toast';
+import FileUpload from '../../components/admin/FileUpload';
+import FileManager from '../../components/admin/FileManager';
+import { uploadFile, deleteFile } from '../../utils/fileUpload';
 
 // ReactQuill configuration
 const quillModules = {
@@ -58,6 +62,7 @@ const AdminPageEdit = () => {
     status: 'draft',
     metaTitle: '',
     metaDescription: '',
+    attachments: [],
     createdAt: null,
     updatedAt: null,
     createdBy: '',
@@ -66,6 +71,8 @@ const AdminPageEdit = () => {
 
   const isNewPage = id === 'new';
   const [hasBeenSaved, setHasBeenSaved] = useState(false);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
 
   // Update formData when user becomes available
   useEffect(() => {
@@ -193,8 +200,81 @@ const AdminPageEdit = () => {
   const handlePublish = () => handleSave('published');
   const handleSaveDraft = () => handleSave('draft');
 
+  // File handling functions
+  const handleFileSelect = (files) => {
+    setSelectedFiles(prev => [...prev, ...files]);
+  };
+
+  const handleFileRemove = (index) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUploadFiles = async () => {
+    if (selectedFiles.length === 0) return;
+
+    setUploadingFiles(true);
+    try {
+      const uploadPromises = selectedFiles.map(file => 
+        uploadFile(file, isNewPage ? 'temp' : id, currentUser.uid)
+      );
+
+      const uploadedFiles = await Promise.all(uploadPromises);
+      
+      setFormData(prev => ({
+        ...prev,
+        attachments: [...(prev.attachments || []), ...uploadedFiles]
+      }));
+
+      setSelectedFiles([]);
+      toast.success(`${uploadedFiles.length} filer laddades upp framgångsrikt`);
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Ett fel uppstod vid uppladdning av filer');
+    } finally {
+      setUploadingFiles(false);
+    }
+  };
+
+  const handleDeleteFile = async (fileId) => {
+    try {
+      const fileToDelete = formData.attachments.find(f => f.id === fileId);
+      if (fileToDelete && fileToDelete.storagePath) {
+        await deleteFile(fileToDelete.storagePath);
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        attachments: prev.attachments.filter(f => f.id !== fileId)
+      }));
+
+      toast.success('Filen togs bort');
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Ett fel uppstod vid borttagning av filen');
+    }
+  };
+
+  const handleToggleFileVisibility = (fileId) => {
+    setFormData(prev => ({
+      ...prev,
+      attachments: prev.attachments.map(f => 
+        f.id === fileId ? { ...f, isPublic: !f.isPublic } : f
+      )
+    }));
+  };
+
+  const handleUpdateFileDisplayName = (fileId, newName) => {
+    setFormData(prev => ({
+      ...prev,
+      attachments: prev.attachments.map(f => 
+        f.id === fileId ? { ...f, displayName: newName } : f
+      )
+    }));
+  };
+
   const tabs = [
     { id: 'content', name: 'Innehåll', icon: DocumentDuplicateIcon },
+    { id: 'attachments', name: 'Bilagor', icon: PaperClipIcon },
     { id: 'seo', name: 'SEO', icon: Cog6ToothIcon }
   ];
 
@@ -360,6 +440,64 @@ const AdminPageEdit = () => {
                 placeholder="Sidans innehåll..."
                 className="bg-white"
               />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'attachments' && (
+          <div className="p-6 space-y-6">
+            {/* File Upload Section */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Ladda upp bilagor</h3>
+              <FileUpload
+                onFileSelect={handleFileSelect}
+                onFileRemove={handleFileRemove}
+                selectedFiles={selectedFiles}
+                disabled={uploadingFiles}
+              />
+              
+              {selectedFiles.length > 0 && (
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={handleUploadFiles}
+                    disabled={uploadingFiles}
+                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {uploadingFiles ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Laddar upp...
+                      </>
+                    ) : (
+                      `Ladda upp ${selectedFiles.length} filer`
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* File Management Section */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Hantera bilagor</h3>
+              <FileManager
+                files={formData.attachments || []}
+                onDeleteFile={handleDeleteFile}
+                onToggleVisibility={handleToggleFileVisibility}
+                onUpdateDisplayName={handleUpdateFileDisplayName}
+                disabled={uploadingFiles}
+              />
+            </div>
+
+            {/* Help Section */}
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <h4 className="text-sm font-medium text-blue-900 mb-2">Tips för bilagor:</h4>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• Endast publika filer visas för besökare på sidan</li>
+                <li>• Du kan redigera filnamnet för att göra det mer beskrivande</li>
+                <li>• Största filstorlek: 10MB per fil</li>
+                <li>• Tillåtna filtyper: PDF, DOC, DOCX, XLS, XLSX, TXT, ZIP</li>
+                <li>• Filer sparas automatiskt när du sparar sidan</li>
+              </ul>
             </div>
           </div>
         )}
