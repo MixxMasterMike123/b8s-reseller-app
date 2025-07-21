@@ -3,7 +3,7 @@
  * Beautiful dropdown selector that allows users to override geo-detected language and currency
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { ChevronDownIcon, CheckIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
 import { useLanguageCurrency } from '../../contexts/LanguageCurrencyContext';
@@ -17,6 +17,9 @@ import { getLanguageSwitcherOptions } from '../../utils/translationDetection';
 const LanguageCurrencySelector = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [availableOptions, setAvailableOptions] = useState([]);
+  const [dropdownPosition, setDropdownPosition] = useState('bottom'); // 'top' or 'bottom'
+  const containerRef = useRef(null);
+  const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { countryCode: urlCountryCode } = useParams();
@@ -47,6 +50,19 @@ const LanguageCurrencySelector = () => {
 
     loadOptions();
   }, [urlCountryCode]);
+
+  // Handle window resize to recalculate dropdown position
+  useEffect(() => {
+    const handleResize = () => {
+      if (isOpen) {
+        const position = calculateDropdownPosition();
+        setDropdownPosition(position);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isOpen]);
 
   const handleCountrySelection = async (targetCountryCode, targetLanguage) => {
     console.log('🔄 Country/Language selection:', targetCountryCode, '→', targetLanguage);
@@ -94,6 +110,46 @@ const LanguageCurrencySelector = () => {
 
   const currentCountryData = getCurrentCountryData();
   const displayInfo = getDisplayInfo();
+
+  // Calculate optimal dropdown position based on viewport boundaries
+  const calculateDropdownPosition = () => {
+    if (!containerRef.current) return 'bottom';
+    
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    const dropdownHeight = 400; // Approximate height of dropdown
+    const dropdownWidth = 288; // w-72 = 288px
+    
+    // Check if dropdown would overflow bottom
+    const spaceBelow = viewportHeight - containerRect.bottom;
+    const spaceAbove = containerRect.top;
+    
+    // Check if dropdown would overflow right edge
+    const spaceRight = viewportWidth - containerRect.right;
+    const spaceLeft = containerRect.left;
+    
+    // For footer context, prefer top positioning
+    if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+      return 'top';
+    }
+    
+    // If both top and bottom are constrained, use the one with more space
+    if (spaceBelow < dropdownHeight && spaceAbove < dropdownHeight) {
+      return spaceAbove > spaceBelow ? 'top' : 'bottom';
+    }
+    
+    return 'bottom';
+  };
+
+  // Update dropdown position when opening
+  const handleToggleDropdown = () => {
+    if (!isOpen) {
+      const position = calculateDropdownPosition();
+      setDropdownPosition(position);
+    }
+    setIsOpen(!isOpen);
+  };
 
   // Get country flag emoji
   const getCountryFlag = (countryCode) => {
@@ -149,9 +205,9 @@ const LanguageCurrencySelector = () => {
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggleDropdown}
         className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
       >
         <span className="text-lg">{getCountryFlag(currentCountryData.countryCode)}</span>
@@ -174,7 +230,14 @@ const LanguageCurrencySelector = () => {
           />
           
           {/* Dropdown - Compact Design */}
-          <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+          <div 
+            ref={dropdownRef}
+            className={`absolute right-0 w-72 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-[80vh] overflow-y-auto ${
+              dropdownPosition === 'top' 
+                ? 'bottom-full mb-2' 
+                : 'top-full mt-2'
+            }`}
+          >
             {/* Header */}
             <div className="px-3 py-2 border-b border-gray-100 bg-gray-50">
               <h3 className="text-xs font-semibold text-gray-900 mb-1">
