@@ -32,6 +32,7 @@ import OrderHistoryPage from './pages/OrderHistoryPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 import ProfilePage from './pages/ProfilePage';
 import ContactPage from './pages/ContactPage';
+import TrainingStepPage from './pages/TrainingStepPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminUserCreate from './pages/admin/AdminUserCreate';
@@ -270,6 +271,13 @@ function App() {
               <Route path="/contact" element={
                 <PrivateRoute>
                   <ContactPage />
+                </PrivateRoute>
+              } />
+              
+              {/* Training Routes */}
+              <Route path="/training/step/:step" element={
+                <PrivateRoute>
+                  <TrainingStepPage />
                 </PrivateRoute>
               } />
               

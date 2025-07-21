@@ -1,12 +1,13 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/TranslationContext';
 import AppLayout from '../components/layout/AppLayout';
 import TrainingModal from '../components/TrainingModal';
 import { 
   ShoppingCartIcon, 
-  PhoneIcon,
+  DocumentTextIcon, 
+  CogIcon,
   CheckCircleIcon,
   ClipboardDocumentListIcon,
   AcademicCapIcon,
@@ -17,11 +18,27 @@ import {
 const DashboardPage = () => {
   const { userData, currentUser } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [isTrainingModalOpen, setIsTrainingModalOpen] = React.useState(false);
 
   // Debug info
   const hostname = window.location.hostname;
   const subdomain = hostname.split('.')[0];
+
+  // Detect if user is on mobile
+  const isMobile = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+
+  const handleTrainingClick = () => {
+    if (isMobile()) {
+      // Redirect mobile users to training pages
+      navigate('/training/step/1');
+    } else {
+      // Open modal for desktop users
+      setIsTrainingModalOpen(true);
+    }
+  };
 
   const handleTrainingComplete = () => {
     console.log(t('dashboard.training_completed', 'Training completed!'));
@@ -34,7 +51,7 @@ const DashboardPage = () => {
         {/* Training Button */}
         <div className="flex justify-center">
           <button
-            onClick={() => setIsTrainingModalOpen(true)}
+            onClick={handleTrainingClick}
             className="flex items-center justify-center px-6 py-3 bg-blue-600 text-white text-base rounded-lg hover:bg-blue-700 transition-colors"
           >
             <AcademicCapIcon className="h-5 w-5 mr-2" />
@@ -156,26 +173,6 @@ const DashboardPage = () => {
             </div>
             <p className="text-sm text-gray-600">{t('dashboard.marketing_description', 'Ladda ner broschyrer och marknadsföringsmaterial')}</p>
           </Link>
-        </div>
-
-        {/* Contact Information */}
-        <div className="bg-gray-800 text-white rounded-lg p-4">
-          <div className="flex items-center mb-3">
-            <PhoneIcon className="h-5 w-5 text-gray-300 mr-2" />
-            <h3 className="text-base font-medium">{t('dashboard.contact_title', 'Kontaktuppgifter')}</h3>
-          </div>
-          
-          <div className="text-sm space-y-1">
-            <p className="font-medium text-blue-200">{t('dashboard.company_name', 'JPH Innovation AB')}</p>
-            <p className="text-gray-300">{t('dashboard.company_address_1', 'Östergatan 30 C')}</p>
-            <p className="text-gray-300">{t('dashboard.company_address_2', '152 43 Södertälje')}</p>
-            <p className="text-gray-300">{t('dashboard.company_country', 'SWEDEN')}</p>
-            <p className="mt-2">
-              <a href="mailto:info@b8shield.com" className="text-blue-300 hover:text-blue-200 underline">
-                {t('dashboard.company_email', 'info@b8shield.com')}
-              </a>
-            </p>
-          </div>
         </div>
       </div>
       

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from '../contexts/TranslationContext';
 import { 
   XMarkIcon,
@@ -9,58 +10,19 @@ import {
   UserGroupIcon,
   QuestionMarkCircleIcon,
   TrophyIcon,
-  MapPinIcon,
-  SpeakerWaveIcon,
-  HandRaisedIcon,
-  ChatBubbleLeftRightIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
-import ProductDetailPopup from './ProductDetailPopup';
+import ProductDetailPopup from '../components/ProductDetailPopup';
 
-const TrainingModal = ({ isOpen, onClose, onComplete }) => {
+const TrainingStepPage = () => {
   const { t } = useTranslation();
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const { step } = useParams();
+  const navigate = useNavigate();
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [productPopupOpen, setProductPopupOpen] = useState(false);
   const [selectedProductVariant, setSelectedProductVariant] = useState(null);
 
-  // Reset modal to step 1 when opened
-  useEffect(() => {
-    if (isOpen) {
-      setCurrentSlide(0);
-      setSelectedVariant(null);
-      setProductPopupOpen(false);
-      setSelectedProductVariant(null);
-    }
-  }, [isOpen]);
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      // Store original body styles
-      const originalStyle = window.getComputedStyle(document.body);
-      const scrollY = window.scrollY;
-      
-      // Apply modal-open styles
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.left = '0';
-      document.body.style.right = '0';
-      document.body.style.overflow = 'hidden';
-      document.body.style.width = '100%';
-      
-      // Cleanup function
-      return () => {
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.left = '';
-        document.body.style.right = '';
-        document.body.style.overflow = '';
-        document.body.style.width = '';
-        window.scrollTo(0, scrollY);
-      };
-    }
-  }, [isOpen]);
+  const currentSlide = parseInt(step) - 1;
 
   const handleVariantClick = (variantName) => {
     setSelectedVariant(selectedVariant === variantName ? null : variantName);
@@ -272,123 +234,120 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
 
   const handleNext = () => {
     if (isLastSlide) {
-      onComplete();
-      onClose();
+      // Redirect to dashboard on completion
+      navigate('/dashboard');
     } else {
-      setCurrentSlide(currentSlide + 1);
+      navigate(`/training/step/${currentSlide + 2}`);
     }
   };
 
   const handlePrev = () => {
     if (!isFirstSlide) {
-      setCurrentSlide(currentSlide - 1);
+      navigate(`/training/step/${currentSlide}`);
     }
   };
 
-  if (!isOpen) return null;
+  const handleClose = () => {
+    navigate('/dashboard');
+  };
+
+  // Redirect to dashboard if invalid step
+  useEffect(() => {
+    if (currentSlide < 0 || currentSlide >= slides.length) {
+      navigate('/dashboard');
+    }
+  }, [currentSlide, navigate]);
+
+  if (currentSlide < 0 || currentSlide >= slides.length) {
+    return null;
+  }
 
   return (
     <>
-      {/* Responsive Modal - Full Screen on Mobile, Centered on Desktop */}
-      <div 
-        className="fixed inset-0 z-[9999] bg-black bg-opacity-50 flex items-center justify-center p-4"
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          width: '100vw',
-          height: '100vh',
-          zIndex: 9999
-        }}
-      >
-        {/* Modal Container - Responsive Design */}
-        <div className="bg-white flex flex-col w-full h-full md:w-[800px] md:h-[600px] md:max-w-[90vw] md:max-h-[90vh] rounded-lg shadow-xl">
-          {/* Fixed Header */}
-          <div className="bg-[#459CA8] px-4 py-3 border-b border-gray-200 flex-shrink-0 rounded-t-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center min-w-0 flex-1">
-                <currentSlideData.icon className="h-5 w-5 text-white mr-3 flex-shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-base font-semibold text-white truncate">
-                    {currentSlideData.title}
-                  </h2>
-                  <p className="text-xs text-white/90 truncate">
-                    {currentSlideData.subtitle}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={onClose}
-                className="text-white/70 hover:text-white transition-colors flex-shrink-0 ml-2"
-              >
-                <XMarkIcon className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Scrollable Content - Takes remaining space */}
-          <div className="flex-1 overflow-y-auto bg-white px-4 py-4">
-            {currentSlideData.content}
-          </div>
-
-          {/* Fixed Footer */}
-          <div className="bg-gray-50 border-t border-gray-200 px-4 py-3 flex-shrink-0 rounded-b-lg">
-            <div className="space-y-3">
-              {/* Progress */}
-              <div className="flex items-center justify-between text-xs text-gray-600">
-                <span>{t('training.step_counter', 'Steg {{current}} av {{total}}', { current: currentSlide + 1, total: slides.length })}</span>
-                <span>{Math.round(((currentSlide + 1) / slides.length) * 100)}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-[#459CA8] h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }}
-                />
-              </div>
-
-              {/* Navigation */}
-              <div className="flex items-center justify-between gap-2">
-                <button
-                  onClick={handlePrev}
-                  disabled={isFirstSlide}
-                  className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
-                    isFirstSlide
-                      ? 'text-gray-400 cursor-not-allowed'
-                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-                  }`}
-                >
-                  <ArrowLeftIcon className="h-4 w-4 mr-1" />
-                  <span className="hidden sm:inline">{t('training.previous', 'Föregående')}</span>
-                </button>
-                
-                <div className="flex items-center text-xs text-gray-500 px-2">
-                  <ClockIcon className="h-4 w-4 mr-1" />
-                  <span>{5 - currentSlide}m</span>
-                </div>
-                
-                <button
-                  onClick={handleNext}
-                  className="flex items-center px-4 py-2 bg-[#EE7E31] text-white rounded-lg text-sm font-medium hover:bg-[#EE7E31]/90 transition-colors min-h-[44px]"
-                >
-                  {isLastSlide ? (
-                    <>
-                      <CheckCircleIcon className="h-4 w-4 mr-1" />
-                      <span>Klar!</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="hidden sm:inline">{t('training.next', 'Nästa')}</span>
-                      <span className="sm:hidden">→</span>
-                      <ArrowRightIcon className="h-4 w-4 ml-1" />
-                    </>
-                  )}
-                </button>
+      {/* Mobile-First Training Page Layout */}
+      <div className="min-h-screen flex flex-col bg-white">
+        {/* Fixed Header */}
+        <header className="flex-shrink-0 bg-[#459CA8] px-4 py-3 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center min-w-0 flex-1">
+              <currentSlideData.icon className="h-5 w-5 text-white mr-3 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base font-semibold text-white truncate">
+                  {currentSlideData.title}
+                </h2>
+                <p className="text-xs text-white/90 truncate">
+                  {currentSlideData.subtitle}
+                </p>
               </div>
             </div>
+            <button
+              onClick={handleClose}
+              className="text-white/70 hover:text-white transition-colors flex-shrink-0 ml-2"
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </button>
           </div>
-        </div>
+          
+          {/* Progress Bar */}
+          <div className="mt-3">
+            <div className="flex items-center justify-between text-xs text-white/90 mb-1">
+              <span>{t('training.step_counter', 'Steg {{current}} av {{total}}', { current: currentSlide + 1, total: slides.length })}</span>
+              <span>{Math.round(((currentSlide + 1) / slides.length) * 100)}%</span>
+            </div>
+            <div className="w-full bg-white/20 rounded-full h-2">
+              <div 
+                className="bg-white h-2 rounded-full transition-all duration-300"
+                style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }}
+              />
+            </div>
+          </div>
+        </header>
+
+        {/* Scrollable Content */}
+        <main className="flex-1 overflow-y-auto bg-white px-4 py-4 pb-24">
+          {currentSlideData.content}
+        </main>
+
+        {/* Sticky Footer */}
+        <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 shadow-lg">
+          <div className="flex items-center justify-between gap-2">
+            <button
+              onClick={handlePrev}
+              disabled={isFirstSlide}
+              className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
+                isFirstSlide
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+              }`}
+            >
+              <ArrowLeftIcon className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">{t('training.previous', 'Föregående')}</span>
+            </button>
+            
+            <div className="flex items-center text-xs text-gray-500 px-2">
+              <ClockIcon className="h-4 w-4 mr-1" />
+              <span>{5 - currentSlide}m</span>
+            </div>
+            
+            <button
+              onClick={handleNext}
+              className="flex items-center px-4 py-2 bg-[#EE7E31] text-white rounded-lg text-sm font-medium hover:bg-[#EE7E31]/90 transition-colors min-h-[44px]"
+            >
+              {isLastSlide ? (
+                <>
+                  <CheckCircleIcon className="h-4 w-4 mr-1" />
+                  <span>Klar!</span>
+                </>
+              ) : (
+                <>
+                  <span className="hidden sm:inline">{t('training.next', 'Nästa')}</span>
+                  <span className="sm:hidden">→</span>
+                  <ArrowRightIcon className="h-4 w-4 ml-1" />
+                </>
+              )}
+            </button>
+          </div>
+        </footer>
       </div>
 
       {/* Product Detail Popup */}
@@ -401,4 +360,4 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
   );
 };
 
-export default TrainingModal; 
+export default TrainingStepPage; 
