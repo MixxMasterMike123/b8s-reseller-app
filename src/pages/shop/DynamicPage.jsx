@@ -7,6 +7,8 @@ import { useTranslation } from '../../contexts/TranslationContext';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
 import { toast } from 'react-hot-toast';
+import { DocumentIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { formatFileSize, getFileTypeInfo } from '../../utils/fileUpload';
 
 const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => {
   const { slug: paramSlug } = useParams();
@@ -320,6 +322,43 @@ const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => 
                 }
               `
             }} />
+            
+            {/* Attachments Section - Only show if files exist and are public */}
+            {page.attachments && page.attachments.length > 0 && (
+              <div className="mt-8 pt-8 border-t border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  {t('attachments', 'Bilagor')} ({page.attachments.filter(f => f.isPublic).length})
+                </h3>
+                <div className="space-y-3">
+                  {page.attachments
+                    .filter(file => file.isPublic) // Only show public files
+                    .map((file) => {
+                      const fileTypeInfo = getFileTypeInfo(file.type);
+                      return (
+                        <a
+                          key={file.id}
+                          href={file.url}
+                          download={file.name}
+                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors group"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <DocumentIcon className={`h-5 w-5 ${fileTypeInfo.color}`} />
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 group-hover:text-blue-600">
+                                {file.displayName || file.name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {formatFileSize(file.size)} • {fileTypeInfo.label}
+                              </p>
+                            </div>
+                          </div>
+                          <ArrowDownTrayIcon className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                        </a>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

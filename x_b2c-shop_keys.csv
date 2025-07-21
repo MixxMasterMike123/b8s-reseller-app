@@ -98,6 +98,7 @@
 "clicks_30_days","Klick (30 dagar)","Clicks (30 days)","Clicks (30 days)","B2C affiliate portal - statistic label","Pending","","","Label for clicks statistics"
 "conversions_30_days","Konverteringar (30 dagar)","Conversions (30 days)","Conversions (30 days)","B2C affiliate portal - statistic label","Pending","","","Label for conversions statistics"
 "unpaid_commission","Obetald Provision","Unpaid Commission","Unpaid Commission","B2C affiliate portal - statistic label","Pending","","","Label for unpaid commission"
+"attachments","Bilagor","Attachments","Attachments","B2C dynamic page - file attachments section","Complete","","","Section title for downloadable files on CMS pages"
 "total_earnings","Totala Intäkter","Total Earnings","Total Earnings","B2C affiliate portal - statistic label","Pending","","","Label for total earnings"
 "request_payout","Begär utbetalning","Request payout","Request payout","B2C affiliate portal - button text","Pending","","","Button text for requesting payout"
 "cart_breadcrumb","Varukorg","Shopping Cart","Shopping Cart","B2C shopping cart - breadcrumb","Pending","","","Breadcrumb navigation for shopping cart"
