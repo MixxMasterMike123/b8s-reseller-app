@@ -7,12 +7,13 @@ import { useCart } from '../../contexts/CartContext';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
-import { getCountryAwareUrl } from '../../utils/productUrls';
+import { getCountryAwareUrl, getCheckoutSeoTitle, getCheckoutSeoDescription } from '../../utils/productUrls';
 import { translateColor } from '../../utils/colorTranslations';
 import toast from 'react-hot-toast';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import SeoHreflang from '../../components/shop/SeoHreflang';
 import SmartPrice from '../../components/shop/SmartPrice';
+import { Helmet } from 'react-helmet-async';
 import { 
   ChevronLeftIcon, 
   LockClosedIcon, 
@@ -466,6 +467,19 @@ const Checkout = () => {
 
   return (
     <>
+      <Helmet>
+        <title>{getCheckoutSeoTitle()}</title>
+        <meta name="description" content={getCheckoutSeoDescription()} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={getCheckoutSeoTitle()} />
+        <meta property="og:description" content={getCheckoutSeoDescription()} />
+        <meta property="og:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
+        <meta property="og:url" content={window.location.href} />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={getCheckoutSeoTitle()} />
+        <meta name="twitter:description" content={getCheckoutSeoDescription()} />
+        <meta name="twitter:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
+      </Helmet>
       <SeoHreflang />
       <div className="min-h-screen bg-gray-50">
         <ShopNavigation breadcrumb={t('breadcrumb_checkout', 'Kassa')} />

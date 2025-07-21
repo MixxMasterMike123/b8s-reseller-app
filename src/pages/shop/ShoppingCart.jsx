@@ -9,8 +9,9 @@ import toast from 'react-hot-toast';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
 import SeoHreflang from '../../components/shop/SeoHreflang';
-import { getCountryAwareUrl } from '../../utils/productUrls';
+import { getCountryAwareUrl, getCartSeoTitle, getCartSeoDescription } from '../../utils/productUrls';
 import SmartPrice from '../../components/shop/SmartPrice';
+import { Helmet } from 'react-helmet-async';
 
 const ShoppingCart = () => {
   const { cart, updateQuantity, removeFromCart, updateShippingCountry, calculateTotals, applyDiscountCode, removeDiscount } = useCart();
@@ -80,6 +81,19 @@ const ShoppingCart = () => {
 
   return (
     <>
+      <Helmet>
+        <title>{getCartSeoTitle()}</title>
+        <meta name="description" content={getCartSeoDescription()} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={getCartSeoTitle()} />
+        <meta property="og:description" content={getCartSeoDescription()} />
+        <meta property="og:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
+        <meta property="og:url" content={window.location.href} />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={getCartSeoTitle()} />
+        <meta name="twitter:description" content={getCartSeoDescription()} />
+        <meta name="twitter:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
+      </Helmet>
       <SeoHreflang />
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <ShopNavigation breadcrumb={t('cart_breadcrumb', 'Varukorg')} />

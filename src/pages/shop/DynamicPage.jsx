@@ -9,11 +9,27 @@ import ShopFooter from '../../components/shop/ShopFooter';
 import { toast } from 'react-hot-toast';
 import { DocumentIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { formatFileSize, getFileTypeInfo } from '../../utils/fileUpload';
+import { getLegalSeoTitle, getLegalSeoDescription } from '../../utils/productUrls';
+import { Helmet } from 'react-helmet-async';
 
 const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => {
   const { slug: paramSlug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Helper function to determine page type from slug for SEO
+  const getPageTypeFromSlug = (slug) => {
+    if (!slug) return 'privacy';
+    
+    const slugLower = slug.toLowerCase();
+    if (slugLower.includes('integritet') || slugLower.includes('privacy')) return 'privacy';
+    if (slugLower.includes('anvandarvillkor') || slugLower.includes('terms')) return 'terms';
+    if (slugLower.includes('retur') || slugLower.includes('return')) return 'returns';
+    if (slugLower.includes('cookie')) return 'cookies';
+    if (slugLower.includes('leverans') || slugLower.includes('shipping')) return 'shipping';
+    
+    return 'privacy'; // default
+  };
   
   // Extract slug from URL path dynamically
   const getSlugFromPath = () => {
@@ -199,8 +215,22 @@ const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => 
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <ShopNavigation />
+    <>
+      <Helmet>
+        <title>{metaTitle || getLegalSeoTitle(getPageTypeFromSlug(slug))}</title>
+        <meta name="description" content={metaDescription || getLegalSeoDescription(getPageTypeFromSlug(slug))} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={metaTitle || getLegalSeoTitle(getPageTypeFromSlug(slug))} />
+        <meta property="og:description" content={metaDescription || getLegalSeoDescription(getPageTypeFromSlug(slug))} />
+        <meta property="og:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
+        <meta property="og:url" content={window.location.href} />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={metaTitle || getLegalSeoTitle(getPageTypeFromSlug(slug))} />
+        <meta name="twitter:description" content={metaDescription || getLegalSeoDescription(getPageTypeFromSlug(slug))} />
+        <meta name="twitter:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
+      </Helmet>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <ShopNavigation />
       
       {/* Page Header */}
       <div className="bg-white shadow-sm border-b">
@@ -365,6 +395,7 @@ const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => 
 
       <ShopFooter />
     </div>
+    </>
   );
 };
 

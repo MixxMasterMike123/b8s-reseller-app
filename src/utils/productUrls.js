@@ -140,4 +140,231 @@ export const generateAffiliateLink = (affiliateCode, preferredLang, productPath 
   const path = productPath ? `/${productPath}` : '';
   
   return `${baseUrl}${langPath}${path}?ref=${affiliateCode}`;
+};
+
+/**
+ * SHOP SEO UTILITIES
+ * Comprehensive SEO functions for B2C shop pages
+ */
+
+/**
+ * Generate SEO title for shop homepage/storefront
+ */
+export const getShopSeoTitle = (language = 'sv-SE') => {
+  const titles = {
+    'sv-SE': 'B8Shield™ - Vasskydd för Sportfiskare | Köp Online',
+    'en-GB': 'B8Shield™ - Weed Guard for Anglers | Buy Online',
+    'en-US': 'B8Shield™ - Weed Guard for Anglers | Buy Online'
+  };
+  return titles[language] || titles['sv-SE'];
+};
+
+/**
+ * Generate SEO description for shop homepage/storefront
+ */
+export const getShopSeoDescription = (language = 'sv-SE') => {
+  const descriptions = {
+    'sv-SE': 'B8Shield™ förhindrar att dina fiskedrag fastnar i vass och undervattensvegetation. Perfekt för svenska förhållanden. Gratis frakt över 299 kr. Köp online nu!',
+    'en-GB': 'B8Shield™ prevents your fishing lures from getting caught in weeds and underwater vegetation. Perfect for Nordic conditions. Free shipping over £25. Buy online now!',
+    'en-US': 'B8Shield™ prevents your fishing lures from getting caught in weeds and underwater vegetation. Perfect for fishing conditions. Free shipping over $30. Buy online now!'
+  };
+  return descriptions[language] || descriptions['sv-SE'];
+};
+
+/**
+ * Generate SEO title for shopping cart page
+ */
+export const getCartSeoTitle = (language = 'sv-SE') => {
+  const titles = {
+    'sv-SE': 'Din Varukorg | B8Shield™',
+    'en-GB': 'Your Shopping Cart | B8Shield™',
+    'en-US': 'Your Shopping Cart | B8Shield™'
+  };
+  return titles[language] || titles['sv-SE'];
+};
+
+/**
+ * Generate SEO description for shopping cart page
+ */
+export const getCartSeoDescription = (language = 'sv-SE') => {
+  const descriptions = {
+    'sv-SE': 'Granska dina valda B8Shield produkter. Säker kassa och snabb leverans. Fortsätt handla eller gå till kassan.',
+    'en-GB': 'Review your selected B8Shield products. Secure checkout and fast delivery. Continue shopping or proceed to checkout.',
+    'en-US': 'Review your selected B8Shield products. Secure checkout and fast delivery. Continue shopping or proceed to checkout.'
+  };
+  return descriptions[language] || descriptions['sv-SE'];
+};
+
+/**
+ * Generate SEO title for checkout page
+ */
+export const getCheckoutSeoTitle = (language = 'sv-SE') => {
+  const titles = {
+    'sv-SE': 'Kassa | Säker Betalning | B8Shield™',
+    'en-GB': 'Checkout | Secure Payment | B8Shield™',
+    'en-US': 'Checkout | Secure Payment | B8Shield™'
+  };
+  return titles[language] || titles['sv-SE'];
+};
+
+/**
+ * Generate SEO description for checkout page
+ */
+export const getCheckoutSeoDescription = (language = 'sv-SE') => {
+  const descriptions = {
+    'sv-SE': 'Säker kassa för dina B8Shield produkter. Snabb leverans och 14 dagars ångerrätt. Betala säkert online.',
+    'en-GB': 'Secure checkout for your B8Shield products. Fast delivery and 14-day return policy. Pay securely online.',
+    'en-US': 'Secure checkout for your B8Shield products. Fast delivery and 14-day return policy. Pay securely online.'
+  };
+  return descriptions[language] || descriptions['sv-SE'];
+};
+
+/**
+ * Generate SEO title for affiliate pages
+ */
+export const getAffiliateSeoTitle = (pageType = 'login', language = 'sv-SE') => {
+  const titles = {
+    login: {
+      'sv-SE': 'Affiliate-inloggning | B8Shield™ Partner Portal',
+      'en-GB': 'Affiliate Login | B8Shield™ Partner Portal',
+      'en-US': 'Affiliate Login | B8Shield™ Partner Portal'
+    },
+    registration: {
+      'sv-SE': 'Affiliate-registrering | Bli Partner | B8Shield™',
+      'en-GB': 'Affiliate Registration | Become a Partner | B8Shield™',
+      'en-US': 'Affiliate Registration | Become a Partner | B8Shield™'
+    },
+    portal: {
+      'sv-SE': 'Affiliate Portal | Partner Dashboard | B8Shield™',
+      'en-GB': 'Affiliate Portal | Partner Dashboard | B8Shield™',
+      'en-US': 'Affiliate Portal | Partner Dashboard | B8Shield™'
+    }
+  };
+  return titles[pageType]?.[language] || titles[pageType]?.['sv-SE'] || titles.login['sv-SE'];
+};
+
+/**
+ * Generate SEO description for affiliate pages
+ */
+export const getAffiliateSeoDescription = (pageType = 'login', language = 'sv-SE') => {
+  const descriptions = {
+    login: {
+      'sv-SE': 'Logga in på ditt B8Shield affiliate-konto. Hantera dina länkar, statistik och utbetalningar.',
+      'en-GB': 'Login to your B8Shield affiliate account. Manage your links, statistics and payouts.',
+      'en-US': 'Login to your B8Shield affiliate account. Manage your links, statistics and payouts.'
+    },
+    registration: {
+      'sv-SE': 'Bli B8Shield affiliate-partner. Tjäna pengar genom att marknadsföra våra produkter. Ansök nu!',
+      'en-GB': 'Become a B8Shield affiliate partner. Earn money by promoting our products. Apply now!',
+      'en-US': 'Become a B8Shield affiliate partner. Earn money by promoting our products. Apply now!'
+    },
+    portal: {
+      'sv-SE': 'Hantera ditt B8Shield affiliate-konto. Se statistik, generera länkar och hantera utbetalningar.',
+      'en-GB': 'Manage your B8Shield affiliate account. View statistics, generate links and manage payouts.',
+      'en-US': 'Manage your B8Shield affiliate account. View statistics, generate links and manage payouts.'
+    }
+  };
+  return descriptions[pageType]?.[language] || descriptions[pageType]?.['sv-SE'] || descriptions.login['sv-SE'];
+};
+
+/**
+ * Generate SEO title for legal pages
+ */
+export const getLegalSeoTitle = (pageType = 'privacy', language = 'sv-SE') => {
+  const titles = {
+    privacy: {
+      'sv-SE': 'Integritetspolicy | B8Shield™',
+      'en-GB': 'Privacy Policy | B8Shield™',
+      'en-US': 'Privacy Policy | B8Shield™'
+    },
+    terms: {
+      'sv-SE': 'Köpvillkor | B8Shield™',
+      'en-GB': 'Terms of Service | B8Shield™',
+      'en-US': 'Terms of Service | B8Shield™'
+    },
+    returns: {
+      'sv-SE': 'Returpolicy | 14 Dagars Ångerrätt | B8Shield™',
+      'en-GB': 'Return Policy | 14-Day Right of Withdrawal | B8Shield™',
+      'en-US': 'Return Policy | 14-Day Right of Withdrawal | B8Shield™'
+    },
+    cookies: {
+      'sv-SE': 'Cookie-policy | B8Shield™',
+      'en-GB': 'Cookie Policy | B8Shield™',
+      'en-US': 'Cookie Policy | B8Shield™'
+    },
+    shipping: {
+      'sv-SE': 'Frakt & Leverans | B8Shield™',
+      'en-GB': 'Shipping & Delivery | B8Shield™',
+      'en-US': 'Shipping & Delivery | B8Shield™'
+    }
+  };
+  return titles[pageType]?.[language] || titles[pageType]?.['sv-SE'] || titles.privacy['sv-SE'];
+};
+
+/**
+ * Generate SEO description for legal pages
+ */
+export const getLegalSeoDescription = (pageType = 'privacy', language = 'sv-SE') => {
+  const descriptions = {
+    privacy: {
+      'sv-SE': 'Läs om hur B8Shield hanterar dina personuppgifter. GDPR-kompatibel integritetspolicy.',
+      'en-GB': 'Read about how B8Shield handles your personal data. GDPR-compliant privacy policy.',
+      'en-US': 'Read about how B8Shield handles your personal data. GDPR-compliant privacy policy.'
+    },
+    terms: {
+      'sv-SE': 'B8Shield köpvillkor och användarvillkor. Läs våra villkor innan du handlar.',
+      'en-GB': 'B8Shield terms of service and conditions of purchase. Read our terms before shopping.',
+      'en-US': 'B8Shield terms of service and conditions of purchase. Read our terms before shopping.'
+    },
+    returns: {
+      'sv-SE': 'B8Shield returpolicy. 14 dagars ångerrätt enligt EU-lag. Enkel returprocess.',
+      'en-GB': 'B8Shield return policy. 14-day right of withdrawal under EU law. Simple return process.',
+      'en-US': 'B8Shield return policy. 14-day right of withdrawal under EU law. Simple return process.'
+    },
+    cookies: {
+      'sv-SE': 'B8Shield cookie-policy. Läs om hur vi använder cookies på vår webbplats.',
+      'en-GB': 'B8Shield cookie policy. Read about how we use cookies on our website.',
+      'en-US': 'B8Shield cookie policy. Read about how we use cookies on our website.'
+    },
+    shipping: {
+      'sv-SE': 'B8Shield frakt & leverans. Snabb leverans i Sverige och Norden. Gratis frakt över 299 kr.',
+      'en-GB': 'B8Shield shipping & delivery. Fast delivery in Sweden and Nordic countries. Free shipping over £25.',
+      'en-US': 'B8Shield shipping & delivery. Fast delivery in Sweden and Nordic countries. Free shipping over $30.'
+    }
+  };
+  return descriptions[pageType]?.[language] || descriptions[pageType]?.['sv-SE'] || descriptions.privacy['sv-SE'];
+};
+
+/**
+ * Generate structured data for shop homepage
+ */
+export const generateShopStructuredData = (language = 'sv-SE') => {
+  const baseUrl = 'https://shop.b8shield.com';
+  const langCode = language.split('-')[1]?.toLowerCase() || 'se';
+  
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "B8Shield",
+    "url": `${baseUrl}/${langCode}`,
+    "logo": `${baseUrl}/images/B8S_full_logo.svg`,
+    "description": getShopSeoDescription(language),
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Östergatan 30 C",
+      "addressLocality": "Södertälje",
+      "postalCode": "152 43",
+      "addressCountry": "SE"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+46-8-123-4567",
+      "contactType": "customer service",
+      "email": "info@b8shield.com"
+    },
+    "sameAs": [
+      "https://www.facebook.com/b8shield",
+      "https://www.instagram.com/b8shield"
+    ]
+  };
 }; 

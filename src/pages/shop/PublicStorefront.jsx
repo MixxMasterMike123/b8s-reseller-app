@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getProductImage } from '../../utils/productImages';
-import { getProductUrl } from '../../utils/productUrls';
+import { getProductUrl, getShopSeoTitle, getShopSeoDescription, generateShopStructuredData } from '../../utils/productUrls';
 import { translateColor } from '../../utils/colorTranslations';
 // Toast notifications removed - using AddedToCartModal for user feedback
 import { useCart } from '../../contexts/CartContext';
@@ -17,6 +17,7 @@ import SeoHreflang from '../../components/shop/SeoHreflang';
 import SmartPrice from '../../components/shop/SmartPrice';
 import { getProductGroupContent } from '../../utils/productGroups';
 import AddedToCartModal from '../../components/shop/AddedToCartModal';
+import { Helmet } from 'react-helmet-async';
 
 const PublicStorefront = () => {
   const { t, currentLanguage } = useTranslation();
@@ -192,6 +193,20 @@ const PublicStorefront = () => {
 
   return (
     <>
+      <Helmet>
+        <title>{getShopSeoTitle(currentLanguage)}</title>
+        <meta name="description" content={getShopSeoDescription(currentLanguage)} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={getShopSeoTitle(currentLanguage)} />
+        <meta property="og:description" content={getShopSeoDescription(currentLanguage)} />
+        <meta property="og:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
+        <meta property="og:url" content={window.location.href} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={getShopSeoTitle(currentLanguage)} />
+        <meta name="twitter:description" content={getShopSeoDescription(currentLanguage)} />
+        <meta name="twitter:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
+        <script type="application/ld+json">{JSON.stringify(generateShopStructuredData(currentLanguage))}</script>
+      </Helmet>
       <SeoHreflang />
       <div className="min-h-screen bg-white">
         <ShopNavigation />
