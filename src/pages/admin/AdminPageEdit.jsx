@@ -8,7 +8,7 @@ import {
   GlobeAltIcon,
   Cog6ToothIcon
 } from '@heroicons/react/24/outline';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
@@ -167,15 +167,19 @@ const AdminPageEdit = () => {
         })
       };
 
-      const pageId = isNewPage ? formData.slug : id;
-      await setDoc(doc(db, 'pages', pageId), pageData);
-      
-      toast.success(isNewPage ? 'Sidan har skapats' : 'Sidan har uppdaterats');
-      
       if (isNewPage) {
+        // For new pages, use addDoc to generate a unique ID
+        const docRef = await addDoc(collection(db, 'pages'), pageData);
+        const pageId = docRef.id;
+        
+        toast.success('Sidan har skapats');
         setHasBeenSaved(true); // Mark as saved after first save
         navigate(`/admin/pages/${pageId}`);
       } else {
+        // For existing pages, use setDoc with the existing ID
+        await setDoc(doc(db, 'pages', id), pageData);
+        
+        toast.success('Sidan har uppdaterats');
         setFormData(prev => ({ ...prev, status: newStatus }));
       }
     } catch (error) {

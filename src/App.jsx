@@ -60,6 +60,7 @@ import ForgotPassword from './pages/shop/ForgotPassword';
 import EmailVerificationHandler from './pages/shop/EmailVerificationHandler';
 import GeoRedirect from './components/shop/GeoRedirect';
 import CountryRouteValidator from './components/shop/CountryRouteValidator';
+import DynamicRouteHandler from './components/shop/DynamicRouteHandler';
 
 // Legal & Compliance Pages
 import PrivacyPolicy from './pages/shop/PrivacyPolicy';
@@ -67,6 +68,9 @@ import TermsOfService from './pages/shop/TermsOfService';
 import ReturnPolicy from './pages/shop/ReturnPolicy';
 import CookiePolicy from './pages/shop/CookiePolicy';
 import ShippingInfo from './pages/shop/ShippingInfo';
+
+// Dynamic CMS Pages
+import DynamicPage from './pages/shop/DynamicPage';
 
 // Affiliate Program Pages
 import AffiliateRegistration from './pages/shop/AffiliateRegistration';
@@ -206,6 +210,15 @@ function App() {
               <Route path="/:countryCode/affiliate-registration" element={<CountryRouteValidator><AffiliateRegistration /></CountryRouteValidator>} />
               <Route path="/:countryCode/affiliate-login" element={<CountryRouteValidator><AffiliateLogin /></CountryRouteValidator>} />
               <Route path="/:countryCode/affiliate-portal" element={<CountryRouteValidator><AffiliatePortal /></CountryRouteValidator>} />
+              
+              {/* Dynamic CMS Pages - Must be before catch-all */}
+              <Route path="/:countryCode/*" element={
+                <CountryRouteValidator>
+                  <DynamicRouteHandler>
+                    <Navigate to="/" replace />
+                  </DynamicRouteHandler>
+                </CountryRouteValidator>
+              } />
               
               {/* Catch-all redirect to geo-detection */}
               <Route path="*" element={<GeoRedirect />} />
