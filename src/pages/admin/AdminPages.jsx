@@ -128,6 +128,54 @@ const AdminPages = () => {
     );
   };
 
+  const getTranslationStatus = (page) => {
+    const languages = ['sv-SE', 'en-GB', 'en-US'];
+    const fields = ['title', 'content', 'metaTitle', 'metaDescription'];
+    
+    let completedLanguages = 0;
+    
+    // Check each language
+    for (const lang of languages) {
+      let langComplete = true;
+      
+      // Check each field for this language
+      for (const field of fields) {
+        const fieldValue = page[field];
+        
+        if (typeof fieldValue === 'string') {
+          // Single string value - only counts for Swedish
+          if (lang === 'sv-SE' && fieldValue.length === 0) {
+            langComplete = false;
+            break;
+          }
+        } else if (typeof fieldValue === 'object' && fieldValue) {
+          // Multilingual object
+          if (!fieldValue[lang] || fieldValue[lang].length === 0) {
+            langComplete = false;
+            break;
+          }
+        } else {
+          // No value at all
+          langComplete = false;
+          break;
+        }
+      }
+      
+      if (langComplete) {
+        completedLanguages++;
+      }
+    }
+    
+    return {
+      completed: completedLanguages,
+      total: languages.length,
+      statusColor: completedLanguages === 3 ? 'bg-green-500' :
+                   completedLanguages >= 2 ? 'bg-blue-500' :
+                   completedLanguages >= 1 ? 'bg-yellow-500' :
+                   'bg-gray-300'
+    };
+  };
+
   return (
     <AppLayout>
       {(loading || !currentUser) ? (
@@ -203,6 +251,9 @@ const AdminPages = () => {
                   Status
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Översättningar
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Uppdaterad
                 </th>
                 <th scope="col" className="relative px-6 py-3">
@@ -213,7 +264,7 @@ const AdminPages = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredPages.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
                     <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
                     <h3 className="mt-2 text-sm font-medium text-gray-900">Inga sidor</h3>
                     <p className="mt-1 text-sm text-gray-500">
@@ -249,6 +300,22 @@ const AdminPages = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(page.status)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {(() => {
+                        const translationStatus = getTranslationStatus(page);
+                        return (
+                          <div className="flex items-center gap-1">
+                            <div 
+                              className={`w-2 h-2 rounded-full ${translationStatus.statusColor}`} 
+                              title={`${translationStatus.completed}/${translationStatus.total} språk kompletta`}
+                            ></div>
+                            <span className="text-xs text-gray-500">
+                              {translationStatus.completed}/{translationStatus.total}
+                            </span>
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {page.updatedAt?.toDate?.()?.toLocaleDateString('sv-SE') || 'Okänt'}

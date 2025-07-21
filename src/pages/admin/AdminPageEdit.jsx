@@ -14,12 +14,31 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import ContentLanguageIndicator from '../../components/ContentLanguageIndicator';
 import AppLayout from '../../components/layout/AppLayout';
-// ReactQuill temporarily removed due to infinite loop issues
-// import ReactQuill from 'react-quill';
-// import 'react-quill/dist/quill.snow.css';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import { toast } from 'react-hot-toast';
 
-// ReactQuill configuration removed - using simple textarea instead
+// ReactQuill configuration
+const quillModules = {
+  toolbar: [
+    [{ 'header': [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    [{ 'color': [] }, { 'background': [] }],
+    [{ 'align': [] }],
+    ['link', 'image'],
+    ['clean']
+  ],
+};
+
+const quillFormats = [
+  'header',
+  'bold', 'italic', 'underline', 'strike',
+  'list', 'bullet',
+  'color', 'background',
+  'align',
+  'link', 'image'
+];
 
 const AdminPageEdit = () => {
   const { id } = useParams();
@@ -46,6 +65,7 @@ const AdminPageEdit = () => {
   });
 
   const isNewPage = id === 'new';
+  const [hasBeenSaved, setHasBeenSaved] = useState(false);
 
   // Update formData when user becomes available
   useEffect(() => {
@@ -74,13 +94,15 @@ const AdminPageEdit = () => {
       try {
         const pageDoc = await getDoc(doc(db, 'pages', id));
         if (pageDoc.exists()) {
-          const pageData = pageDoc.data();
-          setFormData(prev => ({
-            ...prev,
-            ...pageData,
-            createdBy: pageData.createdBy || currentUser.uid,
-            updatedBy: pageData.updatedBy || currentUser.uid
-          }));
+                  const pageData = pageDoc.data();
+        setFormData(prev => ({
+          ...prev,
+          ...pageData,
+          createdBy: pageData.createdBy || currentUser.uid,
+          updatedBy: pageData.updatedBy || currentUser.uid
+        }));
+        // Mark as saved since this is an existing page
+        setHasBeenSaved(true);
         } else {
           toast.error('Sidan kunde inte hittas');
           navigate('/admin/pages');
@@ -108,40 +130,17 @@ const AdminPageEdit = () => {
       .trim();
   };
 
-  const handleTitleChange = useCallback((language, value) => {
-    setFormData(prev => {
-      const newTitle = setContentValue(prev.title, language, value);
-      return {
-        ...prev,
-        title: newTitle,
-        // Auto-generate slug from Swedish title if this is a new page and slug is empty
-        slug: (isNewPage && !prev.slug && language === 'sv-SE') 
-          ? generateSlug(value) 
-          : prev.slug
-      };
+  // Auto-generate slug from Swedish title when title changes (only for new pages)
+  const handleTitleChange = (e) => {
+    const newTitle = setContentValue(formData.title, e.target.value);
+    
+    setFormData({
+      ...formData,
+      title: newTitle,
+      // Only auto-generate slug if this is a new page that hasn't been saved yet
+      slug: (isNewPage && !hasBeenSaved) ? generateSlug(newTitle['sv-SE'] || '') : formData.slug
     });
-  }, [isNewPage, setContentValue]);
-
-  const handleContentChange = useCallback((language, value) => {
-    setFormData(prev => {
-      const newContent = setContentValue(prev.content, language, value);
-      return { ...prev, content: newContent };
-    });
-  }, [setContentValue]);
-
-  const handleMetaTitleChange = useCallback((language, value) => {
-    setFormData(prev => {
-      const newMetaTitle = setContentValue(prev.metaTitle, language, value);
-      return { ...prev, metaTitle: newMetaTitle };
-    });
-  }, [setContentValue]);
-
-  const handleMetaDescriptionChange = useCallback((language, value) => {
-    setFormData(prev => {
-      const newMetaDescription = setContentValue(prev.metaDescription, language, value);
-      return { ...prev, metaDescription: newMetaDescription };
-    });
-  }, [setContentValue]);
+  };
 
   const handleSave = async (newStatus = formData.status) => {
     if (!formData.title || !getContentValue(formData.title)) {
@@ -174,6 +173,7 @@ const AdminPageEdit = () => {
       toast.success(isNewPage ? 'Sidan har skapats' : 'Sidan har uppdaterats');
       
       if (isNewPage) {
+        setHasBeenSaved(true); // Mark as saved after first save
         navigate(`/admin/pages/${pageId}`);
       } else {
         setFormData(prev => ({ ...prev, status: newStatus }));
@@ -287,15 +287,16 @@ const AdminPageEdit = () => {
               <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
                 Titel *
               </label>
-              <ContentLanguageIndicator />
+              <ContentLanguageIndicator 
+                contentField={formData.title}
+                label="Titel"
+                currentValue={getContentValue(formData.title)}
+              />
               <input
                 type="text"
                 id="title"
                 value={getContentValue(formData.title)}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  title: setContentValue(formData.title, e.target.value)
-                })}
+                onChange={handleTitleChange}
                 className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Sidans titel..."
                 required
@@ -321,7 +322,15 @@ const AdminPageEdit = () => {
                 />
               </div>
               <p className="mt-1 text-sm text-gray-500">
-                URL-vänlig version av sidtiteln. Endast små bokstäver, siffror och bindestreck.
+                {isNewPage && !hasBeenSaved ? (
+                  <>
+                    URL-vänlig version av sidtiteln. <span className="font-medium text-blue-600">Genereras automatiskt från svenska titeln.</span> Endast små bokstäver, siffror och bindestreck.
+                  </>
+                ) : (
+                  <>
+                    URL-vänlig version av sidtiteln. <span className="font-medium text-gray-600">Manuell redigering möjlig.</span> Endast små bokstäver, siffror och bindestreck.
+                  </>
+                )}
               </p>
             </div>
 
@@ -330,17 +339,22 @@ const AdminPageEdit = () => {
               <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
                 Innehåll
               </label>
-              <ContentLanguageIndicator />
-              <textarea
-                id="content"
-                rows="10"
+              <ContentLanguageIndicator 
+                contentField={formData.content}
+                label="Innehåll"
+                currentValue={getContentValue(formData.content)}
+              />
+              <ReactQuill
+                theme="snow"
                 value={getContentValue(formData.content)}
-                onChange={(e) => setFormData({
+                onChange={(value) => setFormData({
                   ...formData,
-                  content: setContentValue(formData.content, e.target.value)
+                  content: setContentValue(formData.content, value)
                 })}
-                className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                modules={quillModules}
+                formats={quillFormats}
                 placeholder="Sidans innehåll..."
+                className="bg-white"
               />
             </div>
           </div>
@@ -353,7 +367,11 @@ const AdminPageEdit = () => {
               <label htmlFor="metaTitle" className="block text-sm font-medium text-gray-700 mb-2">
                 SEO Titel
               </label>
-              <ContentLanguageIndicator />
+              <ContentLanguageIndicator 
+                contentField={formData.metaTitle}
+                label="SEO Titel"
+                currentValue={getContentValue(formData.metaTitle)}
+              />
               <input
                 type="text"
                 id="metaTitle"
@@ -376,7 +394,11 @@ const AdminPageEdit = () => {
               <label htmlFor="metaDescription" className="block text-sm font-medium text-gray-700 mb-2">
                 SEO Beskrivning
               </label>
-              <ContentLanguageIndicator />
+              <ContentLanguageIndicator 
+                contentField={formData.metaDescription}
+                label="SEO Beskrivning"
+                currentValue={getContentValue(formData.metaDescription)}
+              />
               <textarea
                 id="metaDescription"
                 rows="3"
