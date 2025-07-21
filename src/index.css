@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Simple modal isolation */
+.modal-open {
+  overflow: hidden;
+}
+
+/* Ensure modal content is always visible */
+.modal-content-visible {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
 /* Custom styles below this line */
 body {
   @apply bg-gray-50;

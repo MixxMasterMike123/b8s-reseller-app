@@ -62,11 +62,7 @@ import GeoRedirect from './components/shop/GeoRedirect';
 import CountryRouteValidator from './components/shop/CountryRouteValidator';
 import DynamicRouteHandler from './components/shop/DynamicRouteHandler';
 
-// Legal & Compliance Pages
-import PrivacyPolicy from './pages/shop/PrivacyPolicy';
-import TermsOfService from './pages/shop/TermsOfService';
-import ReturnPolicy from './pages/shop/ReturnPolicy';
-import CookiePolicy from './pages/shop/CookiePolicy';
+// Legal & Compliance Pages (now handled by CMS)
 import ShippingInfo from './pages/shop/ShippingInfo';
 
 // Dynamic CMS Pages
@@ -202,11 +198,7 @@ function App() {
               <Route path="/:countryCode/order-confirmation/:orderId" element={<CountryRouteValidator><OrderConfirmation /></CountryRouteValidator>} />
               <Route path="/:countryCode/account" element={<CountryRouteValidator><CustomerAccount /></CountryRouteValidator>} />
               <Route path="/account" element={<CustomerAccount />} />
-              <Route path="/:countryCode/privacy" element={<CountryRouteValidator><PrivacyPolicy /></CountryRouteValidator>} />
-              <Route path="/:countryCode/terms" element={<CountryRouteValidator><TermsOfService /></CountryRouteValidator>} />
-              <Route path="/:countryCode/returns" element={<CountryRouteValidator><ReturnPolicy /></CountryRouteValidator>} />
-              <Route path="/:countryCode/cookies" element={<CountryRouteValidator><CookiePolicy /></CountryRouteValidator>} />
-              <Route path="/:countryCode/shipping" element={<CountryRouteValidator><ShippingInfo /></CountryRouteValidator>} />
+              {/* Legal pages now handled by CMS via DynamicRouteHandler */}
               <Route path="/:countryCode/affiliate-registration" element={<CountryRouteValidator><AffiliateRegistration /></CountryRouteValidator>} />
               <Route path="/:countryCode/affiliate-login" element={<CountryRouteValidator><AffiliateLogin /></CountryRouteValidator>} />
               <Route path="/:countryCode/affiliate-portal" element={<CountryRouteValidator><AffiliatePortal /></CountryRouteValidator>} />

@@ -430,9 +430,12 @@ const AffiliatePortal = () => {
 
             {/* Mobile-Optimized Payout Button */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-              <button className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
+              <Link 
+                to={getCountryAwareUrl('affiliates/begar-utbetalning')} 
+                className="block w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium text-center"
+              >
                 {t('affiliate_portal_request_payout', 'Begär utbetalning')}
-              </button>
+              </Link>
             </div>
           </div>
         );

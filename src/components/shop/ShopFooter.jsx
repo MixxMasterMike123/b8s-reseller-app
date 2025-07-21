@@ -93,12 +93,12 @@ const ShopFooter = () => {
             <h3 className="text-lg font-semibold mb-4">{t('footer_customer_service', 'Kundservice & Info')}</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to={getCountryAwareUrl('shipping')} className="text-gray-300 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('leveransinformation')} className="text-gray-300 hover:text-white transition-colors">
                   {t('footer_shipping_info', 'Leveransinformation')}
                 </Link>
               </li>
               <li>
-                <Link to={getCountryAwareUrl('returns')} className="text-gray-300 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('legal/returpolicy')} className="text-gray-300 hover:text-white transition-colors">
                   {t('footer_returns', 'Returer & Ångerrätt')}
                 </Link>
               </li>
@@ -153,22 +153,22 @@ const ShopFooter = () => {
             <h3 className="text-lg font-semibold mb-4">{t('footer_legal', 'Juridiskt')}</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to={getCountryAwareUrl('terms')} className="text-gray-300 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('legal/anvandarvillkor')} className="text-gray-300 hover:text-white transition-colors">
                   {t('footer_terms', 'Användarvillkor')}
                 </Link>
               </li>
               <li>
-                <Link to={getCountryAwareUrl('privacy')} className="text-gray-300 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('legal/integritetspolicy')} className="text-gray-300 hover:text-white transition-colors">
                   {t('footer_privacy', 'Integritetspolicy')}
                 </Link>
               </li>
               <li>
-                <Link to={getCountryAwareUrl('cookies')} className="text-gray-300 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('legal/cookie-policy')} className="text-gray-300 hover:text-white transition-colors">
                   {t('footer_cookies', 'Cookie-policy')}
                 </Link>
               </li>
               <li>
-                <Link to={getCountryAwareUrl('returns')} className="text-gray-300 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('legal/returpolicy')} className="text-gray-300 hover:text-white transition-colors">
                   {t('footer_return_policy', 'Returpolicy')}
                 </Link>
               </li>

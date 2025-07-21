@@ -34,6 +34,34 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
     }
   }, [isOpen]);
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      // Store original body styles
+      const originalStyle = window.getComputedStyle(document.body);
+      const scrollY = window.scrollY;
+      
+      // Apply modal-open styles
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+      document.body.style.overflow = 'hidden';
+      document.body.style.width = '100%';
+      
+      // Cleanup function
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.overflow = '';
+        document.body.style.width = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [isOpen]);
+
   const handleVariantClick = (variantName) => {
     setSelectedVariant(selectedVariant === variantName ? null : variantName);
     setSelectedProductVariant(variantName);
@@ -105,127 +133,83 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
             </div>
           </div>
           
-          <div className="bg-green-50 border-l-4 border-green-400 p-3 rounded-r mt-4">
+          <div className="mt-4 bg-green-50 border-l-4 border-green-400 p-3 rounded-r">
             <p className="text-sm text-green-800 italic">
-              "{t('training.understanding_quote', 'När kunden dock väl förstår vad B8Shield är och gör, är den lätt att välja, men kunden måste förstå det först')}"
+              "{t('training.action_quote', 'När kunden dock väl förstår vad B8Shield är och gör, är den lätt att välja, men kunden måste förstå det först')}".
             </p>
           </div>
         </div>
       )
     },
     {
-      id: 'pitch',
-      title: t('training.pitch_title', 'Så förklarar du produkten på 15 sekunder'),
-      subtitle: t('training.pitch_subtitle', 'Säg detta till kunden'),
+      id: 'explanation',
+      title: t('training.product_explanation_title', 'Så förklarar du produkten på 15 sekunder'),
+      subtitle: t('training.15_second_pitch', '15 sekunders förklaring'),
       icon: UserGroupIcon,
       iconColor: 'text-green-600',
       bgColor: 'bg-green-50',
       content: (
         <div className="space-y-4">
-          <div className="bg-white rounded-lg p-4 border border-green-200">
-            <div className="flex items-center mb-3">
-              <span className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">1</span>
-              <p className="text-sm font-medium">
-                {t('training.pitch_point_1', 'B8Shield hindrar fiskedrag från att fastna i undervattensvegetation och andra undervattenshinder.')}
-              </p>
+          <div className="space-y-4 text-sm text-gray-700">
+            <div className="flex items-start bg-white rounded-lg p-4 border border-green-200">
+              <span className="flex-shrink-0 w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">1</span>
+              <span>{t('training.explanation_1', 'B8Shield hindrar fiskedrag från att fastna i undervattensvegetation och andra undervattenshinder.')}</span>
             </div>
-          </div>
-          
-          <div className="bg-white rounded-lg p-4 border border-green-200">
-            <div className="flex items-start">
-              <span className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-1">2</span>
-              <div className="flex-1">
-                <p className="text-sm font-medium mb-3">{t('training.pitch_point_2_intro', 'B8Shield finns i 4 olika utföranden:')}</p>
-                
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { name: t('training.variant_transparent_simple', 'Transparent'), key: 'TRANSPARENT' },
-                    { name: t('training.variant_red_simple', 'Röd'), key: 'RÖD' },
-                    { name: t('training.variant_fluorescent_simple', 'Fluorescerande'), key: 'FLUORESCERANDE' },
-                    { name: t('training.variant_glitter_simple', 'Glitter'), key: 'GLITTER' }
-                  ].map((variant, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleVariantClick(variant.key)}
-                      className={`text-center p-3 rounded border text-sm font-semibold transition-all hover:shadow-md ${
-                        selectedVariant === variant.key 
-                          ? 'border-green-500 bg-green-50 shadow-md' 
-                          : 'border-gray-200 hover:border-green-300 hover:bg-green-25'
-                      }`}
-                    >
-                      <div className="font-semibold">{variant.name}</div>
-                      <div className="text-xs text-blue-600 mt-1">{t('training.click_for_details', 'Klicka för detaljer')}</div>
-                    </button>
-                  ))}
-                </div>
+            
+            <div className="flex items-start bg-white rounded-lg p-4 border border-green-200">
+              <span className="flex-shrink-0 w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">2</span>
+              <div>
+                <p className="font-medium mb-2">{t('training.explanation_2_title', 'B8Shield finns i 4 olika utföranden:')}</p>
+                <ul className="space-y-2 ml-4 text-xs">
+                  <li>• <strong>{t('training.variant_transparent', 'TRANSPARENT.')}</strong> {t('training.variant_transparent_desc', 'När man inte vill kompromissa med fiskedragets naturliga färger och utseende.')}</li>
+                  <li>• <strong>{t('training.variant_red', 'RÖD.')}</strong> {t('training.variant_red_desc', 'Utnyttja den traditionella röda färgen på många betesfiskar för att attrahera mer fisk.')}</li>
+                  <li>• <strong>{t('training.variant_fluorescent', 'FLUORESCERANDE.')}</strong> {t('training.variant_fluorescent_desc', 'När du skall natt fiska och vill attrahera fiskar i grumliga eller mörka vatten.')}</li>
+                  <li>• <strong>{t('training.variant_glitter', 'GLITTER.')}</strong> {t('training.variant_glitter_desc', 'När man skall fiska i stark solljus hjälper dess gnistrande färg till med att attrahera mer fisk.')}</li>
+                </ul>
               </div>
             </div>
-          </div>
-
-          <div className="bg-white rounded-lg p-4 border border-green-200">
-            <div className="flex items-center">
-              <span className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">3</span>
-              <p className="text-sm">
-                {t('training.pitch_point_3', 'B8Shield fästs på tre-krok. Passat till krokstorlek 2, 4 och 6, där storlek 2 också passar på krokstorlek 1. Krokstorlek 1/0 och 2/0 kommer inom kort.')}
-              </p>
+            
+            <div className="flex items-start bg-white rounded-lg p-4 border border-green-200">
+              <span className="flex-shrink-0 w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">3</span>
+              <span>{t('training.explanation_3', 'B8Shield fästs på tre-krok. Passat till krokstorlek 2, 4 och 6, där storlek 2 också passar på krokstorlek 1. Krokstorlek 1/0 och 2/0 kommer inom kort.')}</span>
             </div>
-          </div>
-
-          <div className="bg-white rounded-lg p-4 border border-green-200">
-            <div className="flex items-center">
-              <span className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">4</span>
-              <p className="text-sm">
-                {t('training.pitch_point_4', 'B8Shields är designad så att man enkelt kan växla den mellan olika drag vid behov.')}
-              </p>
+            
+            <div className="flex items-start bg-white rounded-lg p-4 border border-green-200">
+              <span className="flex-shrink-0 w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">4</span>
+              <span>{t('training.explanation_4', 'B8Shields är designad så att man enkelt kan växla den mellan olika drag vid behov.')}</span>
             </div>
           </div>
         </div>
       )
     },
     {
-      id: 'objections',
-      title: t('training.objections_title', 'Vanliga frågor'),
-      subtitle: t('training.objections_subtitle', 'Och vad du svarar'),
+      id: 'faq',
+      title: t('training.faq_title', 'Vanliga frågor – och vad du svarar'),
+      subtitle: t('training.common_questions', 'Vanliga frågor'),
       icon: QuestionMarkCircleIcon,
       iconColor: 'text-blue-600',
       bgColor: 'bg-blue-50',
       content: (
         <div className="space-y-4">
-          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r">
-            <div className="flex items-center mb-2">
-              <QuestionMarkCircleIcon className="h-4 w-4 text-blue-600 mr-2" />
-              <h4 className="font-semibold text-blue-900">{t('training.objection_1_question', 'Kommer fisken sluta hugga?')}</h4>
-            </div>
-            <div className="flex items-start">
-              <ChatBubbleLeftRightIcon className="h-4 w-4 text-blue-600 mr-2 mt-0.5" />
-              <p className="text-sm text-blue-800">
-                <strong>{t('training.answer_label', 'Svar:')}</strong> {t('training.objection_1_answer', 'Nej, B8Shield påverkar inte krokens förmåga att kroka fisk. Under ett bett flexar sköldens vingar för att exponera krokarna, vilket säkerställer en lyckad fångst. Du krokar helt enkelt fisken som vanligt.')}
+          <div className="space-y-4">
+            <div className="border-l-4 border-blue-400 pl-4 bg-blue-50 py-3 rounded-r">
+              <h4 className="text-sm font-medium text-blue-900 mb-2">{t('training.faq_1_question', 'Fråga 1: Kommer fisken sluta hugga?')}</h4>
+              <p className="text-xs text-blue-800">
+                <strong>{t('training.answer', 'Svar:')}</strong> {t('training.faq_1_answer', 'Nej, B8Shield påverkar inte krokens förmåga att kroka fisk. Under ett bett flexar sköldens vingar för att exponera krokarna, vilket säkerställer en lyckad fångst. Du krokar helt enkelt fisken som vanligt.')}
               </p>
             </div>
-          </div>
-          
-          <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-r">
-            <div className="flex items-center mb-2">
-              <QuestionMarkCircleIcon className="h-4 w-4 text-green-600 mr-2" />
-              <h4 className="font-semibold text-green-900">{t('training.objection_2_question', 'Förstör det gången på draget?')}</h4>
-            </div>
-            <div className="flex items-start">
-              <ChatBubbleLeftRightIcon className="h-4 w-4 text-green-600 mr-2 mt-0.5" />
-              <p className="text-sm text-green-800">
-                <strong>{t('training.answer_label', 'Svar:')}</strong> {t('training.objection_2_answer', 'Nej, B8Shield är testad med många typer av drag. Ingen skillnad i gång.')}
+            
+            <div className="border-l-4 border-green-400 pl-4 bg-green-50 py-3 rounded-r">
+              <h4 className="text-sm font-medium text-green-900 mb-2">{t('training.faq_2_question', 'Fråga 2: Förstör det gången på draget?')}</h4>
+              <p className="text-xs text-green-800">
+                <strong>{t('training.answer', 'Svar:')}</strong> {t('training.faq_2_answer', 'Nej, B8Shield är testad med många typer av drag. Ingen skillnad i gång.')}
               </p>
             </div>
-          </div>
-          
-          <div className="bg-purple-50 border-l-4 border-purple-400 p-4 rounded-r">
-            <div className="flex items-center mb-2">
-              <QuestionMarkCircleIcon className="h-4 w-4 text-purple-600 mr-2" />
-              <h4 className="font-semibold text-purple-900">{t('training.objection_3_question', 'När ska man använda den?')}</h4>
-            </div>
-            <div className="flex items-start">
-              <ChatBubbleLeftRightIcon className="h-4 w-4 text-purple-600 mr-2 mt-0.5" />
-              <p className="text-sm text-purple-800">
-                <strong>{t('training.answer_label', 'Svar:')}</strong> {t('training.objection_3_answer', 'När du fiskar där det finns många undervattenhinder som ex. undervattensvegetation eller där det är stenigt, alltså där fisken ofta gömmer sig.')}
+            
+            <div className="border-l-4 border-purple-400 pl-4 bg-purple-50 py-3 rounded-r">
+              <h4 className="text-sm font-medium text-purple-900 mb-2">{t('training.faq_3_question', 'Fråga 3: När ska man använda den?')}</h4>
+              <p className="text-xs text-purple-800">
+                <strong>{t('training.answer', 'Svar:')}</strong> {t('training.faq_3_answer', 'När du fiskar där det finns många undervattenhinder som ex. undervattensvegetation eller där det är stenigt, alltså där fisken ofta gömmer sig.')}
               </p>
             </div>
           </div>
@@ -234,32 +218,46 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
     },
     {
       id: 'completion',
-      title: t('training.completion_title', 'Grattis!'),
-      subtitle: t('training.completion_subtitle', 'Du är nu certifierad B8Shield-specialist'),
+      title: t('training.certified_seller', 'Certifierad B8Shield specialist'),
+      subtitle: t('training.ready_to_sell', 'Redo att sälja!'),
       icon: TrophyIcon,
       iconColor: 'text-yellow-600',
       bgColor: 'bg-yellow-50',
       content: (
-        <div className="text-center space-y-6">
-          <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white rounded-lg p-6">
-            <TrophyIcon className="h-16 w-16 mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">{t('training.certified_seller', 'Certifierad B8Shield specialist')}</h3>
+        <div className="space-y-4">
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r">
+            <div className="flex items-center mb-3">
+              <TrophyIcon className="h-6 w-6 text-yellow-600 mr-2" />
+              <h3 className="text-lg font-semibold text-yellow-900">
+                {t('training.congratulations', 'Grattis!')}
+              </h3>
+            </div>
+            <p className="text-sm text-yellow-800 mb-3">
+              {t('training.completion_message', 'Du har nu all information du behöver för att framgångsrikt sälja B8Shield till dina kunder.')}
+            </p>
+            <p className="text-sm text-yellow-800">
+              {t('training.completion_subtitle', 'Kom ihåg: Kunderna behöver lära sig vad B8Shield är - det är ditt jobb att lära dem!')}
+            </p>
           </div>
           
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <h4 className="font-semibold text-gray-900 mb-2">{t('training.now_you_can', 'Nu kan du:')}</h4>
-            <ul className="text-sm text-gray-700 space-y-1">
-              <li className="flex items-center">
-                <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2" />
-                {t('training.skill_1', 'Förklara B8Shield på 15 sekunder')}
+          <div className="bg-white rounded-lg p-4 border border-yellow-200">
+            <h4 className="font-medium text-gray-900 mb-2">{t('training.key_takeaways', 'Viktiga punkter att komma ihåg:')}</h4>
+            <ul className="space-y-2 text-sm text-gray-700">
+              <li className="flex items-start">
+                <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                <span>{t('training.takeaway_1', 'Placera B8Shield synligt nära kassan')}</span>
               </li>
-              <li className="flex items-center">
-                <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2" />
-                {t('training.skill_2', 'Hantera kundinvändningar')}
+              <li className="flex items-start">
+                <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                <span>{t('training.takeaway_2', 'Aktivt förklara produkten för kunder')}</span>
               </li>
-              <li className="flex items-center">
-                <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2" />
-                {t('training.skill_3', 'Öka din försäljning med rätt teknik')}
+              <li className="flex items-start">
+                <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                <span>{t('training.takeaway_3', 'Använd lösa B8Shields för demonstration')}</span>
+              </li>
+              <li className="flex items-start">
+                <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                <span>{t('training.takeaway_4', 'Kunder måste förstå problemet först')}</span>
               </li>
             </ul>
           </div>
@@ -269,12 +267,12 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
   ];
 
   const currentSlideData = slides[currentSlide];
-  const isLastSlide = currentSlide === slides.length - 1;
   const isFirstSlide = currentSlide === 0;
+  const isLastSlide = currentSlide === slides.length - 1;
 
   const handleNext = () => {
     if (isLastSlide) {
-      onComplete?.();
+      onComplete();
       onClose();
     } else {
       setCurrentSlide(currentSlide + 1);
@@ -291,41 +289,63 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] sm:max-h-[95vh] overflow-hidden flex flex-col">
-          {/* Header */}
-          <div className="bg-[#459CA8] px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex-shrink-0">
+      {/* Mobile-First Modal - Complete Isolation */}
+      <div 
+        className="fixed inset-0 z-[9999] bg-black bg-opacity-50"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 9999
+        }}
+      >
+        {/* Modal Container - Full Screen on Mobile */}
+        <div 
+          className="w-full h-full bg-white flex flex-col"
+          style={{
+            width: '100vw',
+            height: '100vh',
+            maxWidth: '100vw',
+            maxHeight: '100vh'
+          }}
+        >
+          {/* Fixed Header */}
+          <div className="bg-[#459CA8] px-4 py-3 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <currentSlideData.icon className="h-6 w-6 text-white mr-3" />
-                <div>
-                  <h2 className="text-lg font-semibold text-white">
+              <div className="flex items-center min-w-0 flex-1">
+                <currentSlideData.icon className="h-5 w-5 text-white mr-3 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-base font-semibold text-white truncate">
                     {currentSlideData.title}
                   </h2>
-                  <p className="text-sm text-white/90">
+                  <p className="text-xs text-white/90 truncate">
                     {currentSlideData.subtitle}
                   </p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="text-white/70 hover:text-white transition-colors"
+                className="text-white/70 hover:text-white transition-colors flex-shrink-0 ml-2"
               >
-                <XMarkIcon className="h-6 w-6" />
+                <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
           </div>
 
-          {/* Content - Now flexible height */}
-          <div className="px-4 sm:px-6 py-4 sm:py-6 flex-grow overflow-y-auto bg-white">
+          {/* Scrollable Content - Takes remaining space */}
+          <div className="flex-1 overflow-y-auto bg-white px-4 py-4">
             {currentSlideData.content}
           </div>
 
-          {/* Footer */}
-          <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
-            <div className="flex flex-col space-y-3">
-              {/* Step counter and progress bar */}
-              <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+          {/* Fixed Footer */}
+          <div className="bg-gray-50 border-t border-gray-200 px-4 py-3 flex-shrink-0">
+            <div className="space-y-3">
+              {/* Progress */}
+              <div className="flex items-center justify-between text-xs text-gray-600">
                 <span>{t('training.step_counter', 'Steg {{current}} av {{total}}', { current: currentSlide + 1, total: slides.length })}</span>
                 <span>{Math.round(((currentSlide + 1) / slides.length) * 100)}%</span>
               </div>
@@ -336,42 +356,40 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
                 />
               </div>
 
-              {/* Navigation buttons */}
-              <div className="flex items-center justify-between pt-2 gap-2">
+              {/* Navigation */}
+              <div className="flex items-center justify-between gap-2">
                 <button
                   onClick={handlePrev}
                   disabled={isFirstSlide}
-                  className={`flex items-center px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
+                  className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
                     isFirstSlide
                       ? 'text-gray-400 cursor-not-allowed'
                       : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
                   }`}
                 >
-                  <ArrowLeftIcon className="h-4 w-4 mr-1 sm:mr-2" />
+                  <ArrowLeftIcon className="h-4 w-4 mr-1" />
                   <span className="hidden sm:inline">{t('training.previous', 'Föregående')}</span>
                 </button>
                 
                 <div className="flex items-center text-xs text-gray-500 px-2">
                   <ClockIcon className="h-4 w-4 mr-1" />
-                  <span className="hidden sm:inline">{t('training.time_remaining', '~{{minutes}} min kvar', { minutes: 5 - currentSlide })}</span>
-                  <span className="sm:hidden">{5 - currentSlide}m</span>
+                  <span>{5 - currentSlide}m</span>
                 </div>
                 
                 <button
                   onClick={handleNext}
-                  className="flex items-center px-4 sm:px-6 py-2 bg-[#EE7E31] text-white rounded-lg text-sm font-medium hover:bg-[#EE7E31]/90 transition-colors min-h-[44px]"
+                  className="flex items-center px-4 py-2 bg-[#EE7E31] text-white rounded-lg text-sm font-medium hover:bg-[#EE7E31]/90 transition-colors min-h-[44px]"
                 >
                   {isLastSlide ? (
                     <>
-                      <CheckCircleIcon className="h-4 w-4 mr-1 sm:mr-2" />
-                      <span className="hidden sm:inline">{t('training.start_selling', 'Börja sälja!')}</span>
-                      <span className="sm:hidden">Klar!</span>
+                      <CheckCircleIcon className="h-4 w-4 mr-1" />
+                      <span>Klar!</span>
                     </>
                   ) : (
                     <>
                       <span className="hidden sm:inline">{t('training.next', 'Nästa')}</span>
                       <span className="sm:hidden">→</span>
-                      <ArrowRightIcon className="h-4 w-4 ml-1 sm:ml-2" />
+                      <ArrowRightIcon className="h-4 w-4 ml-1" />
                     </>
                   )}
                 </button>

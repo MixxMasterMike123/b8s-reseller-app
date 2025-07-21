@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
@@ -11,7 +11,26 @@ import { toast } from 'react-hot-toast';
 const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => {
   const { slug: paramSlug } = useParams();
   const navigate = useNavigate();
-  const slug = propSlug || paramSlug;
+  const location = useLocation();
+  
+  // Extract slug from URL path dynamically
+  const getSlugFromPath = () => {
+    if (propSlug) return propSlug;
+    if (paramSlug) return paramSlug;
+    
+    // Extract from full pathname
+    const pathname = location.pathname;
+    const pathParts = pathname.split('/').filter(Boolean);
+    
+    // Remove country code and get the rest as slug
+    if (pathParts.length >= 2) {
+      return pathParts.slice(1).join('/'); // Skip country code, join rest
+    }
+    
+    return null;
+  };
+  
+  const slug = getSlugFromPath();
   const { getContentValue } = useContentTranslation();
   const { t } = useTranslation();
   const [page, setPage] = useState(null);
@@ -92,6 +111,56 @@ const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => 
   }
 
   if (error || !page) {
+    // Special handling for affiliate payout page
+    if (slug && slug.includes('begar-utbetalning')) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+          <ShopNavigation />
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-center max-w-2xl mx-auto px-4">
+              <h1 className="text-3xl font-bold text-gray-900 mb-6">
+                Begär utbetalning
+              </h1>
+              <div className="bg-white rounded-lg shadow-sm border p-8 mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                  Affiliate Utbetalning
+                </h2>
+                <p className="text-gray-600 mb-4">
+                  För att begära utbetalning av dina affiliate-intäkter, kontakta oss direkt:
+                </p>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-center space-x-2">
+                    <span className="text-gray-600">Email:</span>
+                    <a href="mailto:info@b8shield.com" className="text-blue-600 hover:text-blue-800 font-medium">
+                      info@b8shield.com
+                    </a>
+                  </div>
+                  <div className="flex items-center justify-center space-x-2">
+                    <span className="text-gray-600">Telefon:</span>
+                    <span className="font-medium">Mån-Fre: 09:00-17:00</span>
+                  </div>
+                </div>
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>Viktig information:</strong> Vi behandlar utbetalningsförfrågningar inom 3-5 arbetsdagar. 
+                    Minimum utbetalningsbelopp är 100 kr.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate(-1)}
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              >
+                Gå tillbaka till Affiliate Portal
+              </button>
+            </div>
+          </div>
+          <ShopFooter />
+        </div>
+      );
+    }
+
+    // Default error page for other missing pages
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
         <ShopNavigation />
