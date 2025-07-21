@@ -83,5 +83,11 @@ service firebase.storage {
       allow read: if request.auth != null && isAdmin(); // Only admins can access
       allow write: if request.auth != null && isAdmin(); // Only admins can upload
     }
+    
+    // Page attachments (CMS file upload system)
+    match /pages/{pageId}/attachments/{fileName} {
+      allow read: if true; // Anyone can read published page attachments
+      allow write: if request.auth != null && isAdmin(); // Only admins can upload
+    }
   }
 }
