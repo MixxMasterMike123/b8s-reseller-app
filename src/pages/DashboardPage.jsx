@@ -12,7 +12,8 @@ import {
   ClipboardDocumentListIcon,
   AcademicCapIcon,
   CubeIcon,
-  PresentationChartBarIcon
+  PresentationChartBarIcon,
+  PhoneIcon
 } from '@heroicons/react/24/outline';
 
 const DashboardPage = () => {
@@ -173,6 +174,26 @@ const DashboardPage = () => {
             </div>
             <p className="text-sm text-gray-600">{t('dashboard.marketing_description', 'Ladda ner broschyrer och marknadsföringsmaterial')}</p>
           </Link>
+        </div>
+
+        {/* Contact Information */}
+        <div className="bg-gray-800 text-white rounded-lg p-4">
+          <div className="flex items-center mb-3">
+            <PhoneIcon className="h-5 w-5 text-gray-300 mr-2" />
+            <h3 className="text-base font-medium">{t('dashboard.contact_title', 'Kontaktuppgifter')}</h3>
+          </div>
+          
+          <div className="text-sm space-y-1">
+            <p className="font-medium text-blue-200">{t('dashboard.company_name', 'JPH Innovation AB')}</p>
+            <p className="text-gray-300">{t('dashboard.company_address_1', 'Östergatan 30 C')}</p>
+            <p className="text-gray-300">{t('dashboard.company_address_2', '152 43 Södertälje')}</p>
+            <p className="text-gray-300">{t('dashboard.company_country', 'SWEDEN')}</p>
+            <p className="mt-2">
+              <a href="mailto:info@b8shield.com" className="text-blue-300 hover:text-blue-200 underline">
+                {t('dashboard.company_email', 'info@b8shield.com')}
+              </a>
+            </p>
+          </div>
         </div>
       </div>
       
