@@ -345,7 +345,6 @@ const TrainingStepPage = () => {
                 ) : (
                   <>
                     <span className="hidden sm:inline">{t('training.next', 'Nästa')}</span>
-                    <span className="sm:hidden">→</span>
                     <ArrowRightIcon className="h-4 w-4 ml-1 sm:ml-2" />
                   </>
                 )}

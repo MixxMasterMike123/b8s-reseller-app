@@ -367,13 +367,12 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
                       <span className="hidden sm:inline">{t('training.start_selling', 'Börja sälja!')}</span>
                       <span className="sm:hidden">Klar!</span>
                     </>
-                  ) : (
-                    <>
-                      <span className="hidden sm:inline">{t('training.next', 'Nästa')}</span>
-                      <span className="sm:hidden">→</span>
-                      <ArrowRightIcon className="h-4 w-4 ml-1 sm:ml-2" />
-                    </>
-                  )}
+                                  ) : (
+                  <>
+                    <span className="hidden sm:inline">{t('training.next', 'Nästa')}</span>
+                    <ArrowRightIcon className="h-4 w-4 ml-1 sm:ml-2" />
+                  </>
+                )}
                 </button>
               </div>
             </div>
