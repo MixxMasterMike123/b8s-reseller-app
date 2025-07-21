@@ -46,16 +46,40 @@ const FileManager = ({
   };
 
   const formatDate = (date) => {
-    if (typeof date === 'string') {
-      date = new Date(date);
+    try {
+      // Handle different date formats
+      let dateObj;
+      if (date instanceof Date) {
+        dateObj = date;
+      } else if (typeof date === 'string') {
+        dateObj = new Date(date);
+      } else if (date && typeof date === 'object' && date.seconds) {
+        // Firebase Timestamp object
+        dateObj = new Date(date.seconds * 1000);
+      } else if (date && typeof date === 'object' && date.toDate) {
+        // Firebase Timestamp with toDate method
+        dateObj = date.toDate();
+      } else {
+        // Fallback to current date
+        dateObj = new Date();
+      }
+
+      // Check if date is valid
+      if (isNaN(dateObj.getTime())) {
+        return 'Okänd datum';
+      }
+
+      return dateObj.toLocaleDateString('sv-SE', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error('Date formatting error:', error, date);
+      return 'Okänd datum';
     }
-    return date.toLocaleDateString('sv-SE', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   if (files.length === 0) {

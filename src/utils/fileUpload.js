@@ -75,7 +75,7 @@ export const uploadFile = async (file, pageId, userId) => {
       url: downloadURL,
       size: file.size,
       type: file.type,
-      uploadedAt: new Date(),
+      uploadedAt: new Date().toISOString(), // Store as ISO string for consistency
       uploadedBy: userId,
       downloads: 0,
       isPublic: true,
