@@ -120,14 +120,30 @@ const TrainingStepPage = () => {
             
             <div className="flex items-start bg-white rounded-lg p-4 border border-green-200">
               <span className="flex-shrink-0 w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">2</span>
-              <div>
-                <p className="font-medium mb-2">{t('training.explanation_2_title', 'B8Shield finns i 4 olika utföranden:')}</p>
-                <ul className="space-y-2 ml-4 text-xs">
-                  <li>• <strong>{t('training.variant_transparent', 'TRANSPARENT.')}</strong> {t('training.variant_transparent_desc', 'När man inte vill kompromissa med fiskedragets naturliga färger och utseende.')}</li>
-                  <li>• <strong>{t('training.variant_red', 'RÖD.')}</strong> {t('training.variant_red_desc', 'Utnyttja den traditionella röda färgen på många betesfiskar för att attrahera mer fisk.')}</li>
-                  <li>• <strong>{t('training.variant_fluorescent', 'FLUORESCERANDE.')}</strong> {t('training.variant_fluorescent_desc', 'När du skall natt fiska och vill attrahera fiskar i grumliga eller mörka vatten.')}</li>
-                  <li>• <strong>{t('training.variant_glitter', 'GLITTER.')}</strong> {t('training.variant_glitter_desc', 'När man skall fiska i stark solljus hjälper dess gnistrande färg till med att attrahera mer fisk.')}</li>
-                </ul>
+              <div className="flex-1">
+                <p className="text-sm font-medium mb-3">{t('training.pitch_point_2_intro', 'B8Shield finns i 4 olika utföranden:')}</p>
+                
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { name: t('training.variant_transparent_simple', 'Transparent'), key: 'TRANSPARENT' },
+                    { name: t('training.variant_red_simple', 'Röd'), key: 'RÖD' },
+                    { name: t('training.variant_fluorescent_simple', 'Fluorescerande'), key: 'FLUORESCERANDE' },
+                    { name: t('training.variant_glitter_simple', 'Glitter'), key: 'GLITTER' }
+                  ].map((variant, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleVariantClick(variant.key)}
+                      className={`text-center p-3 rounded border text-sm font-semibold transition-all hover:shadow-md ${
+                        selectedVariant === variant.key 
+                          ? 'border-green-500 bg-green-50 shadow-md' 
+                          : 'border-gray-200 hover:border-green-300 hover:bg-green-25'
+                      }`}
+                    >
+                      <div className="font-semibold">{variant.name}</div>
+                      <div className="text-xs text-blue-600 mt-1">{t('training.click_for_details', 'Klicka för detaljer')}</div>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
             
@@ -290,7 +306,7 @@ const TrainingStepPage = () => {
         </header>
 
         {/* Content - Matching Original Modal */}
-        <main className="px-4 sm:px-6 py-4 sm:py-6 flex-grow overflow-y-auto bg-white pb-24">
+        <main className="px-4 sm:px-6 py-4 sm:py-6 flex-grow overflow-y-auto bg-white pb-32">
           {currentSlideData.content}
         </main>
 
