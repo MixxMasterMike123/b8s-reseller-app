@@ -97,7 +97,7 @@ const TrainingStepPage = () => {
           
           <div className="mt-4 bg-green-50 border-l-4 border-green-400 p-3 rounded-r">
             <p className="text-sm text-green-800 italic">
-              "{t('training.action_quote', 'När kunden dock väl förstår vad B8Shield är och gör, är den lätt att välja, men kunden måste förstå det först')}".
+              "{t('training.understanding_quote', 'När kunden dock väl förstår vad B8Shield är och gör, är den lätt att välja, men kunden måste förstå det först')}".
             </p>
           </div>
         </div>
@@ -105,8 +105,8 @@ const TrainingStepPage = () => {
     },
     {
       id: 'explanation',
-      title: t('training.product_explanation_title', 'Så förklarar du produkten på 15 sekunder'),
-      subtitle: t('training.15_second_pitch', '15 sekunders förklaring'),
+      title: t('training.pitch_title', 'Så förklarar du produkten på 15 sekunder'),
+      subtitle: t('training.pitch_subtitle', 'Säg detta till kunden'),
       icon: UserGroupIcon,
       iconColor: 'text-green-600',
       bgColor: 'bg-green-50',
@@ -115,7 +115,7 @@ const TrainingStepPage = () => {
           <div className="space-y-4 text-sm text-gray-700">
             <div className="flex items-start bg-white rounded-lg p-4 border border-green-200">
               <span className="flex-shrink-0 w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">1</span>
-              <span>{t('training.explanation_1', 'B8Shield hindrar fiskedrag från att fastna i undervattensvegetation och andra undervattenshinder.')}</span>
+              <span>{t('training.pitch_point_1', 'B8Shield hindrar fiskedrag från att fastna i undervattensvegetation och andra undervattenshinder.')}</span>
             </div>
             
             <div className="flex items-start bg-white rounded-lg p-4 border border-green-200">
@@ -149,12 +149,12 @@ const TrainingStepPage = () => {
             
             <div className="flex items-start bg-white rounded-lg p-4 border border-green-200">
               <span className="flex-shrink-0 w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">3</span>
-              <span>{t('training.explanation_3', 'B8Shield fästs på tre-krok. Passat till krokstorlek 2, 4 och 6, där storlek 2 också passar på krokstorlek 1. Krokstorlek 1/0 och 2/0 kommer inom kort.')}</span>
+              <span>{t('training.pitch_point_3', 'B8Shield fästs på tre-krok. Passat till krokstorlek 2, 4 och 6, där storlek 2 också passar på krokstorlek 1. Krokstorlek 1/0 och 2/0 kommer inom kort.')}</span>
             </div>
             
             <div className="flex items-start bg-white rounded-lg p-4 border border-green-200">
               <span className="flex-shrink-0 w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">4</span>
-              <span>{t('training.explanation_4', 'B8Shields är designad så att man enkelt kan växla den mellan olika drag vid behov.')}</span>
+              <span>{t('training.pitch_point_4', 'B8Shields är designad så att man enkelt kan växla den mellan olika drag vid behov.')}</span>
             </div>
           </div>
         </div>
@@ -162,8 +162,8 @@ const TrainingStepPage = () => {
     },
     {
       id: 'faq',
-      title: t('training.faq_title', 'Vanliga frågor – och vad du svarar'),
-      subtitle: t('training.common_questions', 'Vanliga frågor'),
+      title: t('training.objections_title', 'Vanliga frågor'),
+      subtitle: t('training.objections_subtitle', 'Och vad du svarar'),
       icon: QuestionMarkCircleIcon,
       iconColor: 'text-blue-600',
       bgColor: 'bg-blue-50',
@@ -171,23 +171,23 @@ const TrainingStepPage = () => {
         <div className="space-y-4">
           <div className="space-y-4">
             <div className="border-l-4 border-blue-400 pl-4 bg-blue-50 py-3 rounded-r">
-              <h4 className="text-sm font-medium text-blue-900 mb-2">{t('training.faq_1_question', 'Fråga 1: Kommer fisken sluta hugga?')}</h4>
+              <h4 className="text-sm font-medium text-blue-900 mb-2">{t('training.objection_1_question', 'Kommer fisken sluta hugga?')}</h4>
               <p className="text-xs text-blue-800">
-                <strong>{t('training.answer', 'Svar:')}</strong> {t('training.faq_1_answer', 'Nej, B8Shield påverkar inte krokens förmåga att kroka fisk. Under ett bett flexar sköldens vingar för att exponera krokarna, vilket säkerställer en lyckad fångst. Du krokar helt enkelt fisken som vanligt.')}
+                <strong>{t('training.answer_label', 'Svar:')}</strong> {t('training.objection_1_answer', 'Nej, B8Shield påverkar inte krokens förmåga att kroka fisk. Under ett bett flexar sköldens vingar för att exponera krokarna, vilket säkerställer en lyckad fångst. Du krokar helt enkelt fisken som vanligt.')}
               </p>
             </div>
             
             <div className="border-l-4 border-green-400 pl-4 bg-green-50 py-3 rounded-r">
-              <h4 className="text-sm font-medium text-green-900 mb-2">{t('training.faq_2_question', 'Fråga 2: Förstör det gången på draget?')}</h4>
+              <h4 className="text-sm font-medium text-green-900 mb-2">{t('training.objection_2_question', 'Förstör det gången på draget?')}</h4>
               <p className="text-xs text-green-800">
-                <strong>{t('training.answer', 'Svar:')}</strong> {t('training.faq_2_answer', 'Nej, B8Shield är testad med många typer av drag. Ingen skillnad i gång.')}
+                <strong>{t('training.answer_label', 'Svar:')}</strong> {t('training.objection_2_answer', 'Nej, B8Shield är testad med många typer av drag. Ingen skillnad i gång.')}
               </p>
             </div>
             
             <div className="border-l-4 border-purple-400 pl-4 bg-purple-50 py-3 rounded-r">
-              <h4 className="text-sm font-medium text-purple-900 mb-2">{t('training.faq_3_question', 'Fråga 3: När ska man använda den?')}</h4>
+              <h4 className="text-sm font-medium text-purple-900 mb-2">{t('training.objection_3_question', 'När ska man använda den?')}</h4>
               <p className="text-xs text-purple-800">
-                <strong>{t('training.answer', 'Svar:')}</strong> {t('training.faq_3_answer', 'När du fiskar där det finns många undervattenhinder som ex. undervattensvegetation eller där det är stenigt, alltså där fisken ofta gömmer sig.')}
+                <strong>{t('training.answer_label', 'Svar:')}</strong> {t('training.objection_3_answer', 'När du fiskar där det finns många undervattenhinder som ex. undervattensvegetation eller där det är stenigt, alltså där fisken ofta gömmer sig.')}
               </p>
             </div>
           </div>
