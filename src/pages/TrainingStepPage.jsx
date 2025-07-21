@@ -196,46 +196,32 @@ const TrainingStepPage = () => {
     },
     {
       id: 'completion',
-      title: t('training.certified_seller', 'Certifierad B8Shield specialist'),
-      subtitle: t('training.ready_to_sell', 'Redo att sälja!'),
+      title: t('training.completion_title', 'Grattis!'),
+      subtitle: t('training.completion_subtitle', 'Du är nu certifierad B8Shield-specialist'),
       icon: TrophyIcon,
       iconColor: 'text-yellow-600',
       bgColor: 'bg-yellow-50',
       content: (
-        <div className="space-y-4">
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r">
-            <div className="flex items-center mb-3">
-              <TrophyIcon className="h-6 w-6 text-yellow-600 mr-2" />
-              <h3 className="text-lg font-semibold text-yellow-900">
-                {t('training.congratulations', 'Grattis!')}
-              </h3>
-            </div>
-            <p className="text-sm text-yellow-800 mb-3">
-              {t('training.completion_message', 'Du har nu all information du behöver för att framgångsrikt sälja B8Shield till dina kunder.')}
-            </p>
-            <p className="text-sm text-yellow-800">
-              {t('training.completion_subtitle', 'Kom ihåg: Kunderna behöver lära sig vad B8Shield är - det är ditt jobb att lära dem!')}
-            </p>
+        <div className="text-center space-y-6">
+          <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white rounded-lg p-6">
+            <TrophyIcon className="h-16 w-16 mx-auto mb-4" />
+            <h3 className="text-xl font-bold mb-2">{t('training.certified_seller', 'Certifierad B8Shield specialist')}</h3>
           </div>
           
-          <div className="bg-white rounded-lg p-4 border border-yellow-200">
-            <h4 className="font-medium text-gray-900 mb-2">{t('training.key_takeaways', 'Viktiga punkter att komma ihåg:')}</h4>
-            <ul className="space-y-2 text-sm text-gray-700">
-              <li className="flex items-start">
-                <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                <span>{t('training.takeaway_1', 'Placera B8Shield synligt nära kassan')}</span>
+          <div className="bg-white rounded-lg p-4 border border-gray-200">
+            <h4 className="font-semibold text-gray-900 mb-2">{t('training.now_you_can', 'Nu kan du:')}</h4>
+            <ul className="text-sm text-gray-700 space-y-1">
+              <li className="flex items-center">
+                <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2" />
+                {t('training.skill_1', 'Förklara B8Shield på 15 sekunder')}
               </li>
-              <li className="flex items-start">
-                <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                <span>{t('training.takeaway_2', 'Aktivt förklara produkten för kunder')}</span>
+              <li className="flex items-center">
+                <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2" />
+                {t('training.skill_2', 'Hantera kundinvändningar')}
               </li>
-              <li className="flex items-start">
-                <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                <span>{t('training.takeaway_3', 'Använd lösa B8Shields för demonstration')}</span>
-              </li>
-              <li className="flex items-start">
-                <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                <span>{t('training.takeaway_4', 'Kunder måste förstå problemet först')}</span>
+              <li className="flex items-center">
+                <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2" />
+                {t('training.skill_3', 'Öka din försäljning med rätt teknik')}
               </li>
             </ul>
           </div>
