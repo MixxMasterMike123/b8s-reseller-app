@@ -38,25 +38,15 @@ const DashboardPage = () => {
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
-        {/* Debug Info - Subtle */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 md:p-3">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
-            <div className="flex items-center">
-              <InformationCircleIcon className="h-4 w-4 text-gray-400 mr-2" />
-              <span className="text-xs text-gray-600">
-                {t('dashboard.b2b_mode_debug', 'B2B Mode')}: {hostname} | {subdomain}
-              </span>
-            </div>
-            
-            {/* TEST BUTTON for stakeholders */}
-            <button
-              onClick={() => setIsTrainingModalOpen(true)}
-              className="w-full sm:w-auto flex items-center justify-center px-4 py-2 md:px-3 md:py-1 bg-blue-600 text-white text-sm md:text-xs rounded-lg hover:bg-blue-700 transition-colors min-h-[44px] md:min-h-0"
-            >
-              <AcademicCapIcon className="h-4 w-4 mr-1" />
-              {t('dashboard.test_training', 'Testa Säljutbildning')}
-            </button>
-          </div>
+        {/* Training Button */}
+        <div className="flex justify-center">
+          <button
+            onClick={() => setIsTrainingModalOpen(true)}
+            className="flex items-center justify-center px-6 py-3 bg-blue-600 text-white text-base rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <AcademicCapIcon className="h-5 w-5 mr-2" />
+            Viktig information till butikspersonal
+          </button>
         </div>
 
         {/* Hero Banner - Clean */}

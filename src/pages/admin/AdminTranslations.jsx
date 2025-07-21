@@ -283,7 +283,7 @@ const AdminTranslations = () => {
                 { key: 'dashboard.view_orders', fallback: 'Visa och spåra dina tidigare beställningar' },
                 { key: 'dashboard.browse_products', fallback: 'Bläddra och ladda ner produktinformation' },
                 { key: 'dashboard.marketing_materials', fallback: 'Ladda ner broschyrer och marknadsföringsmaterial' },
-                { key: 'dashboard.test_training', fallback: 'Testa Säljutbildning' },
+                { key: 'dashboard.test_training', fallback: 'Viktig information till butikspersonal' },
                 { key: 'dashboard.staff_info', fallback: 'Information för butikspersonal' },
                 
                 // Training Modal

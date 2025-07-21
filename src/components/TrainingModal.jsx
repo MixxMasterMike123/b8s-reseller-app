@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../contexts/TranslationContext';
 import { 
   XMarkIcon,
@@ -24,6 +24,16 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
   const [productPopupOpen, setProductPopupOpen] = useState(false);
   const [selectedProductVariant, setSelectedProductVariant] = useState(null);
 
+  // Reset modal to step 1 when opened
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentSlide(0);
+      setSelectedVariant(null);
+      setProductPopupOpen(false);
+      setSelectedProductVariant(null);
+    }
+  }, [isOpen]);
+
   const handleVariantClick = (variantName) => {
     setSelectedVariant(selectedVariant === variantName ? null : variantName);
     setSelectedProductVariant(variantName);
@@ -31,39 +41,6 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
   };
 
   const slides = [
-    {
-      id: 'welcome',
-      title: t('training.welcome', 'Välkommen'),
-      subtitle: t('training.welcome_subtitle', 'Till B8Shield återförsäljarportal'),
-      icon: UserGroupIcon,
-      iconColor: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      content: (
-        <div className="space-y-4">
-          <div className="bg-white rounded-lg p-6 border border-blue-200">
-            <p className="text-gray-700 mb-4">
-              {t('training.welcome_text', 'Välkommen till vår återförsäljarportal – ett verktyg för att göra ert samarbete med oss så smidigt som möjligt.')}
-            </p>
-            
-            <h3 className="font-semibold text-gray-900 mb-3">{t('training.features_title', 'Funktioner:')}</h3>
-            <ul className="space-y-2">
-              <li className="flex items-center text-gray-700">
-                <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
-                {t('training.feature_orders', 'Lägga beställningar direkt')}
-              </li>
-              <li className="flex items-center text-gray-700">
-                <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
-                {t('training.feature_history', 'Överblick över orderhistorik')}
-              </li>
-              <li className="flex items-center text-gray-700">
-                <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
-                {t('training.feature_materials', 'Ladda ner marknadsföringsmaterial')}
-              </li>
-            </ul>
-          </div>
-        </div>
-      )
-    },
     {
       id: 'problem',
       title: t('training.staff_info_title', 'Viktig info till butikspersonal'),
@@ -92,7 +69,7 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
     },
     {
       id: 'actions',
-      title: t('training.key_actions_title', 'Av den orsaken är det avgörande att ni'),
+      title: t('training.key_actions_title', 'För att sälja B8Shield är det avgörande att ni'),
       subtitle: t('training.to_sell_b8shield', 'För att sälja B8Shield'),
       icon: ExclamationTriangleIcon,
       iconColor: 'text-red-600',
@@ -104,7 +81,7 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
               <span className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</span>
               <div className="ml-3">
                 <p className="text-sm text-gray-700">
-                  {t('training.action_1', 'Ge butiksstället en synlig och central plats i butiken, gärna nära kassan.')}
+                  {t('training.action_1', 'Ger butiksstället en synlig och central plats i butiken, gärna nära kassan.')}
                 </p>
               </div>
             </div>
@@ -162,22 +139,21 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
                 
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { name: 'TRANSPARENT', desc: t('training.variant_transparent_desc', 'När man inte vill kompromissa med fiskedragets naturliga färger och utseende') },
-                    { name: 'RÖD', desc: t('training.variant_red_desc', 'Utnyttja den traditionella röda färgen på många betesfiskar för att attrahera mer fisk') },
-                    { name: 'FLUORESCERANDE', desc: t('training.variant_fluorescent_desc', 'När du skall natt fiska och vill attrahera fiskar i grumliga eller mörka vatten') },
-                    { name: 'GLITTER', desc: t('training.variant_glitter_desc', 'När man skall fiska i stark solljus hjälper dess gnistrande färg till med att attrahera mer fisk') }
+                    { name: t('training.variant_transparent_simple', 'Transparent'), key: 'TRANSPARENT' },
+                    { name: t('training.variant_red_simple', 'Röd'), key: 'RÖD' },
+                    { name: t('training.variant_fluorescent_simple', 'Fluorescerande'), key: 'FLUORESCERANDE' },
+                    { name: t('training.variant_glitter_simple', 'Glitter'), key: 'GLITTER' }
                   ].map((variant, idx) => (
                     <button
                       key={idx}
-                      onClick={() => handleVariantClick(variant.name)}
-                      className={`text-left p-2 rounded border text-xs transition-all hover:shadow-md ${
-                        selectedVariant === variant.name 
+                      onClick={() => handleVariantClick(variant.key)}
+                      className={`text-center p-3 rounded border text-sm font-semibold transition-all hover:shadow-md ${
+                        selectedVariant === variant.key 
                           ? 'border-green-500 bg-green-50 shadow-md' 
                           : 'border-gray-200 hover:border-green-300 hover:bg-green-25'
                       }`}
                     >
                       <div className="font-semibold">{variant.name}</div>
-                      <div className="text-gray-600">{variant.desc}</div>
                       <div className="text-xs text-blue-600 mt-1">{t('training.click_for_details', 'Klicka för detaljer')}</div>
                     </button>
                   ))}
@@ -259,7 +235,7 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
     {
       id: 'completion',
       title: t('training.completion_title', 'Grattis!'),
-      subtitle: t('training.completion_subtitle', 'Du är nu certifierad B8Shield-säljare'),
+      subtitle: t('training.completion_subtitle', 'Du är nu certifierad B8Shield-specialist'),
       icon: TrophyIcon,
       iconColor: 'text-yellow-600',
       bgColor: 'bg-yellow-50',
@@ -267,8 +243,7 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
         <div className="text-center space-y-6">
           <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white rounded-lg p-6">
             <TrophyIcon className="h-16 w-16 mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">{t('training.certified_seller', 'Certifierad B8Shield-Säljare')}</h3>
-            <p className="text-yellow-100">{t('training.completed_training', 'Du har genomfört säljutbildningen')}</p>
+            <h3 className="text-xl font-bold mb-2">{t('training.certified_seller', 'Certifierad B8Shield specialist')}</h3>
           </div>
           
           <div className="bg-white rounded-lg p-4 border border-gray-200">
@@ -316,10 +291,10 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[95vh] overflow-hidden flex flex-col">
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] sm:max-h-[95vh] overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="bg-[#459CA8] px-6 py-4 border-b border-gray-200 flex-shrink-0">
+          <div className="bg-[#459CA8] px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <currentSlideData.icon className="h-6 w-6 text-white mr-3" />
@@ -342,12 +317,12 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
           </div>
 
           {/* Content - Now flexible height */}
-          <div className="px-6 py-6 flex-grow overflow-y-auto bg-white">
+          <div className="px-4 sm:px-6 py-4 sm:py-6 flex-grow overflow-y-auto bg-white">
             {currentSlideData.content}
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
             <div className="flex flex-col space-y-3">
               {/* Step counter and progress bar */}
               <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
@@ -362,38 +337,41 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
               </div>
 
               {/* Navigation buttons */}
-              <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center justify-between pt-2 gap-2">
                 <button
                   onClick={handlePrev}
                   disabled={isFirstSlide}
-                  className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
                     isFirstSlide
                       ? 'text-gray-400 cursor-not-allowed'
                       : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
                   }`}
                 >
-                  <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                  {t('training.previous', 'Föregående')}
+                  <ArrowLeftIcon className="h-4 w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">{t('training.previous', 'Föregående')}</span>
                 </button>
                 
-                <div className="flex items-center text-xs text-gray-500">
+                <div className="flex items-center text-xs text-gray-500 px-2">
                   <ClockIcon className="h-4 w-4 mr-1" />
-                  {t('training.time_remaining', '~{{minutes}} min kvar', { minutes: 5 - currentSlide })}
+                  <span className="hidden sm:inline">{t('training.time_remaining', '~{{minutes}} min kvar', { minutes: 5 - currentSlide })}</span>
+                  <span className="sm:hidden">{5 - currentSlide}m</span>
                 </div>
                 
                 <button
                   onClick={handleNext}
-                  className="flex items-center px-6 py-2 bg-[#EE7E31] text-white rounded-lg text-sm font-medium hover:bg-[#EE7E31]/90 transition-colors"
+                  className="flex items-center px-4 sm:px-6 py-2 bg-[#EE7E31] text-white rounded-lg text-sm font-medium hover:bg-[#EE7E31]/90 transition-colors min-h-[44px]"
                 >
                   {isLastSlide ? (
                     <>
-                      <CheckCircleIcon className="h-4 w-4 mr-2" />
-                      {t('training.start_selling', 'Börja sälja!')}
+                      <CheckCircleIcon className="h-4 w-4 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">{t('training.start_selling', 'Börja sälja!')}</span>
+                      <span className="sm:hidden">Klar!</span>
                     </>
                   ) : (
                     <>
-                      {t('training.next', 'Nästa')}
-                      <ArrowRightIcon className="h-4 w-4 ml-2" />
+                      <span className="hidden sm:inline">{t('training.next', 'Nästa')}</span>
+                      <span className="sm:hidden">→</span>
+                      <ArrowRightIcon className="h-4 w-4 ml-1 sm:ml-2" />
                     </>
                   )}
                 </button>
