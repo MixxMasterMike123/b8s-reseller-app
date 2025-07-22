@@ -99,16 +99,6 @@ const AppLayout = ({ children }) => {
       icon: HomeIcon,
     },
     {
-      name: t('nav.product_catalog', 'Produktkatalog'),
-      path: '/products',
-      icon: CubeIcon,
-    },
-    {
-      name: t('nav.marketing_materials', 'Marknadsföringsmaterial'),
-      path: '/marketing',
-      icon: MegaphoneIcon,
-    },
-    {
       name: t('nav.place_order', 'Lägg en beställning'),
       path: '/order',
       icon: ShoppingCartIcon,
@@ -117,6 +107,16 @@ const AppLayout = ({ children }) => {
       name: t('nav.order_history', 'Orderhistorik'),
       path: '/orders',
       icon: ClipboardDocumentListIcon,
+    },
+    {
+      name: t('nav.product_catalog', 'Produktkatalog'),
+      path: '/products',
+      icon: CubeIcon,
+    },
+    {
+      name: t('nav.marketing_materials', 'Marknadsföringsmaterial'),
+      path: '/marketing',
+      icon: MegaphoneIcon,
     },
     {
       name: t('nav.contact_support', 'Kontakt & Support'),
