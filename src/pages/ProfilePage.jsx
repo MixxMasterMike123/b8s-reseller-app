@@ -317,6 +317,10 @@ const ProfilePage = () => {
                       <p className="text-sm md:text-sm text-gray-500 mb-1">{t('profile.org_number', 'Organisationsnummer')}</p>
                       <p className="font-medium text-base">{userData?.orgNumber || t('profile.not_specified', 'Ej angivet')}</p>
                     </div>
+                    <div>
+                      <p className="text-sm md:text-sm text-gray-500 mb-1">{t('profile.your_margin', 'Din Marginal')}</p>
+                      <p className="font-medium text-base">{userData?.marginal ? `${userData.marginal}%` : t('profile.not_specified', 'Ej angivet')}</p>
+                    </div>
                   </div>
                 </div>
 

@@ -151,6 +151,7 @@
 "profile.email","E-post","Email","Email","","approved","","",""
 "profile.not_specified","Ej angivet","Not specified","Not specified","","approved","","",""
 "profile.org_number","Organisationsnummer","Organisation Number","Organization Number","","approved","","",""
+"profile.your_margin","Din Marginal","Your Margin","Your Margin","","approved","","",""
 "profile.phone","Telefon","Phone","Phone","","approved","","",""
 "profile.profile_information","Profilinformation","Profile Information","Profile Information","","approved","","",""
 "profile.title","Profil","Profile","Profile","","approved","","",""
