@@ -56,7 +56,7 @@ const DashboardPage = () => {
             className="flex items-center justify-center px-6 py-3 bg-blue-600 text-white text-base rounded-lg hover:bg-blue-700 transition-colors"
           >
             <AcademicCapIcon className="h-5 w-5 mr-2" />
-            Viktig information till butikspersonal
+            {t('dashboard.test_training', 'Viktig information till butikspersonal')}
           </button>
         </div>
 
