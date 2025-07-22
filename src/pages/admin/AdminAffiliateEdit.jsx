@@ -26,7 +26,9 @@ import {
   HomeIcon,
   DocumentArrowDownIcon,
   CalendarDaysIcon,
-  ReceiptPercentIcon
+  ReceiptPercentIcon,
+  PaperAirplaneIcon,
+  KeyIcon
 } from '@heroicons/react/24/solid';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
@@ -104,6 +106,10 @@ const AdminAffiliateEdit = () => {
   const [recentOrders, setRecentOrders] = useState([]);
   const [payoutHistory, setPayoutHistory] = useState([]);
   const [loadingPayouts, setLoadingPayouts] = useState(false);
+
+  // Credential sending state
+  const [sendingCredentials, setSendingCredentials] = useState(false);
+  const [credentialsResult, setCredentialsResult] = useState(null);
 
   // Editable fields
   const [commissionRate, setCommissionRate] = useState('');
@@ -489,6 +495,32 @@ const AdminAffiliateEdit = () => {
     }
   };
 
+  // Handle sending affiliate credentials
+  const handleSendCredentials = async () => {
+    if (!id || !data) return;
+    
+    try {
+      setSendingCredentials(true);
+      
+      // Call the cloud function to send affiliate credentials
+      const sendAffiliateCredentials = httpsCallable(functions, 'sendAffiliateCredentialsV2');
+      const result = await sendAffiliateCredentials({ affiliateId: id });
+      
+      setCredentialsResult(result.data);
+      
+      // Refresh affiliate data to show updated credential status
+      await fetchData();
+      
+      toast.success('Inloggningsuppgifter skickade framgångsrikt!');
+      
+    } catch (error) {
+      console.error('Error sending affiliate credentials:', error);
+      toast.error(`Kunde inte skicka inloggningsuppgifter: ${error.message}`);
+    } finally {
+      setSendingCredentials(false);
+    }
+  };
+
   if (loading) return <AppLayout><div className="text-center p-8">Laddar...</div></AppLayout>;
   if (!data) return <AppLayout><div className="text-center p-8">Ingen data hittades.</div></AppLayout>;
 
@@ -536,6 +568,39 @@ const AdminAffiliateEdit = () => {
           <div className="flex items-center gap-3">
             {!isApplication && !isEditing && (
               <>
+                {/* Send Credentials Button/Status */}
+                {data.credentialsSent ? (
+                  <div className="flex items-center px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
+                    <CheckIcon className="h-5 w-5 text-green-600 mr-2" />
+                    <div>
+                      <div className="text-sm font-medium text-green-800">
+                        Inloggningsuppgifter skickade
+                      </div>
+                      <div className="text-xs text-green-600">
+                        {data.credentialsSentAt && new Date(data.credentialsSentAt.seconds * 1000).toLocaleDateString('sv-SE')}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleSendCredentials}
+                    disabled={sendingCredentials}
+                    className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {sendingCredentials ? (
+                      <>
+                        <ClockIcon className="h-4 w-4 mr-2 animate-spin" />
+                        Skickar...
+                      </>
+                    ) : (
+                      <>
+                        <PaperAirplaneIcon className="h-4 w-4 mr-2" />
+                        Skicka inloggningsuppgifter
+                      </>
+                    )}
+                  </button>
+                )}
+
                 <button
                   onClick={() => setIsEditing(true)} 
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -567,6 +632,35 @@ const AdminAffiliateEdit = () => {
             )}
           </div>
         </div>
+
+        {/* Credentials Result Display */}
+        {credentialsResult && (
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-start">
+              <KeyIcon className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-medium text-blue-800 mb-2">
+                  {credentialsResult.isExistingUser ? 
+                    'Befintligt konto uppdaterat och inloggningsuppgifter skickade!' :
+                    'Nytt konto skapat och inloggningsuppgifter skickade!'
+                  }
+                </h4>
+                <div className="text-sm text-blue-700">
+                  <p><strong>E-post:</strong> {data.email}</p>
+                  <p><strong>Tillfälligt lösenord:</strong> <code className="bg-blue-100 px-2 py-1 rounded font-mono">{credentialsResult.temporaryPassword}</code></p>
+                  {credentialsResult.isExistingUser && (
+                    <p className="text-xs mt-1 text-blue-600">
+                      <strong>Obs:</strong> Ett befintligt Firebase Auth-konto uppdaterades med nytt lösenord.
+                    </p>
+                  )}
+                  <p className="text-xs mt-2 text-blue-600">
+                    Affiliate kommer att få instruktioner om att ändra lösenordet vid första inloggningen.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Quick Stats for Active Affiliates */}
         {!isApplication && data && affiliateStats && (
