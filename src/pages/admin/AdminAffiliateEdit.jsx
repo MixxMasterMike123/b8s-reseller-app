@@ -725,6 +725,7 @@ const AdminAffiliateEdit = () => {
                             >
                               <option value="active">Aktiv</option>
                               <option value="suspended">Suspenderad</option>
+                              <option value="inactive">Inte Aktiv</option>
                             </select>
                           ) : (
                             <StatusBadge status={status} />
