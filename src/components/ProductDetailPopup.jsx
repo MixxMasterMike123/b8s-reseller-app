@@ -3,8 +3,10 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { generateProductImage } from '../utils/productImages';
+import { useTranslation } from '../contexts/TranslationContext';
 
 const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
+  const { t } = useTranslation();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -147,6 +149,16 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
     }).format(price);
   };
 
+  const getSalesTip = (variant) => {
+    const tips = {
+      'TRANSPARENT': t('training.popup.sales_tip_transparent', 'vill ha skydd utan att ändra dragets utseende.'),
+      'RÖD': t('training.popup.sales_tip_red', 'fiskar efter rovfisk och vill attrahera mer fisk.'),
+      'FLUORESCERANDE': t('training.popup.sales_tip_fluorescent', 'fiskar på kvällar eller i grumliga vatten.'),
+      'GLITTER': t('training.popup.sales_tip_glitter', 'fiskar i stark solljus och vill ha extra attraktion.')
+    };
+    return tips[variant] || t('training.popup.sales_tip_default', 'vill skydda sina fiskedrag från vegetation.');
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -202,14 +214,14 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
                 )}
                 {product.size && (
                   <p className="text-sm text-gray-600 mt-1">
-                    Tillgänglig i: {product.size}
+                    {t('training.popup.available_in', 'Tillgänglig i:')} {product.size}
                   </p>
                 )}
               </div>
 
               {/* Description */}
               <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-900 mb-2">Beskrivning</h4>
+                <h4 className="font-semibold text-gray-900 mb-2">{t('training.popup.description', 'Beskrivning')}</h4>
                 <p className="text-gray-700 text-sm leading-relaxed">
                   {product.variantDescription || product.description}
                 </p>
@@ -218,7 +230,7 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
               {/* Features */}
               {product.variantFeatures && (
                 <div className="bg-blue-50 rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-900 mb-3">Egenskaper</h4>
+                  <h4 className="font-semibold text-gray-900 mb-3">{t('training.popup.features', 'Egenskaper')}</h4>
                   <ul className="space-y-2">
                     {product.variantFeatures.map((feature, index) => (
                       <li key={index} className="flex items-start text-sm">
@@ -232,7 +244,7 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
 
               {/* Sales Tips */}
               <div className="bg-green-50 rounded-lg p-4 border-l-4 border-green-400">
-                <h4 className="font-semibold text-green-900 mb-2">Säljargument</h4>
+                <h4 className="font-semibold text-green-900 mb-2">{t('training.popup.sales_arguments', 'Säljargument')}</h4>
                 <p className="text-green-800 text-sm">
                   "Den här varianten är perfekt för kunder som {getSalesTip(variantType)}"
                 </p>
@@ -240,7 +252,7 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className="text-gray-600">Kunde inte ladda produktinformation</p>
+              <p className="text-gray-600">{t('training.popup.load_error', 'Kunde inte ladda produktinformation')}</p>
             </div>
           )}
         </div>
@@ -252,7 +264,7 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
               onClick={onClose}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Stäng
+              {t('training.popup.close', 'Stäng')}
             </button>
           </div>
         </div>
@@ -261,14 +273,6 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
   );
 };
 
-const getSalesTip = (variant) => {
-  const tips = {
-    'TRANSPARENT': 'vill ha skydd utan att ändra dragets utseende.',
-    'RÖD': 'fiskar efter rovfisk och vill attrahera mer fisk.',
-    'FLUORESCERANDE': 'fiskar på kvällar eller i grumliga vatten.',
-    'GLITTER': 'fiskar i stark solljus och vill ha extra attraktion.'
-  };
-  return tips[variant] || 'vill skydda sina fiskedrag från vegetation.';
-};
+
 
 export default ProductDetailPopup; 
