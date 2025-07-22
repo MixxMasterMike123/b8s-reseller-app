@@ -189,7 +189,7 @@ const ShippingInfo = () => {
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h4 className="font-semibold mb-2">Problem med spårning?</h4>
                 <p className="text-sm text-gray-700">
-                  Kontakta vår kundtjänst på info@b8shield.com om du har problem med att spåra ditt paket 
+                  Kontakta vår kundtjänst på info@jphinnovation.se om du har problem med att spåra ditt paket 
                   eller om spårningsinformationen inte uppdateras.
                 </p>
               </div>
@@ -298,7 +298,7 @@ const ShippingInfo = () => {
                       JPH Innovation AB<br />
                       Östergatan 30c<br />
                       152 43 Södertälje<br />
-                      E-post: info@b8shield.com<br />
+                      E-post: info@jphinnovation.se<br />
                       Telefon: [Telefonnummer]
                     </p>
                   </div>

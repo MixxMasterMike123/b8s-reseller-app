@@ -149,8 +149,8 @@ const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => 
                 <div className="space-y-3">
                   <div className="flex items-center justify-center space-x-2">
                     <span className="text-gray-600">Email:</span>
-                    <a href="mailto:info@b8shield.com" className="text-blue-600 hover:text-blue-800 font-medium">
-                      info@b8shield.com
+                    <a href="mailto:info@jphinnovation.se" className="text-blue-600 hover:text-blue-800 font-medium">
+  info@jphinnovation.se
                     </a>
                   </div>
                   <div className="flex items-center justify-center space-x-2">

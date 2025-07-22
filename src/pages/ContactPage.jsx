@@ -66,10 +66,10 @@ const ContactPage = () => {
                 </svg>
                 <div>
                   <a 
-                    href="mailto:info@b8shield.com" 
+                    href="mailto:info@jphinnovation.se" 
                     className="text-blue-600 hover:text-blue-800 font-semibold text-lg underline"
                   >
-                    info@b8shield.com
+                    info@jphinnovation.se
                   </a>
                 </div>
               </div>
@@ -89,7 +89,7 @@ const ContactPage = () => {
               <div className="bg-green-50 p-4 rounded-lg">
                 <h3 className="font-semibold text-green-800 mb-2">{t('contact.support.email.title', '📧 E-post support')}</h3>
                 <p className="text-green-700">
-                  {t('contact.support.email.description', 'Skicka era frågor till')} <span className="font-semibold">info@b8shield.com</span> {t('contact.support.email.response', 'så återkommer vi så snart som möjligt')}.
+                  {t('contact.support.email.description', 'Skicka era frågor till')} <span className="font-semibold">info@jphinnovation.se</span> {t('contact.support.email.response', 'så återkommer vi så snart som möjligt')}.
                 </p>
               </div>
               

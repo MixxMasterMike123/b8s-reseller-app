@@ -81,7 +81,7 @@ const ShopFooter = () => {
                 </Link>
               </li>
               <li>
-                <a href="mailto:info@b8shield.com" className="text-gray-300 hover:text-white transition-colors">
+                <a href="mailto:info@jphinnovation.se" className="text-gray-300 hover:text-white transition-colors">
                   {t('footer_contact', 'Kontakt')}
                 </a>
               </li>
@@ -136,7 +136,7 @@ const ShopFooter = () => {
                 </Link>
               </li>
               <li>
-                <a href="mailto:info@b8shield.com" className="text-gray-300 hover:text-white transition-colors">
+                <a href="mailto:info@jphinnovation.se" className="text-gray-300 hover:text-white transition-colors">
                   {t('footer_customer_support', 'Kundtjänst')}
                 </a>
               </li>

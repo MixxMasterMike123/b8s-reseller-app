@@ -360,7 +360,7 @@ export const generateShopStructuredData = (language = 'sv-SE') => {
       "@type": "ContactPoint",
       "telephone": "+46-8-123-4567",
       "contactType": "customer service",
-      "email": "info@b8shield.com"
+      "email": "info@jphinnovation.se"
     },
     "sameAs": [
       "https://www.facebook.com/b8shield",

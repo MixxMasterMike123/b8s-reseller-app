@@ -189,8 +189,8 @@ const DashboardPage = () => {
             <p className="text-gray-300">{t('dashboard.company_address_2', '152 43 Södertälje')}</p>
             <p className="text-gray-300">{t('dashboard.company_country', 'SWEDEN')}</p>
             <p className="mt-2">
-              <a href="mailto:info@b8shield.com" className="text-blue-300 hover:text-blue-200 underline">
-                {t('dashboard.company_email', 'info@b8shield.com')}
+                              <a href="mailto:info@jphinnovation.se" className="text-blue-300 hover:text-blue-200 underline">
+                  {t('dashboard.company_email', 'info@jphinnovation.se')}
               </a>
             </p>
           </div>
