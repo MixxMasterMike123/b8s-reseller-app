@@ -460,13 +460,7 @@ const OrderPage = () => {
             <div className="md:p-4 p-5 border border-gray-200 rounded bg-blue-50">
               <h2 className="md:text-xl text-2xl font-semibold mb-3">{t('orders.pricing_info', 'Information om prissättning')}</h2>
               <p className="md:text-base text-lg leading-relaxed">{t('orders.pricing_description', 'Alla priser är exklusive moms och beräknas med din personliga marginal på {{margin}}%.', { margin: marginal || 35 })}</p>
-              {(marginal || 35) === 35 && (
-                <div className="mt-4 md:p-3 p-4 bg-orange-100 border border-orange-300 rounded-lg">
-                                      <p className="text-orange-800 font-semibold md:text-base text-lg">
-                      🎉 {t('orders.intro_pricing', 'Just nu introduktionspris, endast under en kortare period, under fiskesäsong 2025')}
-                    </p>
-                </div>
-              )}
+
             </div>
             
         </div>
@@ -506,13 +500,7 @@ const OrderPage = () => {
                   {/* Price Breakdown */}
                   <div className="mb-4 p-3 bg-white rounded border">
                     <h3 className="font-bold text-sm mb-2">{t('orders.purchase_price_with_margin', 'Inköpspris med {{margin}}% marginal', { margin: marginal || 35 })}:</h3>
-                    {(marginal || 35) === 35 && (
-                      <div className="mb-2 p-2 bg-green-100 border border-green-300 rounded text-xs">
-                                                  <p className="text-green-800">
-                            🎉 {t('orders.intro_pricing', 'Just nu introduktionspris, endast under en kortare period, under fiskesäsong 2025')}
-                          </p>
-                      </div>
-                    )}
+
                     <div className="space-y-1 text-sm">
                                               <div className="flex justify-between">
                           <span>{t('orders.price_per_package', 'Pris per förpackning (exkl. moms)')}:</span>
