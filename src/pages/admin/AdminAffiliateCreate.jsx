@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import toast from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
@@ -106,15 +106,13 @@ const AdminAffiliateCreate = () => {
           totalEarnings: 0,
           balance: 0,
         },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       };
 
-      // Create a temporary ID for the affiliate
-      const tempId = `temp_${Date.now()}`;
-      
-      // Save to Firestore
-      await setDoc(doc(db, 'affiliates', tempId), affiliateData);
+      // Save to Firestore and get the real document ID
+      const docRef = await addDoc(collection(db, 'affiliates'), affiliateData);
+      const realId = docRef.id;
 
       toast.success(`Affiliate "${formData.name}" har skapats med kod: ${affiliateCode}`, { id: toastId, duration: 5000 });
       navigate('/admin/affiliates');
