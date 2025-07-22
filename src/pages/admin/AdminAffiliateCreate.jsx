@@ -83,8 +83,8 @@ const AdminAffiliateCreate = () => {
         tiktok: formData.tiktok || ''
       };
 
-      // Create affiliate data
-      const affiliateData = {
+      // Save to Firestore and get the real document ID
+      const docRef = await addDoc(collection(db, 'affiliates'), {
         affiliateCode,
         name: formData.name,
         email: formData.email,
@@ -108,11 +108,14 @@ const AdminAffiliateCreate = () => {
         },
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
-      };
-
-      // Save to Firestore and get the real document ID
-      const docRef = await addDoc(collection(db, 'affiliates'), affiliateData);
+      });
+      
       const realId = docRef.id;
+      
+      // Update the document with its own ID field
+      await setDoc(doc(db, 'affiliates', realId), {
+        id: realId // Store the document ID in the data itself
+      }, { merge: true });
 
       toast.success(`Affiliate "${formData.name}" har skapats med kod: ${affiliateCode}`, { id: toastId, duration: 5000 });
       navigate('/admin/affiliates');
