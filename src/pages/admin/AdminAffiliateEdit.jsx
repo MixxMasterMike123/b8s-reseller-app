@@ -112,6 +112,26 @@ const AdminAffiliateEdit = () => {
   const [preferredLang, setPreferredLang] = useState('');
   const [customAffiliateCode, setCustomAffiliateCode] = useState('');
   const [codeValidationError, setCodeValidationError] = useState('');
+  
+  // Personal/Contact fields
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [city, setCity] = useState('');
+  const [country, setCountry] = useState('');
+  
+  // Social media fields
+  const [website, setWebsite] = useState('');
+  const [instagram, setInstagram] = useState('');
+  const [youtube, setYoutube] = useState('');
+  const [facebook, setFacebook] = useState('');
+  const [tiktok, setTiktok] = useState('');
+  
+  // Marketing fields
+  const [promotionMethod, setPromotionMethod] = useState('');
+  const [message, setMessage] = useState('');
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('sv-SE', {
@@ -261,6 +281,26 @@ const AdminAffiliateEdit = () => {
           setStatus(affiliateData.status || '');
           setPreferredLang(affiliateData.preferredLang || 'sv-SE');
           setCustomAffiliateCode(''); // Initialize empty for new custom codes
+          
+          // Set personal/contact fields
+          setName(affiliateData.name || '');
+          setEmail(affiliateData.email || '');
+          setPhone(affiliateData.phone || '');
+          setAddress(affiliateData.address || '');
+          setPostalCode(affiliateData.postalCode || '');
+          setCity(affiliateData.city || '');
+          setCountry(affiliateData.country || '');
+          
+          // Set social media fields
+          setWebsite(affiliateData.socials?.website || '');
+          setInstagram(affiliateData.socials?.instagram || '');
+          setYoutube(affiliateData.socials?.youtube || '');
+          setFacebook(affiliateData.socials?.facebook || '');
+          setTiktok(affiliateData.socials?.tiktok || '');
+          
+          // Set marketing fields
+          setPromotionMethod(affiliateData.promotionMethod || '');
+          setMessage(affiliateData.message || '');
         } else {
           toast.error('Kunde inte hitta affiliate eller ansökan.');
           navigate('/admin/affiliates');
@@ -338,10 +378,34 @@ const AdminAffiliateEdit = () => {
       }
 
       const updateData = {
+        // Business settings
         commissionRate: Number(commissionRate),
         checkoutDiscount: Number(checkoutDiscount),
         status: status,
         preferredLang: preferredLang,
+        
+        // Personal/Contact information
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
+        postalCode: postalCode.trim(),
+        city: city.trim(),
+        country: country,
+        
+        // Social media
+        socials: {
+          website: website.trim(),
+          instagram: instagram.trim(),
+          youtube: youtube.trim(),
+          facebook: facebook.trim(),
+          tiktok: tiktok.trim(),
+        },
+        
+        // Marketing information
+        promotionMethod: promotionMethod.trim(),
+        message: message.trim(),
+        
         updatedAt: new Date(),
       };
 
@@ -564,16 +628,53 @@ const AdminAffiliateEdit = () => {
                       label="Namn" 
                       icon={<UserGroupIcon className="h-5 w-5" />}
                     >
-                      {data.name}
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Förnamn Efternamn"
+                        />
+                      ) : (
+                        data.name
+                      )}
                     </DetailItem>
                     
                     <DetailItem 
                       label="E-post" 
                       icon={<LinkIcon className="h-5 w-5" />}
                     >
-                      <a href={`mailto:${data.email}`} className="text-blue-600 hover:underline">
-                        {data.email}
-                      </a>
+                      {isEditing ? (
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="email@example.com"
+                        />
+                      ) : (
+                        <a href={`mailto:${data.email}`} className="text-blue-600 hover:underline">
+                          {data.email}
+                        </a>
+                      )}
+                    </DetailItem>
+
+                    <DetailItem 
+                      label="Telefon" 
+                      icon={<LinkIcon className="h-5 w-5" />}
+                    >
+                      {isEditing ? (
+                        <input
+                          type="tel"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="+46 70 123 45 67"
+                        />
+                      ) : (
+                        data.phone || '-'
+                      )}
                     </DetailItem>
 
                     {!isApplication && (
@@ -780,21 +881,110 @@ const AdminAffiliateEdit = () => {
                       label="Primär kanal"
                       icon={<ChatBubbleLeftIcon className="h-5 w-5" />}
                     >
-                      {data.promotionMethod}
+                      {isEditing ? (
+                        <textarea
+                          value={promotionMethod}
+                          onChange={(e) => setPromotionMethod(e.target.value)}
+                          rows="3"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Beskriv hur affiliate planerar att marknadsföra produkterna..."
+                        />
+                      ) : (
+                        data.promotionMethod || '-'
+                      )}
                     </DetailItem>
 
                     <DetailItem 
                       label="Meddelande"
                       icon={<DocumentTextIcon className="h-5 w-5" />}
                     >
-                      <p className="whitespace-pre-wrap">{data.message || '-'}</p>
+                      {isEditing ? (
+                        <textarea
+                          value={message}
+                          onChange={(e) => setMessage(e.target.value)}
+                          rows="3"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Ytterligare information eller meddelande..."
+                        />
+                      ) : (
+                        <p className="whitespace-pre-wrap">{data.message || '-'}</p>
+                      )}
                     </DetailItem>
 
                     <DetailItem 
                       label="Sociala medier"
                       icon={<GlobeAltIcon className="h-5 w-5" />}
                     >
-                      <SocialLinks socials={data.socials} />
+                      {isEditing ? (
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Hemsida
+                            </label>
+                            <input
+                              type="url"
+                              value={website}
+                              onChange={(e) => setWebsite(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="https://example.com"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Instagram
+                            </label>
+                            <input
+                              type="text"
+                              value={instagram}
+                              onChange={(e) => setInstagram(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="@username"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              YouTube
+                            </label>
+                            <input
+                              type="text"
+                              value={youtube}
+                              onChange={(e) => setYoutube(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Kanalnamn"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Facebook
+                            </label>
+                            <input
+                              type="text"
+                              value={facebook}
+                              onChange={(e) => setFacebook(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Sidnamn"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              TikTok
+                            </label>
+                            <input
+                              type="text"
+                              value={tiktok}
+                              onChange={(e) => setTiktok(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="@username"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <SocialLinks socials={data.socials} />
+                      )}
                     </DetailItem>
                   </div>
                 </div>
@@ -814,12 +1004,76 @@ const AdminAffiliateEdit = () => {
               </div>
               
               <div className="p-6">
-                <address className="not-italic">
-                  <p className="text-gray-900">{data.address}</p>
-                  <p className="text-gray-900">{data.postalCode}</p>
-                  <p className="text-gray-900">{data.city}</p>
-                  <p className="text-gray-900">{data.country}</p>
-                </address>
+                {isEditing ? (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Adress
+                      </label>
+                      <input
+                        type="text"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Gatunamn 123"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Postnummer
+                        </label>
+                        <input
+                          type="text"
+                          value={postalCode}
+                          onChange={(e) => setPostalCode(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="123 45"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Stad
+                        </label>
+                        <input
+                          type="text"
+                          value={city}
+                          onChange={(e) => setCity(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Stockholm"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Land
+                      </label>
+                      <select
+                        value={country}
+                        onChange={(e) => setCountry(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="SE">Sverige</option>
+                        <option value="NO">Norge</option>
+                        <option value="DK">Danmark</option>
+                        <option value="FI">Finland</option>
+                        <option value="DE">Tyskland</option>
+                        <option value="US">USA</option>
+                        <option value="GB">Storbritannien</option>
+                      </select>
+                    </div>
+                  </div>
+                ) : (
+                  <address className="not-italic">
+                    <p className="text-gray-900">{data.address || '-'}</p>
+                    <p className="text-gray-900">{data.postalCode || '-'}</p>
+                    <p className="text-gray-900">{data.city || '-'}</p>
+                    <p className="text-gray-900">{data.country || '-'}</p>
+                  </address>
+                )}
               </div>
             </div>
 
