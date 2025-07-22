@@ -208,9 +208,14 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
                   {product.name}
                 </h3>
                 {product.basePrice && (
-                  <p className="text-xl font-semibold text-blue-600">
-                    {formatPrice(product.basePrice * 1.25)} {/* Add 25% VAT for display */}
-                  </p>
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600 mb-1">
+                      {t('training.popup.recommended_price', 'Rekommenderat pris')}
+                    </p>
+                    <p className="text-xl font-semibold text-blue-600">
+                      {formatPrice(product.basePrice * 1.25)} {/* Add 25% VAT for display */}
+                    </p>
+                  </div>
                 )}
                 {product.size && (
                   <p className="text-sm text-gray-600 mt-1">
