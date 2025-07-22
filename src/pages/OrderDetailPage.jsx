@@ -607,21 +607,13 @@ const OrderDetailPage = () => {
 
 
 
-        <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mt-8">
+        <div className="flex justify-center mt-8">
           <Link
             to="/orders"
             className="w-full md:w-auto inline-flex items-center justify-center px-4 py-3 md:py-2 border border-gray-300 rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 font-medium min-h-[48px] md:min-h-0 text-base md:text-sm transition-colors"
           >
             {t('order_detail.back_to_orders', 'Tillbaka till orderlistan')}
           </Link>
-          {order.status === 'pending' && (
-            <Link
-              to={`/orders/${orderId}/edit`}
-              className="w-full md:w-auto inline-flex items-center justify-center bg-blue-600 text-white px-4 py-3 md:py-2 rounded-lg hover:bg-blue-700 transition-colors min-h-[48px] md:min-h-0 text-base md:text-sm font-medium"
-            >
-              {t('order_detail.edit_order', 'Redigera beställning')}
-            </Link>
-          )}
         </div>
       </div>
     </AppLayout>
