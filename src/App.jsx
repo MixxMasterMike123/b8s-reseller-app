@@ -75,6 +75,7 @@ import AffiliateLogin from './pages/shop/AffiliateLogin';
 import AffiliatePortal from './pages/shop/AffiliatePortal';
 import AdminAffiliates from './pages/admin/AdminAffiliates';
 import AdminAffiliateEdit from './pages/admin/AdminAffiliateEdit';
+import AdminAffiliateCreate from './pages/admin/AdminAffiliateCreate';
 import AdminAffiliateAnalytics from './pages/admin/AdminAffiliateAnalytics';
 import AdminAffiliatePayout from './pages/admin/AdminAffiliatePayout';
 import AffiliateTracker from './components/AffiliateTracker';
@@ -360,11 +361,16 @@ function App() {
                 </AdminRoute>
               } />
 
-              <Route path="/admin/affiliates" element={
-                <AdminRoute>
-                  <AdminAffiliates />
-                </AdminRoute>
-              } />
+                      <Route path="/admin/affiliates" element={
+          <AdminRoute>
+            <AdminAffiliates />
+          </AdminRoute>
+        } />
+        <Route path="/admin/affiliates/create" element={
+          <AdminRoute>
+            <AdminAffiliateCreate />
+          </AdminRoute>
+        } />
 
               <Route path="/admin/affiliates/analytics" element={
                 <AdminRoute>

@@ -57,7 +57,7 @@ const AdminAffiliates = () => {
       const apps = appSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setApplications(apps);
 
-      // Fetch all approved/managed affiliates
+      // Fetch all affiliates (including inactive)
       const affiliateQuery = query(collection(db, 'affiliates'), orderBy('createdAt', 'desc'));
       const affiliateSnapshot = await getDocs(affiliateQuery);
       const affiliateList = affiliateSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -110,6 +110,7 @@ const AdminAffiliates = () => {
       pending: "bg-yellow-100 text-yellow-800",
       approved: "bg-green-100 text-green-800",
       active: "bg-green-100 text-green-800",
+      inactive: "bg-gray-100 text-gray-800",
       suspended: "bg-orange-100 text-orange-800",
       denied: "bg-red-100 text-red-800",
     };
@@ -117,6 +118,7 @@ const AdminAffiliates = () => {
       pending: "Väntar",
       approved: "Godkänd",
       active: "Aktiv",
+      inactive: "Inte Aktiv",
       suspended: "Suspenderad",
       denied: "Nekad"
     };
@@ -136,13 +138,22 @@ const AdminAffiliates = () => {
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Affiliate-hantering</h1>
               <p className="text-gray-600">Hantera nya ansökningar och se statistik för dina aktiva affiliates.</p>
             </div>
-            <Link 
-              to="/admin/affiliates/analytics" 
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <ChartBarIcon className="h-5 w-5 mr-2" />
-              Detaljerad Analytics
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link 
+                to="/admin/affiliates/create" 
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                <UsersIcon className="h-5 w-5 mr-2" />
+                Lägg till Affiliate
+              </Link>
+              <Link 
+                to="/admin/affiliates/analytics" 
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <ChartBarIcon className="h-5 w-5 mr-2" />
+                Detaljerad Analytics
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -201,7 +212,7 @@ const AdminAffiliates = () => {
         <div>
           <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
             <ChartBarIcon className="h-6 w-6 mr-3 text-green-600" />
-            Aktiva Affiliates ({affiliates.length})
+            Alla Affiliates ({affiliates.length})
           </h2>
           
           {loading ? (

@@ -382,14 +382,28 @@ const AdminAffiliateEdit = () => {
   };
 
   const handleToggleAffiliateStatus = async () => {
-    const newStatus = data.status === 'active' ? 'suspended' : 'active';
-    const actionText = newStatus === 'active' ? 'aktivera' : 'suspendra';
+    let newStatus;
+    let actionText;
+    
+    if (data.status === 'active') {
+      newStatus = 'suspended';
+      actionText = 'suspendra';
+    } else if (data.status === 'suspended') {
+      newStatus = 'inactive';
+      actionText = 'inaktivera';
+    } else if (data.status === 'inactive') {
+      newStatus = 'active';
+      actionText = 'aktivera';
+    } else {
+      newStatus = 'active';
+      actionText = 'aktivera';
+    }
     
     if (!window.confirm(`Är du säker på att du vill ${actionText} affiliate "${data.name}"?`)) {
       return;
     }
     
-    const toastId = toast.loading(`${actionText === 'aktivera' ? 'Aktiverar' : 'Suspenderar'} affiliate...`);
+    const toastId = toast.loading(`${actionText.charAt(0).toUpperCase() + actionText.slice(1)} affiliate...`);
     try {
       // Update the affiliate status
       await updateDoc(doc(db, 'affiliates', id), {
@@ -397,7 +411,13 @@ const AdminAffiliateEdit = () => {
         updatedAt: new Date().toISOString()
       });
       
-      toast.success(`Affiliate "${data.name}" har ${newStatus === 'active' ? 'aktiverats' : 'suspenderats'}.`, { id: toastId });
+      const statusText = {
+        active: 'aktiverats',
+        suspended: 'suspenderats',
+        inactive: 'inaktiverats'
+      };
+      
+      toast.success(`Affiliate "${data.name}" har ${statusText[newStatus] || 'uppdaterats'}.`, { id: toastId });
       fetchData(); // Refresh the data
     } catch (error) {
       console.error("Error updating affiliate status: ", error);
@@ -417,11 +437,13 @@ const AdminAffiliateEdit = () => {
     const baseClasses = "px-3 py-1 text-xs font-medium rounded-full";
     const statusStyles = {
       active: "bg-green-100 text-green-800",
+      inactive: "bg-gray-100 text-gray-800",
       suspended: "bg-orange-100 text-orange-800",
       pending: "bg-yellow-100 text-yellow-800"
     };
     const statusText = {
       active: "Aktiv",
+      inactive: "Inte Aktiv",
       suspended: "Suspenderad",
       pending: "Väntar"
     };
@@ -463,10 +485,12 @@ const AdminAffiliateEdit = () => {
                   className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                     data.status === 'active' 
                       ? 'bg-orange-600 hover:bg-orange-700 focus:ring-orange-500' 
+                      : data.status === 'suspended'
+                      ? 'bg-gray-600 hover:bg-gray-700 focus:ring-gray-500'
                       : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
                   }`}
                 >
-                  {data.status === 'active' ? 'Suspendra' : 'Aktivera'}
+                  {data.status === 'active' ? 'Suspendra' : data.status === 'suspended' ? 'Inaktivera' : 'Aktivera'}
                 </button>
                 
                 <button
