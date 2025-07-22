@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/TranslationContext';
 import AppLayout from '../components/layout/AppLayout';
 import OrderStatusMenu from '../components/OrderStatusMenu';
-import ProductMenu from '../components/ProductMenu';
+
 
 // Add a helper function to parse and display order distribution data
 const getOrderDistribution = (order) => {
@@ -198,16 +198,7 @@ const OrderDetailPage = () => {
 
   const canCancel = order?.status === 'pending' || order?.status === 'confirmed';
 
-  // Define orderProducts based on the order data
-  const orderProducts = order ? [
-    {
-      id: 'b8shield-base',
-      name: 'B8 Shield',
-      description: 'B8 Shield protection for smartphones',
-      basePrice: order.prisInfo?.produktPris || 71.2,
-      isActive: true
-    }
-  ] : [];
+
 
   if (loading) {
     return (
@@ -614,37 +605,7 @@ const OrderDetailPage = () => {
           </div>
         )}
 
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-2 text-gray-800">{t('order_detail.products', 'Produkter')}</h2>
-          <div className="mb-4">
-            <ProductMenu 
-              products={orderProducts} 
-              selectedProduct={null} 
-              onProductSelect={(product) => {
-                // Just view product details in read-only mode
-                toast.success(t('order_detail.viewing_product', 'Visning av {{product}}', { product: product.name }));
-              }} 
-            />
-          </div>
-          
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold mb-3 text-gray-800">{t('order_detail.product_information', 'Produktinformation')}</h2>
-            <div className="space-y-2">
-              <p className="text-gray-700">
-                <span className="font-medium">{t('order_detail.product', 'Produkt')}:</span> {order.productName || t('order_detail.not_specified', 'Ej angett')}
-              </p>
-              <p className="text-gray-700">
-                <span className="font-medium">{t('order_detail.color', 'Färg')}:</span> {order.color || t('order_detail.not_specified', 'Ej angett')}
-              </p>
-              <p className="text-gray-700">
-                <span className="font-medium">{t('order_detail.size', 'Storlek')}:</span> {order.size || t('order_detail.not_specified', 'Ej angett')}
-              </p>
-              <p className="text-gray-700">
-                <span className="font-medium">{t('order_detail.quantity', 'Antal')}:</span> {order.quantity || t('order_detail.not_specified', 'Ej angett')}
-              </p>
-            </div>
-          </div>
-        </div>
+
 
         <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mt-8">
           <Link
