@@ -17,7 +17,7 @@ import { getLanguageSwitcherOptions } from '../../utils/translationDetection';
 const LanguageCurrencySelector = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [availableOptions, setAvailableOptions] = useState([]);
-  const [dropdownPosition, setDropdownPosition] = useState('bottom'); // 'top' or 'bottom'
+  const [dropdownPosition, setDropdownPosition] = useState({ vertical: 'bottom', horizontal: 'right' }); // { vertical: 'top'|'bottom', horizontal: 'left'|'right' }
   const containerRef = useRef(null);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
@@ -113,33 +113,44 @@ const LanguageCurrencySelector = () => {
 
   // Calculate optimal dropdown position based on viewport boundaries
   const calculateDropdownPosition = () => {
-    if (!containerRef.current) return 'bottom';
+    if (!containerRef.current) return { vertical: 'bottom', horizontal: 'right' };
     
     const containerRect = containerRef.current.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
     const dropdownHeight = 400; // Approximate height of dropdown
-    const dropdownWidth = 288; // w-72 = 288px
+    const dropdownWidth = viewportWidth < 640 ? 256 : 288; // w-64 on mobile, w-72 on desktop
     
-    // Check if dropdown would overflow bottom
+    // Check vertical positioning
     const spaceBelow = viewportHeight - containerRect.bottom;
     const spaceAbove = containerRect.top;
     
-    // Check if dropdown would overflow right edge
+    // Check horizontal positioning
     const spaceRight = viewportWidth - containerRect.right;
     const spaceLeft = containerRect.left;
     
-    // For footer context, prefer top positioning
+    // Determine vertical position
+    let vertical = 'bottom';
     if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
-      return 'top';
+      vertical = 'top';
+    } else if (spaceBelow < dropdownHeight && spaceAbove < dropdownHeight) {
+      vertical = spaceAbove > spaceBelow ? 'top' : 'bottom';
     }
     
-    // If both top and bottom are constrained, use the one with more space
-    if (spaceBelow < dropdownHeight && spaceAbove < dropdownHeight) {
-      return spaceAbove > spaceBelow ? 'top' : 'bottom';
+    // Determine horizontal position
+    let horizontal = 'right';
+    if (spaceRight < dropdownWidth && spaceLeft > dropdownWidth) {
+      horizontal = 'left';
+    } else if (spaceRight < dropdownWidth && spaceLeft < dropdownWidth) {
+      horizontal = spaceLeft > spaceRight ? 'left' : 'right';
     }
     
-    return 'bottom';
+    // For very small screens, center the dropdown if both sides are constrained
+    if (viewportWidth < 400 && spaceRight < dropdownWidth && spaceLeft < dropdownWidth) {
+      horizontal = 'center';
+    }
+    
+    return { vertical, horizontal };
   };
 
   // Update dropdown position when opening
@@ -232,10 +243,16 @@ const LanguageCurrencySelector = () => {
           {/* Dropdown - Compact Design */}
           <div 
             ref={dropdownRef}
-            className={`absolute right-0 w-72 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-[80vh] overflow-y-auto ${
-              dropdownPosition === 'top' 
+            className={`absolute w-64 sm:w-72 min-w-[280px] bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-[80vh] overflow-y-auto ${
+              dropdownPosition.vertical === 'top' 
                 ? 'bottom-full mb-2' 
                 : 'top-full mt-2'
+            } ${
+              dropdownPosition.horizontal === 'left'
+                ? 'right-0'
+                : dropdownPosition.horizontal === 'center'
+                ? 'left-1/2 transform -translate-x-1/2'
+                : 'left-0'
             }`}
           >
             {/* Header */}
