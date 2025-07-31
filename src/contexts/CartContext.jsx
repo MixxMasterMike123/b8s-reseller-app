@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { db } from '../firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { calculateCommission, normalizeAffiliateCode } from '../utils/affiliateCalculations';
+import { getProductImage } from '../utils/productImages';
 
 // Shipping cost constants
 export const SHIPPING_COSTS = {
@@ -258,6 +259,16 @@ export const CartProvider = ({ children }) => {
     }));
   };
 
+  // Get the best available image for B2C display (same logic as PublicStorefront)
+  const getB2cProductImage = (product) => {
+    // Priority: B2C main image > B2C gallery first image > generated image
+    if (product.b2cImageUrl) return product.b2cImageUrl;
+    if (product.b2cImageGallery && product.b2cImageGallery.length > 0) return product.b2cImageGallery[0];
+    
+    // Generate consumer-focused image if no B2C images available
+    return getProductImage(product); // Pass the product object to use color field
+  };
+
   // Add item to cart
   const addToCart = (product, quantity = 1) => {
     setCart(prevCart => {
@@ -276,7 +287,7 @@ export const CartProvider = ({ children }) => {
           id: product.id,
           name: product.name,
           price: product.b2cPrice || product.basePrice,
-          image: product.b2cImageUrl || product.imageUrl,
+          image: getB2cProductImage(product),
           sku: product.sku,
           color: product.color,
           size: product.size,
@@ -294,7 +305,7 @@ export const CartProvider = ({ children }) => {
           id: product.id,
           name: product.name,
           price: product.b2cPrice || product.basePrice,
-          image: product.b2cImageUrl || product.imageUrl,
+          image: getB2cProductImage(product),
           sku: product.sku,
           color: product.color,
           size: product.size,
