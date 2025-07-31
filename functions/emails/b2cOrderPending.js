@@ -19,7 +19,10 @@ function formatPrice(price) {
 }
 
 module.exports = ({ lang = 'sv-SE', orderData, customerInfo, orderId }) => {
-  const { orderNumber, items = [], subtotal = 0, shipping = 0, vat = 0, total = 0, discountAmount = 0, affiliateCode } = orderData;
+  const { orderNumber, items = [], subtotal = 0, shipping = 0, vat = 0, total = 0, discountAmount = 0 } = orderData;
+  
+  // Handle different affiliate data structures (Stripe vs Mock payments)
+  const affiliateCode = orderData.affiliateCode || orderData.affiliate?.code;
   const customerName = customerInfo.firstName + (customerInfo.lastName ? ' ' + customerInfo.lastName : '') || customerInfo.name || 'Kund';
   const segment = segmentFromLang(lang);
   const orderUrl = `${APP_URLS.B2C_SHOP}/${segment}/order-confirmation/${orderId || ''}`;
