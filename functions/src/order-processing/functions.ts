@@ -32,6 +32,12 @@ interface OrderData {
   affiliateCode?: string;
   discountCode?: string;
   affiliateClickId?: string;
+  // Stripe payment structure for affiliate data
+  affiliate?: {
+    code?: string;
+    discountPercentage?: number;
+    amount?: number;
+  };
   source?: string;
   trackingNumber?: string;
   carrier?: string;
@@ -265,7 +271,10 @@ export const processB2COrderCompletionHttp = onRequest(
       }
 
       const orderData = orderSnap.data() as OrderData;
-      const { affiliateCode, discountCode } = orderData;
+      
+      // Handle different affiliate data structures (Stripe vs Mock payments)
+      const affiliateCode = orderData.affiliateCode || orderData.affiliate?.code;
+      const discountCode = orderData.discountCode || orderData.affiliate?.code;
 
       // --- Update B2C Customer Statistics ---
       if (orderData.b2cCustomerId && orderData.total) {
@@ -482,19 +491,23 @@ export const processB2COrderCompletion = onCall<OrderProcessingData>(
       }
 
       const orderData = orderSnap.data() as OrderData;
-      console.log(`Processing order ${orderId}. Affiliate code: ${orderData.affiliateCode || 'none'}`);
+      
+      // Handle different affiliate data structures (Stripe vs Mock payments)
+      const affiliateCode = orderData.affiliateCode || orderData.affiliate?.code;
+      
+      console.log(`Processing order ${orderId}. Affiliate code: ${affiliateCode || 'none'}`);
 
-      if (orderData.affiliateCode) {
-        console.log(`Processing conversion for order ${orderId} with affiliate code: ${orderData.affiliateCode}`);
+      if (affiliateCode) {
+        console.log(`Processing conversion for order ${orderId} with affiliate code: ${affiliateCode}`);
 
         // Find the affiliate by code
         const affiliatesRef = localDb.collection('affiliates');
-        const q = affiliatesRef.where('affiliateCode', '==', orderData.affiliateCode).where('status', '==', 'active');
+        const q = affiliatesRef.where('affiliateCode', '==', affiliateCode).where('status', '==', 'active');
         const affiliateSnapshot = await q.get();
 
         if (affiliateSnapshot.empty) {
-          console.error(`No active affiliate found for code: ${orderData.affiliateCode}`);
-          return { success: false, error: `No active affiliate found for code: ${orderData.affiliateCode}` };
+          console.error(`No active affiliate found for code: ${affiliateCode}`);
+          return { success: false, error: `No active affiliate found for code: ${affiliateCode}` };
         }
 
         const affiliateDoc = affiliateSnapshot.docs[0];
@@ -545,7 +558,7 @@ export const processB2COrderCompletion = onCall<OrderProcessingData>(
             try {
               const clicksRef = localDb.collection('affiliateClicks');
               const recentClicksQuery = clicksRef
-                .where('affiliateCode', '==', orderData.affiliateCode)
+                .where('affiliateCode', '==', affiliateCode)
                 .where('converted', '==', false)
                 .orderBy('timestamp', 'desc')
                 .limit(1);
@@ -562,7 +575,7 @@ export const processB2COrderCompletion = onCall<OrderProcessingData>(
                 });
                 console.log(`Click document ${clickDoc.id} marked as converted.`);
               } else {
-                console.log(`No unconverted clicks found for affiliate code ${orderData.affiliateCode}`);
+                console.log(`No unconverted clicks found for affiliate code ${affiliateCode}`);
               }
             } catch (clickError) {
               console.error(`Error updating click record:`, clickError);
