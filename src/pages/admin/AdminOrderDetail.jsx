@@ -301,7 +301,7 @@ const AdminOrderDetail = () => {
           <div class="section-title">Order Information</div>
           <p><strong>Date:</strong> ${formatDate(order.createdAt)}</p>
           <p><strong>Status:</strong> ${statusText}</p>
-          <p><strong>Payment Method:</strong> ${order.paymentMethod || 'Invoice'}</p>
+          <p><strong>Payment Method:</strong> ${order.payment?.method === 'stripe' ? 'Stripe (Card)' : order.paymentMethod || 'Invoice'}</p>
           ${order.source ? `<p><strong>Source:</strong> ${order.source === 'b2c' ? 'B2C Shop' : 'B2B Portal'}</p>` : ''}
         </div>
 
@@ -530,7 +530,7 @@ const AdminOrderDetail = () => {
                 <span className="font-medium">Status:</span> {statusText}
               </p>
               <p className="text-gray-700">
-                <span className="font-medium">Payment Method:</span> {order.paymentMethod || 'Invoice'}
+                <span className="font-medium">Payment Method:</span> {order.payment?.method === 'stripe' ? 'Stripe (Card)' : order.paymentMethod || 'Invoice'}
               </p>
               {order.deliveryMethod && (
                 <p className="text-gray-700">
