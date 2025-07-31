@@ -224,7 +224,7 @@ const Checkout = () => {
     console.log('🔍 Payment Intent metadata:', paymentIntent.metadata);
     
     // Always use current cart items for order creation (includes images)
-    // Metadata cart items are simplified for Stripe's 500-char limit
+    // Metadata only stores minimal data due to Stripe's 500-char limit
     const cartItems = cart.items.map(item => ({
       id: item.id,
       name: item.name,
@@ -234,15 +234,18 @@ const Checkout = () => {
       image: item.image
     }));
     
-    // Log metadata cart items for validation (optional)
+    // Log metadata summary for validation (optional)
     try {
-      if (paymentIntent.metadata.cartItems) {
-        const metadataItems = JSON.parse(paymentIntent.metadata.cartItems);
-        console.log('✅ Metadata cart items (simplified):', metadataItems);
-        console.log('✅ Using full cart items for order:', cartItems);
+      const { itemCount, totalItems, cartSummary, itemIds } = paymentIntent.metadata;
+      console.log('✅ Metadata summary:', { itemCount, totalItems, cartSummary, itemIds });
+      console.log('✅ Using full cart items for order:', cartItems);
+      
+      // Validate item count matches
+      if (itemCount && parseInt(itemCount) !== cartItems.length) {
+        console.warn('⚠️ Cart item count mismatch between metadata and current cart');
       }
     } catch (error) {
-      console.warn('⚠️ Could not parse metadata cart items (non-critical):', error);
+      console.warn('⚠️ Could not validate metadata cart summary (non-critical):', error);
     }
     
     const orderData = {
