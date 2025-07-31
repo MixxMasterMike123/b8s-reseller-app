@@ -74,7 +74,7 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
             itemCount: cartItems.length,
             customerEmail: customerInfo.email
         });
-        // Create Payment Intent
+        // Create Payment Intent with automatic payment methods
         const paymentIntent = await stripe.paymentIntents.create({
             amount: amountInOre,
             currency: currency.toLowerCase(),
@@ -97,13 +97,15 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
                     affiliateCode: affiliateInfo.code,
                     affiliateClickId: affiliateInfo.clickId,
                 }),
-                // Store cart items as JSON string
+                // Store simplified cart items for metadata (Stripe 500-char limit)
                 cartItems: JSON.stringify(cartItems.map(item => ({
                     id: item.id,
-                    name: item.name,
+                    name: typeof item.name === 'string' ? item.name : item.name['sv-SE'] || item.name['en-GB'] || item.name['en-US'] || 'B8Shield',
                     price: item.price,
                     quantity: item.quantity,
                     sku: item.sku
+                    // Note: image URLs can be very long, so we don't store them in Stripe metadata
+                    // Full cart items with images are stored in our database during order creation
                 }))),
                 source: 'b2c_shop',
                 platform: 'b8shield'
