@@ -205,39 +205,43 @@ const OrderConfirmation = () => {
               </div>
 
               {/* Affiliate Information (if applicable) */}
-              {order.affiliateCode && (
-                <div className="bg-green-50 border border-green-200 rounded-xl p-6">
-                  <h2 className="text-xl font-semibold text-green-800 mb-4">
-                    {t('order_confirmation_affiliate_applied', '🎉 Affiliate-rabatt tillämpad')}
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-green-700 font-medium">
-                        {t('order_confirmation_affiliate_code', 'Affiliate-kod')}
-                      </p>
-                      <p className="text-green-900 font-semibold">{order.affiliateCode}</p>
-                    </div>
-                    {order.affiliateDiscount && (
-                      <>
+              {(() => {
+                const affiliateCode = order.affiliateCode || order.affiliate?.code;
+                const discountPercentage = order.discountPercentage || order.affiliate?.discountPercentage || order.affiliateDiscount?.percentage;
+                const discountAmount = order.discountAmount || order.affiliate?.amount || order.affiliateDiscount?.amount;
+                
+                return affiliateCode && (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-6">
+                    <h2 className="text-xl font-semibold text-green-800 mb-4">
+                      {t('order_confirmation_affiliate_applied', '🎉 Affiliate-rabatt tillämpad')}
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-green-700 font-medium">
+                          {t('order_confirmation_affiliate_code', 'Affiliate-kod')}
+                        </p>
+                        <p className="text-green-900 font-semibold">{affiliateCode}</p>
+                      </div>
+                      {(discountPercentage || discountAmount) && (
                         <div>
                           <p className="text-sm text-green-700 font-medium">
                             {t('order_confirmation_discount', 'Rabatt')}
                           </p>
                           <p className="text-green-900 font-semibold">
-                            {order.affiliateDiscount.percentage}% ({formatPrice(order.affiliateDiscount.amount)})
+                            {discountPercentage}% ({formatPrice(discountAmount)})
                           </p>
                         </div>
-                      </>
-                    )}
+                      )}
+                    </div>
+                    <div className="mt-4 p-3 bg-white rounded-lg border border-green-200">
+                      <p className="text-sm text-green-800">
+                        <strong>{t('order_confirmation_tracking_status', 'Spårningsstatus:')}</strong> {' '}
+                        {t('order_confirmation_affiliate_tracking_description', 'Denna beställning har registrerats för affiliate-provision. Affiliate-partnern kommer att få kredit för denna försäljning.')}
+                      </p>
+                    </div>
                   </div>
-                  <div className="mt-4 p-3 bg-white rounded-lg border border-green-200">
-                    <p className="text-sm text-green-800">
-                      <strong>{t('order_confirmation_tracking_status', 'Spårningsstatus:')}</strong> {' '}
-                      {t('order_confirmation_affiliate_tracking_description', 'Denna beställning har registrerats för affiliate-provision. Affiliate-partnern kommer att få kredit för denna försäljning.')}
-                    </p>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Next Steps */}
               <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
@@ -292,10 +296,16 @@ const OrderConfirmation = () => {
                   {order.discountAmount > 0 && (
                     <div className="flex justify-between text-sm text-green-600">
                       <span className="font-medium">
-                        {t('order_confirmation_discount_with_code', 'Rabatt ({{affiliateCode}}) {{discountPercentage}}%', { 
-                          affiliateCode: order.affiliateCode, 
-                          discountPercentage: order.discountPercentage 
-                        })}
+                        {(() => {
+                          // Handle different affiliate data structures
+                          const affiliateCode = order.affiliateCode || order.affiliate?.code || 'AFFILIATE';
+                          const discountPercentage = order.discountPercentage || order.affiliate?.discountPercentage || order.affiliateDiscount?.percentage || 0;
+                          
+                          return t('order_confirmation_discount_with_code', 'Rabatt ({{affiliateCode}}) {{discountPercentage}}%', { 
+                            affiliateCode, 
+                            discountPercentage 
+                          });
+                        })()}
                       </span>
                       <span className="font-medium">- {formatPrice(order.discountAmount)}</span>
                     </div>

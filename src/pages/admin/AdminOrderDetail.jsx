@@ -653,7 +653,12 @@ const AdminOrderDetail = () => {
                 {order.source === 'b2c' && order.discountAmount > 0 && (
                   <tr>
                     <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium text-green-600">
-                      Affiliate rabatt ({order.affiliateCode}), {order.discountPercentage}%:
+                      {(() => {
+                        // Handle different affiliate data structures
+                        const affiliateCode = order.affiliateCode || order.affiliate?.code || 'AFFILIATE';
+                        const discountPercentage = order.discountPercentage || order.affiliate?.discountPercentage || order.affiliateDiscount?.percentage || 0;
+                        return `Affiliate rabatt (${affiliateCode}), ${discountPercentage}%:`;
+                      })()}
                     </td>
                     <td className="px-4 py-4 text-sm text-green-600 text-right">
                       - {order.discountAmount?.toLocaleString('sv-SE', {
