@@ -17,6 +17,7 @@ interface CreatePaymentIntentRequest {
     price: number;
     quantity: number;
     sku: string;
+    image: string;
   }>;
   customerInfo: {
     email: string;
@@ -123,7 +124,7 @@ export const createPaymentIntentV2 = onRequest(
         customerEmail: customerInfo.email
       });
 
-      // Create Payment Intent
+      // Create Payment Intent with automatic payment methods
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amountInOre,
         currency: currency.toLowerCase(),
@@ -152,7 +153,8 @@ export const createPaymentIntentV2 = onRequest(
             name: item.name,
             price: item.price,
             quantity: item.quantity,
-            sku: item.sku
+            sku: item.sku,
+            image: item.image
           }))),
           source: 'b2c_shop',
           platform: 'b8shield'

@@ -238,7 +238,8 @@ const Checkout = () => {
         name: item.name,
         price: item.price,
         quantity: item.quantity,
-        sku: item.sku
+        sku: item.sku,
+        image: item.image
       }));
     }
     
@@ -260,13 +261,12 @@ const Checkout = () => {
         postalCode: shippingInfo.postalCode,
         country: shippingInfo.country
       },
-      pricing: {
-        subtotal: freshTotals.subtotal,
-        shipping: freshTotals.shipping,
-        vat: freshTotals.vat,
-        discountAmount: freshTotals.discountAmount || 0,
-        total: freshTotals.total
-      },
+      // Flat pricing structure to match OrderConfirmation expectations
+      subtotal: freshTotals.subtotal,
+      shipping: freshTotals.shipping,
+      vat: freshTotals.vat,
+      discountAmount: freshTotals.discountAmount || 0,
+      total: freshTotals.total,
       payment: {
         method: 'stripe',
         paymentIntentId: paymentIntent.id,

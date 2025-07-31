@@ -30,7 +30,7 @@ const OrderConfirmation = () => {
       if (!orderId) {
         setLoading(false);
         toast.error(t('order_confirmation_no_id', 'Ingen order ID hittades.'));
-        navigate('/');
+        navigate(getCountryAwareUrl(''));
         return;
       }
       try {
@@ -43,7 +43,7 @@ const OrderConfirmation = () => {
         } else {
           console.error("No such order document!");
           toast.error(t('order_confirmation_not_found', 'Kunde inte hitta din beställning.'));
-          navigate('/');
+          navigate(getCountryAwareUrl(''));
         }
       } catch (error) {
         console.error("Error fetching order:", error);
