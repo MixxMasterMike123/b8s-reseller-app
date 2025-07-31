@@ -13,6 +13,8 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@heroicons/react": "^2.0.18",
+    "@stripe/react-stripe-js": "^3.8.1",
+    "@stripe/stripe-js": "^7.7.0",
     "@types/react-cookiebot": "^1.0.5",
     "csv-parser": "^3.2.0",
     "date-fns": "^2.30.0",
@@ -33,7 +35,8 @@
     "react-quill": "^2.0.0",
     "react-router-dom": "^6.30.0",
     "recharts": "^2.15.4",
-    "schema-dts": "^1.1.5"
+    "schema-dts": "^1.1.5",
+    "stripe": "^18.4.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.15",

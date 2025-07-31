@@ -26,8 +26,8 @@ const AffiliateLogin = () => {
         <meta name="twitter:description" content={getAffiliateSeoDescription('login')} />
         <meta name="twitter:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
       </Helmet>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <ShopNavigation breadcrumb={t('breadcrumb_affiliate_login', 'Affiliate-inloggning')} />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <ShopNavigation breadcrumb={t('breadcrumb_affiliate_login', 'Affiliate-inloggning')} />
       
       {/* Desktop: Side-by-side layout, Mobile: Stacked */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

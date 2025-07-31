@@ -52,6 +52,11 @@ import {
   debugDatabase
 } from './customer-admin/functions';
 
+// Import payment functions for Stripe integration
+import {
+  createPaymentIntentV2
+} from './payment/createPaymentIntent';
+
 // Re-export affiliate functions individually with V2 names (avoid V1 conflicts)
 export { logAffiliateClickV2, logAffiliateClickHttpV2, processAffiliateConversionV2 };
 
@@ -96,6 +101,11 @@ export {
   createAdminUser as createAdminUserV2,
   checkNamedDatabase as checkNamedDatabaseV2,
   debugDatabase as debugDatabaseV2
+};
+
+// Re-export payment functions for Stripe integration
+export {
+  createPaymentIntentV2
 };
 
 // Example protected HTTP function - TESTING

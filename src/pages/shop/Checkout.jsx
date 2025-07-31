@@ -19,6 +19,7 @@ import {
   LockClosedIcon, 
   ShoppingBagIcon 
 } from '@heroicons/react/24/outline';
+import StripePaymentForm from '../../components/shop/StripePaymentForm';
 
 const Checkout = () => {
   const { cart, calculateTotals, clearCart } = useCart();
@@ -185,6 +186,108 @@ const Checkout = () => {
     const timestamp = Date.now().toString().slice(-6);
     const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
     return `B8S-${timestamp}${random}`;
+  };
+
+  // Handle successful Stripe payment
+  const handlePaymentSuccess = async (paymentIntent) => {
+    console.log('✅ Payment successful, creating order...', paymentIntent);
+    
+    try {
+      // Create the order with payment information
+      const orderId = await createOrderFromPayment(paymentIntent);
+      console.log('✅ Order created with ID:', orderId);
+      
+      // Clear the cart after successful order creation
+      clearCart();
+      
+      // Navigate to order confirmation page with the order ID
+      navigate(getCountryAwareUrl(`order-confirmation/${orderId}`));
+      
+    } catch (error) {
+      console.error('❌ Error creating order after payment:', error);
+      toast.error('Betalning genomförd men fel vid orderskapande. Kontakta support.');
+    }
+  };
+
+  // Handle payment errors
+  const handlePaymentError = (error) => {
+    console.error('❌ Payment failed:', error);
+    toast.error(`Betalning misslyckades: ${error.message}`);
+  };
+
+  // Create order from successful payment
+  const createOrderFromPayment = async (paymentIntent) => {
+    const freshTotals = calculateTotals();
+    const orderNumber = generateOrderNumber();
+
+    // Extract cart items from payment intent metadata
+    console.log('🔍 Payment Intent metadata:', paymentIntent.metadata);
+    
+    let cartItems;
+    try {
+      if (!paymentIntent.metadata.cartItems) {
+        throw new Error('No cartItems in metadata');
+      }
+      cartItems = JSON.parse(paymentIntent.metadata.cartItems);
+      console.log('✅ Parsed cart items:', cartItems);
+    } catch (error) {
+      console.error('❌ Error parsing cart items from metadata:', error);
+      console.log('📋 Falling back to current cart items');
+      cartItems = cart.items.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        sku: item.sku
+      }));
+    }
+    
+    const orderData = {
+      orderNumber,
+      status: 'confirmed', // Stripe payment confirmed
+      source: 'b2c',
+      items: cartItems,
+      customerInfo: {
+        email: contactInfo.email,
+        name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+        firstName: shippingInfo.firstName,
+        lastName: shippingInfo.lastName
+      },
+      shippingInfo: {
+        address: shippingInfo.address,
+        apartment: shippingInfo.apartment || '',
+        city: shippingInfo.city,
+        postalCode: shippingInfo.postalCode,
+        country: shippingInfo.country
+      },
+      pricing: {
+        subtotal: freshTotals.subtotal,
+        shipping: freshTotals.shipping,
+        vat: freshTotals.vat,
+        discountAmount: freshTotals.discountAmount || 0,
+        total: freshTotals.total
+      },
+      payment: {
+        method: 'stripe',
+        paymentIntentId: paymentIntent.id,
+        amount: paymentIntent.amount / 100, // Convert from öre to SEK
+        currency: paymentIntent.currency,
+        status: paymentIntent.status
+      },
+      affiliate: freshTotals.discountCode ? {
+        code: freshTotals.discountCode,
+        discountPercentage: freshTotals.discountPercentage,
+        clickId: freshTotals.affiliateClickId
+      } : null,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+
+    // Add order to database
+    const orderRef = await addDoc(collection(db, 'orders'), orderData);
+    console.log('✅ Order created:', orderRef.id);
+
+    return orderRef.id;
   };
 
   const handlePlaceOrder = async () => {
@@ -792,55 +895,21 @@ const Checkout = () => {
                     </div>
                   </div>
 
-                  {/* Mock Payment Options */}
-                  <div className="space-y-4 mb-6">
-                    <h3 className="font-medium text-gray-900">{t('checkout_payment_method', 'Betalningsmetod')}</h3>
-                    
-                    {/* Shopify-style payment options */}
-                    <div className="border border-gray-300 rounded-lg overflow-hidden">
-                      <div className="bg-purple-600 text-white p-4 text-center font-semibold">
-                        Shop Pay (Mock)
-                      </div>
-                      <div className="bg-orange-500 text-white p-4 text-center font-semibold">
-                        PayPal (Mock)
-                      </div>
-                      <div className="bg-black text-white p-4 text-center font-semibold">
-                        Apple Pay (Mock)
-                      </div>
-                    </div>
-
-                    <div className="text-center text-gray-500 text-sm">
-                      {t('checkout_quick_checkout', 'Alternativ för snabb utcheckning')}
-                    </div>
-
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-300" />
-                      </div>
-                      <div className="relative flex justify-center text-sm">
-                        <span className="bg-white px-2 text-gray-500">{t('checkout_or', 'ELLER')}</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                      <div className="flex items-center justify-center space-x-2">
-                        <div className="text-yellow-600 font-semibold">
-                          {t('checkout_dev_mode', '🚧 Utvecklingsläge')}
-                        </div>
-                      </div>
-                      <p className="text-center text-sm text-yellow-700 mt-2">
-                        {t('checkout_dev_description', 'Betalningsintegrationen (Stripe/Klarna/Swish) implementeras i nästa fas. Denna testorder skapas utan betalning för att testa affiliate-spårning.')}
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={handlePlaceOrder}
-                    disabled={loading}
-                    className="w-full bg-blue-600 text-white px-6 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? t('checkout_processing', 'Bearbetar beställning...') : t('checkout_complete_order', 'Slutför beställning (Test)')}
-                  </button>
+                  {/* Stripe Payment Form */}
+                  <StripePaymentForm
+                    customerInfo={{
+                      email: contactInfo.email,
+                      name: `${shippingInfo.firstName} ${shippingInfo.lastName}`
+                    }}
+                    shippingInfo={{
+                      country: shippingInfo.country,
+                      address: `${shippingInfo.address}${shippingInfo.apartment ? `, ${shippingInfo.apartment}` : ''}`,
+                      city: shippingInfo.city,
+                      postalCode: shippingInfo.postalCode
+                    }}
+                    onPaymentSuccess={handlePaymentSuccess}
+                    onPaymentError={handlePaymentError}
+                  />
 
                   <p className="text-xs text-center text-gray-500 mt-4">
                     {t('checkout_terms_agreement', 'Genom att slutföra beställningen godkänner du våra')}{' '}

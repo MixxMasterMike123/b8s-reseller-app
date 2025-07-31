@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendVerificationEmail = exports.sendStatusUpdateHttp = exports.approveAffiliate = exports.testEmail = exports.updateCustomerEmail = exports.sendOrderStatusUpdateEmail = exports.sendUserActivationEmail = exports.sendOrderConfirmationEmails = exports.sendB2COrderPendingEmail = exports.sendB2COrderNotificationAdmin = exports.sendOrderStatusEmail = exports.sendB2BOrderConfirmationCustomer = exports.sendB2BOrderConfirmationAdmin = exports.sendAffiliateWelcomeEmail = exports.sendCustomerWelcomeEmail = void 0;
+exports.sendAffiliateCredentialsV2 = exports.sendVerificationEmail = exports.sendStatusUpdateHttp = exports.approveAffiliate = exports.testEmail = exports.updateCustomerEmail = exports.sendOrderStatusUpdateEmail = exports.sendUserActivationEmail = exports.sendOrderConfirmationEmails = exports.sendB2COrderPendingEmail = exports.sendB2COrderNotificationAdmin = exports.sendOrderStatusEmail = exports.sendB2BOrderConfirmationCustomer = exports.sendB2BOrderConfirmationAdmin = exports.sendAffiliateWelcomeEmail = exports.sendCustomerWelcomeEmail = void 0;
 const firestore_1 = require("firebase-functions/v2/firestore");
 const https_1 = require("firebase-functions/v2/https");
 const app_1 = require("firebase-admin/app");
@@ -1053,6 +1053,109 @@ JPH Innovation AB
         console.error('Error sending verification email:', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         throw new https_1.HttpsError('internal', `Failed to send verification email: ${errorMessage}`);
+    }
+});
+// Send affiliate credentials and welcome email
+exports.sendAffiliateCredentialsV2 = (0, https_1.onCall)(async (request) => {
+    const { auth: userAuth, data } = request;
+    if (!userAuth?.uid) {
+        throw new Error('Unauthorized');
+    }
+    try {
+        const { affiliateId } = data;
+        if (!affiliateId) {
+            throw new Error('Affiliate ID is required');
+        }
+        // Get affiliate data
+        const affiliateDoc = await email_handler_1.db.collection('affiliates').doc(affiliateId).get();
+        if (!affiliateDoc.exists) {
+            throw new Error('Affiliate not found');
+        }
+        const affiliateData = affiliateDoc.data();
+        let isExistingUser = false;
+        let temporaryPassword = await generateTemporaryPassword();
+        let userRecord;
+        try {
+            // Try to create new Firebase Auth account
+            userRecord = await auth.createUser({
+                email: affiliateData.email,
+                password: temporaryPassword,
+                emailVerified: true,
+                displayName: affiliateData.name
+            });
+            console.log(`Created new Firebase Auth user for affiliate ${affiliateData.email}`);
+        }
+        catch (error) {
+            if (error.code === 'auth/email-already-exists') {
+                // If user exists, update their password
+                const existingUser = await auth.getUserByEmail(affiliateData.email);
+                await auth.updateUser(existingUser.uid, {
+                    password: temporaryPassword
+                });
+                userRecord = existingUser;
+                isExistingUser = true;
+                console.log(`Updated existing affiliate user password for ${affiliateData.email}`);
+            }
+            else {
+                throw error;
+            }
+        }
+        // Update affiliate document with new credentials info
+        await affiliateDoc.ref.update({
+            credentialsSent: true,
+            credentialsSentAt: new Date(),
+            credentialsSentBy: userAuth.uid,
+            firebaseAuthUid: userRecord.uid,
+            requiresPasswordChange: true,
+            temporaryPassword,
+            credentialsHistory: firestore_2.FieldValue.arrayUnion({
+                sentAt: new Date(),
+                sentBy: userAuth.uid,
+                isResend: isExistingUser
+            })
+        });
+        // Generate login instructions
+        const loginInstructions = isExistingUser
+            ? `<p>Du hade redan ett konto hos B8Shield, så du kan logga in med ditt befintliga lösenord. Om du har glömt det kan du återställa det på inloggningssidan.</p>`
+            : `<ul>
+          <li><strong>Användarnamn:</strong> ${affiliateData.email}</li>
+          <li><strong>Tillfälligt lösenord:</strong> ${temporaryPassword}</li>
+        </ul>
+        <p>Vi rekommenderar starkt att du byter ditt lösenord efter första inloggningen.</p>`;
+        // Send welcome email using existing template
+        const emailTemplate = (0, emails_1.getEmail)('affiliateWelcome', 'sv-SE', {
+            appData: {
+                name: affiliateData.name,
+                email: affiliateData.email,
+                preferredLang: 'sv-SE'
+            },
+            affiliateCode: affiliateData.affiliateCode,
+            tempPassword: temporaryPassword,
+            loginInstructions,
+            wasExistingAuthUser: isExistingUser
+        });
+        const emailData = createEmailData(affiliateData.email, email_handler_1.EMAIL_FROM.affiliate, emailTemplate, {
+            userData: {
+                email: affiliateData.email,
+                companyName: affiliateData.name || '',
+                preferredLang: 'sv-SE'
+            },
+            affiliateData,
+            tempPassword: temporaryPassword,
+            wasExistingAuthUser: isExistingUser
+        });
+        await (0, email_handler_1.sendEmail)(emailData);
+        console.log(`${isExistingUser ? 'New credentials' : 'Welcome email'} sent successfully to affiliate ${affiliateData.email} for affiliate ${affiliateId}${isExistingUser ? ' (existing user)' : ''}`);
+        return {
+            success: true,
+            isExistingUser,
+            temporaryPassword,
+            email: affiliateData.email
+        };
+    }
+    catch (error) {
+        console.error('Error sending affiliate credentials:', error);
+        throw new Error('Failed to send affiliate credentials');
     }
 });
 //# sourceMappingURL=functions.js.map
