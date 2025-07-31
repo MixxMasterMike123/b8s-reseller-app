@@ -257,7 +257,9 @@ const Checkout = () => {
         email: contactInfo.email,
         name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
         firstName: shippingInfo.firstName,
-        lastName: shippingInfo.lastName
+        lastName: shippingInfo.lastName,
+        marketingOptIn: contactInfo.marketing,
+        preferredLang: currentLanguage // Store user's language preference for emails
       },
       shippingInfo: {
         address: shippingInfo.address,
