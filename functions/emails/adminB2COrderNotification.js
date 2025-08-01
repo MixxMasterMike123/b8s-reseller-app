@@ -1,3 +1,35 @@
+// Helper function to get product display name with color and size for admin emails
+function getProductDisplayNameAdmin(item) {
+  // Handle multilingual product names
+  const baseName = typeof item.name === 'object' 
+    ? (item.name['sv-SE'] || item.name['en-GB'] || item.name['en-US'] || JSON.stringify(item.name))
+    : item.name || 'Unknown Product';
+  
+  const color = item.color;
+  const size = item.size;
+  
+  let displayName = baseName;
+  
+  // Add color if available
+  if (color && color !== 'Blandade färger' && color !== 'Mixed colors') {
+    displayName += ` ${color}`;
+  }
+  
+  // Add size if available
+  if (size && size !== 'Blandade storlekar' && size !== 'Mixed sizes') {
+    // Convert size to readable format
+    if (size.includes('Storlek') || size.includes('Size')) {
+      // Extract number from "Storlek 2" -> "stl. 2"
+      const sizeNumber = size.replace(/Storlek|Size/i, '').trim();
+      displayName += `, stl. ${sizeNumber}`;
+    } else {
+      displayName += `, stl. ${size}`;
+    }
+  }
+  
+  return displayName;
+}
+
 module.exports = ({ orderData }) => {
   const subject = `New B2C Order Received: ${orderData.orderNumber}`;
   
@@ -36,12 +68,8 @@ module.exports = ({ orderData }) => {
         <h3 style="margin-top: 0; color: #065f46;">Order Details</h3>
         <ul style="list-style: none; padding: 0;">
           ${orderData.items.map(item => {
-            // Handle multilingual product names
-            const productName = typeof item.name === 'object' 
-              ? (item.name['sv-SE'] || item.name['en-GB'] || item.name['en-US'] || JSON.stringify(item.name))
-              : item.name || 'Unknown Product';
-            return `<li style="padding: 8px 0; border-bottom: 1px solid #d1fae5;">
-              <strong>${productName}</strong> - ${item.quantity} pcs @ ${item.price} SEK
+            return `<li style="padding: 12px 0; border-bottom: 1px solid #d1fae5;">
+              <strong>${getProductDisplayNameAdmin(item)}</strong> - ${item.quantity} pcs @ ${item.price} SEK
               <span style="float: right; font-weight: bold;">${(item.price * item.quantity).toFixed(0)} SEK</span>
             </li>`;
           }).join('')}

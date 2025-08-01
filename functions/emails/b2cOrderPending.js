@@ -13,6 +13,35 @@ function getProductName(item, lang) {
   return item.name || 'Okänd produkt';
 }
 
+// Helper function to get product display name with color and size
+function getProductDisplayName(item, lang) {
+  const baseName = getProductName(item, lang);
+  const color = item.color;
+  const size = item.size;
+  
+  let displayName = baseName;
+  
+  // Add color if available
+  if (color && color !== 'Blandade färger' && color !== 'Mixed colors') {
+    displayName += ` ${color}`;
+  }
+  
+  // Add size if available
+  if (size && size !== 'Blandade storlekar' && size !== 'Mixed sizes') {
+    // Convert size to readable format
+    const sizeText = lang.startsWith('en') ? 'size' : 'stl.';
+    if (size.includes('Storlek') || size.includes('Size')) {
+      // Extract number from "Storlek 2" -> "stl. 2"
+      const sizeNumber = size.replace(/Storlek|Size/i, '').trim();
+      displayName += `, ${sizeText} ${sizeNumber}`;
+    } else {
+      displayName += `, ${sizeText} ${size}`;
+    }
+  }
+  
+  return displayName;
+}
+
 // Helper function to format price
 function formatPrice(price) {
   return `${price.toFixed(0)} SEK`;
@@ -40,7 +69,7 @@ Ordernummer: ${orderNumber}
 Status: Mottagen
 
 PRODUKTER:
-${items.map(item => `- ${getProductName(item, lang)} x ${item.quantity} - ${formatPrice(item.price * item.quantity)}`).join('\n')}
+${items.map(item => `- ${getProductDisplayName(item, lang)} x ${item.quantity} - ${formatPrice(item.price * item.quantity)}`).join('\n')}
 
 ORDERSAMMANFATTNING:
 Delsumma: ${formatPrice(subtotal)}
@@ -56,12 +85,13 @@ B8Shield Team
 JPH Innovation AB
 `,
       html: `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px;">
-  <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <div style="text-align: center; margin-bottom: 30px;">
-      <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
+<div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 15px;">
+  <!-- Mobile-optimized email container -->
+  <div style="background-color: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <div style="text-align: center; margin-bottom: 25px;">
+      <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 180px; height: auto; display: block; margin: 0 auto;">
     </div>
-    <h2 style="color: #1f2937; margin-bottom: 20px;">Hej ${customerName},</h2>
+    <h2 style="color: #1f2937; margin-bottom: 20px; font-size: 20px; line-height: 1.3;">Hej ${customerName},</h2>
     <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">Tack för din beställning från B8Shield! Vi har mottagit din order och kommer att behandla den snarast.</p>
     
     <div style="background-color: #f3f4f6; border-radius: 6px; padding: 20px; margin-bottom: 25px;">
@@ -71,24 +101,28 @@ JPH Innovation AB
       <p style="margin: 8px 0; color: #374151;"><strong>E-post:</strong> ${customerInfo.email}</p>
     </div>
 
-    <div style="background-color: #ecfdf5; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
-      <h4 style="color: #065f46; margin-top: 0; margin-bottom: 15px;">🛒 DINA PRODUKTER:</h4>
-      <div style="background-color: white; border-radius: 4px; padding: 15px;">
+    <div style="background-color: #ecfdf5; padding: 15px; border-radius: 6px; margin-bottom: 25px;">
+      <h4 style="color: #065f46; margin-top: 0; margin-bottom: 15px; font-size: 16px;">🛒 DINA PRODUKTER:</h4>
+      <div style="background-color: white; border-radius: 4px; padding: 10px;">
         ${items.map(item => `
-          <table style="width: 100%; border-bottom: 1px solid #e5e7eb; padding: 10px 0; margin-bottom: 8px;">
-            <tr>
-              <td style="width: 60px; vertical-align: top; padding-right: 12px;">
-                ${item.image ? `<img src="${item.image}" alt="${getProductName(item, lang)}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb; display: block;" />` : ''}
-              </td>
-              <td style="vertical-align: top; padding-right: 12px;">
-                <div style="font-weight: bold; color: #1f2937; margin-bottom: 4px;">${getProductName(item, lang)}</div>
-                <div style="font-size: 14px; color: #6b7280;">Kvantitet: ${item.quantity} st × ${formatPrice(item.price)}</div>
-              </td>
-              <td style="vertical-align: top; text-align: right; white-space: nowrap;">
-                <div style="font-weight: bold; color: #1f2937; font-size: 16px;">${formatPrice(item.price * item.quantity)}</div>
-              </td>
-            </tr>
-          </table>
+          <div style="display: flex; flex-direction: column; border-bottom: 1px solid #e5e7eb; padding: 15px 0; margin-bottom: 10px;">
+            <!-- Mobile-first product layout -->
+            <div style="display: flex; align-items: flex-start; margin-bottom: 8px;">
+              ${item.image ? `
+              <div style="flex-shrink: 0; margin-right: 12px;">
+                <img src="${item.image}" alt="${getProductDisplayName(item, lang)}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb; display: block;" />
+              </div>
+              ` : ''}
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: bold; color: #1f2937; font-size: 16px; line-height: 1.4; margin-bottom: 6px;">${getProductDisplayName(item, lang)}</div>
+                <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">Kvantitet: ${item.quantity} st × ${formatPrice(item.price)}</div>
+              </div>
+            </div>
+            <!-- Price prominently displayed -->
+            <div style="text-align: right; background-color: #f9fafb; padding: 8px 12px; border-radius: 4px;">
+              <div style="font-weight: bold; color: #1f2937; font-size: 18px;">${formatPrice(item.price * item.quantity)}</div>
+            </div>
+          </div>
         `).join('')}
       </div>
     </div>
@@ -151,7 +185,7 @@ Order number: ${orderNumber}
 Status: Received
 
 PRODUCTS:
-${items.map(item => `- ${getProductName(item, lang)} x ${item.quantity} - ${formatPrice(item.price * item.quantity)}`).join('\n')}
+${items.map(item => `- ${getProductDisplayName(item, lang)} x ${item.quantity} - ${formatPrice(item.price * item.quantity)}`).join('\n')}
 
 ORDER SUMMARY:
 Subtotal: ${formatPrice(subtotal)}
@@ -167,12 +201,13 @@ The B8Shield Team
 JPH Innovation AB
 `,
       html: `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px;">
-  <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <div style="text-align: center; margin-bottom: 30px;">
-      <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
+<div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 15px;">
+  <!-- Mobile-optimized email container -->
+  <div style="background-color: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <div style="text-align: center; margin-bottom: 25px;">
+      <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 180px; height: auto; display: block; margin: 0 auto;">
     </div>
-    <h2 style="color: #1f2937; margin-bottom: 20px;">Hello ${customerName},</h2>
+    <h2 style="color: #1f2937; margin-bottom: 20px; font-size: 20px; line-height: 1.3;">Hello ${customerName},</h2>
     <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">Thank you for shopping with B8Shield! We have received your order and will process it shortly.</p>
     
     <div style="background-color: #f3f4f6; border-radius: 6px; padding: 20px; margin-bottom: 25px;">
@@ -182,24 +217,28 @@ JPH Innovation AB
       <p style="margin: 8px 0; color: #374151;"><strong>Email:</strong> ${customerInfo.email}</p>
     </div>
 
-    <div style="background-color: #ecfdf5; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
-      <h4 style="color: #065f46; margin-top: 0; margin-bottom: 15px;">🛒 YOUR PRODUCTS:</h4>
-      <div style="background-color: white; border-radius: 4px; padding: 15px;">
+    <div style="background-color: #ecfdf5; padding: 15px; border-radius: 6px; margin-bottom: 25px;">
+      <h4 style="color: #065f46; margin-top: 0; margin-bottom: 15px; font-size: 16px;">🛒 YOUR PRODUCTS:</h4>
+      <div style="background-color: white; border-radius: 4px; padding: 10px;">
         ${items.map(item => `
-          <table style="width: 100%; border-bottom: 1px solid #e5e7eb; padding: 10px 0; margin-bottom: 8px;">
-            <tr>
-              <td style="width: 60px; vertical-align: top; padding-right: 12px;">
-                ${item.image ? `<img src="${item.image}" alt="${getProductName(item, lang)}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb; display: block;" />` : ''}
-              </td>
-              <td style="vertical-align: top; padding-right: 12px;">
-                <div style="font-weight: bold; color: #1f2937; margin-bottom: 4px;">${getProductName(item, lang)}</div>
-                <div style="font-size: 14px; color: #6b7280;">Quantity: ${item.quantity} pcs × ${formatPrice(item.price)}</div>
-              </td>
-              <td style="vertical-align: top; text-align: right; white-space: nowrap;">
-                <div style="font-weight: bold; color: #1f2937; font-size: 16px;">${formatPrice(item.price * item.quantity)}</div>
-              </td>
-            </tr>
-          </table>
+          <div style="display: flex; flex-direction: column; border-bottom: 1px solid #e5e7eb; padding: 15px 0; margin-bottom: 10px;">
+            <!-- Mobile-first product layout -->
+            <div style="display: flex; align-items: flex-start; margin-bottom: 8px;">
+              ${item.image ? `
+              <div style="flex-shrink: 0; margin-right: 12px;">
+                <img src="${item.image}" alt="${getProductDisplayName(item, lang)}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb; display: block;" />
+              </div>
+              ` : ''}
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: bold; color: #1f2937; font-size: 16px; line-height: 1.4; margin-bottom: 6px;">${getProductDisplayName(item, lang)}</div>
+                <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">Quantity: ${item.quantity} pcs × ${formatPrice(item.price)}</div>
+              </div>
+            </div>
+            <!-- Price prominently displayed -->
+            <div style="text-align: right; background-color: #f9fafb; padding: 8px 12px; border-radius: 4px;">
+              <div style="font-weight: bold; color: #1f2937; font-size: 18px;">${formatPrice(item.price * item.quantity)}</div>
+            </div>
+          </div>
         `).join('')}
       </div>
     </div>
