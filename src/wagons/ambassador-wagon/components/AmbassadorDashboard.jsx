@@ -40,12 +40,17 @@ const AmbassadorDashboard = () => {
   // Filter contacts based on search
   useEffect(() => {
     if (searchQuery.trim()) {
-      const filtered = contacts.filter(contact => 
-        contact.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contact.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contact.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contact.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
+      const filtered = contacts.filter(contact => {
+        const searchTerm = searchQuery.toLowerCase();
+        const tags = Array.isArray(contact.tags) ? contact.tags : [];
+        
+        return (
+          contact.name?.toLowerCase().includes(searchTerm) ||
+          contact.email?.toLowerCase().includes(searchTerm) ||
+          contact.category?.toLowerCase().includes(searchTerm) ||
+          tags.some(tag => String(tag).toLowerCase().includes(searchTerm))
+        );
+      });
       setFilteredContacts(filtered);
     } else {
       setFilteredContacts(contacts);
@@ -91,6 +96,18 @@ const AmbassadorDashboard = () => {
   // 🧠 SOPHISTICATED AMBASSADOR TRIGGER SCORING SYSTEM
   // Adapted from Dining Wagon's intelligent priority calculation
   const calculateContactTriggerScore = (contact) => {
+    // Debug logging to understand data structure
+    console.log('🔍 Ambassador Contact Data Structure:', {
+      id: contact.id,
+      name: contact.name,
+      platforms: contact.platforms,
+      platformsType: typeof contact.platforms,
+      tags: contact.tags,
+      tagsType: typeof contact.tags,
+      status: contact.status,
+      influencerTier: contact.influencerTier
+    });
+
     const now = new Date();
     let daysSinceLastContact = 0;
     
@@ -100,12 +117,15 @@ const AmbassadorDashboard = () => {
       daysSinceLastContact = 999; // Never contacted
     }
 
-    // Get all tags from contact's activities
-    const contactActivities = activities.filter(activity => activity.contactId === contact.id);
-    const allTags = [
-      ...(contact.tags || []),
-      ...contactActivities.flatMap(activity => activity.tags || [])
-    ];
+    // Get all tags from contact's activities with proper validation
+    const contactActivities = Array.isArray(activities) ? activities.filter(activity => activity.contactId === contact.id) : [];
+    const contactTags = Array.isArray(contact.tags) ? contact.tags : [];
+    const activityTags = contactActivities.flatMap(activity => {
+      const tags = Array.isArray(activity.tags) ? activity.tags : [];
+      return tags.map(tag => String(tag)); // Ensure all tags are strings
+    });
+    
+    const allTags = [...contactTags.map(tag => String(tag)), ...activityTags];
 
     // Use smart tag scoring system
     const tagScore = calculateAmbassadorTagScore(allTags, daysSinceLastContact);
@@ -153,10 +173,11 @@ const AmbassadorDashboard = () => {
     }
 
     // Platform-specific scoring (Instagram/YouTube higher priority)
-    if (contact.platforms?.includes('instagram') && contact.followersCount > 50000) {
+    const platforms = Array.isArray(contact.platforms) ? contact.platforms : [];
+    if (platforms.includes('instagram') && contact.followersCount > 50000) {
       score += 8;
     }
-    if (contact.platforms?.includes('youtube') && contact.followersCount > 10000) {
+    if (platforms.includes('youtube') && contact.followersCount > 10000) {
       score += 10;
     }
 
@@ -388,14 +409,17 @@ const AmbassadorDashboard = () => {
                           </div>
                           
                           {/* Platform & Followers */}
-                          {contact.platforms && contact.platforms.length > 0 && (
-                            <div className="flex items-center space-x-2 text-xs text-gray-500">
-                              <span>📱 {contact.platforms.join(', ')}</span>
-                              {contact.followersCount && (
-                                <span>• {contact.followersCount.toLocaleString()} följare</span>
-                              )}
-                            </div>
-                          )}
+                          {(() => {
+                            const platforms = Array.isArray(contact.platforms) ? contact.platforms : [];
+                            return platforms.length > 0 && (
+                              <div className="flex items-center space-x-2 text-xs text-gray-500">
+                                <span>📱 {platforms.join(', ')}</span>
+                                {contact.followersCount && (
+                                  <span>• {contact.followersCount.toLocaleString()} följare</span>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                       
