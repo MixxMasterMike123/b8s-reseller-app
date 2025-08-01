@@ -112,7 +112,7 @@ export const LanguageCurrencyProvider = ({ children }) => {
     if (typeof window === 'undefined') return null;
     
     const pathname = window.location.pathname;
-    const segments = pathname.split('/').filter(Boolean);
+    const segments = pathname?.split('/')?.filter(Boolean) || [];
     const countryCode = segments[0];
     
     if (countryCode && countryCode.length === 2) {

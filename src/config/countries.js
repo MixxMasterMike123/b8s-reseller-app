@@ -53,7 +53,7 @@ export const getCountry = (code) => {
 
 // Get country from URL path
 export const getCountryFromPath = (pathname) => {
-  const segments = pathname.split('/').filter(Boolean);
+  const segments = pathname?.split('/')?.filter(Boolean) || [];
   const countryCode = segments[0];
   return COUNTRIES[countryCode] ? countryCode : null;
 };

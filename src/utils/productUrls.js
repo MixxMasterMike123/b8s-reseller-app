@@ -65,7 +65,7 @@ export const getProductUrl = (product) => {
   const slug = getVariantProductSlug(product);
   
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '/se';
-  const segments = pathname.split('/').filter(Boolean);
+  const segments = pathname?.split('/')?.filter(Boolean) || [];
   const countryCode = segments[0] || 'se';
   
   return `/${countryCode}/product/${slug}`;
@@ -75,7 +75,7 @@ export const getProductUrl = (product) => {
 export const getCountryAwareUrl = (path) => {
   // Get current country from URL path
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '/se';
-  const segments = pathname.split('/').filter(Boolean);
+  const segments = pathname?.split('/')?.filter(Boolean) || [];
   const countryCode = segments[0] || 'se';
   
   // Validate country code
