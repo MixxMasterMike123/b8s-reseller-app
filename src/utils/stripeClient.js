@@ -23,7 +23,7 @@ export const getStripe = () => {
   return stripePromise;
 };
 
-// Stripe configuration
+// Simple Stripe configuration - let Stripe handle payment method detection
 export const STRIPE_CONFIG = {
   currency: 'sek',
   country: 'SE',

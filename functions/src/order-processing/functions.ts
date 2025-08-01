@@ -37,6 +37,7 @@ interface OrderData {
     code?: string;
     discountPercentage?: number;
     amount?: number;
+    clickId?: string;
   };
   source?: string;
   trackingNumber?: string;
@@ -275,6 +276,7 @@ export const processB2COrderCompletionHttp = onRequest(
       // Handle different affiliate data structures (Stripe vs Mock payments)
       const affiliateCode = orderData.affiliateCode || orderData.affiliate?.code;
       const discountCode = orderData.discountCode || orderData.affiliate?.code;
+      const affiliateClickId = orderData.affiliateClickId || orderData.affiliate?.clickId;
 
       // --- Update B2C Customer Statistics ---
       if (orderData.b2cCustomerId && orderData.total) {
@@ -401,11 +403,11 @@ export const processB2COrderCompletionHttp = onRequest(
       console.log(`Successfully updated order ${orderId} with commission data`);
 
       // Update the click to mark conversion
-      if (orderData.affiliateClickId) {
-        console.log(`Updating affiliate click ${orderData.affiliateClickId}`);
+      if (affiliateClickId) {
+        console.log(`Updating affiliate click ${affiliateClickId}`);
         await localDb
           .collection('affiliateClicks')
-          .doc(orderData.affiliateClickId)
+          .doc(affiliateClickId)
           .update({
             converted: true,
             orderId: orderId,
@@ -415,7 +417,7 @@ export const processB2COrderCompletionHttp = onRequest(
 
       // Determine attribution method for analytics
       let attributionMethod = null;
-      if (orderData.affiliateClickId) {
+      if (affiliateClickId) {
         attributionMethod = 'server';
       } else if (affiliateCode) {
         attributionMethod = 'cookie';

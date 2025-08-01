@@ -44,14 +44,31 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
       const clickData = clickSnap.docs.map(d => d.data());
 
       // Fetch orders for chart only (not for totals)
-      const ordersQuery = query(
+      // Query 1: Orders with top-level affiliateCode (Mock payments)
+      const ordersQuery1 = query(
         collection(db, 'orders'),
         where('affiliateCode', '==', affiliateCode),
         orderBy('createdAt', 'desc'),
         limit(500)
       );
-      const orderSnap = await getDocs(ordersQuery);
-      const orderData = orderSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const orderSnap1 = await getDocs(ordersQuery1);
+      const orderData1 = orderSnap1.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // Query 2: Orders with affiliate.code structure (Stripe payments)
+      const ordersQuery2 = query(
+        collection(db, 'orders'),
+        where('affiliate.code', '==', affiliateCode),
+        orderBy('createdAt', 'desc'),
+        limit(500)
+      );
+      const orderSnap2 = await getDocs(ordersQuery2);
+      const orderData2 = orderSnap2.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // Merge and deduplicate orders by ID
+      const allOrders = [...orderData1, ...orderData2];
+      const orderData = allOrders.filter((order, index, array) => 
+        array.findIndex(o => o.id === order.id) === index
+      );
 
       // Filter orders by date range (for chart only)
       const filteredOrders = orderData.filter(order => {

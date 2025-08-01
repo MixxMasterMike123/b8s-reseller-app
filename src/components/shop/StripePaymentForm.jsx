@@ -272,7 +272,7 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPay
   const options = {
     clientSecret,
     appearance: STRIPE_CONFIG.appearance,
-    locale: STRIPE_CONFIG.locale,
+    locale: STRIPE_CONFIG.locale
   };
 
   return (

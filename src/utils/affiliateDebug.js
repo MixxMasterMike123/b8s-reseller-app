@@ -48,18 +48,36 @@ export const diagnoseAffiliateData = async (affiliateCode) => {
     results.affiliateClicks = clicksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     console.log(`📊 Found ${results.affiliateClicks.length} clicks`);
 
-    // 3. Get affiliate orders
+    // 3. Get affiliate orders (check both structures)
     console.log(`📦 Fetching affiliate orders...`);
     const ordersRef = collection(db, 'orders');
-    const ordersQuery = query(
+    
+    // Query 1: Orders with top-level affiliateCode (Mock payments)
+    const ordersQuery1 = query(
       ordersRef,
       where('affiliateCode', '==', affiliateCode),
       orderBy('createdAt', 'desc'),
       limit(50)
     );
-    const ordersSnapshot = await getDocs(ordersQuery);
-    results.affiliateOrders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    console.log(`📊 Found ${results.affiliateOrders.length} orders`);
+    const ordersSnapshot1 = await getDocs(ordersQuery1);
+    const orders1 = ordersSnapshot1.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Query 2: Orders with affiliate.code structure (Stripe payments)
+    const ordersQuery2 = query(
+      ordersRef,
+      where('affiliate.code', '==', affiliateCode),
+      orderBy('createdAt', 'desc'),
+      limit(50)
+    );
+    const ordersSnapshot2 = await getDocs(ordersQuery2);
+    const orders2 = ordersSnapshot2.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Merge and deduplicate orders by ID
+    const allOrders = [...orders1, ...orders2];
+    results.affiliateOrders = allOrders.filter((order, index, array) => 
+      array.findIndex(o => o.id === order.id) === index
+    );
+    console.log(`📊 Found ${results.affiliateOrders.length} orders (${orders1.length} Mock + ${orders2.length} Stripe)`);
 
     // 4. Analyze field mismatches
     console.log(`🔍 Analyzing field mismatches...`);

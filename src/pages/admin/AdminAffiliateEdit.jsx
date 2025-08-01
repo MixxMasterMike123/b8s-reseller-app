@@ -160,13 +160,28 @@ const AdminAffiliateEdit = () => {
       });
       
       // Get recent orders with this affiliate code (for detailed list display)
+      // Query 1: Orders with top-level affiliateCode (Mock payments)
       const ordersRef = collection(db, 'orders');
-      const q = query(ordersRef, where('affiliateCode', '==', affiliateCode));
-      const orderSnap = await getDocs(q);
-      const orders = orderSnap.docs.map(doc => ({
+      const q1 = query(ordersRef, where('affiliateCode', '==', affiliateCode));
+      const orderSnap1 = await getDocs(q1);
+      const orders1 = orderSnap1.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      })).filter(order => order.status !== 'cancelled'); // Only count non-cancelled orders
+      }));
+
+      // Query 2: Orders with affiliate.code structure (Stripe payments)
+      const q2 = query(ordersRef, where('affiliate.code', '==', affiliateCode));
+      const orderSnap2 = await getDocs(q2);
+      const orders2 = orderSnap2.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      // Merge and deduplicate orders by ID, then filter cancelled orders
+      const allOrders = [...orders1, ...orders2];
+      const orders = allOrders
+        .filter((order, index, array) => array.findIndex(o => o.id === order.id) === index)
+        .filter(order => order.status !== 'cancelled'); // Only count non-cancelled orders
 
       // Get click data for unique clicks calculation
       const clicksRef = collection(db, 'affiliateClicks');
