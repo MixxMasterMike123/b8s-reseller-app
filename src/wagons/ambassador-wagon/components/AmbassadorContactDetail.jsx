@@ -348,51 +348,355 @@ const AmbassadorContactDetail = () => {
               <h2 className="text-lg font-medium text-gray-900 mb-4">Kontaktinformation</h2>
               
               {isEditing ? (
-                <div className="space-y-4">
+                <div className="space-y-6">
+                  {/* Basic Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-md font-medium text-gray-900 border-b border-gray-200 pb-2">Grundläggande Information</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Namn *</label>
+                        <input
+                          type="text"
+                          value={editData.name || ''}
+                          onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                        <input
+                          type="email"
+                          value={editData.email || ''}
+                          onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                        <input
+                          type="tel"
+                          value={editData.phone || ''}
+                          onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Webbplats</label>
+                        <input
+                          type="url"
+                          value={editData.website || ''}
+                          onChange={(e) => setEditData({ ...editData, website: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          placeholder="https://"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Land/Region</label>
+                        <input
+                          type="text"
+                          value={editData.country || ''}
+                          onChange={(e) => setEditData({ ...editData, country: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tidszon</label>
+                        <select
+                          value={editData.timezone || 'Europe/Stockholm'}
+                          onChange={(e) => setEditData({ ...editData, timezone: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                        >
+                          <option value="Europe/Stockholm">Europe/Stockholm (CET)</option>
+                          <option value="Europe/London">Europe/London (GMT)</option>
+                          <option value="America/New_York">America/New_York (EST)</option>
+                          <option value="America/Los_Angeles">America/Los_Angeles (PST)</option>
+                          <option value="Europe/Berlin">Europe/Berlin (CET)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Professional Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-md font-medium text-gray-900 border-b border-gray-200 pb-2">Professionell Information</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Media Kit URL</label>
+                        <input
+                          type="url"
+                          value={editData.mediaKitUrl || ''}
+                          onChange={(e) => setEditData({ ...editData, mediaKitUrl: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          placeholder="https://"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Prislista URL</label>
+                        <input
+                          type="url"
+                          value={editData.rateCardUrl || ''}
+                          onChange={(e) => setEditData({ ...editData, rateCardUrl: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          placeholder="https://"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Social Media Platforms */}
+                  <div className="space-y-4">
+                    <h3 className="text-md font-medium text-gray-900 border-b border-gray-200 pb-2">Social Media Plattformar</h3>
+                    
+                    {/* Instagram */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <h4 className="text-sm font-medium text-gray-900 mb-3">📷 Instagram</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Handle</label>
+                          <input
+                            type="text"
+                            value={editData.platforms?.instagram?.handle || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                instagram: { ...editData.platforms?.instagram, handle: e.target.value }
+                              }
+                            })}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="användarnamn"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Följare</label>
+                          <input
+                            type="number"
+                            value={editData.platforms?.instagram?.followers || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                instagram: { ...editData.platforms?.instagram, followers: parseInt(e.target.value) || 0 }
+                              }
+                            })}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="0"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Profil URL</label>
+                          <input
+                            type="url"
+                            value={editData.platforms?.instagram?.url || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                instagram: { ...editData.platforms?.instagram, url: e.target.value }
+                              }
+                            })}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="https://instagram.com/..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* YouTube */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <h4 className="text-sm font-medium text-gray-900 mb-3">▶️ YouTube</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Kanal</label>
+                          <input
+                            type="text"
+                            value={editData.platforms?.youtube?.handle || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                youtube: { ...editData.platforms?.youtube, handle: e.target.value }
+                              }
+                            })}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="kanalnamn"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Prenumeranter</label>
+                          <input
+                            type="number"
+                            value={editData.platforms?.youtube?.subscribers || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                youtube: { ...editData.platforms?.youtube, subscribers: parseInt(e.target.value) || 0 }
+                              }
+                            })}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="0"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Kanal URL</label>
+                          <input
+                            type="url"
+                            value={editData.platforms?.youtube?.url || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                youtube: { ...editData.platforms?.youtube, url: e.target.value }
+                              }
+                            })}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="https://youtube.com/..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* TikTok */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <h4 className="text-sm font-medium text-gray-900 mb-3">🎵 TikTok</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Handle</label>
+                          <input
+                            type="text"
+                            value={editData.platforms?.tiktok?.handle || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                tiktok: { ...editData.platforms?.tiktok, handle: e.target.value }
+                              }
+                            })}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="användarnamn"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Följare</label>
+                          <input
+                            type="number"
+                            value={editData.platforms?.tiktok?.followers || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                tiktok: { ...editData.platforms?.tiktok, followers: parseInt(e.target.value) || 0 }
+                              }
+                            })}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="0"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Profil URL</label>
+                          <input
+                            type="url"
+                            value={editData.platforms?.tiktok?.url || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                tiktok: { ...editData.platforms?.tiktok, url: e.target.value }
+                              }
+                            })}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="https://tiktok.com/@..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Status & Classification */}
+                  <div className="space-y-4">
+                    <h3 className="text-md font-medium text-gray-900 border-b border-gray-200 pb-2">Status & Klassificering</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select
+                          value={editData.status || 'prospect'}
+                          onChange={(e) => setEditData({ ...editData, status: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                        >
+                          <option value="prospect">Prospekt</option>
+                          <option value="contacted">Kontaktad</option>
+                          <option value="negotiating">Förhandlar</option>
+                          <option value="converted">Konverterad</option>
+                          <option value="declined">Avböjd</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Prioritet</label>
+                        <select
+                          value={editData.priority || 'medium'}
+                          onChange={(e) => setEditData({ ...editData, priority: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                        >
+                          <option value="low">Låg</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">Hög</option>
+                          <option value="critical">Kritisk</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                        <select
+                          value={editData.category || 'fishing'}
+                          onChange={(e) => setEditData({ ...editData, category: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                        >
+                          <option value="fishing">Fiske</option>
+                          <option value="outdoor">Utomhus</option>
+                          <option value="lifestyle">Livsstil</option>
+                          <option value="tech">Teknik</option>
+                          <option value="other">Annat</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Notes */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Namn</label>
-                    <input
-                      type="text"
-                      value={editData.name || ''}
-                      onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Anteckningar</label>
+                    <textarea
+                      value={editData.notes || ''}
+                      onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
+                      rows={3}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                      placeholder="Interna anteckningar om denna ambassadör..."
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input
-                      type="email"
-                      value={editData.email || ''}
-                      onChange={(e) => setEditData({ ...editData, email: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select
-                      value={editData.status || 'prospect'}
-                      onChange={(e) => setEditData({ ...editData, status: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                    >
-                      <option value="prospect">Prospekt</option>
-                      <option value="contacted">Kontaktad</option>
-                      <option value="negotiating">Förhandlar</option>
-                      <option value="converted">Konverterad</option>
-                      <option value="declined">Avböjd</option>
-                    </select>
-                  </div>
-                  <div className="flex space-x-2">
+
+                  {/* Action Buttons */}
+                  <div className="flex space-x-3 pt-4 border-t border-gray-200">
                     <button
                       onClick={handleSaveContact}
-                      className="flex-1 px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700"
+                      className="flex-1 px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
                     >
-                      Spara
+                      💾 Spara ändringar
                     </button>
                     <button
                       onClick={() => setIsEditing(false)}
-                      className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                      className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
                     >
-                      Avbryt
+                      ❌ Avbryt
                     </button>
                   </div>
                 </div>
