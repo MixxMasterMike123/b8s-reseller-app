@@ -44,6 +44,8 @@ import AdminOrderDetail from './pages/admin/AdminOrderDetail';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminMarketingMaterials from './pages/admin/AdminMarketingMaterials';
 import AdminMarketingMaterialEdit from './pages/admin/AdminMarketingMaterialEdit';
+import AdminCustomerMarketingMaterials from './pages/admin/AdminCustomerMarketingMaterials';
+import AdminCustomerMarketingMaterialEdit from './pages/admin/AdminCustomerMarketingMaterialEdit';
 import AdminPages from './pages/admin/AdminPages';
 import AdminPageEdit from './pages/admin/AdminPageEdit';
 import AdminSettings from './pages/admin/AdminSettings';
@@ -346,6 +348,18 @@ function App() {
               <Route path="/admin/marketing/:materialId/edit" element={
                 <AdminRoute>
                   <AdminMarketingMaterialEdit />
+                </AdminRoute>
+              } />
+
+              <Route path="/admin/customers/:customerId/marketing" element={
+                <AdminRoute>
+                  <AdminCustomerMarketingMaterials />
+                </AdminRoute>
+              } />
+
+              <Route path="/admin/customers/:customerId/marketing/:materialId/edit" element={
+                <AdminRoute>
+                  <AdminCustomerMarketingMaterialEdit />
                 </AdminRoute>
               } />
 

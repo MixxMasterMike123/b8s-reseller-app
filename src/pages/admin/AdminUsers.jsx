@@ -366,12 +366,24 @@ const AdminUsers = () => {
 
                       {/* Column 3: Actions */}
                       <td className="px-4 md:px-6 py-4 text-right">
-                        <Link
-                          to={`/admin/users/${user.id}/edit`}
-                          className="min-h-[32px] inline-flex items-center px-4 py-2 text-xs font-medium text-blue-600 hover:text-blue-900 hover:bg-blue-50 border border-blue-300 rounded transition-colors"
-                        >
-                          Redigera
-                        </Link>
+                        <div className="flex flex-col md:flex-row items-end md:items-center justify-end gap-2">
+                          <Link
+                            to={`/admin/users/${user.id}/edit`}
+                            className="min-h-[32px] inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-900 hover:bg-blue-50 border border-blue-300 rounded transition-colors"
+                          >
+                            Redigera
+                          </Link>
+                          {/* Show customer marketing materials link only for customers (not admins) */}
+                          {user.role !== 'admin' && (
+                            <Link
+                              to={`/admin/customers/${user.id}/marketing`}
+                              className="min-h-[32px] inline-flex items-center px-3 py-1 text-xs font-medium text-purple-600 hover:text-purple-900 hover:bg-purple-50 border border-purple-300 rounded transition-colors"
+                              title="Hantera kundspecifikt marknadsföringsmaterial"
+                            >
+                              Material
+                            </Link>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

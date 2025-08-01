@@ -540,6 +540,20 @@ const AdminUserEdit = () => {
               </p>
             </div>
             <div className="flex items-center space-x-3">
+              {/* Customer Marketing Materials Link - only for customers */}
+              {user.role !== 'admin' && (
+                <Link
+                  to={`/admin/customers/${user.id}/marketing`}
+                  className="inline-flex items-center px-4 py-2 border border-purple-300 text-sm font-medium rounded-md text-purple-700 bg-purple-50 hover:bg-purple-100"
+                  title="Hantera kundspecifikt marknadsföringsmaterial"
+                >
+                  <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  Marknadsföringsmaterial
+                </Link>
+              )}
+              
               {/* Customer Activation Button/Status */}
               {user.credentialsSent ? (
                 <div className="flex items-center px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
