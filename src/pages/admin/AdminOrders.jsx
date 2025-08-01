@@ -232,6 +232,9 @@ const AdminOrders = () => {
                     <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Datum & Belopp
                     </th>
+                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Trafikkälla
+                    </th>
                     <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status & Åtgärd
                     </th>
@@ -310,7 +313,38 @@ const AdminOrders = () => {
                         </div>
                       </td>
 
-                      {/* Column 3: Status & Action */}
+                      {/* Column 3: Traffic Source */}
+                      <td className="px-4 md:px-6 py-4">
+                        <div className="space-y-1">
+                          {/* Source Type */}
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                              order.source === 'b2c' 
+                                ? 'bg-purple-100 text-purple-800'
+                                : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {order.source === 'b2c' ? 'B2C' : 'B2B'}
+                            </span>
+                          </div>
+                          
+                          {/* Affiliate Info */}
+                          {(order.affiliateCode || order.affiliate?.code) && (
+                            <div className="text-xs text-gray-600">
+                              <span className="font-medium">Affiliate:</span> {order.affiliateCode || order.affiliate?.code}
+                            </div>
+                          )}
+                          
+                          {/* Payment Method */}
+                          <div className="text-xs text-gray-500">
+                            {order.source === 'b2c' 
+                              ? (order.payment?.method === 'stripe' ? 'Stripe' : 'Mock Payment')
+                              : 'B2B Order'
+                            }
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Column 4: Status & Action */}
                       <td className="px-4 md:px-6 py-4 text-right">
                         <div className="flex flex-col items-end gap-3">
                           <div className="w-full max-w-[120px]">

@@ -274,6 +274,9 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {t('analytics_order_id', 'Order #')}
                   </th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('analytics_traffic_source', 'Trafikkälla')}
+                  </th>
                   <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {t('analytics_order_value', 'Ordervärde')}
                   </th>
@@ -295,6 +298,28 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm font-mono text-gray-600">
                         {o.orderNumber || `${o.id.substring(0,8)}...`}
+                      </td>
+                      <td className="px-3 py-3 text-sm text-gray-600">
+                        <div className="space-y-1">
+                          {/* Payment Method */}
+                          <div className="text-xs">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded font-medium ${
+                              o.payment?.method === 'stripe' 
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {o.payment?.method === 'stripe' ? 'Stripe' : 'Mock'}
+                            </span>
+                          </div>
+                          
+                          {/* Customer Info */}
+                          <div className="text-xs text-gray-500">
+                            {o.customerInfo?.firstName ? 
+                              `${o.customerInfo.firstName} ${o.customerInfo.lastName || ''}`.trim() : 
+                              'Okänd kund'
+                            }
+                          </div>
+                        </div>
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 text-right">
                         <SmartPrice 
