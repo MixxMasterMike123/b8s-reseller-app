@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { toast } from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
 import {
@@ -32,6 +33,7 @@ const AdminUserEdit = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const { getAllUsers, updateAnyUserProfile, updateUserMarginal, updateUserRole, toggleUserActive, isAdmin, currentUser, sendCustomerWelcomeEmail, deleteCustomerAccount } = useAuth();
+  const { getContentValue } = useContentTranslation();
   
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1190,10 +1192,10 @@ const AdminUserEdit = () => {
                         </button>
                       </div>
 
-                      <h4 className="font-medium text-gray-900 mb-2 text-sm line-clamp-2">{material.name}</h4>
+                      <h4 className="font-medium text-gray-900 mb-2 text-sm line-clamp-2">{getContentValue(material.name)}</h4>
                       
                       {material.description && (
-                        <p className="text-xs text-gray-600 mb-3 line-clamp-2">{material.description}</p>
+                        <p className="text-xs text-gray-600 mb-3 line-clamp-2">{getContentValue(material.description)}</p>
                       )}
 
                       <div className="text-xs text-gray-500 mb-3">
