@@ -11,6 +11,7 @@ import {
   getFileIcon,
   downloadFile
 } from '../../utils/marketingMaterials';
+import FileIcon from '../../components/FileIcon';
 import {
   getAdminDocuments,
   uploadAdminDocument,
@@ -1176,7 +1177,7 @@ const AdminUserEdit = () => {
                     <div key={material.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center">
-                          <span className="text-xl mr-2">{getFileIcon(material.fileType)}</span>
+                          <FileIcon iconName={getFileIcon(material.fileType)} className="w-5 h-5 mr-2 text-gray-600" />
                           <span className="text-xs px-2 py-1 bg-purple-100 text-purple-600 rounded-full">
                             {getCategoryLabel(material.category)}
                           </span>

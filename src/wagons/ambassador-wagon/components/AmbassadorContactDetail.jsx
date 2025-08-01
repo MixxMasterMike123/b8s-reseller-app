@@ -33,6 +33,14 @@ import {
   UserIcon as UserSolid
 } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
+import {
+  analyzeTextForAmbassadorTags,
+  getAmbassadorUrgencyLevel,
+  isUrgentAmbassadorActivity,
+  processManualAmbassadorTags,
+  getAmbassadorTagAutocomplete,
+  ambassadorCommonTags
+} from '../utils/smartTagging';
 
 const AmbassadorContactDetail = () => {
   const { id } = useParams();
@@ -56,6 +64,13 @@ const AmbassadorContactDetail = () => {
     followUpDate: ''
   });
 
+  // 🧠 SMART TAGGING STATE MANAGEMENT
+  const [suggestedTags, setSuggestedTags] = useState([]);
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [manualTagInput, setManualTagInput] = useState('');
+  const [autocompleteOptions, setAutocompleteOptions] = useState([]);
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+
   // Load contact data
   useEffect(() => {
     if (id) {
@@ -66,6 +81,79 @@ const AmbassadorContactDetail = () => {
       }
     }
   }, [id, getContactById]);
+
+  // 🧠 AUTO-ANALYZE CONTENT FOR SMART TAG SUGGESTIONS
+  useEffect(() => {
+    const combinedText = `${activityData.title} ${activityData.content}`.trim();
+    if (combinedText) {
+      const allSuggestions = analyzeTextForAmbassadorTags(combinedText);
+      // Filter out tags that are already selected
+      const filteredSuggestions = allSuggestions.filter(tag => !selectedTags.includes(tag));
+      setSuggestedTags(filteredSuggestions);
+      
+      // Debug logging for development
+      console.log('🎯 Ambassador Tag Analysis:', {
+        text: combinedText,
+        allSuggestions,
+        selectedTags,
+        filteredSuggestions
+      });
+    } else {
+      setSuggestedTags([]);
+    }
+  }, [activityData.title, activityData.content, selectedTags]);
+
+  // 🎯 SMART TAG MANAGEMENT FUNCTIONS
+  const addTag = (tag) => {
+    if (!selectedTags.includes(tag)) {
+      setSelectedTags([...selectedTags, tag]);
+    }
+    // Remove from suggestions once added
+    setSuggestedTags(suggestedTags.filter(t => t !== tag));
+  };
+
+  const removeTag = (tag) => {
+    setSelectedTags(selectedTags.filter(t => t !== tag));
+  };
+
+  const ignoreSuggestion = (tag) => {
+    setSuggestedTags(suggestedTags.filter(t => t !== tag));
+  };
+
+  // 🎯 MANUAL TAG INPUT PROCESSING
+  const processManualTags = (input) => {
+    if (!input.trim()) return;
+    
+    const newTags = processManualAmbassadorTags(input, selectedTags);
+    if (newTags.length > 0) {
+      setSelectedTags([...selectedTags, ...newTags]);
+      setManualTagInput('');
+    }
+  };
+
+  const handleManualTagKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      processManualTags(manualTagInput);
+    } else if (e.key === ',' || e.key === ' ') {
+      e.preventDefault();
+      processManualTags(manualTagInput);
+    }
+  };
+
+  const handleManualTagChange = (e) => {
+    const value = e.target.value;
+    setManualTagInput(value);
+    
+    // Show autocomplete suggestions
+    if (value.trim().length > 0) {
+      const matches = getAmbassadorTagAutocomplete(value, selectedTags);
+      setAutocompleteOptions(matches);
+      setShowAutocomplete(matches.length > 0);
+    } else {
+      setShowAutocomplete(false);
+    }
+  };
 
   // Get tier badge
   const getTierBadge = (tier) => {
@@ -146,16 +234,18 @@ const AmbassadorContactDetail = () => {
     }
   };
 
-  // Handle add activity
+  // Handle add activity with smart tags
   const handleAddActivity = async (e) => {
     e.preventDefault();
     
     try {
       await addActivity({
         ...activityData,
-        contactId: id
+        contactId: id,
+        tags: selectedTags // 🧠 Include smart tags
       });
       
+      // Reset form and tag state
       setActivityData({
         type: 'note',
         title: '',
@@ -167,8 +257,11 @@ const AmbassadorContactDetail = () => {
         campaignType: '',
         followUpDate: ''
       });
+      setSelectedTags([]);
+      setSuggestedTags([]);
+      setManualTagInput('');
       setShowActivityForm(false);
-      toast.success('Aktivitet tillagd');
+      toast.success('🎯 Aktivitet med smarta taggar tillagd');
     } catch (error) {
       console.error('Error adding activity:', error);
       toast.error('Kunde inte lägga till aktivitet');
@@ -526,6 +619,103 @@ const AmbassadorContactDetail = () => {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                           placeholder="Vad är nästa steg?"
                         />
+                      </div>
+                    </div>
+
+                    {/* 🧠 SMART TAGGING SYSTEM */}
+                    <div className="space-y-4">
+                      {/* Smart Suggestions */}
+                      {suggestedTags.length > 0 && (
+                        <div className="p-4 bg-purple-50 border border-purple-200 rounded-md">
+                          <h4 className="text-sm font-medium text-purple-900 mb-2">🧠 Smarta tagg-förslag:</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {suggestedTags.map(tag => (
+                              <div key={tag} className="flex items-center space-x-1">
+                                <button
+                                  type="button"
+                                  onClick={() => addTag(tag)}
+                                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors"
+                                >
+                                  #{tag}
+                                  <PlusIcon className="h-3 w-3 ml-1" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => ignoreSuggestion(tag)}
+                                  className="text-purple-600 hover:text-purple-800"
+                                  title="Ignorera förslag"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Selected Tags */}
+                      {selectedTags.length > 0 && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Valda taggar:</label>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedTags.map(tag => (
+                              <span key={tag} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                                #{tag}
+                                <button
+                                  type="button"
+                                  onClick={() => removeTag(tag)}
+                                  className="ml-2 text-purple-600 hover:text-purple-800"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Manual Tag Input */}
+                      <div className="relative">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Lägg till taggar:</label>
+                        <input
+                          type="text"
+                          value={manualTagInput}
+                          onChange={handleManualTagChange}
+                          onKeyPress={handleManualTagKeyPress}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          placeholder="Skriv taggar (t.ex. #hett, #akut, #ringabak) - tryck Enter eller komma för att lägga till"
+                        />
+                        
+                        {/* Autocomplete Dropdown */}
+                        {showAutocomplete && autocompleteOptions.length > 0 && (
+                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                            {autocompleteOptions.map(option => (
+                              <button
+                                key={option}
+                                type="button"
+                                onClick={() => {
+                                  addTag(option);
+                                  setManualTagInput('');
+                                  setShowAutocomplete(false);
+                                }}
+                                className="w-full text-left px-3 py-2 hover:bg-purple-50 text-sm"
+                              >
+                                #{option}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Tag Help Text */}
+                      <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                        <p className="text-xs text-blue-700">
+                          <strong>🎯 Smarta taggar:</strong> #hett (hot prospect), #akut (urgent), #ringabak (callback), #problem (issues), #nöjd (satisfied).
+                          <br />
+                          <strong>📅 Datum:</strong> "på måndag", "nästa vecka" skapar automatiska datum-taggar.
+                          <br />
+                          <strong>📱 Plattformar:</strong> Instagram, YouTube, TikTok identifieras automatiskt.
+                        </p>
                       </div>
                     </div>
                     
