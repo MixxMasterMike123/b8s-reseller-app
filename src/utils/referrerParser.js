@@ -1,6 +1,13 @@
 /**
  * Parse and format referrer URLs for better display
  * Converts raw referrer URLs to human-readable source names
+ * 
+ * BUSINESS LOGIC:
+ * - Internal B8Shield domains → "Direct" (not useful to show shop.b8shield.com as referrer)
+ * - External social/search/websites → Show actual source (valuable for attribution)
+ * - Unknown/invalid → "Direct" (clean fallback)
+ * 
+ * This provides meaningful traffic source data for affiliate and admin analytics
  */
 
 export const parseReferrer = (referrer) => {
@@ -11,6 +18,13 @@ export const parseReferrer = (referrer) => {
   try {
     const url = new URL(referrer);
     const hostname = url.hostname.toLowerCase();
+    
+    // Filter out internal B8Shield domains - these should be "Direct"
+    if (hostname.includes('b8shield.com') || 
+        hostname.includes('b8shield-reseller-app.web.app') ||
+        hostname.includes('b8shield-reseller-app.firebaseapp.com')) {
+      return { name: 'Direkt', icon: 'LINK', category: 'direct' };
+    }
     
     // Social Media Platforms
     if (hostname.includes('instagram.com')) {
@@ -95,6 +109,12 @@ export const parseReferrer = (referrer) => {
     
     // Generic website - show clean domain name
     const cleanDomain = hostname.replace('www.', '');
+    
+    // For very short or suspicious domains, show as Direct to avoid clutter
+    if (cleanDomain.length < 4 || cleanDomain.includes('localhost') || cleanDomain.includes('127.0.0.1')) {
+      return { name: 'Direkt', icon: 'LINK', category: 'direct' };
+    }
+    
     return { 
       name: cleanDomain, 
       icon: 'WEB', 
@@ -103,8 +123,8 @@ export const parseReferrer = (referrer) => {
     };
     
   } catch (error) {
-    // Invalid URL - show as text
-    return { name: referrer, icon: 'LINK', category: 'unknown' };
+    // Invalid URL or parsing error - treat as Direct
+    return { name: 'Direkt', icon: 'LINK', category: 'direct' };
   }
 };
 
