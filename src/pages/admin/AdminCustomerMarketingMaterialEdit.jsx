@@ -16,6 +16,7 @@ import {
   getFileType,
   getFileIcon
 } from '../../utils/marketingMaterials';
+import FileIcon from '../../components/FileIcon';
 
 function AdminCustomerMarketingMaterialEdit() {
   const { customerId, materialId } = useParams();
@@ -269,7 +270,7 @@ function AdminCustomerMarketingMaterialEdit() {
                   className="flex flex-col items-center justify-center text-gray-500"
                   style={{ display: material.fileType === 'image' && material.downloadURL ? 'none' : 'flex' }}
                 >
-                  <span className="text-4xl mb-2">{getFileIcon(material.fileType)}</span>
+                  <FileIcon iconName={getFileIcon(material.fileType)} className="w-16 h-16 mb-2" />
                   <span className="text-sm font-medium">{material.fileName}</span>
                 </div>
               </div>

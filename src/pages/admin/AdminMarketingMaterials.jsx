@@ -15,6 +15,7 @@ import {
   getFileIcon,
   downloadFile
 } from '../../utils/marketingMaterials';
+import FileIcon from '../../components/FileIcon';
 
 function AdminMarketingMaterials() {
   const { isAdmin } = useAuth();
@@ -369,12 +370,12 @@ function AdminMarketingMaterials() {
                                   }}
                                 />
                               ) : null}
-                              <span 
-                                className="text-2xl"
-                                style={{ display: material.fileType === 'image' && material.downloadURL ? 'none' : 'block' }}
+                              <div 
+                                className="text-gray-500"
+                                style={{ display: material.fileType === 'image' && material.downloadURL ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center' }}
                               >
-                                {getFileIcon(material.fileType)}
-                              </span>
+                                <FileIcon iconName={getFileIcon(material.fileType)} className="w-8 h-8" />
+                              </div>
                             </div>
                           </div>
                           <div className="min-w-0 flex-1">
