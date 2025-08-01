@@ -294,6 +294,33 @@ const Checkout = () => {
     const orderRef = await addDoc(collection(db, 'orders'), orderData);
     console.log('✅ Order created:', orderRef.id);
 
+    // 2. Call the post-order processing function for affiliate processing
+    try {
+      console.log('Calling post-order processing function for Stripe order...');
+      const timestamp = Date.now();
+      const functionUrl = `https://us-central1-b8shield-reseller-app.cloudfunctions.net/processB2COrderCompletionHttpV2?_=${timestamp}`;
+      
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+        body: JSON.stringify({ orderId: orderRef.id }),
+      });
+
+      if (!response.ok) {
+        console.error('CRITICAL: Failed to call post-order processing function for Stripe order.', await response.text());
+        // Don't show error to user since payment already succeeded - log for admin review
+      } else {
+        const result = await response.json();
+        console.log('Post-order processing completed successfully for Stripe order:', result);
+      }
+    } catch (error) {
+      console.error('CRITICAL: Failed to call post-order processing function for Stripe order.', error);
+      // Don't show error to user since payment already succeeded - log for admin review
+    }
+
     return orderRef.id;
   };
 
