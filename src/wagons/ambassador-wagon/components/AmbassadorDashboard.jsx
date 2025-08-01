@@ -24,6 +24,11 @@ import {
   BellIcon as BellSolid,
   StarIcon as StarSolid
 } from '@heroicons/react/24/solid';
+import {
+  calculateAmbassadorTagScore,
+  getAmbassadorUrgencyLevel,
+  isUrgentAmbassadorActivity
+} from '../utils/smartTagging';
 
 const AmbassadorDashboard = () => {
   const { contacts, loading: contactsLoading, getContactsByStatus, getContactsByTier, getTopInfluencers } = useAmbassadorContacts();
@@ -83,41 +88,147 @@ const AmbassadorDashboard = () => {
     return colors[status] || 'text-gray-600 bg-gray-100';
   };
 
-  // Calculate priority triggers (simplified version)
-  const getPriorityContacts = () => {
+  // 🧠 SOPHISTICATED AMBASSADOR TRIGGER SCORING SYSTEM
+  // Adapted from Dining Wagon's intelligent priority calculation
+  const calculateContactTriggerScore = (contact) => {
     const now = new Date();
-    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+    let daysSinceLastContact = 0;
+    
+    if (contact.lastContactedAt) {
+      daysSinceLastContact = Math.floor((now - contact.lastContactedAt) / (1000 * 60 * 60 * 24));
+    } else {
+      daysSinceLastContact = 999; // Never contacted
+    }
 
-    return contacts
+    // Get all tags from contact's activities
+    const contactActivities = activities.filter(activity => activity.contactId === contact.id);
+    const allTags = [
+      ...(contact.tags || []),
+      ...contactActivities.flatMap(activity => activity.tags || [])
+    ];
+
+    // Use smart tag scoring system
+    const tagScore = calculateAmbassadorTagScore(allTags, daysSinceLastContact);
+    let score = tagScore.score;
+    let reason = tagScore.reason;
+    let urgency = tagScore.urgency;
+
+    // 🎯 AMBASSADOR-SPECIFIC MODIFIERS
+
+    // Tier-based scoring (Mega > Macro > Micro > Nano)
+    if (contact.influencerTier === 'mega') {
+      score += 15;
+      if (daysSinceLastContact >= 7) {
+        score += 20;
+        reason = `MEGA influencer: ${daysSinceLastContact} dagar tystnad`;
+        urgency = 'high';
+      }
+    } else if (contact.influencerTier === 'macro') {
+      score += 10;
+      if (daysSinceLastContact >= 5) {
+        score += 15;
+        reason = `MACRO influencer: ${daysSinceLastContact} dagar sedan`;
+        urgency = urgency === 'low' ? 'medium' : urgency;
+      }
+    } else if (contact.influencerTier === 'micro') {
+      score += 5;
+      if (daysSinceLastContact >= 10) {
+        score += 10;
+        reason = `MICRO influencer: ${daysSinceLastContact} dagar sedan`;
+      }
+    }
+
+    // Status-based modifiers
+    if (contact.status === 'negotiating') {
+      score += 25;
+      reason = `Förhandling pågår - ${daysSinceLastContact} dagar sedan`;
+      urgency = urgency === 'low' ? 'medium' : urgency;
+    } else if (contact.status === 'contacted' && daysSinceLastContact >= 3) {
+      score += 20;
+      reason = `Kontaktad prospect: ${daysSinceLastContact} dagar uppföljning`;
+      urgency = urgency === 'low' ? 'medium' : urgency;
+    } else if (contact.status === 'prospect' && daysSinceLastContact >= 2) {
+      score += 15;
+      reason = `Ny prospect: ${daysSinceLastContact} dagar sedan`;
+    }
+
+    // Platform-specific scoring (Instagram/YouTube higher priority)
+    if (contact.platforms?.includes('instagram') && contact.followersCount > 50000) {
+      score += 8;
+    }
+    if (contact.platforms?.includes('youtube') && contact.followersCount > 10000) {
+      score += 10;
+    }
+
+    // Recent activity urgency check
+    const recentUrgentActivities = contactActivities
+      .filter(activity => {
+        const activityDate = activity.createdAt?.toDate ? activity.createdAt.toDate() : activity.createdAt;
+        const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+        return activityDate > threeDaysAgo && isUrgentAmbassadorActivity(activity);
+      });
+
+    if (recentUrgentActivities.length > 0) {
+      score += 30;
+      urgency = 'critical';
+      reason = 'Akuta aktiviteter kräver uppmärksamhet';
+    }
+
+    return { score, reason, urgency, daysSinceLastContact };
+  };
+
+  // 🎯 INTELLIGENT PRIORITY CONTACT SELECTION
+  const getPriorityContacts = () => {
+    // Check Swedish business hours (8:00-17:00, Mon-Fri)
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const isBusinessHours = currentDay >= 1 && currentDay <= 5 && currentHour >= 8 && currentHour <= 17;
+
+    const scoredContacts = contacts
+      .map(contact => ({
+        ...contact,
+        triggerData: calculateContactTriggerScore(contact)
+      }))
       .filter(contact => {
-        // High priority: Mega influencers not contacted in 3+ days
-        if (contact.influencerTier === 'mega' && (!contact.lastContactedAt || contact.lastContactedAt < threeDaysAgo)) {
-          return true;
+        // During business hours: show all contacts with score > 15
+        if (isBusinessHours) {
+          return contact.triggerData.score > 15;
         }
-        // Medium priority: Macro influencers not contacted in 1+ day
-        if (contact.influencerTier === 'macro' && (!contact.lastContactedAt || contact.lastContactedAt < oneDayAgo)) {
-          return true;
-        }
-        // High priority: Tags indicating hot prospects
-        if (contact.tags?.includes('#hett') || contact.tags?.includes('#kontrakt')) {
-          return true;
-        }
-        return false;
+        // Outside business hours: only critical/high priority (Swedish work-life balance)
+        return contact.triggerData.urgency === 'critical' || contact.triggerData.score > 50;
       })
-      .sort((a, b) => {
-        // Sort by tier importance and last contact
-        const tierOrder = { mega: 4, macro: 3, micro: 2, nano: 1 };
-        const aTier = tierOrder[a.influencerTier] || 0;
-        const bTier = tierOrder[b.influencerTier] || 0;
-        
-        if (aTier !== bTier) return bTier - aTier;
-        
-        const aTime = a.lastContactedAt ? a.lastContactedAt.getTime() : 0;
-        const bTime = b.lastContactedAt ? b.lastContactedAt.getTime() : 0;
-        return aTime - bTime; // Oldest first
-      })
-      .slice(0, 3); // Top 3 priority contacts
+      .sort((a, b) => b.triggerData.score - a.triggerData.score)
+      .slice(0, 3); // Max 3 contacts for Swedish Lagom principle
+
+    return scoredContacts;
+  };
+
+  // 🎯 GET URGENCY STYLING
+  const getUrgencyIcon = (urgency) => {
+    switch (urgency) {
+      case 'critical':
+        return <ExclamationSolid className="h-5 w-5 text-red-600" />;
+      case 'high':
+        return <FireSolid className="h-5 w-5 text-orange-600" />;
+      case 'medium':
+        return <BellSolid className="h-5 w-5 text-yellow-600" />;
+      default:
+        return <ClockIcon className="h-5 w-5 text-gray-600" />;
+    }
+  };
+
+  const getUrgencyColor = (urgency) => {
+    switch (urgency) {
+      case 'critical':
+        return 'border-red-400 bg-red-50';
+      case 'high':
+        return 'border-orange-400 bg-orange-50';
+      case 'medium':
+        return 'border-yellow-400 bg-yellow-50';
+      default:
+        return 'border-gray-300 bg-gray-50';
+    }
   };
 
   const priorityContacts = getPriorityContacts();
@@ -219,39 +330,91 @@ const AmbassadorDashboard = () => {
             <div className="p-6">
               {priorityContacts.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-gray-500">Inga akuta kontakter just nu - Vila gott! 😴</p>
+                  <div className="flex items-center justify-center mb-3">
+                    <BellIcon className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <p className="text-gray-500 mb-2">Inga akuta kontakter just nu</p>
+                  <p className="text-sm text-gray-400">Vila gott! 😴 Systemet meddelar när någon behöver uppmärksamhet</p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {priorityContacts.map((contact) => (
-                    <div key={contact.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <div className="h-10 w-10 bg-purple-100 rounded-full flex items-center justify-center">
+                    <div 
+                      key={contact.id} 
+                      className={`flex items-start justify-between p-4 border-2 rounded-lg hover:shadow-md transition-all ${getUrgencyColor(contact.triggerData.urgency)}`}
+                    >
+                      <div className="flex items-start">
+                        {/* Urgency Indicator */}
+                        <div className="flex-shrink-0 mr-3 mt-1">
+                          {getUrgencyIcon(contact.triggerData.urgency)}
+                        </div>
+                        
+                        {/* Avatar */}
+                        <div className="flex-shrink-0 mr-4">
+                          <div className="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
                             <span className="text-sm font-medium text-purple-600">
                               {contact.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
                         </div>
-                        <div className="ml-4">
-                          <p className="text-sm font-medium text-gray-900">{contact.name}</p>
-                          <div className="flex items-center space-x-2 mt-1">
+                        
+                        {/* Contact Info & Trigger Data */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <p className="text-sm font-medium text-gray-900">{contact.name}</p>
+                            <span className="text-xs text-gray-500">
+                              (Score: {contact.triggerData.score})
+                            </span>
+                          </div>
+                          
+                          {/* Trigger Reason */}
+                          <p className="text-sm text-gray-700 mb-2 font-medium">
+                            🎯 {contact.triggerData.reason}
+                          </p>
+                          
+                          {/* Badges Row */}
+                          <div className="flex items-center space-x-2 mb-2">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTierColor(contact.influencerTier)}`}>
                               {contact.influencerTier?.toUpperCase()}
                             </span>
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(contact.status)}`}>
                               {contact.status}
                             </span>
+                            {contact.triggerData.daysSinceLastContact < 999 && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                {contact.triggerData.daysSinceLastContact} dagar sedan
+                              </span>
+                            )}
                           </div>
+                          
+                          {/* Platform & Followers */}
+                          {contact.platforms && contact.platforms.length > 0 && (
+                            <div className="flex items-center space-x-2 text-xs text-gray-500">
+                              <span>📱 {contact.platforms.join(', ')}</span>
+                              {contact.followersCount && (
+                                <span>• {contact.followersCount.toLocaleString()} följare</span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <Link
-                        to={`/admin/ambassadors/prospects/${contact.id}`}
-                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
-                      >
-                        Kontakta
-                        <ArrowRightIcon className="ml-2 h-3 w-3" />
-                      </Link>
+                      
+                      {/* Action Button */}
+                      <div className="flex-shrink-0 ml-4">
+                        <Link
+                          to={`/admin/ambassadors/prospects/${contact.id}`}
+                          className={`inline-flex items-center px-4 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white transition-colors ${
+                            contact.triggerData.urgency === 'critical' 
+                              ? 'bg-red-600 hover:bg-red-700' 
+                              : contact.triggerData.urgency === 'high'
+                              ? 'bg-orange-600 hover:bg-orange-700'
+                              : 'bg-purple-600 hover:bg-purple-700'
+                          }`}
+                        >
+                          {contact.triggerData.urgency === 'critical' ? 'AKUT' : 'Kontakta'}
+                          <ArrowRightIcon className="ml-2 h-3 w-3" />
+                        </Link>
+                      </div>
                     </div>
                   ))}
                 </div>
