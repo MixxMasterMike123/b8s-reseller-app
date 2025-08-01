@@ -7,6 +7,7 @@ import SmartPrice, { ExactPrice } from '../../components/shop/SmartPrice';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend
 } from 'recharts';
+import { parseReferrer, getReferrerCategory } from '../../utils/referrerParser';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -17,6 +18,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
   const [loading, setLoading] = useState(true);
   const [clicks, setClicks] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [affiliateClicksData, setAffiliateClicksData] = useState({});
 
 
   // Set user's preferred language if available
@@ -26,6 +28,45 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
       console.log(`🌍 Analytics: Using affiliate preferred language: ${affiliateData.preferredLang}`);
     }
   }, [affiliateData?.preferredLang, selectLanguage]);
+
+  // Fetch affiliate click details for referrer information
+  const fetchAffiliateClickDetails = async (orders) => {
+    try {
+      // Get all unique affiliate click IDs from orders
+      const clickIds = [];
+      orders.forEach(order => {
+        if (order.affiliateClickId) {
+          clickIds.push(order.affiliateClickId);
+        }
+        if (order.affiliate?.clickId) {
+          clickIds.push(order.affiliate.clickId);
+        }
+      });
+
+      if (clickIds.length === 0) return;
+
+      // Fetch affiliate clicks in batches (Firestore 'in' query limit is 10)
+      const clickData = {};
+      const batchSize = 10;
+      
+      for (let i = 0; i < clickIds.length; i += batchSize) {
+        const batch = clickIds.slice(i, i + batchSize);
+        const clicksQuery = query(
+          collection(db, 'affiliateClicks'),
+          where('__name__', 'in', batch)
+        );
+        
+        const clicksSnapshot = await getDocs(clicksQuery);
+        clicksSnapshot.docs.forEach(doc => {
+          clickData[doc.id] = { id: doc.id, ...doc.data() };
+        });
+      }
+
+      setAffiliateClicksData(clickData);
+    } catch (error) {
+      console.error('Error fetching affiliate click details:', error);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -83,6 +124,11 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
 
       setClicks(clickData);
       setOrders(filteredOrders);
+
+      // Fetch affiliate click details for referrer information
+      if (orderData.length > 0) {
+        await fetchAffiliateClickDetails(orderData);
+      }
 
       // Chart data loaded successfully
 
@@ -312,13 +358,44 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
                             </span>
                           </div>
                           
-                          {/* Customer Info */}
-                          <div className="text-xs text-gray-500">
-                            {o.customerInfo?.firstName ? 
-                              `${o.customerInfo.firstName} ${o.customerInfo.lastName || ''}`.trim() : 
-                              'Okänd kund'
+                          {/* Referrer Information */}
+                          {(() => {
+                            const clickId = o.affiliateClickId || o.affiliate?.clickId;
+                            const clickData = clickId ? affiliateClicksData[clickId] : null;
+                            
+                            if (clickData && clickData.landingPage && clickData.landingPage !== 'unknown') {
+                              const referrer = parseReferrer(clickData.landingPage);
+                              const category = getReferrerCategory(referrer.category);
+                              
+                              // Map category colors to actual Tailwind classes
+                              const categoryStyles = {
+                                purple: 'text-purple-800 bg-purple-100',
+                                blue: 'text-blue-800 bg-blue-100', 
+                                green: 'text-green-800 bg-green-100',
+                                red: 'text-red-800 bg-red-100',
+                                teal: 'text-teal-800 bg-teal-100',
+                                gray: 'text-gray-800 bg-gray-100',
+                                indigo: 'text-indigo-800 bg-indigo-100'
+                              };
+                              
+                              return (
+                                <div className="text-xs">
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded font-medium ${categoryStyles[category.color] || categoryStyles.gray}`}>
+                                    {referrer.name}
+                                  </span>
+                                </div>
+                              );
                             }
-                          </div>
+                            
+                            return (
+                              <div className="text-xs text-gray-500">
+                                {o.customerInfo?.firstName ? 
+                                  `${o.customerInfo.firstName} ${o.customerInfo.lastName || ''}`.trim() : 
+                                  'Okänd kund'
+                                }
+                              </div>
+                            );
+                          })()}
                         </div>
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 text-right">

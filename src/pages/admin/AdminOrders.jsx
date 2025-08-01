@@ -6,6 +6,9 @@ import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import OrderStatusMenu from '../../components/OrderStatusMenu';
 import { toast } from 'react-hot-toast';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../../firebase/config';
+import { parseReferrer, getReferrerCategory } from '../../utils/referrerParser';
 
 
 const getStatusStyles = (status) => {
@@ -29,6 +32,55 @@ const getStatusStyles = (status) => {
 
 const AdminOrders = () => {
   const { getAllOrders, updateOrderStatus, loading: contextLoading, error: contextError } = useOrder();
+  const [affiliateClicks, setAffiliateClicks] = useState({});
+  const [clicksLoading, setClicksLoading] = useState(false);
+
+  // Fetch affiliate click data for orders with affiliate information
+  const fetchAffiliateClicks = async (orders) => {
+    if (!orders || orders.length === 0) return;
+    
+    setClicksLoading(true);
+    try {
+      // Get all unique affiliate click IDs from orders
+      const clickIds = [];
+      orders.forEach(order => {
+        if (order.affiliateClickId) {
+          clickIds.push(order.affiliateClickId);
+        }
+        if (order.affiliate?.clickId) {
+          clickIds.push(order.affiliate.clickId);
+        }
+      });
+
+      if (clickIds.length === 0) {
+        setClicksLoading(false);
+        return;
+      }
+
+      // Fetch affiliate clicks in batches (Firestore 'in' query limit is 10)
+      const clickData = {};
+      const batchSize = 10;
+      
+      for (let i = 0; i < clickIds.length; i += batchSize) {
+        const batch = clickIds.slice(i, i + batchSize);
+        const clicksQuery = query(
+          collection(db, 'affiliateClicks'),
+          where('__name__', 'in', batch)
+        );
+        
+        const clicksSnapshot = await getDocs(clicksQuery);
+        clicksSnapshot.docs.forEach(doc => {
+          clickData[doc.id] = { id: doc.id, ...doc.data() };
+        });
+      }
+
+      setAffiliateClicks(clickData);
+    } catch (error) {
+      console.error('Error fetching affiliate clicks:', error);
+    } finally {
+      setClicksLoading(false);
+    }
+  };
 
   const getStatusLabel = (status) => {
     switch (status) {
@@ -69,6 +121,13 @@ const AdminOrders = () => {
     };
     fetchOrders();
   }, [getAllOrders]);
+
+  // Fetch affiliate click data when orders change
+  useEffect(() => {
+    if (orders && orders.length > 0) {
+      fetchAffiliateClicks(orders);
+    }
+  }, [orders]);
 
   const filteredOrders = useMemo(() => {
     if (!Array.isArray(orders)) {
@@ -333,6 +392,46 @@ const AdminOrders = () => {
                               <span className="font-medium">Affiliate:</span> {order.affiliateCode || order.affiliate?.code}
                             </div>
                           )}
+                          
+                          {/* Referrer Information */}
+                          {(() => {
+                            const clickId = order.affiliateClickId || order.affiliate?.clickId;
+                            const clickData = clickId ? affiliateClicks[clickId] : null;
+                            
+                            if (clicksLoading && clickId) {
+                              return (
+                                <div className="text-xs text-gray-400">
+                                  Laddar referrer...
+                                </div>
+                              );
+                            }
+                            
+                            if (clickData && clickData.landingPage && clickData.landingPage !== 'unknown') {
+                              const referrer = parseReferrer(clickData.landingPage);
+                              const category = getReferrerCategory(referrer.category);
+                              
+                              // Map category colors to actual Tailwind classes
+                              const categoryStyles = {
+                                purple: 'text-purple-800 bg-purple-100',
+                                blue: 'text-blue-800 bg-blue-100', 
+                                green: 'text-green-800 bg-green-100',
+                                red: 'text-red-800 bg-red-100',
+                                teal: 'text-teal-800 bg-teal-100',
+                                gray: 'text-gray-800 bg-gray-100',
+                                indigo: 'text-indigo-800 bg-indigo-100'
+                              };
+                              
+                              return (
+                                <div className="text-xs">
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded font-medium ${categoryStyles[category.color] || categoryStyles.gray}`}>
+                                    {referrer.name}
+                                  </span>
+                                </div>
+                              );
+                            }
+                            
+                            return null;
+                          })()}
                           
                           {/* Payment Method */}
                           <div className="text-xs text-gray-500">
