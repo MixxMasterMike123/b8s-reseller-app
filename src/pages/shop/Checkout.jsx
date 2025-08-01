@@ -29,6 +29,7 @@ const Checkout = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
   const [step, setStep] = useState('contact'); // 'contact', 'shipping', 'payment'
   
   // Login modal state
@@ -192,20 +193,28 @@ const Checkout = () => {
   const handlePaymentSuccess = async (paymentIntent) => {
     console.log('✅ Payment successful, creating order...', paymentIntent);
     
+    // Set processing state to prevent empty cart page
+    setProcessingPayment(true);
+    
     try {
       // Create the order with payment information
       const orderId = await createOrderFromPayment(paymentIntent);
       console.log('✅ Order created with ID:', orderId);
       
-      // Clear the cart after successful order creation
-      clearCart();
-      
       // Navigate to order confirmation page with the order ID
+      // Clear cart AFTER navigation to prevent empty cart page flash
       navigate(getCountryAwareUrl(`order-confirmation/${orderId}`));
+      
+      // Clear the cart after navigation
+      setTimeout(() => {
+        clearCart();
+        setProcessingPayment(false);
+      }, 100);
       
     } catch (error) {
       console.error('❌ Error creating order after payment:', error);
       toast.error('Betalning genomförd men fel vid orderskapande. Kontakta support.');
+      setProcessingPayment(false);
     }
   };
 
@@ -579,7 +588,7 @@ const Checkout = () => {
     }
   };
 
-  if (cart.items.length === 0) {
+  if (cart.items.length === 0 && !processingPayment) {
     return (
       <div className="min-h-screen bg-gray-50">
         <ShopNavigation />
@@ -597,6 +606,24 @@ const Checkout = () => {
           >
             {t('checkout_continue_shopping', 'Fortsätt handla')}
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show processing spinner when payment is being processed
+  if (processingPayment) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <ShopNavigation />
+        <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            {t('checkout_processing_payment', 'Behandlar betalning...')}
+          </h1>
+          <p className="text-gray-600 mb-8">
+            {t('checkout_processing_description', 'Vi behandlar din betalning och skapar din order. Vänta ett ögonblick...')}
+          </p>
         </div>
       </div>
     );
