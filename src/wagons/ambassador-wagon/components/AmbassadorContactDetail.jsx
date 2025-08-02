@@ -530,12 +530,25 @@ const AmbassadorContactDetail = () => {
             <div>
               <h4 className="text-sm font-medium text-gray-900 mb-3">Social Media</h4>
               <div className="space-y-2">
-                {contact.totalFollowers && (
-                  <div className="flex items-center text-gray-600">
-                    <UserGroupIcon className="h-4 w-4 mr-2" />
-                    {contact.totalFollowers.toLocaleString()} följare totalt
-                  </div>
-                )}
+                {(() => {
+                  // Calculate total followers dynamically including otherPlatforms
+                  const platformFollowers = contact.platforms ? 
+                    Object.values(contact.platforms).reduce((sum, platform) => 
+                      sum + (platform.followers || platform.subscribers || 0), 0) : 0;
+                  
+                  const otherFollowers = contact.otherPlatforms ? 
+                    contact.otherPlatforms.reduce((sum, platform) => 
+                      sum + (platform.followers || 0), 0) : 0;
+                  
+                  const totalFollowers = platformFollowers + otherFollowers;
+                  
+                  return totalFollowers > 0 ? (
+                    <div className="flex items-center text-gray-600">
+                      <UserGroupIcon className="h-4 w-4 mr-2" />
+                      {totalFollowers.toLocaleString()} följare totalt
+                    </div>
+                  ) : null;
+                })()}
                 {contact.platforms && Object.entries(contact.platforms).map(([platform, data]) => {
                   // Handle different platforms with different terminology
                   const count = data.followers || data.subscribers || 0;
