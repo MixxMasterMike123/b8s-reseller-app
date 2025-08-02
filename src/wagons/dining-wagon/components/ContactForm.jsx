@@ -100,22 +100,14 @@ const ContactForm = () => {
   const validateForm = () => {
     const newErrors = {};
 
+    // Only company name is mandatory
     if (!formData.companyName.trim()) {
       newErrors.companyName = 'Företagsnamn är obligatoriskt';
     }
 
-    if (!formData.contactPerson.trim()) {
-      newErrors.contactPerson = 'Kontaktperson är obligatorisk';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'E-post är obligatorisk';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    // Validate email format if provided (but not mandatory)
+    if (formData.email.trim() && !/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Ogiltig e-postadress';
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Telefonnummer är obligatoriskt';
     }
 
     setErrors(newErrors);
@@ -127,7 +119,7 @@ const ContactForm = () => {
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error('Vänligen fyll i alla obligatoriska fält korrekt');
+      toast.error('Vänligen fyll i företagsnamn korrekt');
       return;
     }
 
@@ -229,7 +221,7 @@ const ContactForm = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Namn *
+                    Namn
                   </label>
                   <input
                     type="text"
@@ -251,7 +243,7 @@ const ContactForm = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    E-post *
+                    E-post
                   </label>
                   <input
                     type="email"
@@ -274,7 +266,7 @@ const ContactForm = () => {
 
               <div className="mt-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Telefon *
+                  Telefon
                 </label>
                 <input
                   type="tel"
