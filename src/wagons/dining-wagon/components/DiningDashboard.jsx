@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import AppLayout from '../../../components/layout/AppLayout';
 import { useDiningContacts } from '../hooks/useDiningContacts';
 import { useDiningActivities } from '../hooks/useDiningActivities';
-import B2BImportButton from './B2BImportButton';
+
 import {
   collection, 
   doc, 
@@ -540,6 +540,24 @@ const DiningDashboard = () => {
             )}
           </div>
 
+          {/* Top Action Buttons */}
+          <div className="flex items-center justify-center space-x-4 mb-6">
+            <Link
+              to="/admin/dining/contacts"
+              className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors space-x-2"
+            >
+              <ChatBubbleLeftRightIcon className="h-5 w-5" />
+              <span>Alla kontakter</span>
+            </Link>
+            <Link
+              to="/admin/dining/activities/new"
+              className="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition-colors space-x-2"
+            >
+              <PhoneIcon className="h-5 w-5" />
+              <span>Registrera samtal</span>
+            </Link>
+          </div>
+
           {/* Add New Contact Button */}
           <Link
             to="/admin/dining/contacts/new"
@@ -838,28 +856,7 @@ const DiningDashboard = () => {
           </div>
         </div>
 
-        {/* Quick Actions Footer */}
-        <div className="mt-12 text-center">
-          <div className="flex items-center justify-center space-x-6">
-            <Link
-              to="/admin/dining/contacts"
-              className="text-gray-600 hover:text-gray-900 font-medium flex items-center space-x-1"
-            >
-              <span>Alla kontakter</span>
-              <ArrowRightIcon className="h-4 w-4" />
-            </Link>
-            <span className="text-gray-300">•</span>
-            <Link
-              to="/admin/dining/activities/new"
-              className="text-gray-600 hover:text-gray-900 font-medium flex items-center space-x-1"
-            >
-              <span>Registrera samtal</span>
-              <ArrowRightIcon className="h-4 w-4" />
-            </Link>
-            <span className="text-gray-300">•</span>
-            <B2BImportButton />
-          </div>
-        </div>
+
 
       </div>
     </AppLayout>
