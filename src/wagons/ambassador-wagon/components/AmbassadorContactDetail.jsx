@@ -60,6 +60,8 @@ const AmbassadorContactDetail = () => {
   const [showActivityForm, setShowActivityForm] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [newPortfolioUrl, setNewPortfolioUrl] = useState('');
+  const [newTag, setNewTag] = useState('');
   const [activityData, setActivityData] = useState({
     type: 'social_media', // Default to DM/social media contact
     title: '',
@@ -314,6 +316,46 @@ const AmbassadorContactDetail = () => {
     } catch (error) {
       console.error('Error activating ambassador:', error);
     }
+  };
+
+  // Portfolio URL handlers
+  const handleAddPortfolioUrl = () => {
+    if (newPortfolioUrl.trim()) {
+      const currentUrls = editData.portfolioUrls || [];
+      setEditData({
+        ...editData,
+        portfolioUrls: [...currentUrls, newPortfolioUrl.trim()]
+      });
+      setNewPortfolioUrl('');
+    }
+  };
+
+  const handleRemovePortfolioUrl = (urlToRemove) => {
+    const currentUrls = editData.portfolioUrls || [];
+    setEditData({
+      ...editData,
+      portfolioUrls: currentUrls.filter(url => url !== urlToRemove)
+    });
+  };
+
+  // Tag handlers
+  const handleAddTag = () => {
+    if (newTag.trim() && !editData.tags?.includes(newTag.trim())) {
+      const currentTags = editData.tags || [];
+      setEditData({
+        ...editData,
+        tags: [...currentTags, newTag.trim()]
+      });
+      setNewTag('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove) => {
+    const currentTags = editData.tags || [];
+    setEditData({
+      ...editData,
+      tags: currentTags.filter(tag => tag !== tagToRemove)
+    });
   };
 
   // Activity Item Component
@@ -789,6 +831,7 @@ const AmbassadorContactDetail = () => {
                         value={editData.name || ''}
                         onChange={(e) => setEditData({ ...editData, name: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                        placeholder="Influencerns fullständiga namn"
                       />
                     </div>
                     <div>
@@ -798,15 +841,9 @@ const AmbassadorContactDetail = () => {
                         value={editData.email || ''}
                         onChange={(e) => setEditData({ ...editData, email: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                        placeholder="kontakt@example.com"
                       />
                     </div>
-                  </div>
-                </div>
-
-                {/* Contact Details */}
-                <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">Kontaktuppgifter</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
                       <input
@@ -814,33 +851,61 @@ const AmbassadorContactDetail = () => {
                         value={editData.phone || ''}
                         onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                        placeholder="+46 70 123 45 67"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Webbplats</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Affärs-email</label>
                       <input
-                        type="url"
-                        value={editData.website || ''}
-                        onChange={(e) => setEditData({ ...editData, website: e.target.value })}
+                        type="email"
+                        value={editData.businessEmail || ''}
+                        onChange={(e) => setEditData({ ...editData, businessEmail: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                        placeholder="https://"
+                        placeholder="business@example.com"
                       />
                     </div>
-                  </div>
-                </div>
-
-                {/* Location and Timezone */}
-                <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">Plats & Tidszon</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Land/Region</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Management Kontakt</label>
                       <input
                         type="text"
-                        value={editData.location || ''}
-                        onChange={(e) => setEditData({ ...editData, location: e.target.value })}
+                        value={editData.managementContact || ''}
+                        onChange={(e) => setEditData({ ...editData, managementContact: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                        placeholder="Manager/agent kontaktinfo"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Land</label>
+                      <select
+                        value={editData.country || editData.location || 'Sverige'}
+                        onChange={(e) => setEditData({ ...editData, country: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                      >
+                        <option value="Sverige">Sverige</option>
+                        <option value="Norge">Norge</option>
+                        <option value="Danmark">Danmark</option>
+                        <option value="Finland">Finland</option>
+                        <option value="Tyskland">Tyskland</option>
+                        <option value="Storbritannien">Storbritannien</option>
+                        <option value="USA">USA</option>
+                        <option value="Annat">Annat</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Språk</label>
+                      <select
+                        value={editData.language || 'sv-SE'}
+                        onChange={(e) => setEditData({ ...editData, language: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                      >
+                        <option value="sv-SE">Svenska</option>
+                        <option value="en-US">English (US)</option>
+                        <option value="en-GB">English (UK)</option>
+                        <option value="de-DE">Deutsch</option>
+                        <option value="da-DK">Dansk</option>
+                        <option value="no-NO">Norsk</option>
+                        <option value="fi-FI">Suomi</option>
+                      </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Tidszon</label>
@@ -859,10 +924,20 @@ const AmbassadorContactDetail = () => {
                   </div>
                 </div>
 
-                {/* Professional Information */}
+                {/* Important Links */}
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">Professionell Information</h4>
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Viktiga Länkar</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Webbsida</label>
+                      <input
+                        type="url"
+                        value={editData.websiteUrl || editData.website || ''}
+                        onChange={(e) => setEditData({ ...editData, websiteUrl: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                        placeholder="https://www.example.com"
+                      />
+                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Media Kit URL</label>
                       <input
@@ -870,40 +945,65 @@ const AmbassadorContactDetail = () => {
                         value={editData.mediaKitUrl || ''}
                         onChange={(e) => setEditData({ ...editData, mediaKitUrl: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                        placeholder="https://"
+                        placeholder="https://drive.google.com/..."
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Prislista URL</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Rate Card URL</label>
                       <input
                         type="url"
-                        value={editData.pricelistUrl || ''}
-                        onChange={(e) => setEditData({ ...editData, pricelistUrl: e.target.value })}
+                        value={editData.rateCardUrl || editData.pricelistUrl || ''}
+                        onChange={(e) => setEditData({ ...editData, rateCardUrl: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                        placeholder="https://"
+                        placeholder="Prislista för samarbeten"
                       />
                     </div>
                   </div>
+
+                  {/* Portfolio URLs */}
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Portfolio-länkar</label>
+                    <div className="flex gap-2 mb-3">
+                      <input
+                        type="url"
+                        value={newPortfolioUrl || ''}
+                        onChange={(e) => setNewPortfolioUrl(e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                        placeholder="https://example.com/portfolio"
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddPortfolioUrl())}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddPortfolioUrl}
+                        className="px-4 py-2 text-sm font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100"
+                      >
+                        Lägg till
+                      </button>
+                    </div>
+                    
+                    {editData.portfolioUrls && editData.portfolioUrls.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {editData.portfolioUrls.map((url, index) => (
+                          <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800">
+                            {url}
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePortfolioUrl(url)}
+                              className="ml-2 text-purple-600 hover:text-purple-800"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Influencer Details */}
+                {/* Status & Kategorisering */}
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">Influencer Detaljer</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Tier</label>
-                      <select
-                        value={editData.influencerTier || ''}
-                        onChange={(e) => setEditData({ ...editData, influencerTier: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                      >
-                        <option value="">Välj tier</option>
-                        <option value="nano">Nano (1K-10K)</option>
-                        <option value="mikro">Mikro (10K-100K)</option>
-                        <option value="makro">Makro (100K-1M)</option>
-                        <option value="mega">Mega (1M+)</option>
-                      </select>
-                    </div>
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Status & Kategorisering</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                       <select
@@ -921,6 +1021,48 @@ const AmbassadorContactDetail = () => {
                         <option value="suspended">Avstängd</option>
                       </select>
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Prioritet</label>
+                      <select
+                        value={editData.priority || 'medium'}
+                        onChange={(e) => setEditData({ ...editData, priority: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                      >
+                        <option value="low">Låg</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">Hög</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                      <select
+                        value={editData.category || 'fishing'}
+                        onChange={(e) => setEditData({ ...editData, category: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                      >
+                        <option value="fishing">Fiske</option>
+                        <option value="outdoor">Outdoor</option>
+                        <option value="lifestyle">Livsstil</option>
+                        <option value="sports">Sport</option>
+                        <option value="travel">Resor</option>
+                        <option value="other">Annat</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Influencer Tier</label>
+                    <select
+                      value={editData.influencerTier || ''}
+                      onChange={(e) => setEditData({ ...editData, influencerTier: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                    >
+                      <option value="">Välj tier</option>
+                      <option value="nano">Nano (1K-10K)</option>
+                      <option value="mikro">Mikro (10K-100K)</option>
+                      <option value="makro">Makro (100K-1M)</option>
+                      <option value="mega">Mega (1M+)</option>
+                    </select>
                   </div>
                 </div>
 
@@ -950,7 +1092,7 @@ const AmbassadorContactDetail = () => {
                               }
                             })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                            placeholder="@användarnamn"
+                            placeholder="användarnamn"
                           />
                         </div>
                         <div>
@@ -987,12 +1129,376 @@ const AmbassadorContactDetail = () => {
                               }
                             })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                            placeholder="https://instagram.com/..."
+                            placeholder="https://instagram.com/username"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* YouTube */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center mb-3">
+                        <span className="font-medium text-gray-900">▶️ YouTube</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Kanal</label>
+                          <input
+                            type="text"
+                            value={editData.platforms?.youtube?.handle || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                youtube: {
+                                  ...editData.platforms?.youtube,
+                                  handle: e.target.value
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="kanalnamn"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Prenumeranter</label>
+                          <input
+                            type="number"
+                            value={editData.platforms?.youtube?.subscribers || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                youtube: {
+                                  ...editData.platforms?.youtube,
+                                  subscribers: parseInt(e.target.value) || 0
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Kanal URL</label>
+                          <input
+                            type="url"
+                            value={editData.platforms?.youtube?.url || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                youtube: {
+                                  ...editData.platforms?.youtube,
+                                  url: e.target.value
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="https://youtube.com/username"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* TikTok */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center mb-3">
+                        <span className="font-medium text-gray-900">🎵 TikTok</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Handle</label>
+                          <input
+                            type="text"
+                            value={editData.platforms?.tiktok?.handle || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                tiktok: {
+                                  ...editData.platforms?.tiktok,
+                                  handle: e.target.value
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="användarnamn"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Följare</label>
+                          <input
+                            type="number"
+                            value={editData.platforms?.tiktok?.followers || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                tiktok: {
+                                  ...editData.platforms?.tiktok,
+                                  followers: parseInt(e.target.value) || 0
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Profil URL</label>
+                          <input
+                            type="url"
+                            value={editData.platforms?.tiktok?.url || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                tiktok: {
+                                  ...editData.platforms?.tiktok,
+                                  url: e.target.value
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="https://tiktok.com/@username"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Facebook */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center mb-3">
+                        <span className="font-medium text-gray-900">📘 Facebook</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Handle</label>
+                          <input
+                            type="text"
+                            value={editData.platforms?.facebook?.handle || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                facebook: {
+                                  ...editData.platforms?.facebook,
+                                  handle: e.target.value
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="användarnamn"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Följare</label>
+                          <input
+                            type="number"
+                            value={editData.platforms?.facebook?.followers || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                facebook: {
+                                  ...editData.platforms?.facebook,
+                                  followers: parseInt(e.target.value) || 0
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Sida URL</label>
+                          <input
+                            type="url"
+                            value={editData.platforms?.facebook?.url || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                facebook: {
+                                  ...editData.platforms?.facebook,
+                                  url: e.target.value
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="https://facebook.com/username"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Twitter */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center mb-3">
+                        <span className="font-medium text-gray-900">🐦 Twitter/X</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Handle</label>
+                          <input
+                            type="text"
+                            value={editData.platforms?.twitter?.handle || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                twitter: {
+                                  ...editData.platforms?.twitter,
+                                  handle: e.target.value
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="användarnamn"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Följare</label>
+                          <input
+                            type="number"
+                            value={editData.platforms?.twitter?.followers || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                twitter: {
+                                  ...editData.platforms?.twitter,
+                                  followers: parseInt(e.target.value) || 0
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Profil URL</label>
+                          <input
+                            type="url"
+                            value={editData.platforms?.twitter?.url || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                twitter: {
+                                  ...editData.platforms?.twitter,
+                                  url: e.target.value
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="https://twitter.com/username"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* LinkedIn */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center mb-3">
+                        <span className="font-medium text-gray-900">💼 LinkedIn</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Handle</label>
+                          <input
+                            type="text"
+                            value={editData.platforms?.linkedin?.handle || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                linkedin: {
+                                  ...editData.platforms?.linkedin,
+                                  handle: e.target.value
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="användarnamn"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Följare</label>
+                          <input
+                            type="number"
+                            value={editData.platforms?.linkedin?.followers || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                linkedin: {
+                                  ...editData.platforms?.linkedin,
+                                  followers: parseInt(e.target.value) || 0
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Profil URL</label>
+                          <input
+                            type="url"
+                            value={editData.platforms?.linkedin?.url || ''}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              platforms: {
+                                ...editData.platforms,
+                                linkedin: {
+                                  ...editData.platforms?.linkedin,
+                                  url: e.target.value
+                                }
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="https://linkedin.com/in/username"
                           />
                         </div>
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* Tags */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Taggar</h4>
+                  <div className="flex gap-2 mb-3">
+                    <input
+                      type="text"
+                      value={newTag || ''}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                      placeholder="Lägg till tagg (t.ex. #hett, #kontrakt)"
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddTag}
+                      className="px-4 py-2 text-sm font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100"
+                    >
+                      Lägg till
+                    </button>
+                  </div>
+                  
+                  {editData.tags && editData.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {editData.tags.map((tag, index) => (
+                        <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800">
+                          {tag}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveTag(tag)}
+                            className="ml-2 text-purple-600 hover:text-purple-800"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Notes */}
