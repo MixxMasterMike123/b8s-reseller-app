@@ -16,7 +16,8 @@ import {
   DocumentTextIcon,
   ClockIcon,
   ExclamationTriangleIcon,
-  CheckIcon
+  CheckIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import {
   PhoneIcon as PhoneSolid,
@@ -186,7 +187,7 @@ const ContactDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { currentUser, userData, isAdmin, getAllUsers } = useAuth();
-  const { contacts, getContact, updateContact, deleteContact, hasInitialized } = useDiningContacts();
+  const { contacts, getContact, updateContact, deleteContact, activateContact, hasInitialized } = useDiningContacts();
   const { getActivitiesByContact, addActivity, updateActivity, deleteActivity } = useDiningActivities();
   
   // URL parameter detection for activity highlighting
@@ -1005,6 +1006,21 @@ const ContactDetail = () => {
     }
   };
 
+  // 🎯 NEW: Activate contact (Convert prospect to B2B customer)
+  const handleActivateContact = async () => {
+    if (!window.confirm(`Är du säker på att du vill aktivera "${contact.companyName}" som B2B-kund? De kommer då att visas i kundhanteringen.`)) {
+      return;
+    }
+
+    try {
+      await activateContact(id);
+      // Success message handled by the hook
+    } catch (error) {
+      console.error('Error activating contact:', error);
+      // Error message handled by the hook
+    }
+  };
+
   const handleDeleteContact = async () => {
     if (!window.confirm(`Är du säker på att du vill ta bort kontakten "${contact.companyName}"? Detta kan inte ångras.`)) {
       return;
@@ -1153,6 +1169,18 @@ const ContactDetail = () => {
                   </span>
                 )}
                   </button>
+                  {/* 🎯 NEW: Make Active Button (Only for prospects) */}
+                  {contact.active !== true && (
+                    <button
+                      onClick={handleActivateContact}
+                      className="flex items-center px-4 py-2 border border-green-300 text-green-700 hover:bg-green-50 rounded-lg font-medium transition-colors space-x-2"
+                      title="Aktivera som B2B-kund"
+                    >
+                      <CheckCircleIcon className="h-5 w-5" />
+                      <span>Gör Aktiv</span>
+                    </button>
+                  )}
+                  
                   <button
                     onClick={handleEditContact}
                     className="flex items-center px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition-colors space-x-2"

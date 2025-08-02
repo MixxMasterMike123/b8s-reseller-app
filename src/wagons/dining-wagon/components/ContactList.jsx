@@ -14,11 +14,13 @@ import {
   GlobeAltIcon,
   StarIcon,
   ExclamationTriangleIcon,
-  ArrowLeftIcon
+  ArrowLeftIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import {
   StarIcon as StarSolid
 } from '@heroicons/react/24/solid';
+import toast from 'react-hot-toast';
 
 const ContactList = () => {
   const { 
@@ -26,7 +28,8 @@ const ContactList = () => {
     loading, 
     filterContacts, 
     getContactStats, 
-    getCountries
+    getCountries,
+    activateContact
   } = useDiningContacts();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -49,6 +52,21 @@ const ContactList = () => {
 
   const stats = getContactStats();
   const countries = getCountries();
+
+  // 🎯 NEW: Activate contact handler
+  const handleActivateContact = async (contactId, companyName) => {
+    if (!window.confirm(`Aktivera "${companyName}" som B2B-kund? De kommer då att visas i kundhanteringen.`)) {
+      return;
+    }
+
+    try {
+      await activateContact(contactId);
+      // Success message handled by the hook
+    } catch (error) {
+      console.error('Error activating contact:', error);
+      // Error message handled by the hook
+    }
+  };
 
   // Status badge styling
   const getStatusBadge = (status) => {
@@ -352,6 +370,18 @@ const ContactList = () => {
                       {/* Column 3: Actions */}
                       <td className="px-4 md:px-6 py-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
+                          {/* Make Active Button (Only for prospects) */}
+                          {contact.active !== true && (
+                            <button
+                              onClick={() => handleActivateContact(contact.id, contact.companyName)}
+                              className="text-green-600 hover:text-green-700 font-medium text-sm flex items-center space-x-1"
+                              title="Aktivera som B2B-kund"
+                            >
+                              <CheckCircleIcon className="h-4 w-4" />
+                              <span>Aktivera</span>
+                            </button>
+                          )}
+                          
                           <Link
                             to={`/admin/dining/contacts/${contact.id}`}
                             className="text-orange-600 hover:text-orange-900 font-medium text-sm"

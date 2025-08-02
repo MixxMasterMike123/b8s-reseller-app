@@ -180,6 +180,33 @@ export const useDiningContacts = () => {
     }
   }, []);
 
+  // 🎯 NEW: Activate contact (Convert prospect to active B2B customer)
+  const activateContact = useCallback(async (contactId) => {
+    try {
+      setLoading(true);
+      
+      const contactRef = doc(db, 'users', contactId);
+      const now = new Date();
+      const activationData = {
+        active: true,          // 🔥 CRITICAL: Makes them appear in B2B Admin
+        status: 'active',      // Updates CRM status too
+        lastActivityAt: now,
+        updatedAt: now.toISOString()
+      };
+
+      await updateDoc(contactRef, activationData);
+      
+      toast.success('🍽️ Kontakt aktiverad som B2B-kund! Nu synlig i kundhantering.');
+      return true;
+    } catch (error) {
+      console.error('Error activating contact:', error);
+      toast.error('Kunde inte aktivera kontakt');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Delete contact (Remove guest)
   const deleteContact = useCallback(async (contactId) => {
     try {
@@ -279,6 +306,7 @@ export const useDiningContacts = () => {
     addContact,
     updateContact,
     deleteContact,
+    activateContact,   // 🎯 NEW: Convert prospect to active B2B customer
     getContact,
     
     // Utilities
