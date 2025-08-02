@@ -23,7 +23,8 @@ import {
   PlusIcon,
   TrashIcon,
   ClipboardDocumentListIcon,
-  CameraIcon
+  CameraIcon,
+  PencilIcon
 } from '@heroicons/react/24/outline';
 import {
   PhoneIcon as PhoneSolid,
@@ -48,7 +49,7 @@ const AmbassadorContactDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getContactById, updateContact, loading: contactLoading } = useAmbassadorContacts();
-  const { activities, addActivity, loading: activitiesLoading, activityTypes } = useAmbassadorActivities(id);
+  const { activities, addActivity, updateActivity, loading: activitiesLoading, activityTypes } = useAmbassadorActivities(id);
 
   const [contact, setContact] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -75,6 +76,10 @@ const AmbassadorContactDetail = () => {
   
   // 👁️ ACTIVITY EXPANSION STATE
   const [expandedActivities, setExpandedActivities] = useState(new Set());
+  
+  // ✏️ ACTIVITY EDITING STATE  
+  const [editingActivity, setEditingActivity] = useState(null);
+  const [editingActivityData, setEditingActivityData] = useState({});
 
   // Load contact data
   useEffect(() => {
@@ -197,7 +202,15 @@ const AmbassadorContactDetail = () => {
 
   // 🧠 AUTO-ANALYZE CONTENT FOR SMART TAG SUGGESTIONS
   useEffect(() => {
-    const combinedText = `${activityData.title} ${activityData.content}`.trim();
+    let combinedText = '';
+    
+    // Check if we're editing an activity or adding a new one
+    if (editingActivity) {
+      combinedText = `${editingActivityData.title || ''} ${editingActivityData.content || ''}`.trim();
+    } else {
+      combinedText = `${activityData.title} ${activityData.content}`.trim();
+    }
+    
     if (combinedText) {
       const allSuggestions = analyzeTextForTags(combinedText);
       // Filter out tags that are already selected
@@ -209,12 +222,13 @@ const AmbassadorContactDetail = () => {
         text: combinedText,
         allSuggestions,
         selectedTags,
-        filteredSuggestions
+        filteredSuggestions,
+        editingMode: !!editingActivity
       });
     } else {
       setSuggestedTags([]);
     }
-  }, [activityData.title, activityData.content, selectedTags]);
+  }, [activityData.title, activityData.content, editingActivityData.title, editingActivityData.content, selectedTags, editingActivity]);
 
   // 🎯 SMART TAG MANAGEMENT FUNCTIONS
   const addTag = (tag) => {
@@ -301,6 +315,59 @@ const AmbassadorContactDetail = () => {
   // Check if text needs expansion (longer than 100 characters)
   const needsExpansion = (text) => {
     return text && text.length > 100;
+  };
+
+  // ✏️ ACTIVITY EDITING FUNCTIONS
+  const startEditingActivity = (activity) => {
+    setEditingActivity(activity.id);
+    setEditingActivityData({
+      type: activity.type || 'social_media',
+      title: activity.title || '',
+      content: activity.content || '',
+      outcome: activity.outcome || '',
+      nextAction: activity.nextAction || '',
+      priority: activity.priority || 'medium',
+      platform: activity.platform || 'instagram',
+      campaignType: activity.campaignType || '',
+      followUpDate: activity.followUpDate || ''
+    });
+    setSelectedTags(activity.tags || []);
+    setSuggestedTags([]);
+    setShowActivityForm(false); // Hide add form if open
+  };
+
+  const cancelEditingActivity = () => {
+    setEditingActivity(null);
+    setEditingActivityData({});
+    setSelectedTags([]);
+    setSuggestedTags([]);
+  };
+
+  const saveEditedActivity = async () => {
+    try {
+      // Find the activity and update it
+      const activityToUpdate = activities.find(a => a.id === editingActivity);
+      if (!activityToUpdate) {
+        toast.error('Aktivitet kunde inte hittas');
+        return;
+      }
+
+      const updatedActivity = {
+        ...activityToUpdate,
+        ...editingActivityData,
+        tags: selectedTags,
+        updatedAt: new Date().toISOString()
+      };
+
+      // Update in database (we need to implement updateActivity in the hook)
+      await updateActivity(editingActivity, updatedActivity);
+      
+      toast.success('Aktivitet uppdaterad!');
+      cancelEditingActivity();
+    } catch (error) {
+      console.error('Error updating activity:', error);
+      toast.error('Kunde inte uppdatera aktivitet');
+    }
   };
 
   // Get tier badge
@@ -1075,10 +1142,19 @@ const AmbassadorContactDetail = () => {
                                 )}
                               </div>
                               
-                              {/* Date aligned with title */}
-                              <span className="text-xs text-gray-500 flex-shrink-0">
-                                {activity.createdAt?.toLocaleDateString('sv-SE') || 'Idag'}
-                              </span>
+                              {/* Date and edit button */}
+                              <div className="flex items-center space-x-2 flex-shrink-0">
+                                <span className="text-xs text-gray-500">
+                                  {activity.createdAt?.toLocaleDateString('sv-SE') || 'Idag'}
+                                </span>
+                                <button
+                                  onClick={() => startEditingActivity(activity)}
+                                  className="text-gray-400 hover:text-purple-600 transition-colors"
+                                  title="Redigera aktivitet"
+                                >
+                                  <PencilIcon className="h-3 w-3" />
+                                </button>
+                              </div>
                             </div>
                             
                             {activity.content && activity.content !== activity.title && (
@@ -1387,6 +1463,153 @@ const AmbassadorContactDetail = () => {
                 </div>
               )}
 
+              {/* ✏️ EDIT ACTIVITY FORM */}
+              {editingActivity && (
+                <div className="border-t border-gray-200 p-6 bg-blue-50">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-medium text-gray-900 flex items-center">
+                      <PencilIcon className="h-5 w-5 text-blue-600 mr-2" />
+                      Redigera Aktivitet
+                    </h3>
+                  </div>
+                  
+                  <form className="space-y-4" onSubmit={(e) => {
+                    e.preventDefault();
+                    saveEditedActivity();
+                  }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Vad hände? (sammanfattning)</label>
+                        <input
+                          type="text"
+                          value={editingActivityData.title}
+                          onChange={(e) => setEditingActivityData({ ...editingActivityData, title: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="T.ex. 'Skickade DM om B8Shield', 'Svarade på story', 'Förslag om samarbete'"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Plattform</label>
+                        <select
+                          value={editingActivityData.platform}
+                          onChange={(e) => setEditingActivityData({ ...editingActivityData, platform: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="instagram">Instagram DM</option>
+                          <option value="tiktok">TikTok DM</option>
+                          <option value="youtube">YouTube</option>
+                          <option value="facebook">Facebook</option>
+                          <option value="email">Email</option>
+                          <option value="phone">Telefon</option>
+                          <option value="other">Annat</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Detaljerad beskrivning</label>
+                      <textarea
+                        value={editingActivityData.content}
+                        onChange={(e) => setEditingActivityData({ ...editingActivityData, content: e.target.value })}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Detaljerad beskrivning... Smart tagging aktiveras automatiskt när du skriver!"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Resultat/Utfall</label>
+                        <input
+                          type="text"
+                          value={editingActivityData.outcome}
+                          onChange={(e) => setEditingActivityData({ ...editingActivityData, outcome: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Vad blev resultatet?"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Nästa steg</label>
+                        <input
+                          type="text"
+                          value={editingActivityData.nextAction}
+                          onChange={(e) => setEditingActivityData({ ...editingActivityData, nextAction: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Vad är nästa steg?"
+                        />
+                      </div>
+                    </div>
+
+                    {/* 🧠 SMART TAGGING SYSTEM FOR EDIT */}
+                    <div className="space-y-4">
+                      {/* Smart Suggestions */}
+                      {suggestedTags.length > 0 && (
+                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
+                          <h4 className="text-sm font-medium text-blue-900 mb-2">🧠 Smarta tagg-förslag:</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {suggestedTags.map(tag => (
+                              <div key={tag} className="flex items-center space-x-1">
+                                <button
+                                  type="button"
+                                  onClick={() => addTag(tag)}
+                                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors"
+                                >
+                                  <PlusIcon className="h-3 w-3 mr-1" />
+                                  {tag}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Selected Tags */}
+                      {selectedTags.length > 0 && (
+                        <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
+                          <h4 className="text-sm font-medium text-gray-900 mb-2">Valda taggar:</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedTags.map(tag => (
+                              <span
+                                key={tag}
+                                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800"
+                              >
+                                #{tag}
+                                <button
+                                  type="button"
+                                  onClick={() => removeTag(tag)}
+                                  className="ml-2 text-purple-600 hover:text-purple-800"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        type="button"
+                        onClick={cancelEditingActivity}
+                        className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                      >
+                        Avbryt
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={activitiesLoading}
+                        className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {activitiesLoading ? 'Sparar...' : 'Spara Ändringar'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
               {/* Activities List */}
               <div className="p-6">
                 {activities.length === 0 ? (
@@ -1494,8 +1717,19 @@ const AmbassadorContactDetail = () => {
                                     )}
                                   </div>
                                   <div className="text-right text-sm whitespace-nowrap text-gray-500 ml-4">
-                                    <time>{activity.createdAt?.toLocaleDateString('sv-SE')}</time>
-                                    <p className="text-xs">{activity.createdAt?.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}</p>
+                                    <div className="flex items-center space-x-2 justify-end">
+                                      <button
+                                        onClick={() => startEditingActivity(activity)}
+                                        className="text-gray-400 hover:text-purple-600 transition-colors"
+                                        title="Redigera aktivitet"
+                                      >
+                                        <PencilIcon className="h-3 w-3" />
+                                      </button>
+                                      <div>
+                                        <time>{activity.createdAt?.toLocaleDateString('sv-SE')}</time>
+                                        <p className="text-xs">{activity.createdAt?.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}</p>
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
