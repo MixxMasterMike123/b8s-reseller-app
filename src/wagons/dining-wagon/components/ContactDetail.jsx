@@ -186,7 +186,7 @@ const ContactDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { currentUser, userData, isAdmin, getAllUsers } = useAuth();
-  const { contacts, getContact, updateContact, hasInitialized } = useDiningContacts();
+  const { contacts, getContact, updateContact, deleteContact, hasInitialized } = useDiningContacts();
   const { getActivitiesByContact, addActivity, updateActivity, deleteActivity } = useDiningActivities();
   
   // URL parameter detection for activity highlighting
@@ -965,6 +965,21 @@ const ContactDetail = () => {
     setEditingContactData({});
   };
 
+  const handleDeleteContact = async () => {
+    if (!window.confirm(`Är du säker på att du vill ta bort kontakten "${contact.companyName}"? Detta kan inte ångras.`)) {
+      return;
+    }
+
+    try {
+      await deleteContact(id);
+      toast.success('🍽️ Kontakt borttagen');
+      navigate('/admin/dining/contacts'); // Redirect to contact list after deletion
+    } catch (error) {
+      console.error('Error deleting contact:', error);
+      toast.error('Kunde inte ta bort kontakt');
+    }
+  };
+
   if (!hasInitialized) {
     return (
       <AppLayout>
@@ -1074,6 +1089,14 @@ const ContactDetail = () => {
                   >
                     <PencilIcon className="h-5 w-5" />
                     <span>Redigera</span>
+                  </button>
+                  <button
+                    onClick={handleDeleteContact}
+                    className="flex items-center px-4 py-2 border border-red-300 text-red-700 hover:bg-red-50 rounded-lg font-medium transition-colors space-x-2"
+                    title="Ta bort kontakt"
+                  >
+                    <TrashIcon className="h-5 w-5" />
+                    <span>Ta bort</span>
                   </button>
             </div>
           </div>

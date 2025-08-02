@@ -26,8 +26,7 @@ const ContactList = () => {
     loading, 
     filterContacts, 
     getContactStats, 
-    getCountries,
-    deleteContact 
+    getCountries
   } = useDiningContacts();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -85,15 +84,7 @@ const ContactList = () => {
     return null;
   };
 
-  const handleDeleteContact = async (contactId, companyName) => {
-    if (window.confirm(`Är du säker på att du vill ta bort gästen "${companyName}"?`)) {
-      try {
-        await deleteContact(contactId);
-      } catch (error) {
-        console.error('Error deleting contact:', error);
-      }
-    }
-  };
+
 
   if (loading) {
     return (
@@ -351,12 +342,6 @@ const ContactList = () => {
                           >
                             Visa
                           </Link>
-                          <button
-                            onClick={() => handleDeleteContact(contact.id, contact.companyName)}
-                            className="text-red-600 hover:text-red-900 font-medium text-sm"
-                          >
-                            Ta bort
-                          </button>
                         </div>
                       </td>
                     </tr>
