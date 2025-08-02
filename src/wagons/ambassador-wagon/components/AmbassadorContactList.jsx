@@ -455,27 +455,7 @@ const AmbassadorContactList = () => {
                               
                               const totalFollowers = platformFollowers + otherFollowers;
                               
-                              // Debug logging for Graham Hopkins
-                              if (contact.email === 'ghopkins1974@gmail.com') {
-                                console.log('🔍 Graham Hopkins LIST VIEW:', {
-                                  name: contact.name,
-                                  platformFollowers,
-                                  otherFollowers,
-                                  totalFollowers,
-                                  displayValue: totalFollowers.toLocaleString(),
-                                  otherPlatformsLength: contact.otherPlatforms?.length || 0,
-                                  otherPlatformsData: contact.otherPlatforms
-                                });
-                              }
-                              
-                              const displayValue = totalFollowers.toLocaleString();
-                              
-                              // Final display debug for Graham Hopkins
-                              if (contact.email === 'ghopkins1974@gmail.com') {
-                                console.log('🎯 DISPLAYING for Graham Hopkins:', displayValue + ' följare');
-                              }
-                              
-                              return displayValue;
+                              return totalFollowers.toLocaleString();
                             })()} följare
                           </span>
                         </div>
