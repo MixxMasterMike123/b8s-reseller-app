@@ -1148,10 +1148,10 @@ const AmbassadorContactDetail = () => {
                                 </span>
                                 <button
                                   onClick={() => startEditingActivity(activity)}
-                                  className="text-gray-400 hover:text-purple-600 transition-colors"
+                                  className="text-gray-600 hover:text-purple-600 transition-colors p-1 rounded hover:bg-purple-50"
                                   title="Redigera aktivitet"
                                 >
-                                  <PencilIcon className="h-3 w-3" />
+                                  <PencilIcon className="h-4 w-4" />
                                 </button>
                               </div>
                             </div>
@@ -1609,7 +1609,7 @@ const AmbassadorContactDetail = () => {
                 </div>
               )}
 
-              {/* Activities List */}
+              {/* Remaining Activities List (beyond first 4 shown in timeline) */}
               <div className="p-6">
                 {activities.length === 0 ? (
                   <div className="text-center py-8">
@@ -1617,10 +1617,15 @@ const AmbassadorContactDetail = () => {
                     <h3 className="mt-2 text-sm font-medium text-gray-900">Inga aktiviteter än</h3>
                     <p className="mt-1 text-sm text-gray-500">Lägg till den första aktiviteten för denna ambassadör.</p>
                   </div>
-                ) : (
-                  <div className="flow-root">
-                    <ul className="-mb-8">
-                      {activities.map((activity, activityIdx) => (
+                ) : activities.length > 4 ? (
+                  <div>
+                    <div className="mb-4">
+                      <h3 className="text-sm font-medium text-gray-900">Äldre aktiviteter ({activities.length - 4} till)</h3>
+                      <p className="text-xs text-gray-500 mt-1">Senaste 4 aktiviteter visas ovan</p>
+                    </div>
+                    <div className="flow-root">
+                      <ul className="-mb-8">
+                        {activities.slice(4).map((activity, activityIdx) => (
                         <li key={activity.id}>
                           <div className="relative pb-8">
                             {activityIdx !== activities.length - 1 ? (
@@ -1719,10 +1724,10 @@ const AmbassadorContactDetail = () => {
                                     <div className="flex items-center space-x-2 justify-end">
                                       <button
                                         onClick={() => startEditingActivity(activity)}
-                                        className="text-gray-400 hover:text-purple-600 transition-colors"
+                                        className="text-gray-600 hover:text-purple-600 transition-colors p-1 rounded hover:bg-purple-50"
                                         title="Redigera aktivitet"
                                       >
-                                        <PencilIcon className="h-3 w-3" />
+                                        <PencilIcon className="h-4 w-4" />
                                       </button>
                                       <div>
                                         <time>{activity.createdAt?.toLocaleDateString('sv-SE')}</time>
@@ -1738,7 +1743,7 @@ const AmbassadorContactDetail = () => {
                       ))}
                     </ul>
                   </div>
-                )}
+                ) : null}
               </div>
             </div>
           </div>

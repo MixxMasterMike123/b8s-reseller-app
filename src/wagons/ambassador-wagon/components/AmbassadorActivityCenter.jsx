@@ -504,10 +504,10 @@ const AmbassadorActivityCenter = () => {
                                 <div className="flex items-center space-x-2 justify-end">
                                   <button
                                     onClick={() => startEditingActivity(activity)}
-                                    className="text-gray-400 hover:text-purple-600 transition-colors"
+                                    className="text-gray-600 hover:text-purple-600 transition-colors p-2 rounded hover:bg-purple-50 border border-gray-200"
                                     title="Redigera aktivitet"
                                   >
-                                    <PencilIcon className="h-4 w-4" />
+                                    <PencilIcon className="h-5 w-5" />
                                   </button>
                                   <div className="text-right">
                                     <time>{activity.createdAt?.toLocaleDateString('sv-SE')}</time>
