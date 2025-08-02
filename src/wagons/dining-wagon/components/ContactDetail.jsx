@@ -186,7 +186,7 @@ const ContactDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { currentUser, userData, isAdmin, getAllUsers } = useAuth();
-  const { contacts, getContact, hasInitialized } = useDiningContacts();
+  const { contacts, getContact, updateContact, hasInitialized } = useDiningContacts();
   const { getActivitiesByContact, addActivity, updateActivity, deleteActivity } = useDiningActivities();
   
   // URL parameter detection for activity highlighting
@@ -220,6 +220,11 @@ const ContactDetail = () => {
   
   // Dismissed activities state for trigger management
   const [dismissedActivities, setDismissedActivities] = useState(new Set());
+
+  // ✏️ CONTACT EDITING STATE
+  const [isEditingContact, setIsEditingContact] = useState(false);
+  const [editingContactData, setEditingContactData] = useState({});
+  const [isSavingContact, setIsSavingContact] = useState(false);
 
   // Admin Documents state (ZEN integration)
   const [adminDocuments, setAdminDocuments] = useState([]);
@@ -924,6 +929,42 @@ const ContactDetail = () => {
     }
   };
 
+  // ✏️ CONTACT EDITING FUNCTIONS
+  const handleEditContact = () => {
+    setEditingContactData({
+      companyName: contact.companyName || '',
+      contactPerson: contact.contactPerson || '',
+      phone: contact.phone || '',
+      email: contact.email || '',
+      address: contact.address || '',
+      city: contact.city || '',
+      postalCode: contact.postalCode || '',
+      country: contact.country || '',
+      orgNumber: contact.orgNumber || '',
+      notes: contact.notes || ''
+    });
+    setIsEditingContact(true);
+  };
+
+  const handleSaveContact = async () => {
+    try {
+      setIsSavingContact(true);
+      await updateContact(id, editingContactData);
+      setIsEditingContact(false);
+      toast.success('🍽️ Kontaktinformation uppdaterad');
+    } catch (error) {
+      console.error('Error updating contact:', error);
+      toast.error('Kunde inte uppdatera kontakt');
+    } finally {
+      setIsSavingContact(false);
+    }
+  };
+
+  const handleCancelContactEdit = () => {
+    setIsEditingContact(false);
+    setEditingContactData({});
+  };
+
   if (!hasInitialized) {
     return (
       <AppLayout>
@@ -1025,6 +1066,14 @@ const ContactDetail = () => {
                     {adminDocuments.length}
                   </span>
                 )}
+                  </button>
+                  <button
+                    onClick={handleEditContact}
+                    className="flex items-center px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition-colors space-x-2"
+                    title="Redigera kontaktinformation"
+                  >
+                    <PencilIcon className="h-5 w-5" />
+                    <span>Redigera</span>
                   </button>
             </div>
           </div>
@@ -1807,6 +1856,180 @@ const ContactDetail = () => {
                 </div>
               </div>
             </div>
+        )}
+
+        {/* ✏️ CONTACT EDIT MODAL */}
+        {isEditingContact && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900 flex items-center">
+                  <PencilIcon className="h-5 w-5 text-orange-600 mr-2" />
+                  Redigera Kontaktinformation
+                </h3>
+                <button
+                  onClick={handleCancelContactEdit}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <span className="sr-only">Stäng</span>
+                  ×
+                </button>
+              </div>
+              
+              <form className="space-y-6" onSubmit={(e) => {
+                e.preventDefault();
+                handleSaveContact();
+              }}>
+                {/* Company Information */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Företagsinformation</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Företagsnamn</label>
+                      <input
+                        type="text"
+                        value={editingContactData.companyName}
+                        onChange={(e) => setEditingContactData({ ...editingContactData, companyName: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="Företagsnamn"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Kontaktperson</label>
+                      <input
+                        type="text"
+                        value={editingContactData.contactPerson}
+                        onChange={(e) => setEditingContactData({ ...editingContactData, contactPerson: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="Kontaktperson"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Information */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Kontaktuppgifter</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                      <input
+                        type="tel"
+                        value={editingContactData.phone}
+                        onChange={(e) => setEditingContactData({ ...editingContactData, phone: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="Telefonnummer"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">E-post</label>
+                      <input
+                        type="email"
+                        value={editingContactData.email}
+                        onChange={(e) => setEditingContactData({ ...editingContactData, email: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="E-postadress"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Address Information */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Adressinformation</h4>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Adress</label>
+                      <input
+                        type="text"
+                        value={editingContactData.address}
+                        onChange={(e) => setEditingContactData({ ...editingContactData, address: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="Gatuadress"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Postnummer</label>
+                        <input
+                          type="text"
+                          value={editingContactData.postalCode}
+                          onChange={(e) => setEditingContactData({ ...editingContactData, postalCode: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                          placeholder="Postnummer"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Ort</label>
+                        <input
+                          type="text"
+                          value={editingContactData.city}
+                          onChange={(e) => setEditingContactData({ ...editingContactData, city: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                          placeholder="Ort"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Land</label>
+                        <input
+                          type="text"
+                          value={editingContactData.country}
+                          onChange={(e) => setEditingContactData({ ...editingContactData, country: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                          placeholder="Land"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Information */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Ytterligare information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Organisationsnummer</label>
+                      <input
+                        type="text"
+                        value={editingContactData.orgNumber}
+                        onChange={(e) => setEditingContactData({ ...editingContactData, orgNumber: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="Organisationsnummer"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Anteckningar</label>
+                      <textarea
+                        value={editingContactData.notes}
+                        onChange={(e) => setEditingContactData({ ...editingContactData, notes: e.target.value })}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="Interna anteckningar om kontakten"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={handleCancelContactEdit}
+                    className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    Avbryt
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSavingContact}
+                    className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 disabled:opacity-50"
+                  >
+                    {isSavingContact ? 'Sparar...' : 'Spara Ändringar'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
 
       </div>
