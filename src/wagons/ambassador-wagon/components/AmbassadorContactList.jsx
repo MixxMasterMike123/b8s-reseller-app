@@ -457,17 +457,25 @@ const AmbassadorContactList = () => {
                               
                               // Debug logging for Graham Hopkins
                               if (contact.email === 'ghopkins1974@gmail.com') {
-                                console.log('🔍 Graham Hopkins data:', {
+                                console.log('🔍 Graham Hopkins LIST VIEW:', {
                                   name: contact.name,
-                                  platforms: contact.platforms,
-                                  otherPlatforms: contact.otherPlatforms,
                                   platformFollowers,
                                   otherFollowers,
-                                  totalFollowers
+                                  totalFollowers,
+                                  displayValue: totalFollowers.toLocaleString(),
+                                  otherPlatformsLength: contact.otherPlatforms?.length || 0,
+                                  otherPlatformsData: contact.otherPlatforms
                                 });
                               }
                               
-                              return totalFollowers.toLocaleString();
+                              const displayValue = totalFollowers.toLocaleString();
+                              
+                              // Final display debug for Graham Hopkins
+                              if (contact.email === 'ghopkins1974@gmail.com') {
+                                console.log('🎯 DISPLAYING for Graham Hopkins:', displayValue + ' följare');
+                              }
+                              
+                              return displayValue;
                             })()} följare
                           </span>
                         </div>
