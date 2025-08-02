@@ -393,6 +393,26 @@ const AmbassadorContactDetail = () => {
     );
   };
 
+  // Get contact type badge (Ambassador vs Regular Affiliate)
+  const getContactTypeBadge = (contact) => {
+    if (contact.contactType === 'ambassador') {
+      return (
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800 border border-purple-200">
+          <StarIcon className="h-3 w-3 mr-1" />
+          Ambassadör
+        </span>
+      );
+    } else {
+      // Regular affiliate (no contactType field or contactType !== 'ambassador')
+      return (
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 border border-blue-200">
+          <ShareIcon className="h-3 w-3 mr-1" />
+          Affiliate
+        </span>
+      );
+    }
+  };
+
   // Get status badge
   const getStatusBadge = (status) => {
     const styles = {
@@ -400,20 +420,26 @@ const AmbassadorContactDetail = () => {
       contacted: 'bg-blue-100 text-blue-800',
       negotiating: 'bg-orange-100 text-orange-800',
       converted: 'bg-green-100 text-green-800',
-      declined: 'bg-red-100 text-red-800'
+      declined: 'bg-red-100 text-red-800',
+      active: 'bg-green-100 text-green-800',
+      pending: 'bg-yellow-100 text-yellow-800',
+      suspended: 'bg-red-100 text-red-800'
     };
     
     const labels = {
       prospect: 'Prospekt',
-      contacted: 'Kontaktad',
+      contacted: 'Kontaktad', 
       negotiating: 'Förhandlar',
       converted: 'Konverterad',
-      declined: 'Avböjd'
+      declined: 'Avböjd',
+      active: 'Aktiv',
+      pending: 'Väntande',
+      suspended: 'Avstängd'
     };
 
     return (
-      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${styles[status]}`}>
-        {labels[status]}
+      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${styles[status] || styles.prospect}`}>
+        {labels[status] || status || 'Prospekt'}
       </span>
     );
   };
@@ -530,19 +556,22 @@ const AmbassadorContactDetail = () => {
                   {contact.name}
                 </h1>
                 <div className="flex items-center space-x-3 mt-2">
-                  {getTierBadge(contact.influencerTier)}
+                  {/* 🎯 NEW: Contact Type Badge (Ambassador vs Affiliate) */}
+                  {getContactTypeBadge(contact)}
+                  
+                  {contact.influencerTier && getTierBadge(contact.influencerTier)}
                   {getStatusBadge(contact.status)}
                   
                   {/* 🎯 NEW: Active/Inactive Status Badge */}
                   {contact.active === true ? (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800 border border-green-200 font-medium">
                       <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                      Aktiv Affiliate
+                      Aktiv
                     </span>
                   ) : (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-800 border border-orange-200 font-medium">
                       <span className="w-2 h-2 bg-orange-400 rounded-full mr-2"></span>
-                      Ambassadör Prospekt
+                      Inaktiv
                     </span>
                   )}
                   

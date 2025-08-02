@@ -27,11 +27,8 @@ export const useAmbassadorContacts = () => {
     
     // 🎯 NEW: Use same affiliates collection as Affiliate Admin
     const contactsRef = collection(db, 'affiliates');
-    // 🎯 NEW: Filter by contactType to only show ambassadors from affiliates collection
-    const q = query(contactsRef, 
-      where('contactType', '==', 'ambassador'),
-      orderBy('updatedAt', 'desc')
-    );
+    // 🎯 NEW: Show ALL affiliates (both regular affiliates and ambassadors) like Dining Wagon shows all B2B customers
+    const q = query(contactsRef, orderBy('updatedAt', 'desc'));
     
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {

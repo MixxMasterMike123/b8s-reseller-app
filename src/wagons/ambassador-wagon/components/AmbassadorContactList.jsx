@@ -11,7 +11,9 @@ import {
   ArrowLeftIcon,
   TrashIcon,
   ShareIcon,
-  UserIcon
+  UserIcon,
+  StarIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import {
   StarIcon as StarSolid,
@@ -25,7 +27,8 @@ const AmbassadorContactList = () => {
     searchContacts, 
     getContactsByStatus,
     getContactsByTier,
-    deleteContact 
+    deleteContact,
+    activateContact
   } = useAmbassadorContacts();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -158,6 +161,39 @@ const AmbassadorContactList = () => {
     );
   };
 
+  // Get contact type badge (Ambassador vs Regular Affiliate)
+  const getContactTypeBadge = (contact) => {
+    if (contact.contactType === 'ambassador') {
+      return (
+        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+          <StarIcon className="h-3 w-3 mr-1" />
+          Ambassadör
+        </span>
+      );
+    } else {
+      // Regular affiliate (no contactType field or contactType !== 'ambassador')
+      return (
+        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+          <ShareIcon className="h-3 w-3 mr-1" />
+          Affiliate
+        </span>
+      );
+    }
+  };
+
+  // Handle activate contact
+  const handleActivateContact = async (contactId, name) => {
+    if (!window.confirm(`Är du säker på att du vill aktivera "${name}" som affiliate? De kommer då att visas i affiliate-hanteringen.`)) {
+      return;
+    }
+
+    try {
+      await activateContact(contactId);
+    } catch (error) {
+      console.error('Error activating contact:', error);
+    }
+  };
+
   const handleDeleteContact = async (contactId, name) => {
     if (window.confirm(`Är du säker på att du vill ta bort ambassadören "${name}"?`)) {
       try {
@@ -195,9 +231,9 @@ const AmbassadorContactList = () => {
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 flex items-center">
                   <UserGroupIcon className="h-8 w-8 text-purple-600 mr-3" />
-                  Ambassadör-prospekt
+                  Ambassadörer & Affiliates
                 </h1>
-                <p className="text-gray-600 mt-1">Hantera alla influencer-kontakter och partnerships</p>
+                <p className="text-gray-600 mt-1">Hantera alla marketing partners - både ambassadörer och affiliates</p>
               </div>
             </div>
             <Link
@@ -415,7 +451,20 @@ const AmbassadorContactList = () => {
                         {getPlatformIcons(contact.platforms)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(contact.status)}
+                        <div className="flex flex-col space-y-1">
+                          {getContactTypeBadge(contact)}
+                          {contact.active === true ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 border border-green-200 font-medium">
+                              <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1"></span>
+                              Aktiv
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800 border border-orange-200 font-medium">
+                              <span className="w-1.5 h-1.5 bg-orange-400 rounded-full mr-1"></span>
+                              Inaktiv
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {contact.lastContactedAt ? 
@@ -425,6 +474,18 @@ const AmbassadorContactList = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end space-x-2">
+                          {/* Make Active Button (Only for inactive contacts) */}
+                          {contact.active !== true && (
+                            <button
+                              onClick={() => handleActivateContact(contact.id, contact.name)}
+                              className="text-green-600 hover:text-green-700 font-medium text-sm flex items-center space-x-1"
+                              title="Aktivera som affiliate"
+                            >
+                              <CheckCircleIcon className="h-4 w-4" />
+                              <span>Aktivera</span>
+                            </button>
+                          )}
+                          
                           <Link
                             to={`/admin/ambassadors/prospects/${contact.id}`}
                             className="text-purple-600 hover:text-purple-900"
@@ -434,7 +495,7 @@ const AmbassadorContactList = () => {
                           <button
                             onClick={() => handleDeleteContact(contact.id, contact.name)}
                             className="text-red-600 hover:text-red-900"
-                            title="Ta bort ambassadör"
+                            title="Ta bort kontakt"
                           >
                             <TrashIcon className="h-4 w-4" />
                           </button>
