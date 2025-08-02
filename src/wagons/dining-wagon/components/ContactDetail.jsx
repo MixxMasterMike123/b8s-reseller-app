@@ -50,7 +50,6 @@ import {
   ChatBubbleLeftRightIcon as ChatBubbleLeftRightIconOutline,
   ClipboardDocumentListIcon,
   FolderIcon,
-  CheckCircleIcon,
   FireIcon,
   BellIcon,
   StarIcon,
