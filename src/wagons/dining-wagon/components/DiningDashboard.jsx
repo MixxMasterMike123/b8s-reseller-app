@@ -540,6 +540,40 @@ const DiningDashboard = () => {
             )}
           </div>
 
+          {/* 🎯 NEW: Customer Statistics */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+            <div className="flex items-center justify-center space-x-8">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">
+                  {contacts.filter(c => c.active === true).length}
+                </div>
+                <div className="flex items-center justify-center text-sm text-green-700 font-medium">
+                  <span className="w-2 h-2 bg-green-400 rounded-full mr-1"></span>
+                  Aktiva B2B Kunder
+                </div>
+              </div>
+              <div className="h-8 w-px bg-gray-200"></div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">
+                  {contacts.filter(c => c.active !== true).length}
+                </div>
+                <div className="flex items-center justify-center text-sm text-orange-700 font-medium">
+                  <span className="w-2 h-2 bg-orange-400 rounded-full mr-1"></span>
+                  CRM Reserveringar
+                </div>
+              </div>
+              <div className="h-8 w-px bg-gray-200"></div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">
+                  {contacts.length}
+                </div>
+                <div className="text-sm text-gray-600 font-medium">
+                  Totalt kontakter
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Top Action Buttons */}
           <div className="flex items-center justify-center space-x-4 mb-6">
             <Link

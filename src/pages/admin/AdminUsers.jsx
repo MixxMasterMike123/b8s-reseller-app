@@ -38,23 +38,21 @@ const AdminUsers = () => {
   }, [getAllUsers]);
 
   useEffect(() => {
-    // 🆕 ENHANCE: Filter users based on search term, status filter, AND active tab
+    // 🎯 FILTER: Show only ACTIVE paying customers (active: true)
     const filtered = users.filter(user => {
       const matchesSearch = 
         user.companyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.contactPerson?.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesStatus = 
-        statusFilter === 'all' || 
-        (statusFilter === 'active' && user.active) || 
-        (statusFilter === 'inactive' && !user.active);
+      // 🔥 CRITICAL: Only show active customers (paying customers with portal access)
+      const isActiveCustomer = user.active === true;
       
-      // 🆕 ADD: Tab-based filtering (preserves all existing logic)
+      // 🆕 ADD: Tab-based filtering (customers vs admins)
       const matchesTab = 
         activeTab === 'customers' ? user.role !== 'admin' : user.role === 'admin';
       
-      return matchesSearch && matchesStatus && matchesTab;
+      return matchesSearch && isActiveCustomer && matchesTab;
     });
     
     setFilteredUsers(filtered);
@@ -172,7 +170,7 @@ const AdminUsers = () => {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              B2B Kunder ({users.filter(u => u.role !== 'admin').length})
+              Aktiva B2B Kunder ({users.filter(u => u.role !== 'admin' && u.active === true).length})
             </button>
             <button
               onClick={() => setActiveTab('admins')}
@@ -211,16 +209,10 @@ const AdminUsers = () => {
             </div>
             
             <div className="flex-shrink-0">
-              <select
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                {/* 🆕 ENHANCE: Dynamic filter options based on active tab */}
-                <option value="all">{activeTab === 'customers' ? 'Alla Kunder' : 'Alla Admins'}</option>
-                <option value="active">{activeTab === 'customers' ? 'Aktiva Kunder' : 'Aktiva Admins'}</option>
-                <option value="inactive">{activeTab === 'customers' ? 'Inaktiva Kunder' : 'Inaktiva Admins'}</option>
-              </select>
+              <div className="inline-flex items-center px-3 py-2 bg-green-50 border border-green-200 rounded-md text-sm text-green-800">
+                <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                Endast aktiva kunder visas
+              </div>
             </div>
           </div>
         </div>

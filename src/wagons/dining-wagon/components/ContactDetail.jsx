@@ -1091,6 +1091,21 @@ const ContactDetail = () => {
                   </a>
                 </div>
                 
+                {/* 🎯 NEW: Active/Prospect Status Indicator */}
+                <div className="mt-3">
+                  {contact.active === true ? (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800 border border-green-200 font-medium">
+                      <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                      Aktiv B2B Kund
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-800 border border-orange-200 font-medium">
+                      <span className="w-2 h-2 bg-orange-400 rounded-full mr-2"></span>
+                      CRM Reservering
+                    </span>
+                  )}
+                </div>
+
                 {/* Contact Tags */}
                 {contact.tags && contact.tags.length > 0 && (
                   <div className="mt-3">

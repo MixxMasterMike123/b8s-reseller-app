@@ -323,6 +323,22 @@ const ContactList = () => {
                       <td className="px-4 md:px-6 py-4">
                         <div className="space-y-2">
                           {getStatusBadge(contact.status)}
+                          
+                          {/* 🎯 NEW: Active/Prospect Indicator */}
+                          <div className="flex items-center space-x-2">
+                            {contact.active === true ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 border border-green-200">
+                                <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1"></span>
+                                Aktiv Kund
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800 border border-orange-200">
+                                <span className="w-1.5 h-1.5 bg-orange-400 rounded-full mr-1"></span>
+                                Reservering
+                              </span>
+                            )}
+                          </div>
+                          
                           <div className="flex items-center text-sm text-gray-600">
                             <GlobeAltIcon className="h-4 w-4 mr-2" />
                             {contact.country || 'Ej angivet'}
