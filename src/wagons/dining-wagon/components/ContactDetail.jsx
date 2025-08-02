@@ -938,12 +938,24 @@ const ContactDetail = () => {
       contactPerson: contact.contactPerson || '',
       phone: contact.phone || '',
       email: contact.email || '',
+      website: contact.website || '',
       address: contact.address || '',
       city: contact.city || '',
       postalCode: contact.postalCode || '',
-      country: contact.country || '',
+      country: contact.country || 'Sverige',
       orgNumber: contact.orgNumber || '',
-      notes: contact.notes || ''
+      notes: contact.notes || '',
+      // CRM fields
+      status: contact.status || 'prospect',
+      priority: contact.priority || 'medium',
+      source: contact.source || 'manual',
+      // B2B fields
+      marginal: contact.marginal || 35,
+      deliveryAddress: contact.deliveryAddress || '',
+      deliveryCity: contact.deliveryCity || '',
+      deliveryPostalCode: contact.deliveryPostalCode || '',
+      deliveryCountry: contact.deliveryCountry || 'Sverige',
+      sameAsCompanyAddress: contact.sameAsCompanyAddress !== false
     });
     setEditingContactTags(contact.tags || []);
     setIsEditingContact(true);
@@ -1999,6 +2011,16 @@ const ContactDetail = () => {
                       />
                     </div>
                   </div>
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Webbsida</label>
+                    <input
+                      type="url"
+                      value={editingContactData.website}
+                      onChange={(e) => setEditingContactData({ ...editingContactData, website: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="https://www.example.com"
+                    />
+                  </div>
                 </div>
 
                 {/* Address Information */}
@@ -2048,6 +2070,134 @@ const ContactDetail = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* CRM Information */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">CRM-information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                      <select
+                        value={editingContactData.status}
+                        onChange={(e) => setEditingContactData({ ...editingContactData, status: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                      >
+                        <option value="prospect">Reservering</option>
+                        <option value="active">Stamgäst</option>
+                        <option value="inactive">Inaktiv</option>
+                        <option value="closed">Stängd</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Prioritet</label>
+                      <select
+                        value={editingContactData.priority}
+                        onChange={(e) => setEditingContactData({ ...editingContactData, priority: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                      >
+                        <option value="low">Låg</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">Hög</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Källa</label>
+                      <select
+                        value={editingContactData.source}
+                        onChange={(e) => setEditingContactData({ ...editingContactData, source: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                      >
+                        <option value="manual">Manuell</option>
+                        <option value="website">Webbsida</option>
+                        <option value="referral">Rekommendation</option>
+                        <option value="marketing">Marknadsföring</option>
+                        <option value="cold_call">Cold call</option>
+                        <option value="event">Event</option>
+                        <option value="other">Annat</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* B2B Information */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">B2B-information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Marginal (%)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={editingContactData.marginal}
+                        onChange={(e) => setEditingContactData({ ...editingContactData, marginal: parseInt(e.target.value) || 0 })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="35"
+                      />
+                    </div>
+                    <div>
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={editingContactData.sameAsCompanyAddress}
+                          onChange={(e) => setEditingContactData({ ...editingContactData, sameAsCompanyAddress: e.target.checked })}
+                          className="rounded border-gray-300 text-orange-600 focus:border-orange-500 focus:ring-orange-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700">Samma leveransadress som företagsadress</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {!editingContactData.sameAsCompanyAddress && (
+                    <div className="mt-4">
+                      <h5 className="text-sm font-medium text-gray-900 mb-3">Leveransadress</h5>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Leveransadress</label>
+                          <input
+                            type="text"
+                            value={editingContactData.deliveryAddress}
+                            onChange={(e) => setEditingContactData({ ...editingContactData, deliveryAddress: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                            placeholder="Leveransadress"
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Postnummer</label>
+                            <input
+                              type="text"
+                              value={editingContactData.deliveryPostalCode}
+                              onChange={(e) => setEditingContactData({ ...editingContactData, deliveryPostalCode: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                              placeholder="Postnummer"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Ort</label>
+                            <input
+                              type="text"
+                              value={editingContactData.deliveryCity}
+                              onChange={(e) => setEditingContactData({ ...editingContactData, deliveryCity: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                              placeholder="Ort"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Land</label>
+                            <input
+                              type="text"
+                              value={editingContactData.deliveryCountry}
+                              onChange={(e) => setEditingContactData({ ...editingContactData, deliveryCountry: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                              placeholder="Land"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Additional Information */}
