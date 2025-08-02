@@ -1079,124 +1079,130 @@ const ContactDetail = () => {
           <p className="text-gray-600">Till {contact.contactPerson} på {contact.companyName}</p>
         </div>
 
-        {/* Contact Card */}
+                {/* Contact Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8">
-          <div className="flex items-start justify-between mb-6">
-            <div className="flex items-start space-x-4">
-              <div className="bg-orange-100 p-3 rounded-xl">
-                <BuildingOffice2Icon className="h-8 w-8 text-orange-600" />
-                </div>
-                <div>
-                <h2 className="text-2xl font-bold text-gray-900">{contact.companyName}</h2>
-                <p className="text-lg text-gray-600">{contact.contactPerson}</p>
-                <div className="flex items-center space-x-4 mt-2">
-                  <a 
-                    href={`tel:${contact.phone}`}
-                    className="flex items-center text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    <PhoneIcon className="h-4 w-4 mr-1" />
-                    {contact.phone}
-                  </a>
-                  <a 
-                    href={`mailto:${contact.email}`}
-                    className="flex items-center text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    <EnvelopeIcon className="h-4 w-4 mr-1" />
-                    {contact.email}
-                  </a>
-                </div>
-                
-                {/* 🎯 NEW: Active/Prospect Status Indicator */}
-                <div className="mt-3">
-                  {contact.active === true ? (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800 border border-green-200 font-medium">
-                      <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                      Aktiv B2B Kund
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-800 border border-orange-200 font-medium">
-                      <span className="w-2 h-2 bg-orange-400 rounded-full mr-2"></span>
-                      CRM Reservering
-                    </span>
-                  )}
-                </div>
+          {/* 🎯 IMPROVED: Desktop-First Layout - Header on top, buttons below */}
+          
+          {/* Company Header with Icon */}
+          <div className="flex items-start space-x-4 mb-4">
+            <div className="bg-orange-100 p-3 rounded-xl">
+              <BuildingOffice2Icon className="h-8 w-8 text-orange-600" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-gray-900">{contact.companyName}</h2>
+              <p className="text-lg text-gray-600">{contact.contactPerson}</p>
+            </div>
+          </div>
 
-                {/* Contact Tags */}
-                {contact.tags && contact.tags.length > 0 && (
-                  <div className="mt-3">
-                    <div className="flex flex-wrap gap-1">
-                      {contact.tags.map((tag, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800"
-                        >
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+          {/* Contact Information */}
+          <div className="mb-4">
+            <div className="flex items-center space-x-4 mb-3">
+              <a 
+                href={`tel:${contact.phone}`}
+                className="flex items-center text-blue-600 hover:text-blue-700 font-medium"
+              >
+                <PhoneIcon className="h-4 w-4 mr-1" />
+                {contact.phone}
+              </a>
+              <a 
+                href={`mailto:${contact.email}`}
+                className="flex items-center text-blue-600 hover:text-blue-700 font-medium"
+              >
+                <EnvelopeIcon className="h-4 w-4 mr-1" />
+                {contact.email}
+              </a>
             </div>
             
-            {/* Quick Action Buttons */}
-            <div className="flex space-x-3">
-              <a
-                href={`tel:${contact.phone}`}
-                className="flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors space-x-2"
-              >
-                <PhoneSolid className="h-5 w-5" />
-                <span>Ring nu</span>
-              </a>
-              <a
-                href={`mailto:${contact.email}`}
-                className="flex items-center px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition-colors space-x-2"
-              >
-                <EnvelopeIcon className="h-5 w-5" />
-                <span>Maila</span>
-              </a>
-                  <button
-                onClick={() => setShowAdminDocUpload(true)}
-                className="flex items-center px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition-colors space-x-2"
-                title="Admin-dokument (endast synligt för administratörer)"
-                  >
-                <DocumentArrowUpIcon className="h-5 w-5" />
-                    <span>Dokument</span>
-                {adminDocuments.length > 0 && (
-                  <span className="ml-1 inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {adminDocuments.length}
-                  </span>
-                )}
-                  </button>
-                  {/* 🎯 NEW: Make Active Button (Only for prospects) */}
-                  {contact.active !== true && (
-                    <button
-                      onClick={handleActivateContact}
-                      className="flex items-center px-4 py-2 border border-green-300 text-green-700 hover:bg-green-50 rounded-lg font-medium transition-colors space-x-2"
-                      title="Aktivera som B2B-kund"
-                    >
-                      <CheckCircleIcon className="h-5 w-5" />
-                      <span>Gör Aktiv</span>
-                    </button>
-                  )}
-                  
-                  <button
-                    onClick={handleEditContact}
-                    className="flex items-center px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition-colors space-x-2"
-                    title="Redigera kontaktinformation"
-                  >
-                    <PencilIcon className="h-5 w-5" />
-                    <span>Redigera</span>
-                  </button>
-                  <button
-                    onClick={handleDeleteContact}
-                    className="flex items-center px-4 py-2 border border-red-300 text-red-700 hover:bg-red-50 rounded-lg font-medium transition-colors space-x-2"
-                    title="Ta bort kontakt"
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                    <span>Ta bort</span>
-                  </button>
+            {/* Active/Prospect Status Indicator */}
+            <div className="mb-3">
+              {contact.active === true ? (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800 border border-green-200 font-medium">
+                  <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                  Aktiv B2B Kund
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-800 border border-orange-200 font-medium">
+                  <span className="w-2 h-2 bg-orange-400 rounded-full mr-2"></span>
+                  CRM Reservering
+                </span>
+              )}
             </div>
+
+            {/* Contact Tags */}
+            {contact.tags && contact.tags.length > 0 && (
+              <div>
+                <div className="flex flex-wrap gap-1">
+                  {contact.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* 🎯 NEW: Action Buttons Below (Smaller & More Compact) */}
+          <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
+            <a
+              href={`tel:${contact.phone}`}
+              className="flex items-center px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-md text-sm font-medium transition-colors space-x-1.5"
+            >
+              <PhoneSolid className="h-4 w-4" />
+              <span>Ring nu</span>
+            </a>
+            <a
+              href={`mailto:${contact.email}`}
+              className="flex items-center px-3 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md text-sm font-medium transition-colors space-x-1.5"
+            >
+              <EnvelopeIcon className="h-4 w-4" />
+              <span>Maila</span>
+            </a>
+            <button
+              onClick={() => setShowAdminDocUpload(true)}
+              className="flex items-center px-3 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md text-sm font-medium transition-colors space-x-1.5"
+              title="Admin-dokument (endast synligt för administratörer)"
+            >
+              <DocumentArrowUpIcon className="h-4 w-4" />
+              <span>Dokument</span>
+              {adminDocuments.length > 0 && (
+                <span className="ml-1 inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {adminDocuments.length}
+                </span>
+              )}
+            </button>
+            
+            {/* Make Active Button (Only for prospects) */}
+            {contact.active !== true && (
+              <button
+                onClick={handleActivateContact}
+                className="flex items-center px-3 py-1.5 border border-green-300 text-green-700 hover:bg-green-50 rounded-md text-sm font-medium transition-colors space-x-1.5"
+                title="Aktivera som B2B-kund"
+              >
+                <CheckCircleIcon className="h-4 w-4" />
+                <span>Gör Aktiv</span>
+              </button>
+            )}
+            
+            <button
+              onClick={handleEditContact}
+              className="flex items-center px-3 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md text-sm font-medium transition-colors space-x-1.5"
+              title="Redigera kontaktinformation"
+            >
+              <PencilIcon className="h-4 w-4" />
+              <span>Redigera</span>
+            </button>
+            <button
+              onClick={handleDeleteContact}
+              className="flex items-center px-3 py-1.5 border border-red-300 text-red-700 hover:bg-red-50 rounded-md text-sm font-medium transition-colors space-x-1.5"
+              title="Ta bort kontakt"
+            >
+              <TrashIcon className="h-4 w-4" />
+              <span>Ta bort</span>
+            </button>
           </div>
         </div>
 
