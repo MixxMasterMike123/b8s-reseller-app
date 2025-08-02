@@ -1628,7 +1628,7 @@ const AmbassadorContactDetail = () => {
                         {activities.slice(4).map((activity, activityIdx) => (
                         <li key={activity.id}>
                           <div className="relative pb-8">
-                            {activityIdx !== activities.length - 1 ? (
+                            {activityIdx !== activities.slice(4).length - 1 ? (
                               <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true" />
                             ) : null}
                             <div className="relative flex space-x-3">
@@ -1742,6 +1742,7 @@ const AmbassadorContactDetail = () => {
                         </li>
                       ))}
                     </ul>
+                    </div>
                   </div>
                 ) : null}
               </div>
