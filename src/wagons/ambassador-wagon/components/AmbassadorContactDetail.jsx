@@ -84,11 +84,119 @@ const AmbassadorContactDetail = () => {
     }
   }, [id, getContactById]);
 
+  // Advanced Swedish weekday and date parsing for ambassadors
+  const parseSwedishWeekdays = (text) => {
+    const weekdays = {
+      'måndag': 1, 'tisdag': 2, 'onsdag': 3, 'torsdag': 4, 
+      'fredag': 5, 'lördag': 6, 'söndag': 0
+    };
+    
+    const lowerText = text.toLowerCase();
+    const today = new Date();
+    const currentDay = today.getDay();
+    const dateTags = [];
+    
+    // Special case: "nästa vecka" defaults to next Tuesday
+    if (lowerText.includes('nästa vecka') || lowerText.includes('nästa veck')) {
+      const nextTuesday = new Date(today);
+      const currentDayAdjusted = currentDay === 0 ? 7 : currentDay;
+      const daysUntilNextTuesday = (7 - currentDayAdjusted) + 2; // 2 = Tuesday
+      
+      nextTuesday.setDate(today.getDate() + daysUntilNextTuesday);
+      const dateStr = nextTuesday.toISOString().split('T')[0];
+      const tagName = `tisdag-${dateStr}`;
+      
+      if (!dateTags.includes(tagName)) {
+        dateTags.push(tagName);
+      }
+    }
+
+    // Check for weekday mentions with context
+    Object.entries(weekdays).forEach(([weekdayName, weekdayNum]) => {
+      const patterns = [
+        `på ${weekdayName}`,
+        `i ${weekdayName}`,
+        `${weekdayName}`,
+        `nästa ${weekdayName}`,
+        `kommande ${weekdayName}`
+      ];
+      
+      patterns.forEach(pattern => {
+        if (lowerText.includes(pattern)) {
+          let targetDate = new Date(today);
+          let daysUntilTarget;
+          
+          // Calculate days until target weekday
+          if (weekdayNum === 0) weekdayNum = 7; // Convert Sunday to 7 for easier calculation
+          const currentDayAdjusted = currentDay === 0 ? 7 : currentDay;
+          
+          if (pattern.includes('nästa') || pattern.includes('kommande')) {
+            // Explicitly next week
+            daysUntilTarget = (7 - currentDayAdjusted) + weekdayNum;
+          } else {
+            // This week or next week logic
+            daysUntilTarget = weekdayNum - currentDayAdjusted;
+            if (daysUntilTarget <= 0) {
+              daysUntilTarget += 7; // Move to next week if day has passed
+            }
+          }
+          
+          targetDate.setDate(today.getDate() + daysUntilTarget);
+          
+          // Format as Swedish date tag
+          const dateStr = targetDate.toISOString().split('T')[0]; // YYYY-MM-DD
+          const tagName = `${weekdayName}-${dateStr}`;
+          
+          if (!dateTags.includes(tagName)) {
+            dateTags.push(tagName);
+          }
+        }
+      });
+    });
+    
+    return dateTags;
+  };
+
+  // 🧠 SMART TAG ANALYSIS FOR AMBASSADORS
+  const analyzeTextForTags = (text) => {
+    if (!text.trim()) return [];
+    
+    const keywordMap = {
+      'hett': ['intresserad', 'vill samarbeta', 'collaboration', 'partnerskap', 'sponsring', 'deals', 'affär', 'möjlighet', 'potential'],
+      'akut': ['akut', 'bråttom', 'snabbt', 'idag', 'direkt', 'asap', 'nu', 'omgående', 'urgent', 'rush'],
+      'intresserad': ['intresserad', 'interested', 'gillar', 'love', 'kul', 'spännande', 'exciting', 'cool'],
+      'följare': ['följare', 'followers', 'subs', 'prenumeranter', 'audience', 'reach', 'engagement'],
+      'content': ['content', 'innehåll', 'video', 'post', 'story', 'reel', 'youtube', 'tiktok'],
+      'svar': ['svarade', 'replied', 'answered', 'response', 'comeback', 'answered'],
+      'ignorerad': ['ignorerad', 'inget svar', 'no response', 'tystnad', 'inte svarat', 'quiet'],
+      'väntar': ['väntar', 'waiting', 'pending', 'avvaktar', 'kommer höra'],
+      'kontakt': ['kontakt', 'contact', 'dm', 'meddelande', 'message', 'skrev', 'sent'],
+      'gratis': ['gratis', 'free', 'kostnadsfritt', 'sample', 'prov', 'test']
+    };
+    
+    const lowerText = text.toLowerCase();
+    const detected = [];
+    
+    // Standard keyword detection
+    Object.entries(keywordMap).forEach(([tag, keywords]) => {
+      if (keywords.some(keyword => lowerText.includes(keyword))) {
+        detected.push(tag);
+      }
+    });
+    
+    // Advanced: Swedish weekday date parsing
+    const dateTags = parseSwedishWeekdays(text);
+    detected.push(...dateTags);
+    
+    // Max 5 suggested tags for ambassador keywords and dates
+    return detected.slice(0, 5);
+  };
+
   // 🧠 AUTO-ANALYZE CONTENT FOR SMART TAG SUGGESTIONS
   useEffect(() => {
     const combinedText = `${activityData.title} ${activityData.content}`.trim();
     if (combinedText) {
-      const allSuggestions = analyzeTextForAmbassadorTags(combinedText);
+      const allSuggestions = analyzeTextForTags(combinedText);
       // Filter out tags that are already selected
       const filteredSuggestions = allSuggestions.filter(tag => !selectedTags.includes(tag));
       setSuggestedTags(filteredSuggestions);
@@ -122,11 +230,16 @@ const AmbassadorContactDetail = () => {
     setSuggestedTags(suggestedTags.filter(t => t !== tag));
   };
 
-  // 🎯 MANUAL TAG INPUT PROCESSING
+  // Manual tag input functions (copied from Dining Wagon)
   const processManualTags = (input) => {
     if (!input.trim()) return;
     
-    const newTags = processManualAmbassadorTags(input, selectedTags);
+    // Split by comma, space, or newline, clean and filter
+    const newTags = input
+      .split(/[,\s\n]+/)
+      .map(tag => tag.replace('#', '').trim().toLowerCase())
+      .filter(tag => tag.length > 0 && !selectedTags.includes(tag));
+    
     if (newTags.length > 0) {
       setSelectedTags([...selectedTags, ...newTags]);
       setManualTagInput('');
@@ -147,14 +260,24 @@ const AmbassadorContactDetail = () => {
     const value = e.target.value;
     setManualTagInput(value);
     
-    // Show autocomplete suggestions
+    // Show autocomplete suggestions for ambassadors
     if (value.trim().length > 0) {
-      const matches = getAmbassadorTagAutocomplete(value, selectedTags);
-      setAutocompleteOptions(matches);
+      const commonTags = ['hett', 'akut', 'intresserad', 'följare', 'content', 'svar', 'ignorerad', 'väntar', 'kontakt', 'gratis', 'samarbete', 'sponsring', 'partnerskap', 'influencer', 'brand', 'campaign', 'story', 'post', 'reel', 'video'];
+      const inputText = value.replace('#', '').toLowerCase();
+      const matches = commonTags.filter(tag => 
+        tag.includes(inputText) && !selectedTags.includes(tag)
+      );
+      setAutocompleteOptions(matches.slice(0, 5)); // Max 5 suggestions
       setShowAutocomplete(matches.length > 0);
     } else {
       setShowAutocomplete(false);
     }
+  };
+
+  const selectAutocompleteOption = (tag) => {
+    setSelectedTags([...selectedTags, tag]);
+    setManualTagInput('');
+    setShowAutocomplete(false);
   };
 
   // Get tier badge
@@ -249,21 +372,22 @@ const AmbassadorContactDetail = () => {
       
       // Reset form and tag state
       setActivityData({
-        type: 'note',
+        type: 'social_media', // Default to DM/social media contact
         title: '',
         content: '',
         outcome: '',
         nextAction: '',
         priority: 'medium',
-        platform: '',
+        platform: 'instagram', // Default to Instagram DMs
         campaignType: '',
         followUpDate: ''
       });
       setSelectedTags([]);
       setSuggestedTags([]);
       setManualTagInput('');
+      setShowAutocomplete(false);
       setShowActivityForm(false);
-      toast.success('🎯 Aktivitet med smarta taggar tillagd');
+      toast.success('🎯 DM-aktivitet med smarta taggar tillagd');
     } catch (error) {
       console.error('Error adding activity:', error);
       toast.error('Kunde inte lägga till aktivitet');
@@ -1018,7 +1142,7 @@ const AmbassadorContactDetail = () => {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Titel</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Vad hände? (sammanfattning)</label>
                       <input
                         type="text"
                         value={activityData.title}
@@ -1036,7 +1160,7 @@ const AmbassadorContactDetail = () => {
                         onChange={(e) => setActivityData({ ...activityData, content: e.target.value })}
                         rows={3}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                        placeholder="Detaljerad beskrivning av DM-konversationen, använd #taggar (hett, akut, intresserad)"
+                        placeholder="Detaljerad beskrivning... Smart tagging aktiveras automatiskt när du skriver!"
                         required
                       />
                     </div>
@@ -1064,101 +1188,108 @@ const AmbassadorContactDetail = () => {
                       </div>
                     </div>
 
-                    {/* 🧠 SMART TAGGING SYSTEM */}
-                    <div className="space-y-4">
-                      {/* Smart Suggestions */}
-                      {suggestedTags.length > 0 && (
-                        <div className="p-4 bg-purple-50 border border-purple-200 rounded-md">
-                          <h4 className="text-sm font-medium text-purple-900 mb-2">🧠 Smarta tagg-förslag:</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {suggestedTags.map(tag => (
-                              <div key={tag} className="flex items-center space-x-1">
+                    {/* 🧠 SMART TAGGING SYSTEM - Clean Dining Wagon Design */}
+                    {(suggestedTags.length > 0 || selectedTags.length > 0) && (
+                      <div className="mb-4">
+                        
+                        {/* Suggested Tags - Elegant and Subtle */}
+                        {suggestedTags.length > 0 && (
+                          <div className="mb-2">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs text-gray-500 font-medium">
+                                Föreslås:
+                              </span>
+                              <button
+                                onClick={() => setSuggestedTags([])}
+                                className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                              >
+                                ignorera
+                              </button>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {suggestedTags.map(tag => (
                                 <button
-                                  type="button"
+                                  key={tag}
                                   onClick={() => addTag(tag)}
-                                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors"
+                                  className="inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-sm hover:bg-blue-200 transition-colors"
+                                >
+                                  <span className="text-blue-600 mr-1">+</span>
+                                  #{tag}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Selected Tags - Clean and Minimal */}
+                        {selectedTags.length > 0 && (
+                          <div className="mb-2">
+                            <span className="text-xs text-gray-500 font-medium mb-1 block">
+                              Taggar:
+                            </span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {selectedTags.map(tag => (
+                                <span
+                                  key={tag}
+                                  className="inline-flex items-center bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-sm"
                                 >
                                   #{tag}
-                                  <PlusIcon className="h-3 w-3 ml-1" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => ignoreSuggestion(tag)}
-                                  className="text-purple-600 hover:text-purple-800"
-                                  title="Ignorera förslag"
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Selected Tags */}
-                      {selectedTags.length > 0 && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Valda taggar:</label>
-                          <div className="flex flex-wrap gap-2">
-                            {selectedTags.map(tag => (
-                              <span key={tag} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
-                                #{tag}
-                                <button
-                                  type="button"
-                                  onClick={() => removeTag(tag)}
-                                  className="ml-2 text-purple-600 hover:text-purple-800"
-                                >
-                                  ×
-                                </button>
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Manual Tag Input */}
-                      <div className="relative">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Lägg till taggar:</label>
-                        <input
-                          type="text"
-                          value={manualTagInput}
-                          onChange={handleManualTagChange}
-                          onKeyPress={handleManualTagKeyPress}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                          placeholder="Skriv taggar (t.ex. #hett, #akut, #ringabak) - tryck Enter eller komma för att lägga till"
-                        />
-                        
-                        {/* Autocomplete Dropdown */}
-                        {showAutocomplete && autocompleteOptions.length > 0 && (
-                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto">
-                            {autocompleteOptions.map(option => (
-                              <button
-                                key={option}
-                                type="button"
-                                onClick={() => {
-                                  addTag(option);
-                                  setManualTagInput('');
-                                  setShowAutocomplete(false);
-                                }}
-                                className="w-full text-left px-3 py-2 hover:bg-purple-50 text-sm"
-                              >
-                                #{option}
-                              </button>
-                            ))}
+                                  <button
+                                    onClick={() => removeTag(tag)}
+                                    className="ml-1.5 text-gray-600 hover:text-gray-800 transition-colors"
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>
+                    )}
 
-                      {/* Tag Help Text */}
-                      <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                        <p className="text-xs text-blue-700">
-                          <strong>🎯 Smarta taggar:</strong> #hett (hot prospect), #akut (urgent), #ringabak (callback), #problem (issues), #nöjd (satisfied).
-                          <br />
-                          <strong>📅 Datum:</strong> "på måndag", "nästa vecka" skapar automatiska datum-taggar.
-                          <br />
-                          <strong>📱 Plattformar:</strong> Instagram, YouTube, TikTok identifieras automatiskt.
-                        </p>
-                      </div>
+                    {/* Manual Tag Input - Clean Design */}
+                    <div className="mb-4 relative">
+                      <label className="block text-xs text-gray-500 font-medium mb-1">
+                        Lägg till egna taggar (valfritt)
+                      </label>
+                      <input
+                        type="text"
+                        value={manualTagInput}
+                        onChange={handleManualTagChange}
+                        onKeyPress={handleManualTagKeyPress}
+                        onFocus={() => {
+                          if (manualTagInput.trim().length > 0 && autocompleteOptions.length > 0) {
+                            setShowAutocomplete(true);
+                          }
+                        }}
+                        onBlur={() => {
+                          // Delay hiding to allow clicking on options
+                          setTimeout(() => setShowAutocomplete(false), 200);
+                        }}
+                        placeholder="Skriv egna taggar... (tryck Enter, komma eller mellanslag för att lägga till)"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
+                      />
+                      
+                      {/* Autocomplete Dropdown */}
+                      {showAutocomplete && autocompleteOptions.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-32 overflow-y-auto">
+                          {autocompleteOptions.map(tag => (
+                            <button
+                              key={tag}
+                              onClick={() => selectAutocompleteOption(tag)}
+                              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center border-b border-gray-100 last:border-b-0"
+                            >
+                              <span className="text-gray-400 mr-1">#</span>
+                              <span className="text-gray-700">{tag}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      
+                      <p className="text-xs text-gray-400 mt-1">
+                        T.ex. "hett", "akut", "intresserad" - separera med komma eller mellanslag
+                      </p>
                     </div>
                     
                     <div className="flex justify-end space-x-3">
