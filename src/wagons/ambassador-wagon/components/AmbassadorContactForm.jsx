@@ -160,28 +160,30 @@ const AmbassadorContactForm = () => {
     }));
   };
 
-  // Validate form
+  // Generate handle name from social media platforms if name is empty
+  const generateHandleName = (platforms) => {
+    // Priority order for handle selection
+    const platformPriority = ['instagram', 'tiktok', 'youtube', 'twitter', 'facebook', 'linkedin'];
+    
+    for (const platform of platformPriority) {
+      if (platforms[platform]?.handle?.trim()) {
+        return `@${platforms[platform].handle.replace('@', '')}`;
+      }
+    }
+    
+    return 'Prospect'; // Fallback for prospects with no handles
+  };
+
+  // Validate form - RELAXED: No mandatory fields
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.name.trim()) {
-      newErrors.name = 'Namn krävs';
-    }
-    
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email krävs';
-    } else if (!/^[^\@]+@[^\@]+\.[^\@]+$/.test(formData.email)) {
+    // Only validate email format if provided
+    if (formData.email.trim() && !/^[^\@]+@[^\@]+\.[^\@]+$/.test(formData.email)) {
       newErrors.email = 'Ogiltig email-adress';
     }
     
-    // Check if at least one platform has followers
-    const hasActivePlatform = Object.values(formData.platforms).some(platform => 
-      (platform.followers > 0 || platform.subscribers > 0) && platform.handle
-    );
-    
-    if (!hasActivePlatform) {
-      newErrors.platforms = 'Minst en plattform med följare krävs';
-    }
+    // No mandatory fields - ambassadors can be prospects without complete info
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -197,12 +199,16 @@ const AmbassadorContactForm = () => {
     }
     
     try {
+      // Generate display name: use provided name or handle name for prospects
+      const displayName = formData.name.trim() || generateHandleName(formData.platforms);
+      
       const ambassadorData = {
         ...formData,
-        // Remove empty platform entries
+        name: displayName, // Use generated handle name if no name provided
+        // Keep all platforms (even without followers for prospects)
         platforms: Object.fromEntries(
           Object.entries(formData.platforms).filter(([key, platform]) => 
-            platform.handle && (platform.followers > 0 || platform.subscribers > 0)
+            platform.handle || platform.followers > 0 || platform.subscribers > 0
           )
         ),
         createdBy: 'admin'
@@ -257,7 +263,7 @@ const AmbassadorContactForm = () => {
                 <UserPlusIcon className="h-8 w-8 text-purple-600 mr-3" />
                 Ny Ambassadör
               </h1>
-              <p className="text-gray-600 mt-1">Lägg till en ny influencer-prospekt till systemet</p>
+              <p className="text-gray-600 mt-1">Lägg till influencer-prospekt - fyll i så mycket du vet, resten kan kompletteras senare</p>
             </div>
           </div>
         </div>
@@ -273,7 +279,7 @@ const AmbassadorContactForm = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Namn <span className="text-red-500">*</span>
+                  Namn <span className="text-gray-400 text-xs">(används @handle om tomt)</span>
                 </label>
                 <input
                   type="text"
@@ -283,7 +289,7 @@ const AmbassadorContactForm = () => {
                   className={`w-full px-3 py-2 border rounded-md focus:ring-purple-500 focus:border-purple-500 ${
                     errors.name ? 'border-red-300' : 'border-gray-300'
                   }`}
-                  placeholder="Influencerns fullständiga namn"
+                  placeholder="Influencerns fullständiga namn (valfritt för prospects)"
                 />
                 {errors.name && (
                   <p className="mt-1 text-sm text-red-600">{errors.name}</p>
@@ -292,7 +298,7 @@ const AmbassadorContactForm = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email <span className="text-red-500">*</span>
+                  Email <span className="text-gray-400 text-xs">(valfritt)</span>
                 </label>
                 <input
                   type="email"
@@ -302,7 +308,7 @@ const AmbassadorContactForm = () => {
                   className={`w-full px-3 py-2 border rounded-md focus:ring-purple-500 focus:border-purple-500 ${
                     errors.email ? 'border-red-300' : 'border-gray-300'
                   }`}
-                  placeholder="kontakt@example.com"
+                  placeholder="kontakt@example.com (kan lämnas tomt för prospects)"
                 />
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-600">{errors.email}</p>
@@ -368,19 +374,16 @@ const AmbassadorContactForm = () => {
 
           {/* Social Media Platforms */}
           <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center mb-6">
-              <ShareIcon className="h-6 w-6 text-purple-600 mr-2" />
-              <h2 className="text-lg font-medium text-gray-900">Social Media Plattformar</h2>
-              <div className="ml-4">
-                {getTierBadge(formData.influencerTier)}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center">
+                <ShareIcon className="h-6 w-6 text-purple-600 mr-2" />
+                <h2 className="text-lg font-medium text-gray-900">Social Media Plattformar</h2>
+                <div className="ml-4">
+                  {getTierBadge(formData.influencerTier)}
+                </div>
               </div>
+              <p className="text-sm text-gray-500">Lägg till så många du känner till</p>
             </div>
-            
-            {errors.platforms && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-sm text-red-600">{errors.platforms}</p>
-              </div>
-            )}
 
             <div className="space-y-6">
               {Object.entries(formData.platforms).map(([platform, data]) => (

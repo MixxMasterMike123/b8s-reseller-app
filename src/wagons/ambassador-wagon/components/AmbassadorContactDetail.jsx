@@ -55,13 +55,13 @@ const AmbassadorContactDetail = () => {
   const [editData, setEditData] = useState({});
   const [showActivityForm, setShowActivityForm] = useState(false);
   const [activityData, setActivityData] = useState({
-    type: 'note',
+    type: 'social_media', // Default to DM/social media contact
     title: '',
     content: '',
     outcome: '',
     nextAction: '',
     priority: 'medium',
-    platform: '',
+    platform: 'instagram', // Default to Instagram DMs
     campaignType: '',
     followUpDate: ''
   });
@@ -832,11 +832,147 @@ const AmbassadorContactDetail = () => {
           </div>
 
           {/* Right Column - Activities */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* What Happened Before? - Timeline Section */}
+            {(() => {
+              const recentActivities = activities.slice(0, 4); // Show 4 most recent
+              
+              return activities.length > 0 ? (
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                      <ClockIcon className="h-5 w-5 text-gray-600 mr-2" />
+                      Vad har hänt innan? ({activities.length} interaktioner)
+                    </h3>
+                    <Link
+                      to={`/admin/ambassadors/activities?contact=${id}`}
+                      className="text-purple-600 hover:text-purple-700 text-sm font-medium"
+                    >
+                      Se alla →
+                    </Link>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {recentActivities.map((activity, index) => {
+                      const isUrgent = activity.tags?.includes('akut') || activity.tags?.includes('hett');
+                      const urgencyLevel = activity.tags?.includes('akut') ? 'critical' : 
+                                         activity.tags?.includes('hett') ? 'high' : 'normal';
+                      
+                      // Dynamic styling for timeline activities
+                      const getTimelineStyle = (level) => {
+                        switch(level) {
+                          case 'critical':
+                            return 'flex items-start space-x-3 p-3 bg-red-50 rounded-lg border-2 border-red-200';
+                          case 'high':
+                            return 'flex items-start space-x-3 p-3 bg-orange-50 rounded-lg border-2 border-orange-200';
+                          default:
+                            return 'flex items-start space-x-3 p-3 bg-gray-50 rounded-lg';
+                        }
+                      };
+                      
+                      return (
+                        <div 
+                          key={activity.id || index} 
+                          className={getTimelineStyle(urgencyLevel)}
+                        >
+                          <div className="flex-shrink-0 mt-0.5">
+                            {getActivityIcon(activity.type)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            {/* Date aligned with title */}
+                            <div className="flex justify-between items-start mb-1">
+                              <div className="flex items-center space-x-2 flex-1">
+                                <div className="text-sm font-medium text-gray-900 truncate">
+                                  {activity.title || activity.content}
+                                </div>
+
+                                {/* Urgency indicators */}
+                                {isUrgent && (
+                                  <div className="flex items-center space-x-1">
+                                    {urgencyLevel === 'critical' && (
+                                      <>
+                                        <ExclamationTriangleIcon className="h-3 w-3 text-red-600" />
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                          AKUT
+                                        </span>
+                                      </>
+                                    )}
+                                    {urgencyLevel === 'high' && (
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                        HETT
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Date aligned with title */}
+                              <span className="text-xs text-gray-500 flex-shrink-0">
+                                {activity.createdAt?.toLocaleDateString('sv-SE') || 'Idag'}
+                              </span>
+                            </div>
+                            
+                            {activity.content && activity.content !== activity.title && (
+                              <p className="text-sm text-gray-600 mt-1 line-clamp-1">
+                                {activity.content}
+                              </p>
+                            )}
+                            
+                            {/* Platform indicator */}
+                            {activity.platform && (
+                              <div className="flex items-center mt-1">
+                                <ShareIcon className="h-3 w-3 text-gray-400 mr-1" />
+                                <span className="text-xs text-gray-500 capitalize">
+                                  {activity.platform === 'instagram' ? 'Instagram DM' : 
+                                   activity.platform === 'tiktok' ? 'TikTok DM' :
+                                   activity.platform === 'youtube' ? 'YouTube' :
+                                   activity.platform}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {/* Tags display */}
+                            {activity.tags && activity.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {activity.tags.map(tag => (
+                                  <span
+                                    key={tag}
+                                    className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${
+                                      tag === 'akut' ? 'bg-red-100 text-red-800' :
+                                      tag === 'hett' ? 'bg-orange-100 text-orange-800' :
+                                      'bg-gray-100 text-gray-800'
+                                    }`}
+                                  >
+                                    #{tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    
+                    {activities.length > 4 && (
+                      <div className="text-center py-3">
+                        <Link
+                          to={`/admin/ambassadors/activities?contact=${id}`}
+                          className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                        >
+                          Se alla {activities.length} interaktioner →
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : null;
+            })()}
+
             <div className="bg-white rounded-lg shadow">
               <div className="px-6 py-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-medium text-gray-900">Aktiviteter & Kommunikation</h2>
+                  <h2 className="text-lg font-medium text-gray-900">DM & Kommunikation</h2>
                   <button
                     onClick={() => setShowActivityForm(!showActivityForm)}
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
@@ -865,17 +1001,17 @@ const AmbassadorContactDetail = () => {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Plattform</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Plattform <span className="text-xs text-gray-500">(DM fokus)</span></label>
                         <select
                           value={activityData.platform}
                           onChange={(e) => setActivityData({ ...activityData, platform: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                         >
-                          <option value="">Välj plattform</option>
-                          <option value="instagram">Instagram</option>
-                          <option value="youtube">YouTube</option>
-                          <option value="tiktok">TikTok</option>
-                          <option value="facebook">Facebook</option>
+                          <option value="instagram">Instagram DM (rekommenderat)</option>
+                          <option value="tiktok">TikTok DM</option>
+                          <option value="youtube">YouTube kommentar/DM</option>
+                          <option value="facebook">Facebook Messenger</option>
+                          <option value="email">Email</option>
                           <option value="other">Annat</option>
                         </select>
                       </div>
@@ -888,7 +1024,7 @@ const AmbassadorContactDetail = () => {
                         value={activityData.title}
                         onChange={(e) => setActivityData({ ...activityData, title: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                        placeholder="Kort beskrivning av aktiviteten"
+                        placeholder="T.ex. 'Skickade DM om B8Shield', 'Svarade på story', 'Förslag om samarbete'"
                         required
                       />
                     </div>
@@ -900,7 +1036,7 @@ const AmbassadorContactDetail = () => {
                         onChange={(e) => setActivityData({ ...activityData, content: e.target.value })}
                         rows={3}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                        placeholder="Detaljerad beskrivning, använd #taggar för smart taggning"
+                        placeholder="Detaljerad beskrivning av DM-konversationen, använd #taggar (hett, akut, intresserad)"
                         required
                       />
                     </div>
