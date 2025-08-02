@@ -600,11 +600,24 @@ const AmbassadorContactDetail = () => {
               {getContactTypeBadge(contact)}
               {contact.influencerTier && getTierBadge(contact.influencerTier)}
               {getStatusBadge(contact.status)}
-              {contact.totalFollowers && (
-                <span className="text-sm text-gray-600">
-                  {contact.totalFollowers.toLocaleString()} följare totalt
-                </span>
-              )}
+              {(() => {
+                // Calculate total followers dynamically including otherPlatforms
+                const platformFollowers = contact.platforms ? 
+                  Object.values(contact.platforms).reduce((sum, platform) => 
+                    sum + (platform.followers || platform.subscribers || 0), 0) : 0;
+                
+                const otherFollowers = contact.otherPlatforms ? 
+                  contact.otherPlatforms.reduce((sum, platform) => 
+                    sum + (platform.followers || 0), 0) : 0;
+                
+                const totalFollowers = platformFollowers + otherFollowers;
+                
+                return totalFollowers > 0 ? (
+                  <span className="text-sm text-gray-600">
+                    {totalFollowers.toLocaleString()} följare totalt
+                  </span>
+                ) : null;
+              })()}
             </div>
           </div>
 

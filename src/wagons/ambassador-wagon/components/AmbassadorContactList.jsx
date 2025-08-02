@@ -443,7 +443,20 @@ const AmbassadorContactList = () => {
                         <div className="flex flex-col">
                           {getTierBadge(contact.influencerTier)}
                           <span className="text-xs text-gray-500 mt-1">
-                            {contact.totalFollowers?.toLocaleString() || '0'} följare
+                            {(() => {
+                              // Calculate total followers dynamically including otherPlatforms
+                              const platformFollowers = contact.platforms ? 
+                                Object.values(contact.platforms).reduce((sum, platform) => 
+                                  sum + (platform.followers || platform.subscribers || 0), 0) : 0;
+                              
+                              const otherFollowers = contact.otherPlatforms ? 
+                                contact.otherPlatforms.reduce((sum, platform) => 
+                                  sum + (platform.followers || 0), 0) : 0;
+                              
+                              const totalFollowers = platformFollowers + otherFollowers;
+                              
+                              return totalFollowers.toLocaleString();
+                            })()} följare
                           </span>
                         </div>
                       </td>
