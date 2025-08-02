@@ -455,6 +455,18 @@ const AmbassadorContactList = () => {
                               
                               const totalFollowers = platformFollowers + otherFollowers;
                               
+                              // Debug logging for Graham Hopkins
+                              if (contact.email === 'ghopkins1974@gmail.com') {
+                                console.log('🔍 Graham Hopkins data:', {
+                                  name: contact.name,
+                                  platforms: contact.platforms,
+                                  otherPlatforms: contact.otherPlatforms,
+                                  platformFollowers,
+                                  otherFollowers,
+                                  totalFollowers
+                                });
+                              }
+                              
                               return totalFollowers.toLocaleString();
                             })()} följare
                           </span>
