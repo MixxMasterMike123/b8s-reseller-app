@@ -62,6 +62,12 @@ const AmbassadorContactDetail = () => {
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [newPortfolioUrl, setNewPortfolioUrl] = useState('');
   const [newTag, setNewTag] = useState('');
+  const [newOtherPlatform, setNewOtherPlatform] = useState({
+    name: '',
+    handle: '',
+    followers: 0,
+    url: ''
+  });
   const [activityData, setActivityData] = useState({
     type: 'social_media', // Default to DM/social media contact
     title: '',
@@ -358,6 +364,26 @@ const AmbassadorContactDetail = () => {
     });
   };
 
+  // Other platform handlers for edit modal
+  const handleAddOtherPlatform = () => {
+    if (newOtherPlatform.name.trim() && newOtherPlatform.handle.trim()) {
+      const currentOtherPlatforms = editData.otherPlatforms || [];
+      setEditData({
+        ...editData,
+        otherPlatforms: [...currentOtherPlatforms, { ...newOtherPlatform }]
+      });
+      setNewOtherPlatform({ name: '', handle: '', followers: 0, url: '' });
+    }
+  };
+
+  const handleRemoveOtherPlatform = (index) => {
+    const currentOtherPlatforms = editData.otherPlatforms || [];
+    setEditData({
+      ...editData,
+      otherPlatforms: currentOtherPlatforms.filter((_, i) => i !== index)
+    });
+  };
+
   // Activity Item Component
   const ActivityItem = ({ activity, isTimeline = false }) => {
     const isExpanded = isActivityExpanded(activity.id);
@@ -524,6 +550,14 @@ const AmbassadorContactDetail = () => {
                     </div>
                   );
                 })}
+                {contact.otherPlatforms && contact.otherPlatforms.map((platform, index) => (
+                  <div key={`other-${index}`} className="flex items-center text-gray-600">
+                    <span className="font-medium mr-2">
+                      {platform.name}:
+                    </span>
+                    <span>{platform.followers.toLocaleString()} följare</span>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -1460,6 +1494,103 @@ const AmbassadorContactDetail = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* Other Platforms */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Andra Plattformar</h4>
+                  
+                  {/* Add New Other Platform */}
+                  <div className="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50">
+                    <h5 className="text-sm font-medium text-gray-900 mb-3">Lägg till ny plattform</h5>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Plattform</label>
+                        <input
+                          type="text"
+                          value={newOtherPlatform.name}
+                          onChange={(e) => setNewOtherPlatform({ ...newOtherPlatform, name: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          placeholder="BlueSky, Threads..."
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Handle</label>
+                        <input
+                          type="text"
+                          value={newOtherPlatform.handle}
+                          onChange={(e) => setNewOtherPlatform({ ...newOtherPlatform, handle: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          placeholder="användarnamn"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Följare</label>
+                        <input
+                          type="number"
+                          value={newOtherPlatform.followers}
+                          onChange={(e) => setNewOtherPlatform({ ...newOtherPlatform, followers: parseInt(e.target.value) || 0 })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">URL</label>
+                        <input
+                          type="url"
+                          value={newOtherPlatform.url}
+                          onChange={(e) => setNewOtherPlatform({ ...newOtherPlatform, url: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          placeholder="https://..."
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4">
+                      <button
+                        type="button"
+                        onClick={handleAddOtherPlatform}
+                        className="px-4 py-2 text-sm font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100"
+                      >
+                        Lägg till plattform
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Existing Other Platforms */}
+                  {editData.otherPlatforms && editData.otherPlatforms.length > 0 && (
+                    <div className="space-y-3">
+                      <h5 className="text-sm font-medium text-gray-900">Tillagda plattformar</h5>
+                      {editData.otherPlatforms.map((platform, index) => (
+                        <div key={index} className="border border-gray-200 rounded-lg p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <h6 className="text-sm font-medium text-gray-900">{platform.name}</h6>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveOtherPlatform(index)}
+                              className="text-red-600 hover:text-red-800 text-sm"
+                            >
+                              Ta bort
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-gray-600">
+                            <div>Handle: @{platform.handle}</div>
+                            <div>Följare: {platform.followers.toLocaleString()}</div>
+                            <div>
+                              URL: {platform.url ? (
+                                <a href={platform.url} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700">
+                                  Länk
+                                </a>
+                              ) : (
+                                'Ingen URL'
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Tags */}

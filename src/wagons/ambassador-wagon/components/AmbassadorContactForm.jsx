@@ -45,6 +45,9 @@ const AmbassadorContactForm = () => {
       linkedin: { handle: '', followers: 0, url: '' }
     },
     
+    // Other platforms (BlueSky, Threads, etc.)
+    otherPlatforms: [],
+    
     // Important links
     websiteUrl: '',
     mediaKitUrl: '',
@@ -65,12 +68,18 @@ const AmbassadorContactForm = () => {
   const [errors, setErrors] = useState({});
   const [newTag, setNewTag] = useState('');
   const [newPortfolioUrl, setNewPortfolioUrl] = useState('');
+  const [newOtherPlatform, setNewOtherPlatform] = useState({
+    name: '',
+    handle: '',
+    followers: 0,
+    url: ''
+  });
 
   // Calculate influencer tier based on highest platform followers
-  const calculateInfluencerTier = (platforms) => {
-    const maxFollowers = Math.max(
-      ...Object.values(platforms).map(p => p.followers || p.subscribers || 0)
-    );
+  const calculateInfluencerTier = (platforms, otherPlatforms = []) => {
+    const platformFollowers = Object.values(platforms).map(p => p.followers || p.subscribers || 0);
+    const otherFollowers = otherPlatforms.map(p => p.followers || 0);
+    const maxFollowers = Math.max(...platformFollowers, ...otherFollowers, 0);
     
     if (maxFollowers >= 1000000) return 'mega';
     if (maxFollowers >= 100000) return 'macro'; 
@@ -109,7 +118,7 @@ const AmbassadorContactForm = () => {
       return {
         ...prev,
         platforms: newPlatforms,
-        influencerTier: calculateInfluencerTier(newPlatforms)
+        influencerTier: calculateInfluencerTier(newPlatforms, prev.otherPlatforms)
       };
     });
   };
@@ -160,14 +169,49 @@ const AmbassadorContactForm = () => {
     }));
   };
 
+  // Add other platform
+  const handleAddOtherPlatform = () => {
+    if (newOtherPlatform.name.trim() && newOtherPlatform.handle.trim()) {
+      setFormData(prev => {
+        const newOtherPlatforms = [...prev.otherPlatforms, { ...newOtherPlatform }];
+        return {
+          ...prev,
+          otherPlatforms: newOtherPlatforms,
+          influencerTier: calculateInfluencerTier(prev.platforms, newOtherPlatforms)
+        };
+      });
+      setNewOtherPlatform({ name: '', handle: '', followers: 0, url: '' });
+    }
+  };
+
+  // Remove other platform
+  const handleRemoveOtherPlatform = (index) => {
+    setFormData(prev => {
+      const newOtherPlatforms = prev.otherPlatforms.filter((_, i) => i !== index);
+      return {
+        ...prev,
+        otherPlatforms: newOtherPlatforms,
+        influencerTier: calculateInfluencerTier(prev.platforms, newOtherPlatforms)
+      };
+    });
+  };
+
   // Generate handle name from social media platforms if name is empty
-  const generateHandleName = (platforms) => {
+  const generateHandleName = (platforms, otherPlatforms = []) => {
     // Priority order for handle selection
     const platformPriority = ['instagram', 'tiktok', 'youtube', 'twitter', 'facebook', 'linkedin'];
     
+    // Check standard platforms first
     for (const platform of platformPriority) {
       if (platforms[platform]?.handle?.trim()) {
         return `@${platforms[platform].handle.replace('@', '')}`;
+      }
+    }
+    
+    // Check other platforms if no standard platform handle found
+    for (const otherPlatform of otherPlatforms) {
+      if (otherPlatform.handle?.trim()) {
+        return `@${otherPlatform.handle.replace('@', '')}`;
       }
     }
     
@@ -200,7 +244,7 @@ const AmbassadorContactForm = () => {
     
     try {
       // Generate display name: use provided name or handle name for prospects
-      const displayName = formData.name.trim() || generateHandleName(formData.platforms);
+      const displayName = formData.name.trim() || generateHandleName(formData.platforms, formData.otherPlatforms);
       
       const ambassadorData = {
         ...formData,
@@ -436,6 +480,114 @@ const AmbassadorContactForm = () => {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Other Platforms (BlueSky, Threads, etc.) */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center">
+                <ShareIcon className="h-6 w-6 text-purple-600 mr-2" />
+                <h2 className="text-lg font-medium text-gray-900">Andra Plattformar</h2>
+              </div>
+              <p className="text-sm text-gray-500">BlueSky, Threads, m.m.</p>
+            </div>
+
+            {/* Add New Other Platform */}
+            <div className="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50">
+              <h3 className="text-sm font-medium text-gray-900 mb-3">Lägg till ny plattform</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Plattform</label>
+                  <input
+                    type="text"
+                    value={newOtherPlatform.name}
+                    onChange={(e) => setNewOtherPlatform({ ...newOtherPlatform, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                    placeholder="BlueSky, Threads..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Handle</label>
+                  <input
+                    type="text"
+                    value={newOtherPlatform.handle}
+                    onChange={(e) => setNewOtherPlatform({ ...newOtherPlatform, handle: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                    placeholder="användarnamn"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Följare</label>
+                  <input
+                    type="number"
+                    value={newOtherPlatform.followers}
+                    onChange={(e) => setNewOtherPlatform({ ...newOtherPlatform, followers: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">URL</label>
+                  <input
+                    type="url"
+                    value={newOtherPlatform.url}
+                    onChange={(e) => setNewOtherPlatform({ ...newOtherPlatform, url: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                    placeholder="https://..."
+                  />
+                </div>
+              </div>
+              
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={handleAddOtherPlatform}
+                  className="px-4 py-2 text-sm font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100"
+                >
+                  Lägg till plattform
+                </button>
+              </div>
+            </div>
+
+            {/* Existing Other Platforms */}
+            {formData.otherPlatforms.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-gray-900">Tillagda plattformar</h3>
+                {formData.otherPlatforms.map((platform, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-gray-900 capitalize">{platform.name}</h4>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveOtherPlatform(index)}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                      >
+                        Ta bort
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                      <div>
+                        <span className="text-gray-600">Handle:</span> @{platform.handle}
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Följare:</span> {platform.followers.toLocaleString()}
+                      </div>
+                      <div>
+                        <span className="text-gray-600">URL:</span>{' '}
+                        {platform.url ? (
+                          <a href={platform.url} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700">
+                            Länk
+                          </a>
+                        ) : (
+                          'Ingen URL'
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Important Links */}
