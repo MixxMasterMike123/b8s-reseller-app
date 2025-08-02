@@ -72,6 +72,9 @@ const AmbassadorContactDetail = () => {
   const [manualTagInput, setManualTagInput] = useState('');
   const [autocompleteOptions, setAutocompleteOptions] = useState([]);
   const [showAutocomplete, setShowAutocomplete] = useState(false);
+  
+  // 👁️ ACTIVITY EXPANSION STATE
+  const [expandedActivities, setExpandedActivities] = useState(new Set());
 
   // Load contact data
   useEffect(() => {
@@ -278,6 +281,26 @@ const AmbassadorContactDetail = () => {
     setSelectedTags([...selectedTags, tag]);
     setManualTagInput('');
     setShowAutocomplete(false);
+  };
+
+  // 👁️ ACTIVITY EXPANSION FUNCTIONS
+  const toggleActivityExpansion = (activityId) => {
+    const newExpanded = new Set(expandedActivities);
+    if (newExpanded.has(activityId)) {
+      newExpanded.delete(activityId);
+    } else {
+      newExpanded.add(activityId);
+    }
+    setExpandedActivities(newExpanded);
+  };
+
+  const isActivityExpanded = (activityId) => {
+    return expandedActivities.has(activityId);
+  };
+
+  // Check if text needs expansion (longer than 100 characters)
+  const needsExpansion = (text) => {
+    return text && text.length > 100;
   };
 
   // Get tier badge
@@ -1007,9 +1030,30 @@ const AmbassadorContactDetail = () => {
                             {/* Date aligned with title */}
                             <div className="flex justify-between items-start mb-1">
                               <div className="flex items-center space-x-2 flex-1">
-                                <div className="text-sm font-medium text-gray-900 truncate">
-                                  {activity.title || activity.content}
+                                <div className="text-sm font-medium text-gray-900">
+                                  {(() => {
+                                    const titleText = activity.title || activity.content;
+                                    const expanded = isActivityExpanded(activity.id);
+                                    const needsTruncation = needsExpansion(titleText);
+                                    
+                                    if (!needsTruncation || expanded) {
+                                      return titleText;
+                                    } else {
+                                      return titleText.substring(0, 100) + '...';
+                                    }
+                                  })()}
                                 </div>
+
+                                {/* Expand button for long titles */}
+                                {needsExpansion(activity.title || activity.content) && (
+                                  <button
+                                    onClick={() => toggleActivityExpansion(activity.id)}
+                                    className="text-purple-600 hover:text-purple-800 text-xs font-medium ml-1"
+                                    title={isActivityExpanded(activity.id) ? 'Visa mindre' : 'Visa mer'}
+                                  >
+                                    {isActivityExpanded(activity.id) ? 'mindre' : 'mer'}
+                                  </button>
+                                )}
 
                                 {/* Urgency indicators */}
                                 {isUrgent && (
@@ -1038,9 +1082,40 @@ const AmbassadorContactDetail = () => {
                             </div>
                             
                             {activity.content && activity.content !== activity.title && (
-                              <p className="text-sm text-gray-600 mt-1 line-clamp-1">
-                                {activity.content}
-                              </p>
+                              <div className="text-sm text-gray-600 mt-1">
+                                {(() => {
+                                  const expanded = isActivityExpanded(activity.id);
+                                  const needsTruncation = needsExpansion(activity.content);
+                                  
+                                  if (!needsTruncation || expanded) {
+                                    return (
+                                      <div>
+                                        <p className="whitespace-pre-wrap">{activity.content}</p>
+                                        {needsTruncation && (
+                                          <button
+                                            onClick={() => toggleActivityExpansion(activity.id)}
+                                            className="text-purple-600 hover:text-purple-800 text-xs font-medium mt-1"
+                                          >
+                                            Visa mindre
+                                          </button>
+                                        )}
+                                      </div>
+                                    );
+                                  } else {
+                                    return (
+                                      <div>
+                                        <p className="whitespace-pre-wrap">{activity.content.substring(0, 100)}...</p>
+                                        <button
+                                          onClick={() => toggleActivityExpansion(activity.id)}
+                                          className="text-purple-600 hover:text-purple-800 text-xs font-medium mt-1"
+                                        >
+                                          Visa mer
+                                        </button>
+                                      </div>
+                                    );
+                                  }
+                                })()}
+                              </div>
                             )}
                             
                             {/* Platform indicator */}
@@ -1337,9 +1412,71 @@ const AmbassadorContactDetail = () => {
                               </div>
                               <div className="min-w-0 flex-1 pt-1.5">
                                 <div className="flex items-center justify-between">
-                                  <div>
-                                    <p className="text-sm font-medium text-gray-900">{activity.title}</p>
-                                    <p className="text-sm text-gray-500">{activity.content}</p>
+                                  <div className="flex-1">
+                                    {/* Expandable Title */}
+                                    <div className="flex items-center space-x-2 mb-1">
+                                      <div className="text-sm font-medium text-gray-900">
+                                        {(() => {
+                                          const expanded = isActivityExpanded(activity.id);
+                                          const needsTruncation = needsExpansion(activity.title);
+                                          
+                                          if (!needsTruncation || expanded) {
+                                            return activity.title;
+                                          } else {
+                                            return activity.title.substring(0, 100) + '...';
+                                          }
+                                        })()}
+                                      </div>
+                                      {/* Expand button for long titles */}
+                                      {needsExpansion(activity.title) && (
+                                        <button
+                                          onClick={() => toggleActivityExpansion(activity.id)}
+                                          className="text-purple-600 hover:text-purple-800 text-xs font-medium"
+                                          title={isActivityExpanded(activity.id) ? 'Visa mindre' : 'Visa mer'}
+                                        >
+                                          {isActivityExpanded(activity.id) ? 'mindre' : 'mer'}
+                                        </button>
+                                      )}
+                                    </div>
+                                    
+                                    {/* Expandable Content */}
+                                    {activity.content && (
+                                      <div className="text-sm text-gray-500 mb-2">
+                                        {(() => {
+                                          const expanded = isActivityExpanded(activity.id);
+                                          const needsTruncation = needsExpansion(activity.content);
+                                          
+                                          if (!needsTruncation || expanded) {
+                                            return (
+                                              <div>
+                                                <p className="whitespace-pre-wrap">{activity.content}</p>
+                                                {needsTruncation && (
+                                                  <button
+                                                    onClick={() => toggleActivityExpansion(activity.id)}
+                                                    className="text-purple-600 hover:text-purple-800 text-xs font-medium mt-1"
+                                                  >
+                                                    Visa mindre
+                                                  </button>
+                                                )}
+                                              </div>
+                                            );
+                                          } else {
+                                            return (
+                                              <div>
+                                                <p className="whitespace-pre-wrap">{activity.content.substring(0, 100)}...</p>
+                                                <button
+                                                  onClick={() => toggleActivityExpansion(activity.id)}
+                                                  className="text-purple-600 hover:text-purple-800 text-xs font-medium mt-1"
+                                                >
+                                                  Visa mer
+                                                </button>
+                                              </div>
+                                            );
+                                          }
+                                        })()}
+                                      </div>
+                                    )}
+                                    
                                     {activity.outcome && (
                                       <p className="text-sm text-green-600 mt-1">Resultat: {activity.outcome}</p>
                                     )}
@@ -1350,13 +1487,13 @@ const AmbassadorContactDetail = () => {
                                       <div className="flex flex-wrap gap-1 mt-2">
                                         {activity.tags.map((tag, index) => (
                                           <span key={index} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                                            {tag}
+                                            #{tag}
                                           </span>
                                         ))}
                                       </div>
                                     )}
                                   </div>
-                                  <div className="text-right text-sm whitespace-nowrap text-gray-500">
+                                  <div className="text-right text-sm whitespace-nowrap text-gray-500 ml-4">
                                     <time>{activity.createdAt?.toLocaleDateString('sv-SE')}</time>
                                     <p className="text-xs">{activity.createdAt?.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}</p>
                                   </div>
