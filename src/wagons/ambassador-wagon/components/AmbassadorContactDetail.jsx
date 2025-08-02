@@ -510,12 +510,20 @@ const AmbassadorContactDetail = () => {
                     {contact.totalFollowers.toLocaleString()} följare totalt
                   </div>
                 )}
-                {contact.platforms && Object.entries(contact.platforms).map(([platform, data]) => (
-                  <div key={platform} className="flex items-center text-gray-600">
-                    <span className="capitalize font-medium mr-2">{platform}:</span>
-                    <span>{data.followers?.toLocaleString() || 0} följare</span>
-                  </div>
-                ))}
+                {contact.platforms && Object.entries(contact.platforms).map(([platform, data]) => {
+                  // Handle different platforms with different terminology
+                  const count = data.followers || data.subscribers || 0;
+                  const term = platform === 'youtube' ? 'prenumeranter' : 'följare';
+                  
+                  return (
+                    <div key={platform} className="flex items-center text-gray-600">
+                      <span className="capitalize font-medium mr-2">
+                        {platform === 'youtube' ? 'YouTube' : platform.charAt(0).toUpperCase() + platform.slice(1)}:
+                      </span>
+                      <span>{count.toLocaleString()} {term}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
