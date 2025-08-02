@@ -25,9 +25,13 @@ export const useAmbassadorContacts = () => {
     console.log('👑 Setting up Firebase subscription to ambassadorContacts collection...');
     setLoading(true);
     
-    // Use separate ambassadorContacts collection (completely isolated)
-    const contactsRef = collection(db, 'ambassadorContacts');
-    const q = query(contactsRef, orderBy('updatedAt', 'desc'));
+    // 🎯 NEW: Use same affiliates collection as Affiliate Admin
+    const contactsRef = collection(db, 'affiliates');
+    // 🎯 NEW: Filter by contactType to only show ambassadors from affiliates collection
+    const q = query(contactsRef, 
+      where('contactType', '==', 'ambassador'),
+      orderBy('updatedAt', 'desc')
+    );
     
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {
@@ -174,7 +178,14 @@ export const useAmbassadorContacts = () => {
         lastActivityAt: now
       };
 
-      const docRef = await addDoc(collection(db, 'ambassadorContacts'), newContact);
+      // 🎯 NEW: Add ambassador-specific fields for affiliates collection
+      const ambassadorContact = {
+        ...newContact,
+        contactType: 'ambassador',  // 🔥 Distinguish from regular affiliates
+        active: false,              // 🔥 New ambassadors are inactive prospects by default 
+      };
+      
+      const docRef = await addDoc(collection(db, 'affiliates'), ambassadorContact);
       
       toast.success(`👑 Ny ambassadör tillagd: ${contactData.name}`);
       return docRef.id;
@@ -192,7 +203,8 @@ export const useAmbassadorContacts = () => {
     try {
       setLoading(true);
       
-      const contactRef = doc(db, 'ambassadorContacts', contactId);
+      // 🎯 NEW: Use affiliates collection
+      const contactRef = doc(db, 'affiliates', contactId);
       const now = new Date();
       
       // Recalculate influencer tier if platforms updated
@@ -236,13 +248,41 @@ export const useAmbassadorContacts = () => {
     try {
       setLoading(true);
       
-      await deleteDoc(doc(db, 'ambassadorContacts', contactId));
+      // 🎯 NEW: Use affiliates collection
+      await deleteDoc(doc(db, 'affiliates', contactId));
       
       toast.success('👑 Ambassadör borttagen från listan');
       return true;
     } catch (error) {
       console.error('Error deleting ambassador contact:', error);
       toast.error('Kunde inte ta bort ambassadör');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // 🎯 NEW: Activate ambassador (Convert prospect to active affiliate)
+  const activateContact = useCallback(async (contactId) => {
+    try {
+      setLoading(true);
+      
+      const contactRef = doc(db, 'affiliates', contactId);
+      const now = new Date();
+      const activationData = {
+        active: true,              // 🔥 CRITICAL: Makes them appear in Affiliate Admin
+        status: 'active',          // Updates status too
+        lastActivityAt: now,
+        updatedAt: now
+      };
+
+      await updateDoc(contactRef, activationData);
+      
+      toast.success('👑 Ambassadör aktiverad som affiliate! Nu synlig i affiliate-hantering.');
+      return true;
+    } catch (error) {
+      console.error('Error activating ambassador:', error);
+      toast.error('Kunde inte aktivera ambassadör');
       throw error;
     } finally {
       setLoading(false);
@@ -295,6 +335,7 @@ export const useAmbassadorContacts = () => {
     addContact,
     updateContact,
     deleteContact,
+    activateContact,       // 🎯 NEW: Convert ambassador to active affiliate
     getContactById,
     getContactsByStatus,
     getContactsByTier,

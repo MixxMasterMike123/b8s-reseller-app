@@ -23,7 +23,8 @@ import {
   PlusIcon,
   TrashIcon,
   ClipboardDocumentListIcon,
-  CameraIcon
+  CameraIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import {
   PhoneIcon as PhoneSolid,
@@ -47,7 +48,7 @@ import {
 const AmbassadorContactDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getContactById, updateContact, loading: contactLoading } = useAmbassadorContacts();
+  const { getContactById, updateContact, activateContact, loading: contactLoading } = useAmbassadorContacts();
   const { activities, addActivity, updateActivity, loading: activitiesLoading, activityTypes } = useAmbassadorActivities(id);
 
   const [contact, setContact] = useState(null);
@@ -483,12 +484,19 @@ const AmbassadorContactDetail = () => {
     }
   };
 
-  // Handle convert to affiliate
-  const handleConvertToAffiliate = () => {
-    if (window.confirm(`Vill du konvertera ${contact.name} till aktiv affiliate?`)) {
-      // TODO: Implement conversion logic
-      toast.success('Konvertering till affiliate är under utveckling');
-      navigate('/admin/ambassadors/conversions');
+  // 🎯 NEW: Activate ambassador (Convert prospect to active affiliate)
+  const handleActivateContact = async () => {
+    if (!window.confirm(`Är du säker på att du vill aktivera "${contact.name}" som affiliate? De kommer då att visas i affiliate-hanteringen.`)) {
+      return;
+    }
+
+    try {
+      await activateContact(id);
+      // Update local state to reflect the change
+      setContact({ ...contact, active: true, status: 'active' });
+    } catch (error) {
+      console.error('Error activating ambassador:', error);
+      // Error message handled by the hook
     }
   };
 
@@ -524,6 +532,20 @@ const AmbassadorContactDetail = () => {
                 <div className="flex items-center space-x-3 mt-2">
                   {getTierBadge(contact.influencerTier)}
                   {getStatusBadge(contact.status)}
+                  
+                  {/* 🎯 NEW: Active/Inactive Status Badge */}
+                  {contact.active === true ? (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800 border border-green-200 font-medium">
+                      <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                      Aktiv Affiliate
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-800 border border-orange-200 font-medium">
+                      <span className="w-2 h-2 bg-orange-400 rounded-full mr-2"></span>
+                      Ambassadör Prospekt
+                    </span>
+                  )}
+                  
                   {contact.totalFollowers && (
                     <span className="text-sm text-gray-600">
                       {contact.totalFollowers.toLocaleString()} följare totalt
@@ -533,15 +555,17 @@ const AmbassadorContactDetail = () => {
               </div>
             </div>
             <div className="flex space-x-3">
-              {contact.status === 'negotiating' && (
+              {/* 🎯 NEW: Make Active Button (Only for inactive ambassadors) */}
+              {contact.active !== true && (
                 <button
-                  onClick={handleConvertToAffiliate}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+                  onClick={handleActivateContact}
+                  className="inline-flex items-center px-4 py-2 border border-green-300 text-green-700 hover:bg-green-50 rounded-md text-sm font-medium"
                 >
-                  <StarSolid className="h-4 w-4 mr-2" />
-                  Konvertera till Affiliate
+                  <CheckCircleIcon className="h-4 w-4 mr-2" />
+                  Gör Aktiv
                 </button>
               )}
+              
               <button
                 onClick={() => setIsEditing(!isEditing)}
                 className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
