@@ -225,6 +225,8 @@ const ContactDetail = () => {
   const [isEditingContact, setIsEditingContact] = useState(false);
   const [editingContactData, setEditingContactData] = useState({});
   const [isSavingContact, setIsSavingContact] = useState(false);
+  const [editingContactTags, setEditingContactTags] = useState([]);
+  const [newContactTag, setNewContactTag] = useState('');
 
   // Admin Documents state (ZEN integration)
   const [adminDocuments, setAdminDocuments] = useState([]);
@@ -943,13 +945,18 @@ const ContactDetail = () => {
       orgNumber: contact.orgNumber || '',
       notes: contact.notes || ''
     });
+    setEditingContactTags(contact.tags || []);
     setIsEditingContact(true);
   };
 
   const handleSaveContact = async () => {
     try {
       setIsSavingContact(true);
-      await updateContact(id, editingContactData);
+      const updatedData = {
+        ...editingContactData,
+        tags: editingContactTags
+      };
+      await updateContact(id, updatedData);
       setIsEditingContact(false);
       toast.success('🍽️ Kontaktinformation uppdaterad');
     } catch (error) {
@@ -963,6 +970,27 @@ const ContactDetail = () => {
   const handleCancelContactEdit = () => {
     setIsEditingContact(false);
     setEditingContactData({});
+    setEditingContactTags([]);
+    setNewContactTag('');
+  };
+
+  // Contact tag management functions
+  const handleAddContactTag = () => {
+    if (newContactTag.trim() && !editingContactTags.includes(newContactTag.trim())) {
+      setEditingContactTags([...editingContactTags, newContactTag.trim()]);
+      setNewContactTag('');
+    }
+  };
+
+  const handleRemoveContactTag = (tagToRemove) => {
+    setEditingContactTags(editingContactTags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleContactTagKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddContactTag();
+    }
   };
 
   const handleDeleteContact = async () => {
@@ -1050,6 +1078,22 @@ const ContactDetail = () => {
                     {contact.email}
                   </a>
                 </div>
+                
+                {/* Contact Tags */}
+                {contact.tags && contact.tags.length > 0 && (
+                  <div className="mt-3">
+                    <div className="flex flex-wrap gap-1">
+                      {contact.tags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -2030,6 +2074,50 @@ const ContactDetail = () => {
                         placeholder="Interna anteckningar om kontakten"
                       />
                     </div>
+                  </div>
+                </div>
+
+                {/* Tags */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Taggar</h4>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        value={newContactTag}
+                        onChange={(e) => setNewContactTag(e.target.value)}
+                        onKeyPress={handleContactTagKeyPress}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="Lägg till tagg..."
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddContactTag}
+                        className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors"
+                      >
+                        Lägg till
+                      </button>
+                    </div>
+
+                    {editingContactTags.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {editingContactTags.map((tag, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-800"
+                          >
+                            #{tag}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveContactTag(tag)}
+                              className="ml-2 text-orange-600 hover:text-orange-800"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 
