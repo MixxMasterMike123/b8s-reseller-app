@@ -208,6 +208,8 @@ function App() {
               <Route path="/:countryCode/affiliate-registration" element={<CountryRouteValidator><AffiliateRegistration /></CountryRouteValidator>} />
               <Route path="/:countryCode/affiliate-login" element={<CountryRouteValidator><AffiliateLogin /></CountryRouteValidator>} />
               <Route path="/:countryCode/affiliate-portal" element={<CountryRouteValidator><AffiliatePortal /></CountryRouteValidator>} />
+              <Route path="/:countryCode/forgot-password" element={<CountryRouteValidator><ForgotPassword /></CountryRouteValidator>} />
+              <Route path="/:countryCode/reset-password" element={<CountryRouteValidator><ResetPassword /></CountryRouteValidator>} />
               
               {/* Dynamic CMS Pages - Must be before catch-all */}
               <Route path="/:countryCode/*" element={
