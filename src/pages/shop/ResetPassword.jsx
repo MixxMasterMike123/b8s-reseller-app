@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { confirmPasswordReset } from 'firebase/auth';
+import { httpsCallable, getFunctions } from 'firebase/functions';
 import { auth, db } from '../../firebase/config';
-import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useTranslation } from '../../contexts/TranslationContext';
 import toast from 'react-hot-toast';
 import ShopNavigation from '../../components/shop/ShopNavigation';
@@ -111,25 +111,16 @@ const ResetPassword = () => {
     const toastId = toast.loading(t('reset_password_loading', 'Återställer lösenord...'));
     
     try {
-      // Use Firebase Auth to reset password with the code from our custom email
-      // Note: This uses the same reset mechanism but with our custom email
-      await confirmPasswordReset(auth, resetCode, newPassword);
+      // Use our custom Firebase Function to reset password
+      const functions = getFunctions();
+      const confirmPasswordResetV2 = httpsCallable(functions, 'confirmPasswordResetV2');
       
-      // Mark the reset code as used in Firestore
-      const resetQuery = query(
-        collection(db, 'passwordResets'),
-        where('resetCode', '==', resetCode),
-        where('used', '==', false)
-      );
+      const result = await confirmPasswordResetV2({
+        resetCode,
+        newPassword
+      });
       
-      const resetSnapshot = await getDocs(resetQuery);
-      if (!resetSnapshot.empty) {
-        const resetDoc = resetSnapshot.docs[0];
-        await updateDoc(resetDoc.ref, {
-          used: true,
-          usedAt: new Date()
-        });
-      }
+      console.log('Password reset successful:', result.data);
       
       toast.dismiss(toastId);
       toast.success(t('reset_password_success', 'Lösenord återställt! Du kan nu logga in.'), {
@@ -142,12 +133,18 @@ const ResetPassword = () => {
       toast.dismiss(toastId);
       console.error('Password reset error:', error);
       
-      if (error.code === 'auth/expired-action-code') {
-        toast.error(t('reset_password_error_expired_code', 'Återställningskoden har gått ut. Begär en ny.'));
-      } else if (error.code === 'auth/invalid-action-code') {
-        toast.error(t('reset_password_error_invalid_action_code', 'Ogiltig återställningskod'));
-      } else if (error.code === 'auth/weak-password') {
-        toast.error(t('reset_password_error_weak_password', 'Lösenordet är för svagt'));
+      if (error.code === 'functions/invalid-argument') {
+        if (error.message.includes('expired')) {
+          toast.error(t('reset_password_error_expired_code', 'Återställningskoden har gått ut. Begär en ny.'));
+        } else if (error.message.includes('used') || error.message.includes('Invalid')) {
+          toast.error(t('reset_password_error_invalid_action_code', 'Ogiltig eller använd återställningskod'));
+        } else if (error.message.includes('Password must be')) {
+          toast.error(t('reset_password_error_weak_password', 'Lösenordet måste vara minst 6 tecken'));
+        } else {
+          toast.error(t('reset_password_error_invalid_action_code', 'Ogiltig återställningskod'));
+        }
+      } else if (error.code === 'functions/not-found') {
+        toast.error(t('reset_password_error_user_not_found', 'Användaren hittades inte'));
       } else {
         toast.error(t('reset_password_error_generic', 'Ett fel uppstod. Försök igen.'));
       }

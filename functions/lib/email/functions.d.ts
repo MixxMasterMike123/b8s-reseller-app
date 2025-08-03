@@ -62,4 +62,8 @@ export declare const sendPasswordResetEmailV2: import("firebase-functions/v2/htt
     language: string;
     expiresAt: string;
 }>, unknown>;
+export declare const confirmPasswordResetV2: import("firebase-functions/v2/https").CallableFunction<any, Promise<{
+    success: boolean;
+    email: any;
+}>, unknown>;
 export {};

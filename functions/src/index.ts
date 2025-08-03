@@ -27,7 +27,8 @@ import {
   sendStatusUpdateHttp,
   sendVerificationEmail,
   sendAffiliateCredentialsV2,
-  sendPasswordResetEmailV2
+  sendPasswordResetEmailV2,
+  confirmPasswordResetV2
 } from './email/functions';
 
 // Import order processing functions directly with original names
@@ -79,7 +80,8 @@ export {
   sendStatusUpdateHttp as sendStatusUpdateHttpV2,
   sendVerificationEmail as sendVerificationEmailV2,
   sendAffiliateCredentialsV2,
-  sendPasswordResetEmailV2
+  sendPasswordResetEmailV2,
+  confirmPasswordResetV2
 };
 
 // Re-export order processing functions individually with V2 names (avoid V1 conflicts)
