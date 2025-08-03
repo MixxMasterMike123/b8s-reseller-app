@@ -68,11 +68,11 @@ const DashboardPage = () => {
             className="w-full h-32 md:h-48 lg:h-64 object-cover"
           />
           {/* B8Shield Logo Overlay */}
-          <div className="absolute top-4 left-4 md:top-6 md:left-6">
+          <div className="absolute bottom-4 left-4 md:bottom-6 md:left-6">
             <img 
-              src="/images/B8Shield-Logotype 1.svg" 
+              src="/images/B8S_logo_white.svg" 
               alt="B8Shield Logo"
-              className="h-8 md:h-12 lg:h-16 w-auto drop-shadow-lg opacity-90 hover:opacity-100 transition-opacity duration-200"
+              className="h-8 md:h-10 lg:h-12 w-auto drop-shadow-lg opacity-90 hover:opacity-100 transition-opacity duration-200"
             />
           </div>
         </div>
