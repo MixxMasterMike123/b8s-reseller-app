@@ -15,6 +15,7 @@ const templates = {
   adminB2COrderNotification: require('./adminB2COrderNotification'),
   b2bOrderConfirmationCustomer: require('./b2bOrderConfirmationCustomer'),
   b2bOrderConfirmationAdmin: require('./b2bOrderConfirmationAdmin'),
+  passwordReset: require('./passwordReset'),
   // future templates will be added here
 };
 

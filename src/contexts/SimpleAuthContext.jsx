@@ -8,6 +8,7 @@ import {
   updatePassword as firebaseUpdatePassword,
   updateEmail
 } from 'firebase/auth';
+import { httpsCallable, getFunctions } from 'firebase/functions';
 import { auth, db } from '../firebase/config';
 import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
@@ -110,11 +111,18 @@ export function SimpleAuthContextProvider({ children }) {
     }
   }
 
-  // Reset password
+  // Reset password using custom Firebase Function
   async function resetPassword(email) {
     try {
       setError('');
-      await sendPasswordResetEmail(auth, email);
+      
+      // Call our custom Firebase Function to send branded password reset email
+      const functions = getFunctions();
+      const sendPasswordResetEmailV2 = httpsCallable(functions, 'sendPasswordResetEmailV2');
+      
+      const result = await sendPasswordResetEmailV2({ email });
+      
+      console.log('Custom password reset email sent:', result.data);
       toast.success('Password reset email sent');
       return true;
     } catch (error) {

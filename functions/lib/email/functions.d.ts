@@ -56,4 +56,10 @@ export declare const sendVerificationEmail: import("firebase-functions/v2/https"
 export declare const sendAffiliateCredentialsV2: import("firebase-functions/v2/https").CallableFunction<{
     affiliateId: string;
 }, any, unknown>;
+export declare const sendPasswordResetEmailV2: import("firebase-functions/v2/https").CallableFunction<any, Promise<{
+    success: boolean;
+    email: any;
+    language: string;
+    expiresAt: string;
+}>, unknown>;
 export {};

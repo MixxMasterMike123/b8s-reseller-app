@@ -1480,4 +1480,91 @@ export const sendAffiliateCredentialsV2 = onCall<{ affiliateId: string }>(async 
     console.error('Error sending affiliate credentials:', error);
     throw new Error('Failed to send affiliate credentials');
   }
+});
+
+// Function to send custom password reset email
+export const sendPasswordResetEmailV2 = onCall(async (request) => {
+  const { email } = request.data;
+
+  if (!email || !isValidEmail(email)) {
+    throw new HttpsError('invalid-argument', 'Valid email is required');
+  }
+
+  try {
+    console.log(`Processing password reset request for: ${email}`);
+
+    // Generate secure reset code
+    const resetCode = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+    const timestamp = new Date().toLocaleString('sv-SE');
+
+    // Get user agent from request context
+    const userAgent = request.rawRequest?.headers?.['user-agent'] || 'Unknown device';
+
+    // Try to find user's preferred language
+    let preferredLang = 'sv-SE';
+    
+    // Check if user exists in affiliates collection
+    try {
+      const affiliatesSnapshot = await db.collection('affiliates').where('email', '==', email).get();
+      if (!affiliatesSnapshot.empty) {
+        const affiliateData = affiliatesSnapshot.docs[0].data();
+        preferredLang = affiliateData.preferredLang || affiliateData.lang || 'sv-SE';
+        console.log(`Found affiliate with preferred language: ${preferredLang}`);
+      }
+    } catch (error) {
+      console.log('No affiliate found, checking B2C customers...');
+    }
+
+    // Check if user exists in B2C customers collection
+    try {
+      const b2cCustomersSnapshot = await db.collection('b2cCustomers').where('email', '==', email).get();
+      if (!b2cCustomersSnapshot.empty) {
+        const customerData = b2cCustomersSnapshot.docs[0].data();
+        preferredLang = customerData.preferredLang || customerData.lang || 'sv-SE';
+        console.log(`Found B2C customer with preferred language: ${preferredLang}`);
+      }
+    } catch (error) {
+      console.log('No B2C customer found, using default language');
+    }
+
+    // Store reset code in Firestore
+    await db.collection('passwordResets').add({
+      email,
+      resetCode,
+      expiresAt,
+      used: false,
+      createdAt: new Date(),
+      userAgent
+    });
+
+    // Generate password reset email
+    const emailTemplate = getEmail('passwordReset', preferredLang, {
+      email,
+      resetCode,
+      userAgent,
+      timestamp
+    } as any);
+
+    // Create email data
+    const emailData = createEmailData(
+      email,
+      EMAIL_FROM.system,
+      emailTemplate
+    );
+
+    // Send the email
+    await sendEmail(emailData);
+    console.log(`Password reset email sent successfully to ${email} in language ${preferredLang}`);
+
+    return { 
+      success: true,
+      email,
+      language: preferredLang,
+      expiresAt: expiresAt.toISOString()
+    };
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    throw new HttpsError('internal', 'Failed to send password reset email');
+  }
 }); 

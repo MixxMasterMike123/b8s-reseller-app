@@ -137,4 +137,13 @@ export interface B2COrderEmailData {
   orderData: B2COrderData;
   customerInfo?: B2CCustomerInfo;
   lang?: string;
+}
+
+// Password reset email data structure
+export interface PasswordResetData {
+  email: string;
+  resetCode: string;
+  userAgent?: string;
+  timestamp: string;
+  preferredLang?: string;
 } 

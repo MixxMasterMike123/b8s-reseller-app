@@ -109,4 +109,11 @@ export interface B2COrderEmailData {
     customerInfo?: B2CCustomerInfo;
     lang?: string;
 }
+export interface PasswordResetData {
+    email: string;
+    resetCode: string;
+    userAgent?: string;
+    timestamp: string;
+    preferredLang?: string;
+}
 export {};

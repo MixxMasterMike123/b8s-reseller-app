@@ -60,6 +60,7 @@ import CustomerAccount from './pages/shop/CustomerAccount';
 import CustomerLogin from './pages/shop/CustomerLogin';
 import CustomerRegister from './pages/shop/CustomerRegister';
 import ForgotPassword from './pages/shop/ForgotPassword';
+import ResetPassword from './pages/shop/ResetPassword';
 import EmailVerificationHandler from './pages/shop/EmailVerificationHandler';
 import GeoRedirect from './components/shop/GeoRedirect';
 import CountryRouteValidator from './components/shop/CountryRouteValidator';
@@ -105,7 +106,7 @@ const ConditionalTranslationProvider = ({ children, appMode }) => {
   }
   
   // B2B Reseller Portal - Credential pages should NOT use TranslationProvider (they use credentialTranslations)
-  const credentialRoutes = ['/login', '/register', '/forgot-password'];
+  const credentialRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
   const isCredentialPage = credentialRoutes.includes(location.pathname);
   
   if (isCredentialPage) {
@@ -188,7 +189,8 @@ function App() {
               {/* Credential pages - country-neutral for simplicity */}
               <Route path="/login" element={<CustomerLogin />} />
               <Route path="/register" element={<CustomerRegister />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
+                              <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/affiliate-login" element={<AffiliateLogin />} />
               
               {/* Firebase Auth Action Handler - Email Verification */}
