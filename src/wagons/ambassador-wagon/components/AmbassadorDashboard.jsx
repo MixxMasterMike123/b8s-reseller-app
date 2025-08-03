@@ -482,7 +482,7 @@ const AmbassadorDashboard = () => {
         <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <h2 className="text-lg font-medium text-gray-900">
-              Senaste Ambassadörer ({filteredContacts.length})
+              Senaste Ambassadörer
             </h2>
             <Link
               to="/admin/ambassadors/prospects"
@@ -531,7 +531,7 @@ const AmbassadorDashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredContacts.slice(0, 10).map((contact) => (
+                    {filteredContacts.slice(0, 5).map((contact) => (
                       <tr key={contact.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
