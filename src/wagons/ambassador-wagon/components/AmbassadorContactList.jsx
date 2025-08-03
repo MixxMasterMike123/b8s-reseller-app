@@ -466,7 +466,7 @@ const AmbassadorContactList = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col space-y-1">
                           {getContactTypeBadge(contact)}
-                          {contact.active === true ? (
+                          {(contact.active === true || contact.status === 'active') ? (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 border border-green-200 font-medium">
                               <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1"></span>
                               Aktiv
@@ -488,7 +488,7 @@ const AmbassadorContactList = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end space-x-2">
                           {/* Make Active Button (Only for inactive contacts) */}
-                          {contact.active !== true && (
+                          {(contact.active !== true && contact.status !== 'active') && (
                             <button
                               onClick={() => handleActivateContact(contact.id, contact.name)}
                               className="text-green-600 hover:text-green-700 font-medium text-sm flex items-center space-x-1"

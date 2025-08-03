@@ -88,6 +88,7 @@ const AmbassadorDashboard = () => {
       contacted: 'text-blue-600 bg-blue-100',
       negotiating: 'text-orange-600 bg-orange-100',
       converted: 'text-green-600 bg-green-100',
+      active: 'text-green-600 bg-green-100',
       declined: 'text-red-600 bg-red-100'
     };
     return colors[status] || 'text-gray-600 bg-gray-100';
