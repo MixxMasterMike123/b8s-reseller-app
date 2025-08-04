@@ -210,19 +210,19 @@ const AdminOrderDetail = () => {
   const getStatusInfo = (status) => {
     switch (status) {
       case 'pending':
-        return { text: 'Väntar', color: 'bg-yellow-100 text-yellow-800' };
+        return { text: 'Väntar', color: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300' };
       case 'confirmed':
-        return { text: 'Bekräftad', color: 'bg-blue-100 text-blue-800' };
+        return { text: 'Bekräftad', color: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300' };
       case 'processing':
-        return { text: 'Behandlas', color: 'bg-purple-100 text-purple-800' };
+        return { text: 'Behandlas', color: 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300' };
       case 'shipped':
-        return { text: 'Skickad', color: 'bg-indigo-100 text-indigo-800' };
+        return { text: 'Skickad', color: 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-300' };
       case 'delivered':
-        return { text: 'Levererad', color: 'bg-green-100 text-green-800' };
+        return { text: 'Levererad', color: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' };
       case 'cancelled':
-        return { text: 'Avbruten', color: 'bg-red-100 text-red-800' };
+        return { text: 'Avbruten', color: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300' };
       default:
-        return { text: status || 'Unknown', color: 'bg-gray-100 text-gray-800' };
+        return { text: status || 'Unknown', color: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300' };
     }
   };
 
@@ -413,12 +413,12 @@ const AdminOrderDetail = () => {
   if (!order) {
     return (
       <AppLayout>
-        <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <div className="max-w-6xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <div className="py-12 text-center">
-            <h2 className="text-xl font-medium text-gray-700 mb-2">Order not found</h2>
+            <h2 className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">Order not found</h2>
             <Link
               to="/admin/orders"
-              className="text-blue-600 hover:text-blue-800 font-medium"
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
             >
               Back to Orders
             </Link>
@@ -432,25 +432,25 @@ const AdminOrderDetail = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-6">
+      <div className="max-w-6xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
         {/* Header Section */}
         <div>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <Link to="/admin/orders" className="text-blue-600 hover:text-blue-800 mr-2 inline-flex items-center">
+              <Link to="/admin/orders" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 mr-2 inline-flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
                 </svg>
               </Link>
-              <h1 className="text-2xl font-bold text-gray-800">B8Shield Order Details</h1>
-              <p className="text-gray-600 mt-2">Order Number: <span className="font-semibold">{order.orderNumber}</span></p>
+              <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">B8Shield Order Details</h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">Order Number: <span className="font-semibold">{order.orderNumber}</span></p>
             </div>
             <div className="flex items-center gap-2">
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColor}`}>
                 {statusText}
               </span>
               {updateStatusLoading ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-r-transparent"></div>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 dark:border-blue-400 border-r-transparent"></div>
               ) : (
                 <OrderStatusMenu 
                   currentStatus={order.status} 
@@ -459,14 +459,14 @@ const AdminOrderDetail = () => {
               )}
               <button
                 onClick={handlePrint}
-                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                className="bg-gray-600 dark:bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
               >
                 Print
               </button>
               <button
                 onClick={handleDeleteOrder}
                 disabled={deleteLoading}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                className="bg-red-600 dark:bg-red-700 text-white px-4 py-2 rounded-lg hover:bg-red-700 dark:hover:bg-red-800 transition-colors disabled:opacity-50"
               >
                 {deleteLoading ? 'Deleting...' : 'Delete Order'}
               </button>
@@ -475,42 +475,42 @@ const AdminOrderDetail = () => {
         </div>
 
         {/* User Information - Enhanced with user profile data */}
-        <div className="bg-gray-50 p-4 rounded-lg mb-6">
-          <h2 className="text-lg font-semibold mb-3 text-gray-800">User Information</h2>
+        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-6">
+          <h2 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">User Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-gray-300">
                 <span className="font-medium">User ID:</span> {order.userId || 'Not available'}
               </p>
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-gray-300">
                 <span className="font-medium">Company/Name:</span> {displayUser.companyName}
               </p>
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-gray-300">
                 <span className="font-medium">Contact Person:</span> {displayUser.contactPerson}
               </p>
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-gray-300">
                 <span className="font-medium">Role:</span> {displayUser.role}
               </p>
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-gray-300">
                 <span className="font-medium">Account Status:</span>{' '}
-                <span className={`px-2 py-0.5 text-xs rounded-full ${displayUser.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                <span className={`px-2 py-0.5 text-xs rounded-full ${displayUser.active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'}`}>
                   {displayUser.active ? 'Active' : 'Inactive'}
                 </span>
               </p>
             </div>
             <div>
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-gray-300">
                 <span className="font-medium">Email:</span> {displayUser.email}
               </p>
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-gray-300">
                 <span className="font-medium">Phone:</span> {displayUser.phone}
               </p>
               {userData && (
                 <>
-                  <p className="text-gray-700">
+                  <p className="text-gray-700 dark:text-gray-300">
                     <span className="font-medium">Account Created:</span> {userData.createdAt ? formatDate(userData.createdAt) : 'Unknown'}
                   </p>
-                  <p className="text-gray-700">
+                  <p className="text-gray-700 dark:text-gray-300">
                     <span className="font-medium">Last Updated:</span> {userData.updatedAt ? formatDate(userData.updatedAt) : 'Unknown'}
                   </p>
                 </>
@@ -520,39 +520,39 @@ const AdminOrderDetail = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold mb-3 text-gray-800">Order Information</h2>
+          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+            <h2 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Order Information</h2>
             <div className="space-y-2">
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-gray-300">
                 <span className="font-medium">Date:</span> {formatDate(order.createdAt)}
               </p>
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-gray-300">
                 <span className="font-medium">Status:</span> {statusText}
               </p>
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-gray-300">
                 <span className="font-medium">Payment Method:</span> {order.payment?.method === 'stripe' ? 'Stripe (Card)' : order.paymentMethod || 'Invoice'}
               </p>
               {order.deliveryMethod && (
-                <p className="text-gray-700">
+                <p className="text-gray-700 dark:text-gray-300">
                   <span className="font-medium">Delivery Method:</span> {order.deliveryMethod}
                 </p>
               )}
               {order.source && (
-                <p className="text-gray-700">
+                <p className="text-gray-700 dark:text-gray-300">
                   <span className="font-medium">Order Source:</span>{' '}
-                  <span className={`px-2 py-0.5 text-xs rounded-full ${order.source === 'b2c' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>
+                  <span className={`px-2 py-0.5 text-xs rounded-full ${order.source === 'b2c' ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300' : 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300'}`}>
                     {order.source === 'b2c' ? 'B2C Shop' : 'B2B Portal'}
                   </span>
                 </p>
               )}
               {order.source === 'b2c' && order.affiliateCode && (
-                <p className="text-gray-700">
+                <p className="text-gray-700 dark:text-gray-300">
                   <span className="font-medium">REF Code:</span>{' '}
-                  <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-800">
+                  <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-300">
                     {order.affiliateCode}
                   </span>
                   {order.affiliateDiscount && (
-                    <span className="ml-2 text-sm text-gray-500">
+                    <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
                       ({order.affiliateDiscount.percentage}% rabatt)
                     </span>
                   )}
@@ -561,16 +561,16 @@ const AdminOrderDetail = () => {
             </div>
           </div>
 
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold mb-3 text-gray-800">Delivery Address</h2>
+          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+            <h2 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Delivery Address</h2>
             <div className="space-y-2">
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-gray-300">
                 <span className="font-medium">Name/Company:</span> {displayAddress.company}
               </p>
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-gray-300">
                 <span className="font-medium">Contact Person:</span> {displayAddress.contactPerson}
               </p>
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-gray-300">
                 <span className="font-medium">Address:</span> {displayAddress.address}
               </p>
             </div>
@@ -578,53 +578,53 @@ const AdminOrderDetail = () => {
         </div>
 
         <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-3 text-gray-800">Order Items</h2>
-          <div className="shadow-sm overflow-hidden border-b border-gray-200 sm:rounded-lg">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <h2 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Order Items</h2>
+          <div className="shadow-sm overflow-hidden border-b border-gray-200 dark:border-gray-700 sm:rounded-lg">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Product
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Color
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Size
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Quantity
                   </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Price per item
                   </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Total
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {(order.items && order.items.length > 0 ? order.items : getOrderDistribution(order)).map((item, index) => (
                   <tr key={index}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">
                       {getContentValue(item.name) || 'B8 Shield'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {getContentValue(item.color)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {getContentValue(item.size)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {item.quantity} st
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">
                       {item.price?.toLocaleString('sv-SE', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                       })} kr
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">
                       {(item.price * item.quantity).toLocaleString('sv-SE', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
@@ -633,10 +633,10 @@ const AdminOrderDetail = () => {
                   </tr>
                 ))}
               </tbody>
-              <tfoot>
+              <tfoot className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium">Subtotal:</td>
-                  <td className="px-4 py-4 text-sm text-gray-700 text-right">
+                  <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium text-gray-800 dark:text-gray-200">Subtotal:</td>
+                  <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300 text-right">
                     {order.source === 'b2c' ? (
                       `${order.subtotal?.toLocaleString('sv-SE', {
                         minimumFractionDigits: 2,
@@ -652,7 +652,7 @@ const AdminOrderDetail = () => {
                 </tr>
                 {order.source === 'b2c' && order.discountAmount > 0 && (
                   <tr>
-                    <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium text-green-600">
+                    <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium text-green-600 dark:text-green-400">
                       {(() => {
                         // Handle different affiliate data structures
                         const affiliateCode = order.affiliateCode || order.affiliate?.code || 'AFFILIATE';
@@ -660,7 +660,7 @@ const AdminOrderDetail = () => {
                         return `Affiliate rabatt (${affiliateCode}), ${discountPercentage}%:`;
                       })()}
                     </td>
-                    <td className="px-4 py-4 text-sm text-green-600 text-right">
+                    <td className="px-4 py-4 text-sm text-green-600 dark:text-green-400 text-right">
                       - {order.discountAmount?.toLocaleString('sv-SE', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
@@ -670,8 +670,8 @@ const AdminOrderDetail = () => {
                 )}
                 {order.source === 'b2c' && order.shipping > 0 && (
                   <tr>
-                    <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium">Shipping:</td>
-                    <td className="px-4 py-4 text-sm text-gray-700 text-right">
+                    <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium text-gray-800 dark:text-gray-200">Shipping:</td>
+                    <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300 text-right">
                       {order.shipping.toLocaleString('sv-SE', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
@@ -680,8 +680,8 @@ const AdminOrderDetail = () => {
                   </tr>
                 )}
                 <tr>
-                  <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium">VAT (25%):</td>
-                  <td className="px-4 py-4 text-sm text-gray-700 text-right">
+                  <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium text-gray-800 dark:text-gray-200">VAT (25%):</td>
+                  <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300 text-right">
                     {order.source === 'b2c' ? (
                       `${order.vat?.toLocaleString('sv-SE', {
                         minimumFractionDigits: 2,
@@ -696,8 +696,8 @@ const AdminOrderDetail = () => {
                   </td>
                 </tr>
                 <tr>
-                  <td colSpan="4" className="px-4 py-4 text-sm text-right font-bold">Total:</td>
-                  <td className="px-4 py-4 text-sm font-bold text-gray-800 text-right">
+                  <td colSpan="4" className="px-4 py-4 text-sm text-right font-bold text-gray-800 dark:text-gray-100">Total:</td>
+                  <td className="px-4 py-4 text-sm font-bold text-gray-800 dark:text-gray-100 text-right">
                     {order.source === 'b2c' ? (
                       `${order.total?.toLocaleString('sv-SE', {
                         minimumFractionDigits: 2,
@@ -718,9 +718,9 @@ const AdminOrderDetail = () => {
 
         {order.note && (
           <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-2 text-gray-800">Notes</h2>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-gray-700">{order.note}</p>
+            <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Notes</h2>
+            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+              <p className="text-gray-700 dark:text-gray-300">{order.note}</p>
             </div>
           </div>
         )}
@@ -728,28 +728,28 @@ const AdminOrderDetail = () => {
         {/* Status History Section */}
         {order.statusHistory && order.statusHistory.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-2 text-gray-800">Status History</h2>
-            <div className="bg-gray-50 p-4 rounded-lg">
+            <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Status History</h2>
+            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
               <ul className="space-y-3">
                 {order.statusHistory.map((history, index) => (
-                  <li key={index} className="border-b border-gray-200 pb-2 last:border-0 last:pb-0">
+                  <li key={index} className="border-b border-gray-200 dark:border-gray-600 pb-2 last:border-0 last:pb-0">
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="font-medium">Status changed from </span>
+                        <span className="font-medium text-gray-800 dark:text-gray-200">Status changed from </span>
                         <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusInfo(history.from).color}`}>
                           {getStatusInfo(history.from).text}
                         </span>
-                        <span className="font-medium"> to </span>
+                        <span className="font-medium text-gray-800 dark:text-gray-200"> to </span>
                         <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusInfo(history.to).color}`}>
                           {getStatusInfo(history.to).text}
                         </span>
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
                         {history.changedAt ? formatDate(history.changedAt) : 'N/A'}
                       </div>
                     </div>
                     {history.displayName && (
-                      <div className="text-sm text-gray-500 mt-1">
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         By: {history.displayName}
                       </div>
                     )}
@@ -763,7 +763,7 @@ const AdminOrderDetail = () => {
         <div className="flex justify-between mt-8">
           <Link
             to="/admin/orders"
-            className="text-blue-600 hover:text-blue-800 font-medium"
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
           >
             Back to Order List
           </Link>
