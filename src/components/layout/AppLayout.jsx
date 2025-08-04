@@ -186,12 +186,6 @@ const AppLayout = ({ children }) => {
       description: t('nav.admin_affiliates_desc', 'Hantera affiliate-partners'),
     },
     {
-      name: t('nav.admin_campaigns', 'Kampanjer'),
-      path: '/admin/campaigns',
-      icon: MegaphoneIcon,
-      description: t('nav.admin_campaigns_desc', 'Hantera marknadsföringskampanjer'),
-    },
-    {
       name: t('nav.admin_settings', 'Inställningar'),
       path: '/admin/settings',
       icon: Cog6ToothIcon,
