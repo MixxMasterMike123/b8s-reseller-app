@@ -664,7 +664,7 @@ const AdminUserEdit = () => {
                   name="companyName"
                   value={formData.companyName}
                   onChange={handleInputChange}
-                  className={`block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                  className={`block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 ${
                     errors.companyName ? 'border-red-300' : ''
                   }`}
                   placeholder="Företagets namn"
@@ -682,7 +682,7 @@ const AdminUserEdit = () => {
                   name="orgNumber"
                   value={formData.orgNumber}
                   onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                   placeholder="556123-4567"
                 />
               </div>
@@ -703,7 +703,7 @@ const AdminUserEdit = () => {
                   name="contactPerson"
                   value={formData.contactPerson}
                   onChange={handleInputChange}
-                  className={`block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                  className={`block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 ${
                     errors.contactPerson ? 'border-red-300' : ''
                   }`}
                   placeholder="Förnamn Efternamn"
@@ -727,8 +727,8 @@ const AdminUserEdit = () => {
                       errors.email ? 'border-red-300' : ''
                     } ${
                       !emailEditEnabled 
-                        ? 'bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 text-gray-500 dark:text-gray-400 cursor-not-allowed' 
-                        : 'bg-white dark:bg-gray-700 border-blue-300 dark:border-blue-600 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500 cursor-text'
+                        ? 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed' 
+                        : 'bg-white dark:bg-gray-600 border-blue-300 dark:border-blue-400 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-300 focus:ring-blue-500 dark:focus:ring-blue-300 cursor-text'
                     }`}
                     placeholder="exempel@företag.se"
                     required
@@ -771,7 +771,7 @@ const AdminUserEdit = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                   placeholder="08-123 456 78"
                 />
               </div>
@@ -783,7 +783,7 @@ const AdminUserEdit = () => {
                   name="preferredLang"
                   value={formData.preferredLang}
                   onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                 >
                   <option value="sv-SE">Svenska</option>
                   <option value="en-GB">English (UK)</option>
@@ -807,7 +807,7 @@ const AdminUserEdit = () => {
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                   placeholder="Gatuadress 123"
                 />
               </div>
@@ -822,7 +822,7 @@ const AdminUserEdit = () => {
                   name="postalCode"
                   value={formData.postalCode}
                   onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                   placeholder="123 45"
                 />
               </div>
@@ -837,7 +837,7 @@ const AdminUserEdit = () => {
                   name="city"
                   value={formData.city}
                   onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                   placeholder="Stockholm"
                 />
               </div>
@@ -851,7 +851,7 @@ const AdminUserEdit = () => {
                   name="country"
                   value={formData.country}
                   onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                 >
                   <option value="Sverige">Sverige</option>
                   <option value="Norge">Norge</option>
@@ -873,7 +873,7 @@ const AdminUserEdit = () => {
                   name="sameAsCompanyAddress"
                   checked={formData.sameAsCompanyAddress}
                   onChange={handleInputChange}
-                  className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded"
+                  className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 rounded"
                 />
                 <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
                   Samma som företagsadress
@@ -893,7 +893,7 @@ const AdminUserEdit = () => {
                     name="deliveryAddress"
                     value={formData.deliveryAddress}
                     onChange={handleInputChange}
-                    className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                     placeholder="Leveransadress 123"
                   />
                 </div>
@@ -908,7 +908,7 @@ const AdminUserEdit = () => {
                     name="deliveryPostalCode"
                     value={formData.deliveryPostalCode}
                     onChange={handleInputChange}
-                    className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                     placeholder="123 45"
                   />
                 </div>
@@ -923,7 +923,7 @@ const AdminUserEdit = () => {
                     name="deliveryCity"
                     value={formData.deliveryCity}
                     onChange={handleInputChange}
-                    className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                     placeholder="Stockholm"
                   />
                 </div>
@@ -937,7 +937,7 @@ const AdminUserEdit = () => {
                     name="deliveryCountry"
                     value={formData.deliveryCountry}
                     onChange={handleInputChange}
-                    className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                   >
                     <option value="Sverige">Sverige</option>
                     <option value="Norge">Norge</option>
@@ -972,7 +972,7 @@ const AdminUserEdit = () => {
                     step="0.5"
                     value={formData.marginal}
                     onChange={handleInputChange}
-                    className={`block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                    className={`block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 ${
                       errors.marginal ? 'border-red-300' : ''
                     }`}
                   />
@@ -988,7 +988,7 @@ const AdminUserEdit = () => {
                     name="role"
                     value={formData.role}
                     onChange={handleInputChange}
-                    className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                   >
                     <option value="user">Kund</option>
                     <option value="admin">Administratör</option>
@@ -1002,7 +1002,7 @@ const AdminUserEdit = () => {
                     name="active"
                     checked={formData.active}
                     onChange={handleInputChange}
-                    className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded"
+                    className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 rounded"
                   />
                   <label htmlFor="active" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                     Aktiv kund
@@ -1023,7 +1023,7 @@ const AdminUserEdit = () => {
               rows={4}
               value={formData.notes}
               onChange={handleInputChange}
-              className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
               placeholder="Interna anteckningar om kunden..."
             />
           </div>
@@ -1090,7 +1090,7 @@ const AdminUserEdit = () => {
                           required
                           value={materialFormData.name}
                           onChange={(e) => setMaterialFormData(prev => ({ ...prev, name: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
                           placeholder="Materialnamn"
                         />
                       </div>
@@ -1101,7 +1101,7 @@ const AdminUserEdit = () => {
                         <select
                           value={materialFormData.category}
                           onChange={(e) => setMaterialFormData(prev => ({ ...prev, category: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
                         >
                           {categories.map(cat => (
                             <option key={cat.value} value={cat.value}>{cat.label}</option>
@@ -1118,7 +1118,7 @@ const AdminUserEdit = () => {
                         value={materialFormData.description}
                         onChange={(e) => setMaterialFormData(prev => ({ ...prev, description: e.target.value }))}
                         rows={2}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
                         placeholder="Beskrivning av materialet"
                       />
                     </div>
@@ -1132,7 +1132,7 @@ const AdminUserEdit = () => {
                         required
                         onChange={handleMaterialFileChange}
                         accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.mp4,.mov,.avi,.webm,.mkv,.pdf,.doc,.docx,.txt,.rtf,.zip,.rar"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
                       />
                       {materialFormData.file && (
                         <p className="mt-1 text-sm text-gray-600">
@@ -1264,7 +1264,7 @@ const AdminUserEdit = () => {
                           required
                           value={adminDocFormData.title}
                           onChange={(e) => setAdminDocFormData(prev => ({ ...prev, title: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                           placeholder="Dokumenttitel"
                         />
                       </div>
@@ -1275,7 +1275,7 @@ const AdminUserEdit = () => {
                         <select
                           value={adminDocFormData.category}
                           onChange={(e) => setAdminDocFormData(prev => ({ ...prev, category: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                         >
                           <option value="dokument">Dokument</option>
                           <option value="kontrakt">Kontrakt</option>
@@ -1295,7 +1295,7 @@ const AdminUserEdit = () => {
                         value={adminDocFormData.description}
                         onChange={(e) => setAdminDocFormData(prev => ({ ...prev, description: e.target.value }))}
                         rows={2}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                         placeholder="Beskrivning av dokumentet"
                       />
                     </div>
@@ -1308,7 +1308,7 @@ const AdminUserEdit = () => {
                         value={adminDocFormData.notes}
                         onChange={(e) => setAdminDocFormData(prev => ({ ...prev, notes: e.target.value }))}
                         rows={2}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                         placeholder="Interna anteckningar (endast synliga för admins)"
                       />
                     </div>
@@ -1322,7 +1322,7 @@ const AdminUserEdit = () => {
                         required
                         onChange={handleAdminDocFileChange}
                         accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.mp4,.mov,.avi,.webm,.mkv,.pdf,.doc,.docx,.txt,.rtf,.zip,.rar"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                       />
                       {adminDocFormData.file && (
                         <p className="mt-1 text-sm text-gray-600">
