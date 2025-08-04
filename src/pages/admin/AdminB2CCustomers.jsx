@@ -233,27 +233,27 @@ const AdminB2CCustomers = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-md">
+      <div className="max-w-7xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
         {/* Header */}
-        <div className="px-4 py-5 border-b border-gray-200 sm:px-6 flex justify-between items-center">
+        <div className="px-4 py-5 border-b border-gray-200 dark:border-gray-700 sm:px-6 flex justify-between items-center">
           <div>
-            <h1 className="text-lg leading-6 font-medium text-gray-900">
+            <h1 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
               B2C Kunder
             </h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Hantera konsumentkunder och deras data
             </p>
           </div>
           <div className="flex gap-3">
             <button
               onClick={exportCustomersCSV}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
             >
               Exportera CSV
             </button>
             <Link
               to="/admin"
-              className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
             >
               Tillbaka till Admin
             </Link>
@@ -261,40 +261,40 @@ const AdminB2CCustomers = () => {
         </div>
 
         {/* Statistics Cards */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-blue-50 rounded-lg p-4">
-              <div className="text-2xl font-bold text-blue-600">{stats.totalCustomers}</div>
-              <div className="text-sm text-blue-600">Totala Kunder</div>
+            <div className="bg-blue-50 dark:bg-blue-900 rounded-lg p-4">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-300">{stats.totalCustomers}</div>
+              <div className="text-sm text-blue-600 dark:text-blue-400">Totala Kunder</div>
             </div>
-            <div className="bg-green-50 rounded-lg p-4">
-              <div className="text-2xl font-bold text-green-600">{stats.marketingConsent}</div>
-              <div className="text-sm text-green-600">Godkänt Marknadsföring</div>
+            <div className="bg-green-50 dark:bg-green-900 rounded-lg p-4">
+              <div className="text-2xl font-bold text-green-600 dark:text-green-300">{stats.marketingConsent}</div>
+              <div className="text-sm text-green-600 dark:text-green-400">Godkänt Marknadsföring</div>
             </div>
-            <div className="bg-purple-50 rounded-lg p-4">
-              <div className="text-2xl font-bold text-purple-600">{stats.withOrders}</div>
-              <div className="text-sm text-purple-600">Med Ordrar</div>
+            <div className="bg-purple-50 dark:bg-purple-900 rounded-lg p-4">
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-300">{stats.withOrders}</div>
+              <div className="text-sm text-purple-600 dark:text-purple-400">Med Ordrar</div>
             </div>
-            <div className="bg-yellow-50 rounded-lg p-4">
-              <div className="text-2xl font-bold text-yellow-600">{formatCurrency(stats.totalSales)}</div>
-              <div className="text-sm text-yellow-600">Total Försäljning</div>
+            <div className="bg-yellow-50 dark:bg-yellow-900 rounded-lg p-4">
+              <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-300">{formatCurrency(stats.totalSales)}</div>
+              <div className="text-sm text-yellow-600 dark:text-yellow-400">Total Försäljning</div>
             </div>
           </div>
         </div>
 
         {/* Filter and search */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="relative flex-1">
               <input
                 type="text"
                 placeholder="Sök efter namn eller e-post..."
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 pl-10 py-2"
+                className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-blue-500 pl-10 py-2"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
                 </svg>
               </div>
@@ -302,7 +302,7 @@ const AdminB2CCustomers = () => {
             
             <div className="flex-shrink-0">
               <select
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2"
+                className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2"
                 value={segmentFilter}
                 onChange={(e) => setSegmentFilter(e.target.value)}
               >
@@ -319,43 +319,43 @@ const AdminB2CCustomers = () => {
         <div className="p-6">
           {loading ? (
             <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
             </div>
           ) : filteredCustomers.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Kund
                     </th>
-                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Kontakt
                     </th>
-                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Ordrar
                     </th>
-                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Segment
                     </th>
-                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Registrerad
                     </th>
-                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Åtgärder
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {filteredCustomers.map((customer) => (
-                    <tr key={customer.id} className="hover:bg-gray-50">
+                    <tr key={customer.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-4 md:px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                               {customer.firstName} {customer.lastName}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
                               {customer.city}, {customer.country}
                             </div>
                           </div>
@@ -363,30 +363,30 @@ const AdminB2CCustomers = () => {
                       </td>
                       
                       <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{customer.email}</div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-900 dark:text-gray-100">{customer.email}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
                           {customer.marketingConsent ? (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300">
                               Marknadsföring OK
                             </span>
                           ) : (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
                               Ej marknadsföring
                             </span>
                           )}
                         </div>
                       </td>
                       
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                         <div>{customer.realStats?.totalOrders || 0} ordrar</div>
-                        <div className="text-gray-500">{formatCurrency(customer.realStats?.totalSpent || 0)}</div>
+                        <div className="text-gray-500 dark:text-gray-400">{formatCurrency(customer.realStats?.totalSpent || 0)}</div>
                       </td>
                       
                       <td className="px-4 md:px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          customer.customerSegment === 'vip' ? 'bg-purple-100 text-purple-800' :
-                          customer.customerSegment === 'repeat' ? 'bg-blue-100 text-blue-800' :
-                          'bg-gray-100 text-gray-800'
+                          customer.customerSegment === 'vip' ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300' :
+                          customer.customerSegment === 'repeat' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300' :
+                          'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                         }`}>
                           {customer.customerSegment === 'vip' ? 'VIP' :
                            customer.customerSegment === 'repeat' ? 'Återkommande' :
@@ -394,7 +394,7 @@ const AdminB2CCustomers = () => {
                         </span>
                       </td>
                       
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {formatDate(customer.createdAt)}
                       </td>
                       
@@ -402,14 +402,14 @@ const AdminB2CCustomers = () => {
                         <div className="flex space-x-2">
                           <Link
                             to={`/admin/b2c-customers/${customer.id}`}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
                           >
                             Redigera
                           </Link>
-                          <span className="text-gray-300">|</span>
+                          <span className="text-gray-300 dark:text-gray-600">|</span>
                           <Link
                             to={`/admin/b2c-customers/${customer.id}/orders`}
-                            className="text-green-600 hover:text-green-900"
+                            className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300"
                           >
                             Ordrar ({customer.realStats?.totalOrders || 0})
                           </Link>
@@ -422,8 +422,8 @@ const AdminB2CCustomers = () => {
             </div>
           ) : (
             <div className="text-center py-8">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Inga B2C-kunder hittades</h3>
-              <p className="text-gray-500">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Inga B2C-kunder hittades</h3>
+              <p className="text-gray-500 dark:text-gray-400">
                 {searchTerm || segmentFilter !== 'all' 
                   ? 'Försök justera sökkriterier eller filter.'
                   : 'B2C-kunder kommer att visas här när de skapar konton via kassan.'
