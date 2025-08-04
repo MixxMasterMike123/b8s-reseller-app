@@ -1,5 +1,6 @@
 export interface AffiliateClickData {
     affiliateCode: string;
+    campaignCode?: string;
 }
 export interface AffiliateClickResponse {
     success: boolean;
@@ -34,6 +35,7 @@ export interface AffiliateData {
 export interface AffiliateClickRecord {
     affiliateCode: string;
     affiliateId: string;
+    campaignCode?: string;
     timestamp: any;
     ipAddress: string;
     userAgent: string;

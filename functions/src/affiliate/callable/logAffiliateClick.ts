@@ -18,7 +18,7 @@ export const logAffiliateClickV2 = onCall<AffiliateClickData>(
     const db = getFirestore(getApp(), 'b8s-reseller-db');
     
     const { data } = request;
-    const { affiliateCode } = data;
+    const { affiliateCode, campaignCode } = data;
 
     if (!affiliateCode) {
       throw new Error('The function must be called with an affiliateCode.');
@@ -40,6 +40,7 @@ export const logAffiliateClickV2 = onCall<AffiliateClickData>(
       const clickRef = await db.collection('affiliateClicks').add({
         affiliateCode: affiliateCode,
         affiliateId: affiliateDoc.id,
+        campaignCode: campaignCode || null, // Store campaign code if provided
         timestamp: Timestamp.now(),
         ipAddress: request.rawRequest?.ip || 'unknown',
         userAgent: request.rawRequest?.headers?.['user-agent'] || 'unknown',
@@ -51,8 +52,30 @@ export const logAffiliateClickV2 = onCall<AffiliateClickData>(
       await affiliateDoc.ref.update({
         'stats.clicks': FieldValue.increment(1)
       });
+
+      // Update campaign stats if campaign code provided
+      if (campaignCode) {
+        try {
+          const campaignsRef = db.collection('campaigns');
+          const campaignQuery = campaignsRef.where('code', '==', campaignCode);
+          const campaignSnapshot = await campaignQuery.get();
+          
+          if (!campaignSnapshot.empty) {
+            const campaignDoc = campaignSnapshot.docs[0];
+            await campaignDoc.ref.update({
+              'totalClicks': FieldValue.increment(1)
+            });
+            console.log(`Campaign click logged for campaign ${campaignCode}`);
+          } else {
+            console.warn(`Campaign not found for code: ${campaignCode}`);
+          }
+        } catch (campaignError) {
+          console.error(`Error updating campaign stats for ${campaignCode}:`, campaignError);
+          // Don't throw error here - affiliate click was successful
+        }
+      }
     
-      console.log(`Click logged for affiliate ${affiliateCode}, clickId: ${clickRef.id}`);
+      console.log(`Click logged for affiliate ${affiliateCode}${campaignCode ? ` with campaign ${campaignCode}` : ''}, clickId: ${clickRef.id}`);
 
       return { 
         success: true, 

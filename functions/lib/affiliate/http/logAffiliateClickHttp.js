@@ -31,7 +31,7 @@ exports.logAffiliateClickHttpV2 = (0, https_1.onRequest)({
         res.status(405).send('Method Not Allowed');
         return;
     }
-    const { affiliateCode } = req.body;
+    const { affiliateCode, campaignCode } = req.body;
     if (!affiliateCode) {
         res.status(400).json({
             success: false,
@@ -56,6 +56,7 @@ exports.logAffiliateClickHttpV2 = (0, https_1.onRequest)({
         const clickRef = await db.collection('affiliateClicks').add({
             affiliateCode: affiliateCode,
             affiliateId: affiliateDoc.id,
+            campaignCode: campaignCode || null,
             timestamp: firestore_1.Timestamp.now(),
             ipAddress: req.ip || 'unknown',
             userAgent: req.headers['user-agent'] || 'unknown',
@@ -66,7 +67,29 @@ exports.logAffiliateClickHttpV2 = (0, https_1.onRequest)({
         await affiliateDoc.ref.update({
             'stats.clicks': firestore_1.FieldValue.increment(1)
         });
-        console.log(`HTTP click logged for affiliate ${affiliateCode}, clickId: ${clickRef.id}`);
+        // Update campaign stats if campaign code provided
+        if (campaignCode) {
+            try {
+                const campaignsRef = db.collection('campaigns');
+                const campaignQuery = campaignsRef.where('code', '==', campaignCode);
+                const campaignSnapshot = await campaignQuery.get();
+                if (!campaignSnapshot.empty) {
+                    const campaignDoc = campaignSnapshot.docs[0];
+                    await campaignDoc.ref.update({
+                        'totalClicks': firestore_1.FieldValue.increment(1)
+                    });
+                    console.log(`Campaign click logged for campaign ${campaignCode}`);
+                }
+                else {
+                    console.warn(`Campaign not found for code: ${campaignCode}`);
+                }
+            }
+            catch (campaignError) {
+                console.error(`Error updating campaign stats for ${campaignCode}:`, campaignError);
+                // Don't throw error here - affiliate click was successful
+            }
+        }
+        console.log(`HTTP click logged for affiliate ${affiliateCode}${campaignCode ? ` with campaign ${campaignCode}` : ''}, clickId: ${clickRef.id}`);
         res.status(200).json({
             success: true,
             message: `Click logged for affiliate ${affiliateCode}`,

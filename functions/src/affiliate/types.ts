@@ -2,6 +2,7 @@
 
 export interface AffiliateClickData {
   affiliateCode: string;
+  campaignCode?: string; // Optional campaign tracking
 }
 
 export interface AffiliateClickResponse {
@@ -39,6 +40,7 @@ export interface AffiliateData {
 export interface AffiliateClickRecord {
   affiliateCode: string;
   affiliateId: string;
+  campaignCode?: string; // Optional campaign tracking
   timestamp: any; // Firestore Timestamp
   ipAddress: string;
   userAgent: string;
