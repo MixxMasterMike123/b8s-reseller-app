@@ -10,10 +10,12 @@ import {
   RocketLaunchIcon
 } from '@heroicons/react/24/outline';
 import AppLayout from '../../../components/layout/AppLayout';
+import { useContentTranslation } from '../../../hooks/useContentTranslation';
 import { useCampaigns } from '../hooks/useCampaigns';
 import { CAMPAIGN_STATUS } from '../utils/campaignUtils';
 
 const CampaignDashboard = () => {
+  const { getContentValue } = useContentTranslation();
   const { 
     campaigns, 
     loading, 
@@ -26,6 +28,22 @@ const CampaignDashboard = () => {
   const stats = getCampaignStats();
   const activeCampaigns = getActiveCampaigns();
   const draftCampaigns = getDraftCampaigns();
+
+  // Safe rendering function for campaign names (prevents React string/json errors)
+  const safeGetCampaignName = (campaign) => {
+    if (!campaign) return 'Namnlös kampanj';
+    
+    // Use getContentValue for safe multilingual content extraction
+    const name = getContentValue(campaign.name);
+    
+    // Ensure we always return a string, never an object
+    if (typeof name === 'string' && name.trim()) {
+      return name;
+    }
+    
+    // Fallback to campaign code or default name
+    return campaign.code ? `Kampanj ${campaign.code}` : 'Namnlös kampanj';
+  };
 
   // Get status badge component
   const getStatusBadge = (status) => {
@@ -200,7 +218,7 @@ const CampaignDashboard = () => {
                           {getCampaignTypeIcon(campaign.type)}
                           <div className="ml-3">
                             <p className="text-sm font-medium text-gray-900">
-                              {campaign.name?.['sv-SE'] || 'Namnlös kampanj'}
+                              {safeGetCampaignName(campaign)}
                             </p>
                             <p className="text-sm text-gray-500">
                               Kod: {campaign.code}
@@ -246,7 +264,7 @@ const CampaignDashboard = () => {
                           {getCampaignTypeIcon(campaign.type)}
                           <div className="ml-3">
                             <p className="text-sm font-medium text-gray-900">
-                              {campaign.name?.['sv-SE'] || 'Namnlös kampanj'}
+                              {safeGetCampaignName(campaign)}
                             </p>
                             <p className="text-sm text-gray-500">
                               Kod: {campaign.code}

@@ -676,7 +676,13 @@ const CampaignEdit = () => {
                 <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
                   <div>
                     <dt className="font-medium text-gray-700">Namn:</dt>
-                    <dd className="text-gray-900">{getContentValue(formData.name, 'sv-SE') || 'Ej angivet'}</dd>
+                    <dd className="text-gray-900">
+                      {(() => {
+                        // 🚨 CRITICAL: Safe multilingual content rendering to prevent React string/json errors
+                        const name = getContentValue(formData.name);
+                        return typeof name === 'string' && name.trim() ? name : 'Ej angivet';
+                      })()}
+                    </dd>
                   </div>
                   <div>
                     <dt className="font-medium text-gray-700">Typ:</dt>
