@@ -439,6 +439,32 @@ const CampaignEdit = () => {
                 />
               </div>
 
+              {/* Affiliate Information - Multilingual (Only visible to affiliates) */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Affiliate-information
+                  <span className="text-xs text-gray-500 ml-2">(Synlig endast för affiliates)</span>
+                </label>
+                <ContentLanguageIndicator 
+                  contentField={formData.affiliateInfo}
+                  label="Affiliate-information"
+                  className="mb-2"
+                />
+                <textarea
+                  value={getContentValue(formData.affiliateInfo)}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    affiliateInfo: setContentValue(formData.affiliateInfo, e.target.value)
+                  })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="Speciell information endast för dina affiliates..."
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Denna information syns endast för affiliates i deras portal, inte för admins.
+                </p>
+              </div>
+
               {/* Campaign Code */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">

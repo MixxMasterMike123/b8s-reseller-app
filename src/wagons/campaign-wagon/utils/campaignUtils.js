@@ -319,6 +319,11 @@ export const getDefaultCampaign = () => {
       'en-GB': '',
       'en-US': ''
     },
+    affiliateInfo: {
+      'sv-SE': '',
+      'en-GB': '',
+      'en-US': ''
+    },
     
     // Campaign identity
     code: '',

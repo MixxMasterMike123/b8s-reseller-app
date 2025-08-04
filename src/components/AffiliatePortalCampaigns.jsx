@@ -56,10 +56,12 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
   const generateCampaignLink = (campaign, productPath = '') => {
     if (!affiliateData?.affiliateCode || !campaign?.code) return '';
     
-    // Create campaign-specific affiliate code: AFFILIATE_CODE-CAMPAIGN_CODE
-    const campaignAffiliateCode = `${affiliateData.affiliateCode}-${campaign.code}`;
+    // Generate base affiliate link
+    const baseLink = generateAffiliateLink(affiliateData.affiliateCode, affiliateData?.preferredLang, productPath);
     
-    return generateAffiliateLink(campaignAffiliateCode, affiliateData?.preferredLang, productPath);
+    // Add campaign parameter
+    const separator = baseLink.includes('?') ? '&' : '?';
+    return `${baseLink}${separator}campaign=${campaign.code}`;
   };
 
   // Generate QR Code for campaign
@@ -80,7 +82,7 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
       }));
     } catch (error) {
       console.error('Error generating QR code:', error);
-      toast.error('Fel vid generering av QR-kod');
+      toast.error(t('campaign_qr_error', 'Fel vid generering av QR-kod'));
     }
   };
 
@@ -89,13 +91,13 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
     try {
       await navigator.clipboard.writeText(link);
       setCopyStatus(prev => ({ ...prev, [campaignId]: true }));
-      toast.success('Länk kopierad!');
+      toast.success(t('campaign_link_copied_success', 'Länk kopierad!'));
       
       setTimeout(() => {
         setCopyStatus(prev => ({ ...prev, [campaignId]: false }));
       }, 2000);
     } catch (error) {
-      toast.error('Kunde inte kopiera länk');
+      toast.error(t('campaign_link_copy_error', 'Kunde inte kopiera länk'));
     }
   };
 
@@ -124,10 +126,10 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
 
   // Safe campaign name rendering
   const safeGetCampaignName = (campaign) => {
-    if (!campaign) return 'Namnlös kampanj';
+    if (!campaign) return t('campaign_unnamed', 'Namnlös kampanj');
     const name = getContentValue(campaign.name);
     if (typeof name === 'string' && name.trim()) return name;
-    return campaign.code ? `Kampanj ${campaign.code}` : 'Namnlös kampanj';
+    return campaign.code ? t('campaign_with_code', 'Kampanj {{code}}', { code: campaign.code }) : t('campaign_unnamed', 'Namnlös kampanj');
   };
 
   // Safe campaign description rendering  
@@ -167,7 +169,7 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
         <div className="flex">
           <ExclamationTriangleIcon className="h-5 w-5 text-red-400 mr-3 mt-0.5" />
           <div>
-            <h3 className="text-sm font-medium text-red-800">Ett fel uppstod</h3>
+            <h3 className="text-sm font-medium text-red-800">{t('campaign_error_occurred', 'Ett fel uppstod')}</h3>
             <p className="mt-1 text-sm text-red-700">{error}</p>
           </div>
         </div>
@@ -179,9 +181,9 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
     return (
       <div className="text-center py-12">
         <MegaphoneIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Inga aktiva kampanjer</h3>
-        <p className="text-gray-600">Det finns inga kampanjer tillgängliga för dig just nu.</p>
-        <p className="text-sm text-gray-500 mt-2">Kontakta din kampanjansvarig för mer information.</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">{t('campaign_no_active', 'Inga aktiva kampanjer')}</h3>
+        <p className="text-gray-600">{t('campaign_none_available', 'Det finns inga kampanjer tillgängliga för dig just nu.')}</p>
+        <p className="text-sm text-gray-500 mt-2">{t('campaign_contact_manager', 'Kontakta din kampanjansvarig för mer information.')}</p>
       </div>
     );
   }
@@ -192,9 +194,9 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
         <div className="flex items-center">
           <MegaphoneIcon className="h-8 w-8 mr-3" />
           <div>
-            <h2 className="text-xl font-bold">Aktiva Kampanjer</h2>
+            <h2 className="text-xl font-bold">{t('campaign_active_title', 'Aktiva Kampanjer')}</h2>
             <p className="text-purple-100 mt-1">
-              {availableCampaigns.length} kampanjer tillgängliga för dig
+              {t('campaign_available_count', '{{count}} kampanjer tillgängliga för dig', { count: availableCampaigns.length })}
             </p>
           </div>
         </div>
@@ -218,13 +220,26 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
                         {safeGetCampaignName(campaign)}
                       </h3>
                       <p className="text-sm text-gray-600 mt-1">
-                        Kampanjkod: <span className="font-mono font-medium">{campaign.code}</span>
+                        {t('campaign_code_label', 'Kampanjkod')}: <span className="font-mono font-medium">{campaign.code}</span>
                       </p>
                       {safeGetCampaignDescription(campaign) && (
                         <p className="text-sm text-gray-600 mt-2">
                           {safeGetCampaignDescription(campaign)}
                         </p>
                       )}
+                      {(() => {
+                        const affiliateInfo = getContentValue(campaign.affiliateInfo);
+                        return affiliateInfo && typeof affiliateInfo === 'string' && affiliateInfo.trim() ? (
+                          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                            <p className="text-sm font-medium text-blue-800 mb-1">
+                              {t('campaign_affiliate_info_title', 'Information för dig som affiliate')}:
+                            </p>
+                            <p className="text-sm text-blue-700">
+                              {affiliateInfo}
+                            </p>
+                          </div>
+                        ) : null;
+                      })()}
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -237,19 +252,19 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
                   {campaign.startDate && (
                     <div className="flex items-center">
                       <CalendarIcon className="h-4 w-4 mr-2" />
-                      Start: {new Date(campaign.startDate).toLocaleDateString('sv-SE')}
+                      {t('campaign_start_date', 'Start')}: {new Date(campaign.startDate).toLocaleDateString('sv-SE')}
                     </div>
                   )}
                   {campaign.endDate && (
                     <div className="flex items-center">
                       <CalendarIcon className="h-4 w-4 mr-2" />
-                      Slut: {new Date(campaign.endDate).toLocaleDateString('sv-SE')}
+                      {t('campaign_end_date', 'Slut')}: {new Date(campaign.endDate).toLocaleDateString('sv-SE')}
                     </div>
                   )}
                   {campaign.customerDiscountRate > 0 && (
                     <div className="flex items-center">
                       <TagIcon className="h-4 w-4 mr-2" />
-                      Kundrabatt: {campaign.customerDiscountRate}%
+                      {t('campaign_customer_discount', 'Kundrabatt')}: {campaign.customerDiscountRate}%
                     </div>
                   )}
                 </div>
@@ -261,7 +276,7 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
                   {/* Generated Link */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Din kampanjspecifika länk:
+                      {t('campaign_specific_link', 'Din kampanjspecifika länk')}:
                     </label>
                     <div className="flex items-center space-x-2">
                       <input
@@ -281,12 +296,12 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
                         {isCopied ? (
                           <>
                             <CheckIcon className="h-4 w-4 mr-1 inline" />
-                            Kopierad!
+                            {t('campaign_link_copied', 'Kopierad!')}
                           </>
                         ) : (
                           <>
                             <ClipboardDocumentIcon className="h-4 w-4 mr-1 inline" />
-                            Kopiera
+                            {t('campaign_link_copy', 'Kopiera')}
                           </>
                         )}
                       </button>
@@ -296,8 +311,8 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
                   {/* QR Code Section */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-700 mb-1">QR-kod för delning:</p>
-                      <p className="text-xs text-gray-500">Perfekt för sociala medier och utskrifter</p>
+                      <p className="text-sm font-medium text-gray-700 mb-1">{t('campaign_qr_sharing', 'QR-kod för delning')}:</p>
+                      <p className="text-xs text-gray-500">{t('campaign_qr_description', 'Perfekt för sociala medier och utskrifter')}</p>
                     </div>
                     <div className="flex items-center space-x-4">
                       {qrCode && (
@@ -312,7 +327,7 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
                         className="px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm font-medium transition-colors"
                       >
                         <QrCodeIcon className="h-4 w-4 mr-1 inline" />
-                        {qrCode ? 'Uppdatera QR' : 'Generera QR'}
+                        {qrCode ? t('campaign_qr_update', 'Uppdatera QR') : t('campaign_qr_generate', 'Generera QR')}
                       </button>
                     </div>
                   </div>
@@ -321,7 +336,7 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
                   {campaign.customAffiliateRate > 0 && (
                     <div className="bg-green-50 border border-green-200 rounded-md p-3">
                       <p className="text-sm text-green-800">
-                        <span className="font-medium">Din provision:</span> {campaign.customAffiliateRate}% per försäljning genom denna kampanj
+                        <span className="font-medium">{t('campaign_your_commission', 'Din provision')}:</span> {campaign.customAffiliateRate}% {t('campaign_per_sale', 'per försäljning genom denna kampanj')}
                       </p>
                     </div>
                   )}

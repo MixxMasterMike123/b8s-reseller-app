@@ -11,9 +11,10 @@ const AffiliateTracker = () => {
     const handleAffiliateLink = async () => {
       const params = new URLSearchParams(location.search);
       const refCode = params.get('ref');
+      const campaignCode = params.get('campaign');
 
       if (refCode) {
-        console.log(`🔗 New affiliate code detected from URL: ${refCode}`);
+        console.log(`🔗 New affiliate code detected from URL: ${refCode}${campaignCode ? ` with campaign: ${campaignCode}` : ''}`);
         
         // Read existing code from localStorage (and clean up any sessionStorage)
         const existingAffiliateRef = localStorage.getItem('b8s_affiliate_ref');
@@ -62,24 +63,31 @@ const AffiliateTracker = () => {
         // Always store the new affiliate code (with "last ref wins" principle)
         const normalizedCode = normalizeAffiliateCode(refCode);
         const expiry = new Date().getTime() + 30 * 24 * 60 * 60 * 1000; // 30 days
-        const affiliateInfo = { code: normalizedCode, expiry: expiry };
+        const affiliateInfo = { 
+          code: normalizedCode, 
+          expiry: expiry,
+          campaign: campaignCode || null // Store campaign code if present
+        };
         localStorage.setItem('b8s_affiliate_ref', JSON.stringify(affiliateInfo));
-        console.log(`✅ Stored affiliate code in localStorage: ${normalizedCode}`);
+        console.log(`✅ Stored affiliate code in localStorage: ${normalizedCode}${campaignCode ? ` with campaign: ${campaignCode}` : ''}`);
 
         // sessionStorage cleanup already handled above when reading existing ref
 
         // Call a cloud function to log the click (fire and forget)
         try {
           const logClick = httpsCallable(functions, 'logAffiliateClickV2');
-          const result = await logClick({ affiliateCode: refCode });
+          const result = await logClick({ 
+            affiliateCode: refCode,
+            campaignCode: campaignCode || null
+          });
           
           // Store the click ID if returned
           if (result.data && result.data.clickId) {
             affiliateInfo.clickId = result.data.clickId;
             localStorage.setItem('b8s_affiliate_ref', JSON.stringify(affiliateInfo));
-            console.log(`📊 Click logged for affiliate code: ${refCode}, ID: ${result.data.clickId}`);
+            console.log(`📊 Click logged for affiliate code: ${refCode}${campaignCode ? ` with campaign: ${campaignCode}` : ''}, ID: ${result.data.clickId}`);
           } else {
-            console.log(`📊 Click logged for affiliate code: ${refCode}`);
+            console.log(`📊 Click logged for affiliate code: ${refCode}${campaignCode ? ` with campaign: ${campaignCode}` : ''}`);
           }
         } catch (error) {
           console.error("❌ Error logging affiliate click:", error);
