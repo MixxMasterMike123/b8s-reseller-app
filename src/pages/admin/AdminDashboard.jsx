@@ -284,7 +284,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* B2C Customers */}
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0 bg-blue-500 rounded-md p-3">
@@ -294,15 +294,15 @@ const AdminDashboard = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">B2C Kunder</dt>
-                    <dd className="text-2xl font-semibold text-gray-900">{stats.b2cCustomers}</dd>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">B2C Kunder</dt>
+                    <dd className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.b2cCustomers}</dd>
                   </dl>
                 </div>
               </div>
             </div>
-            <div className="bg-gray-50 px-5 py-3">
+            <div className="bg-gray-50 dark:bg-gray-700 px-5 py-3">
               <div className="text-sm">
-                <Link to="/admin/b2c-customers" className="font-medium text-blue-700 hover:text-blue-900">
+                <Link to="/admin/b2c-customers" className="font-medium text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">
                   Hantera kunder
                 </Link>
               </div>
@@ -310,7 +310,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* B2B Users */}
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0 bg-purple-500 rounded-md p-3">
@@ -320,15 +320,15 @@ const AdminDashboard = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">B2B Kunder</dt>
-                    <dd className="text-2xl font-semibold text-gray-900">{stats.totalUsers}</dd>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">B2B Kunder</dt>
+                    <dd className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.totalUsers}</dd>
                   </dl>
                 </div>
               </div>
             </div>
-            <div className="bg-gray-50 px-5 py-3">
+            <div className="bg-gray-50 dark:bg-gray-700 px-5 py-3">
               <div className="text-sm">
-                <Link to="/admin/users" className="font-medium text-blue-700 hover:text-blue-900">
+                <Link to="/admin/users" className="font-medium text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">
                   Hantera kunder
                 </Link>
               </div>
@@ -336,7 +336,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* Affiliate Revenue */}
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0 bg-orange-500 rounded-md p-3">
@@ -346,15 +346,15 @@ const AdminDashboard = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Affiliate Intäkt</dt>
-                    <dd className="text-2xl font-semibold text-gray-900">{formatCurrency(stats.affiliateRevenue)}</dd>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Affiliate Intäkt</dt>
+                    <dd className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{formatCurrency(stats.affiliateRevenue)}</dd>
                   </dl>
                 </div>
               </div>
             </div>
-            <div className="bg-gray-50 px-5 py-3">
+            <div className="bg-gray-50 dark:bg-gray-700 px-5 py-3">
               <div className="text-sm">
-                <Link to="/admin/affiliates" className="font-medium text-blue-700 hover:text-blue-900">
+                <Link to="/admin/affiliates" className="font-medium text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">
                   Hantera affiliates
                 </Link>
               </div>
@@ -365,7 +365,7 @@ const AdminDashboard = () => {
         {/* Order Status & Affiliate Stats */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
           {/* Total Orders */}
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0 bg-indigo-500 rounded-md p-3">
@@ -375,15 +375,15 @@ const AdminDashboard = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Totalt Ordrar</dt>
-                    <dd className="text-2xl font-semibold text-gray-900">{stats.totalOrders}</dd>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Totalt Ordrar</dt>
+                    <dd className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.totalOrders}</dd>
                   </dl>
                 </div>
               </div>
             </div>
-            <div className="bg-gray-50 px-5 py-3">
+            <div className="bg-gray-50 dark:bg-gray-700 px-5 py-3">
               <div className="text-sm">
-                <Link to="/admin/orders" className="font-medium text-blue-700 hover:text-blue-900">
+                <Link to="/admin/orders" className="font-medium text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">
                   Visa alla ordrar
                 </Link>
               </div>
@@ -391,7 +391,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* Pending Orders */}
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0 bg-yellow-500 rounded-md p-3">
@@ -401,15 +401,15 @@ const AdminDashboard = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Väntande</dt>
-                    <dd className="text-2xl font-semibold text-gray-900">{stats.pendingOrders}</dd>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Väntande</dt>
+                    <dd className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.pendingOrders}</dd>
                   </dl>
                 </div>
               </div>
             </div>
-            <div className="bg-gray-50 px-5 py-3">
+            <div className="bg-gray-50 dark:bg-gray-700 px-5 py-3">
               <div className="text-sm">
-                <Link to="/admin/orders" className="font-medium text-blue-700 hover:text-blue-900">
+                <Link to="/admin/orders" className="font-medium text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">
                   Hantera ordrar
                 </Link>
               </div>
@@ -417,7 +417,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* Processing Orders */}
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0 bg-blue-500 rounded-md p-3">
@@ -427,15 +427,15 @@ const AdminDashboard = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Bearbetas</dt>
-                    <dd className="text-2xl font-semibold text-gray-900">{stats.processingOrders}</dd>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Bearbetas</dt>
+                    <dd className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.processingOrders}</dd>
                   </dl>
                 </div>
               </div>
             </div>
-            <div className="bg-gray-50 px-5 py-3">
+            <div className="bg-gray-50 dark:bg-gray-700 px-5 py-3">
               <div className="text-sm">
-                <Link to="/admin/orders" className="font-medium text-blue-700 hover:text-blue-900">
+                <Link to="/admin/orders" className="font-medium text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">
                   Hantera ordrar
                 </Link>
               </div>
@@ -443,7 +443,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* Active Affiliates */}
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0 bg-emerald-500 rounded-md p-3">
@@ -453,15 +453,15 @@ const AdminDashboard = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Aktiva Affiliates</dt>
-                    <dd className="text-2xl font-semibold text-gray-900">{stats.activeAffiliates}</dd>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Aktiva Affiliates</dt>
+                    <dd className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.activeAffiliates}</dd>
                   </dl>
                 </div>
               </div>
             </div>
-            <div className="bg-gray-50 px-5 py-3">
+            <div className="bg-gray-50 dark:bg-gray-700 px-5 py-3">
               <div className="text-sm">
-                <Link to="/admin/affiliates" className="font-medium text-blue-700 hover:text-blue-900">
+                <Link to="/admin/affiliates" className="font-medium text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">
                   Hantera affiliates
                 </Link>
               </div>
@@ -475,40 +475,40 @@ const AdminDashboard = () => {
         </div>
 
         {/* Recent Orders */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">{t('admin.dashboard.recent_orders', 'Senaste ordrar')}</h3>
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+          <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">{t('admin.dashboard.recent_orders', 'Senaste ordrar')}</h3>
           </div>
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {stats.recentOrders.length === 0 ? (
-              <div className="px-4 py-8 text-center text-gray-500">
+              <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                 <p>{t('admin.dashboard.no_orders_found', 'Inga ordrar hittades')}</p>
               </div>
             ) : (
               stats.recentOrders.map((order) => {
                 const orderSource = getOrderSource(order);
                 return (
-                  <div key={order.id} className="px-4 py-4 sm:px-6 hover:bg-gray-50">
+                  <div key={order.id} className="px-4 py-4 sm:px-6 hover:bg-gray-50 dark:hover:bg-gray-700">
                     <div className="flex items-center justify-between">
                       <div className="truncate">
                         <div className="flex items-center text-sm">
-                          <p className="font-medium text-blue-600 truncate">{order.orderNumber || order.id}</p>
+                          <p className="font-medium text-blue-600 dark:text-blue-400 truncate">{order.orderNumber || order.id}</p>
                           <span className={`ml-3 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${orderSource.color}`}>
                             {orderSource.type}
                           </span>
-                          <p className="ml-3 flex-shrink-0 font-normal text-gray-500">
+                          <p className="ml-3 flex-shrink-0 font-normal text-gray-500 dark:text-gray-400">
                             {t('admin.dashboard.order_from', 'från')} {formatOrderDate(order.createdAt)}
                           </p>
                         </div>
                         <div className="mt-2 flex">
-                          <div className="flex items-center text-sm text-gray-500">
-                            <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" />
                             </svg>
                             {order.items?.length || 0} {t('admin.dashboard.products', 'produkter')}
                           </div>
-                          <div className="ml-6 flex items-center text-sm text-gray-500">
-                            <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                          <div className="ml-6 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                             </svg>
                             {formatOrderValue(order)}
@@ -518,7 +518,7 @@ const AdminDashboard = () => {
                       <div className="ml-6 flex-shrink-0">
                         <Link
                           to={`/admin/orders/${order.id}`}
-                          className="font-medium text-blue-600 hover:text-blue-500"
+                          className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
                         >
                           {t('admin.dashboard.view_details', 'Visa detaljer')}
                         </Link>
@@ -529,9 +529,9 @@ const AdminDashboard = () => {
               })
             )}
           </div>
-          <div className="bg-gray-50 px-4 py-4 sm:px-6">
+          <div className="bg-gray-50 dark:bg-gray-700 px-4 py-4 sm:px-6">
             <div className="text-sm">
-              <Link to="/admin/orders" className="font-medium text-blue-600 hover:text-blue-500">
+              <Link to="/admin/orders" className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
                 {t('admin.dashboard.view_all_orders', 'Visa alla ordrar')} <span aria-hidden="true">&rarr;</span>
               </Link>
             </div>

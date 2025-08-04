@@ -243,19 +243,19 @@ const AppLayout = ({ children }) => {
                       to={item.path}
                       className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md ${
                         isActive(item.path)
-                          ? 'bg-blue-50 text-blue-700'
-                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                          ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-200'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
                       }`}
                     >
                       <item.icon
                         className={`mr-3 h-5 w-5 flex-shrink-0 ${
-                          isActive(item.path) ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
+                          isActive(item.path) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400'
                         }`}
                         aria-hidden="true"
                       />
                       <div>
                         <div>{item.name}</div>
-                        <div className="text-xs text-gray-500">{item.description}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{item.description}</div>
                       </div>
                     </Link>
                   ))}
@@ -265,10 +265,10 @@ const AppLayout = ({ children }) => {
                     <>
                       <div className="relative my-4">
                         <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                          <div className="w-full border-t border-gray-300" />
+                          <div className="w-full border-t border-gray-300 dark:border-gray-600" />
                         </div>
                         <div className="relative flex justify-center">
-                          <span className="bg-white px-2 text-xs text-gray-500 uppercase tracking-wider font-semibold flex items-center">
+                          <span className="bg-white dark:bg-gray-800 px-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold flex items-center">
                             <CpuChipIcon className="h-4 w-4 mr-1" />
                             {t('nav.ai_wagons', 'AI Vagnar')}
                           </span>
@@ -281,14 +281,14 @@ const AppLayout = ({ children }) => {
                           to={item.path}
                           className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md ${
                             isActive(item.path)
-                              ? 'bg-blue-50 text-blue-700'
-                              : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                              ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-200'
+                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
                           }`}
                         >
-                          <SparklesIcon className="mr-3 h-5 w-5 flex-shrink-0 text-blue-500" />
+                          <SparklesIcon className="mr-3 h-5 w-5 flex-shrink-0 text-blue-500 dark:text-blue-400" />
                           <div>
                             <div>{item.title}</div>
-                            <div className="text-xs text-gray-500">{item.description}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{item.description}</div>
                           </div>
                         </Link>
                       ))}
@@ -304,13 +304,13 @@ const AppLayout = ({ children }) => {
                       to={item.path}
                       className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md ${
                         isActive(item.path)
-                          ? 'bg-blue-50 text-blue-700'
-                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                          ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-200'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
                       }`}
                     >
                       <item.icon
                         className={`mr-3 h-5 w-5 flex-shrink-0 ${
-                          isActive(item.path) ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
+                          isActive(item.path) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400'
                         }`}
                         aria-hidden="true"
                       />
@@ -389,7 +389,7 @@ const AppLayout = ({ children }) => {
           </div>
           
           {/* User Profile Section */}
-          <div className="border-t border-gray-200 p-4">
+          <div className="border-t border-gray-200 dark:border-gray-700 p-4">
             
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -399,16 +399,16 @@ const AppLayout = ({ children }) => {
                 </div>
               </div>
               <div className="ml-3 min-w-0 flex-1">
-                <div className="truncate text-sm font-medium text-gray-900">
+                <div className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
                   {userProfile?.companyName || currentUser?.email}
                 </div>
-                <div className="truncate text-sm text-gray-500">
+                <div className="truncate text-sm text-gray-500 dark:text-gray-400">
                   {currentUser?.email}
                 </div>
               </div>
               <button
                 onClick={handleLogout}
-                className="ml-auto flex-shrink-0 bg-white p-1 text-gray-400 rounded-full hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="ml-auto flex-shrink-0 bg-white dark:bg-gray-800 p-1 text-gray-400 dark:text-gray-500 rounded-full hover:text-gray-500 dark:hover:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <ArrowRightOnRectangleIcon className="h-6 w-6" aria-hidden="true" />
               </button>
