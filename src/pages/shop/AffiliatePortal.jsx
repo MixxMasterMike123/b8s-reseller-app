@@ -8,7 +8,8 @@ import {
   BookOpenIcon,
   PresentationChartBarIcon,
   ChartBarIcon, 
-  SparklesIcon
+  SparklesIcon,
+  MegaphoneIcon
 } from '@heroicons/react/24/outline';
 import { db } from '../../firebase/config';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
@@ -18,6 +19,7 @@ import ShopFooter from '../../components/shop/ShopFooter';
 import AffiliateSuccessGuide from '../../components/affiliate/AffiliateSuccessGuide';
 import AffiliateMarketingMaterials from '../../components/AffiliateMarketingMaterials';
 import AffiliateAnalyticsTab from './AffiliateAnalyticsTab';
+import AffiliatePortalCampaigns from '../../components/AffiliatePortalCampaigns';
 import SmartPrice, { ExactPrice } from '../../components/shop/SmartPrice';
 
 import toast from 'react-hot-toast';
@@ -244,6 +246,11 @@ const AffiliatePortal = () => {
       id: 'analytics',
       name: t('affiliate_portal_tab_analytics', 'Analys'),
       icon: <ChartBarIcon className="h-5 w-5" />
+    },
+    {
+      id: 'campaigns',
+      name: t('affiliate_portal_tab_campaigns', 'Kampanjer'),
+      icon: <MegaphoneIcon className="h-5 w-5" />
     },
     {
       id: 'success',
@@ -634,6 +641,13 @@ const AffiliatePortal = () => {
                 affiliateData={affiliateData}
               />
             </div>
+          </div>
+        );
+      case 'campaigns':
+        return (
+          <div className="space-y-4">
+            {/* Campaign Management */}
+            <AffiliatePortalCampaigns affiliateData={affiliateData} />
           </div>
         );
       default:

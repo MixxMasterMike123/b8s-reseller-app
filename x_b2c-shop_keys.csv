@@ -754,3 +754,4 @@
 "checkout_processing_payment","Behandlar betalning...","Processing Payment...","Processing Payment...","B2C checkout - payment processing","Complete","","","Title shown during payment processing"
 "checkout_processing_description","Vi behandlar din betalning och skapar din order. Vänta ett ögonblick...","We are processing your payment and creating your order. Please wait a moment...","We are processing your payment and creating your order. Please wait a moment...","B2C checkout - processing description","Complete","","","Description shown during payment processing"
 "analytics_traffic_source","Trafikkälla","Traffic Source","Traffic Source","B2C affiliate analytics - traffic source column","Complete","","","Column header for traffic source information"
+"affiliate_portal_tab_campaigns","Kampanjer","Campaigns","Campaigns","B2C affiliate portal - campaigns tab","Complete","","","Navigation tab for campaigns"
