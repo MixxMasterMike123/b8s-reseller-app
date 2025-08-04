@@ -3,6 +3,7 @@ import {
   collection, 
   doc, 
   getDocs, 
+  getDoc,
   addDoc, 
   updateDoc, 
   deleteDoc, 
@@ -191,10 +192,53 @@ export const useCampaigns = () => {
     return await updateCampaign(campaignId, { status: newStatus });
   }, [updateCampaign]);
 
-  // Get campaign by ID
+  // Get campaign by ID (synchronous - from loaded campaigns)
   const getCampaignById = useCallback((campaignId) => {
     return campaigns.find(campaign => campaign.id === campaignId);
   }, [campaigns]);
+
+  // Get campaign by ID (async - direct Firebase fetch)
+  const fetchCampaignById = useCallback(async (campaignId) => {
+    if (!campaignId) return null;
+    
+    try {
+      console.log('🚂 Fetching campaign by ID:', campaignId);
+      
+      const campaignRef = doc(db, 'campaigns', campaignId);
+      const campaignSnap = await getDoc(campaignRef);
+      
+      if (!campaignSnap.exists()) {
+        console.log('🚂 Campaign not found:', campaignId);
+        return null;
+      }
+      
+      const campaignData = campaignSnap.data();
+      const safeDate = (dateValue) => {
+        if (!dateValue) return new Date();
+        if (dateValue instanceof Date) return dateValue;
+        if (dateValue.toDate && typeof dateValue.toDate === 'function') {
+          return dateValue.toDate();
+        }
+        if (typeof dateValue === 'string') return new Date(dateValue);
+        return new Date();
+      };
+      
+      const campaign = {
+        id: campaignSnap.id,
+        ...campaignData,
+        startDate: safeDate(campaignData.startDate),
+        endDate: safeDate(campaignData.endDate),
+        createdAt: safeDate(campaignData.createdAt),
+        updatedAt: safeDate(campaignData.updatedAt)
+      };
+      
+      console.log('🚂 Campaign fetched successfully:', campaign);
+      return campaign;
+    } catch (error) {
+      console.error('🚂 Error fetching campaign:', error);
+      return null;
+    }
+  }, []);
 
   // Get campaigns by status
   const getCampaignsByStatus = useCallback((status) => {
@@ -267,6 +311,7 @@ export const useCampaigns = () => {
     
     // Query operations
     getCampaignById,
+    fetchCampaignById,
     getCampaignsByStatus,
     getActiveCampaigns,
     getDraftCampaigns,

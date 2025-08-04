@@ -29,7 +29,7 @@ const CampaignEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getContentValue, setContentValue } = useContentTranslation();
-  const { getCampaignById, updateCampaign, deleteCampaign, toggleCampaignStatus } = useCampaigns();
+  const { fetchCampaignById, updateCampaign, deleteCampaign, toggleCampaignStatus } = useCampaigns();
   
   // Component state
   const [campaign, setCampaign] = useState(null);
@@ -52,19 +52,22 @@ const CampaignEdit = () => {
 
   const loadCampaignData = async () => {
     try {
-      const campaignData = getCampaignById(id);
+      console.log('🚂 Loading campaign data for ID:', id);
+      const campaignData = await fetchCampaignById(id);
       
       if (!campaignData) {
+        console.log('🚂 Campaign not found, redirecting to campaigns list');
         toast.error('Kampanj hittades inte');
         navigate('/admin/campaigns');
         return;
       }
 
+      console.log('🚂 Campaign data loaded successfully:', campaignData);
       setCampaign(campaignData);
       setFormData({...campaignData});
       setLoading(false);
     } catch (error) {
-      console.error('Error loading campaign:', error);
+      console.error('🚂 Error loading campaign:', error);
       toast.error('Kunde inte ladda kampanjdata');
       navigate('/admin/campaigns');
     }
