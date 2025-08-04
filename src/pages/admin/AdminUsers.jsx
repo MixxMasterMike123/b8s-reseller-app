@@ -135,24 +135,24 @@ const AdminUsers = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-md">
+      <div className="max-w-7xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
         {/* Header */}
-        <div className="px-4 py-5 border-b border-gray-200 sm:px-6 flex justify-between items-center">
-          <h1 className="text-lg leading-6 font-medium text-gray-900">
+        <div className="px-4 py-5 border-b border-gray-200 dark:border-gray-700 sm:px-6 flex justify-between items-center">
+          <h1 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
             {/* 🆕 ENHANCE: Dynamic header based on active tab */}
             {activeTab === 'customers' ? 'Kundhantering' : 'Admin Användare'}
           </h1>
           <div className="flex gap-3">
             <Link
               to="/admin/users/create"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
             >
               {/* 🆕 ENHANCE: Dynamic button text based on active tab */}
               {activeTab === 'customers' ? 'Skapa Ny Kund' : 'Skapa Ny Admin'}
             </Link>
             <Link
               to="/admin"
-              className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
             >
               Back to Admin Dashboard
             </Link>
@@ -160,14 +160,14 @@ const AdminUsers = () => {
         </div>
 
         {/* 🆕 ADD: Tab Navigation */}
-        <div className="border-b border-gray-200">
+        <div className="border-b border-gray-200 dark:border-gray-700">
           <nav className="px-4 sm:px-6 -mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab('customers')}
               className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                 activeTab === 'customers'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
               Aktiva B2B Kunder ({users.filter(u => u.role !== 'admin' && u.active === true).length})
@@ -176,8 +176,8 @@ const AdminUsers = () => {
               onClick={() => setActiveTab('admins')}
               className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                 activeTab === 'admins'
-                  ? 'border-purple-500 text-purple-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
               Admin Användare ({users.filter(u => u.role === 'admin').length})
@@ -186,7 +186,7 @@ const AdminUsers = () => {
         </div>
 
         {/* Filter and search */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="relative flex-1">
               <input
@@ -197,19 +197,19 @@ const AdminUsers = () => {
                     ? "Sök efter namn, e-post eller företag..." 
                     : "Sök efter namn, e-post eller admin..."
                 }
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 pl-10 py-2"
+                className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm focus:border-primary-500 focus:ring-primary-500 pl-10 py-2"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
                 </svg>
               </div>
             </div>
             
             <div className="flex-shrink-0">
-              <div className="inline-flex items-center px-3 py-2 bg-green-50 border border-green-200 rounded-md text-sm text-green-800">
+              <div className="inline-flex items-center px-3 py-2 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-md text-sm text-green-800 dark:text-green-300">
                 <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-2"></span>
                 Endast aktiva kunder visas
               </div>
@@ -221,51 +221,51 @@ const AdminUsers = () => {
         <div className="p-6">
           {loading ? (
             <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
             </div>
           ) : filteredUsers.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Företag & Kontakt
                     </th>
-                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Roll & Status
                     </th>
-                    <th scope="col" className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Åtgärder
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
+                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       {/* Column 1: Company & Contact */}
                       <td className="px-4 md:px-6 py-4">
                         <div className="flex items-start">
                           <div className="flex-shrink-0 h-12 w-12 mr-4">
-                            <div className="h-12 w-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
-                              <span className="text-sm font-medium text-blue-800">
+                            <div className="h-12 w-12 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-800 dark:to-blue-700 rounded-full flex items-center justify-center">
+                              <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
                                 {(user.companyName || user.contactPerson || 'U').charAt(0).toUpperCase()}
                               </span>
                             </div>
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="text-sm font-medium text-gray-900 mb-1">
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
                               {user.companyName || 'Ej angivet'}
                             </div>
-                            <div className="text-xs text-gray-500 mb-1">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
                               {user.email}
                             </div>
                             {user.contactPerson && (
-                              <div className="text-xs text-gray-600 mb-1">
+                              <div className="text-xs text-gray-600 dark:text-gray-300 mb-1">
                                 Kontakt: {user.contactPerson}
                               </div>
                             )}
                             {user.phone && (
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
                                 Tel: {user.phone}
                               </div>
                             )}
@@ -280,7 +280,7 @@ const AdminUsers = () => {
                           <div>
                             <div className="flex items-center gap-2 mb-2">
                               <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                                user.role === 'admin' ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300' : 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300'
                               }`}>
                                 {user.role === 'admin' ? 'Admin' : 'Kund'}
                               </span>
@@ -288,7 +288,7 @@ const AdminUsers = () => {
                                 value={user.role}
                                 onChange={(e) => handleRoleChange(user.id, user.role, e.target.value)}
                                 disabled={roleUpdateLoading}
-                                className="text-xs border border-gray-300 rounded py-1 px-2 min-h-[28px] focus:ring-blue-500 focus:border-blue-500"
+                                className="text-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded py-1 px-2 min-h-[28px] focus:ring-blue-500 focus:border-blue-500"
                               >
                                 <option value="user">Kund</option>
                                 <option value="admin">Admin</option>
@@ -298,7 +298,7 @@ const AdminUsers = () => {
 
                           {/* Margin Section */}
                           <div>
-                            <div className="text-xs text-gray-500 mb-1">Marginal:</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Marginal:</div>
                             {editingMarginals[user.id] !== undefined ? (
                               <div className="flex items-center gap-2">
                                 <input
@@ -311,33 +311,33 @@ const AdminUsers = () => {
                                     ...prev,
                                     [user.id]: e.target.value
                                   }))}
-                                  className="w-16 text-xs border border-gray-300 rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500"
+                                  className="w-16 text-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500"
                                   disabled={marginalUpdateLoading}
                                 />
-                                <span className="text-xs text-gray-400">%</span>
+                                <span className="text-xs text-gray-400 dark:text-gray-500">%</span>
                                 <button
                                   onClick={() => handleMarginalChange(user.id, editingMarginals[user.id])}
                                   disabled={marginalUpdateLoading}
-                                  className="min-h-[24px] px-2 py-1 text-xs font-medium text-green-600 hover:text-green-900 hover:bg-green-50 rounded transition-colors"
+                                  className="min-h-[24px] px-2 py-1 text-xs font-medium text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900 rounded transition-colors"
                                 >
                                   ✓
                                 </button>
                                 <button
                                   onClick={() => cancelEditingMarginal(user.id)}
                                   disabled={marginalUpdateLoading}
-                                  className="min-h-[24px] px-2 py-1 text-xs font-medium text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors"
+                                  className="min-h-[24px] px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-colors"
                                 >
                                   ✕
                                 </button>
                               </div>
                             ) : (
                               <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-gray-900">
+                                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                   {user.marginal || 35}%
                                 </span>
                                 <button
                                   onClick={() => startEditingMarginal(user.id, user.marginal || 35)}
-                                  className="min-h-[24px] px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded transition-colors"
+                                  className="min-h-[24px] px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded transition-colors"
                                 >
                                   Ändra
                                 </button>
@@ -348,7 +348,7 @@ const AdminUsers = () => {
                           {/* Status Section */}
                           <div>
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              user.active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
                             }`}>
                               {user.active ? 'Aktiv' : 'Inaktiv'}
                             </span>
@@ -361,7 +361,7 @@ const AdminUsers = () => {
                         <div className="flex flex-col md:flex-row items-end md:items-center justify-end gap-2">
                           <Link
                             to={`/admin/users/${user.id}/edit`}
-                            className="min-h-[32px] inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-900 hover:bg-blue-50 border border-blue-300 rounded transition-colors"
+                            className="min-h-[32px] inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded transition-colors"
                           >
                             Redigera
                           </Link>
@@ -369,7 +369,7 @@ const AdminUsers = () => {
                           {user.role !== 'admin' && (
                             <Link
                               to={`/admin/customers/${user.id}/marketing`}
-                              className="min-h-[32px] inline-flex items-center px-3 py-1 text-xs font-medium text-purple-600 hover:text-purple-900 hover:bg-purple-50 border border-purple-300 rounded transition-colors"
+                              className="min-h-[32px] inline-flex items-center px-3 py-1 text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900 border border-purple-300 dark:border-purple-600 rounded transition-colors"
                               title="Hantera kundspecifikt marknadsföringsmaterial"
                             >
                               Material
@@ -385,7 +385,7 @@ const AdminUsers = () => {
           ) : (
             <div className="text-center py-8">
               {/* 🆕 ENHANCE: Dynamic empty state message based on active tab */}
-              <p className="text-gray-500">
+              <p className="text-gray-500 dark:text-gray-400">
                 {activeTab === 'customers' 
                   ? 'Inga kunder hittades som matchar dina kriterier.' 
                   : 'Inga admin användare hittades som matchar dina kriterier.'
