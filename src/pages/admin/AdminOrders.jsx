@@ -14,19 +14,19 @@ import { parseReferrer, getReferrerCategory } from '../../utils/referrerParser';
 const getStatusStyles = (status) => {
   switch (status) {
     case 'pending':
-      return 'bg-yellow-100 text-yellow-800'; // Waiting for confirmation
+      return 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300'; // Waiting for confirmation
     case 'confirmed':
-      return 'bg-blue-100 text-blue-800'; // Confirmed
+      return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300'; // Confirmed
     case 'processing':
-      return 'bg-purple-100 text-purple-800'; // Processing
+      return 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300'; // Processing
     case 'shipped':
-      return 'bg-indigo-100 text-indigo-800'; // Shipped
+      return 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-300'; // Shipped
     case 'delivered':
-      return 'bg-green-100 text-green-800'; // Delivered
+      return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'; // Delivered
     case 'cancelled':
-      return 'bg-red-100 text-red-800'; // Cancelled
+      return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'; // Cancelled
     default:
-      return 'bg-gray-100 text-gray-800'; // Unknown status
+      return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'; // Unknown status
   }
 };
 
@@ -209,8 +209,8 @@ const AdminOrders = () => {
       onClick={() => setActiveTab(tabName)}
       className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
         activeTab === tabName
-          ? 'bg-blue-600 text-white shadow'
-          : 'text-gray-600 hover:bg-gray-200'
+          ? 'bg-blue-600 dark:bg-blue-500 text-white shadow'
+          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
       }`}
     >
       {label}
@@ -238,19 +238,19 @@ const AdminOrders = () => {
     <AppLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-          <h1 className="text-3xl font-bold text-gray-900">Orderhantering</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Orderhantering</h1>
           <input
             type="text"
             placeholder="Sök på ordernr, kundinfo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            className="w-full md:w-64 px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-lg focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
           />
         </div>
         
         <div className="mb-6 space-y-4">
-          <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 pb-3">
-             <span className="text-sm font-semibold text-gray-600 mr-2">Källa:</span>
+          <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-3">
+             <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 mr-2">Källa:</span>
             {sourceTabs.map(tab => (
               <TabButton
                 key={tab.key}
@@ -262,7 +262,7 @@ const AdminOrders = () => {
             ))}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-semibold text-gray-600 mr-2">Status:</span>
+            <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 mr-2">Status:</span>
             {statusTabs.map(tab => (
               <TabButton
                 key={tab.key}
@@ -276,43 +276,48 @@ const AdminOrders = () => {
         </div>
 
         {loading || contextLoading ? (
-          <p>Laddar ordrar...</p>
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
+            <span className="ml-3 text-blue-600 dark:text-blue-400">Laddar ordrar...</span>
+          </div>
         ) : currentError ? (
-          <p className="text-red-500">Fel vid laddning av ordrar: {currentError}</p>
+          <div className="text-center py-12">
+            <p className="text-red-500 dark:text-red-400">Fel vid laddning av ordrar: {currentError}</p>
+          </div>
         ) : (
-          <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Order & Kund
                     </th>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Datum & Belopp
                     </th>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Trafikkälla
                     </th>
-                    <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Status & Åtgärd
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {sortedOrders.map(order => (
-                    <tr key={order.id} className="hover:bg-gray-50">
+                    <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       {/* Column 1: Order & Customer */}
                       <td className="px-4 md:px-6 py-4">
                         <div className="flex items-start">
                           <div className="flex-shrink-0 h-12 w-12 mr-4">
                             <div className={`h-12 w-12 rounded-full flex items-center justify-center ${
                               order.source === 'b2c' 
-                                ? 'bg-gradient-to-br from-purple-100 to-purple-200'
-                                : 'bg-gradient-to-br from-blue-100 to-blue-200'
+                                ? 'bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-800 dark:to-purple-700'
+                                : 'bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-800 dark:to-blue-700'
                             }`}>
                               <span className={`text-sm font-medium ${
-                                order.source === 'b2c' ? 'text-purple-800' : 'text-blue-800'
+                                order.source === 'b2c' ? 'text-purple-800 dark:text-purple-200' : 'text-blue-800 dark:text-blue-200'
                               }`}>
                                 {order.source === 'b2c' ? 'B2C' : 'B2B'}
                               </span>
@@ -320,21 +325,21 @@ const AdminOrders = () => {
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-sm font-mono font-medium text-gray-900">
+                              <span className="text-sm font-mono font-medium text-gray-900 dark:text-gray-100">
                                 {order.orderNumber || order.id}
                               </span>
                               <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                                 order.source === 'b2c' 
-                                  ? 'bg-purple-100 text-purple-800'
-                                  : 'bg-blue-100 text-blue-800'
+                                  ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300'
+                                  : 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300'
                               }`}>
                                 {order.source === 'b2c' ? 'Kund' : 'Återförsäljare'}
                               </span>
                             </div>
-                            <div className="text-sm text-gray-900 mb-1">
+                            <div className="text-sm text-gray-900 dark:text-gray-100 mb-1">
                               {order.companyName || `${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''}`.trim() || 'Gäst'}
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
                               {/* B2C orders have customerInfo.email, B2B orders have userEmail or need lookup via userId */}
                               {order.source === 'b2c' 
                                 ? (order.customerInfo?.email || 'Ingen e-post')
@@ -349,14 +354,14 @@ const AdminOrders = () => {
                       <td className="px-4 md:px-6 py-4">
                         <div className="space-y-2">
                           <div>
-                            <div className="text-xs text-gray-500 mb-1">Datum:</div>
-                            <div className="text-sm text-gray-900">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Datum:</div>
+                            <div className="text-sm text-gray-900 dark:text-gray-100">
                               {formatDate(order.createdAt)}
                             </div>
                           </div>
                           <div>
-                            <div className="text-xs text-gray-500 mb-1">Belopp:</div>
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Belopp:</div>
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                               {new Intl.NumberFormat('sv-SE', { 
                                 style: 'currency', 
                                 currency: 'SEK',
@@ -379,8 +384,8 @@ const AdminOrders = () => {
                           <div className="flex items-center gap-2">
                             <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                               order.source === 'b2c' 
-                                ? 'bg-purple-100 text-purple-800'
-                                : 'bg-blue-100 text-blue-800'
+                                ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300'
+                                : 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300'
                             }`}>
                               {order.source === 'b2c' ? 'B2C' : 'B2B'}
                             </span>
@@ -388,7 +393,7 @@ const AdminOrders = () => {
                           
                           {/* Affiliate Info */}
                           {(order.affiliateCode || order.affiliate?.code) && (
-                            <div className="text-xs text-gray-600">
+                            <div className="text-xs text-gray-600 dark:text-gray-400">
                               <span className="font-medium">Affiliate:</span> {order.affiliateCode || order.affiliate?.code}
                             </div>
                           )}
@@ -400,7 +405,7 @@ const AdminOrders = () => {
                             
                             if (clicksLoading && clickId) {
                               return (
-                                <div className="text-xs text-gray-400">
+                                <div className="text-xs text-gray-400 dark:text-gray-500">
                                   Laddar referrer...
                                 </div>
                               );
@@ -410,15 +415,15 @@ const AdminOrders = () => {
                               const referrer = parseReferrer(clickData.landingPage);
                               const category = getReferrerCategory(referrer.category);
                               
-                              // Map category colors to actual Tailwind classes
+                              // Map category colors to actual Tailwind classes with dark mode
                               const categoryStyles = {
-                                purple: 'text-purple-800 bg-purple-100',
-                                blue: 'text-blue-800 bg-blue-100', 
-                                green: 'text-green-800 bg-green-100',
-                                red: 'text-red-800 bg-red-100',
-                                teal: 'text-teal-800 bg-teal-100',
-                                gray: 'text-gray-800 bg-gray-100',
-                                indigo: 'text-indigo-800 bg-indigo-100'
+                                purple: 'text-purple-800 dark:text-purple-300 bg-purple-100 dark:bg-purple-900',
+                                blue: 'text-blue-800 dark:text-blue-300 bg-blue-100 dark:bg-blue-900', 
+                                green: 'text-green-800 dark:text-green-300 bg-green-100 dark:bg-green-900',
+                                red: 'text-red-800 dark:text-red-300 bg-red-100 dark:bg-red-900',
+                                teal: 'text-teal-800 dark:text-teal-300 bg-teal-100 dark:bg-teal-900',
+                                gray: 'text-gray-800 dark:text-gray-300 bg-gray-100 dark:bg-gray-700',
+                                indigo: 'text-indigo-800 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900'
                               };
                               
                               return (
@@ -434,7 +439,7 @@ const AdminOrders = () => {
                           })()}
                           
                           {/* Payment Method */}
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
                             {order.source === 'b2c' 
                               ? (order.payment?.method === 'stripe' ? 'Stripe' : 'Mock Payment')
                               : 'B2B Order'
@@ -455,7 +460,7 @@ const AdminOrders = () => {
                           </div>
                           <Link
                             to={`/admin/orders/${order.id}`}
-                            className="min-h-[32px] inline-flex items-center px-4 py-2 text-xs font-medium text-blue-600 hover:text-blue-900 hover:bg-blue-50 border border-blue-300 rounded transition-colors"
+                            className="min-h-[32px] inline-flex items-center px-4 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded transition-colors"
                           >
                             Hantera
                           </Link>
@@ -465,10 +470,10 @@ const AdminOrders = () => {
                   ))}
                 </tbody>
                 {activeSourceTab === 'b2b' && sortedOrders.length > 0 && (
-                  <tfoot className="bg-gray-50 font-semibold">
+                  <tfoot className="bg-gray-50 dark:bg-gray-700 font-semibold">
                     <tr>
-                      <td className="px-4 md:px-6 py-4 text-right text-gray-700">Totalsumma:</td>
-                      <td className="px-4 md:px-6 py-4 text-gray-900">
+                      <td className="px-4 md:px-6 py-4 text-right text-gray-700 dark:text-gray-300">Totalsumma:</td>
+                      <td className="px-4 md:px-6 py-4 text-gray-900 dark:text-gray-100">
                         <div className="text-sm font-medium">
                           {new Intl.NumberFormat('sv-SE', { 
                             style: 'currency', 
