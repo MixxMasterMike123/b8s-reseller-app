@@ -264,6 +264,72 @@ const safeGetCampaignName = (campaign) => {
 
 **PREVENTION STRATEGY**: All future multilingual content rendering in campaigns now follows the proven safe patterns used throughout B2C shop and B2B dashboard, preventing React Error #31 completely.
 
+### **🔒 SMART CAMPAIGN CODE EDITABILITY SYSTEM:**
+**BUSINESS LOGIC IMPLEMENTED**: Campaign codes should be editable until they go LIVE/ACTIVE, then locked to prevent breaking affiliate tracking links.
+
+**CONDITIONAL EDITABILITY RULES**:
+- ✏️ **EDITABLE**: Draft, Paused, Completed, Cancelled campaigns
+- 🔒 **LOCKED**: Active campaigns (affiliates are using the codes)
+
+**TECHNICAL IMPLEMENTATION**:
+
+**❌ BEFORE (Always Read-Only):**
+```javascript
+<input
+  value={formData.code || ''}
+  className="bg-gray-50"
+  readOnly
+/>
+<p>Kampanjkoden genereras automatiskt och kan inte ändras</p>
+```
+
+**✅ AFTER (Smart Conditional Logic):**
+```javascript
+<input
+  value={formData.code || ''}
+  className={`${formData.status === 'active' ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
+  placeholder={formData.status === 'active' ? 'Koden är låst medan kampanjen är aktiv' : 'Ange kampanjkod...'}
+  readOnly={formData.status === 'active'}
+/>
+<p>
+  {formData.status === 'active' 
+    ? '🔒 Kampanjkoden kan inte ändras medan kampanjen är aktiv (affiliates använder koden)'
+    : '✏️ Endast bokstäver, siffror, bindestreck (-) och understreck (_) tillåtna. Exempel: sommarkampanj-2025'
+  }
+</p>
+```
+
+**UI/UX ENHANCEMENTS**:
+- **Status Indicator**: Label shows "(Låst - Kampanj aktiv)" when locked
+- **Visual Feedback**: Gray background + cursor-not-allowed when locked, white background when editable
+- **Smart Placeholders**: Different placeholder text based on editability state
+- **Contextual Help Text**: Explains why locked (affiliate tracking) or format requirements when editable
+
+**FORM VALIDATION ADDED**:
+```javascript
+// Campaign code validation (when editable)
+const hasValidCode = formData.code && formData.code.trim() !== '' && /^[a-zA-Z0-9_-]+$/.test(formData.code.trim());
+```
+
+**VALIDATION RULES**:
+- ✅ **Required**: Campaign code cannot be empty
+- ✅ **Format**: Alphanumeric characters, hyphens (-), underscores (_) only
+- ✅ **Example**: `sommarkampanj-2025`, `BLACK_FRIDAY_2025`, `vinter-rea`
+
+**BUSINESS PROTECTION**:
+- **Active Campaign Lock**: Prevents breaking affiliate tracking links in production
+- **Format Validation**: Ensures URL-safe campaign codes for affiliate links
+- **User Guidance**: Clear feedback about when and why codes can/cannot be changed
+
+**FILES UPDATED**:
+- ✅ `CampaignEdit.jsx`: Added conditional editability, validation, and UI feedback
+- ✅ **Build Status**: `CampaignEdit-32586ac6.js` (20.43 kB) - Includes smart editability system
+
+**DEPLOYMENT STATUS**: 
+- ✅ **Live at**: https://partner.b8shield.com/admin/campaigns/{ID}
+- ✅ **Feature**: Campaign codes are now intelligently editable based on campaign status
+- ✅ **Protection**: Active campaigns maintain code integrity for affiliate tracking
+
 ---
 
 ## **PHASE 3: AFFILIATE PORTAL INTEGRATION** 📋 NEXT

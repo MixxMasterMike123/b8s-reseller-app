@@ -255,6 +255,36 @@ export const useCampaigns = () => {
     return getCampaignsByStatus('draft');
   }, [getCampaignsByStatus]);
 
+  // Get paused campaigns
+  const getPausedCampaigns = useCallback(() => {
+    return getCampaignsByStatus('paused');
+  }, [getCampaignsByStatus]);
+
+  // Get completed campaigns
+  const getCompletedCampaigns = useCallback(() => {
+    return getCampaignsByStatus('completed');
+  }, [getCampaignsByStatus]);
+
+  // Get cancelled campaigns
+  const getCancelledCampaigns = useCallback(() => {
+    return getCampaignsByStatus('cancelled');
+  }, [getCampaignsByStatus]);
+
+  // Get all campaigns (for comprehensive view)
+  const getAllCampaigns = useCallback(() => {
+    return campaigns.sort((a, b) => {
+      // Sort by status priority: active -> paused -> draft -> completed -> cancelled
+      const statusOrder = { active: 1, paused: 2, draft: 3, completed: 4, cancelled: 5 };
+      const aOrder = statusOrder[a.status] || 6;
+      const bOrder = statusOrder[b.status] || 6;
+      
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      
+      // Within same status, sort by updatedAt (newest first)
+      return new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt);
+    });
+  }, [campaigns]);
+
   // Search campaigns by name
   const searchCampaigns = useCallback((searchTerm) => {
     if (!searchTerm) return campaigns;
@@ -315,6 +345,10 @@ export const useCampaigns = () => {
     getCampaignsByStatus,
     getActiveCampaigns,
     getDraftCampaigns,
+    getPausedCampaigns,
+    getCompletedCampaigns,
+    getCancelledCampaigns,
+    getAllCampaigns,
     searchCampaigns,
     
     // Statistics

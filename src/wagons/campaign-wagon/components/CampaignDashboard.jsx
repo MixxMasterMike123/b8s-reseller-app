@@ -22,12 +22,20 @@ const CampaignDashboard = () => {
     error,
     getCampaignStats,
     getActiveCampaigns,
-    getDraftCampaigns
+    getDraftCampaigns,
+    getPausedCampaigns,
+    getCompletedCampaigns,
+    getCancelledCampaigns,
+    getAllCampaigns
   } = useCampaigns();
 
   const stats = getCampaignStats();
   const activeCampaigns = getActiveCampaigns();
   const draftCampaigns = getDraftCampaigns();
+  const pausedCampaigns = getPausedCampaigns();
+  const completedCampaigns = getCompletedCampaigns();
+  const cancelledCampaigns = getCancelledCampaigns();
+  const allCampaigns = getAllCampaigns();
 
   // Safe rendering function for campaign names (prevents React string/json errors)
   const safeGetCampaignName = (campaign) => {
@@ -194,97 +202,113 @@ const CampaignDashboard = () => {
           </div>
         )}
 
-        {/* Campaign Lists */}
+        {/* All Campaigns - Comprehensive View */}
         {!loading && !error && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Active Campaigns */}
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-medium text-gray-900">Aktiva Kampanjer ({activeCampaigns.length})</h2>
-              </div>
-              
-              <div className="divide-y divide-gray-200">
-                {activeCampaigns.length === 0 ? (
-                  <div className="p-6 text-center text-gray-500">
-                    <MegaphoneIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <p>Inga aktiva kampanjer ännu</p>
-                    <p className="text-sm mt-1">Skapa din första kampanj för att komma igång</p>
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-medium text-gray-900">Alla Kampanjer ({allCampaigns.length})</h2>
+                {allCampaigns.length > 0 && (
+                  <div className="text-sm text-gray-500">
+                    Aktiva: {activeCampaigns.length} | Pausade: {pausedCampaigns.length} | Utkast: {draftCampaigns.length} | Avslutade: {completedCampaigns.length}
                   </div>
-                ) : (
-                  activeCampaigns.slice(0, 5).map((campaign) => (
-                    <div key={campaign.id} className="p-6 hover:bg-gray-50">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          {getCampaignTypeIcon(campaign.type)}
-                          <div className="ml-3">
-                            <p className="text-sm font-medium text-gray-900">
-                              {safeGetCampaignName(campaign)}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              Kod: {campaign.code}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {getStatusBadge(campaign.status)}
-                          <Link
-                            to={`/admin/campaigns/${campaign.id}`}
-                            className="text-purple-600 hover:text-purple-500 text-sm font-medium"
-                          >
-                            Visa →
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  ))
                 )}
               </div>
             </div>
-
-            {/* Draft Campaigns */}
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-medium text-gray-900">Utkast ({draftCampaigns.length})</h2>
-              </div>
-              
-              <div className="divide-y divide-gray-200">
-                {draftCampaigns.length === 0 ? (
-                  <div className="p-6 text-center text-gray-500">
-                    <div className="w-12 h-12 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                      <span className="text-gray-400 text-xl">📝</span>
-                    </div>
-                    <p>Inga utkast sparade</p>
-                    <p className="text-sm mt-1">Spara kampanjer som utkast innan aktivering</p>
+            
+            <div className="divide-y divide-gray-200">
+              {allCampaigns.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <MegaphoneIcon className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Inga kampanjer än</h3>
+                  <p>Skapa din första kampanj för att komma igång med affiliate-marknadsföring</p>
+                  <div className="mt-6">
+                    <Link
+                      to="/admin/campaigns/create"
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-purple-700 bg-purple-100 hover:bg-purple-200"
+                    >
+                      <PlusIcon className="-ml-1 mr-2 h-4 w-4" />
+                      Skapa Din Första Kampanj
+                    </Link>
                   </div>
-                ) : (
-                  draftCampaigns.slice(0, 5).map((campaign) => (
-                    <div key={campaign.id} className="p-6 hover:bg-gray-50">
+                </div>
+              ) : (
+                <>
+                  {/* Status Summary Cards */}
+                  <div className="p-6 bg-gray-50">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {activeCampaigns.length > 0 && (
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-green-600">{activeCampaigns.length}</div>
+                          <div className="text-xs text-gray-500">Aktiva</div>
+                        </div>
+                      )}
+                      {pausedCampaigns.length > 0 && (
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-yellow-600">{pausedCampaigns.length}</div>
+                          <div className="text-xs text-gray-500">Pausade</div>
+                        </div>
+                      )}
+                      {draftCampaigns.length > 0 && (
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-gray-600">{draftCampaigns.length}</div>
+                          <div className="text-xs text-gray-500">Utkast</div>
+                        </div>
+                      )}
+                      {completedCampaigns.length > 0 && (
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-blue-600">{completedCampaigns.length}</div>
+                          <div className="text-xs text-gray-500">Avslutade</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Campaign List */}
+                  {allCampaigns.map((campaign) => (
+                    <div key={campaign.id} className="p-6 hover:bg-gray-50 transition-colors">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center">
+                        <div className="flex items-center min-w-0 flex-1">
                           {getCampaignTypeIcon(campaign.type)}
-                          <div className="ml-3">
-                            <p className="text-sm font-medium text-gray-900">
-                              {safeGetCampaignName(campaign)}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              Kod: {campaign.code}
-                            </p>
+                          <div className="ml-3 min-w-0 flex-1">
+                            <div className="flex items-center">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {safeGetCampaignName(campaign)}
+                              </p>
+                              <div className="ml-2 flex-shrink-0">
+                                {getStatusBadge(campaign.status)}
+                              </div>
+                            </div>
+                            <div className="mt-1 flex items-center text-sm text-gray-500">
+                              <span>Kod: {campaign.code}</span>
+                              {campaign.startDate && (
+                                <>
+                                  <span className="mx-2">•</span>
+                                  <span>Start: {new Date(campaign.startDate).toLocaleDateString('sv-SE')}</span>
+                                </>
+                              )}
+                              {campaign.endDate && (
+                                <>
+                                  <span className="mx-2">•</span>
+                                  <span>Slut: {new Date(campaign.endDate).toLocaleDateString('sv-SE')}</span>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          {getStatusBadge(campaign.status)}
+                        <div className="ml-4 flex-shrink-0">
                           <Link
                             to={`/admin/campaigns/${campaign.id}`}
                             className="text-purple-600 hover:text-purple-500 text-sm font-medium"
                           >
-                            Redigera →
+                            {campaign.status === 'draft' ? 'Redigera' : 'Visa'} →
                           </Link>
                         </div>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
+                  ))}
+                </>
+              )}
             </div>
           </div>
         )}
