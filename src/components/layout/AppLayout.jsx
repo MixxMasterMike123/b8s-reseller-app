@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import MentionNotifications from '../../wagons/dining-wagon/components/MentionNotifications';
 import LanguageSwitcher from '../LanguageSwitcher';
+import DarkModeToggle from '../DarkModeToggle';
 import { useTranslation } from '../../contexts/TranslationContext';
 
 // 🚂 WAGON SYSTEM: Import wagon registry for menu items
@@ -204,10 +205,10 @@ const AppLayout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Desktop Sidebar */}
       <div className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
-        <div className="flex flex-grow flex-col overflow-y-auto border-r border-gray-200 bg-white shadow-sm">
+        <div className="flex flex-grow flex-col overflow-y-auto border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
           <div className="flex flex-shrink-0 items-center px-4 py-6">
             <Link to="/" className="flex items-center">
               <img
@@ -419,13 +420,16 @@ const AppLayout = ({ children }) => {
       {/* Desktop and Mobile header */}
       <div className="md:pl-64 flex flex-col flex-1">
         {/* Desktop header - hidden on mobile */}
-        <div className="sticky top-0 z-20 hidden md:flex h-16 flex-shrink-0 bg-white shadow border-b border-gray-200">
+        <div className="sticky top-0 z-20 hidden md:flex h-16 flex-shrink-0 bg-white dark:bg-gray-800 shadow border-b border-gray-200 dark:border-gray-700">
           <div className="flex flex-1 justify-end px-6">
             <div className="flex items-center space-x-4">
               {/* Admin tools for desktop */}
               {isAdmin && (
                 <MentionNotifications />
               )}
+              
+              {/* Dark Mode Toggle */}
+              <DarkModeToggle />
               
               {/* Language Switcher */}
               <LanguageSwitcher />
@@ -438,7 +442,7 @@ const AppLayout = ({ children }) => {
                   </div>
                 </div>
                 <div className="hidden lg:block">
-                  <div className="text-sm font-medium text-gray-900">
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {userProfile?.companyName || currentUser?.email}
                   </div>
                 </div>
@@ -455,7 +459,7 @@ const AppLayout = ({ children }) => {
         </div>
         
         {/* Mobile header */}
-        <div className="sticky top-0 z-10 flex h-16 flex-shrink-0 bg-white shadow md:hidden">
+        <div className="sticky top-0 z-10 flex h-16 flex-shrink-0 bg-white dark:bg-gray-800 shadow md:hidden">
           <button
             type="button"
             className="border-r border-gray-200 px-4 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 md:hidden"
@@ -481,6 +485,9 @@ const AppLayout = ({ children }) => {
               {isAdmin && (
                 <MentionNotifications />
               )}
+              
+              {/* Dark Mode Toggle */}
+              <DarkModeToggle />
               
               {/* Language Switcher */}
               <LanguageSwitcher />

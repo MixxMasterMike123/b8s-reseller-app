@@ -230,26 +230,26 @@ const AdminDashboard = () => {
 
         {/* Breadcrumb */}
         <nav className="mb-8">
-          <ol className="flex items-center space-x-2 text-sm text-gray-500">
+          <ol className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
             <li>
-              <Link to="/" className="hover:text-gray-700">{t('admin.dashboard.breadcrumb_dashboard', 'Dashboard')}</Link>
+              <Link to="/" className="hover:text-gray-700 dark:hover:text-gray-300">{t('admin.dashboard.breadcrumb_dashboard', 'Dashboard')}</Link>
             </li>
             <li>
-              <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <svg className="h-5 w-5 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
               </svg>
             </li>
-            <li className="font-medium text-gray-900">{t('admin.dashboard.breadcrumb_admin', 'Admin Dashboard')}</li>
+            <li className="font-medium text-gray-900 dark:text-gray-100">{t('admin.dashboard.breadcrumb_admin', 'Admin Dashboard')}</li>
           </ol>
         </nav>
 
         {/* Welcome Section */}
-        <div className="bg-white shadow rounded-lg mb-8">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg mb-8">
           <div className="px-4 py-5 sm:p-6">
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               {t('admin.dashboard.welcome', 'Välkommen till Admin Dashboard')}
             </h1>
-            <p className="mt-1 text-gray-500">
+            <p className="mt-1 text-gray-500 dark:text-gray-400">
               {t('admin.dashboard.description', 'Här kan du se en översikt över systemet och hantera användare, ordrar och produkter.')}
             </p>
           </div>
@@ -258,7 +258,7 @@ const AdminDashboard = () => {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
           {/* Total Revenue */}
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0 bg-green-500 rounded-md p-3">
@@ -268,15 +268,15 @@ const AdminDashboard = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total Intäkt</dt>
-                    <dd className="text-2xl font-semibold text-gray-900">{formatCurrency(stats.totalRevenue)}</dd>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Intäkt</dt>
+                    <dd className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{formatCurrency(stats.totalRevenue)}</dd>
                   </dl>
                 </div>
               </div>
             </div>
-            <div className="bg-gray-50 px-5 py-3">
+            <div className="bg-gray-50 dark:bg-gray-700 px-5 py-3">
               <div className="text-sm">
-                <Link to="/admin/orders" className="font-medium text-blue-700 hover:text-blue-900">
+                <Link to="/admin/orders" className="font-medium text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">
                   Visa alla ordrar
                 </Link>
               </div>
