@@ -125,7 +125,13 @@ const CampaignEdit = () => {
     
     switch (step) {
       case 1:
-        return getContentValue(formData.name, 'sv-SE').trim() !== '';
+        // Name is always required
+        const hasValidName = getContentValue(formData.name, 'sv-SE').trim() !== '';
+        
+        // Campaign code is required and must be valid (alphanumeric, hyphens, underscores)
+        const hasValidCode = formData.code && formData.code.trim() !== '' && /^[a-zA-Z0-9_-]+$/.test(formData.code.trim());
+        
+        return hasValidName && hasValidCode;
       case 2:
         return formData.type && (formData.selectedAffiliates === 'all' || formData.affiliateIds?.length > 0);
       case 3:
@@ -436,18 +442,23 @@ const CampaignEdit = () => {
               {/* Campaign Code */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Kampanjkod
+                  Kampanjkod {formData.status === 'active' && <span className="text-orange-500">(Låst - Kampanj aktiv)</span>}
                 </label>
                 <input
                   type="text"
                   value={formData.code || ''}
                   onChange={(e) => handleFieldChange('code', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500 bg-gray-50"
-                  placeholder="Automatiskt genererad..."
-                  readOnly
+                  className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500 ${
+                    formData.status === 'active' ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'
+                  }`}
+                  placeholder={formData.status === 'active' ? 'Koden är låst medan kampanjen är aktiv' : 'Ange kampanjkod...'}
+                  readOnly={formData.status === 'active'}
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  Kampanjkoden genereras automatiskt och kan inte ändras
+                  {formData.status === 'active' 
+                    ? '🔒 Kampanjkoden kan inte ändras medan kampanjen är aktiv (affiliates använder koden)'
+                    : '✏️ Endast bokstäver, siffror, bindestreck (-) och understreck (_) tillåtna. Exempel: sommarkampanj-2025'
+                  }
                 </p>
               </div>
             </div>
