@@ -2131,10 +2131,17 @@ const ContactDetail = () => {
                         onChange={(e) => setEditingContactData({ ...editingContactData, status: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
                       >
+                        {/* New status options - prioritized */}
+                        <option value="ej_kontaktad">Ej kontaktad</option>
+                        <option value="kontaktad">Kontaktad</option>
+                        <option value="dialog">Dialog</option>
+                        <option value="af">ÅF</option>
+                        <option value="closed">Stängd</option>
+                        
+                        {/* Legacy status options - for backward compatibility */}
                         <option value="prospect">Reservering</option>
                         <option value="active">Stamgäst</option>
                         <option value="inactive">Inaktiv</option>
-                        <option value="closed">Stängd</option>
                       </select>
                     </div>
                     <div>
@@ -2156,8 +2163,11 @@ const ContactDetail = () => {
                         onChange={(e) => setEditingContactData({ ...editingContactData, source: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
                       >
+                        <option value="ai">AI</option>
                         <option value="manual">Manuell</option>
                         <option value="website">Webbsida</option>
+                        <option value="phone">Telefonsamtal</option>
+                        <option value="email">E-post</option>
                         <option value="referral">Rekommendation</option>
                         <option value="marketing">Marknadsföring</option>
                         <option value="cold_call">Cold call</option>

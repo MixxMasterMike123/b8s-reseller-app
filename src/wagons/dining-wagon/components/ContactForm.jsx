@@ -34,7 +34,7 @@ const ContactForm = () => {
     country: 'Sverige',
     
     // CRM fields
-    status: 'prospect',
+    status: 'ej_kontaktad',
     priority: 'medium',
     source: 'manual',
     tags: [],
@@ -338,22 +338,18 @@ const ContactForm = () => {
                     />
                   </div>
 
-                  <div>
+                                    <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Land
                     </label>
-                    <select
+                    <input
+                      type="text"
                       name="country"
                       value={formData.country}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    >
-                      <option value="Sverige">Sverige</option>
-                      <option value="Norge">Norge</option>
-                      <option value="Danmark">Danmark</option>
-                      <option value="Finland">Finland</option>
-                      <option value="Andra länder">Andra länder</option>
-                    </select>
+                      placeholder="Sverige"
+                    />
                   </div>
                 </div>
               </div>
@@ -377,10 +373,17 @@ const ContactForm = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   >
+                    {/* New status options - prioritized */}
+                    <option value="ej_kontaktad">Ej kontaktad</option>
+                    <option value="kontaktad">Kontaktad</option>
+                    <option value="dialog">Dialog</option>
+                    <option value="af">ÅF</option>
+                    <option value="closed">Stängd</option>
+                    
+                    {/* Legacy status options - for backward compatibility */}
                     <option value="prospect">Reservering (Prospekt)</option>
                     <option value="active">Stamgäst (Aktiv)</option>
                     <option value="inactive">Inaktiv</option>
-                    <option value="closed">Stängd</option>
                   </select>
                 </div>
 
@@ -410,6 +413,7 @@ const ContactForm = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   >
+                    <option value="ai">AI</option>
                     <option value="manual">Manuell inmatning</option>
                     <option value="website">Webbplats</option>
                     <option value="phone">Telefonsamtal</option>

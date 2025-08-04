@@ -71,17 +71,31 @@ const ContactList = () => {
   // Status badge styling
   const getStatusBadge = (status) => {
     const styles = {
+      // New status options
+      ej_kontaktad: 'bg-orange-100 text-orange-800',
+      kontaktad: 'bg-blue-100 text-blue-800',
+      dialog: 'bg-purple-100 text-purple-800',
+      af: 'bg-green-100 text-green-800',
+      closed: 'bg-red-100 text-red-800',
+      
+      // Legacy status options - for backward compatibility
       prospect: 'bg-yellow-100 text-yellow-800',
       active: 'bg-green-100 text-green-800',
-      inactive: 'bg-gray-100 text-gray-800',
-      closed: 'bg-red-100 text-red-800'
+      inactive: 'bg-gray-100 text-gray-800'
     };
     
     const labels = {
+      // New status options
+      ej_kontaktad: 'Ej kontaktad',
+      kontaktad: 'Kontaktad',
+      dialog: 'Dialog',
+      af: 'ÅF',
+      closed: 'Stängd',
+      
+      // Legacy status options - for backward compatibility
       prospect: 'Reservering',
       active: 'Stamgäst',
-      inactive: 'Inaktiv',
-      closed: 'Stängd'
+      inactive: 'Inaktiv'
     };
 
     return (
