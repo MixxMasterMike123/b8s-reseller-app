@@ -114,12 +114,13 @@ src/wagons/campaign-wagon/
 
 ### **✅ DEPLOYMENT STATUS (Phase 2 Complete):**
 - **Campaign Creation**: https://b8shield-reseller-app.web.app/admin/campaigns/create
-  - ✅ CampaignCreate-c61a59e2.js (14.84 kB) - 4-step wizard with multilingual support
-- **Campaign Editing**: https://b8shield-reseller-app.web.app/admin/campaigns/{ID}
-  - ✅ CampaignEdit-0750eed0.js (21.41 kB) - Complete editing with status management
-- **Build Status**: ✅ Both components compiled successfully
+  - ✅ CampaignCreate-c249e545.js (14.84 kB) - 4-step wizard with multilingual support
+- **Campaign Editing**: https://partner.b8shield.com/admin/campaigns/{ID}
+  - ✅ CampaignEdit-cc9286af.js (21.59 kB) - Complete editing with async data loading
+- **Build Status**: ✅ Both components compiled successfully with async loading fix
 - **Functionality**: ✅ Full campaign lifecycle management (Create → Edit → Delete)
 - **Integration**: ✅ Perfect integration with existing Campaign Wagon infrastructure
+- **🔧 CRITICAL FIX**: Fixed campaign loading timing issue with async `fetchCampaignById` function
 
 ### **✅ CAMPAIGN EDITING FEATURES ADDED:**
 - **Data Fetching**: Loads existing campaign data based on URL ID parameter
@@ -131,6 +132,18 @@ src/wagons/campaign-wagon/
 - **Action Buttons**: Professional header with Activate/Pause and Delete actions
 - **Campaign Code Display**: Shows generated campaign code (read-only)
 - **Advanced Features**: Status badges, loading spinners, comprehensive form validation
+
+### **🔧 CRITICAL TIMING FIX RESOLVED:**
+**PROBLEM**: Original `getCampaignById` function was synchronous and relied on the `campaigns` array being populated from Firebase subscription, causing "Kampanj hittades inte" (Campaign not found) errors when components loaded before data.
+
+**SOLUTION**: Added new `fetchCampaignById` async function that directly fetches from Firebase using `getDoc()`:
+- **Direct Firebase Fetch**: Uses `doc()` and `getDoc()` to fetch campaign directly by ID
+- **Proper Error Handling**: Returns `null` if campaign doesn't exist instead of undefined
+- **Safe Date Conversion**: Includes same date handling logic as subscription
+- **Debug Logging**: Console logs for troubleshooting campaign loading issues
+- **Backward Compatibility**: Keeps original `getCampaignById` for other components
+
+**TECHNICAL**: Updated `CampaignEdit.jsx` to use `fetchCampaignById` instead of synchronous lookup, ensuring reliable campaign loading regardless of subscription timing.
 
 ---
 

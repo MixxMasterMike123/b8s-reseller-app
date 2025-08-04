@@ -16,6 +16,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import AppLayout from '../../../components/layout/AppLayout';
+import ContentLanguageIndicator from '../../../components/ContentLanguageIndicator';
 import { useContentTranslation } from '../../../hooks/useContentTranslation';
 import { useCampaigns } from '../hooks/useCampaigns';
 import { CAMPAIGN_TYPES, getDefaultCampaign } from '../utils/campaignUtils';
@@ -58,14 +59,7 @@ const CampaignCreate = () => {
     }
   };
 
-  // Handle multilingual content updates
-  const handleContentChange = (field, value, language = 'sv-SE') => {
-    const updatedContent = setContentValue(formData[field] || {}, value, language);
-    setFormData(prev => ({
-      ...prev,
-      [field]: updatedContent
-    }));
-  };
+
 
   // Handle form field updates
   const handleFieldChange = (field, value) => {
@@ -225,38 +219,22 @@ const CampaignCreate = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Kampanjnamn <span className="text-red-500">*</span>
                 </label>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Svenska</label>
-                    <input
-                      type="text"
-                      value={getContentValue(formData.name, 'sv-SE')}
-                      onChange={(e) => handleContentChange('name', e.target.value, 'sv-SE')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                      placeholder="T.ex. Sommartävling 2025"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">English (UK)</label>
-                    <input
-                      type="text"
-                      value={getContentValue(formData.name, 'en-GB')}
-                      onChange={(e) => handleContentChange('name', e.target.value, 'en-GB')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                      placeholder="e.g. Summer Competition 2025"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">English (US)</label>
-                    <input
-                      type="text"
-                      value={getContentValue(formData.name, 'en-US')}
-                      onChange={(e) => handleContentChange('name', e.target.value, 'en-US')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                      placeholder="e.g. Summer Contest 2025"
-                    />
-                  </div>
-                </div>
+                <ContentLanguageIndicator 
+                  contentField={formData.name}
+                  label="Kampanjnamn"
+                  className="mb-2"
+                />
+                <input
+                  type="text"
+                  value={getContentValue(formData.name)}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    name: setContentValue(formData.name, e.target.value)
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="T.ex. Sommartävling 2025"
+                  required
+                />
               </div>
 
               {/* Campaign Description - Multilingual */}
@@ -264,38 +242,21 @@ const CampaignCreate = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Beskrivning
                 </label>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Svenska</label>
-                    <textarea
-                      value={getContentValue(formData.description, 'sv-SE')}
-                      onChange={(e) => handleContentChange('description', e.target.value, 'sv-SE')}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                      placeholder="Beskriv kampanjen..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">English (UK)</label>
-                    <textarea
-                      value={getContentValue(formData.description, 'en-GB')}
-                      onChange={(e) => handleContentChange('description', e.target.value, 'en-GB')}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                      placeholder="Describe the campaign..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">English (US)</label>
-                    <textarea
-                      value={getContentValue(formData.description, 'en-US')}
-                      onChange={(e) => handleContentChange('description', e.target.value, 'en-US')}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                      placeholder="Describe the campaign..."
-                    />
-                  </div>
-                </div>
+                <ContentLanguageIndicator 
+                  contentField={formData.description}
+                  label="Kampanjbeskrivning"
+                  className="mb-2"
+                />
+                <textarea
+                  value={getContentValue(formData.description)}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    description: setContentValue(formData.description, e.target.value)
+                  })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="Beskriv kampanjen..."
+                />
               </div>
             </div>
           )}
