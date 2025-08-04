@@ -139,10 +139,10 @@ const AppLayout = ({ children }) => {
       description: t('nav.admin_dashboard_desc', 'Översikt och statistik'),
     },
     {
-      name: t('nav.admin_customers', 'Kunder'),
+      name: t('nav.admin_customers', 'B2B Kunder och Admins'),
       path: '/admin/users',
       icon: UsersIcon,
-      description: t('nav.admin_customers_desc', 'Hantera användare'),
+      description: t('nav.admin_customers_desc', 'Hantera B2B-kunder och administratörer'),
     },
     {
       name: t('nav.admin_b2c_customers', 'B2C Kunder'),
