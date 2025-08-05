@@ -175,7 +175,7 @@ function AdminMarketingMaterials() {
       <AppLayout>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="text-center">
-            <p className="text-red-600">Du har inte behörighet att se denna sida.</p>
+            <p className="text-red-600 dark:text-red-400">Du har inte behörighet att se denna sida.</p>
           </div>
         </div>
       </AppLayout>
@@ -189,20 +189,20 @@ function AdminMarketingMaterials() {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Marknadsföringsmaterial</h1>
-              <p className="mt-1 text-sm text-gray-600">Hantera allmänt marknadsföringsmaterial</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Marknadsföringsmaterial</h1>
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Hantera allmänt marknadsföringsmaterial</p>
             </div>
             <div className="flex gap-3">
               <Link 
                 to="/admin" 
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
               >
                 Tillbaka till Admin
               </Link>
               <button
                 onClick={handlePopulateFromProducts}
                 disabled={populating}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
               >
                 {populating ? 'Importerar...' : 'Importera från Produkter'}
               </button>
@@ -211,7 +211,7 @@ function AdminMarketingMaterials() {
                   setShowUploadForm(true);
                   setFormData({ name: '', description: '', category: 'allmänt', file: null });
                 }}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600"
               >
                 Ladda upp Material
               </button>
@@ -221,8 +221,8 @@ function AdminMarketingMaterials() {
 
         {/* Upload Form (only for new materials) */}
         {showUploadForm && (
-          <div className="mb-8 bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">
+          <div className="mb-8 bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+            <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
               Ladda upp Nytt Material
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -238,18 +238,18 @@ function AdminMarketingMaterials() {
                     required
                     value={getContentValue(formData.name)}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: setContentValue(prev.name, e.target.value) }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                     placeholder={currentLanguage === 'sv-SE' ? "Materialnamn" : "Material name"}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Kategori
                   </label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                   >
                     {categories.map(cat => (
                       <option key={cat.value} value={cat.value}>{cat.label}</option>
@@ -268,13 +268,13 @@ function AdminMarketingMaterials() {
                   value={getContentValue(formData.description)}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: setContentValue(prev.description, e.target.value) }))}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder={currentLanguage === 'sv-SE' ? "Beskrivning av materialet" : "Description of the material"}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Fil * (Bilder, Videos, PDF, Word-dokument)
                 </label>
                 <input
@@ -282,10 +282,10 @@ function AdminMarketingMaterials() {
                   required
                   onChange={handleFileChange}
                   accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.mp4,.mov,.avi,.webm,.mkv,.pdf,.doc,.docx,.txt,.rtf,.zip,.rar"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                 />
                 {formData.file && (
-                  <p className="mt-1 text-sm text-gray-600">
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                     Vald fil: {formData.file.name} ({formatFileSize(formData.file.size)})
                   </p>
                 )}
@@ -295,14 +295,14 @@ function AdminMarketingMaterials() {
                 <button
                   type="submit"
                   disabled={uploading}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50"
                 >
                   {uploading ? 'Laddar upp...' : 'Ladda upp'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowUploadForm(false)}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                 >
                   Avbryt
                 </button>
@@ -312,52 +312,52 @@ function AdminMarketingMaterials() {
         )}
 
         {/* Materials List */}
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
               Tillgängligt Material ({materials.length})
             </h2>
           </div>
 
           {loading ? (
             <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
             </div>
           ) : materials.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500">Inget material uppladdat ännu</p>
+              <p className="text-gray-500 dark:text-gray-400">Inget material uppladdat ännu</p>
               <button
                 onClick={() => setShowUploadForm(true)}
-                className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600"
               >
                 Ladda upp första materialet
               </button>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Material & Kategori
                     </th>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Filinfo & Storlek
                     </th>
-                    <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Åtgärder
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {materials.map((material) => (
-                    <tr key={material.id} className="hover:bg-gray-50">
+                    <tr key={material.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       {/* Column 1: Material & Category */}
                       <td className="px-4 md:px-6 py-4">
                         <div className="flex items-start">
                           {/* File Preview/Icon */}
                           <div className="flex-shrink-0 h-16 w-16 mr-4">
-                            <div className="flex items-center justify-center h-16 w-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                            <div className="flex items-center justify-center h-16 w-16 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
                               {material.fileType === 'image' && material.downloadURL ? (
                                 <img 
                                   src={material.downloadURL}
@@ -371,7 +371,7 @@ function AdminMarketingMaterials() {
                                 />
                               ) : null}
                               <div 
-                                className="text-gray-500"
+                                className="text-gray-500 dark:text-gray-400"
                                 style={{ display: material.fileType === 'image' && material.downloadURL ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center' }}
                               >
                                 <FileIcon iconName={getFileIcon(material.fileType)} className="w-8 h-8" />
@@ -379,16 +379,16 @@ function AdminMarketingMaterials() {
                             </div>
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="text-sm font-medium text-gray-900 mb-1">
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
                               {getContentValue(material.name)}
                             </div>
                             <div className="mb-2">
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300">
                                 {getCategoryLabel(material.category)}
                               </span>
                             </div>
                             {material.description && (
-                              <div className="text-xs text-gray-500 line-clamp-2">
+                              <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
                                 {getContentValue(material.description)}
                               </div>
                             )}
@@ -399,14 +399,14 @@ function AdminMarketingMaterials() {
                       {/* Column 2: File Info & Size */}
                       <td className="px-4 md:px-6 py-4">
                         <div className="text-sm">
-                          <div className="font-mono text-xs text-gray-900 mb-1 truncate max-w-[200px]" title={material.fileName}>
+                          <div className="font-mono text-xs text-gray-900 dark:text-gray-100 mb-1 truncate max-w-[200px]" title={material.fileName}>
                             {material.fileName}
                           </div>
-                          <div className="text-xs text-gray-500 mb-1">
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
                             {material.fileSize ? formatFileSize(material.fileSize) : 'Okänd storlek'}
                           </div>
                           <div className="flex gap-1">
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 uppercase">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 uppercase">
                               {material.fileType || 'Okänd'}
                             </span>
                           </div>
@@ -418,7 +418,7 @@ function AdminMarketingMaterials() {
                         <div className="flex flex-col md:flex-row items-end md:items-center justify-end gap-2">
                           <button
                             onClick={() => handleDownload(material)}
-                            className="min-h-[32px] px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded transition-colors flex items-center gap-1"
+                            className="min-h-[32px] px-3 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded transition-colors flex items-center gap-1"
                             title="Ladda ner"
                           >
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -428,7 +428,7 @@ function AdminMarketingMaterials() {
                           </button>
                           <button
                             onClick={() => handleEdit(material)}
-                            className="min-h-[32px] px-3 py-1 text-xs font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors flex items-center gap-1"
+                            className="min-h-[32px] px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded transition-colors flex items-center gap-1"
                             title="Redigera"
                           >
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -438,7 +438,7 @@ function AdminMarketingMaterials() {
                           </button>
                           <button
                             onClick={() => handleDelete(material.id)}
-                            className="min-h-[32px] px-3 py-1 text-xs font-medium text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors flex items-center gap-1"
+                            className="min-h-[32px] px-3 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-colors flex items-center gap-1"
                             title="Ta bort"
                           >
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
