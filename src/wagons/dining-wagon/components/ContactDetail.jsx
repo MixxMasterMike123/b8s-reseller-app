@@ -17,7 +17,8 @@ import {
   ClockIcon,
   ExclamationTriangleIcon,
   CheckIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  GlobeAltIcon
 } from '@heroicons/react/24/outline';
 import {
   PhoneIcon as PhoneSolid,
@@ -236,6 +237,9 @@ const ContactDetail = () => {
   const [adminDocCategory, setAdminDocCategory] = useState('dokument');
   const [adminDocNotes, setAdminDocNotes] = useState('');
   const [adminDocUploading, setAdminDocUploading] = useState(false);
+
+  // META scraping state
+  const [metaScraping, setMetaScraping] = useState(false);
 
   // Auto-scroll and highlight activity from URL parameter
   useEffect(() => {
@@ -1032,6 +1036,82 @@ const ContactDetail = () => {
     } catch (error) {
       console.error('Error deleting contact:', error);
       toast.error('Kunde inte ta bort kontakt');
+    }
+  };
+
+  // META scraping function
+  const handleScrapeWebsiteMeta = async () => {
+    if (!editingContactData.website) {
+      toast.error('Ingen webbsida angiven');
+      return;
+    }
+
+    setMetaScraping(true);
+
+    try {
+      // Call Firebase Function for META scraping
+      const response = await fetch('https://scrapwebsitemetav2-yrn2lv34uq-uc.a.run.app', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: editingContactData.website
+        })
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        toast.error(`Kunde inte hämta META data: ${result.error}`);
+        return;
+      }
+
+      const { data } = result;
+      
+      // Format the META data for appending to notes
+      let metaText = '\n\n--- WEBBSIDA META ---\n';
+      
+      if (data.title) {
+        metaText += `Titel: ${data.title}\n`;
+      }
+      
+      if (data.description) {
+        metaText += `Beskrivning: ${data.description}\n`;
+      }
+      
+      if (data.keywords) {
+        metaText += `Nyckelord: ${data.keywords}\n`;
+      }
+      
+      metaText += `Språk: ${data.detectedLanguage === 'sv' ? 'Svenska' : 
+                            data.detectedLanguage === 'en' ? 'Engelska' : 
+                            data.detectedLanguage === 'de' ? 'Tyska' : 
+                            data.detectedLanguage || 'Okänt'}\n`;
+      
+      if (data.simpleTranslation) {
+        metaText += `Enkel översättning: ${data.simpleTranslation}\n`;
+      }
+      
+      metaText += `Hämtad: ${new Date().toLocaleDateString('sv-SE')}\n`;
+      metaText += `---`;
+
+      // Append to existing notes
+      const currentNotes = editingContactData.notes || '';
+      const updatedNotes = currentNotes + metaText;
+
+      setEditingContactData({
+        ...editingContactData,
+        notes: updatedNotes
+      });
+
+      toast.success('✨ META data hämtad och tillagd i anteckningar');
+
+    } catch (error) {
+      console.error('Error scraping META:', error);
+      toast.error('Kunde inte hämta META data från webbsidan');
+    } finally {
+      setMetaScraping(false);
     }
   };
 
@@ -2273,7 +2353,30 @@ const ContactDetail = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Anteckningar</label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-sm font-medium text-gray-700">Anteckningar</label>
+                        {editingContactData.website && (
+                          <button
+                            type="button"
+                            onClick={handleScrapeWebsiteMeta}
+                            disabled={metaScraping}
+                            className="flex items-center space-x-1 text-xs text-orange-600 hover:text-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            title="Hämta META beskrivning från webbsidan"
+                          >
+                            {metaScraping ? (
+                              <>
+                                <div className="animate-spin rounded-full h-3 w-3 border-b border-orange-600"></div>
+                                <span>Hämtar...</span>
+                              </>
+                            ) : (
+                              <>
+                                <GlobeAltIcon className="h-3 w-3" />
+                                <span>Hämta META</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
                       <textarea
                         value={editingContactData.notes}
                         onChange={(e) => setEditingContactData({ ...editingContactData, notes: e.target.value })}

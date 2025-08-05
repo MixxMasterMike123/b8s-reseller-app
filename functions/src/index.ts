@@ -59,6 +59,11 @@ import {
   createPaymentIntentV2
 } from './payment/createPaymentIntent';
 
+// Import website scraper functions for DiningWagon
+import {
+  scrapeWebsiteMeta
+} from './website-scraper/functions';
+
 // Re-export affiliate functions individually with V2 names (avoid V1 conflicts)
 export { logAffiliateClickV2, logAffiliateClickHttpV2, processAffiliateConversionV2 };
 
@@ -110,6 +115,11 @@ export {
 // Re-export payment functions for Stripe integration
 export {
   createPaymentIntentV2
+};
+
+// Re-export website scraper functions for DiningWagon
+export {
+  scrapeWebsiteMeta as scrapeWebsiteMetaV2
 };
 
 // Example protected HTTP function - TESTING
