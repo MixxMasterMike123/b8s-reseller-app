@@ -96,18 +96,26 @@ const ContactForm = () => {
     }
   };
 
-  // Validate form
+  // Validate form - ALL fields optional for cold outreach flexibility
   const validateForm = () => {
     const newErrors = {};
 
-    // Only company name is mandatory
-    if (!formData.companyName.trim()) {
-      newErrors.companyName = 'Företagsnamn är obligatoriskt';
-    }
+    // NO mandatory fields - perfect for cold outreach scenarios
+    // Only validate format if data is provided
 
-    // Validate email format if provided (but not mandatory)
+    // Validate email format if provided (optional)
     if (formData.email.trim() && !/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Ogiltig e-postadress';
+    }
+
+    // Validate phone format if provided (optional)
+    if (formData.phone.trim() && !/^[\d\s\-\+\(\)]+$/.test(formData.phone)) {
+      newErrors.phone = 'Ogiltigt telefonnummer';
+    }
+
+    // Validate website URL format if provided (optional)
+    if (formData.website.trim() && !formData.website.match(/^https?:\/\/.+\..+/)) {
+      newErrors.website = 'Ange fullständig URL (http://... eller https://...)';
     }
 
     setErrors(newErrors);
@@ -119,7 +127,7 @@ const ContactForm = () => {
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error('Vänligen fyll i företagsnamn korrekt');
+      toast.error('Vänligen kontrollera formatet på e-post, telefon och webbsida');
       return;
     }
 
