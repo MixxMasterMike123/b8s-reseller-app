@@ -428,18 +428,21 @@ const AdminPageEdit = () => {
                 label="Innehåll"
                 currentValue={getContentValue(formData.content)}
               />
-              <ReactQuill
-                theme="snow"
-                value={getContentValue(formData.content)}
-                onChange={(value) => setFormData({
-                  ...formData,
-                  content: setContentValue(formData.content, value)
-                })}
-                modules={quillModules}
-                formats={quillFormats}
-                placeholder="Sidans innehåll..."
-                className="bg-white"
-              />
+              <div className="border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden bg-white dark:bg-gray-700">
+                <div className="quill-dark-mode">
+                  <ReactQuill
+                    theme="snow"
+                    value={getContentValue(formData.content)}
+                    onChange={(value) => setFormData({
+                      ...formData,
+                      content: setContentValue(formData.content, value)
+                    })}
+                    modules={quillModules}
+                    formats={quillFormats}
+                    placeholder="Sidans innehåll..."
+                  />
+                </div>
+              </div>
             </div>
           </div>
         )}
