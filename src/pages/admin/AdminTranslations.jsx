@@ -1548,10 +1548,10 @@ const AdminTranslations = () => {
   const renderSettings = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Google Sheets Konfiguration</h3>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Google Sheets Konfiguration</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Admin Portal Översättningar
             </label>
             <div className="flex space-x-2">
@@ -1560,12 +1560,12 @@ const AdminTranslations = () => {
                 value={sheetUrls.admin}
                 onChange={(e) => setSheetUrls(prev => ({ ...prev, admin: e.target.value }))}
                 placeholder="https://docs.google.com/spreadsheets/d/..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               />
               {sheetUrls.admin && (
                 <button
                   onClick={() => clearSheetUrl('admin')}
-                  className="px-3 py-2 text-red-600 hover:text-red-800 border border-red-300 rounded-md hover:bg-red-50"
+                  className="px-3 py-2 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 border border-red-300 dark:border-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-900"
                   title="Rensa URL"
                 >
                   <XMarkIcon className="h-4 w-4" />
@@ -1576,7 +1576,7 @@ const AdminTranslations = () => {
               <button
                 onClick={() => handleLoadSheet('admin')}
                 disabled={!sheetUrls.admin}
-                className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ArrowPathIcon className="h-4 w-4 mr-1" />
                 Testa anslutning
@@ -1585,7 +1585,7 @@ const AdminTranslations = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               B2B Portal Översättningar
             </label>
             <div className="flex space-x-2">
@@ -1594,12 +1594,12 @@ const AdminTranslations = () => {
                 value={sheetUrls.b2b}
                 onChange={(e) => setSheetUrls(prev => ({ ...prev, b2b: e.target.value }))}
                 placeholder="https://docs.google.com/spreadsheets/d/..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               />
               {sheetUrls.b2b && (
                 <button
                   onClick={() => clearSheetUrl('b2b')}
-                  className="px-3 py-2 text-red-600 hover:text-red-800 border border-red-300 rounded-md hover:bg-red-50"
+                  className="px-3 py-2 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 border border-red-300 dark:border-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-900"
                   title="Rensa URL"
                 >
                   <XMarkIcon className="h-4 w-4" />
@@ -1610,7 +1610,7 @@ const AdminTranslations = () => {
               <button
                 onClick={() => handleLoadSheet('b2b')}
                 disabled={!sheetUrls.b2b}
-                className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ArrowPathIcon className="h-4 w-4 mr-1" />
                 Testa anslutning
@@ -1619,7 +1619,7 @@ const AdminTranslations = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               B2C Shop Översättningar
             </label>
             <div className="flex space-x-2">
@@ -1628,12 +1628,12 @@ const AdminTranslations = () => {
                 value={sheetUrls.b2c}
                 onChange={(e) => setSheetUrls(prev => ({ ...prev, b2c: e.target.value }))}
                 placeholder="https://docs.google.com/spreadsheets/d/..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               />
               {sheetUrls.b2c && (
                 <button
                   onClick={() => clearSheetUrl('b2c')}
-                  className="px-3 py-2 text-red-600 hover:text-red-800 border border-red-300 rounded-md hover:bg-red-50"
+                  className="px-3 py-2 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 border border-red-300 dark:border-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-900"
                   title="Rensa URL"
                 >
                   <XMarkIcon className="h-4 w-4" />
@@ -1644,7 +1644,7 @@ const AdminTranslations = () => {
               <button
                 onClick={() => handleLoadSheet('b2c')}
                 disabled={!sheetUrls.b2c}
-                className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ArrowPathIcon className="h-4 w-4 mr-1" />
                 Testa anslutning
@@ -1653,7 +1653,7 @@ const AdminTranslations = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Innehållsfält Översättningar
             </label>
             <div className="flex space-x-2">
@@ -1662,12 +1662,12 @@ const AdminTranslations = () => {
                 value={sheetUrls.content}
                 onChange={(e) => setSheetUrls(prev => ({ ...prev, content: e.target.value }))}
                 placeholder="https://docs.google.com/spreadsheets/d/..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               />
               {sheetUrls.content && (
                 <button
                   onClick={() => clearSheetUrl('content')}
-                  className="px-3 py-2 text-red-600 hover:text-red-800 border border-red-300 rounded-md hover:bg-red-50"
+                  className="px-3 py-2 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 border border-red-300 dark:border-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-900"
                   title="Rensa URL"
                 >
                   <XMarkIcon className="h-4 w-4" />
@@ -1678,7 +1678,7 @@ const AdminTranslations = () => {
               <button
                 onClick={() => handleLoadSheet('content')}
                 disabled={!sheetUrls.content}
-                className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ArrowPathIcon className="h-4 w-4 mr-1" />
                 Testa anslutning
@@ -1688,33 +1688,33 @@ const AdminTranslations = () => {
         </div>
       </div>
 
-      <div className="border-t pt-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">API-inställningar</h3>
+      <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">API-inställningar</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Google Sheets API-nyckel
             </label>
             <input
               type="password"
               placeholder="Din Google Sheets API-nyckel"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
             />
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Behövs för att komma åt Google Sheets API. Konfigurera i .env-fil.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="border-t pt-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Språkinställningar</h3>
+      <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Språkinställningar</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Standardspråk
             </label>
-            <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400">
               <option value="sv-SE">Svenska (Sverige)</option>
               <option value="en-GB">English (UK)</option>
               <option value="en-US">English (US)</option>
@@ -1722,7 +1722,7 @@ const AdminTranslations = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Aktiverade språk
             </label>
             <div className="space-y-2">
@@ -1731,9 +1731,9 @@ const AdminTranslations = () => {
                   <input
                     type="checkbox"
                     defaultChecked={lang.code === 'sv-SE'}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-700"
                   />
-                  <span className="ml-2 text-sm text-gray-700">{lang.name}</span>
+                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">{lang.name}</span>
                 </label>
               ))}
             </div>
@@ -1741,10 +1741,10 @@ const AdminTranslations = () => {
         </div>
       </div>
 
-      <div className="flex justify-end pt-6 border-t">
+      <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-gray-700">
         <button
           onClick={saveSheetUrls}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
         >
           Spara inställningar
         </button>
