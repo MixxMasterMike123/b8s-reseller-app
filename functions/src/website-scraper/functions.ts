@@ -201,25 +201,49 @@ export const scrapeWebsiteMeta = onRequest(
 
       console.log(`Scraping META data from: ${websiteUrl}`);
 
-      // Fetch website HTML
-      const response = await fetch(websiteUrl, {
-        method: 'GET',
-        headers: {
-          'User-Agent': 'B8Shield-MetaScraper/1.0 (+https://partner.b8shield.com)'
-        },
-        // Timeout after 20 seconds
-        signal: AbortSignal.timeout(20000)
-      });
+      // Fetch website HTML with proper error handling
+      let response: Response;
+      let html: string;
+      
+      try {
+        response = await fetch(websiteUrl, {
+          method: 'GET',
+          headers: {
+            'User-Agent': 'B8Shield-MetaScraper/1.0 (+https://partner.b8shield.com)'
+          },
+          // Timeout after 20 seconds
+          signal: AbortSignal.timeout(20000)
+        });
 
-      if (!response.ok) {
+        if (!response.ok) {
+          res.status(400).json({ 
+            success: false, 
+            error: `Failed to fetch website: ${response.status} ${response.statusText}` 
+          });
+          return;
+        }
+
+        html = await response.text();
+      } catch (fetchError: any) {
+        // Handle network errors, DNS failures, timeouts, etc.
+        let errorMessage = 'Failed to connect to website';
+        
+        if (fetchError.code === 'ENOTFOUND') {
+          errorMessage = 'Website not found - check the URL';
+        } else if (fetchError.name === 'AbortError') {
+          errorMessage = 'Website took too long to respond (timeout)';
+        } else if (fetchError.code === 'ECONNREFUSED') {
+          errorMessage = 'Website refused connection';
+        } else if (fetchError.message) {
+          errorMessage = `Connection error: ${fetchError.message}`;
+        }
+        
         res.status(400).json({ 
           success: false, 
-          error: `Failed to fetch website: ${response.status} ${response.statusText}` 
+          error: errorMessage 
         });
         return;
       }
-
-      const html = await response.text();
       
       // Extract META data
       const metaData = extractMetaData(html);
