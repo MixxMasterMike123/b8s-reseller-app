@@ -44,7 +44,6 @@ import {
   ArrowLeftIcon as ArrowLeftIconOutline,
   PencilIcon as PencilIconOutline,
   TrashIcon,
-  GlobeAltIcon,
   MapPinIcon,
   UserIcon,
   CalendarIcon,
@@ -1050,7 +1049,7 @@ const ContactDetail = () => {
 
     try {
       // Call Firebase Function for META scraping
-      const response = await fetch('https://scrapwebsitemetav2-yrn2lv34uq-uc.a.run.app', {
+      const response = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/scrapeWebsiteMetaV2', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
