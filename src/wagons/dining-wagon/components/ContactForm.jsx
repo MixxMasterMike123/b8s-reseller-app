@@ -273,17 +273,20 @@ const ContactForm = () => {
                     <label className="block text-sm font-medium text-gray-700">
                       Webbplats
                     </label>
-                    {formData.website && (
-                      <button
-                        type="button"
-                        onClick={handleScrapeWebsiteMeta}
-                        disabled={metaScraping}
-                        className="flex items-center px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <GlobeAltIcon className="h-3 w-3 mr-1" />
-                        {metaScraping ? 'Hämtar...' : 'Hämta META'}
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={handleScrapeWebsiteMeta}
+                      disabled={!formData.website || metaScraping}
+                      className={`flex items-center px-2 py-1 text-xs rounded-md transition-colors ${
+                        !formData.website 
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                          : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                      } ${metaScraping ? 'opacity-50' : ''}`}
+                      title={!formData.website ? 'Ange webbsida först' : 'Hämta META data från webbsidan'}
+                    >
+                      <GlobeAltIcon className="h-3 w-3 mr-1" />
+                      {metaScraping ? 'Hämtar...' : 'Hämta META'}
+                    </button>
                   </div>
                   <input
                     type="url"
