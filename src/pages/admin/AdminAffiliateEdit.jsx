@@ -36,7 +36,7 @@ import { useTranslation } from '../../contexts/TranslationContext';
 
 const SocialLinks = ({ socials }) => {
   if (!socials || Object.values(socials).every(val => !val)) {
-    return <p className="text-sm text-gray-500">-</p>;
+    return <p className="text-sm text-gray-500 dark:text-gray-400">-</p>;
   }
 
   const socialPlatforms = [
@@ -56,9 +56,9 @@ const SocialLinks = ({ socials }) => {
               href={socials[platform.key]} 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="text-blue-600 hover:underline flex items-center group"
+              className="text-blue-600 dark:text-blue-400 hover:underline flex items-center group"
             >
-              <span className="text-gray-400 group-hover:text-blue-600 transition-colors mr-2">
+              <span className="text-gray-400 dark:text-gray-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mr-2">
                 {platform.icon}
               </span>
               <span>{platform.name}</span>
@@ -71,24 +71,24 @@ const SocialLinks = ({ socials }) => {
 };
 
 const StatCard = ({ icon, title, value, color }) => (
-  <div className="bg-white p-4 rounded-2xl shadow-lg flex items-start space-x-3">
+  <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-lg flex items-start space-x-3">
     <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center ${color}`}>
       {React.cloneElement(icon, { className: "h-5 w-5 text-white" })}
     </div>
     <div className="min-w-0 flex-1">
-      <p className="text-xs text-gray-500 font-medium mb-1 line-clamp-2">{title}</p>
-      <p className="text-xl font-bold text-gray-900 truncate">{value}</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1 line-clamp-2">{title}</p>
+      <p className="text-xl font-bold text-gray-900 dark:text-gray-100 truncate">{value}</p>
     </div>
   </div>
 );
 
 const DetailItem = ({ label, children, icon }) => (
   <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
-    <dt className="text-sm font-medium text-gray-500 flex items-center">
-      {icon && <span className="mr-2 text-gray-400">{icon}</span>}
+    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center">
+      {icon && <span className="mr-2 text-gray-400 dark:text-gray-500">{icon}</span>}
       {label}
     </dt>
-    <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{children || '-'}</dd>
+    <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100 sm:col-span-2 sm:mt-0">{children || '-'}</dd>
   </div>
 );
 
@@ -547,10 +547,10 @@ const AdminAffiliateEdit = () => {
   const StatusBadge = ({ status }) => {
     const baseClasses = "px-3 py-1 text-xs font-medium rounded-full";
     const statusStyles = {
-      active: "bg-green-100 text-green-800",
-      inactive: "bg-gray-100 text-gray-800",
-      suspended: "bg-orange-100 text-orange-800",
-      pending: "bg-yellow-100 text-yellow-800"
+      active: "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300",
+      inactive: "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300",
+      suspended: "bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300",
+      pending: "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300"
     };
     const statusText = {
       active: "Aktiv",
@@ -559,7 +559,7 @@ const AdminAffiliateEdit = () => {
       pending: "Väntar"
     };
     return (
-      <span className={`${baseClasses} ${statusStyles[status] || 'bg-gray-100 text-gray-800'}`}>
+      <span className={`${baseClasses} ${statusStyles[status] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'}`}>
         {statusText[status] || status}
       </span>
     );
@@ -570,11 +570,11 @@ const AdminAffiliateEdit = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6 flex justify-between items-center">
           <div>
-            <Link to="/admin/affiliates" className="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 mb-2">
+            <Link to="/admin/affiliates" className="inline-flex items-center text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
               <ArrowLeftIcon className="h-5 w-5 mr-2" />
               Tillbaka till affiliates
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               {isApplication ? `Ansökan från ${data.name}` : `Affiliate: ${data.name}`}
             </h1>
           </div>
@@ -585,13 +585,13 @@ const AdminAffiliateEdit = () => {
               <>
                 {/* Send Credentials Button/Status */}
                 {data.credentialsSent ? (
-                  <div className="flex items-center px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
-                    <CheckIcon className="h-5 w-5 text-green-600 mr-2" />
+                  <div className="flex items-center px-3 py-2 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg">
+                    <CheckIcon className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
                     <div>
-                      <div className="text-sm font-medium text-green-800">
+                      <div className="text-sm font-medium text-green-800 dark:text-green-300">
                         Inloggningsuppgifter skickade
                       </div>
-                      <div className="text-xs text-green-600">
+                      <div className="text-xs text-green-600 dark:text-green-400">
                         {data.credentialsSentAt && new Date(data.credentialsSentAt.seconds * 1000).toLocaleDateString('sv-SE')}
                       </div>
                     </div>
@@ -600,7 +600,7 @@ const AdminAffiliateEdit = () => {
                   <button
                     onClick={handleSendCredentials}
                     disabled={sendingCredentials}
-                    className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="inline-flex items-center px-4 py-2 bg-purple-600 dark:bg-purple-500 text-white text-sm font-medium rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {sendingCredentials ? (
                       <>
@@ -718,11 +718,11 @@ const AdminAffiliateEdit = () => {
           <div className="lg:col-span-2 space-y-8">
             <form onSubmit={handleSave}>
               {/* Basic Info Card */}
-              <div className="bg-white shadow-lg rounded-2xl overflow-hidden mb-8">
-                <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
+              <div className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl overflow-hidden mb-8">
+                <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
                   <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                      <UserGroupIcon className="h-6 w-6 mr-2 text-gray-500" />
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                      <UserGroupIcon className="h-6 w-6 mr-2 text-gray-500 dark:text-gray-400" />
                       Grundinformation
                     </h2>
                     {!isApplication && (
@@ -811,10 +811,10 @@ const AdminAffiliateEdit = () => {
 
               {/* Settings Card */}
               {!isApplication && (
-                <div className="bg-white shadow-lg rounded-2xl overflow-hidden mb-8">
-                  <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
-                    <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                      <CurrencyEuroIcon className="h-6 w-6 mr-2 text-gray-500" />
+                <div className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl overflow-hidden mb-8">
+                  <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                      <CurrencyEuroIcon className="h-6 w-6 mr-2 text-gray-500 dark:text-gray-400" />
                       Inställningar
                     </h2>
                   </div>
@@ -977,10 +977,10 @@ const AdminAffiliateEdit = () => {
               )}
 
               {/* Marketing Info */}
-              <div className="bg-white shadow-lg rounded-2xl overflow-hidden mb-8">
-                <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
-                  <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                    <ChartBarIcon className="h-6 w-6 mr-2 text-gray-500" />
+              <div className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl overflow-hidden mb-8">
+                <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                    <ChartBarIcon className="h-6 w-6 mr-2 text-gray-500 dark:text-gray-400" />
                     Marknadsföring
                   </h2>
                 </div>
@@ -1105,10 +1105,10 @@ const AdminAffiliateEdit = () => {
           {/* Side Column */}
           <div className="space-y-8">
             {/* Address Card */}
-            <div className="bg-white shadow-lg rounded-2xl overflow-hidden">
-              <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
-                <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                  <HomeIcon className="h-6 w-6 mr-2 text-gray-500" />
+            <div className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl overflow-hidden">
+              <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                  <HomeIcon className="h-6 w-6 mr-2 text-gray-500 dark:text-gray-400" />
                   Adress
                 </h2>
               </div>
@@ -1189,10 +1189,10 @@ const AdminAffiliateEdit = () => {
 
             {/* Recent Orders */}
             {!isApplication && recentOrders.length > 0 && (
-              <div className="bg-white shadow-lg rounded-2xl overflow-hidden">
-                <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
-                  <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                    <ShoppingCartIcon className="h-6 w-6 mr-2 text-gray-500" />
+              <div className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl overflow-hidden">
+                <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                    <ShoppingCartIcon className="h-6 w-6 mr-2 text-gray-500 dark:text-gray-400" />
                     Senaste ordrar
                   </h2>
                 </div>
@@ -1202,7 +1202,7 @@ const AdminAffiliateEdit = () => {
                     {recentOrders.slice(0, 5).map((order) => (
                       <div 
                         key={order.id} 
-                        className="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                        className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
                         onClick={() => navigate(`/admin/orders/${order.id}`)}
                       >
                         <div>
@@ -1224,13 +1224,13 @@ const AdminAffiliateEdit = () => {
 
             {/* Payment History */}
             {!isApplication && (
-              <div className="bg-white shadow-lg rounded-2xl overflow-hidden">
-                <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
-                  <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                    <BanknotesIcon className="h-6 w-6 mr-2 text-gray-500" />
+              <div className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl overflow-hidden">
+                <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                    <BanknotesIcon className="h-6 w-6 mr-2 text-gray-500 dark:text-gray-400" />
                     Utbetalningshistorik
                     {data?.stats?.payoutCount > 0 && (
-                      <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                      <span className="ml-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 text-xs font-medium px-2.5 py-0.5 rounded-full">
                         {data.stats.payoutCount} utbetalningar
                       </span>
                     )}
