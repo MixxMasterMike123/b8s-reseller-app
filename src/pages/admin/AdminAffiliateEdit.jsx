@@ -570,7 +570,7 @@ const AdminAffiliateEdit = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6 flex justify-between items-center">
           <div>
-            <Link to="/admin/affiliates" className="inline-flex items-center text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
+            <Link to="/admin/affiliates" className="inline-flex items-center text-sm font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
               <ArrowLeftIcon className="h-5 w-5 mr-2" />
               Tillbaka till affiliates
             </Link>
@@ -650,11 +650,11 @@ const AdminAffiliateEdit = () => {
 
         {/* Credentials Result Display */}
         {credentialsResult && (
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg">
             <div className="flex items-start">
               <KeyIcon className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
               <div>
-                <h4 className="text-sm font-medium text-blue-800 mb-2">
+                <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
                   {credentialsResult.isExistingUser ? 
                     'Befintligt konto uppdaterat och inloggningsuppgifter skickade!' :
                     'Nytt konto skapat och inloggningsuppgifter skickade!'
@@ -742,7 +742,7 @@ const AdminAffiliateEdit = () => {
                           type="text"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                           placeholder="Förnamn Efternamn"
                         />
                       ) : (
@@ -759,7 +759,7 @@ const AdminAffiliateEdit = () => {
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                           placeholder="email@example.com"
                         />
                       ) : (
@@ -778,7 +778,7 @@ const AdminAffiliateEdit = () => {
                           type="tel"
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                           placeholder="+46 70 123 45 67"
                         />
                       ) : (
@@ -792,7 +792,7 @@ const AdminAffiliateEdit = () => {
                           label="Affiliate Kod" 
                           icon={<TagIcon className="h-5 w-5" />}
                         >
-                          <code className="bg-blue-50 px-3 py-1 rounded-md font-mono text-blue-700">
+                          <code className="bg-blue-50 dark:bg-blue-900 px-3 py-1 rounded-md font-mono text-blue-700 dark:text-blue-300">
                             {data.affiliateCode}
                           </code>
                         </DetailItem>
@@ -823,14 +823,14 @@ const AdminAffiliateEdit = () => {
                     <div className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Status
                           </label>
                           {isEditing ? (
                             <select
                               value={status} 
                               onChange={(e) => setStatus(e.target.value)}
-                              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                              className="w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                             >
                               <option value="active">Aktiv</option>
                               <option value="suspended">Suspenderad</option>
@@ -842,7 +842,7 @@ const AdminAffiliateEdit = () => {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Anpassad Affiliate-kod
                           </label>
                           {isEditing ? (
@@ -868,14 +868,14 @@ const AdminAffiliateEdit = () => {
                                     setCustomAffiliateCode(simpleCode);
                                     setCodeValidationError('');
                                   }}
-                                  className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                                  className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors"
                                   title="Generera enkel kod från namn"
                                 >
                                   Auto
                                 </button>
                               </div>
                               {codeValidationError && (
-                                <p className="mt-1 text-sm text-red-600">{codeValidationError}</p>
+                                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{codeValidationError}</p>
                               )}
                               <p className="mt-1 text-xs text-gray-500">
                                 3-20 tecken, endast bokstäver, siffror och bindestreck. Lämna tomt för att behålla nuvarande kod.
@@ -889,7 +889,7 @@ const AdminAffiliateEdit = () => {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Provision
                           </label>
                           {isEditing ? (
@@ -910,7 +910,7 @@ const AdminAffiliateEdit = () => {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Rabatt vid checkout
                           </label>
                           {isEditing ? (
@@ -931,14 +931,14 @@ const AdminAffiliateEdit = () => {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             {isEditing ? t('affiliate_reg_preferred_lang', 'Föredraget språk') : 'Föredraget språk'}
                           </label>
                           {isEditing ? (
                             <select
                               value={preferredLang}
                               onChange={e => setPreferredLang(e.target.value)}
-                              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                              className="w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                             >
                               <option value="sv-SE">{t('lang_swedish', 'Svenska')}</option>
                               <option value="en-GB">{t('lang_english_uk', 'English (UK)')}</option>
@@ -996,7 +996,7 @@ const AdminAffiliateEdit = () => {
                           value={promotionMethod}
                           onChange={(e) => setPromotionMethod(e.target.value)}
                           rows="3"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                           placeholder="Beskriv hur affiliate planerar att marknadsföra produkterna..."
                         />
                       ) : (
@@ -1013,7 +1013,7 @@ const AdminAffiliateEdit = () => {
                           value={message}
                           onChange={(e) => setMessage(e.target.value)}
                           rows="3"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                           placeholder="Ytterligare information eller meddelande..."
                         />
                       ) : (
@@ -1028,66 +1028,66 @@ const AdminAffiliateEdit = () => {
                       {isEditing ? (
                         <div className="space-y-3">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                               Hemsida
                             </label>
                             <input
                               type="url"
                               value={website}
                               onChange={(e) => setWebsite(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                               placeholder="https://example.com"
                             />
                           </div>
                           
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                               Instagram
                             </label>
                             <input
                               type="text"
                               value={instagram}
                               onChange={(e) => setInstagram(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                               placeholder="@username"
                             />
                           </div>
                           
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                               YouTube
                             </label>
                             <input
                               type="text"
                               value={youtube}
                               onChange={(e) => setYoutube(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                               placeholder="Kanalnamn"
                             />
                           </div>
                           
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                               Facebook
                             </label>
                             <input
                               type="text"
                               value={facebook}
                               onChange={(e) => setFacebook(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                               placeholder="Sidnamn"
                             />
                           </div>
                           
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                               TikTok
                             </label>
                             <input
                               type="text"
                               value={tiktok}
                               onChange={(e) => setTiktok(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                               placeholder="@username"
                             />
                           </div>
@@ -1117,54 +1117,54 @@ const AdminAffiliateEdit = () => {
                 {isEditing ? (
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Adress
                       </label>
                       <input
                         type="text"
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                         placeholder="Gatunamn 123"
                       />
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                           Postnummer
                         </label>
                         <input
                           type="text"
                           value={postalCode}
                           onChange={(e) => setPostalCode(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                           placeholder="123 45"
                         />
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                           Stad
                         </label>
                         <input
                           type="text"
                           value={city}
                           onChange={(e) => setCity(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                           placeholder="Stockholm"
                         />
                       </div>
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Land
                       </label>
                       <select
                         value={country}
                         onChange={(e) => setCountry(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                       >
                         <option value="SE">Sverige</option>
                         <option value="NO">Norge</option>
@@ -1241,7 +1241,7 @@ const AdminAffiliateEdit = () => {
                   {loadingPayouts ? (
                     <div className="flex items-center justify-center py-8">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                      <span className="ml-2 text-gray-600">Laddar utbetalningar...</span>
+                      <span className="ml-2 text-gray-600 dark:text-gray-400">Laddar utbetalningar...</span>
                     </div>
                   ) : payoutHistory.length > 0 ? (
                     <div className="space-y-4">
@@ -1259,7 +1259,7 @@ const AdminAffiliateEdit = () => {
                                 </span>
                               </div>
                               
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 dark:text-gray-400">
                                 <div className="flex items-center">
                                   <CalendarDaysIcon className="h-4 w-4 mr-1" />
                                   {formatPayoutDate(payout.payoutDate)}
@@ -1271,7 +1271,7 @@ const AdminAffiliateEdit = () => {
                               </div>
 
                               {payout.notes && (
-                                <p className="text-sm text-gray-600 mt-2 italic">
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 italic">
                                   "{payout.notes}"
                                 </p>
                               )}
@@ -1282,7 +1282,7 @@ const AdminAffiliateEdit = () => {
                                 href={payout.invoiceUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="ml-4 flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                                className="ml-4 flex items-center px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors"
                                 title="Ladda ner faktura"
                               >
                                 <DocumentArrowDownIcon className="h-4 w-4 mr-1" />
@@ -1297,20 +1297,20 @@ const AdminAffiliateEdit = () => {
                       {data?.stats && (
                         <div className="mt-6 pt-6 border-t border-gray-200">
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                            <div className="bg-blue-50 rounded-lg p-4">
-                              <p className="text-sm text-blue-600 font-medium">Totalt utbetalt</p>
-                              <p className="text-lg font-bold text-blue-900">
+                            <div className="bg-blue-50 dark:bg-blue-900 rounded-lg p-4">
+                              <p className="text-sm text-blue-600 dark:text-blue-300 font-medium">Totalt utbetalt</p>
+                              <p className="text-lg font-bold text-blue-900 dark:text-blue-100">
                                 {formatPayoutCurrency(data.stats.totalPaidOut || 0)}
                               </p>
                             </div>
-                            <div className="bg-green-50 rounded-lg p-4">
-                              <p className="text-sm text-green-600 font-medium">Aktuellt saldo</p>
-                              <p className="text-lg font-bold text-green-900">
+                            <div className="bg-green-50 dark:bg-green-900 rounded-lg p-4">
+                              <p className="text-sm text-green-600 dark:text-green-300 font-medium">Aktuellt saldo</p>
+                              <p className="text-lg font-bold text-green-900 dark:text-green-100">
                                 {formatPayoutCurrency(data.stats.balance || 0)}
                               </p>
                             </div>
                             <div className="bg-gray-50 rounded-lg p-4">
-                              <p className="text-sm text-gray-600 font-medium">Antal utbetalningar</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Antal utbetalningar</p>
                               <p className="text-lg font-bold text-gray-900">
                                 {data.stats.payoutCount || 0}
                               </p>
