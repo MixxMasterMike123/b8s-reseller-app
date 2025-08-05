@@ -76,7 +76,7 @@ const StatCard = ({ icon, title, value, color }) => (
       {React.cloneElement(icon, { className: "h-5 w-5 text-white" })}
     </div>
     <div className="min-w-0 flex-1">
-      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1 line-clamp-2">{title}</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 font-medium mb-1 line-clamp-2">{title}</p>
       <p className="text-xl font-bold text-gray-900 dark:text-gray-100 truncate">{value}</p>
     </div>
   </div>
@@ -857,8 +857,8 @@ const AdminAffiliateEdit = () => {
                                     setCodeValidationError('');
                                   }}
                                   placeholder="t.ex. EMMA, FISHING"
-                                  className={`flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
-                                    codeValidationError ? 'border-red-300' : ''
+                                  className={`flex-1 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm ${
+                                    codeValidationError ? 'border-red-300 dark:border-red-500' : ''
                                   }`}
                                 />
                                 <button
@@ -877,12 +877,12 @@ const AdminAffiliateEdit = () => {
                               {codeValidationError && (
                                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">{codeValidationError}</p>
                               )}
-                              <p className="mt-1 text-xs text-gray-500">
+                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                 3-20 tecken, endast bokstäver, siffror och bindestreck. Lämna tomt för att behålla nuvarande kod.
                               </p>
                             </div>
                           ) : (
-                            <span className="text-lg font-semibold">
+                            <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                               {data.affiliateCode}
                             </span>
                           )}
@@ -898,14 +898,14 @@ const AdminAffiliateEdit = () => {
                                 type="number"
                                 value={commissionRate}
                                 onChange={(e) => setCommissionRate(e.target.value)}
-                                className="block w-full rounded-md border-gray-300 pr-12 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 pr-12 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm"
                               />
                               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                                <span className="text-gray-500 sm:text-sm">%</span>
+                                <span className="text-gray-500 dark:text-gray-400 sm:text-sm">%</span>
                               </div>
                             </div>
                           ) : (
-                            <span className="text-lg font-semibold">{data.commissionRate}%</span>
+                            <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">{data.commissionRate}%</span>
                           )}
                         </div>
 
@@ -919,14 +919,14 @@ const AdminAffiliateEdit = () => {
                                 type="number"
                                 value={checkoutDiscount}
                                 onChange={(e) => setCheckoutDiscount(e.target.value)}
-                                className="block w-full rounded-md border-gray-300 pr-12 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 pr-12 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm"
                               />
                               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                                <span className="text-gray-500 sm:text-sm">%</span>
+                                <span className="text-gray-500 dark:text-gray-400 sm:text-sm">%</span>
                               </div>
                             </div>
                           ) : (
-                            <span className="text-lg font-semibold">{data.checkoutDiscount}%</span>
+                            <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">{data.checkoutDiscount}%</span>
                           )}
                         </div>
 
@@ -945,7 +945,7 @@ const AdminAffiliateEdit = () => {
                               <option value="en-US">{t('lang_english_us', 'English (US)')}</option>
                             </select>
                           ) : (
-                            <span className="text-lg font-semibold">
+                            <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                               {preferredLang === 'sv-SE' && t('lang_swedish', 'Svenska')}
                               {preferredLang === 'en-GB' && t('lang_english_uk', 'English (UK)')}
                               {preferredLang === 'en-US' && t('lang_english_us', 'English (US)')}
@@ -1178,10 +1178,10 @@ const AdminAffiliateEdit = () => {
                   </div>
                 ) : (
                   <address className="not-italic">
-                    <p className="text-gray-900">{data.address || '-'}</p>
-                    <p className="text-gray-900">{data.postalCode || '-'}</p>
-                    <p className="text-gray-900">{data.city || '-'}</p>
-                    <p className="text-gray-900">{data.country || '-'}</p>
+                    <p className="text-gray-900 dark:text-gray-100">{data.address || '-'}</p>
+                    <p className="text-gray-900 dark:text-gray-100">{data.postalCode || '-'}</p>
+                    <p className="text-gray-900 dark:text-gray-100">{data.city || '-'}</p>
+                    <p className="text-gray-900 dark:text-gray-100">{data.country || '-'}</p>
                   </address>
                 )}
               </div>
