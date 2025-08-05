@@ -1175,22 +1175,73 @@ const ContactDetail = () => {
 
           {/* Contact Information */}
           <div className="mb-4">
-            <div className="flex items-center space-x-4 mb-3">
-              <a 
-                href={`tel:${contact.phone}`}
-                className="flex items-center text-blue-600 hover:text-blue-700 font-medium"
-              >
-                <PhoneIcon className="h-4 w-4 mr-1" />
-                {contact.phone}
-              </a>
-              <a 
-                href={`mailto:${contact.email}`}
-                className="flex items-center text-blue-600 hover:text-blue-700 font-medium"
-              >
-                <EnvelopeIcon className="h-4 w-4 mr-1" />
-                {contact.email}
-              </a>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+              {contact.phone && (
+                <a 
+                  href={`tel:${contact.phone}`}
+                  className="flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  <PhoneIcon className="h-4 w-4 mr-1" />
+                  {contact.phone}
+                </a>
+              )}
+              {contact.email && (
+                <a 
+                  href={`mailto:${contact.email}`}
+                  className="flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  <EnvelopeIcon className="h-4 w-4 mr-1" />
+                  {contact.email}
+                </a>
+              )}
+              {contact.website && (
+                <a 
+                  href={contact.website.startsWith('http') ? contact.website : `https://${contact.website}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  <GlobeAltIcon className="h-4 w-4 mr-1" />
+                  {contact.website.replace(/^https?:\/\//, '')}
+                </a>
+              )}
+              {contact.orgNumber && (
+                <div className="flex items-center text-gray-600">
+                  <BuildingOffice2Icon className="h-4 w-4 mr-1" />
+                  <span className="text-sm">Org.nr: {contact.orgNumber}</span>
+                </div>
+              )}
             </div>
+
+            {/* Address Information */}
+            {(contact.address || contact.city) && (
+              <div className="mb-3">
+                <div className="flex items-center text-gray-600">
+                  <MapPinIcon className="h-4 w-4 mr-1" />
+                  <span className="text-sm">
+                    {[contact.address, contact.postalCode, contact.city, contact.country].filter(Boolean).join(', ')}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Notes Preview */}
+            {contact.notes && (
+              <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-start">
+                  <DocumentTextIcon className="h-4 w-4 text-gray-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="text-xs font-medium text-gray-700 mb-1">Anteckningar</div>
+                    <div className="text-sm text-gray-600">
+                      {contact.notes.length > 150 
+                        ? `${contact.notes.substring(0, 150)}...` 
+                        : contact.notes
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             
             {/* Active/Prospect Status Indicator */}
             <div className="mb-3">
