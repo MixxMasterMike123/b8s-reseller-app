@@ -210,8 +210,8 @@ const AdminSettings = () => {
     return (
       <AppLayout>
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-          <span className="ml-3 text-lg text-gray-600">Laddar inställningar...</span>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 dark:border-blue-400"></div>
+          <span className="ml-3 text-lg text-gray-600 dark:text-gray-400">Laddar inställningar...</span>
         </div>
       </AppLayout>
     );
@@ -221,28 +221,28 @@ const AdminSettings = () => {
     <AppLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="bg-white shadow-sm">
+        <div className="bg-white dark:bg-gray-800 shadow-sm">
           <div className="px-6 py-4">
             <div className="flex items-center space-x-3">
-              <CogIcon className="h-8 w-8 text-blue-600" />
+              <CogIcon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Systeminställningar</h1>
-                <p className="text-gray-600">Hantera wagon-system och applikationsinställningar</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Systeminställningar</h1>
+                <p className="text-gray-600 dark:text-gray-400">Hantera wagon-system och applikationsinställningar</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="border-b border-gray-200">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+          <div className="border-b border-gray-200 dark:border-gray-700">
             <nav className="-mb-px flex space-x-8 px-6">
               <button
                 onClick={() => setActiveTab('wagons')}
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'wagons'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
                 <CpuChipIcon className="h-5 w-5 inline mr-2" />
@@ -252,8 +252,8 @@ const AdminSettings = () => {
                 onClick={() => setActiveTab('app')}
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'app'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
                 <CogIcon className="h-5 w-5 inline mr-2" />
@@ -266,20 +266,20 @@ const AdminSettings = () => {
             {activeTab === 'wagons' && (
               <div className="space-y-6">
                 {/* Wagon Overview */}
-                                        <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                        <div className="bg-blue-50 dark:bg-blue-900 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
                   <div className="flex items-start space-x-3">
-                    <InformationCircleIcon className="h-6 w-6 text-blue-600 mt-0.5" />
+                    <InformationCircleIcon className="h-6 w-6 text-blue-600 dark:text-blue-400 mt-0.5" />
                     <div>
-                      <h3 className="text-lg font-medium text-blue-900">
+                      <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100">
                         Wagon Management System (Autodetect)
                       </h3>
-                      <p className="text-blue-800 mt-1">
+                      <p className="text-blue-800 dark:text-blue-200 mt-1">
                         Aktivera eller inaktivera specifika wagons för admin-användare. 
                         <strong>Endast admins visas:</strong> Wagons är strikt för admin-användare endast. 
                         Systemet hittar automatiskt alla wagons (även inaktiverade). 
                         Wagons som är inaktiverade i manifestet visas men kan inte aktiveras för användare.
                       </p>
-                      <div className="mt-3 text-sm text-blue-700">
+                      <div className="mt-3 text-sm text-blue-700 dark:text-blue-300">
                         <div className="grid grid-cols-3 gap-4">
                           <div>
                             <strong>Totalt antal wagons:</strong> {availableWagons.length}
@@ -298,11 +298,11 @@ const AdminSettings = () => {
 
                 {/* Wagons List */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-gray-900">Tillgängliga Wagons</h3>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Tillgängliga Wagons</h3>
                   
                   {availableWagons.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <CpuChipIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                      <CpuChipIcon className="h-12 w-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
                       <p>Inga wagons hittades. Kontrollera att wagons är korrekt konfigurerade.</p>
                     </div>
                   ) : (
@@ -311,9 +311,9 @@ const AdminSettings = () => {
                       const manifest = wagon.manifest;
                       
                       return (
-                        <div key={manifest.id} className="bg-white border rounded-lg shadow-sm">
+                        <div key={manifest.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
                           {/* Wagon Header */}
-                          <div className="p-4 border-b border-gray-200">
+                          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3">
                                 <div className={`w-4 h-4 rounded-full flex-shrink-0 ${
@@ -324,31 +324,31 @@ const AdminSettings = () => {
                                 }`} />
                                 <div>
                                   <div className="flex items-center space-x-2">
-                                    <h4 className="text-lg font-medium text-gray-900">
+                                    <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">
                                       {manifest.name}
                                     </h4>
-                                    <span className="text-sm text-gray-500">v{manifest.version}</span>
+                                    <span className="text-sm text-gray-500 dark:text-gray-400">v{manifest.version}</span>
                                     {!statusInfo.manifestEnabled && (
-                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300">
                                         Manifest Inaktiverad
                                       </span>
                                     )}
                                   </div>
-                                  <p className="text-gray-600">{manifest.description}</p>
-                                  <p className="text-sm text-gray-500 mt-1">
+                                  <p className="text-gray-600 dark:text-gray-400">{manifest.description}</p>
+                                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                     Status: <span className="font-medium">{statusInfo.statusText}</span>
                                   </p>
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className="text-sm text-gray-500 mb-1">
+                                <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
                                   Aktiv för {statusInfo.enabledForUsers}/{statusInfo.totalUsers} användare
                                 </div>
                                 <div className={`text-xs px-2 py-1 rounded-full inline-block ${
-                                  statusInfo.status === 'available' ? 'bg-green-100 text-green-800' :
-                                  statusInfo.status === 'partially-enabled' ? 'bg-yellow-100 text-yellow-800' :
-                                  statusInfo.status === 'disabled-manifest' ? 'bg-red-100 text-red-800' :
-                                  'bg-gray-100 text-gray-800'
+                                  statusInfo.status === 'available' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' :
+                                  statusInfo.status === 'partially-enabled' ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300' :
+                                  statusInfo.status === 'disabled-manifest' ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300' :
+                                  'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                                 }`}>
                                   {statusInfo.statusText}
                                 </div>
@@ -360,16 +360,16 @@ const AdminSettings = () => {
                           <div className="p-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                               {users.map((user) => (
-                                <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                                   <div className="flex-1">
-                                    <div className="font-medium text-gray-900">
+                                    <div className="font-medium text-gray-900 dark:text-gray-100">
                                       {user.companyName || user.email}
                                     </div>
-                                    <div className="text-sm text-gray-500">
+                                    <div className="text-sm text-gray-500 dark:text-gray-400">
                                       {user.contactPerson || user.email}
                                     </div>
                                     {(!user.active && !user.isActive) && (
-                                      <div className="text-xs text-red-600">Inaktiv användare</div>
+                                      <div className="text-xs text-red-600 dark:text-red-400">Inaktiv användare</div>
                                     )}
                                   </div>
                                   <div className="ml-3">
@@ -411,14 +411,14 @@ const AdminSettings = () => {
 
             {activeTab === 'app' && (
               <div className="space-y-6">
-                <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                <div className="bg-yellow-50 dark:bg-yellow-900 rounded-lg p-4 border border-yellow-200 dark:border-yellow-700">
                   <div className="flex items-start space-x-3">
-                    <ExclamationTriangleIcon className="h-6 w-6 text-yellow-600 mt-0.5" />
+                    <ExclamationTriangleIcon className="h-6 w-6 text-yellow-600 dark:text-yellow-400 mt-0.5" />
                     <div>
-                      <h3 className="text-lg font-medium text-yellow-900">
+                      <h3 className="text-lg font-medium text-yellow-900 dark:text-yellow-100">
                         Applikationsinställningar
                       </h3>
-                      <p className="text-yellow-800 mt-1">
+                      <p className="text-yellow-800 dark:text-yellow-200 mt-1">
                         Grundläggande systeminställningar kommer att implementeras här i framtiden.
                       </p>
                     </div>
@@ -426,13 +426,13 @@ const AdminSettings = () => {
                 </div>
                 
                 {/* App Settings Preview */}
-                <div className="bg-white border rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-4">Aktuella appinställningar</h4>
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">Aktuella appinställningar</h4>
                   <div className="space-y-2 text-sm">
                     {Object.entries(appSettings).map(([key, value]) => (
                       <div key={key} className="flex justify-between">
-                        <span className="text-gray-600">{key}:</span>
-                        <span className="font-mono text-gray-900">
+                        <span className="text-gray-600 dark:text-gray-400">{key}:</span>
+                        <span className="font-mono text-gray-900 dark:text-gray-100">
                           {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                         </span>
                       </div>
