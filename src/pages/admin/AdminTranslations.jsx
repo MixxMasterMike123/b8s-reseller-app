@@ -776,12 +776,12 @@ const AdminTranslations = () => {
     <div className="space-y-6">
       {/* Welcome Message when no data loaded */}
       {translations.length === 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-6">
           <div className="flex items-center">
-            <GlobeAltIcon className="h-8 w-8 text-blue-600 mr-3" />
+            <GlobeAltIcon className="h-8 w-8 text-blue-600 dark:text-blue-400 mr-3" />
             <div>
-              <h3 className="text-lg font-medium text-blue-900">Välkommen till översättningssystemet</h3>
-              <p className="text-blue-700 mt-1">
+              <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100">Välkommen till översättningssystemet</h3>
+              <p className="text-blue-700 dark:text-blue-200 mt-1">
                 Börja med att ladda översättningar från Google Sheets eller Firebase för att se statistik och hantera språk.
               </p>
             </div>
@@ -790,7 +790,7 @@ const AdminTranslations = () => {
             <button
               onClick={() => loadTranslationsFromSheet('admin')}
               disabled={loading}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50"
             >
               {loading ? (
                 <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
@@ -968,15 +968,15 @@ const AdminTranslations = () => {
     return (
       <div className="space-y-6">
         {translations.length === 0 ? (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-            <GlobeAltIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Inga översättningar att visa</h3>
-            <p className="text-gray-600 mb-4">
+          <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-8 text-center">
+            <GlobeAltIcon className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Inga översättningar att visa</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
               Gå till Import/Export-fliken för att ladda översättningar från Google Sheets eller Firebase.
             </p>
             <button
               onClick={() => setActiveTab('import-export')}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600"
             >
               <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
               Gå till Import/Export
@@ -1072,9 +1072,9 @@ const AdminTranslations = () => {
               </div>
               
               {/* Card-based layout instead of table */}
-              <div className="divide-y divide-gray-200">
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredTranslations.slice(0, 20).map((translation, index) => (
-                  <div key={index} className="p-6 hover:bg-gray-50">
+                  <div key={index} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700">
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
                         {/* Key and Status */}
@@ -1159,8 +1159,8 @@ const AdminTranslations = () => {
               </div>
               
               {filteredTranslations.length > 20 && (
-                <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-                  <p className="text-sm text-gray-600">
+                <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     Visar 20 av {filteredTranslations.length} översättningar. Använd sökfunktionen för att hitta specifika texter.
                   </p>
                 </div>
@@ -1249,10 +1249,10 @@ const AdminTranslations = () => {
                   </h4>
                   <div className="space-y-2">
                     {keys.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded">
+                      <div key={index} className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 p-3 rounded">
                         <div className="flex-1">
-                          <code className="text-sm font-mono text-blue-600">{item.key}</code>
-                          <p className="text-sm text-gray-600 mt-1">{item.fallback}</p>
+                          <code className="text-sm font-mono text-blue-600 dark:text-blue-400">{item.key}</code>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{item.fallback}</p>
                         </div>
                       </div>
                     ))}
@@ -1262,9 +1262,9 @@ const AdminTranslations = () => {
             ))}
           </div>
           
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <h4 className="font-medium text-blue-900 mb-2">Nästa steg:</h4>
-            <ol className="text-sm text-blue-800 space-y-1">
+          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
+            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Nästa steg:</h4>
+            <ol className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
               <li>1. Klicka på "Kopiera alla nycklar" för att kopiera CSV-format</li>
               <li>2. Öppna ditt Google Sheets-dokument</li>
               <li>3. Klistra in data i arket</li>
@@ -1293,12 +1293,12 @@ const AdminTranslations = () => {
     <div className="space-y-6">
       {/* URL Configuration Status Banner */}
       {!sheetUrls[translationType] && (
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+        <div className="bg-orange-50 dark:bg-orange-900 border border-orange-200 dark:border-orange-700 rounded-lg p-4">
           <div className="flex items-center">
-            <ExclamationTriangleIcon className="h-5 w-5 text-orange-600 mr-2" />
+            <ExclamationTriangleIcon className="h-5 w-5 text-orange-600 dark:text-orange-400 mr-2" />
             <div>
-              <h4 className="font-medium text-orange-900">Google Sheets URL inte konfigurerad</h4>
-              <p className="text-sm text-orange-700">
+              <h4 className="font-medium text-orange-900 dark:text-orange-100">Google Sheets URL inte konfigurerad</h4>
+              <p className="text-sm text-orange-700 dark:text-orange-200">
                 {translationType === 'admin' ? 'Admin Portal' : 
                  translationType === 'b2b' ? 'B2B Portal' : 
                  translationType === 'b2c' ? 'B2C Shop' : 
@@ -1312,12 +1312,12 @@ const AdminTranslations = () => {
 
       {/* Data Status Banner */}
       {translations.length === 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
           <div className="flex items-center">
-            <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mr-2" />
+            <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mr-2" />
             <div>
-              <h4 className="font-medium text-yellow-900">Inga översättningar laddade</h4>
-              <p className="text-sm text-yellow-700">
+              <h4 className="font-medium text-yellow-900 dark:text-yellow-100">Inga översättningar laddade</h4>
+              <p className="text-sm text-yellow-700 dark:text-yellow-200">
                 Du behöver först ladda översättningar från Google Sheets eller Firebase för att kunna arbeta med dem.
               </p>
             </div>
@@ -1495,9 +1495,9 @@ const AdminTranslations = () => {
             </div>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 className="font-medium text-blue-900 mb-2">🔄 Rekommenderat arbetsflöde</h4>
-            <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800">
+          <div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">🔄 Rekommenderat arbetsflöde</h4>
+            <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800 dark:text-blue-200">
               <li>Importera från Google Sheets (för att få senaste översättningar)</li>
               <li>Granska och redigera översättningarna i "Hantera översättningar"</li>
               <li>Spara ändringar till Firebase (för manuella redigeringar)</li>
