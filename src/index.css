@@ -223,17 +223,52 @@ code {
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
 }
 
-/* Enhanced SVG icons visibility */
+/* Enhanced SVG icons visibility - Force all icon types */
 .dark .quill-dark-mode .ql-toolbar.ql-snow button svg,
 .dark .quill-dark-mode .ql-toolbar.ql-snow .ql-picker-label svg {
   stroke: currentColor !important;
   fill: currentColor !important;
-  opacity: 0.9;
+  opacity: 1 !important;
+  filter: brightness(0) invert(1) !important; /* Force white icons */
 }
 
 .dark .quill-dark-mode .ql-toolbar.ql-snow button:hover svg,
 .dark .quill-dark-mode .ql-toolbar.ql-snow .ql-picker-label:hover svg {
-  opacity: 1;
+  opacity: 1 !important;
+  filter: brightness(0) invert(1) !important; /* Force white icons on hover */
+}
+
+/* Force visibility for pseudo-element icons (::before content) */
+.dark .quill-dark-mode .ql-toolbar.ql-snow button::before,
+.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-picker-label::before {
+  color: #ffffff !important;
+  opacity: 1 !important;
+  filter: brightness(0) invert(1) !important;
+}
+
+/* Target specific Quill icon classes if they exist */
+.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-bold,
+.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-italic,
+.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-underline,
+.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-strike,
+.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-header,
+.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-list,
+.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-link,
+.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-image,
+.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-clean,
+.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-color,
+.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-background {
+  color: #ffffff !important;
+  filter: brightness(0) invert(1) !important;
+}
+
+/* Force all child elements to be visible */
+.dark .quill-dark-mode .ql-toolbar.ql-snow button *,
+.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-picker-label * {
+  color: inherit !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  filter: brightness(0) invert(1) !important;
 }
 
 /* Picker dropdown arrows */
@@ -397,4 +432,58 @@ code {
 .dark .quill-dark-mode .ql-editor::selection {
   background-color: #3b82f6 !important;
   color: #ffffff !important;
+}
+
+/* Alternative approach - Add text labels as fallback */
+.dark .quill-dark-mode .ql-toolbar.ql-snow button.ql-bold::after {
+  content: "B";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-weight: bold;
+  font-size: 12px;
+  color: #ffffff;
+  pointer-events: none;
+}
+
+.dark .quill-dark-mode .ql-toolbar.ql-snow button.ql-italic::after {
+  content: "I";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-style: italic;
+  font-size: 12px;
+  color: #ffffff;
+  pointer-events: none;
+}
+
+.dark .quill-dark-mode .ql-toolbar.ql-snow button.ql-underline::after {
+  content: "U";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-decoration: underline;
+  font-size: 12px;
+  color: #ffffff;
+  pointer-events: none;
+}
+
+.dark .quill-dark-mode .ql-toolbar.ql-snow button.ql-strike::after {
+  content: "S";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-decoration: line-through;
+  font-size: 12px;
+  color: #ffffff;
+  pointer-events: none;
+}
+
+/* Ensure button content is positioned relative for absolute positioning of ::after */
+.dark .quill-dark-mode .ql-toolbar.ql-snow button {
+  position: relative !important;
 } 
