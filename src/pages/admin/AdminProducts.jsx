@@ -951,8 +951,8 @@ function AdminProducts() {
                     onClick={() => setActiveTab('group')}
                     className={`py-2 px-1 border-b-2 font-medium text-sm ${
                       activeTab === 'group'
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}
                   >
                     {t('group_tab_label', 'Gruppinnehåll')}
@@ -1505,7 +1505,7 @@ function AdminProducts() {
                         }
                       })}
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                       placeholder={currentLanguage === 'sv-SE' ? 
                         "Tekniska specifikationer, installationsanvisningar, etc." :
                         "Technical specifications, installation instructions, etc."
@@ -1515,7 +1515,7 @@ function AdminProducts() {
                   
                   {/* B2B Product Image */}
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       B2B Produktbild (Teknisk bild, Max 5MB)
                     </label>
                     <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
@@ -1523,40 +1523,40 @@ function AdminProducts() {
                         type="file"
                         accept="image/*"
                         onChange={handleB2bImageChange}
-                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 dark:file:bg-blue-900 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-blue-800"
                       />
                       {b2bImagePreview && (
                         <div className="flex-shrink-0">
                           <img 
                             src={b2bImagePreview} 
                             alt="B2B Produktförhandsvisning" 
-                            className="w-32 h-32 object-cover border border-gray-300 rounded-md"
+                            className="w-32 h-32 object-cover border border-gray-300 dark:border-gray-600 rounded-md"
                           />
                         </div>
                       )}
                     </div>
-                    <p className="mt-2 text-xs text-gray-500">
+                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                       Tekniska bilder för återförsäljare (produktspecifikationer, förpackning, etc.)
                     </p>
                   </div>
                   
                   {/* EAN Code */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       EAN-kod
                     </label>
                     <input
                       type="text"
                       value={formData.eanCode || ''}
                       onChange={(e) => setFormData({ ...formData, eanCode: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                       placeholder="t.ex. 1234567890123"
                     />
                   </div>
                   
                   {/* EAN Code Image PNG/JPG */}
                   <div className="sm:col-span-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       EAN-kod bild (PNG/JPG)
                     </label>
                     <div className="space-y-3">
@@ -1564,14 +1564,14 @@ function AdminProducts() {
                         type="file"
                         accept="image/png,image/jpeg,image/jpg"
                         onChange={handleEanPngChange}
-                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 dark:file:bg-blue-900 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-blue-800"
                       />
                       {eanPngPreview && (
                         <div className="flex-shrink-0">
                           <img 
                             src={eanPngPreview} 
                             alt="EAN-kod förhandsvisning" 
-                            className="w-32 h-20 object-contain border border-gray-300 rounded-md bg-white"
+                            className="w-32 h-20 object-contain border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700"
                           />
                         </div>
                       )}
@@ -1580,7 +1580,7 @@ function AdminProducts() {
 
                   {/* EAN Code Image SVG */}
                   <div className="sm:col-span-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       EAN-kod bild (SVG)
                     </label>
                     <div className="space-y-3">
@@ -1588,14 +1588,14 @@ function AdminProducts() {
                         type="file"
                         accept="image/svg+xml"
                         onChange={handleEanSvgChange}
-                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 dark:file:bg-blue-900 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-blue-800"
                       />
                       {eanSvgPreview && (
                         <div className="flex-shrink-0">
                           <img 
                             src={eanSvgPreview} 
                             alt="EAN-kod SVG förhandsvisning" 
-                            className="w-32 h-20 object-contain border border-gray-300 rounded-md bg-white"
+                            className="w-32 h-20 object-contain border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700"
                           />
                         </div>
                       )}
@@ -1608,7 +1608,7 @@ function AdminProducts() {
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   {/* B2C Price */}
                   <div className="sm:col-span-2">
-                    <label htmlFor="b2cPrice" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="b2cPrice" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       B2C Pris (SEK, inkl. moms) *
                     </label>
                     <input
@@ -1617,12 +1617,12 @@ function AdminProducts() {
                       name="b2cPrice"
                       value={formData.b2cPrice}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                       min="0"
                       step="0.01"
                       placeholder="Konsumentpris inklusive moms"
                     />
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                       Detta pris visas för konsumenter på shop.b8shield.com och inkluderar 25% moms
                     </p>
                   </div>
@@ -1643,7 +1643,7 @@ function AdminProducts() {
                         }
                       })}
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                       placeholder={currentLanguage === 'sv-SE' ? 
                         "Marknadsföringstext, fördelar för konsumenten, användningsområden..." :
                         "Marketing text, consumer benefits, use cases..."
@@ -1658,7 +1658,7 @@ function AdminProducts() {
                       label="Mer Information (Detaljerad produktinformation)"
                       className="mb-2"
                     />
-                    <div className="border border-gray-300 rounded-md overflow-hidden bg-white">
+                    <div className="border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden bg-white dark:bg-gray-700">
                       <ReactQuill
                         value={getContentValue(formData.descriptions?.b2cMoreInfo)}
                         onChange={(content) => setFormData({
@@ -1685,7 +1685,7 @@ function AdminProducts() {
                         }
                       />
                     </div>
-                    <p className="mt-2 text-xs text-gray-500">
+                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                       {currentLanguage === 'sv-SE' ? 
                         "Använd editorn för att lägga till detaljerad produktinformation, specifikationer, instruktioner, etc." :
                         "Use the editor to add detailed product information, specifications, instructions, etc."
@@ -1695,7 +1695,7 @@ function AdminProducts() {
                   
                   {/* B2C Main Image */}
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       B2C Huvudbild (Lifestyle/Marketing bild, Max 5MB)
                     </label>
                     <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
@@ -1703,26 +1703,26 @@ function AdminProducts() {
                         type="file"
                         accept="image/*"
                         onChange={handleB2cImageChange}
-                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                        className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-green-50 dark:file:bg-green-900 file:text-green-700 dark:file:text-green-300 hover:file:bg-green-100 dark:hover:file:bg-green-800"
                       />
                       {b2cImagePreview && (
                         <div className="flex-shrink-0">
                           <img 
                             src={b2cImagePreview} 
                             alt="B2C Produktförhandsvisning" 
-                            className="w-32 h-32 object-cover border border-gray-300 rounded-md"
+                            className="w-32 h-32 object-cover border border-gray-300 dark:border-gray-600 rounded-md"
                           />
                         </div>
                       )}
                     </div>
-                    <p className="mt-2 text-xs text-gray-500">
+                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                       Lifestyle-bilder för konsumenter (användning, miljö, action shots, etc.)
                     </p>
                   </div>
                   
                   {/* B2C Image Gallery */}
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       B2C Bildgalleri (Flera lifestyle-bilder, Max 5MB per bild)
                     </label>
                     <div className="space-y-4">
@@ -1731,7 +1731,7 @@ function AdminProducts() {
                         accept="image/*"
                         multiple
                         onChange={handleB2cGalleryChange}
-                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                        className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-green-50 dark:file:bg-green-900 file:text-green-700 dark:file:text-green-300 hover:file:bg-green-100 dark:hover:file:bg-green-800"
                       />
                       
                       {/* Existing Images - Sortable */}
@@ -1771,7 +1771,7 @@ function AdminProducts() {
                         />
                       )}
                     </div>
-                    <p className="mt-2 text-xs text-gray-500">
+                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                       Ytterligare bilder som visar produkten i användning, olika vinklar, etc.
                     </p>
                   </div>
@@ -1799,14 +1799,14 @@ function AdminProducts() {
                 <button
                   type="button"
                   onClick={() => setIsAddingProduct(false)}
-                  className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                 >
                   Avbryt
                 </button>
                 <button
                   type="submit"
                   disabled={loading || uploading}
-                  className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {uploading ? (
                     <span className="flex items-center">
