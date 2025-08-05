@@ -849,19 +849,19 @@ function AdminProducts() {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Produkthantering</h1>
-              <p className="mt-1 text-sm text-gray-600">Hantera produkter i systemet</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Produkthantering</h1>
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Hantera produkter i systemet</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
               <Link 
                 to="/admin" 
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               >
                 Tillbaka till Admin
               </Link>
               <button 
                 onClick={handleAddNewClick}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               >
                 Lägg till Ny Produkt
               </button>
@@ -871,10 +871,10 @@ function AdminProducts() {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4">
+          <div className="mb-6 bg-red-50 dark:bg-red-900 border-l-4 border-red-400 dark:border-red-600 p-4">
             <div className="flex">
               <div className="ml-3">
-                <p className="text-sm text-red-700">{error}</p>
+                <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
               </div>
             </div>
           </div>
@@ -883,24 +883,24 @@ function AdminProducts() {
         {/* Loading State */}
         {loading && !isAddingProduct ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
           </div>
         ) : isAddingProduct ? (
           /* Product Form with Tabs */
-          <div className="bg-white shadow rounded-lg mb-8">
-            <div className="px-6 py-4 border-b border-gray-200">
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg mb-8">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium text-gray-900">
+                <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
                   {selectedProduct ? 'Redigera Produkt' : 'Lägg till Ny Produkt'}
                 </h2>
                 
                 {/* Current Language Indicator */}
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600">Redigerar på:</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Redigerar på:</span>
                   <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                    currentLanguage === 'sv-SE' ? 'bg-blue-100 text-blue-800' :
-                    currentLanguage === 'en-GB' ? 'bg-green-100 text-green-800' :
-                    'bg-purple-100 text-purple-800'
+                    currentLanguage === 'sv-SE' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300' :
+                    currentLanguage === 'en-GB' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' :
+                    'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300'
                   }`}>
                     {currentLanguage === 'sv-SE' ? '🇸🇪 Svenska' :
                      currentLanguage === 'en-GB' ? '🇬🇧 English (UK)' :
@@ -916,8 +916,8 @@ function AdminProducts() {
                   onClick={() => setActiveTab('general')}
                   className={`py-2 px-1 border-b-2 font-medium text-sm ${
                     activeTab === 'general'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                   }`}
                 >
                   Allmänt
@@ -927,8 +927,8 @@ function AdminProducts() {
                   onClick={() => setActiveTab('b2b')}
                   className={`py-2 px-1 border-b-2 font-medium text-sm ${
                     activeTab === 'b2b'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                   }`}
                 >
                   B2B (Återförsäljare)
@@ -938,8 +938,8 @@ function AdminProducts() {
                   onClick={() => setActiveTab('b2c')}
                   className={`py-2 px-1 border-b-2 font-medium text-sm ${
                     activeTab === 'b2c'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                   }`}
                 >
                   B2C (Konsument)
@@ -1827,10 +1827,10 @@ function AdminProducts() {
           </div>
         ) : (
           /* Product List */
-          <div className="bg-white shadow rounded-lg overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h2 className="text-lg font-medium text-gray-900">Produktlista</h2>
+                <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Produktlista</h2>
                 <div className="w-full sm:w-64">
                   <ProductMenu 
                     products={products} 
@@ -1842,33 +1842,33 @@ function AdminProducts() {
             </div>
             
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Produkt & Detaljer
                     </th>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Pris & Status
                     </th>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       EAN & Bilder
                     </th>
-                    <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Åtgärder
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {products.length === 0 ? (
                     <tr>
-                      <td colSpan="4" className="px-4 md:px-6 py-8 text-center text-gray-500">
+                      <td colSpan="4" className="px-4 md:px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                         Inga produkter hittades
                       </td>
                     </tr>
                   ) : (
                     (filteredProduct ? [filteredProduct] : products).map((product) => (
-                      <tr key={product.id} className="hover:bg-gray-50">
+                      <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                         {/* Column 1: Product & Details */}
                         <td className="px-4 md:px-6 py-4">
                           <div className="flex items-start">
@@ -1876,36 +1876,36 @@ function AdminProducts() {
                               <img 
                                 src={product.imageUrl || product.b2bImageUrl || product.b2cImageUrl} 
                                 alt={getContentValue(product.name)} 
-                                className="w-16 h-16 mr-4 object-cover rounded-md border border-gray-200 flex-shrink-0"
+                                className="w-16 h-16 mr-4 object-cover rounded-md border border-gray-200 dark:border-gray-600 flex-shrink-0"
                               />
                             ) : (
-                              <div className="w-16 h-16 mr-4 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200 flex-shrink-0">
-                                <span className="text-xs text-gray-500">Ingen bild</span>
+                              <div className="w-16 h-16 mr-4 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center border border-gray-200 dark:border-gray-600 flex-shrink-0">
+                                <span className="text-xs text-gray-500 dark:text-gray-400">Ingen bild</span>
                               </div>
                             )}
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm font-medium text-gray-900 mb-1">{getContentValue(product.name)}</div>
-                              <div className="text-xs text-gray-500 mb-1">SKU: <span className="font-mono">{product.sku || 'Ej angivet'}</span></div>
+                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">{getContentValue(product.name)}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">SKU: <span className="font-mono">{product.sku || 'Ej angivet'}</span></div>
                               <div className="flex flex-wrap gap-2 text-xs">
                                 {product.size && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded font-medium bg-blue-100 text-blue-800" style={{fontSize: '10px'}}>
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300" style={{fontSize: '10px'}}>
                                     {product.size}
                                   </span>
                                 )}
                                 {product.color && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded font-medium bg-purple-100 text-purple-800" style={{fontSize: '10px'}}>
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300" style={{fontSize: '10px'}}>
                                     {product.color}
                                   </span>
                                 )}
                                 {product.group && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded font-medium bg-green-100 text-green-800" style={{fontSize: '10px'}}>
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300" style={{fontSize: '10px'}}>
                                     {product.group}
                                   </span>
                                 )}
                               </div>
                               {/* Translation status indicators */}
                               <div className="flex items-center gap-3 mt-1">
-                                <span className="text-xs text-gray-500" style={{fontSize: '10px'}}>{t('översättningar_label', 'Översättningar:')}</span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400" style={{fontSize: '10px'}}>{t('översättningar_label', 'Översättningar:')}</span>
                                 {/* B2B Status */}
                                 {(() => {
                                   const b2bDescription = product.descriptions?.b2b;
@@ -1926,7 +1926,7 @@ function AdminProducts() {
                                   
                                   return (
                                     <div className="flex items-center gap-1">
-                                      <span className="text-gray-600 font-medium" style={{fontSize: '10px'}}>{t('b2b_label', 'B2B')}</span>
+                                      <span className="text-gray-600 dark:text-gray-400 font-medium" style={{fontSize: '10px'}}>{t('b2b_label', 'B2B')}</span>
                                       <div className={`w-2 h-2 rounded-full ${statusColor}`} title={t('b2b_translation_status', 'B2B: {{count}}/3 språk', {count: completedLanguages})}></div>
                                     </div>
                                   );
@@ -1952,7 +1952,7 @@ function AdminProducts() {
                                   
                                   return (
                                     <div className="flex items-center gap-1">
-                                      <span className="text-gray-600 font-medium" style={{fontSize: '10px'}}>{t('b2c_label', 'B2C')}</span>
+                                      <span className="text-gray-600 dark:text-gray-400 font-medium" style={{fontSize: '10px'}}>{t('b2c_label', 'B2C')}</span>
                                       <div className={`w-2 h-2 rounded-full ${statusColor}`} title={t('b2c_translation_status', 'B2C: {{count}}/3 språk', {count: completedLanguages})}></div>
                                     </div>
                                   );
@@ -1965,16 +1965,16 @@ function AdminProducts() {
                         {/* Column 2: Price & Status */}
                         <td className="px-4 md:px-6 py-4">
                           <div className="text-sm">
-                            <div className="font-medium text-gray-900 mb-1">
+                            <div className="font-medium text-gray-900 dark:text-gray-100 mb-1">
                               {product.basePrice?.toFixed(2)} SEK
                             </div>
-                            <div className="text-xs text-gray-500 mb-2">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                               Kostnad: {product.manufacturingCost?.toFixed(2)} SEK
                             </div>
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                               product.isActive 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
+                                ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' 
+                                : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
                             }`}>
                               {product.isActive ? 'Aktiv' : 'Inaktiv'}
                             </span>
@@ -1985,19 +1985,19 @@ function AdminProducts() {
                         <td className="px-4 md:px-6 py-4">
                           <div className="text-sm">
                             {product.eanCode ? (
-                              <div className="font-mono text-xs text-gray-900 mb-1">{product.eanCode}</div>
+                              <div className="font-mono text-xs text-gray-900 dark:text-gray-100 mb-1">{product.eanCode}</div>
                             ) : (
-                              <div className="text-xs text-gray-500 mb-1">Ingen EAN-kod</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Ingen EAN-kod</div>
                             )}
                             {(product.eanImagePngUrl || product.eanImageSvgUrl) && (
                               <div className="flex gap-1 mt-1">
                                 {product.eanImagePngUrl && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
                                     PNG
                                   </span>
                                 )}
                                 {product.eanImageSvgUrl && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
                                     SVG
                                   </span>
                                 )}
@@ -2006,12 +2006,12 @@ function AdminProducts() {
                             {/* B2B/B2C Availability indicators */}
                             <div className="flex gap-1 mt-2">
                               {product.availability?.b2b && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300">
                                   B2B
                                 </span>
                               )}
                               {product.availability?.b2c && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300">
                                   B2C
                                 </span>
                               )}
@@ -2025,14 +2025,14 @@ function AdminProducts() {
                             <button 
                               onClick={() => handleEditClick(product)} 
                               disabled={loading}
-                              className="min-h-[32px] inline-flex items-center px-4 py-2 text-xs font-medium text-blue-600 hover:text-blue-900 hover:bg-blue-50 border border-blue-300 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="min-h-[32px] inline-flex items-center px-4 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               Redigera
                             </button>
                             <button 
                               onClick={() => handleDeleteProduct(product.id)} 
                               disabled={loading}
-                              className="min-h-[32px] inline-flex items-center px-4 py-2 text-xs font-medium text-red-600 hover:text-red-900 hover:bg-red-50 border border-red-300 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="min-h-[32px] inline-flex items-center px-4 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900 border border-red-300 dark:border-red-600 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               {loading ? 'Tar bort...' : 'Ta bort'}
                             </button>
