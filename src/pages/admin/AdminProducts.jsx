@@ -1139,7 +1139,7 @@ function AdminProducts() {
                     {/* Weight */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Vikt
                         </label>
                         <input
@@ -1152,14 +1152,14 @@ function AdminProducts() {
                               value: parseFloat(e.target.value) || 0
                             }
                           })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                           min="0"
                           step="0.1"
                           placeholder="0"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Enhet
                         </label>
                         <select
@@ -1171,7 +1171,7 @@ function AdminProducts() {
                               unit: e.target.value
                             }
                           })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                         >
                           <option value="g">gram (g)</option>
                           <option value="kg">kilogram (kg)</option>
@@ -1183,11 +1183,11 @@ function AdminProducts() {
                     
                     {/* Dimensions */}
                     <div className="mb-6">
-                      <h4 className="text-md font-medium text-gray-800 mb-3">Mått</h4>
+                      <h4 className="text-md font-medium text-gray-800 dark:text-gray-200 mb-3">Mått</h4>
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         {/* Length */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Längd
                           </label>
                           <input
@@ -1203,7 +1203,7 @@ function AdminProducts() {
                                 }
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                             min="0"
                             step="0.1"
                             placeholder="0"
@@ -1212,7 +1212,7 @@ function AdminProducts() {
                         
                         {/* Width */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Bredd
                           </label>
                           <input
@@ -1228,7 +1228,7 @@ function AdminProducts() {
                                 }
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                             min="0"
                             step="0.1"
                             placeholder="0"
@@ -1237,7 +1237,7 @@ function AdminProducts() {
                         
                         {/* Height */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Höjd
                           </label>
                           <input
@@ -1253,7 +1253,7 @@ function AdminProducts() {
                                 }
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                             min="0"
                             step="0.1"
                             placeholder="0"
@@ -1262,7 +1262,7 @@ function AdminProducts() {
                         
                         {/* Unit */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Enhet
                           </label>
                           <select
@@ -1278,7 +1278,7 @@ function AdminProducts() {
                                 }
                               });
                             }}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                           >
                             <option value="mm">millimeter (mm)</option>
                             <option value="cm">centimeter (cm)</option>
@@ -1290,11 +1290,11 @@ function AdminProducts() {
                     
                     {/* Shipping Costs */}
                     <div className="mb-6">
-                      <h4 className="text-md font-medium text-gray-800 mb-3">Fraktkostnader (SEK)</h4>
+                      <h4 className="text-md font-medium text-gray-800 dark:text-gray-200 mb-3">Fraktkostnader (SEK)</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {/* Sweden */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Sverige
                           </label>
                           <input
@@ -1310,7 +1310,7 @@ function AdminProducts() {
                                 }
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                             min="0"
                             step="0.01"
                             placeholder="0.00"
@@ -1319,7 +1319,7 @@ function AdminProducts() {
                         
                         {/* Nordic */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Norden
                           </label>
                           <input
@@ -1335,7 +1335,7 @@ function AdminProducts() {
                                 }
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                             min="0"
                             step="0.01"
                             placeholder="0.00"
@@ -1344,7 +1344,7 @@ function AdminProducts() {
                         
                         {/* EU */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             EU
                           </label>
                           <input
@@ -1360,7 +1360,7 @@ function AdminProducts() {
                                 }
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                             min="0"
                             step="0.01"
                             placeholder="0.00"
@@ -1369,7 +1369,7 @@ function AdminProducts() {
                         
                         {/* Worldwide */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Världen
                           </label>
                           <input
@@ -1385,7 +1385,7 @@ function AdminProducts() {
                                 }
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                             min="0"
                             step="0.01"
                             placeholder="0.00"
@@ -1397,7 +1397,7 @@ function AdminProducts() {
                   
                   {/* Market Availability */}
                   <div className="sm:col-span-2">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Marknadstillgänglighet</h3>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Marknadstillgänglighet</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-4">
                         <div className="flex items-center">
@@ -1412,16 +1412,16 @@ function AdminProducts() {
                                 b2b: e.target.checked
                               }
                             })}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-500 rounded bg-white dark:bg-gray-600"
                           />
-                          <label htmlFor="b2bAvailable" className="ml-2 block text-sm text-gray-700">
+                          <label htmlFor="b2bAvailable" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                             Tillgänglig för B2B (Återförsäljare)
                           </label>
                         </div>
                         
                         {formData.availability?.b2b && (
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                               Minsta orderkvantitet (B2B)
                             </label>
                             <input
@@ -1434,7 +1434,7 @@ function AdminProducts() {
                                   b2bMinQuantity: parseInt(e.target.value) || 1
                                 }
                               })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                               min="1"
                             />
                           </div>
@@ -1454,16 +1454,16 @@ function AdminProducts() {
                                 b2c: e.target.checked
                               }
                             })}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-500 rounded bg-white dark:bg-gray-600"
                           />
-                          <label htmlFor="b2cAvailable" className="ml-2 block text-sm text-gray-700">
+                          <label htmlFor="b2cAvailable" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                             Tillgänglig för B2C (Konsumenter)
                           </label>
                         </div>
                         
                         {formData.availability?.b2c && (
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                               Max orderkvantitet (B2C)
                             </label>
                             <input
@@ -1476,7 +1476,7 @@ function AdminProducts() {
                                   b2cMaxQuantity: parseInt(e.target.value) || 10
                                 }
                               })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                               min="1"
                             />
                           </div>
