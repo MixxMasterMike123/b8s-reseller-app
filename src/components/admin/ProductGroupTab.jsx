@@ -145,23 +145,23 @@ const ProductGroupTab = ({ productGroup, onContentChange, onGroupContentUpdate }
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
       </div>
     );
   }
 
   if (!productGroup) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+      <div className="bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg p-6">
         <div className="flex items-center">
-          <svg className="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
           <div>
-            <h3 className="text-sm font-medium text-yellow-800">
+            <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
               {t('no_product_group', 'Ingen produktgrupp')}
             </h3>
-            <p className="text-sm text-yellow-700 mt-1">
+            <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
               {t('no_product_group_desc', 'Denna produkt har ingen grupp tilldelad. Lägg till en grupp för att hantera delat innehåll.')}
             </p>
           </div>
@@ -173,16 +173,16 @@ const ProductGroupTab = ({ productGroup, onContentChange, onGroupContentUpdate }
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
         <div>
-          <h3 className="text-lg font-medium text-blue-900">
+          <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100">
             {t('group_content_title', 'Gruppinnehåll för {{group}}', { group: productGroup })}
           </h3>
-          <p className="text-sm text-blue-700 mt-1">
+          <p className="text-sm text-blue-700 dark:text-blue-200 mt-1">
             {t('group_content_desc', 'Detta innehåll delas mellan alla produkter i gruppen')}
           </p>
           {productsInGroup.length > 0 && (
-            <p className="text-xs text-blue-600 mt-2">
+            <p className="text-xs text-blue-600 dark:text-blue-300 mt-2">
               {t('affected_products', 'Påverkar {{count}} produkter', { count: productsInGroup.length })}
             </p>
           )}
@@ -198,24 +198,26 @@ const ProductGroupTab = ({ productGroup, onContentChange, onGroupContentUpdate }
             label={t('size_guide_label', 'Storleksguide')}
             className="mb-2"
           />
-          <ReactQuill
-            theme="snow"
-            value={(() => {
-              const value = getContentValue(groupContent.sizeGuide) || '';
-              console.log('🎨 Rendering sizeGuide:', { 
-                raw: groupContent.sizeGuide, 
-                processed: value, 
-                currentLanguage 
-              });
-              return value;
-            })()}
-            onChange={(value) => handleContentChange('sizeGuide', value)}
-            modules={quillModules}
-            placeholder={currentLanguage === 'sv-SE' ? 
-              t('size_guide_placeholder', 'Ange storleksguide för produktgruppen...') :
-              'Enter size guide for the product group...'
-            }
-          />
+          <div className="quill-dark-mode">
+            <ReactQuill
+              theme="snow"
+              value={(() => {
+                const value = getContentValue(groupContent.sizeGuide) || '';
+                console.log('🎨 Rendering sizeGuide:', { 
+                  raw: groupContent.sizeGuide, 
+                  processed: value, 
+                  currentLanguage 
+                });
+                return value;
+              })()}
+              onChange={(value) => handleContentChange('sizeGuide', value)}
+              modules={quillModules}
+              placeholder={currentLanguage === 'sv-SE' ? 
+                t('size_guide_placeholder', 'Ange storleksguide för produktgruppen...') :
+                'Enter size guide for the product group...'
+              }
+            />
+          </div>
         </div>
 
         {/* Size and Fit */}
@@ -225,16 +227,18 @@ const ProductGroupTab = ({ productGroup, onContentChange, onGroupContentUpdate }
             label={t('size_and_fit_label', 'Storlek och Passform')}
             className="mb-2"
           />
-          <ReactQuill
-            theme="snow"
-            value={getContentValue(groupContent.sizeAndFit) || ''}
-            onChange={(value) => handleContentChange('sizeAndFit', value)}
-            modules={quillModules}
-            placeholder={currentLanguage === 'sv-SE' ? 
-              t('size_and_fit_placeholder', 'Beskriv storlekar och passform...') :
-              'Describe sizes and fit...'
-            }
-          />
+          <div className="quill-dark-mode">
+            <ReactQuill
+              theme="snow"
+              value={getContentValue(groupContent.sizeAndFit) || ''}
+              onChange={(value) => handleContentChange('sizeAndFit', value)}
+              modules={quillModules}
+              placeholder={currentLanguage === 'sv-SE' ? 
+                t('size_and_fit_placeholder', 'Beskriv storlekar och passform...') :
+                'Describe sizes and fit...'
+              }
+            />
+          </div>
         </div>
 
         {/* Shipping and Returns */}
@@ -244,16 +248,18 @@ const ProductGroupTab = ({ productGroup, onContentChange, onGroupContentUpdate }
             label={t('shipping_returns_label', 'Frakt och Retur')}
             className="mb-2"
           />
-          <ReactQuill
-            theme="snow"
-            value={getContentValue(groupContent.shippingReturns) || ''}
-            onChange={(value) => handleContentChange('shippingReturns', value)}
-            modules={quillModules}
-            placeholder={currentLanguage === 'sv-SE' ? 
-              t('shipping_returns_placeholder', 'Ange frakt- och returinformation...') :
-              'Enter shipping and return information...'
-            }
-          />
+          <div className="quill-dark-mode">
+            <ReactQuill
+              theme="snow"
+              value={getContentValue(groupContent.shippingReturns) || ''}
+              onChange={(value) => handleContentChange('shippingReturns', value)}
+              modules={quillModules}
+              placeholder={currentLanguage === 'sv-SE' ? 
+                t('shipping_returns_placeholder', 'Ange frakt- och returinformation...') :
+                'Enter shipping and return information...'
+              }
+            />
+          </div>
         </div>
 
         {/* How It's Made */}
@@ -263,47 +269,49 @@ const ProductGroupTab = ({ productGroup, onContentChange, onGroupContentUpdate }
             label={t('how_its_made_label', 'Hur den tillverkas')}
             className="mb-2"
           />
-          <ReactQuill
-            theme="snow"
-            value={(() => {
-              const value = getContentValue(groupContent.howItsMade) || '';
-              console.log('🎨 Rendering howItsMade:', { 
-                raw: groupContent.howItsMade, 
-                processed: value, 
-                currentLanguage 
-              });
-              return value;
-            })()}
-            onChange={(value) => handleContentChange('howItsMade', value)}
-            modules={quillModules}
-            placeholder={currentLanguage === 'sv-SE' ? 
-              t('how_its_made_placeholder', 'Beskriv tillverkningsprocess och hållbarhet...') :
-              'Describe manufacturing process and sustainability...'
-            }
-          />
+          <div className="quill-dark-mode">
+            <ReactQuill
+              theme="snow"
+              value={(() => {
+                const value = getContentValue(groupContent.howItsMade) || '';
+                console.log('🎨 Rendering howItsMade:', { 
+                  raw: groupContent.howItsMade, 
+                  processed: value, 
+                  currentLanguage 
+                });
+                return value;
+              })()}
+              onChange={(value) => handleContentChange('howItsMade', value)}
+              modules={quillModules}
+              placeholder={currentLanguage === 'sv-SE' ? 
+                t('how_its_made_placeholder', 'Beskriv tillverkningsprocess och hållbarhet...') :
+                'Describe manufacturing process and sustainability...'
+              }
+            />
+          </div>
         </div>
       </div>
 
       {/* Products in Group (for reference) */}
       {productsInGroup.length > 0 && (
-        <div className="mt-8 bg-gray-50 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-gray-900 mb-3">
+        <div className="mt-8 bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+          <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
             {t('products_in_group', 'Produkter i denna grupp')}
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {productsInGroup.map((product) => (
-              <div key={product.id} className="bg-white rounded border px-3 py-2 flex items-start gap-2">
+              <div key={product.id} className="bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 px-3 py-2 flex items-start gap-2">
                 <input
                   type="radio"
                   name="defaultProduct"
-                  className="mt-1 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  className="mt-1 h-4 w-4 text-blue-600 dark:text-blue-400 border-gray-300 dark:border-gray-500 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-600"
                   checked={groupContent.defaultProductId === product.id}
                   onChange={() => handleDefaultProductSelect(product.id)}
                   title={t('default_product_tooltip', 'Markera som standardprodukt')}
                 />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{getContentValue(product.name)}</p>
-                <p className="text-xs text-gray-500">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{getContentValue(product.name)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {product.color} • {product.size}
                 </p>
                 </div>
