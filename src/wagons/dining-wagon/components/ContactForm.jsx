@@ -51,6 +51,7 @@ const ContactForm = () => {
 
   const [errors, setErrors] = useState({});
   const [newTag, setNewTag] = useState('');
+  const [metaScraping, setMetaScraping] = useState(false);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -93,6 +94,70 @@ const ContactForm = () => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleAddTag();
+    }
+  };
+
+  // META scraping function for website data enrichment
+  const handleScrapeWebsiteMeta = async () => {
+    if (!formData.website) {
+      toast.error('Ingen webbsida angiven');
+      return;
+    }
+
+    setMetaScraping(true);
+
+    try {
+      // Call Firebase Function for META scraping
+      const response = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/scrapeWebsiteMetaV2', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: formData.website
+        })
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        toast.error(`Kunde inte hämta META data: ${result.error}`);
+        return;
+      }
+
+      const { data } = result;
+      
+      // Format the META data for appending to notes
+      let metaText = `\n\n=== AUTO-HÄMTAD WEBBPLATS-INFO ===\n`;
+      metaText += `Titel: ${data.title || 'Ingen titel'}\n`;
+      metaText += `Beskrivning: ${data.description || 'Ingen beskrivning'}\n`;
+      
+      if (data.keywords && data.keywords.length > 0) {
+        metaText += `Nyckelord: ${data.keywords.join(', ')}\n`;
+      }
+      
+      metaText += `Språk: ${data.detectedLanguage || 'Okänt'}\n`;
+      
+      if (data.translatedText && data.translatedText !== data.description) {
+        metaText += `Översättning: ${data.translatedText}\n`;
+      }
+      
+      metaText += `Hämtad: ${new Date().toLocaleString('sv-SE')}\n`;
+      metaText += `==========================================`;
+
+      // Append to existing notes
+      setFormData(prev => ({
+        ...prev,
+        notes: (prev.notes || '') + metaText
+      }));
+
+      toast.success('🌐 META data hämtad och tillagd i anteckningar!');
+      
+    } catch (error) {
+      console.error('META scraping error:', error);
+      toast.error('Kunde inte hämta META data. Försök igen.');
+    } finally {
+      setMetaScraping(false);
     }
   };
 
@@ -204,9 +269,22 @@ const ContactForm = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Webbplats
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Webbplats
+                    </label>
+                    {formData.website && (
+                      <button
+                        type="button"
+                        onClick={handleScrapeWebsiteMeta}
+                        disabled={metaScraping}
+                        className="flex items-center px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <GlobeAltIcon className="h-3 w-3 mr-1" />
+                        {metaScraping ? 'Hämtar...' : 'Hämta META'}
+                      </button>
+                    )}
+                  </div>
                   <input
                     type="url"
                     name="website"
