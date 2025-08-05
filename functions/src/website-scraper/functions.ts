@@ -50,7 +50,6 @@ const SIMPLE_TRANSLATIONS = {
   'über uns': 'om oss',
   'erfahrung': 'erfarenhet',
   'professionell': 'professionell',
-  'innovation': 'innovation',
   'technologie': 'teknik',
   'führend': 'ledande',
   'kompetenz': 'expertis',
@@ -150,19 +149,21 @@ function extractMetaData(html: string): {
 export const scrapeWebsiteMeta = onRequest(
   {
     cors: true,
-    rateLimiter: rateLimiter({
-      maxAttempts: 10,
-      intervalInMinutes: 1
-    }),
     region: 'us-central1',
     memory: '256MiB',
     timeoutSeconds: 30
   },
   async (req, res) => {
     try {
-      // Apply CORS
-      const corsResult = corsHandler(req, res);
-      if (corsResult.handled) return;
+      // Handle CORS
+      if (!corsHandler(req, res)) {
+        return;
+      }
+
+      // Apply rate limiting
+      if (!await rateLimiter(req, res)) {
+        return;
+      }
 
       // Only allow POST
       if (req.method !== 'POST') {

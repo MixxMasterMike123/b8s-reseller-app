@@ -6,10 +6,12 @@ import { processB2COrderCompletionHttp, processB2COrderCompletion, manualStatusU
 import { getGeoData, testGeoHeaders } from './geo/functions';
 import { deleteCustomerAccount, deleteB2CCustomerAccount, toggleCustomerActiveStatus, createAdminUser, checkNamedDatabase, debugDatabase } from './customer-admin/functions';
 import { createPaymentIntentV2 } from './payment/createPaymentIntent';
+import { scrapeWebsiteMeta } from './website-scraper/functions';
 export { logAffiliateClickV2, logAffiliateClickHttpV2, processAffiliateConversionV2 };
 export { sendCustomerWelcomeEmail as sendCustomerWelcomeEmailV2, sendAffiliateWelcomeEmail as sendAffiliateWelcomeEmailV2, sendB2BOrderConfirmationAdmin as sendB2BOrderConfirmationAdminV2, sendB2BOrderConfirmationCustomer as sendB2BOrderConfirmationCustomerV2, sendOrderStatusEmail as sendOrderStatusEmailV2, sendB2COrderNotificationAdmin as sendB2COrderNotificationAdminV2, sendB2COrderPendingEmail as sendB2COrderPendingEmailV2, sendOrderConfirmationEmails as sendOrderConfirmationEmailsV2, sendUserActivationEmail as sendUserActivationEmailV2, sendOrderStatusUpdateEmail as sendOrderStatusUpdateEmailV2, updateCustomerEmail as updateCustomerEmailV2, testEmail as testEmailV2, approveAffiliate as approveAffiliateV2, sendStatusUpdateHttp as sendStatusUpdateHttpV2, sendVerificationEmail as sendVerificationEmailV2, sendAffiliateCredentialsV2, sendPasswordResetEmailV2, confirmPasswordResetV2 };
 export { processB2COrderCompletionHttp as processB2COrderCompletionHttpV2, processB2COrderCompletion as processB2COrderCompletionV2, manualStatusUpdate as manualStatusUpdateV2 };
 export { getGeoData as getGeoDataV2, testGeoHeaders as testGeoHeadersV2 };
 export { deleteCustomerAccount as deleteCustomerAccountV2, deleteB2CCustomerAccount as deleteB2CCustomerAccountV2, toggleCustomerActiveStatus as toggleCustomerActiveStatusV2, createAdminUser as createAdminUserV2, checkNamedDatabase as checkNamedDatabaseV2, debugDatabase as debugDatabaseV2 };
 export { createPaymentIntentV2 };
+export { scrapeWebsiteMeta as scrapeWebsiteMetaV2 };
 export declare const exampleProtectedFunction: import("firebase-functions/v2/https").HttpsFunction;
