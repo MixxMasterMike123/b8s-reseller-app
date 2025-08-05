@@ -223,7 +223,7 @@ code {
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
 }
 
-/* Enhanced SVG icons visibility - Force all icon types */
+/* Enhanced SVG icons visibility - More targeted approach */
 .dark .quill-dark-mode .ql-toolbar.ql-snow button svg,
 .dark .quill-dark-mode .ql-toolbar.ql-snow .ql-picker-label svg {
   stroke: currentColor !important;
@@ -238,37 +238,28 @@ code {
   filter: brightness(0) invert(1) !important; /* Force white icons on hover */
 }
 
-/* Force visibility for pseudo-element icons (::before content) */
-.dark .quill-dark-mode .ql-toolbar.ql-snow button::before,
-.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-picker-label::before {
+/* Target Quill's internal icon system more precisely */
+.dark .quill-dark-mode .ql-toolbar.ql-snow button::before {
   color: #ffffff !important;
   opacity: 1 !important;
   filter: brightness(0) invert(1) !important;
 }
 
-/* Target specific Quill icon classes if they exist */
-.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-bold,
-.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-italic,
-.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-underline,
-.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-strike,
-.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-header,
-.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-list,
-.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-link,
-.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-image,
-.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-clean,
-.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-color,
-.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-background {
-  color: #ffffff !important;
+/* Only target the icon content, not text content */
+.dark .quill-dark-mode .ql-toolbar.ql-snow button:not(.ql-picker-label)::before {
   filter: brightness(0) invert(1) !important;
 }
 
-/* Force all child elements to be visible */
-.dark .quill-dark-mode .ql-toolbar.ql-snow button *,
-.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-picker-label * {
-  color: inherit !important;
-  fill: currentColor !important;
-  stroke: currentColor !important;
+/* Prevent bleeding on picker labels - only target the arrow */
+.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-picker-label::after {
+  border-top-color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+/* More selective targeting to prevent bleeding */
+.dark .quill-dark-mode .ql-toolbar.ql-snow button[class*="ql-"]::before {
   filter: brightness(0) invert(1) !important;
+  color: #ffffff !important;
 }
 
 /* Picker dropdown arrows */
@@ -434,56 +425,34 @@ code {
   color: #ffffff !important;
 }
 
-/* Alternative approach - Add text labels as fallback */
-.dark .quill-dark-mode .ql-toolbar.ql-snow button.ql-bold::after {
-  content: "B";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-weight: bold;
-  font-size: 12px;
-  color: #ffffff;
-  pointer-events: none;
-}
-
-.dark .quill-dark-mode .ql-toolbar.ql-snow button.ql-italic::after {
-  content: "I";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-style: italic;
-  font-size: 12px;
-  color: #ffffff;
-  pointer-events: none;
-}
-
-.dark .quill-dark-mode .ql-toolbar.ql-snow button.ql-underline::after {
-  content: "U";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-decoration: underline;
-  font-size: 12px;
-  color: #ffffff;
-  pointer-events: none;
-}
-
-.dark .quill-dark-mode .ql-toolbar.ql-snow button.ql-strike::after {
-  content: "S";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-decoration: line-through;
-  font-size: 12px;
-  color: #ffffff;
-  pointer-events: none;
-}
-
-/* Ensure button content is positioned relative for absolute positioning of ::after */
+/* Clean up - Remove text fallbacks since filter approach works */
 .dark .quill-dark-mode .ql-toolbar.ql-snow button {
   position: relative !important;
+}
+
+/* Prevent text bleeding in dropdown labels */
+.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-picker-label {
+  overflow: hidden !important;
+}
+
+/* Ensure dropdown text stays readable */
+.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-picker-label .ql-picker-item {
+  filter: none !important; /* Don't invert dropdown text */
+}
+
+/* Prevent filter bleeding to text content in buttons */
+.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-picker-label span {
+  filter: none !important; /* Keep text normal */
+}
+
+/* Only apply invert filter to actual icon elements */
+.dark .quill-dark-mode .ql-toolbar.ql-snow button:not(.ql-picker-label) {
+  /* Icons only, not text */
+}
+
+/* More precise targeting for color/background pickers */
+.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-color .ql-picker-item,
+.dark .quill-dark-mode .ql-toolbar.ql-snow .ql-background .ql-picker-item {
+  filter: none !important; /* Keep color swatches normal */
+  border: 1px solid #6b7280 !important;
 } 
