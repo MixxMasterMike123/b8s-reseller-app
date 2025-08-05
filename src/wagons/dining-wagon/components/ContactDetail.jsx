@@ -1225,18 +1225,84 @@ const ContactDetail = () => {
               </div>
             )}
 
-            {/* Notes Preview */}
+            {/* CRM Information */}
+            <div className="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                {/* Status */}
+                <div className="flex items-center">
+                  <ClipboardDocumentListIcon className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
+                  <div>
+                    <div className="text-xs font-medium text-blue-700">Status</div>
+                    <div className="text-sm">
+                      {(() => {
+                        const statusLabels = {
+                          ej_kontaktad: 'Ej kontaktad',
+                          kontaktad: 'Kontaktad', 
+                          dialog: 'Dialog',
+                          af: 'ÅF',
+                          closed: 'Stängd',
+                          prospect: 'Reservering',
+                          active: 'Stamgäst',
+                          inactive: 'Inaktiv'
+                        };
+                        return statusLabels[contact.status] || contact.status || 'Okänd';
+                      })()}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Priority */}
+                <div className="flex items-center">
+                  <StarIcon className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
+                  <div>
+                    <div className="text-xs font-medium text-blue-700">Prioritet</div>
+                    <div className="flex items-center text-sm">
+                      {contact.priority === 'high' && <ExclamationTriangleIcon className="h-3 w-3 text-red-500 mr-1" />}
+                      {contact.priority === 'medium' && <StarIcon className="h-3 w-3 text-yellow-500 mr-1" />}
+                      <span>
+                        {contact.priority === 'high' ? 'Hög' : 
+                         contact.priority === 'medium' ? 'Medium' : 
+                         contact.priority === 'low' ? 'Låg' : 
+                         contact.priority || 'Medium'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Source */}
+                <div className="flex items-center">
+                  <UserIcon className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
+                  <div>
+                    <div className="text-xs font-medium text-blue-700">Källa</div>
+                    <div className="text-sm">
+                      {(() => {
+                        const sourceLabels = {
+                          manual: 'Manuell',
+                          web: 'Webb',
+                          referral: 'Hänvisning',
+                          phone: 'Telefon',
+                          email: 'E-post',
+                          social: 'Sociala medier',
+                          event: 'Evenemang',
+                          advertising: 'Annonsering'
+                        };
+                        return sourceLabels[contact.source] || contact.source || 'Manuell';
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Notes Full Text */}
             {contact.notes && (
               <div className="mb-3 p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-start">
                   <DocumentTextIcon className="h-4 w-4 text-gray-500 mr-2 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
                     <div className="text-xs font-medium text-gray-700 mb-1">Anteckningar</div>
-                    <div className="text-sm text-gray-600">
-                      {contact.notes.length > 150 
-                        ? `${contact.notes.substring(0, 150)}...` 
-                        : contact.notes
-                      }
+                    <div className="text-sm text-gray-600 whitespace-pre-wrap">
+                      {contact.notes}
                     </div>
                   </div>
                 </div>
