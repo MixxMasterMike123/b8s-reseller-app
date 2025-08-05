@@ -967,7 +967,7 @@ function AdminProducts() {
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   {/* Product Name */}
                   <div className="sm:col-span-2">
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Produktnamn *
                     </label>
                     <ContentLanguageIndicator 
@@ -984,14 +984,14 @@ function AdminProducts() {
                         ...formData,
                         name: setContentValue(formData.name, e.target.value)
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                       required
                     />
                   </div>
                   
                   {/* SKU */}
                   <div>
-                    <label htmlFor="sku" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="sku" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       SKU (Artikelnummer) *
                     </label>
                     <input
@@ -1000,7 +1000,7 @@ function AdminProducts() {
                       name="sku"
                       value={formData.sku}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                       placeholder="t.ex. B8S-4-re, B8S-2-tr"
                       required
                     />
@@ -1008,7 +1008,7 @@ function AdminProducts() {
                   
                   {/* Size */}
                   <div>
-                    <label htmlFor="size" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="size" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Storlek
                     </label>
                     <input
@@ -1017,14 +1017,14 @@ function AdminProducts() {
                       name="size"
                       value={formData.size}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                       placeholder="t.ex. Liten, Medium, Stor eller specifika mått"
                     />
                   </div>
                   
                   {/* Color */}
                   <div>
-                    <label htmlFor="color" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="color" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Färg
                     </label>
                     <select
@@ -1032,7 +1032,7 @@ function AdminProducts() {
                       name="color"
                       value={formData.color}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                     >
                       <option value="">Välj färg...</option>
                       <option value="Transparent">Transparent</option>
@@ -1044,7 +1044,7 @@ function AdminProducts() {
                   
                   {/* Group with Autocomplete */}
                   <div className="sm:col-span-2 relative">
-                    <label htmlFor="group" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="group" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Produktgrupp
                     </label>
                     <div className="relative">
@@ -1056,18 +1056,18 @@ function AdminProducts() {
                         onChange={handleGroupInputChange}
                         onFocus={handleGroupFocus}
                         onBlur={handleGroupBlur}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                         placeholder="t.ex. B8Shield Individual, B8Shield 3-Pack, B8Shield Starter Kit"
                       />
                       
                       {/* Autocomplete Suggestions */}
                       {showGroupSuggestions && filteredGroups.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-48 overflow-y-auto">
                           {filteredGroups.map((group, index) => (
                             <div
                               key={index}
                               onClick={() => handleGroupSelect(group)}
-                              className="px-3 py-2 cursor-pointer hover:bg-blue-50 hover:text-blue-600 text-sm"
+                              className="px-3 py-2 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900 hover:text-blue-600 dark:hover:text-blue-300 text-sm text-gray-900 dark:text-gray-100"
                             >
                               {group}
                             </div>
@@ -1075,14 +1075,14 @@ function AdminProducts() {
                         </div>
                       )}
                     </div>
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                       Skriv för att se befintliga grupper eller skapa en ny. Används för att gruppera produkter i butiken.
                     </p>
                   </div>
                   
                   {/* Base Price */}
                   <div>
-                    <label htmlFor="basePrice" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="basePrice" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Grundpris (SEK, exkl. moms) *
                     </label>
                     <input
@@ -1091,7 +1091,7 @@ function AdminProducts() {
                       name="basePrice"
                       value={formData.basePrice}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                       min="0"
                       step="0.01"
                       required
@@ -1100,7 +1100,7 @@ function AdminProducts() {
                   
                   {/* Manufacturing Cost */}
                   <div>
-                    <label htmlFor="manufacturingCost" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="manufacturingCost" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Tillverkningskostnad (SEK)
                     </label>
                     <input
@@ -1109,7 +1109,7 @@ function AdminProducts() {
                       name="manufacturingCost"
                       value={formData.manufacturingCost}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                       min="0"
                       step="0.01"
                     />
@@ -1124,9 +1124,9 @@ function AdminProducts() {
                         name="isActive"
                         checked={formData.isActive}
                         onChange={handleInputChange}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-500 rounded bg-white dark:bg-gray-600"
                       />
-                      <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
+                      <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                         Aktiv
                       </label>
                     </div>
@@ -1134,7 +1134,7 @@ function AdminProducts() {
                   
                   {/* Google Merchant Center Fields */}
                   <div className="sm:col-span-2">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Google Merchant Center Data</h3>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Google Merchant Center Data</h3>
                     
                     {/* Weight */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

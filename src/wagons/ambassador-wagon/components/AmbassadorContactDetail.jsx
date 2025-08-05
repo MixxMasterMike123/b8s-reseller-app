@@ -247,7 +247,7 @@ const AmbassadorContactDetail = () => {
     
     const labels = {
       prospect: 'Prospekt',
-      contacted: 'Kontaktad', 
+      contacted: 'Kontaktad',
       negotiating: 'Förhandlar',
       converted: 'Konverterad',
       declined: 'Avböjd',
@@ -468,13 +468,13 @@ const AmbassadorContactDetail = () => {
         
         {/* Back Button */}
         <div className="mb-6">
-          <Link 
-            to="/admin/ambassadors/prospects" 
+              <Link
+                to="/admin/ambassadors/prospects"
             className="inline-flex items-center text-gray-600 hover:text-gray-900 font-medium"
-          >
+              >
             <ArrowLeftIcon className="h-4 w-4 mr-1" />
             Tillbaka till ambassadörer
-          </Link>
+              </Link>
         </div>
 
         {/* 🎯 NEW: Full-Width Contact Card (Like DiningWagon) */}
@@ -493,7 +493,7 @@ const AmbassadorContactDetail = () => {
           {/* Contact Information Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             {/* Basic Contact */}
-            <div>
+              <div>
               <h4 className="text-sm font-medium text-gray-900 mb-3">Kontaktuppgifter</h4>
               <div className="space-y-2">
                 {contact.phone && (
@@ -599,7 +599,7 @@ const AmbassadorContactDetail = () => {
             <div className="flex flex-wrap items-center gap-3">
               {getContactTypeBadge(contact)}
               {contact.influencerTier && getTierBadge(contact.influencerTier)}
-              {getStatusBadge(contact.status)}
+                  {getStatusBadge(contact.status)}
               {(() => {
                 // Calculate total followers dynamically including otherPlatforms
                 const platformFollowers = contact.platforms ? 
@@ -613,9 +613,9 @@ const AmbassadorContactDetail = () => {
                 const totalFollowers = platformFollowers + otherFollowers;
                 
                 return totalFollowers > 0 ? (
-                  <span className="text-sm text-gray-600">
+                    <span className="text-sm text-gray-600">
                     {totalFollowers.toLocaleString()} följare totalt
-                  </span>
+                    </span>
                 ) : null;
               })()}
             </div>
@@ -643,9 +643,9 @@ const AmbassadorContactDetail = () => {
                 <PencilIcon className="h-5 w-5" />
                 <span>Redigera</span>
               </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
         {/* Activities and Communication Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -653,13 +653,13 @@ const AmbassadorContactDetail = () => {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-medium text-gray-900">DM & Kommunikation</h3>
-              <button
+                <button
                 onClick={() => setShowActivityForm(!showActivityForm)}
                 className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
-              >
+                >
                 <PlusIcon className="h-4 w-4 mr-2" />
                 Ny Aktivitet
-              </button>
+                </button>
             </div>
 
             {showActivityForm && (
@@ -757,7 +757,7 @@ const AmbassadorContactDetail = () => {
                           <p className="text-xs text-gray-500 mb-2">Föreslagna taggar:</p>
                           <div className="flex flex-wrap gap-2">
                             {suggestedTags.map((tag, index) => (
-                              <button
+              <button
                                 key={index}
                                 onClick={() => addTag(tag)}
                                 className="inline-flex items-center px-2 py-1 rounded-full text-sm bg-gray-100 text-gray-700 border border-gray-200 hover:bg-purple-100 hover:text-purple-800 hover:border-purple-200 transition-colors"
@@ -765,12 +765,12 @@ const AmbassadorContactDetail = () => {
                               >
                                 <PlusIcon className="h-3 w-3 mr-1" />
                                 #{tag}
-                              </button>
+              </button>
                             ))}
-                          </div>
-                        </div>
+            </div>
+          </div>
                       )}
-                    </div>
+        </div>
                   )}
 
                   <div className="flex space-x-3">
@@ -793,7 +793,7 @@ const AmbassadorContactDetail = () => {
             )}
 
             {/* Activities List */}
-            <div className="space-y-4">
+                  <div className="space-y-4">
               {activities.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="mx-auto h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -883,57 +883,57 @@ const AmbassadorContactDetail = () => {
                 {/* Basic Information */}
                 <div>
                   <h4 className="text-sm font-medium text-gray-900 mb-3">Grundläggande Information</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Namn</label>
-                      <input
-                        type="text"
-                        value={editData.name || ''}
-                        onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                        <input
+                          type="text"
+                          value={editData.name || ''}
+                          onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                         placeholder="Influencerns fullständiga namn"
-                      />
-                    </div>
-                    <div>
+                        />
+                      </div>
+                      <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                      <input
-                        type="email"
-                        value={editData.email || ''}
-                        onChange={(e) => setEditData({ ...editData, email: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                        <input
+                          type="email"
+                          value={editData.email || ''}
+                          onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                         placeholder="kontakt@example.com"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
-                      <input
-                        type="tel"
-                        value={editData.phone || ''}
-                        onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                        <input
+                          type="tel"
+                          value={editData.phone || ''}
+                          onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                         placeholder="+46 70 123 45 67"
-                      />
-                    </div>
-                    <div>
+                        />
+                      </div>
+                      <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Affärs-email</label>
-                      <input
+                        <input
                         type="email"
                         value={editData.businessEmail || ''}
                         onChange={(e) => setEditData({ ...editData, businessEmail: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                         placeholder="business@example.com"
-                      />
-                    </div>
-                    <div>
+                        />
+                      </div>
+                      <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Management Kontakt</label>
-                      <input
-                        type="text"
+                        <input
+                          type="text"
                         value={editData.managementContact || ''}
                         onChange={(e) => setEditData({ ...editData, managementContact: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                         placeholder="Manager/agent kontaktinfo"
-                      />
-                    </div>
+                        />
+                      </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Land</label>
                       <select
@@ -967,27 +967,27 @@ const AmbassadorContactDetail = () => {
                         <option value="fi-FI">Suomi</option>
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Tidszon</label>
-                      <select
-                        value={editData.timezone || 'Europe/Stockholm'}
-                        onChange={(e) => setEditData({ ...editData, timezone: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                      >
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tidszon</label>
+                        <select
+                          value={editData.timezone || 'Europe/Stockholm'}
+                          onChange={(e) => setEditData({ ...editData, timezone: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                        >
                         <option value="Europe/Stockholm">Europe/Stockholm</option>
                         <option value="Europe/London">Europe/London</option>
                         <option value="Europe/Berlin">Europe/Berlin</option>
                         <option value="America/New_York">America/New_York</option>
                         <option value="America/Los_Angeles">America/Los_Angeles</option>
-                      </select>
+                        </select>
+                      </div>
                     </div>
                   </div>
-                </div>
 
                 {/* Important Links */}
                 <div>
                   <h4 className="text-sm font-medium text-gray-900 mb-3">Viktiga Länkar</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Webbsida</label>
                       <input
@@ -998,27 +998,27 @@ const AmbassadorContactDetail = () => {
                         placeholder="https://www.example.com"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Media Kit URL</label>
-                      <input
-                        type="url"
-                        value={editData.mediaKitUrl || ''}
-                        onChange={(e) => setEditData({ ...editData, mediaKitUrl: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Media Kit URL</label>
+                        <input
+                          type="url"
+                          value={editData.mediaKitUrl || ''}
+                          onChange={(e) => setEditData({ ...editData, mediaKitUrl: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                         placeholder="https://drive.google.com/..."
-                      />
-                    </div>
-                    <div>
+                        />
+                      </div>
+                      <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Rate Card URL</label>
-                      <input
-                        type="url"
+                        <input
+                          type="url"
                         value={editData.rateCardUrl || editData.pricelistUrl || ''}
-                        onChange={(e) => setEditData({ ...editData, rateCardUrl: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          onChange={(e) => setEditData({ ...editData, rateCardUrl: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                         placeholder="Prislista för samarbeten"
-                      />
+                        />
+                      </div>
                     </div>
-                  </div>
 
                   {/* Portfolio URLs */}
                   <div className="mt-4">
@@ -1124,9 +1124,9 @@ const AmbassadorContactDetail = () => {
                       <option value="mega">Mega (1M+)</option>
                     </select>
                   </div>
-                </div>
+                  </div>
 
-                {/* Social Media Platforms */}
+                  {/* Social Media Platforms */}
                 <div>
                   <h4 className="text-sm font-medium text-gray-900 mb-3">Social Media Plattformar</h4>
                   <div className="space-y-4">
@@ -1321,17 +1321,17 @@ const AmbassadorContactDetail = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                             placeholder="https://tiktok.com/@username"
                           />
-                        </div>
                       </div>
                     </div>
+                  </div>
 
                     {/* Facebook */}
                     <div className="border border-gray-200 rounded-lg p-4">
                       <div className="flex items-center mb-3">
                         <span className="font-medium text-gray-900">📘 Facebook</span>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Handle</label>
                           <input
                             type="text"
@@ -1346,11 +1346,11 @@ const AmbassadorContactDetail = () => {
                                 }
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                             placeholder="användarnamn"
                           />
-                        </div>
-                        <div>
+                      </div>
+                      <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Följare</label>
                           <input
                             type="number"
@@ -1365,10 +1365,10 @@ const AmbassadorContactDetail = () => {
                                 }
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                           />
-                        </div>
-                        <div>
+                      </div>
+                      <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Sida URL</label>
                           <input
                             type="url"
@@ -1383,12 +1383,12 @@ const AmbassadorContactDetail = () => {
                                 }
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                             placeholder="https://facebook.com/username"
                           />
-                        </div>
                       </div>
                     </div>
+                  </div>
 
                     {/* Twitter */}
                     <div className="border border-gray-200 rounded-lg p-4">
@@ -1396,7 +1396,7 @@ const AmbassadorContactDetail = () => {
                         <span className="font-medium text-gray-900">🐦 Twitter/X</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
+                  <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Handle</label>
                           <input
                             type="text"
@@ -1411,10 +1411,10 @@ const AmbassadorContactDetail = () => {
                                 }
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                             placeholder="användarnamn"
-                          />
-                        </div>
+                    />
+                  </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Följare</label>
                           <input
@@ -1432,7 +1432,7 @@ const AmbassadorContactDetail = () => {
                             })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                           />
-                        </div>
+                  </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Profil URL</label>
                           <input
@@ -1451,9 +1451,9 @@ const AmbassadorContactDetail = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                             placeholder="https://twitter.com/username"
                           />
-                        </div>
-                      </div>
-                    </div>
+                </div>
+                  </div>
+            </div>
 
                     {/* LinkedIn */}
                     <div className="border border-gray-200 rounded-lg p-4">
@@ -1479,7 +1479,7 @@ const AmbassadorContactDetail = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                             placeholder="användarnamn"
                           />
-                        </div>
+                    </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Följare</label>
                           <input
@@ -1497,7 +1497,7 @@ const AmbassadorContactDetail = () => {
                             })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                           />
-                        </div>
+                </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Profil URL</label>
                           <input
@@ -1516,10 +1516,10 @@ const AmbassadorContactDetail = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                             placeholder="https://linkedin.com/in/username"
                           />
-                        </div>
-                      </div>
+            </div>
                     </div>
-                  </div>
+                    </div>
+                    </div>
                 </div>
 
                 {/* Other Platforms */}
@@ -1533,24 +1533,24 @@ const AmbassadorContactDetail = () => {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Plattform</label>
-                        <input
-                          type="text"
+                      <input
+                        type="text"
                           value={newOtherPlatform.name}
                           onChange={(e) => setNewOtherPlatform({ ...newOtherPlatform, name: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                           placeholder="BlueSky, Threads..."
-                        />
-                      </div>
-                      <div>
+                      />
+                    </div>
+                    <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Handle</label>
                         <input
                           type="text"
                           value={newOtherPlatform.handle}
                           onChange={(e) => setNewOtherPlatform({ ...newOtherPlatform, handle: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                           placeholder="användarnamn"
-                        />
-                      </div>
+                      />
+                    </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Följare</label>
                         <input
@@ -1572,15 +1572,15 @@ const AmbassadorContactDetail = () => {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="mt-4">
-                      <button
-                        type="button"
+                                <button
+                                  type="button"
                         onClick={handleAddOtherPlatform}
                         className="px-4 py-2 text-sm font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100"
-                      >
+                                >
                         Lägg till plattform
-                      </button>
+                                </button>
                     </div>
                   </div>
 
@@ -1592,14 +1592,14 @@ const AmbassadorContactDetail = () => {
                         <div key={index} className="border border-gray-200 rounded-lg p-3">
                           <div className="flex items-center justify-between mb-2">
                             <h6 className="text-sm font-medium text-gray-900">{platform.name}</h6>
-                            <button
-                              type="button"
+                                <button
+                                  type="button"
                               onClick={() => handleRemoveOtherPlatform(index)}
                               className="text-red-600 hover:text-red-800 text-sm"
-                            >
+                                >
                               Ta bort
-                            </button>
-                          </div>
+                                </button>
+                              </div>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-gray-600">
                             <div>Handle: @{platform.handle}</div>
                             <div>Följare: {platform.followers.toLocaleString()}</div>
@@ -1611,16 +1611,16 @@ const AmbassadorContactDetail = () => {
                               ) : (
                                 'Ingen URL'
                               )}
-                            </div>
+                          </div>
                           </div>
                         </div>
                       ))}
-                    </div>
-                  )}
+                        </div>
+                      )}
                 </div>
 
                 {/* Tags */}
-                <div>
+                        <div>
                   <h4 className="text-sm font-medium text-gray-900 mb-3">Taggar</h4>
                   <div className="flex gap-2 mb-3">
                     <input
@@ -1631,32 +1631,32 @@ const AmbassadorContactDetail = () => {
                       placeholder="Lägg till tagg (t.ex. #hett, #kontrakt)"
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
                     />
-                    <button
-                      type="button"
+                                <button
+                                  type="button"
                       onClick={handleAddTag}
                       className="px-4 py-2 text-sm font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100"
-                    >
+                                >
                       Lägg till
-                    </button>
-                  </div>
+                                </button>
+                          </div>
                   
                   {editData.tags && editData.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {editData.tags.map((tag, index) => (
                         <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800">
                           {tag}
-                          <button
-                            type="button"
+                              <button
+                                type="button"
                             onClick={() => handleRemoveTag(tag)}
                             className="ml-2 text-purple-600 hover:text-purple-800"
                           >
                             ×
-                          </button>
+                              </button>
                         </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
 
                 {/* Notes */}
                 <div>
@@ -1668,29 +1668,29 @@ const AmbassadorContactDetail = () => {
                     rows={4}
                     placeholder="Interna anteckningar om denna ambassadör..."
                   />
-                </div>
-
+                    </div>
+                    
                 {/* Form Actions */}
                 <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-                  <button
-                    type="button"
+                      <button
+                        type="button"
                     onClick={() => setShowEditModal(false)}
                     className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
-                  >
-                    Avbryt
-                  </button>
-                  <button
-                    type="submit"
+                      >
+                        Avbryt
+                      </button>
+                      <button
+                        type="submit"
                     disabled={isSavingEdit}
                     className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-300 transition-colors"
-                  >
+                      >
                     {isSavingEdit ? 'Sparar...' : 'Spara Ändringar'}
-                  </button>
-                </div>
-              </form>
+                      </button>
+                    </div>
+                  </form>
             </div>
-          </div>
-        )}
+                </div>
+              )}
 
         {/* Activity Edit Modal */}
         {editingActivity && (
@@ -1698,13 +1698,13 @@ const AmbassadorContactDetail = () => {
             <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
               <div className="px-6 py-4 border-b border-gray-200">
                 <h3 className="text-lg font-medium text-gray-900">Redigera Aktivitet</h3>
-              </div>
+                  </div>
               
               <form onSubmit={(e) => {
                 e.preventDefault();
                 saveEditedActivity();
               }} className="p-6 space-y-4">
-                <div>
+                              <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Titel</label>
                   <input
                     type="text"
@@ -1712,9 +1712,9 @@ const AmbassadorContactDetail = () => {
                     onChange={(e) => setEditingActivityData({ ...editingActivityData, title: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                   />
-                </div>
+                              </div>
 
-                <div>
+                                  <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Innehåll</label>
                   <textarea
                     value={editingActivityData.content}
@@ -1748,10 +1748,10 @@ const AmbassadorContactDetail = () => {
                             >
                               <XMarkIcon className="h-3 w-3" />
                             </button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
 
                     {suggestedTags.length > 0 && (
                       <div>
@@ -1768,10 +1768,10 @@ const AmbassadorContactDetail = () => {
                               #{tag}
                             </button>
                           ))}
-                        </div>
-                      </div>
+                                  </div>
+                                  </div>
                     )}
-                  </div>
+                                </div>
                 )}
 
                 <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
@@ -1788,11 +1788,11 @@ const AmbassadorContactDetail = () => {
                   >
                     Spara Ändringar
                   </button>
-                </div>
+                              </div>
               </form>
-            </div>
-          </div>
-        )}
+                            </div>
+                  </div>
+                )}
 
       </div>
     </AppLayout>
