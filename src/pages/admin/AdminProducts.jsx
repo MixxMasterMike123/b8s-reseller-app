@@ -1659,31 +1659,33 @@ function AdminProducts() {
                       className="mb-2"
                     />
                     <div className="border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden bg-white dark:bg-gray-700">
-                      <ReactQuill
-                        value={getContentValue(formData.descriptions?.b2cMoreInfo)}
-                        onChange={(content) => setFormData({
-                          ...formData,
-                          descriptions: {
-                            ...formData.descriptions,
-                            b2cMoreInfo: setContentValue(formData.descriptions?.b2cMoreInfo, content)
+                      <div className="quill-dark-mode">
+                        <ReactQuill
+                          value={getContentValue(formData.descriptions?.b2cMoreInfo)}
+                          onChange={(content) => setFormData({
+                            ...formData,
+                            descriptions: {
+                              ...formData.descriptions,
+                              b2cMoreInfo: setContentValue(formData.descriptions?.b2cMoreInfo, content)
+                            }
+                          })}
+                          modules={{
+                            toolbar: [
+                              [{ 'header': [1, 2, 3, false] }],
+                              ['bold', 'italic', 'underline', 'strike'],
+                              [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                              [{ 'color': [] }, { 'background': [] }],
+                              ['link', 'image'],
+                              ['clean']
+                            ]
+                          }}
+                          theme="snow"
+                          placeholder={currentLanguage === 'sv-SE' ? 
+                            "Lägg till detaljerad produktinformation här..." :
+                            "Add detailed product information here..."
                           }
-                        })}
-                        modules={{
-                          toolbar: [
-                            [{ 'header': [1, 2, 3, false] }],
-                            ['bold', 'italic', 'underline', 'strike'],
-                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                            [{ 'color': [] }, { 'background': [] }],
-                            ['link', 'image'],
-                            ['clean']
-                          ]
-                        }}
-                        theme="snow"
-                        placeholder={currentLanguage === 'sv-SE' ? 
-                          "Lägg till detaljerad produktinformation här..." :
-                          "Add detailed product information here..."
-                        }
-                      />
+                        />
+                      </div>
                     </div>
                     <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                       {currentLanguage === 'sv-SE' ? 
