@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AppLayout from '../../../components/layout/AppLayout';
 import { useDiningContacts } from '../hooks/useDiningContacts';
@@ -32,11 +32,62 @@ const ContactList = () => {
     activateContact
   } = useDiningContacts();
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [countryFilter, setCountryFilter] = useState('all');
-  const [priorityFilter, setPriorityFilter] = useState('all');
-  const [showFilters, setShowFilters] = useState(false);
+  // Session storage keys for filter persistence
+  const STORAGE_KEYS = {
+    searchTerm: 'diningWagon_searchTerm',
+    statusFilter: 'diningWagon_statusFilter',
+    countryFilter: 'diningWagon_countryFilter',
+    priorityFilter: 'diningWagon_priorityFilter',
+    showFilters: 'diningWagon_showFilters'
+  };
+
+  // Initialize state from session storage or defaults
+  const [searchTerm, setSearchTerm] = useState(() => 
+    sessionStorage.getItem(STORAGE_KEYS.searchTerm) || ''
+  );
+  const [statusFilter, setStatusFilter] = useState(() => 
+    sessionStorage.getItem(STORAGE_KEYS.statusFilter) || 'all'
+  );
+  const [countryFilter, setCountryFilter] = useState(() => 
+    sessionStorage.getItem(STORAGE_KEYS.countryFilter) || 'all'
+  );
+  const [priorityFilter, setPriorityFilter] = useState(() => 
+    sessionStorage.getItem(STORAGE_KEYS.priorityFilter) || 'all'
+  );
+  const [showFilters, setShowFilters] = useState(() => 
+    sessionStorage.getItem(STORAGE_KEYS.showFilters) === 'true'
+  );
+
+  // Persist filter changes to session storage
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEYS.searchTerm, searchTerm);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEYS.statusFilter, statusFilter);
+  }, [statusFilter]);
+
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEYS.countryFilter, countryFilter);
+  }, [countryFilter]);
+
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEYS.priorityFilter, priorityFilter);
+  }, [priorityFilter]);
+
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEYS.showFilters, showFilters.toString());
+  }, [showFilters]);
+
+  // Clear all filters function
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setCountryFilter('all');
+    setPriorityFilter('all');
+    // Keep showFilters state as is - user might want to keep it open
+    toast.success('🧹 Alla filter rensade!');
+  };
 
   // Filter contacts based on current filters
   const filteredContacts = useMemo(() => {
@@ -223,14 +274,27 @@ const ContactList = () => {
               />
             </div>
             
-            {/* Filter Toggle */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <FunnelIcon className="h-5 w-5 text-gray-500" />
-              <span>Filter</span>
-            </button>
+            <div className="flex space-x-2">
+              {/* Filter Toggle */}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <FunnelIcon className="h-5 w-5 text-gray-500" />
+                <span>Filter</span>
+              </button>
+
+              {/* Clear Filters Button - only show if any filters are active */}
+              {(searchTerm || statusFilter !== 'all' || countryFilter !== 'all' || priorityFilter !== 'all') && (
+                <button
+                  onClick={clearAllFilters}
+                  className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
+                  title="Rensa alla filter"
+                >
+                  <span>Rensa</span>
+                </button>
+              )}
+            </div>
           </div>
           
           {/* Filter Options */}
