@@ -251,7 +251,14 @@ export const useDiningContacts = () => {
       filtered = filtered.filter(contact => 
         contact.companyName?.toLowerCase().includes(searchTerm) ||
         contact.contactPerson?.toLowerCase().includes(searchTerm) ||
-        contact.email?.toLowerCase().includes(searchTerm)
+        contact.email?.toLowerCase().includes(searchTerm) ||
+        contact.phone?.toLowerCase().includes(searchTerm) ||
+        contact.website?.toLowerCase().includes(searchTerm) ||
+        contact.notes?.toLowerCase().includes(searchTerm) ||
+        // 🏷️ NEW: Search in tags array
+        (contact.tags && contact.tags.some(tag => 
+          tag.toLowerCase().includes(searchTerm)
+        ))
       );
     }
 
@@ -262,6 +269,23 @@ export const useDiningContacts = () => {
     }
 
     return filtered;
+  }, [contacts]);
+
+  // Get all unique tags from all contacts for autocomplete
+  const getAllTags = useCallback(() => {
+    const allTags = new Set();
+    
+    contacts.forEach(contact => {
+      if (contact.tags && Array.isArray(contact.tags)) {
+        contact.tags.forEach(tag => {
+          if (tag && typeof tag === 'string' && tag.trim()) {
+            allTags.add(tag.toLowerCase().trim());
+          }
+        });
+      }
+    });
+    
+    return Array.from(allTags).sort();
   }, [contacts]);
 
   // Statistics for dashboard
@@ -313,6 +337,7 @@ export const useDiningContacts = () => {
     filterContacts,
     getContactStats,
     getCountries,
+    getAllTags,
     getTags,
     
     // State management

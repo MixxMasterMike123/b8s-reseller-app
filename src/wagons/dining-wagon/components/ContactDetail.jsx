@@ -186,7 +186,7 @@ const ContactDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { currentUser, userData, isAdmin, getAllUsers } = useAuth();
-  const { contacts, getContact, updateContact, deleteContact, activateContact, hasInitialized } = useDiningContacts();
+  const { contacts, getContact, updateContact, deleteContact, activateContact, hasInitialized, getAllTags } = useDiningContacts();
   const { getActivitiesByContact, addActivity, updateActivity, deleteActivity } = useDiningActivities();
   
   // URL parameter detection for activity highlighting
@@ -579,14 +579,14 @@ const ContactDetail = () => {
     const value = e.target.value;
     setManualTagInput(value);
     
-    // Show autocomplete suggestions
+    // Show autocomplete suggestions from database
     if (value.trim().length > 0) {
-      const commonTags = ['hett', 'ringabak', 'problem', 'nöjd', 'akut', 'budget', 'chef', 'vd', 'presentation', 'uppföljning', 'möte', 'demo', 'förhandling', 'kontrakt', 'leverans', 'support', 'reklamation', 'expansion', 'ny-kund', 'återkommande'];
+      const allTags = getAllTags(); // Get from database instead of hardcoded list
       const inputText = value.replace('#', '').toLowerCase();
-      const matches = commonTags.filter(tag => 
+      const matches = allTags.filter(tag => 
         tag.includes(inputText) && !selectedTags.includes(tag)
       );
-      setAutocompleteOptions(matches.slice(0, 5)); // Max 5 suggestions
+      setAutocompleteOptions(matches.slice(0, 8)); // Max 8 suggestions
       setShowAutocomplete(matches.length > 0);
     } else {
       setShowAutocomplete(false);

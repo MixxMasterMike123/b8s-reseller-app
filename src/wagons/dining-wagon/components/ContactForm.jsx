@@ -19,7 +19,7 @@ import toast from 'react-hot-toast';
 
 const ContactForm = () => {
   const navigate = useNavigate();
-  const { addContact, loading } = useDiningContacts();
+  const { addContact, loading, getAllTags } = useDiningContacts();
 
   const [formData, setFormData] = useState({
     // Core contact info
@@ -52,6 +52,8 @@ const ContactForm = () => {
   const [errors, setErrors] = useState({});
   const [newTag, setNewTag] = useState('');
   const [metaScraping, setMetaScraping] = useState(false);
+  const [showTagAutocomplete, setShowTagAutocomplete] = useState(false);
+  const [tagSuggestions, setTagSuggestions] = useState([]);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -70,14 +72,36 @@ const ContactForm = () => {
     }
   };
 
+  // Handle tag input changes with autocomplete
+  const handleTagInputChange = (e) => {
+    const value = e.target.value;
+    setNewTag(value);
+    
+    if (value.trim().length > 0) {
+      const allTags = getAllTags();
+      const inputText = value.trim().toLowerCase();
+      const matches = allTags.filter(tag => 
+        tag.includes(inputText) && !formData.tags.includes(tag)
+      );
+      setTagSuggestions(matches.slice(0, 8)); // Max 8 suggestions
+      setShowTagAutocomplete(matches.length > 0);
+    } else {
+      setShowTagAutocomplete(false);
+      setTagSuggestions([]);
+    }
+  };
+
   // Add tag to contact
-  const handleAddTag = () => {
-    if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
+  const handleAddTag = (tagToAdd = null) => {
+    const tag = tagToAdd || newTag.trim();
+    if (tag && !formData.tags.includes(tag)) {
       setFormData(prev => ({
         ...prev,
-        tags: [...prev.tags, newTag.trim()]
+        tags: [...prev.tags, tag]
       }));
       setNewTag('');
+      setShowTagAutocomplete(false);
+      setTagSuggestions([]);
     }
   };
 
@@ -94,6 +118,9 @@ const ContactForm = () => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleAddTag();
+    } else if (e.key === 'Escape') {
+      setShowTagAutocomplete(false);
+      setTagSuggestions([]);
     }
   };
 
@@ -520,22 +547,42 @@ const ContactForm = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Taggar</h3>
               
               <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="text"
-                    value={newTag}
-                    onChange={(e) => setNewTag(e.target.value)}
-                    onKeyPress={handleTagKeyPress}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    placeholder="Lägg till tagg..."
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddTag}
-                    className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-                  >
-                    Lägg till
-                  </button>
+                <div className="relative">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      value={newTag}
+                      onChange={handleTagInputChange}
+                      onKeyPress={handleTagKeyPress}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      placeholder="Lägg till tagg... (sök bland befintliga)"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleAddTag()}
+                      className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                    >
+                      Lägg till
+                    </button>
+                  </div>
+
+                  {/* Tag Autocomplete Dropdown */}
+                  {showTagAutocomplete && tagSuggestions.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                      <div className="py-1">
+                        {tagSuggestions.map((tag, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => handleAddTag(tag)}
+                            className="w-full px-4 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                          >
+                            <span className="text-sm text-gray-900">#{tag}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {formData.tags.length > 0 && (
