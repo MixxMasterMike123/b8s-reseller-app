@@ -154,8 +154,8 @@ const AdminAffiliatePayout = () => {
     return (
       <AppLayout>
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <span className="ml-3 text-lg text-gray-600">Laddar affiliate-data...</span>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
+          <span className="ml-3 text-lg text-gray-600 dark:text-gray-400">Laddar affiliate-data...</span>
         </div>
       </AppLayout>
     );
@@ -165,7 +165,7 @@ const AdminAffiliatePayout = () => {
     return (
       <AppLayout>
         <div className="text-center py-12">
-          <p className="text-gray-600">Affiliate hittades inte</p>
+          <p className="text-gray-600 dark:text-gray-400">Affiliate hittades inte</p>
         </div>
       </AppLayout>
     );
@@ -181,13 +181,13 @@ const AdminAffiliatePayout = () => {
           <div className="flex items-center">
             <Link 
               to="/admin/affiliates" 
-              className="mr-4 p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              className="mr-4 p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
               <ArrowLeftIcon className="h-6 w-6" />
             </Link>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Betala Affiliate</h1>
-              <p className="text-gray-600">Behandla betalning för {affiliate.name}</p>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 dark:text-gray-100 mb-2">Betala Affiliate</h1>
+              <p className="text-gray-600 dark:text-gray-400">Behandla betalning för {affiliate.name}</p>
             </div>
           </div>
         </div>
@@ -195,40 +195,40 @@ const AdminAffiliatePayout = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Affiliate Info Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Affiliate Information</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Affiliate Information</h3>
               
               <div className="space-y-3">
                 <div>
-                  <p className="text-sm text-gray-500">Namn</p>
-                  <p className="font-medium text-gray-900">{affiliate.name}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Namn</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{affiliate.name}</p>
                 </div>
                 
                 <div>
-                  <p className="text-sm text-gray-500">Affiliate-kod</p>
-                  <p className="font-medium text-gray-900">{affiliate.affiliateCode}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Affiliate-kod</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{affiliate.affiliateCode}</p>
                 </div>
                 
                 <div>
-                  <p className="text-sm text-gray-500">E-post</p>
-                  <p className="font-medium text-gray-900">{affiliate.email}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">E-post</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{affiliate.email}</p>
                 </div>
                 
                 <div>
-                  <p className="text-sm text-gray-500">Provision</p>
-                  <p className="font-medium text-gray-900">{affiliate.commissionRate}%</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Provision</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{affiliate.commissionRate}%</p>
                 </div>
               </div>
             </div>
 
             {/* Earnings Summary */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Intäktsöversikt</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Intäktsöversikt</h3>
               
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Totala intäkter</span>
-                  <span className="font-bold text-gray-900">{formatCurrency(earningsSummary.totalEarnings)}</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">{formatCurrency(earningsSummary.totalEarnings)}</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
@@ -238,12 +238,12 @@ const AdminAffiliatePayout = () => {
                 
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Tidigare utbetalningar</span>
-                  <span className="font-medium text-gray-900">{formatCurrency(earningsSummary.totalPaidOut)}</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(earningsSummary.totalPaidOut)}</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Antal utbetalningar</span>
-                  <span className="font-medium text-gray-900">{earningsSummary.payoutCount}</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">{earningsSummary.payoutCount}</span>
                 </div>
               </div>
             </div>
@@ -251,16 +251,16 @@ const AdminAffiliatePayout = () => {
 
           {/* Payout Form */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-lg p-8">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
               <div className="flex items-center mb-6">
                 <BanknotesIcon className="h-8 w-8 text-green-600 mr-3" />
-                <h2 className="text-2xl font-bold text-gray-900">Behandla Betalning</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Behandla Betalning</h2>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Payout Amount */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Utbetalningsbelopp *
                   </label>
                   <div className="relative">
@@ -277,20 +277,20 @@ const AdminAffiliatePayout = () => {
                       placeholder="0.00"
                     />
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">SEK</span>
+                      <span className="text-gray-500 dark:text-gray-400 sm:text-sm">SEK</span>
                     </div>
                   </div>
                   {errors.payoutAmount && (
                     <p className="mt-1 text-sm text-red-600">{errors.payoutAmount}</p>
                   )}
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                     Maximalt belopp: {formatCurrency(affiliate.stats?.balance || 0)}
                   </p>
                 </div>
 
                 {/* Invoice Number */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Fakturanummer *
                   </label>
                   <input
@@ -309,7 +309,7 @@ const AdminAffiliatePayout = () => {
 
                 {/* Invoice File Upload */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Fakturafil (PDF) *
                   </label>
                   <div className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-lg ${
@@ -331,12 +331,12 @@ const AdminAffiliatePayout = () => {
                         </label>
                         <p className="pl-1">eller dra och släpp</p>
                       </div>
-                      <p className="text-xs text-gray-500">Endast PDF upp till 10MB</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Endast PDF upp till 10MB</p>
                       
                       {invoiceFile && (
                         <div className="mt-2 p-2 bg-gray-50 rounded-md">
-                          <p className="text-sm text-gray-900">{invoiceFile.name}</p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-sm text-gray-900 dark:text-gray-100">{invoiceFile.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
                             {(invoiceFile.size / 1024 / 1024).toFixed(2)} MB
                           </p>
                         </div>
@@ -350,25 +350,25 @@ const AdminAffiliatePayout = () => {
 
                 {/* Notes */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Anteckningar (valfritt)
                   </label>
                   <textarea
                     rows={3}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                     placeholder="Ytterligare information om betalningen..."
                   />
                 </div>
 
                 {/* Warning */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
                   <div className="flex">
                     <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400 mt-0.5" />
                     <div className="ml-3">
-                      <h3 className="text-sm font-medium text-yellow-800">Viktigt att veta</h3>
-                      <div className="mt-2 text-sm text-yellow-700">
+                      <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">Viktigt att veta</h3>
+                      <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-200">
                         <ul className="list-disc pl-5 space-y-1">
                           <li>Detta kommer att nollställa affiliate-saldot</li>
                           <li>Totala intäkter kommer att bevaras för statistik</li>
@@ -383,7 +383,7 @@ const AdminAffiliatePayout = () => {
                 <div className="flex justify-end space-x-4">
                   <Link
                     to="/admin/affiliates"
-                    className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-blue-500 dark:focus:ring-blue-400"
                   >
                     Avbryt
                   </Link>
@@ -391,7 +391,7 @@ const AdminAffiliatePayout = () => {
                   <button
                     type="submit"
                     disabled={processing || uploading}
-                    className="px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                    className="px-6 py-3 bg-green-600 dark:bg-green-500 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-green-500 dark:focus:ring-green-400 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                   >
                     {uploading ? (
                       <>
