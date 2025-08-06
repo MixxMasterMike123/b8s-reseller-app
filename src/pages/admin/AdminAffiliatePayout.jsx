@@ -186,7 +186,7 @@ const AdminAffiliatePayout = () => {
               <ArrowLeftIcon className="h-6 w-6" />
             </Link>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 dark:text-gray-100 mb-2">Betala Affiliate</h1>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Betala Affiliate</h1>
               <p className="text-gray-600 dark:text-gray-400">Behandla betalning för {affiliate.name}</p>
             </div>
           </div>

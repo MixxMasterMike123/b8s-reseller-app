@@ -300,7 +300,7 @@ const AdminAffiliateAnalytics = () => {
                 <ArrowLeftIcon className="h-6 w-6" />
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 dark:text-gray-100 mb-2">Affiliate Analytics</h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Affiliate Analytics</h1>
                 <p className="text-gray-600 dark:text-gray-400">Detaljerad prestandaanalys för dina affiliates</p>
               </div>
             </div>
@@ -311,7 +311,7 @@ const AdminAffiliateAnalytics = () => {
               <select
                 value={timeRange}
                 onChange={(e) => setTimeRange(e.target.value)}
-                className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               >
                 <option value="7">7 dagar</option>
                 <option value="30">30 dagar</option>

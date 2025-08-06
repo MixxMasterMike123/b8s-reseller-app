@@ -245,36 +245,36 @@ const ContactForm = () => {
           <div className="flex items-center">
             <Link 
               to="/admin/dining/contacts" 
-              className="mr-4 p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              className="mr-4 p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
               <ArrowLeftIcon className="h-6 w-6" />
             </Link>
             <div className="flex items-center">
-              <div className="bg-orange-100 p-3 rounded-xl mr-4">
-                <UserPlusIcon className="h-8 w-8 text-orange-600" />
+              <div className="bg-orange-100 dark:bg-orange-900 p-3 rounded-xl mr-4">
+                <UserPlusIcon className="h-8 w-8 text-orange-600 dark:text-orange-400" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-1">Lägg till Ny Gäst</h1>
-                <p className="text-gray-600">Välkomna en ny gäst till restaurangen</p>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">Lägg till Ny Gäst</h1>
+                <p className="text-gray-600 dark:text-gray-400">Välkomna en ny gäst till restaurangen</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Form */}
-        <div className="bg-white rounded-2xl shadow-lg p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
           <form onSubmit={handleSubmit} className="space-y-8">
             
             {/* Company Information */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <BuildingOfficeIcon className="h-5 w-5 text-orange-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                <BuildingOfficeIcon className="h-5 w-5 text-orange-600 dark:text-orange-400 mr-2" />
                 Företagsinformation
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Företagsnamn *
                   </label>
                   <input
@@ -282,13 +282,13 @@ const ContactForm = () => {
                     name="companyName"
                     value={formData.companyName}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                      errors.companyName ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-4 py-3 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400 ${
+                      errors.companyName ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="Företagets namn"
                   />
                   {errors.companyName && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
                       <ExclamationTriangleIcon className="h-4 w-4 mr-1" />
                       {errors.companyName}
                     </p>
@@ -297,7 +297,7 @@ const ContactForm = () => {
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Webbplats
                     </label>
                     <button
@@ -306,8 +306,8 @@ const ContactForm = () => {
                       disabled={!formData.website || metaScraping}
                       className={`flex items-center px-2 py-1 text-xs rounded-md transition-colors ${
                         !formData.website 
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                          : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
+                          : 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800'
                       } ${metaScraping ? 'opacity-50' : ''}`}
                       title={!formData.website ? 'Ange webbsida först' : 'Hämta META data från webbsidan'}
                     >
@@ -320,7 +320,7 @@ const ContactForm = () => {
                     name="website"
                     value={formData.website}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                     placeholder="https://exempel.se"
                   />
                 </div>
@@ -329,14 +329,14 @@ const ContactForm = () => {
 
             {/* Contact Person */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <UserIcon className="h-5 w-5 text-orange-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                <UserIcon className="h-5 w-5 text-orange-600 dark:text-orange-400 mr-2" />
                 Kontaktperson
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Namn
                   </label>
                   <input
@@ -344,13 +344,13 @@ const ContactForm = () => {
                     name="contactPerson"
                     value={formData.contactPerson}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                      errors.contactPerson ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-4 py-3 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400 ${
+                      errors.contactPerson ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="Förnamn Efternamn"
                   />
                   {errors.contactPerson && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
                       <ExclamationTriangleIcon className="h-4 w-4 mr-1" />
                       {errors.contactPerson}
                     </p>
@@ -358,7 +358,7 @@ const ContactForm = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     E-post
                   </label>
                   <input
@@ -366,13 +366,13 @@ const ContactForm = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                      errors.email ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-4 py-3 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400 ${
+                      errors.email ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="namn@företag.se"
                   />
                   {errors.email && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
                       <ExclamationTriangleIcon className="h-4 w-4 mr-1" />
                       {errors.email}
                     </p>
@@ -381,7 +381,7 @@ const ContactForm = () => {
               </div>
 
               <div className="mt-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Telefon
                 </label>
                 <input
@@ -389,13 +389,13 @@ const ContactForm = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                    errors.phone ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-4 py-3 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400 ${
+                    errors.phone ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'
                   }`}
                   placeholder="+46 70 123 45 67"
                 />
                 {errors.phone && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
                     <ExclamationTriangleIcon className="h-4 w-4 mr-1" />
                     {errors.phone}
                   </p>
@@ -405,14 +405,14 @@ const ContactForm = () => {
 
             {/* Address */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <MapPinIcon className="h-5 w-5 text-orange-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                <MapPinIcon className="h-5 w-5 text-orange-600 dark:text-orange-400 mr-2" />
                 Adress
               </h3>
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Adress
                   </label>
                   <input
@@ -420,14 +420,14 @@ const ContactForm = () => {
                     name="address"
                     value={formData.address}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                     placeholder="Gatuadress"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Stad
                     </label>
                     <input
@@ -435,13 +435,13 @@ const ContactForm = () => {
                       name="city"
                       value={formData.city}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                       placeholder="Stockholm"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Postnummer
                     </label>
                     <input
@@ -449,13 +449,13 @@ const ContactForm = () => {
                       name="postalCode"
                       value={formData.postalCode}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                       placeholder="12345"
                     />
                   </div>
 
                                     <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Land
                     </label>
                     <input
@@ -463,7 +463,7 @@ const ContactForm = () => {
                       name="country"
                       value={formData.country}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                       placeholder="Sverige"
                     />
                   </div>
@@ -473,21 +473,21 @@ const ContactForm = () => {
 
             {/* Status & Priority */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <TagIcon className="h-5 w-5 text-orange-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                <TagIcon className="h-5 w-5 text-orange-600 dark:text-orange-400 mr-2" />
                 Kategorisering
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Status
                   </label>
                   <select
                     name="status"
                     value={formData.status}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                   >
                     {/* New status options - prioritized */}
                     <option value="ej_kontaktad">Ej kontaktad</option>
@@ -504,14 +504,14 @@ const ContactForm = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Prioritet
                   </label>
                   <select
                     name="priority"
                     value={formData.priority}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                   >
                     <option value="low">Låg</option>
                     <option value="medium">Medium</option>
@@ -520,14 +520,14 @@ const ContactForm = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Källa
                   </label>
                   <select
                     name="source"
                     value={formData.source}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                   >
                     <option value="ai">AI</option>
                     <option value="manual">Manuell inmatning</option>
@@ -544,7 +544,7 @@ const ContactForm = () => {
 
             {/* Tags */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Taggar</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Taggar</h3>
               
               <div className="space-y-4">
                 <div className="relative">
@@ -554,13 +554,13 @@ const ContactForm = () => {
                       value={newTag}
                       onChange={handleTagInputChange}
                       onKeyPress={handleTagKeyPress}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                       placeholder="Lägg till tagg... (sök bland befintliga)"
                     />
                     <button
                       type="button"
                       onClick={() => handleAddTag()}
-                      className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                      className="px-4 py-2 bg-orange-600 dark:bg-orange-500 text-white rounded-lg hover:bg-orange-700 dark:hover:bg-orange-600 transition-colors"
                     >
                       Lägg till
                     </button>
@@ -568,16 +568,16 @@ const ContactForm = () => {
 
                   {/* Tag Autocomplete Dropdown */}
                   {showTagAutocomplete && tagSuggestions.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg">
                       <div className="py-1">
                         {tagSuggestions.map((tag, index) => (
                           <button
                             key={index}
                             type="button"
                             onClick={() => handleAddTag(tag)}
-                            className="w-full px-4 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                            className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700 focus:outline-none"
                           >
-                            <span className="text-sm text-gray-900">#{tag}</span>
+                            <span className="text-sm text-gray-900 dark:text-gray-100">#{tag}</span>
                           </button>
                         ))}
                       </div>
@@ -590,13 +590,13 @@ const ContactForm = () => {
                     {formData.tags.map((tag, index) => (
                       <span
                         key={index}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-800"
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300"
                       >
                         {tag}
                         <button
                           type="button"
                           onClick={() => handleRemoveTag(tag)}
-                          className="ml-2 text-orange-600 hover:text-orange-800"
+                          className="ml-2 text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-200"
                         >
                           ×
                         </button>
@@ -609,29 +609,29 @@ const ContactForm = () => {
 
             {/* Notes */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Anteckningar</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Anteckningar</h3>
               <textarea
                 name="notes"
                 value={formData.notes}
                 onChange={handleChange}
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                 placeholder="Anteckningar om gästen..."
               />
             </div>
 
             {/* Submit Buttons */}
-            <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+            <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-600">
               <Link
                 to="/admin/dining/contacts"
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 Avbryt
               </Link>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                className="px-6 py-3 bg-orange-600 dark:bg-orange-500 text-white rounded-lg hover:bg-orange-700 dark:hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
               >
                 {loading ? (
                   <>

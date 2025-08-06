@@ -1152,24 +1152,24 @@ const ContactDetail = () => {
 
         {/* Main Question */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 dark:text-gray-100 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             Vad ska jag säga?
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 dark:text-gray-400">Till {contact.contactPerson} på {contact.companyName}</p>
+          <p className="text-gray-600 dark:text-gray-400">Till {contact.contactPerson} på {contact.companyName}</p>
         </div>
 
                 {/* Contact Card */}
-        <div className="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-8">
           {/* 🎯 IMPROVED: Desktop-First Layout - Header on top, buttons below */}
           
           {/* Company Header with Icon */}
           <div className="flex items-start space-x-4 mb-4">
             <div className="bg-orange-100 dark:bg-orange-900 p-3 rounded-xl">
-              <BuildingOffice2Icon className="h-8 w-8 text-orange-600 dark:text-orange-400 dark:text-orange-400" />
+              <BuildingOffice2Icon className="h-8 w-8 text-orange-600 dark:text-orange-400" />
             </div>
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 dark:text-gray-100">{contact.companyName}</h2>
-              <p className="text-lg text-gray-600 dark:text-gray-400 dark:text-gray-400">{contact.contactPerson}</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{contact.companyName}</h2>
+              <p className="text-lg text-gray-600 dark:text-gray-400">{contact.contactPerson}</p>
             </div>
           </div>
 
@@ -1406,7 +1406,7 @@ const ContactDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           
           {/* Last Conversation */}
-          <div className="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
               <ChatSolid className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />
               Senaste kontakten
@@ -1579,7 +1579,7 @@ const ContactDetail = () => {
         </div>
 
           {/* Conversation Context */}
-          <div className="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
               <PencilIcon className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
               Vad att prata om
@@ -1618,7 +1618,7 @@ const ContactDetail = () => {
           const recentActivities = allActivities.slice(0, 4); // Show 4 most recent
           
           return allActivities.length > 1 ? (
-            <div className="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-8">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-8">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                   <ClockIcon className="h-5 w-5 text-gray-600 dark:text-gray-400 mr-2" />
@@ -1810,7 +1810,7 @@ const ContactDetail = () => {
         })()}
 
         {/* Activity Logger Section - "Vad hände?" */}
-        <div className="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Vad hände? Registrera kontakt</h3>
           
           {/* Activity Type Selector */}
