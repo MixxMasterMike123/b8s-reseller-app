@@ -84,7 +84,7 @@ const TextWithMentions = ({ text, className = "", adminUsers = [] }) => {
            return (
              <span
                key={index}
-               className="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300"
+               className="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600"
              >
                {part}
              </span>
@@ -128,9 +128,9 @@ const InlineActivityEditor = ({ activity, onSave, onCancel, contactName }) => {
   };
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mt-2">
+    <div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 rounded-md p-3 mt-2">
       <div className="mb-2">
-        <label className="block text-xs font-medium text-gray-600 mb-1">
+        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
           Vad är läget med {contactName}?
         </label>
         <input
@@ -139,13 +139,13 @@ const InlineActivityEditor = ({ activity, onSave, onCancel, contactName }) => {
           onChange={(e) => setEditData(prev => ({ ...prev, subject: e.target.value }))}
           onKeyDown={handleKeyDown}
           placeholder="Beskriv vad som hände..."
-          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+          className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
           autoFocus
         />
       </div>
 
       <div className="mb-2">
-        <label className="block text-xs font-medium text-gray-600 mb-1">
+        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
           Detaljer (valfritt)
         </label>
         <textarea
@@ -154,7 +154,7 @@ const InlineActivityEditor = ({ activity, onSave, onCancel, contactName }) => {
           onKeyDown={handleKeyDown}
           placeholder="Mer information..."
           rows={2}
-          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+          className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
         />
       </div>
 
@@ -169,7 +169,7 @@ const InlineActivityEditor = ({ activity, onSave, onCancel, contactName }) => {
           </button>
           <button
             onClick={onCancel}
-            className="px-2 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs rounded transition-colors"
+            className="px-2 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 dark:text-gray-300 text-xs rounded transition-colors"
           >
             Avbryt
           </button>
@@ -367,11 +367,11 @@ const ContactDetail = () => {
 
   // Activity type options with Swedish labels and icons
   const activityTypes = [
-    { value: 'call', label: 'Telefonsamtal', icon: PhoneSolid, color: 'text-blue-600' },
-    { value: 'email', label: 'E-post', icon: EnvelopeSolid, color: 'text-green-600' },
+    { value: 'call', label: 'Telefonsamtal', icon: PhoneSolid, color: 'text-blue-600 dark:text-blue-400' },
+    { value: 'email', label: 'E-post', icon: EnvelopeSolid, color: 'text-green-600 dark:text-green-400' },
     { value: 'text', label: 'SMS/Text', icon: DevicePhoneMobileSolid, color: 'text-purple-600' },
-    { value: 'meeting', label: 'Möte', icon: CalendarDaysSolid, color: 'text-orange-600' },
-    { value: 'note', label: 'Anteckning', icon: DocumentTextSolid, color: 'text-gray-600' }
+    { value: 'meeting', label: 'Möte', icon: CalendarDaysSolid, color: 'text-orange-600 dark:text-orange-400' },
+    { value: 'note', label: 'Anteckning', icon: DocumentTextSolid, color: 'text-gray-600 dark:text-gray-400' }
   ];
 
   // Advanced Swedish weekday and date parsing
@@ -855,7 +855,7 @@ const ContactDetail = () => {
       const IconComponent = activityType.icon;
       return <IconComponent className={`h-5 w-5 ${activityType.color}`} />;
     }
-    return <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-600" />;
+    return <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />;
   };
 
   // Get conversation context for what to talk about
@@ -1118,8 +1118,8 @@ const ContactDetail = () => {
     return (
       <AppLayout>
         <div className="flex items-center justify-center py-16">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-          <span className="ml-3 text-gray-600">Laddar kontakt...</span>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 dark:border-orange-400"></div>
+          <span className="ml-3 text-gray-600 dark:text-gray-400 dark:text-gray-400">Laddar kontakt...</span>
         </div>
       </AppLayout>
     );
@@ -1129,7 +1129,7 @@ const ContactDetail = () => {
   return (
       <AppLayout>
         <div className="text-center py-16">
-          <p className="text-gray-600">Kontakt kunde inte hittas</p>
+          <p className="text-gray-600 dark:text-gray-400 dark:text-gray-400">Kontakt kunde inte hittas</p>
         </div>
       </AppLayout>
     );
@@ -1143,7 +1143,7 @@ const ContactDetail = () => {
         <div className="mb-6">
               <Link 
                 to="/admin/dining/contacts" 
-            className="inline-flex items-center text-gray-600 hover:text-gray-900 font-medium"
+            className="inline-flex items-center text-gray-600 dark:text-gray-400 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-100 font-medium"
               >
             <ArrowLeftIcon className="h-4 w-4 mr-1" />
             Tillbaka till kontakter
@@ -1152,24 +1152,24 @@ const ContactDetail = () => {
 
         {/* Main Question */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 dark:text-gray-100 mb-2">
             Vad ska jag säga?
           </h1>
-          <p className="text-gray-600">Till {contact.contactPerson} på {contact.companyName}</p>
+          <p className="text-gray-600 dark:text-gray-400 dark:text-gray-400">Till {contact.contactPerson} på {contact.companyName}</p>
         </div>
 
                 {/* Contact Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8">
+        <div className="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-8">
           {/* 🎯 IMPROVED: Desktop-First Layout - Header on top, buttons below */}
           
           {/* Company Header with Icon */}
           <div className="flex items-start space-x-4 mb-4">
-            <div className="bg-orange-100 p-3 rounded-xl">
-              <BuildingOffice2Icon className="h-8 w-8 text-orange-600" />
+            <div className="bg-orange-100 dark:bg-orange-900 p-3 rounded-xl">
+              <BuildingOffice2Icon className="h-8 w-8 text-orange-600 dark:text-orange-400 dark:text-orange-400" />
             </div>
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-gray-900">{contact.companyName}</h2>
-              <p className="text-lg text-gray-600">{contact.contactPerson}</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 dark:text-gray-100">{contact.companyName}</h2>
+              <p className="text-lg text-gray-600 dark:text-gray-400 dark:text-gray-400">{contact.contactPerson}</p>
             </div>
           </div>
 
@@ -1179,7 +1179,7 @@ const ContactDetail = () => {
               {contact.phone && (
                 <a 
                   href={`tel:${contact.phone}`}
-                  className="flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                  className="flex items-center text-blue-600 dark:text-blue-400 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
                 >
                   <PhoneIcon className="h-4 w-4 mr-1" />
                   {contact.phone}
@@ -1188,7 +1188,7 @@ const ContactDetail = () => {
               {contact.email && (
                 <a 
                   href={`mailto:${contact.email}`}
-                  className="flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                  className="flex items-center text-blue-600 dark:text-blue-400 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
                 >
                   <EnvelopeIcon className="h-4 w-4 mr-1" />
                   {contact.email}
@@ -1199,14 +1199,14 @@ const ContactDetail = () => {
                   href={contact.website.startsWith('http') ? contact.website : `https://${contact.website}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                  className="flex items-center text-blue-600 dark:text-blue-400 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
                 >
                   <GlobeAltIcon className="h-4 w-4 mr-1" />
                   {contact.website.replace(/^https?:\/\//, '')}
                 </a>
               )}
               {contact.orgNumber && (
-                <div className="flex items-center text-gray-600">
+                <div className="flex items-center text-gray-600 dark:text-gray-400">
                   <BuildingOffice2Icon className="h-4 w-4 mr-1" />
                   <span className="text-sm">Org.nr: {contact.orgNumber}</span>
                 </div>
@@ -1216,7 +1216,7 @@ const ContactDetail = () => {
             {/* Address Information */}
             {(contact.address || contact.city) && (
               <div className="mb-3">
-                <div className="flex items-center text-gray-600">
+                <div className="flex items-center text-gray-600 dark:text-gray-400">
                   <MapPinIcon className="h-4 w-4 mr-1" />
                   <span className="text-sm">
                     {[contact.address, contact.postalCode, contact.city, contact.country].filter(Boolean).join(', ')}
@@ -1226,7 +1226,7 @@ const ContactDetail = () => {
             )}
 
             {/* CRM Information */}
-            <div className="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+            <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900 rounded-lg border border-blue-100">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                 {/* Status */}
                 <div className="flex items-center">
@@ -1296,12 +1296,12 @@ const ContactDetail = () => {
 
             {/* Notes Full Text */}
             {contact.notes && (
-              <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+              <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div className="flex items-start">
-                  <DocumentTextIcon className="h-4 w-4 text-gray-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <DocumentTextIcon className="h-4 w-4 text-gray-500 dark:text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <div className="text-xs font-medium text-gray-700 mb-1">Anteckningar</div>
-                    <div className="text-sm text-gray-600 whitespace-pre-wrap">
+                    <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Anteckningar</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
                       {contact.notes}
                     </div>
                   </div>
@@ -1312,12 +1312,12 @@ const ContactDetail = () => {
             {/* Active/Prospect Status Indicator */}
             <div className="mb-3">
               {contact.active === true ? (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800 border border-green-200 font-medium">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 border border-green-200 font-medium">
                   <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
                   Aktiv B2B Kund
                 </span>
               ) : (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-800 border border-orange-200 font-medium">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300 border border-orange-200 font-medium">
                   <span className="w-2 h-2 bg-orange-400 rounded-full mr-2"></span>
                   CRM Reservering
                 </span>
@@ -1331,7 +1331,7 @@ const ContactDetail = () => {
                   {contact.tags.map((tag, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800"
+                      className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300"
                     >
                       #{tag}
                     </span>
@@ -1352,20 +1352,20 @@ const ContactDetail = () => {
             </a>
             <a
               href={`mailto:${contact.email}`}
-              className="flex items-center px-3 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md text-sm font-medium transition-colors space-x-1.5"
+              className="flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-700 rounded-md text-sm font-medium transition-colors space-x-1.5"
             >
               <EnvelopeIcon className="h-4 w-4" />
               <span>Maila</span>
             </a>
             <button
               onClick={() => setShowAdminDocUpload(true)}
-              className="flex items-center px-3 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md text-sm font-medium transition-colors space-x-1.5"
+              className="flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-700 rounded-md text-sm font-medium transition-colors space-x-1.5"
               title="Admin-dokument (endast synligt för administratörer)"
             >
               <DocumentArrowUpIcon className="h-4 w-4" />
               <span>Dokument</span>
               {adminDocuments.length > 0 && (
-                <span className="ml-1 inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                <span className="ml-1 inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300">
                   {adminDocuments.length}
                 </span>
               )}
@@ -1385,7 +1385,7 @@ const ContactDetail = () => {
             
             <button
               onClick={handleEditContact}
-              className="flex items-center px-3 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md text-sm font-medium transition-colors space-x-1.5"
+              className="flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-700 rounded-md text-sm font-medium transition-colors space-x-1.5"
               title="Redigera kontaktinformation"
             >
               <PencilIcon className="h-4 w-4" />
@@ -1393,7 +1393,7 @@ const ContactDetail = () => {
             </button>
             <button
               onClick={handleDeleteContact}
-              className="flex items-center px-3 py-1.5 border border-red-300 text-red-700 hover:bg-red-50 rounded-md text-sm font-medium transition-colors space-x-1.5"
+              className="flex items-center px-3 py-1.5 border border-red-300 text-red-700 hover:bg-red-50 dark:hover:bg-red-900 dark:bg-red-900 rounded-md text-sm font-medium transition-colors space-x-1.5"
               title="Ta bort kontakt"
             >
               <TrashIcon className="h-4 w-4" />
@@ -1406,9 +1406,9 @@ const ContactDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           
           {/* Last Conversation */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <ChatSolid className="h-5 w-5 text-blue-600 mr-2" />
+          <div className="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+              <ChatSolid className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />
               Senaste kontakten
             </h3>
             
@@ -1422,15 +1422,15 @@ const ContactDetail = () => {
                   // Dynamic styling based on urgency
                   const getActivityStyle = (level, dismissed) => {
                     if (dismissed) {
-                      return 'p-4 bg-gray-50 rounded-lg border border-gray-200';
+                      return 'p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600';
                     }
                     switch(level) {
                       case 'critical':
-                        return 'p-4 bg-red-50 rounded-lg border-2 border-red-200';
+                        return 'p-4 bg-red-50 dark:bg-red-900 rounded-lg border-2 border-red-200';
                       case 'high':
-                        return 'p-4 bg-orange-50 rounded-lg border-2 border-orange-200';
+                        return 'p-4 bg-orange-50 dark:bg-orange-900 rounded-lg border-2 border-orange-200';
                       default:
-                        return 'p-4 bg-blue-50 rounded-lg';
+                        return 'p-4 bg-blue-50 dark:bg-blue-900 rounded-lg';
                     }
                   };
                   
@@ -1444,7 +1444,7 @@ const ContactDetail = () => {
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center space-x-2 flex-1">
                           {getActivityIcon(lastConversation.type)}
-                          <div className="font-medium text-gray-900">
+                          <div className="font-medium text-gray-900 dark:text-gray-100">
                             <TextWithMentions text={lastConversation.subject} adminUsers={adminUsers} />
                           </div>
                           
@@ -1453,14 +1453,14 @@ const ContactDetail = () => {
                             <div className="flex items-center space-x-1">
                               {urgencyLevel === 'critical' && (
                                 <>
-                                  <ExclamationSolid className="h-4 w-4 text-red-600" />
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                  <ExclamationSolid className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300">
                                     AKUT
                                   </span>
                                 </>
                               )}
                               {urgencyLevel === 'high' && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300">
                                   PROBLEM
                                 </span>
                               )}
@@ -1469,7 +1469,7 @@ const ContactDetail = () => {
                           
                           {/* Dismissed indicator */}
                           {isDismissed && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:text-gray-400">
                               <CheckIcon className="h-3 w-3 mr-1" />
                               Löst
                             </span>
@@ -1477,13 +1477,13 @@ const ContactDetail = () => {
                         </div>
                         
                         {/* Date aligned with title */}
-                        <span className="text-sm text-gray-500 flex-shrink-0">
+                        <span className="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">
                           {lastConversation.createdAt?.toDate?.()?.toLocaleDateString('sv-SE') || lastConversation.date || 'Idag'}
                         </span>
                       </div>
                       
                       {lastConversation.description && (
-                        <p className="text-gray-700 mt-2">{lastConversation.description}</p>
+                        <p className="text-gray-700 dark:text-gray-300 mt-2">{lastConversation.description}</p>
                       )}
                       
                       {/* Bottom section with tags, user attribution, and buttons */}
@@ -1500,8 +1500,8 @@ const ContactDetail = () => {
                                     <span
                                       key={tag}
                                       className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                                        tag === 'akut' ? 'bg-red-100 text-red-800' :
-                                        tag === 'problem' ? 'bg-orange-100 text-orange-800' :
+                                        tag === 'akut' ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300' :
+                                        tag === 'problem' ? 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300' :
                                         'bg-gray-100 text-gray-800'
                                       }`}
                                     >
@@ -1522,7 +1522,7 @@ const ContactDetail = () => {
                           {!isDismissed && (
                   <button
                               onClick={() => handleEditActivity(lastConversation)}
-                              className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 bg-white hover:bg-blue-50 border border-blue-300 rounded transition-colors"
+                              className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:bg-blue-900 border border-blue-300 rounded transition-colors"
                               title="Redigera aktivitet"
                   >
                               <PencilIcon className="h-3 w-3 mr-1" />
@@ -1534,7 +1534,7 @@ const ContactDetail = () => {
                           {!isDismissed && (
                   <button
                               onClick={() => handleDeleteActivity(lastConversation.id)}
-                              className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 hover:text-red-800 bg-white hover:bg-red-50 border border-red-300 rounded transition-colors"
+                              className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-800 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900 dark:bg-red-900 border border-red-300 rounded transition-colors"
                               title="Ta bort aktivitet"
                   >
                               <TrashIcon className="h-3 w-3 mr-1" />
@@ -1546,7 +1546,7 @@ const ContactDetail = () => {
                           {isUrgent && !isDismissed && (
                   <button
                               onClick={() => dismissActivity(lastConversation.id)}
-                              className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-50 border border-gray-300 rounded transition-colors"
+                              className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded transition-colors"
                               title="Markera som löst"
                   >
                               <CheckIcon className="h-3 w-3 mr-1" />
@@ -1570,7 +1570,7 @@ const ContactDetail = () => {
                 })()}
           </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 <ChatBubbleLeftRightIcon className="h-8 w-8 text-gray-300 mx-auto mb-2" />
                 <p>Ingen tidigare kontakt</p>
                 <p className="text-sm">Detta blir er första kontakt!</p>
@@ -1579,9 +1579,9 @@ const ContactDetail = () => {
         </div>
 
           {/* Conversation Context */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <PencilIcon className="h-5 w-5 text-green-600 mr-2" />
+          <div className="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+              <PencilIcon className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
               Vad att prata om
             </h3>
             
@@ -1593,15 +1593,15 @@ const ContactDetail = () => {
                 </div>
                 ))
               ) : (
-                <div className="text-center py-4 text-gray-500">
+                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
                   <p className="text-sm">Ring och hör hur det går!</p>
               </div>
               )}
               
               {/* General conversation tips */}
-              <div className="pt-3 border-t border-gray-200">
-                <p className="text-sm text-gray-600 mb-2 font-medium">Allmänna frågor:</p>
-                <ul className="text-sm text-gray-600 space-y-1">
+              <div className="pt-3 border-t border-gray-200 dark:border-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 font-medium">Allmänna frågor:</p>
+                <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                   <li>• "Hur går det med fisket?"</li>
                   <li>• "Är ni nöjda med produkterna?"</li>
                   <li>• "Behöver ni mer material?"</li>
@@ -1618,15 +1618,15 @@ const ContactDetail = () => {
           const recentActivities = allActivities.slice(0, 4); // Show 4 most recent
           
           return allActivities.length > 1 ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
+            <div className="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                  <ClockIcon className="h-5 w-5 text-gray-600 mr-2" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                  <ClockIcon className="h-5 w-5 text-gray-600 dark:text-gray-400 mr-2" />
                   Vad har hänt innan? ({allActivities.length} kontakter)
                 </h3>
                 <Link
                   to={`/admin/dining/activities?contact=${id}`}
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  className="text-blue-600 dark:text-blue-400 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
                 >
                   Se alla →
                 </Link>
@@ -1641,15 +1641,15 @@ const ContactDetail = () => {
                   // Dynamic styling for timeline activities
                   const getTimelineStyle = (level, dismissed) => {
                     if (dismissed) {
-                      return 'flex items-start space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200';
+                      return 'flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600';
                     }
                     switch(level) {
                       case 'critical':
-                        return 'flex items-start space-x-3 p-3 bg-red-50 rounded-lg border-2 border-red-200';
+                        return 'flex items-start space-x-3 p-3 bg-red-50 dark:bg-red-900 rounded-lg border-2 border-red-200';
                       case 'high':
-                        return 'flex items-start space-x-3 p-3 bg-orange-50 rounded-lg border-2 border-orange-200';
+                        return 'flex items-start space-x-3 p-3 bg-orange-50 dark:bg-orange-900 rounded-lg border-2 border-orange-200';
                       default:
-                        return 'flex items-start space-x-3 p-3 bg-gray-50 rounded-lg';
+                        return 'flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg';
                     }
                   };
                   
@@ -1666,7 +1666,7 @@ const ContactDetail = () => {
                         {/* Date aligned with title */}
                         <div className="flex justify-between items-start mb-1">
                           <div className="flex items-center space-x-2 flex-1">
-                            <div className="text-sm font-medium text-gray-900 truncate">
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                               <TextWithMentions text={activity.subject || activity.notes} adminUsers={adminUsers} />
                   </div>
 
@@ -1675,14 +1675,14 @@ const ContactDetail = () => {
                               <div className="flex items-center space-x-1">
                                 {urgencyLevel === 'critical' && (
                                   <>
-                                    <ExclamationSolid className="h-3 w-3 text-red-600" />
-                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                    <ExclamationSolid className="h-3 w-3 text-red-600 dark:text-red-400" />
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300">
                                       AKUT
                                     </span>
                                   </>
                                 )}
                                 {urgencyLevel === 'high' && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300">
                                     PROBLEM
                                   </span>
                                 )}
@@ -1691,7 +1691,7 @@ const ContactDetail = () => {
                             
                             {/* Dismissed indicator */}
                             {isDismissed && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:text-gray-400">
                                 <CheckIcon className="h-3 w-3 mr-1" />
                                 Löst
                               </span>
@@ -1699,13 +1699,13 @@ const ContactDetail = () => {
                     </div>
                           
                           {/* Date aligned with title */}
-                          <span className="text-xs text-gray-500 flex-shrink-0">
+                          <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
                             {activity.createdAt?.toDate?.()?.toLocaleDateString('sv-SE') || activity.date || 'Idag'}
                           </span>
                     </div>
                         
                         {activity.description && (
-                          <p className="text-sm text-gray-600 mt-1 line-clamp-1">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-1">
                             {activity.description}
                           </p>
                         )}
@@ -1724,8 +1724,8 @@ const ContactDetail = () => {
                                     <span
                                       key={tag}
                                       className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${
-                                        tag === 'akut' ? 'bg-red-100 text-red-800' :
-                                        tag === 'problem' ? 'bg-orange-100 text-orange-800' :
+                                        tag === 'akut' ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300' :
+                                        tag === 'problem' ? 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300' :
                                         'bg-gray-100 text-gray-800'
                                       }`}
                                     >
@@ -1746,7 +1746,7 @@ const ContactDetail = () => {
                             {!isDismissed && (
                               <button
                                 onClick={() => handleEditActivity(activity)}
-                                className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium text-blue-600 hover:text-blue-800 bg-white hover:bg-blue-50 border border-blue-300 rounded transition-colors"
+                                className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:bg-blue-900 border border-blue-300 rounded transition-colors"
                                 title="Redigera"
                               >
                                 <PencilIcon className="h-3 w-3" />
@@ -1757,7 +1757,7 @@ const ContactDetail = () => {
                             {!isDismissed && (
                               <button
                                 onClick={() => handleDeleteActivity(activity.id)}
-                                className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium text-red-600 hover:text-red-800 bg-white hover:bg-red-50 border border-red-300 rounded transition-colors"
+                                className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-800 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900 dark:bg-red-900 border border-red-300 rounded transition-colors"
                                 title="Ta bort"
                               >
                                 <TrashIcon className="h-3 w-3" />
@@ -1768,7 +1768,7 @@ const ContactDetail = () => {
                             {isUrgent && !isDismissed && (
                               <button
                                 onClick={() => dismissActivity(activity.id)}
-                                className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-50 border border-gray-300 rounded transition-colors"
+                                className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded transition-colors"
                                 title="Markera som löst"
                               >
                                 <CheckIcon className="h-3 w-3 mr-0.5" />
@@ -1798,7 +1798,7 @@ const ContactDetail = () => {
                   <div className="text-center py-3">
                     <Link
                       to={`/admin/dining/activities?contact=${id}`}
-                      className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                      className="text-sm text-blue-600 dark:text-blue-400 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
                     >
                       Se alla {allActivities.length} kontakter →
                     </Link>
@@ -1810,12 +1810,12 @@ const ContactDetail = () => {
         })()}
 
         {/* Activity Logger Section - "Vad hände?" */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Vad hände? Registrera kontakt</h3>
+        <div className="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Vad hände? Registrera kontakt</h3>
           
           {/* Activity Type Selector */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Typ av kontakt</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Typ av kontakt</label>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
               {activityTypes.map((type) => {
                 const IconComponent = type.icon;
@@ -1825,8 +1825,8 @@ const ContactDetail = () => {
                     onClick={() => handleActivityChange('type', type.value)}
                     className={`flex items-center space-x-2 p-3 rounded-lg border-2 transition-colors ${
                       newActivity.type === type.value
-                        ? 'border-orange-500 bg-orange-50 text-orange-700'
-                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                        ? 'border-orange-500 bg-orange-50 dark:bg-orange-900 text-orange-700'
+                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400'
                     }`}
                   >
                     <IconComponent className="h-5 w-5" />
@@ -1839,10 +1839,10 @@ const ContactDetail = () => {
 
           {/* Subject/Summary with @mention support */}
           <div className="mb-4 relative">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Vad hände? (sammanfattning)
               {isAdmin && (
-                <span className="text-xs text-gray-500 ml-2">• Skriv @mic, @ken, @adm för att tagga kollegor</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">• Skriv @mic, @ken, @adm för att tagga kollegor</span>
               )}
             </label>
             
@@ -1864,23 +1864,23 @@ const ContactDetail = () => {
                 }
               }}
               placeholder="T.ex. 'Intresserad av fler röda', 'Skickade prisförslag @micke', 'Bekräftade leverans'..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
             
             {/* @mention dropdown */}
             {isAdmin && showMentionDropdown && mentionOptions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-32 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-20 max-h-32 overflow-y-auto">
                 {mentionOptions.map((user, index) => (
                   <button
                     key={user.username}
                     onClick={() => insertMention(user)}
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center border-b border-gray-100 last:border-b-0"
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-700 flex items-center border-b border-gray-100 last:border-b-0"
                   >
                     <UserBadge userName={user.fullName} size="sm" className="mr-2 me-0" />
-                    <span className="text-gray-600 text-xs">@{user.username}</span>
+                    <span className="text-gray-600 dark:text-gray-400 text-xs">@{user.username}</span>
                   </button>
                 ))}
-                <div className="px-3 py-1 text-xs text-gray-400 bg-gray-50">
+                <div className="px-3 py-1 text-xs text-gray-400 bg-gray-50 dark:bg-gray-700">
                   Tab eller Enter för att välja
                           </div>
                         </div>
@@ -1895,12 +1895,12 @@ const ContactDetail = () => {
               {suggestedTags.length > 0 && (
                 <div className="mb-2">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-gray-500 font-medium">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                       Föreslås:
                     </span>
                     <button
                       onClick={() => setSuggestedTags([])}
-                      className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                      className="text-xs text-gray-400 hover:text-gray-600 dark:text-gray-400 transition-colors"
                     >
                       ignorera
                     </button>
@@ -1910,9 +1910,9 @@ const ContactDetail = () => {
                       <button
                         key={tag}
                         onClick={() => addTag(tag)}
-                        className="inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-sm hover:bg-blue-200 transition-colors"
+                        className="inline-flex items-center bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 text-xs font-medium px-2.5 py-0.5 rounded-sm hover:bg-blue-200 transition-colors"
                       >
-                        <span className="text-blue-600 mr-1">+</span>
+                        <span className="text-blue-600 dark:text-blue-400 mr-1">+</span>
                         #{tag}
                       </button>
                         ))}
@@ -1923,7 +1923,7 @@ const ContactDetail = () => {
               {/* Selected Tags - Clean and Minimal */}
               {selectedTags.length > 0 && (
                 <div className="mb-2">
-                  <span className="text-xs text-gray-500 font-medium mb-1 block">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1 block">
                     Taggar:
                   </span>
                   <div className="flex flex-wrap gap-1.5">
@@ -1935,7 +1935,7 @@ const ContactDetail = () => {
                         #{tag}
                         <button
                           onClick={() => removeTag(tag)}
-                          className="ml-1.5 text-gray-600 hover:text-gray-800 transition-colors"
+                          className="ml-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 transition-colors"
                         >
                           ×
                         </button>
@@ -1949,7 +1949,7 @@ const ContactDetail = () => {
 
           {/* Manual Tag Input - TAGlist2 for Power Users */}
           <div className="mb-4 relative">
-            <label className="block text-xs text-gray-500 font-medium mb-1">
+            <label className="block text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">
               Lägg till egna taggar (valfritt)
             </label>
             <input
@@ -1967,20 +1967,20 @@ const ContactDetail = () => {
                 setTimeout(() => setShowAutocomplete(false), 200);
               }}
               placeholder="Skriv egna taggar... (tryck Enter, komma eller mellanslag för att lägga till)"
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
             />
             
             {/* Autocomplete Dropdown */}
             {showAutocomplete && autocompleteOptions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-32 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-10 max-h-32 overflow-y-auto">
                 {autocompleteOptions.map(tag => (
                   <button
                     key={tag}
                     onClick={() => selectAutocompleteOption(tag)}
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center border-b border-gray-100 last:border-b-0"
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-700 flex items-center border-b border-gray-100 last:border-b-0"
                   >
                     <span className="text-gray-400 mr-1">#</span>
-                    <span className="text-gray-700">{tag}</span>
+                    <span className="text-gray-700 dark:text-gray-300">{tag}</span>
                   </button>
                 ))}
                 </div>
@@ -1995,7 +1995,7 @@ const ContactDetail = () => {
 
           {/* Description (Optional) */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Detaljer (valfritt)
             </label>
             <textarea
@@ -2003,7 +2003,7 @@ const ContactDetail = () => {
               onChange={(e) => handleActivityChange('description', e.target.value)}
               placeholder="Mer detaljerad beskrivning av vad som diskuterades..."
               rows={3}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
 
@@ -2018,7 +2018,7 @@ const ContactDetail = () => {
                 </button>
               </div>
 
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
             Registrera alla typer av kontakt så du får en komplett historik över era interaktioner
           </p>
         </div>
@@ -2026,7 +2026,7 @@ const ContactDetail = () => {
         {/* Admin Document Modal */}
         {showAdminDocUpload && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
               {/* Header */}
               <div className="bg-gradient-to-r from-orange-600 to-red-600 text-white p-6">
                 <div className="flex items-center justify-between">
@@ -2039,7 +2039,7 @@ const ContactDetail = () => {
                   </div>
                   <button
                     onClick={() => setShowAdminDocUpload(false)}
-                    className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-colors"
+                    className="text-white hover:bg-white dark:bg-gray-800 hover:bg-opacity-20 p-2 rounded-lg transition-colors"
                   >
                     <XMarkIcon className="h-6 w-6" />
                   </button>
@@ -2051,16 +2051,16 @@ const ContactDetail = () => {
                 
                 {/* Upload Section */}
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Ladda upp dokument</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Ladda upp dokument</h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Kategori
                       </label>
                       <select
                         value={adminDocCategory}
                         onChange={(e) => setAdminDocCategory(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                       >
                         {adminDocCategories.map(cat => (
                           <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -2069,30 +2069,30 @@ const ContactDetail = () => {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Anteckningar (valfritt)
                       </label>
                       <textarea
                         value={adminDocNotes}
                         onChange={(e) => setAdminDocNotes(e.target.value)}
                         rows={2}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         placeholder="Interna anteckningar om dokumentet..."
                       />
                   </div>
                   
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Fil
                       </label>
                     <input
                         type="file"
                         onChange={(e) => setAdminDocFile(e.target.files[0])}
                         accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.webp,.svg"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                       {adminDocFile && (
-                        <p className="mt-1 text-sm text-gray-600">
+                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                           Vald fil: {adminDocFile.name} ({formatFileSize(adminDocFile.size)})
                         </p>
                       )}
@@ -2101,7 +2101,7 @@ const ContactDetail = () => {
                     <div className="flex justify-end space-x-3">
                     <button
                         onClick={() => setShowAdminDocUpload(false)}
-                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-700 transition-colors"
                     >
                         Avbryt
                     </button>
@@ -2118,54 +2118,54 @@ const ContactDetail = () => {
 
                 {/* Documents List */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                     Befintliga dokument ({adminDocuments.length})
                   </h3>
                   
                   {adminDocsLoading ? (
                     <div className="flex items-center justify-center py-8">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-600"></div>
-                      <span className="ml-3 text-gray-600">Laddar dokument...</span>
+                      <span className="ml-3 text-gray-600 dark:text-gray-400">Laddar dokument...</span>
                     </div>
                   ) : adminDocuments.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                       <FolderIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                       <p>Inga admin-dokument uppladdade än</p>
                   </div>
                 ) : (
                     <div className="space-y-3">
                       {adminDocuments.map((doc) => (
-                        <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                           <div className="flex items-center space-x-3">
-                            <DocumentTextIcon className="h-6 w-6 text-blue-600" />
+                            <DocumentTextIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                             <div>
-                              <p className="font-medium text-gray-900">{doc.fileName}</p>
-                              <p className="text-sm text-gray-600">
+                              <p className="font-medium text-gray-900 dark:text-gray-100">{doc.fileName}</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
                                 {doc.category} • {formatFileSize(doc.fileSize)}
                               </p>
                               {doc.notes && (
-                                <p className="text-xs text-gray-500 mt-1">{doc.notes}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{doc.notes}</p>
                         )}
                       </div>
                     </div>
                           <div className="flex items-center space-x-2">
                             <button
                               onClick={() => window.open(doc.downloadUrl, '_blank')}
-                              className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors"
+                              className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:bg-blue-900 p-2 rounded-lg transition-colors"
                               title="Visa"
                             >
                               <EyeIcon className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => window.open(doc.downloadUrl, '_blank')}
-                              className="text-green-600 hover:bg-green-50 p-2 rounded-lg transition-colors"
+                              className="text-green-600 dark:text-green-400 hover:bg-green-50 p-2 rounded-lg transition-colors"
                               title="Ladda ner"
                             >
                               <ArrowDownTrayIcon className="h-4 w-4" />
                             </button>
                 <button
                               onClick={() => handleDeleteAdminDoc(doc.id, doc.fileName)}
-                              className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                              className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 dark:bg-red-900 p-2 rounded-lg transition-colors"
                               title="Ta bort"
                 >
                               <TrashIcon className="h-4 w-4" />
@@ -2183,16 +2183,16 @@ const ContactDetail = () => {
 
         {/* ✏️ CONTACT EDIT MODAL */}
         {isEditingContact && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+          <div className="fixed inset-0 bg-gray-600 dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-75 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white dark:bg-gray-800">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900 flex items-center">
-                  <PencilIcon className="h-5 w-5 text-orange-600 mr-2" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+                  <PencilIcon className="h-5 w-5 text-orange-600 dark:text-orange-400 mr-2" />
                   Redigera Kontaktinformation
                 </h3>
                 <button
                   onClick={handleCancelContactEdit}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 dark:text-gray-400"
                 >
                   <span className="sr-only">Stäng</span>
                   ×
@@ -2205,25 +2205,25 @@ const ContactDetail = () => {
               }}>
                 {/* Company Information */}
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">Företagsinformation</h4>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Företagsinformation</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Företagsnamn</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Företagsnamn</label>
                       <input
                         type="text"
                         value={editingContactData.companyName}
                         onChange={(e) => setEditingContactData({ ...editingContactData, companyName: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                         placeholder="Företagsnamn"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Kontaktperson</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kontaktperson</label>
                       <input
                         type="text"
                         value={editingContactData.contactPerson}
                         onChange={(e) => setEditingContactData({ ...editingContactData, contactPerson: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                         placeholder="Kontaktperson"
                       />
                     </div>
@@ -2232,36 +2232,36 @@ const ContactDetail = () => {
 
                 {/* Contact Information */}
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">Kontaktuppgifter</h4>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Kontaktuppgifter</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefon</label>
                       <input
                         type="tel"
                         value={editingContactData.phone}
                         onChange={(e) => setEditingContactData({ ...editingContactData, phone: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                         placeholder="Telefonnummer"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">E-post</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">E-post</label>
                       <input
                         type="email"
                         value={editingContactData.email}
                         onChange={(e) => setEditingContactData({ ...editingContactData, email: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                         placeholder="E-postadress"
                       />
                     </div>
                   </div>
                   <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Webbsida</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Webbsida</label>
                     <input
                       type="url"
                       value={editingContactData.website}
                       onChange={(e) => setEditingContactData({ ...editingContactData, website: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                       placeholder="https://www.example.com"
                     />
                   </div>
@@ -2269,46 +2269,46 @@ const ContactDetail = () => {
 
                 {/* Address Information */}
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">Adressinformation</h4>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Adressinformation</h4>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Adress</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Adress</label>
                       <input
                         type="text"
                         value={editingContactData.address}
                         onChange={(e) => setEditingContactData({ ...editingContactData, address: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                         placeholder="Gatuadress"
                       />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Postnummer</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Postnummer</label>
                         <input
                           type="text"
                           value={editingContactData.postalCode}
                           onChange={(e) => setEditingContactData({ ...editingContactData, postalCode: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                           placeholder="Postnummer"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Ort</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ort</label>
                         <input
                           type="text"
                           value={editingContactData.city}
                           onChange={(e) => setEditingContactData({ ...editingContactData, city: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                           placeholder="Ort"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Land</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Land</label>
                         <input
                           type="text"
                           value={editingContactData.country}
                           onChange={(e) => setEditingContactData({ ...editingContactData, country: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                           placeholder="Land"
                         />
                       </div>
@@ -2318,14 +2318,14 @@ const ContactDetail = () => {
 
                 {/* CRM Information */}
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">CRM-information</h4>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">CRM-information</h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
                       <select
                         value={editingContactData.status}
                         onChange={(e) => setEditingContactData({ ...editingContactData, status: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                       >
                         {/* New status options - prioritized */}
                         <option value="ej_kontaktad">Ej kontaktad</option>
@@ -2341,11 +2341,11 @@ const ContactDetail = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Prioritet</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Prioritet</label>
                       <select
                         value={editingContactData.priority}
                         onChange={(e) => setEditingContactData({ ...editingContactData, priority: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                       >
                         <option value="low">Låg</option>
                         <option value="medium">Medium</option>
@@ -2353,11 +2353,11 @@ const ContactDetail = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Källa</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Källa</label>
                       <select
                         value={editingContactData.source}
                         onChange={(e) => setEditingContactData({ ...editingContactData, source: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                       >
                         <option value="ai">AI</option>
                         <option value="manual">Manuell</option>
@@ -2376,17 +2376,17 @@ const ContactDetail = () => {
 
                 {/* B2B Information */}
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">B2B-information</h4>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">B2B-information</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Marginal (%)</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Marginal (%)</label>
                       <input
                         type="number"
                         min="0"
                         max="100"
                         value={editingContactData.marginal}
                         onChange={(e) => setEditingContactData({ ...editingContactData, marginal: parseInt(e.target.value) || 0 })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                         placeholder="35"
                       />
                     </div>
@@ -2396,55 +2396,55 @@ const ContactDetail = () => {
                           type="checkbox"
                           checked={editingContactData.sameAsCompanyAddress}
                           onChange={(e) => setEditingContactData({ ...editingContactData, sameAsCompanyAddress: e.target.checked })}
-                          className="rounded border-gray-300 text-orange-600 focus:border-orange-500 focus:ring-orange-500"
+                          className="rounded border-gray-300 dark:border-gray-600 text-orange-600 dark:text-orange-400 focus:border-orange-500 focus:ring-orange-500"
                         />
-                        <span className="text-sm font-medium text-gray-700">Samma leveransadress som företagsadress</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Samma leveransadress som företagsadress</span>
                       </label>
                     </div>
                   </div>
                   
                   {!editingContactData.sameAsCompanyAddress && (
                     <div className="mt-4">
-                      <h5 className="text-sm font-medium text-gray-900 mb-3">Leveransadress</h5>
+                      <h5 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Leveransadress</h5>
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Leveransadress</label>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Leveransadress</label>
                           <input
                             type="text"
                             value={editingContactData.deliveryAddress}
                             onChange={(e) => setEditingContactData({ ...editingContactData, deliveryAddress: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                             placeholder="Leveransadress"
                           />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Postnummer</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Postnummer</label>
                             <input
                               type="text"
                               value={editingContactData.deliveryPostalCode}
                               onChange={(e) => setEditingContactData({ ...editingContactData, deliveryPostalCode: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                               placeholder="Postnummer"
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Ort</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ort</label>
                             <input
                               type="text"
                               value={editingContactData.deliveryCity}
                               onChange={(e) => setEditingContactData({ ...editingContactData, deliveryCity: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                               placeholder="Ort"
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Land</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Land</label>
                             <input
                               type="text"
                               value={editingContactData.deliveryCountry}
                               onChange={(e) => setEditingContactData({ ...editingContactData, deliveryCountry: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                               placeholder="Land"
                             />
                           </div>
@@ -2456,27 +2456,27 @@ const ContactDetail = () => {
 
                 {/* Additional Information */}
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">Ytterligare information</h4>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Ytterligare information</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Organisationsnummer</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Organisationsnummer</label>
                       <input
                         type="text"
                         value={editingContactData.orgNumber}
                         onChange={(e) => setEditingContactData({ ...editingContactData, orgNumber: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                         placeholder="Organisationsnummer"
                       />
                     </div>
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <label className="block text-sm font-medium text-gray-700">Anteckningar</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Anteckningar</label>
                         {editingContactData.website && (
                           <button
                             type="button"
                             onClick={handleScrapeWebsiteMeta}
                             disabled={metaScraping}
-                            className="flex items-center space-x-1 text-xs text-orange-600 hover:text-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="flex items-center space-x-1 text-xs text-orange-600 dark:text-orange-400 hover:text-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             title="Hämta META beskrivning från webbsidan"
                           >
                             {metaScraping ? (
@@ -2497,7 +2497,7 @@ const ContactDetail = () => {
                         value={editingContactData.notes}
                         onChange={(e) => setEditingContactData({ ...editingContactData, notes: e.target.value })}
                         rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                         placeholder="Interna anteckningar om kontakten"
                       />
                     </div>
@@ -2506,7 +2506,7 @@ const ContactDetail = () => {
 
                 {/* Tags */}
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">Taggar</h4>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Taggar</h4>
                   <div className="space-y-4">
                     <div className="flex items-center space-x-2">
                       <input
@@ -2514,7 +2514,7 @@ const ContactDetail = () => {
                         value={newContactTag}
                         onChange={(e) => setNewContactTag(e.target.value)}
                         onKeyPress={handleContactTagKeyPress}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500"
                         placeholder="Lägg till tagg..."
                       />
                       <button
@@ -2531,13 +2531,13 @@ const ContactDetail = () => {
                         {editingContactTags.map((tag, index) => (
                           <span
                             key={index}
-                            className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-800"
+                            className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300"
                           >
                             #{tag}
                             <button
                               type="button"
                               onClick={() => handleRemoveContactTag(tag)}
-                              className="ml-2 text-orange-600 hover:text-orange-800"
+                              className="ml-2 text-orange-600 dark:text-orange-400 hover:text-orange-800"
                             >
                               ×
                             </button>
@@ -2549,11 +2549,11 @@ const ContactDetail = () => {
                 </div>
                 
                 {/* Action Buttons */}
-                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-600">
                   <button
                     type="button"
                     onClick={handleCancelContactEdit}
-                    className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-700"
                   >
                     Avbryt
                   </button>
