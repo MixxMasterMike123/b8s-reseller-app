@@ -300,24 +300,24 @@ const FollowUpCenter = () => {
             <div className="flex items-center">
               <Link 
                 to="/admin/dining" 
-                className="mr-4 p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className="mr-4 p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <ArrowLeftIcon className="h-6 w-6" />
               </Link>
               <div className="flex items-center">
-                <div className="bg-orange-100 p-3 rounded-xl mr-4">
-                  <CalendarDaysSolid className="h-8 w-8 text-orange-600" />
+                <div className="bg-orange-100 dark:bg-orange-900 p-3 rounded-xl mr-4">
+                  <CalendarDaysSolid className="h-8 w-8 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-1">Uppföljningskalender</h1>
-                  <p className="text-gray-600">Schemalägg och hantera gästmöten</p>
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">Uppföljningskalender</h1>
+                  <p className="text-gray-600 dark:text-gray-400">Schemalägg och hantera gästmöten</p>
                 </div>
               </div>
             </div>
             
             <button
               onClick={() => setShowAddForm(true)}
-              className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 transition-colors"
+              className="bg-orange-600 dark:bg-orange-500 hover:bg-orange-700 dark:hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 transition-colors"
             >
               <PlusIcon className="h-5 w-5" />
               <span>Ny Uppföljning</span>
@@ -327,51 +327,51 @@ const FollowUpCenter = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Totalt</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Totalt</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total}</p>
               </div>
-              <CalendarDaysSolid className="h-8 w-8 text-blue-600" />
+              <CalendarDaysSolid className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
           
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Försenade</p>
-                <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Försenade</p>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.overdue}</p>
               </div>
-              <ExclamationTriangleSolid className="h-8 w-8 text-red-600" />
+              <ExclamationTriangleSolid className="h-8 w-8 text-red-600 dark:text-red-400" />
             </div>
           </div>
           
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Idag</p>
-                <p className="text-2xl font-bold text-orange-600">{stats.today}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Idag</p>
+                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.today}</p>
               </div>
-              <ClockSolid className="h-8 w-8 text-orange-600" />
+              <ClockSolid className="h-8 w-8 text-orange-600 dark:text-orange-400" />
             </div>
           </div>
           
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Denna vecka</p>
-                <p className="text-2xl font-bold text-green-600">{stats.thisWeek}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Denna vecka</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.thisWeek}</p>
               </div>
-              <UserGroupIcon className="h-8 w-8 text-green-600" />
+              <UserGroupIcon className="h-8 w-8 text-green-600 dark:text-green-400" />
             </div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-8">
           <div className="flex items-center space-x-4 overflow-x-auto">
-            <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Filtrera:</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Filtrera:</span>
             {[
               { key: 'all', label: 'Alla', count: stats.total },
               { key: 'overdue', label: 'Försenade', count: stats.overdue },
@@ -383,8 +383,8 @@ const FollowUpCenter = () => {
                 onClick={() => setSelectedFilter(filter.key)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                   selectedFilter === filter.key
-                    ? 'bg-orange-100 text-orange-700 border border-orange-200'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 {filter.label} ({filter.count})
@@ -396,10 +396,10 @@ const FollowUpCenter = () => {
         {/* Add Follow-Up Form */}
         {showAddForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b border-gray-200">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-600">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-bold text-gray-900">Ny Uppföljning</h2>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Ny Uppföljning</h2>
                   <button
                     onClick={() => setShowAddForm(false)}
                     className="text-gray-400 hover:text-gray-600"
@@ -560,7 +560,7 @@ const FollowUpCenter = () => {
                   />
                 </div>
 
-                <div className="flex space-x-3 pt-4 border-t border-gray-200">
+                <div className="flex space-x-3 pt-4 border-t border-gray-200 dark:border-gray-600">
                   <button
                     type="submit"
                     className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
@@ -581,26 +581,26 @@ const FollowUpCenter = () => {
         )}
 
         {/* Follow-ups List */}
-        <div className="bg-white rounded-xl shadow-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
-              <span className="ml-3 text-gray-600">Laddar uppföljningar...</span>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 dark:border-orange-400"></div>
+              <span className="ml-3 text-gray-600 dark:text-gray-400">Laddar uppföljningar...</span>
             </div>
           ) : followUps.length === 0 ? (
             <div className="text-center py-12">
-              <CalendarDaysIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-lg font-medium text-gray-900 mb-2">Inga uppföljningar ännu</p>
-              <p className="text-gray-600 mb-6">Schemalägg ditt första gästmöte för att komma igång</p>
+              <CalendarDaysIcon className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Inga uppföljningar ännu</p>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">Schemalägg ditt första gästmöte för att komma igång</p>
               <button
                 onClick={() => setShowAddForm(true)}
-                className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                className="bg-orange-600 dark:bg-orange-500 hover:bg-orange-700 dark:hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
               >
                 Lägg till uppföljning
               </button>
             </div>
           ) : (
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-gray-200 dark:divide-gray-600">
               {followUps.map((followUp) => {
                 const scheduledDate = followUp.scheduledDateTime?.toDate();
                 const isOverdue = scheduledDate < new Date() && followUp.status === 'scheduled';
@@ -608,35 +608,35 @@ const FollowUpCenter = () => {
                 return (
                   <div
                     key={followUp.id}
-                    className={`p-6 hover:bg-gray-50 transition-colors border-l-4 ${getPriorityColor(followUp.priority)}`}
+                    className={`p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-l-4 ${getPriorityColor(followUp.priority)}`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-start space-x-4">
                         <div className={`p-2 rounded-lg ${
-                          isOverdue ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'
+                          isOverdue ? 'bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400' : 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
                         }`}>
                           {getFollowUpIcon(followUp.type)}
                         </div>
                         
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
-                            <h3 className="text-lg font-semibold text-gray-900">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                               {followUp.subject}
                             </h3>
                             {getStatusBadge(followUp.status, scheduledDate)}
                           </div>
                           
-                          <p className="text-gray-600 mb-2">
+                          <p className="text-gray-600 dark:text-gray-400 mb-2">
                             <Link 
                               to={`/admin/dining/contacts/${followUp.contactId}`}
-                              className="text-blue-600 hover:text-blue-700 font-medium"
+                              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
                             >
                               {followUp.contactName}
                             </Link>
                             {followUp.contactPerson && ` - ${followUp.contactPerson}`}
                           </p>
                           
-                          <div className="flex items-center space-x-4 text-sm text-gray-500 mb-2">
+                          <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 mb-2">
                             <span className="flex items-center">
                               <CalendarDaysIcon className="h-4 w-4 mr-1" />
                               {scheduledDate?.toLocaleDateString('sv-SE')}

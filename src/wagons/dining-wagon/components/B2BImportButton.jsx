@@ -44,19 +44,19 @@ const B2BImportButton = ({ className = '' }) => {
   };
 
   return (
-    <div className={`bg-white rounded-lg shadow p-6 ${className}`}>
+    <div className={`bg-white dark:bg-gray-800 rounded-lg shadow p-6 ${className}`}>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium text-gray-900">B2B → CRM Import</h3>
-        <CloudArrowUpIcon className="h-6 w-6 text-gray-400" />
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">B2B → CRM Import</h3>
+        <CloudArrowUpIcon className="h-6 w-6 text-gray-400 dark:text-gray-500" />
       </div>
       
       <div className="space-y-4">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
           <div className="flex items-start">
-            <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400 mt-0.5 mr-3" />
+            <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400 dark:text-yellow-300 mt-0.5 mr-3" />
             <div>
-              <h4 className="text-sm font-medium text-yellow-800">Deprecated Feature</h4>
-              <p className="text-sm text-yellow-700 mt-1">
+              <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Deprecated Feature</h4>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
                 B2B import is no longer needed. CRM now reads directly from the unified users collection.
               </p>
             </div>
@@ -66,7 +66,7 @@ const B2BImportButton = ({ className = '' }) => {
         <button
           onClick={handleImport}
           disabled={importing}
-          className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 dark:bg-gray-500 hover:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-gray-500 dark:focus:ring-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {importing ? (
             <>
@@ -82,12 +82,12 @@ const B2BImportButton = ({ className = '' }) => {
         </button>
 
         {importResult && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg p-4">
             <div className="flex items-start">
-              <CheckCircleIcon className="h-5 w-5 text-green-400 mt-0.5 mr-3" />
+              <CheckCircleIcon className="h-5 w-5 text-green-400 dark:text-green-300 mt-0.5 mr-3" />
               <div>
-                <h4 className="text-sm font-medium text-green-800">Unified Database Status</h4>
-                <div className="text-sm text-green-700 mt-2 space-y-1">
+                <h4 className="text-sm font-medium text-green-800 dark:text-green-200">Unified Database Status</h4>
+                <div className="text-sm text-green-700 dark:text-green-300 mt-2 space-y-1">
                   <p>Total users: {importResult.total}</p>
                   <p>Available to CRM: {importResult.total - importResult.errors}</p>
                   <p className="font-medium">{importResult.message}</p>

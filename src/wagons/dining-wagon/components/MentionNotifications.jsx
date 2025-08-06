@@ -65,7 +65,7 @@ const MentionNotifications = () => {
             return (
               <span
                 key={index}
-                className="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300"
+                className="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600"
               >
                 {part}
               </span>
@@ -106,18 +106,18 @@ const MentionNotifications = () => {
           e.stopPropagation();
           setIsOpen(!isOpen);
         }}
-        className="relative p-2 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+        className="relative p-2 text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
         title={unreadCount > 0 ? `${unreadCount} nya omnämnanden` : 'Omnämnanden'}
       >
         {unreadCount > 0 ? (
-          <BellSolid className="h-6 w-6 text-orange-600" />
+          <BellSolid className="h-6 w-6 text-orange-600 dark:text-orange-400" />
         ) : (
           <BellIcon className="h-6 w-6" />
         )}
         
         {/* Red notification badge */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full min-w-[20px]">
+          <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 dark:bg-red-500 rounded-full min-w-[20px]">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -125,13 +125,13 @@ const MentionNotifications = () => {
 
       {/* Dropdown Menu - Normal dropdown below the bell */}
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-[10000] max-h-80 overflow-hidden">
+        <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 z-[10000] max-h-80 overflow-hidden">
           {/* Header */}
-          <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-900">
+          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
               Omnämnanden ({mentions.length})
               {unreadCount > 0 && (
-                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
                   {unreadCount} nya
                 </span>
               )}
@@ -142,7 +142,7 @@ const MentionNotifications = () => {
                   e.stopPropagation();
                   markAllAsRead();
                 }}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
               >
                 Markera alla som lästa
               </button>
@@ -152,50 +152,50 @@ const MentionNotifications = () => {
           {/* Mentions List */}
           <div className="max-h-96 overflow-y-auto">
             {mentions.length === 0 ? (
-              <div className="px-4 py-6 text-center text-gray-500">
-                <BellIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+              <div className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                <BellIcon className="h-8 w-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
                 <p className="text-sm">Inga omnämnanden</p>
               </div>
             ) : (
               mentions.map((mention) => (
                 <div
                   key={mention.id}
-                  className={`border-b border-gray-100 last:border-b-0 ${
-                    !mention.isRead ? 'bg-blue-50' : 'bg-white'
+                  className={`border-b border-gray-100 dark:border-gray-700 last:border-b-0 ${
+                    !mention.isRead ? 'bg-blue-50 dark:bg-blue-900' : 'bg-white dark:bg-gray-800'
                   }`}
                 >
                   <Link
                     to={`/admin/dining/contacts/${mention.contactId}?highlight=${mention.activityId}`}
                     onClick={() => handleMentionClick(mention)}
-                    className="block px-4 py-3 hover:bg-gray-50 transition-colors"
+                    className="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     <div className="flex items-start space-x-3">
                       <div className="flex-shrink-0">
-                        <div className="h-8 w-8 bg-orange-100 rounded-full flex items-center justify-center">
-                          <ChatBubbleLeftRightIcon className="h-4 w-4 text-orange-600" />
+                        <div className="h-8 w-8 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center">
+                          <ChatBubbleLeftRightIcon className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                         </div>
                       </div>
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-gray-900 truncate">
+                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                             {mention.contactName}
                           </p>
                           <div className="flex items-center space-x-2">
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
                               {formatTimeAgo(mention.createdAt)}
                             </span>
                             {!mention.isRead && (
-                              <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                              <div className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
                             )}
                           </div>
                         </div>
                         
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                           Omnämnd av {mention.mentionedByName}
                         </p>
                         
-                        <div className="text-sm text-gray-700 mt-1 line-clamp-2">
+                        <div className="text-sm text-gray-700 dark:text-gray-300 mt-1 line-clamp-2">
                           <TextWithMentions text={mention.mentionText} adminUsers={adminUsers} />
                         </div>
                       </div>
@@ -210,7 +210,7 @@ const MentionNotifications = () => {
                           e.stopPropagation();
                           markAsRead(mention.id);
                         }}
-                        className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 bg-white hover:bg-blue-50 border border-blue-300 rounded transition-colors"
+                        className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-white dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded transition-colors"
                         title="Markera som läst"
                       >
                         <CheckIcon className="h-3 w-3 mr-1" />
@@ -223,7 +223,7 @@ const MentionNotifications = () => {
                         e.stopPropagation();
                         deleteMention(mention.id);
                       }}
-                      className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700 bg-white hover:bg-red-50 border border-red-300 rounded transition-colors"
+                      className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 bg-white dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900 border border-red-300 dark:border-red-600 rounded transition-colors"
                       title="Ta bort"
                     >
                       <TrashIcon className="h-3 w-3" />
@@ -236,8 +236,8 @@ const MentionNotifications = () => {
 
           {/* Footer */}
           {mentions.length > 0 && (
-            <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
-              <p className="text-xs text-gray-500 text-center">
+            <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
                 Klicka på ett omnämnande för att gå till aktiviteten
               </p>
             </div>
