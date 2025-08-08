@@ -27,13 +27,15 @@ import { db } from '../../../firebase/config';
 import { doc, updateDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 import { toJsDate } from '../utils/dateUtils';
+import { parseSwedishWeekdays, analyzeTextForTags } from '../utils/smartTagging';
+import { createMentionNotifications } from '../utils/mentionUtils';
 
 const ActivityCenter = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const preselectedContactId = searchParams.get('contact') || '';
 
-  const { currentUser, userData } = useAuth();
+  const { currentUser, userData, isAdmin, getAllUsers } = useAuth();
   const { activities, addActivity, updateActivity, deleteActivity, loading } = useDiningActivities();
   const { contacts } = useDiningContacts();
 
@@ -64,6 +66,27 @@ const ActivityCenter = () => {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editBuffer, setEditBuffer] = useState({ subject: '', description: '' });
+  const [tagInput, setTagInput] = useState('');
+  const [suggestedTags, setSuggestedTags] = useState([]);
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [adminUsers, setAdminUsers] = useState([]);
+
+  React.useEffect(() => {
+    const loadAdmins = async () => {
+      try {
+        if (!isAdmin || !getAllUsers) return;
+        const all = await getAllUsers();
+        const admins = (all || []).filter(u => u.role === 'admin').map(u => ({
+          userId: u.id,
+          fullName: u.contactPerson || u.companyName || u.email
+        }));
+        setAdminUsers(admins);
+      } catch (e) {
+        console.warn('Failed loading admin users', e);
+      }
+    };
+    loadAdmins();
+  }, [isAdmin, getAllUsers]);
 
   const distinctResponsibles = useMemo(() => {
     const names = new Set();
@@ -140,18 +163,41 @@ const ActivityCenter = () => {
     setSaving(true);
     try {
       const contact = contacts.find(c => c.id === newActivity.contactId);
+      const autoTags = new Set([
+        ...analyzeTextForTags(`${newActivity.subject} ${newActivity.description}`),
+        ...parseSwedishWeekdays(`${newActivity.subject} ${newActivity.description}`),
+        ...selectedTags
+      ]);
       const payload = {
         contactId: newActivity.contactId,
         contactName: contact?.companyName || 'Okänd gäst',
         type: newActivity.type,
         subject: newActivity.subject.trim(),
         description: newActivity.description.trim(),
+        tags: Array.from(autoTags),
         createdAt: new Date(),
         createdBy: currentUser?.uid || 'unknown',
         createdByName: userData?.contactPerson || currentUser?.displayName || currentUser?.email || 'Okänd användare'
       };
-      await addActivity(payload);
+      const activityId = await addActivity(payload);
+
+      // Mentions
+      const combinedText = `${payload.subject} ${payload.description}`.trim();
+      if (isAdmin && adminUsers.length > 0) {
+        await createMentionNotifications({
+          activityId,
+          text: combinedText,
+          adminUsers,
+          contactId: payload.contactId,
+          contactName: payload.contactName,
+          mentionedByUid: currentUser?.uid || 'unknown',
+          mentionedByName: payload.createdByName
+        });
+      }
+
       setNewActivity({ contactId: preselectedContactId || '', type: 'call', subject: '', description: '' });
+      setSelectedTags([]);
+      setTagInput('');
       setShowAdd(false);
       toast.success('Aktivitet registrerad');
     } catch (err) {
@@ -264,6 +310,46 @@ const ActivityCenter = () => {
                     <option key={c.id} value={c.id}>{c.companyName}</option>
                   ))}
                 </select>
+              </div>
+              <div className="md:col-span-12">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Taggar</label>
+                <div className="flex flex-wrap gap-1 mb-1">
+                  {selectedTags.map(tag => (
+                    <span key={tag} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700">#{tag}</span>
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setTagInput(val);
+                    const suggestions = new Set([
+                      ...analyzeTextForTags(`${newActivity.subject} ${newActivity.description} ${val}`),
+                      ...parseSwedishWeekdays(`${newActivity.subject} ${newActivity.description} ${val}`)
+                    ]);
+                    setSuggestedTags(Array.from(suggestions).filter(t => !selectedTags.includes(t)));
+                  }}
+                  placeholder="Lägg till taggar, t.ex. akut, ringabak…"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                />
+                {suggestedTags.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {suggestedTags.slice(0, 6).map(t => (
+                      <button
+                        type="button"
+                        key={t}
+                        onClick={() => {
+                          setSelectedTags(prev => [...prev, t]);
+                          setSuggestedTags(s => s.filter(x => x !== t));
+                        }}
+                        className="px-2 py-0.5 text-xs rounded-full bg-orange-100 text-orange-800"
+                      >
+                        + #{t}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Typ</label>
