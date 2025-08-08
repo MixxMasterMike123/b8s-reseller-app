@@ -1241,7 +1241,7 @@ const ContactDetail = () => {
                           dialog: 'Dialog',
                           af: 'ÅF',
                           closed: 'Stängd',
-                          prospect: 'Reservering',
+                          prospect: 'Prospect',
                           active: 'Stamgäst',
                           inactive: 'Inaktiv'
                         };

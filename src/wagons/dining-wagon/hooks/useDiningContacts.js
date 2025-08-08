@@ -61,7 +61,7 @@ export const useDiningContacts = () => {
             return {
               id: doc.id,
               ...data,
-              // Map B2B active status to CRM status
+              // Map B2B active status to CRM status. Default to 'prospect' (not actionable)
               status: data.status || (data.active ? 'active' : 'prospect'),
               // Add CRM defaults if not present
               priority: data.priority || 'medium',

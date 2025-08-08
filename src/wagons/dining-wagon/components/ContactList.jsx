@@ -143,8 +143,8 @@ const ContactList = () => {
       af: 'ÅF',
       closed: 'Stängd',
       
-      // Legacy status options - for backward compatibility
-      prospect: 'Reservering',
+      // Legacy/CRM options
+      prospect: 'Prospect',
       active: 'Stamgäst',
       inactive: 'Inaktiv'
     };
