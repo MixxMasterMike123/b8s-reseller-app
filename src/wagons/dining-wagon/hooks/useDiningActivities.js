@@ -112,7 +112,7 @@ export const useDiningActivities = (contactId = null) => {
       // Use 'activities' collection for fresh start
       const docRef = await addDoc(collection(db, 'activities'), newActivity);
       
-      toast.success('🍽️ Aktivitet registrerad');
+      toast.success('Aktivitet registrerad');
       return docRef.id;
     } catch (error) {
       console.error('Error adding activity:', error);
@@ -135,7 +135,7 @@ export const useDiningActivities = (contactId = null) => {
         updatedAt: new Date()
       });
       
-      toast.success('🍽️ Aktivitet uppdaterad');
+      toast.success('Aktivitet uppdaterad');
       return true;
     } catch (error) {
       console.error('Error updating activity:', error);
@@ -154,7 +154,7 @@ export const useDiningActivities = (contactId = null) => {
       // Use 'activities' collection for fresh start
       await deleteDoc(doc(db, 'activities', activityId));
       
-      toast.success('🍽️ Aktivitet borttagen');
+      toast.success('Aktivitet borttagen');
       return true;
     } catch (error) {
       console.error('Error deleting activity:', error);

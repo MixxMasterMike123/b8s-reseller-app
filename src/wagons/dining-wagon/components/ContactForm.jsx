@@ -229,7 +229,7 @@ const ContactForm = () => {
       // Success! Navigate to the new contact
       navigate(`/admin/dining/contacts/${contactId}`);
       
-      toast.success('🍽️ Ny gäst har lagts till i reservationssystemet!');
+      toast.success('Ny gäst har lagts till i reservationssystemet');
       
     } catch (error) {
       console.error('Error adding contact:', error);

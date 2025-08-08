@@ -542,7 +542,7 @@ const ContactDetail = () => {
       // Add to local dismissed set for immediate UI update
       setDismissedActivities(prev => new Set([...prev, activityId]));
       
-      toast.success('🍽️ Aktivitet löst');
+      toast.success('Aktivitet löst');
     } catch (error) {
       console.error('Error dismissing activity:', error);
       toast.error('Kunde inte lösa aktivitet');
@@ -909,7 +909,7 @@ const ContactDetail = () => {
         tags: editData.tags
       });
       setEditingActivity(null);
-      toast.success('🍽️ Aktivitet uppdaterad');
+      toast.success('Aktivitet uppdaterad');
     } catch (error) {
       console.error('Error updating activity:', error);
       toast.error('Kunde inte uppdatera aktivitet');
@@ -927,7 +927,7 @@ const ContactDetail = () => {
 
     try {
       await deleteActivity(activityId);
-      toast.success('🍽️ Aktivitet borttagen');
+      toast.success('Aktivitet borttagen');
     } catch (error) {
       console.error('Error deleting activity:', error);
       toast.error('Kunde inte ta bort aktivitet');
@@ -973,7 +973,7 @@ const ContactDetail = () => {
       };
       await updateContact(id, updatedData);
       setIsEditingContact(false);
-      toast.success('🍽️ Kontaktinformation uppdaterad');
+      toast.success('Kontaktinformation uppdaterad');
     } catch (error) {
       console.error('Error updating contact:', error);
       toast.error('Kunde inte uppdatera kontakt');
@@ -1030,7 +1030,7 @@ const ContactDetail = () => {
 
     try {
       await deleteContact(id);
-      toast.success('🍽️ Kontakt borttagen');
+      toast.success('Kontakt borttagen');
       navigate('/admin/dining/contacts'); // Redirect to contact list after deletion
     } catch (error) {
       console.error('Error deleting contact:', error);
@@ -1104,7 +1104,7 @@ const ContactDetail = () => {
         notes: updatedNotes
       });
 
-      toast.success('✨ META data hämtad och tillagd i anteckningar');
+      toast.success('META-data hämtad och tillagd i anteckningar');
 
     } catch (error) {
       console.error('Error scraping META:', error);

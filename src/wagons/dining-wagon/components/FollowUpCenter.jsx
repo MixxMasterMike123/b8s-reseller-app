@@ -167,7 +167,7 @@ const FollowUpCenter = () => {
       });
       
       setShowAddForm(false);
-      toast.success('🗓️ Uppföljning schemalagd!');
+      toast.success('Uppföljning schemalagd');
     } catch (error) {
       console.error('Error adding follow-up:', error);
       toast.error('Kunde inte schemalägga uppföljning');
@@ -183,7 +183,7 @@ const FollowUpCenter = () => {
         ...(newStatus === 'completed' && { completedAt: new Date() })
       });
       
-      toast.success('🍽️ Uppföljning uppdaterad');
+      toast.success('Uppföljning uppdaterad');
     } catch (error) {
       console.error('Error updating follow-up:', error);
       toast.error('Kunde inte uppdatera uppföljning');
@@ -198,7 +198,7 @@ const FollowUpCenter = () => {
 
     try {
       await deleteDoc(doc(db, 'followUps', followUpId));
-      toast.success('🍽️ Uppföljning borttagen');
+      toast.success('Uppföljning borttagen');
     } catch (error) {
       console.error('Error deleting follow-up:', error);
       toast.error('Kunde inte ta bort uppföljning');

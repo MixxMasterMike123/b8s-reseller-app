@@ -114,7 +114,7 @@ const DocumentCenter = ({ contactId, contactName, isOpen, onClose }) => {
 
         await addDoc(collection(db, 'customerDocuments'), docData);
 
-        toast.success(`📄 ${file.name} uppladdad!`);
+        toast.success(`${file.name} uppladdad`);
         return docData;
       } catch (error) {
         console.error('Upload error:', error);
