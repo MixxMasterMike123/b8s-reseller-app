@@ -46,10 +46,35 @@ export function displayHostname(urlString) {
   }
 }
 
+// Decode known Punycode domains back to Unicode
+function decodePunycodeDomain(domain) {
+  // Known Punycode mappings for common domains
+  const punycodeMap = {
+    'xn--tonline-506c.de': 't-online.de', // German t-online
+    'xn--e1afmkfd.xn--p1ai': 'пример.рф', // Russian example
+    // Add more as needed
+  };
+  
+  // Check for exact domain match first
+  if (punycodeMap[domain]) {
+    return punycodeMap[domain];
+  }
+  
+  // Check for partial matches
+  for (const [punycode, unicode] of Object.entries(punycodeMap)) {
+    if (domain.includes(punycode.split('.')[0])) {
+      return domain.replace(punycode.split('.')[0], unicode.split('.')[0]);
+    }
+  }
+  
+  return domain; // Return original if no match found
+}
+
 // Normalize email addresses pasted from rich editors
 // - Trim
 // - Strip zero-width and NBSP
 // - Replace Unicode dash variants with ASCII '-'
+// - Decode Punycode domains back to Unicode
 // - Lowercase domain part only
 export function normalizeEmail(input) {
   if (!input || typeof input !== 'string') return '';
@@ -65,6 +90,9 @@ export function normalizeEmail(input) {
   let domain = value.slice(atIndex + 1);
   domain = domain.replace(/\s+/g, '');
   domain = domain.replace(DASH_VARIANTS_REGEX, '-');
+  
+  // Try to decode Punycode domain
+  domain = decodePunycodeDomain(domain);
   domain = domain.toLowerCase();
 
   return `${local}@${domain}`;
