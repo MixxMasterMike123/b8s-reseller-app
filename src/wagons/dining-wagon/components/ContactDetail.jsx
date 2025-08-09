@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import MarkdownIt from 'markdown-it';
+import DOMPurify from 'dompurify';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import AppLayout from '../../../components/layout/AppLayout';
 import UserBadge, { UserBadgeGroup } from '../../../components/UserBadge';
@@ -40,6 +42,7 @@ import {
   formatFileSize,
   getFileType
 } from '../../../utils/adminDocuments';
+import { normalizeWebsiteUrl, displayHostname } from '../../../utils/urlUtils';
 import {
   ArrowLeftIcon as ArrowLeftIconOutline,
   PencilIcon as PencilIconOutline,
@@ -1196,13 +1199,13 @@ const ContactDetail = () => {
               )}
               {contact.website && (
                 <a 
-                  href={contact.website.startsWith('http') ? contact.website : `https://${contact.website}`}
+                  href={normalizeWebsiteUrl(contact.website)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center text-blue-600 dark:text-blue-400 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                  className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
                 >
                   <GlobeAltIcon className="h-4 w-4 mr-1" />
-                  {contact.website.replace(/^https?:\/\//, '')}
+                  {displayHostname(contact.website)}
                 </a>
               )}
               {contact.orgNumber && (
@@ -1294,16 +1297,28 @@ const ContactDetail = () => {
               </div>
             </div>
 
-            {/* Notes Full Text */}
+            {/* Notes Full Text with Markdown support */}
             {contact.notes && (
               <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div className="flex items-start">
                   <DocumentTextIcon className="h-4 w-4 text-gray-500 dark:text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
                     <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Anteckningar</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
-                      {contact.notes}
-                    </div>
+                    <div
+                      className="prose prose-sm dark:prose-invert max-w-none text-gray-800 dark:text-gray-200"
+                      dangerouslySetInnerHTML={{
+                        __html: (() => {
+                          try {
+                            const md = new MarkdownIt({ html: false, linkify: true, breaks: true });
+                            const raw = String(contact.notes || '');
+                            const html = md.render(raw);
+                            return DOMPurify.sanitize(html);
+                          } catch (e) {
+                            return DOMPurify.sanitize(String(contact.notes || ''));
+                          }
+                        })()
+                      }}
+                    />
                   </div>
                 </div>
               </div>
