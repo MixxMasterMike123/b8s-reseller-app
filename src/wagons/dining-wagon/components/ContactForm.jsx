@@ -16,7 +16,7 @@ import {
   CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
-import { normalizeWebsiteUrl } from '../../../utils/urlUtils';
+import { normalizeWebsiteUrl, normalizeEmail } from '../../../utils/urlUtils';
 
 const ContactForm = () => {
   const navigate = useNavigate();
@@ -227,7 +227,8 @@ const ContactForm = () => {
     try {
       const contactId = await addContact({
         ...formData,
-        website: formData.website ? normalizeWebsiteUrl(formData.website) : ''
+        website: formData.website ? normalizeWebsiteUrl(formData.website) : '',
+        email: formData.email ? normalizeEmail(formData.email) : ''
       });
       
       // Success! Navigate to the new contact

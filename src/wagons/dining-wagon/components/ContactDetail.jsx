@@ -42,7 +42,7 @@ import {
   formatFileSize,
   getFileType
 } from '../../../utils/adminDocuments';
-import { normalizeWebsiteUrl, displayHostname } from '../../../utils/urlUtils';
+import { normalizeWebsiteUrl, displayHostname, normalizeEmail } from '../../../utils/urlUtils';
 import {
   ArrowLeftIcon as ArrowLeftIconOutline,
   PencilIcon as PencilIconOutline,
@@ -972,7 +972,9 @@ const ContactDetail = () => {
       setIsSavingContact(true);
       const updatedData = {
         ...editingContactData,
-        tags: editingContactTags
+        tags: editingContactTags,
+        email: editingContactData.email ? normalizeEmail(editingContactData.email) : editingContactData.email,
+        website: editingContactData.website ? normalizeWebsiteUrl(editingContactData.website) : editingContactData.website
       };
       await updateContact(id, updatedData);
       setIsEditingContact(false);

@@ -46,3 +46,27 @@ export function displayHostname(urlString) {
   }
 }
 
+// Normalize email addresses pasted from rich editors
+// - Trim
+// - Strip zero-width and NBSP
+// - Replace Unicode dash variants with ASCII '-'
+// - Lowercase domain part only
+export function normalizeEmail(input) {
+  if (!input || typeof input !== 'string') return '';
+  let value = input.trim();
+  value = value.replace(ZERO_WIDTH_REGEX, '');
+  value = value.replace(NBSP_REGEX, ' ');
+  value = value.replace(DASH_VARIANTS_REGEX, '-');
+
+  const atIndex = value.lastIndexOf('@');
+  if (atIndex === -1) return value; // not an email, return cleaned value
+
+  const local = value.slice(0, atIndex);
+  let domain = value.slice(atIndex + 1);
+  domain = domain.replace(/\s+/g, '');
+  domain = domain.replace(DASH_VARIANTS_REGEX, '-');
+  domain = domain.toLowerCase();
+
+  return `${local}@${domain}`;
+}
+
