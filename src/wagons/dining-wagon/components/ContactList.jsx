@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AppLayout from '../../../components/layout/AppLayout';
 import { useDiningContacts } from '../hooks/useDiningContacts';
+import { exportContactsToCSV, exportEmailListCSV, getExportStats } from '../utils/contactExport';
 import {
   UserGroupIcon,
   PlusIcon,
@@ -15,7 +16,9 @@ import {
   StarIcon,
   ExclamationTriangleIcon,
   ArrowLeftIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  ArrowDownTrayIcon,
+  ChevronDownIcon
 } from '@heroicons/react/24/outline';
 import {
   StarIcon as StarSolid
@@ -57,6 +60,23 @@ const ContactList = () => {
   const [showFilters, setShowFilters] = useState(() => 
     sessionStorage.getItem(STORAGE_KEYS.showFilters) === 'true'
   );
+
+  // Export dropdown state
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+
+  // Close export dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showExportDropdown && !event.target.closest('.export-dropdown')) {
+        setShowExportDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showExportDropdown]);
 
   // Persist filter changes to session storage
   useEffect(() => {
@@ -117,6 +137,28 @@ const ContactList = () => {
       console.error('Error activating contact:', error);
       // Error message handled by the hook
     }
+  };
+
+  // Export handlers
+  const handleFullExport = () => {
+    exportContactsToCSV(filteredContacts, {
+      filename: `dining-wagon-contacts-full-${new Date().toISOString().split('T')[0]}.csv`
+    });
+    setShowExportDropdown(false);
+  };
+
+  const handleEmailListExport = () => {
+    exportEmailListCSV(filteredContacts, {
+      filename: `dining-wagon-emails-${new Date().toISOString().split('T')[0]}.csv`
+    });
+    setShowExportDropdown(false);
+  };
+
+  const handleAllContactsExport = () => {
+    exportContactsToCSV(contacts, {
+      filename: `dining-wagon-all-contacts-${new Date().toISOString().split('T')[0]}.csv`
+    });
+    setShowExportDropdown(false);
   };
 
   // Status badge styling
@@ -185,7 +227,7 @@ const ContactList = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between">
             <div className="flex items-center">
               <Link 
                 to="/admin/dining" 
@@ -204,13 +246,76 @@ const ContactList = () => {
               </div>
             </div>
             
-            <Link
-              to="/admin/dining/contacts/new"
-              className="bg-orange-600 dark:bg-orange-500 hover:bg-orange-700 dark:hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors"
-            >
-              <PlusIcon className="h-5 w-5" />
-              <span>Ny Gäst</span>
-            </Link>
+            <div className="flex items-center space-x-3">
+              {/* Export Dropdown */}
+              <div className="relative export-dropdown">
+                <button
+                  onClick={() => setShowExportDropdown(!showExportDropdown)}
+                  className="bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors"
+                >
+                  <ArrowDownTrayIcon className="h-5 w-5" />
+                  <span>Exportera</span>
+                  <ChevronDownIcon className="h-4 w-4" />
+                </button>
+                
+                {showExportDropdown && (
+                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+                    <div className="py-2">
+                      <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                        Exportera till CSV för Sender.net
+                      </div>
+                      
+                      <button
+                        onClick={handleFullExport}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <ArrowDownTrayIcon className="h-4 w-4" />
+                          <div>
+                            <div className="font-medium">Filtrerade kontakter ({filteredContacts.length})</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">Komplett data för marknadsföring</div>
+                          </div>
+                        </div>
+                      </button>
+                      
+                      <button
+                        onClick={handleEmailListExport}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <EnvelopeIcon className="h-4 w-4" />
+                          <div>
+                            <div className="font-medium">Endast e-postlista</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">Enkel lista med e-post, namn, företag</div>
+                          </div>
+                        </div>
+                      </button>
+                      
+                      <button
+                        onClick={handleAllContactsExport}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <UserGroupIcon className="h-4 w-4" />
+                          <div>
+                            <div className="font-medium">Alla kontakter ({contacts.length})</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">Komplett databas (ignorerar filter)</div>
+                          </div>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <Link
+                to="/admin/dining/contacts/new"
+                className="bg-orange-600 dark:bg-orange-500 hover:bg-orange-700 dark:hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors"
+              >
+                <PlusIcon className="h-5 w-5" />
+                <span>Ny Gäst</span>
+              </Link>
+            </div>
           </div>
         </div>
 
