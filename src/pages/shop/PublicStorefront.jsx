@@ -31,6 +31,7 @@ const PublicStorefront = () => {
   } = useCart();
   const [products, setProducts] = useState([]);
   const [groupedProducts, setGroupedProducts] = useState([]);
+  const [specialEditionProducts, setSpecialEditionProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [heroReview, setHeroReview] = useState(null);
 
@@ -95,9 +96,20 @@ const PublicStorefront = () => {
       });
       setProducts(productList);
       
-      // Group products dynamically by their group field and load representative products
-      const grouped = await groupProductsByGroup(productList);
+      // Separate special edition products from regular products
+      const specialEditions = productList.filter(product => 
+        product.group === 'B8Shield-special-edition'
+      );
+      const regularProducts = productList.filter(product => 
+        product.group !== 'B8Shield-special-edition'
+      );
+      
+      // Group regular products dynamically by their group field and load representative products
+      const grouped = await groupProductsByGroup(regularProducts);
       setGroupedProducts(grouped);
+      
+      // Set special edition products separately
+      setSpecialEditionProducts(specialEditions);
       
     } catch (error) {
       console.error('Error loading products:', error);
@@ -408,6 +420,102 @@ const PublicStorefront = () => {
                 </div>
               </div>
             ) : (
+              <>
+                {/* Special Edition Products Section */}
+                {specialEditionProducts.length > 0 && (
+                  <div className="mb-12">
+                    <div className="text-center mb-8">
+                      <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+                        {t('special_editions_title', 'Special Editions')}
+                      </h2>
+                      <p className="text-gray-600 max-w-2xl mx-auto">
+                        {t('special_editions_description', 'Exklusiva B8Shield-produkter framtagna i samarbete med våra partners')}
+                      </p>
+                    </div>
+                    
+                    {/* Special Edition Grid - 2 columns */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                      {specialEditionProducts.map((product, index) => {
+                        const productUrl = getProductUrl(product);
+                        
+                        return (
+                          <Link
+                            key={`special-${product.id}-${index}`}
+                            to={productUrl}
+                            className="group block"
+                          >
+                            <div className="bg-white h-full flex flex-col rounded-lg shadow-lg overflow-hidden border-2 border-orange-200 hover:border-orange-400 transition-colors">
+                              {/* Special Edition Badge */}
+                              <div className="relative">
+                                <div className="absolute top-4 left-4 z-10">
+                                  <span className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                                    {t('special_edition_badge', 'SPECIAL EDITION')}
+                                  </span>
+                                </div>
+                                
+                                {/* Product Image */}
+                                <div className="relative aspect-square bg-gray-50 overflow-hidden">
+                                  <img
+                                    src={getB2cProductImage(product)}
+                                    alt={getContentValue(product.name)}
+                                    className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Product Info */}
+                              <div className="flex flex-col flex-1 p-6">
+                                {/* Product Name */}
+                                <h3 className="text-xl font-bold text-gray-900 leading-tight mb-3">
+                                  {getContentValue(product.name) || t('product_name_fallback', 'B8Shield Special Edition')}
+                                </h3>
+                                
+                                {/* Product Description */}
+                                <p className="text-sm text-gray-600 leading-relaxed mb-4 flex-1">
+                                  {getB2cProductDescription(product)}
+                                </p>
+                                
+                                {/* Bottom section with price and CTA */}
+                                <div className="mt-auto space-y-4">
+                                  {/* Price */}
+                                  <div className="text-xl font-bold text-gray-900">
+                                    <SmartPrice 
+                                      sekPrice={product.b2cPrice || product.basePrice} 
+                                      variant="compact"
+                                      showOriginal={false}
+                                    />
+                                  </div>
+                                  
+                                  {/* CTA Button */}
+                                  <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-center py-3 px-6 rounded-full text-base font-bold hover:from-orange-600 hover:to-red-600 transition-all transform hover:scale-105">
+                                    {t('special_edition_cta', 'Se Special Edition')}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Regular Products Section */}
+                {groupedProducts.length > 0 && (
+                  <div>
+                    <div className="text-center mb-8">
+                      <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+                        {t('regular_products_title', 'Våra Produkter')}
+                      </h2>
+                    </div>
+                  </div>
+                )}
+                
+              </>
+            )}
+            
+            {/* Main Products Grid - Only show if not loading */}
+            {!loading && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                 {groupedProducts.map((productGroup, groupIndex) => {
                   // For ALL product groups: show only ONE card using the representative product

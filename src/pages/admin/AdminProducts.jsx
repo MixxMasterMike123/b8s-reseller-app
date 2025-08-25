@@ -116,10 +116,15 @@ function AdminProducts() {
       
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        productsData.push({
-          id: doc.id,
-          ...data
-        });
+        console.log('🔍 Processing document:', doc.id, 'data.id:', data.id);
+        
+        // Ensure we use the document ID, not any id field in the data
+        const productData = {
+          ...data,
+          id: doc.id  // This should override any id field in the data
+        };
+        
+        productsData.push(productData);
         
         // Collect unique groups for autocomplete
         if (data.group && data.group.trim()) {
@@ -224,7 +229,16 @@ function AdminProducts() {
   };
 
   const handleEditClick = (product) => {
-    setSelectedProduct(product);
+    console.log('🔧 Edit clicked for product:', product);
+    console.log('🔧 Product ID:', product?.id);
+    
+    // Create a clean product object with guaranteed document ID
+    const cleanProduct = {
+      ...product,
+      documentId: product.id  // Store the actual Firebase document ID separately
+    };
+    
+    setSelectedProduct(cleanProduct);
     setFormData({
       id: product.id || '',
       name: product.name || '',
@@ -683,8 +697,25 @@ function AdminProducts() {
         }
       } else {
         // Updating existing product
+        console.log('🔧 Updating existing product. selectedProduct:', selectedProduct);
+        console.log('🔧 selectedProduct.id:', selectedProduct?.id);
+        
+        // Try to get product ID from multiple sources
+        const productId = selectedProduct?.documentId || selectedProduct?.id || formData?.id;
+        console.log('🔧 Resolved productId:', productId);
+        console.log('🔧 selectedProduct.documentId:', selectedProduct?.documentId);
+        
+        if (!productId || productId.trim() === '') {
+          console.error("Error: Product ID is missing from all sources");
+          console.error("selectedProduct.documentId:", selectedProduct?.documentId);
+          console.error("selectedProduct.id:", selectedProduct?.id);
+          console.error("formData.id:", formData?.id);
+          toast.error('Fel: Produkt-ID saknas. Försök att ladda om sidan.');
+          return;
+        }
+        
         try {
-          const docRef = doc(db, 'products', selectedProduct.id);
+          const docRef = doc(db, 'products', productId);
           const docSnap = await getDoc(docRef);
           
           if (docSnap.exists()) {
@@ -772,6 +803,12 @@ function AdminProducts() {
 
   const handleDeleteProduct = async (productId) => {
     console.log('🗑️ Starting deletion process for product ID:', productId);
+    
+    if (!productId) {
+      console.error("Error: productId is missing");
+      toast.error('Fel: Produkt-ID saknas. Kan inte ta bort produkten.');
+      return;
+    }
     
     if (!window.confirm('Är du säker på att du vill ta bort denna produkt? Denna åtgärd kan inte ångras.')) {
       console.log('❌ User cancelled deletion');
