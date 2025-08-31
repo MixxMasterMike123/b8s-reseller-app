@@ -14,7 +14,7 @@ import SmartPrice from '../../components/shop/SmartPrice';
 import { Helmet } from 'react-helmet-async';
 
 const ShoppingCart = () => {
-  const { cart, updateQuantity, removeFromCart, updateShippingCountry, calculateTotals, applyDiscountCode, removeDiscount } = useCart();
+  const { cart, updateQuantity, removeFromCart, updateShippingCountry, calculateTotals, applyDiscountCode, removeDiscount, getTotalItems, getShippingTierInfo } = useCart();
   const { t } = useTranslation();
   const { getContentValue } = useContentTranslation();
   const navigate = useNavigate();
@@ -295,6 +295,16 @@ const ShoppingCart = () => {
                         showOriginal={false}
                       />
                     </div>
+                    
+                    {/* Shipping tier explanation */}
+                    {getTotalItems() > 3 && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        {(() => {
+                          const tierInfo = getShippingTierInfo(cart.shippingCountry);
+                          return tierInfo.explanation;
+                        })()}
+                      </div>
+                    )}
                   </div>
 
                   <div className="border-t border-gray-200 my-3 sm:my-4"></div>

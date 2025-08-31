@@ -143,49 +143,73 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Calculate shipping cost based on country and product shipping settings
+  // Calculate shipping cost based on country and tiered quantity (every 3 packs = +1 shipping cost)
   const getShippingCost = (country) => {
     // If no items in cart, return 0
     if (!cart.items || cart.items.length === 0) {
       return 0;
     }
 
-    // Get the highest shipping cost from all products in cart
-    // This ensures we cover shipping for the most expensive item
-    let maxShippingCost = 0;
+    // Calculate total quantity of all items in cart
+    const totalQuantity = cart.items.reduce((total, item) => total + item.quantity, 0);
+    
+    // Calculate number of shipping tiers needed (every 3 packs = 1 shipping cost)
+    const shippingTiers = Math.ceil(totalQuantity / 3);
 
-    cart.items.forEach(item => {
-      let itemShippingCost = 0;
+    // Get base shipping cost per tier
+    let baseShippingCost = 0;
 
-      // Determine shipping region based on country
-      if (country === 'SE') {
-        // Sweden
-        itemShippingCost = item.shipping?.sweden?.cost || 0;
-      } else if (SHIPPING_COSTS.NORDIC.countries.includes(country)) {
-        // Nordic countries (Norway, Denmark, Finland, Iceland)
-        itemShippingCost = item.shipping?.nordic?.cost || SHIPPING_COSTS.NORDIC.cost;
+    // Use fallback to standard shipping costs if product doesn't have specific shipping
+    if (country === 'SE') {
+      // Sweden - use product shipping or fallback to 29 SEK
+      const productShipping = cart.items[0]?.shipping?.sweden?.cost;
+      baseShippingCost = productShipping || 29;
+    } else {
+      // All non-Sweden countries - use product shipping or fallback to 49 SEK
+      let productShipping = 0;
+      
+      if (SHIPPING_COSTS.NORDIC.countries.includes(country)) {
+        // Nordic countries
+        productShipping = cart.items[0]?.shipping?.nordic?.cost;
       } else {
-        // Check if it's EU
+        // International (EU and Rest of World)
         const euCountries = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES'];
         
         if (euCountries.includes(country)) {
           // EU countries
-          itemShippingCost = item.shipping?.eu?.cost || item.shipping?.worldwide?.cost || SHIPPING_COSTS.INTERNATIONAL.cost;
+          productShipping = cart.items[0]?.shipping?.eu?.cost;
         } else {
           // Rest of world
-          itemShippingCost = item.shipping?.worldwide?.cost || SHIPPING_COSTS.INTERNATIONAL.cost;
+          productShipping = cart.items[0]?.shipping?.worldwide?.cost;
         }
       }
+      
+      // All non-Sweden countries default to 49 SEK per tier
+      baseShippingCost = productShipping || 49;
+    }
 
-      maxShippingCost = Math.max(maxShippingCost, itemShippingCost);
-    });
-
-    return maxShippingCost;
+    // Return base shipping cost multiplied by number of tiers
+    return baseShippingCost * shippingTiers;
   };
 
   // Get total number of items in cart
   const getTotalItems = () => {
     return cart.items.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  // Get shipping tier information for display
+  const getShippingTierInfo = (country) => {
+    const totalQuantity = getTotalItems();
+    const shippingTiers = Math.ceil(totalQuantity / 3);
+    const baseShippingCost = country === 'SE' ? 29 : 49;
+    
+    return {
+      totalQuantity,
+      shippingTiers,
+      baseShippingCost,
+      totalShippingCost: baseShippingCost * shippingTiers,
+      explanation: `${totalQuantity} ${totalQuantity === 1 ? 'förpackning' : 'förpackningar'} = ${shippingTiers} ${shippingTiers === 1 ? 'fraktkostnad' : 'fraktkostnader'} (${baseShippingCost} kr × ${shippingTiers})`
+    };
   };
 
   // Modal functions
@@ -439,6 +463,7 @@ export const CartProvider = ({ children }) => {
     removeDiscount,
     getTotalItems,
     getShippingRegion,
+    getShippingTierInfo,
     SHIPPING_COSTS,
     isAddedToCartModalVisible,
     showAddedToCartModal,
