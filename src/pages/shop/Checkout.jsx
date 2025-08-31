@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { db, auth } from '../../firebase/config';
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../../firebase/config';
 import { useCart } from '../../contexts/CartContext';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
@@ -27,7 +26,7 @@ const Checkout = () => {
   const { t, currentLanguage } = useTranslation();
   const { getContentValue } = useContentTranslation();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [step, setStep] = useState('contact'); // 'contact', 'shipping', 'payment'
@@ -57,7 +56,7 @@ const Checkout = () => {
     country: 'SE'
   });
 
-  const [paymentMethod, setPaymentMethod] = useState('mock');
+
 
   const { subtotal, vat, shipping, total, discountAmount, discountCode, discountPercentage, appliedAffiliate } = calculateTotals();
 
@@ -331,261 +330,6 @@ const Checkout = () => {
     }
 
     return orderRef.id;
-  };
-
-  const handlePlaceOrder = async () => {
-    if (!validateStep('shipping')) return;
-    if (cart.items.length === 0) {
-      toast.error(t('checkout_empty_cart', 'Din varukorg är tom.'));
-      return;
-    }
-
-    setLoading(true);
-    const toastId = toast.loading(t('checkout_placing_order', 'Lägger din beställning...'));
-
-    try {
-      // Re-calculate totals directly before creating the order to ensure data is fresh
-      const freshTotals = calculateTotals();
-      const orderNumber = generateOrderNumber();
-
-      // Create B2C customer account if password provided
-      let b2cCustomerId = null;
-      let b2cCustomerAuthId = null;
-      
-      if (contactInfo.password && contactInfo.password.trim().length > 0) {
-        try {
-          console.log('Creating B2C customer account for:', contactInfo.email);
-          
-          // Check if customer already exists in b2cCustomers collection
-          const existingCustomerQuery = query(
-            collection(db, 'b2cCustomers'),
-            where('email', '==', contactInfo.email)
-          );
-          const existingCustomerSnapshot = await getDocs(existingCustomerQuery);
-          
-          if (!existingCustomerSnapshot.empty) {
-            // Customer already exists - use existing customer
-            const existingCustomer = existingCustomerSnapshot.docs[0];
-            b2cCustomerId = existingCustomer.id;
-            b2cCustomerAuthId = existingCustomer.data().firebaseAuthUid;
-            console.log('Using existing B2C customer:', b2cCustomerId);
-          } else {
-            // Create new Firebase Auth account
-            const userCredential = await createUserWithEmailAndPassword(
-              auth, 
-              contactInfo.email, 
-              contactInfo.password
-            );
-            b2cCustomerAuthId = userCredential.user.uid;
-            console.log('Created Firebase Auth account:', b2cCustomerAuthId);
-            
-            // Create B2C customer document
-            const customerData = {
-              email: contactInfo.email,
-              firstName: shippingInfo.firstName,
-              lastName: shippingInfo.lastName,
-              phone: '', // Not collected in checkout yet
-              
-              // Address info
-              address: shippingInfo.address,
-              apartment: shippingInfo.apartment || '',
-              city: shippingInfo.city,
-              postalCode: shippingInfo.postalCode,
-              country: shippingInfo.country,
-              
-              // Account info
-              firebaseAuthUid: b2cCustomerAuthId,
-              emailVerified: false,
-              marketingConsent: contactInfo.marketing,
-              
-              // Analytics
-              stats: {
-                totalOrders: 0,
-                totalSpent: 0,
-                averageOrderValue: 0,
-                lastOrderDate: null,
-                firstOrderDate: serverTimestamp()
-              },
-              
-              // Metadata
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp(),
-              lastLoginAt: null,
-              
-              // Integration
-              preferredLang: currentLanguage,
-              customerSegment: 'new',
-              source: 'b2c_checkout'
-            };
-            
-            const customerDocRef = await addDoc(collection(db, 'b2cCustomers'), customerData);
-            b2cCustomerId = customerDocRef.id;
-            console.log('Created B2C customer document:', b2cCustomerId);
-            
-            toast.success(t('checkout_account_created', 'Konto skapat! Du kan nu logga in med ditt lösenord.'), { duration: 5000 });
-          }
-        } catch (customerError) {
-          console.error('Error creating B2C customer account:', customerError);
-          
-          // Handle the case where email already exists in Firebase Auth
-          if (customerError.code === 'auth/email-already-in-use') {
-            console.log('Email already exists in Firebase Auth, attempting to link to existing account...');
-            
-            try {
-              // Try to find existing B2C customer record by email
-              const existingCustomerQuery = query(
-                collection(db, 'b2cCustomers'),
-                where('email', '==', contactInfo.email)
-              );
-              const existingCustomerSnapshot = await getDocs(existingCustomerQuery);
-              
-              if (!existingCustomerSnapshot.empty) {
-                // B2C customer record exists - use it and update preferred language
-                const existingCustomer = existingCustomerSnapshot.docs[0];
-                b2cCustomerId = existingCustomer.id;
-                b2cCustomerAuthId = existingCustomer.data().firebaseAuthUid;
-                
-                // Update preferred language to reflect current language choice
-                await updateDoc(doc(db, 'b2cCustomers', b2cCustomerId), {
-                  preferredLang: currentLanguage,
-                  updatedAt: serverTimestamp()
-                });
-                
-                console.log('Linked to existing B2C customer and updated preferred language:', b2cCustomerId, currentLanguage);
-                toast.success(t('checkout_existing_account', 'Länkad till ditt befintliga konto.'), { duration: 5000 });
-              } else {
-                // Email exists in Firebase Auth but no B2C customer record - this shouldn't happen but handle it
-                console.log('Email exists in Firebase Auth but no B2C customer record found');
-                toast.error(t('checkout_account_conflict', 'E-postadressen är redan registrerad. Vänligen kontakta support.'), { duration: 5000 });
-              }
-            } catch (linkError) {
-              console.error('Error linking to existing account:', linkError);
-              toast.error(t('checkout_account_error', 'Kunde inte skapa konto, men din beställning behandlas.'), { duration: 5000 });
-            }
-          } else {
-            // Other errors (not email-already-in-use)
-            toast.error(t('checkout_account_error', 'Kunde inte skapa konto, men din beställning behandlas.'), { duration: 5000 });
-          }
-        }
-        }
-
-      const orderData = {
-        orderNumber,
-        source: 'b2c',
-        
-        // Customer info from state
-        customerInfo: {
-          email: contactInfo.email,
-          firstName: shippingInfo.firstName,
-          lastName: shippingInfo.lastName,
-          marketingOptIn: contactInfo.marketing,
-          preferredLang: currentLanguage, // Store user's language preference
-        },
-        
-        // Shipping address from state
-        shippingAddress: {
-          firstName: shippingInfo.firstName,
-          lastName: shippingInfo.lastName,
-          address: shippingInfo.address,
-          apartment: shippingInfo.apartment,
-          postalCode: shippingInfo.postalCode,
-          city: shippingInfo.city,
-          country: shippingInfo.country,
-        },
-        
-        // Order details from fresh calculation
-        items: cart.items,
-        subtotal: freshTotals.subtotal,
-        vat: freshTotals.vat,
-        shipping: freshTotals.shipping,
-        discountAmount: freshTotals.discountAmount,
-        discountPercentage: freshTotals.discountPercentage,
-        total: freshTotals.total,
-        
-        // Payment info (mock for now)
-        paymentMethod: 'mock_payment',
-        paymentStatus: 'pending',
-        
-        // System fields
-        status: 'pending',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        shippingCountry: cart.shippingCountry,
-        
-        // Affiliate tracking from fresh calculation
-        // Add affiliate data if present
-        ...(cart.discountCode && {
-          affiliateCode: cart.discountCode,
-          affiliateClickId: cart.affiliateClickId,
-          affiliateDiscount: {
-            code: cart.discountCode,
-            percentage: cart.discountPercentage || 0,
-            amount: cart.discountAmount || 0,
-          },
-        }),
-        
-        // User reference (if logged in)
-        ...(currentUser && { userId: currentUser.uid, userEmail: currentUser.email }),
-        
-        // B2C Customer reference (if account created)
-        ...(b2cCustomerId && { 
-          b2cCustomerId: b2cCustomerId,
-          b2cCustomerAuthId: b2cCustomerAuthId,
-          hasAccount: true 
-        }),
-      };
-
-      console.log("Submitting the following order data to Firestore:", orderData);
-
-      // 1. Create the main order in the named database ('b8s-reseller-db')
-      const docRef = await addDoc(collection(db, 'orders'), orderData);
-      console.log("Order created successfully with ID:", docRef.id);
-
-      // 2. Call the post-order processing function
-      try {
-        console.log('Calling post-order processing function...');
-        const timestamp = Date.now();
-        const functionUrl = `https://us-central1-b8shield-reseller-app.cloudfunctions.net/processB2COrderCompletionHttpV2?_=${timestamp}`;
-        
-        const response = await fetch(functionUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache',
-          },
-          body: JSON.stringify({ orderId: docRef.id }),
-        });
-
-        if (!response.ok) {
-          console.error('CRITICAL: Failed to call post-order processing function.', await response.text());
-          toast.error(t('checkout_background_error', 'Ett bakgrundsfel inträffade. Din order har tagits emot, men kontakta support om du inte får en bekräftelse.'), { duration: 10000 });
-        } else {
-          const result = await response.json();
-          console.log('Post-order processing completed successfully:', result);
-        }
-      } catch (error) {
-        console.error('CRITICAL: Failed to call post-order processing function.', error);
-        toast.error(t('checkout_background_error', 'Ett bakgrundsfel inträffade. Din order har tagits emot, men kontakta support om du inte får en bekräftelse.'), { duration: 10000 });
-      }
-      
-      toast.success(
-        t('checkout_order_success', 'Tack för din beställning! Ordernummer: {{orderNumber}}', { orderNumber }), 
-        { id: toastId, duration: 8000 }
-      );
-      
-      clearCart();
-      
-      // Redirect to order confirmation page, only passing the orderNumber
-      navigate(getCountryAwareUrl(`order-confirmation/${docRef.id}`), { 
-        state: { orderNumber } 
-      });
-
-    } catch (error) {
-      console.error("Error placing order: ", error);
-      toast.error(t('checkout_error', 'Ett fel uppstod vid beställningen. Försök igen.'), { id: toastId });
-    } finally {
-      setLoading(false);
-    }
   };
 
   if (cart.items.length === 0 && !processingPayment) {
