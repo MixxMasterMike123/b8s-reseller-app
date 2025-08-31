@@ -10,19 +10,27 @@ import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import toast from 'react-hot-toast';
 
-const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentError }) => {
+const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentError, clientSecret }) => {
   const stripe = useStripe();
   const elements = useElements();
   const { cart, calculateTotals, clearCart } = useCart();
   const { t } = useTranslation();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState(null);
+  const [isElementReady, setIsElementReady] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!stripe || !elements) {
       console.error('❌ Stripe not loaded');
+      toast.error('Betalningssystem inte redo. Vänta och försök igen.');
+      return;
+    }
+
+    if (!isElementReady) {
+      console.error('❌ Payment Element not ready');
+      toast.error('Betalningsformulär inte redo. Vänta och försök igen.');
       return;
     }
 
@@ -76,6 +84,15 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
     }
   };
 
+  // Don't render the form if we don't have a valid client secret
+  if (!clientSecret || !clientSecret.startsWith('pi_')) {
+    return (
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+        <p className="text-gray-600">Initierar betalning...</p>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Payment Element */}
@@ -92,6 +109,25 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
                 name: customerInfo.name,
                 email: customerInfo.email,
               }
+            }
+          }}
+          onReady={() => {
+            console.log('✅ Payment Element ready');
+            setIsElementReady(true);
+          }}
+          onFocus={() => {
+            console.log('🎯 Payment Element focused');
+          }}
+          onBlur={() => {
+            console.log('👋 Payment Element blurred');
+          }}
+          onChange={(event) => {
+            console.log('🔄 Payment Element changed:', event.complete ? 'Complete' : 'Incomplete');
+            if (event.error) {
+              console.error('❌ Payment Element error:', event.error);
+              setPaymentError(event.error.message);
+            } else {
+              setPaymentError(null);
             }
           }}
         />
@@ -121,9 +157,9 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
       {/* Submit Button */}
       <button
         type="submit"
-        disabled={!stripe || !elements || isProcessing}
+        disabled={!stripe || !elements || !isElementReady || isProcessing}
         className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-colors ${
-          isProcessing || !stripe || !elements
+          isProcessing || !stripe || !elements || !isElementReady
             ? 'bg-gray-400 cursor-not-allowed'
             : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
         }`}
@@ -136,6 +172,8 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
             </svg>
             {t('processing_payment', 'Bearbetar betalning...')}
           </div>
+        ) : !isElementReady ? (
+          t('loading_payment', 'Laddar betalning...')
         ) : (
           `${t('pay_now', 'Betala nu')} - ${calculateTotals().total.toFixed(2)} kr`
         )}
@@ -209,7 +247,8 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPay
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create payment intent');
+          console.error('❌ Payment intent creation failed:', errorData);
+          throw new Error(errorData.details || errorData.error || 'Failed to create payment intent');
         }
 
         const result = await response.json();
@@ -218,7 +257,8 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPay
           setClientSecret(result.paymentIntent.client_secret);
           console.log('✅ Payment intent created:', result.paymentIntent.id);
         } else {
-          throw new Error('Failed to create payment intent');
+          console.error('❌ Payment intent result failed:', result);
+          throw new Error(result.details || result.error || 'Failed to create payment intent');
         }
 
       } catch (error) {
@@ -282,6 +322,7 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPay
         shippingInfo={shippingInfo}
         onPaymentSuccess={onPaymentSuccess}
         onPaymentError={onPaymentError}
+        clientSecret={clientSecret} // Pass clientSecret to form for validation
       />
     </Elements>
   );

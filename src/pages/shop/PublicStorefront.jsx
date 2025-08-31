@@ -211,12 +211,12 @@ const PublicStorefront = () => {
         <meta property="og:type" content="website" />
         <meta property="og:title" content={getShopSeoTitle(currentLanguage)} />
         <meta property="og:description" content={getShopSeoDescription(currentLanguage)} />
-        <meta property="og:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
+        <meta property="og:image" content="https://shop.b8shield.com/images/b8s_top.webp" />
         <meta property="og:url" content={window.location.href} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={getShopSeoTitle(currentLanguage)} />
         <meta name="twitter:description" content={getShopSeoDescription(currentLanguage)} />
-        <meta name="twitter:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
+        <meta name="twitter:image" content="https://shop.b8shield.com/images/b8s_top.webp" />
         <script type="application/ld+json">{JSON.stringify(generateShopStructuredData(currentLanguage))}</script>
       </Helmet>
       <SeoHreflang />

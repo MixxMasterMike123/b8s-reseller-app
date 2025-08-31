@@ -74,7 +74,7 @@ export const createPaymentIntentV2 = onRequest(
       }
 
       const stripe = new Stripe(stripeSecretKey, {
-        apiVersion: '2025-07-30.basil',
+        apiVersion: '2023-10-16',
       });
 
       logger.info('💳 Creating Stripe Payment Intent', { 
@@ -124,40 +124,62 @@ export const createPaymentIntentV2 = onRequest(
         customerEmail: customerInfo.email
       });
 
-      // Create Payment Intent with automatic payment methods
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: amountInOre,
-        currency: currency.toLowerCase(),
-        automatic_payment_methods: {
-          enabled: true,
-        },
-        metadata: {
-          // Store order information in metadata
-          customerEmail: customerInfo.email,
-          customerName: customerInfo.name || '',
-          itemCount: cartItems.length.toString(),
-          shippingCountry: shippingInfo.country || 'SE',
-          shippingCost: (shippingInfo.cost || 0).toString(),
-          ...(discountInfo && {
-            discountCode: discountInfo.code,
-            discountAmount: discountInfo.amount.toString(),
-            discountPercentage: discountInfo.percentage.toString(),
-          }),
-          ...(affiliateInfo && {
-            affiliateCode: affiliateInfo.code,
-            affiliateClickId: affiliateInfo.clickId,
-          }),
-          // Store minimal cart data for metadata (Stripe 500-char limit)
-          // Full cart items with images are used from current cart during order creation
-          totalItems: cartItems.reduce((sum, item) => sum + item.quantity, 0).toString(),
-          itemIds: cartItems.map(item => item.id.substring(0, 8)).join(','), // First 8 chars of each ID
-          cartSummary: cartItems.map(item => `${item.quantity}x${item.sku}`).join(','),
-          source: 'b2c_shop',
-          platform: 'b8shield'
-        },
-        receipt_email: customerInfo.email,
-        description: `B8Shield Order - ${cartItems.length} item${cartItems.length > 1 ? 's' : ''}`,
-      });
+      // Create Payment Intent with simplified configuration for live mode
+      let paymentIntent;
+      try {
+        paymentIntent = await stripe.paymentIntents.create({
+          amount: amountInOre,
+          currency: currency.toLowerCase(),
+          automatic_payment_methods: {
+            enabled: true,
+          },
+          metadata: {
+            // Store order information in metadata
+            customerEmail: customerInfo.email,
+            customerName: customerInfo.name || '',
+            itemCount: cartItems.length.toString(),
+            shippingCountry: shippingInfo.country || 'SE',
+            shippingCost: (shippingInfo.cost || 0).toString(),
+            ...(discountInfo && {
+              discountCode: discountInfo.code,
+              discountAmount: discountInfo.amount.toString(),
+              discountPercentage: discountInfo.percentage?.toString() || '',
+            }),
+            ...(affiliateInfo && {
+              affiliateCode: affiliateInfo.code,
+              affiliateClickId: affiliateInfo.clickId,
+            }),
+            // Store minimal cart data for metadata (Stripe 500-char limit)
+            // Full cart items with images are used from current cart during order creation
+            totalItems: cartItems.reduce((sum, item) => sum + item.quantity, 0).toString(),
+            itemIds: cartItems.map(item => item.id.substring(0, 8)).join(','), // First 8 chars of each ID
+            cartSummary: cartItems.map(item => `${item.quantity}x${item.sku}`).join(','),
+            source: 'b2c_shop',
+            platform: 'b8shield'
+          },
+          receipt_email: customerInfo.email,
+          description: `B8Shield Order - ${cartItems.length} item${cartItems.length > 1 ? 's' : ''}`,
+        });
+      } catch (stripeError: any) {
+        logger.error('❌ Stripe Payment Intent creation failed', {
+          error: stripeError.message,
+          type: stripeError.type,
+          code: stripeError.code,
+          statusCode: stripeError.statusCode,
+          requestParams: {
+            amount: amountInOre,
+            currency: currency.toLowerCase(),
+            customerEmail: customerInfo.email
+          }
+        });
+        
+        response.status(400).json({ 
+          error: 'Payment intent creation failed',
+          details: stripeError.message,
+          success: false
+        });
+        return;
+      }
 
       logger.info('✅ Payment Intent created successfully', {
         paymentIntentId: paymentIntent.id,

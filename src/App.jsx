@@ -123,8 +123,8 @@ function App() {
   const [wagonRoutes, setWagonRoutes] = useState([]);
 
   // Detect subdomain to determine which app to show
-  const hostname = window.location.hostname;
-  const subdomain = hostname.split('.')[0];
+  const hostname = window.location.hostname || '';
+  const subdomain = hostname && typeof hostname === 'string' ? hostname.split('.')[0] : '';
   
   // Determine app mode based on subdomain
   const isShopSubdomain = subdomain === 'shop';

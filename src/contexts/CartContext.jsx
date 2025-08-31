@@ -131,11 +131,56 @@ export const CartProvider = ({ children }) => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [cart.discountCode]);
 
-  // Calculate shipping cost based on country
+  // Get shipping region name for display
+  const getShippingRegion = (country) => {
+    if (country === 'SE') {
+      return 'Sverige';
+    } else if (SHIPPING_COSTS.NORDIC.countries.includes(country)) {
+      return 'Norden';
+    } else {
+      const euCountries = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES'];
+      return euCountries.includes(country) ? 'EU' : 'Världen';
+    }
+  };
+
+  // Calculate shipping cost based on country and product shipping settings
   const getShippingCost = (country) => {
-    return SHIPPING_COSTS.NORDIC.countries.includes(country)
-      ? SHIPPING_COSTS.NORDIC.cost
-      : SHIPPING_COSTS.INTERNATIONAL.cost;
+    // If no items in cart, return 0
+    if (!cart.items || cart.items.length === 0) {
+      return 0;
+    }
+
+    // Get the highest shipping cost from all products in cart
+    // This ensures we cover shipping for the most expensive item
+    let maxShippingCost = 0;
+
+    cart.items.forEach(item => {
+      let itemShippingCost = 0;
+
+      // Determine shipping region based on country
+      if (country === 'SE') {
+        // Sweden
+        itemShippingCost = item.shipping?.sweden?.cost || 0;
+      } else if (SHIPPING_COSTS.NORDIC.countries.includes(country)) {
+        // Nordic countries (Norway, Denmark, Finland, Iceland)
+        itemShippingCost = item.shipping?.nordic?.cost || SHIPPING_COSTS.NORDIC.cost;
+      } else {
+        // Check if it's EU
+        const euCountries = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES'];
+        
+        if (euCountries.includes(country)) {
+          // EU countries
+          itemShippingCost = item.shipping?.eu?.cost || item.shipping?.worldwide?.cost || SHIPPING_COSTS.INTERNATIONAL.cost;
+        } else {
+          // Rest of world
+          itemShippingCost = item.shipping?.worldwide?.cost || SHIPPING_COSTS.INTERNATIONAL.cost;
+        }
+      }
+
+      maxShippingCost = Math.max(maxShippingCost, itemShippingCost);
+    });
+
+    return maxShippingCost;
   };
 
   // Get total number of items in cart
@@ -291,6 +336,7 @@ export const CartProvider = ({ children }) => {
           sku: product.sku,
           color: product.color,
           size: product.size,
+          shipping: product.shipping, // Include shipping information
           // And update the quantity
           quantity: existingItem.quantity + quantity
         };
@@ -309,6 +355,7 @@ export const CartProvider = ({ children }) => {
           sku: product.sku,
           color: product.color,
           size: product.size,
+          shipping: product.shipping, // Include shipping information
           quantity
         };
         newItems.push(newItem);
@@ -391,6 +438,7 @@ export const CartProvider = ({ children }) => {
     applyDiscountCode,
     removeDiscount,
     getTotalItems,
+    getShippingRegion,
     SHIPPING_COSTS,
     isAddedToCartModalVisible,
     showAddedToCartModal,

@@ -100,10 +100,10 @@ export const getCountryAwareUrl = (path) => {
  * Generates a descriptive title from the product object.
  */
 export const getProductSeoTitle = (product) => {
-  if (!product) return 'B8Shield - Professionellt Vasskydd';
+  if (!product) return 'B8Shield Webshop - Professionellt Vasskydd';
   const name = safeGetContent(product.name);
   const size = product.size ? ` - ${product.size}` : '';
-  return `${name}${size} | B8Shield Vasskydd`;
+  return `${name}${size} | B8Shield Webshop`;
 };
 
 /**
@@ -114,13 +114,15 @@ export const getProductSeoDescription = (product) => {
   if (!product) return 'B8Shield är det ultimata vasskyddet för sportfiskare. Skydda dina fiskedrag och fånga mer fisk. Finns i flera färger och storlekar.';
   
   const name = safeGetContent(product.name);
-  const primaryDesc = safeGetContent(product.descriptions?.b2c);
+  // Prioritize B2B description (more detailed), then B2C, then legacy description
+  const b2bDesc = safeGetContent(product.descriptions?.b2b);
+  const b2cDesc = safeGetContent(product.descriptions?.b2c);
   const fallbackDesc = safeGetContent(product.description);
   const defaultDesc = `Köp ${name}. Skyddar dina fiskedrag från att fastna i vass och annan undervattensvegetation. Perfekt för svenska förhållanden.`;
   
-  const description = primaryDesc || fallbackDesc || defaultDesc;
+  const description = b2bDesc || b2cDesc || fallbackDesc || defaultDesc;
   
-  // Truncate to a reasonable length for meta descriptions
+  // Truncate to a reasonable length for meta descriptions (160 chars is optimal)
   return description.length > 160 ? description.substring(0, 157) + '...' : description;
 };
 
@@ -152,9 +154,9 @@ export const generateAffiliateLink = (affiliateCode, preferredLang, productPath 
  */
 export const getShopSeoTitle = (language = 'sv-SE') => {
   const titles = {
-    'sv-SE': 'B8Shield™ - Vasskydd för Sportfiskare | Köp Online',
-    'en-GB': 'B8Shield™ - Weed Guard for Anglers | Buy Online',
-    'en-US': 'B8Shield™ - Weed Guard for Anglers | Buy Online'
+    'sv-SE': 'B8Shield Webshop - Vasskydd för Sportfiskare | Köp Online',
+    'en-GB': 'B8Shield Webshop - Weed Guard for Anglers | Buy Online',  
+    'en-US': 'B8Shield Webshop - Weed Guard for Anglers | Buy Online'
   };
   return titles[language] || titles['sv-SE'];
 };
@@ -176,9 +178,9 @@ export const getShopSeoDescription = (language = 'sv-SE') => {
  */
 export const getCartSeoTitle = (language = 'sv-SE') => {
   const titles = {
-    'sv-SE': 'Din Varukorg | B8Shield™',
-    'en-GB': 'Your Shopping Cart | B8Shield™',
-    'en-US': 'Your Shopping Cart | B8Shield™'
+    'sv-SE': 'Din Varukorg | B8Shield Webshop',
+    'en-GB': 'Your Shopping Cart | B8Shield Webshop',
+    'en-US': 'Your Shopping Cart | B8Shield Webshop'
   };
   return titles[language] || titles['sv-SE'];
 };

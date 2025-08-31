@@ -32,7 +32,10 @@ const getInitialLanguage = () => {
     // For B2C shop, check if we already have a country in the URL path
     if (typeof window !== 'undefined' && window.location.hostname === 'shop.b8shield.com') {
       const pathname = window.location.pathname;
-      const segments = pathname?.split('/')?.filter(Boolean) || [];
+      // Ensure pathname is a string before calling split
+      const segments = (pathname && typeof pathname === 'string') 
+        ? pathname.split('/').filter(Boolean) 
+        : [];
       const countryCode = segments[0];
       
       // If we have a country code in URL, map it to language immediately

@@ -58,6 +58,9 @@ import {
 import {
   createPaymentIntentV2
 } from './payment/createPaymentIntent';
+import {
+  createPaymentIntentMinimalV2
+} from './payment/createPaymentIntentMinimal';
 
 // Import website scraper functions for DiningWagon
 import {
@@ -114,7 +117,8 @@ export {
 
 // Re-export payment functions for Stripe integration
 export {
-  createPaymentIntentV2
+  createPaymentIntentV2,
+  createPaymentIntentMinimalV2
 };
 
 // Re-export website scraper functions for DiningWagon

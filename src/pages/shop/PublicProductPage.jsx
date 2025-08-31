@@ -212,7 +212,10 @@ const PublicProductPage = () => {
   
   useEffect(() => {
     // After group content and product are loaded, redirect if needed
-    if (!redirected && !location.state?.skipPreferredRedirect && groupContent?.defaultProductId && product && product.id !== groupContent.defaultProductId) {
+    // SKIP redirect for Special Edition products - they should be treated as individual products
+    const isSpecialEdition = product?.group === 'B8Shield-special-edition';
+    
+    if (!redirected && !location.state?.skipPreferredRedirect && !isSpecialEdition && groupContent?.defaultProductId && product && product.id !== groupContent.defaultProductId) {
       const preferredId = groupContent.defaultProductId;
       const preferredVariant = variants.find(v => v.id === preferredId);
       const handleRedirect = async () => {
@@ -272,12 +275,12 @@ const PublicProductPage = () => {
         <meta property="og:type" content="product" />
         <meta property="og:title" content={getProductSeoTitle(product)} />
         <meta property="og:description" content={getProductSeoDescription(product)} />
-        <meta property="og:image" content={productImages[0]} />
+        <meta property="og:image" content={productImages[0] || 'https://shop.b8shield.com/images/b8s_top.webp'} />
         <meta property="og:url" content={window.location.href} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={getProductSeoTitle(product)} />
         <meta name="twitter:description" content={getProductSeoDescription(product)} />
-        <meta name="twitter:image" content={productImages[0]} />
+        <meta name="twitter:image" content={productImages[0] || 'https://shop.b8shield.com/images/b8s_top.webp'} />
         <script type="application/ld+json">{JSON.stringify(generateProductSchema(product))}</script>
       </Helmet>
       <SeoHreflang />

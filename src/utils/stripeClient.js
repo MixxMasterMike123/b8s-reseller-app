@@ -18,7 +18,10 @@ let stripePromise;
 export const getStripe = () => {
   if (!stripePromise) {
     console.log('🔄 Initializing Stripe with key:', stripePublishableKey?.substring(0, 20) + '...');
-    stripePromise = loadStripe(stripePublishableKey);
+    stripePromise = loadStripe(stripePublishableKey, {
+      apiVersion: '2023-10-16',
+      locale: 'sv'
+    });
   }
   return stripePromise;
 };
