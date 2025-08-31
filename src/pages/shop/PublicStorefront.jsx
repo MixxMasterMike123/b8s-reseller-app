@@ -247,15 +247,13 @@ const PublicStorefront = () => {
                 />
                 
                 <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
-                  B8Shield™
+                  {t('hero_title_start', 'Fastna')}
+                  <span className="bg-gradient-to-r from-red-400 to-red-500 bg-clip-text text-transparent"> {t('hero_title_middle', 'aldrig')} </span>
+                  {t('hero_title_end', 'mer!')}
                 </h1>
                 
-                <h2 className="text-2xl font-semibold text-yellow-300 mb-4 drop-shadow-lg">
-                  Lose your best lures no more!
-                </h2>
-                
                 <p className="text-xl text-white/90 mb-6 max-w-lg leading-relaxed drop-shadow-md">
-                  B8Shield™ – Vasskydd som förhindrar att dina fiskedrag fastnar i vassen utan att påverka ditt fiske.
+                  {t('hero_subtitle', 'B8Shield™ – Vasskydd som förhindrar att dina fiskedrag fastnar i vassen utan att påverka ditt fiske.')}
                 </p>
 
                 <button 
@@ -308,15 +306,13 @@ const PublicStorefront = () => {
               />
               
               <h1 className="text-3xl font-bold text-white mb-3 drop-shadow-lg">
-                B8Shield™
+                {t('hero_title_start', 'Fastna')}
+                <span className="bg-gradient-to-r from-red-400 to-red-500 bg-clip-text text-transparent"> {t('hero_title_middle', 'aldrig')} </span>
+                {t('hero_title_end', 'mer!')}
               </h1>
               
-              <h2 className="text-lg font-semibold text-yellow-300 mb-3 drop-shadow-lg">
-                Lose your best lures no more!
-              </h2>
-              
               <p className="text-base text-white/90 mb-6 max-w-sm mx-auto leading-relaxed drop-shadow-md">
-                B8Shield™ – Vasskydd som förhindrar att dina fiskedrag fastnar i vassen utan att påverka ditt fiske.
+                {t('hero_subtitle', 'B8Shield™ – Vasskydd som förhindrar att dina fiskedrag fastnar i vassen utan att påverka ditt fiske.')}
               </p>
 
               <button 
