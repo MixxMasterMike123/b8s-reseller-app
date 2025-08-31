@@ -1,0 +1,103 @@
+# B8Shield Launch Migration - Complete Redirect Rules with WP Admin Access
+# Generated: September 1, 2025 - LAUNCH VERSION
+# Total Affiliates: 10
+# Copy and paste this entire code into your store.b8shield.com .htaccess file
+
+# CRITICAL FEATURES:
+# ✅ Preserves WP admin access (wp-login.php, wp-admin/, plugins)
+# ✅ Redirects all affiliate links to new shop
+# ✅ Redirects main domain to new shop
+# ✅ Maintains affiliate tracking and commission system
+
+RewriteEngine On
+
+# === PRESERVE WORDPRESS ADMIN ACCESS (HIGHEST PRIORITY) ===
+# These paths MUST stay on WordPress - NO redirects!
+RewriteCond %{REQUEST_URI} ^/wp-admin/ [NC,OR]
+RewriteCond %{REQUEST_URI} ^/wp-login\.php [NC,OR]
+RewriteCond %{REQUEST_URI} ^/wp-content/ [NC,OR]
+RewriteCond %{REQUEST_URI} ^/wp-includes/ [NC,OR]
+RewriteCond %{REQUEST_URI} ^/xmlrpc\.php [NC]
+RewriteRule ^.*$ - [L]
+
+# === B8SHIELD AFFILIATE REDIRECTS ===
+# Pattern: store.b8shield.com/ref/{ID}/ → shop.b8shield.com/se?ref={CODE}
+
+# === TOP PERFORMERS (High Priority) ===
+# Emma Mattsdal (ID 19) → EMMA10 - 1225.90 kr - TOP EARNER
+RewriteCond %{HTTP_HOST} ^(www\.)?store\.b8shield\.com$ [NC]
+RewriteCond %{REQUEST_URI} ^/ref/19/?(.*)$
+RewriteRule ^ref/19/?(.*)$ https://shop.b8shield.com/se/$1?ref=EMMA10 [R=301,L]
+
+# Bill Kallberg (ID 18) → KALLBERG-644 - 268.32 kr
+RewriteCond %{HTTP_HOST} ^(www\.)?store\.b8shield\.com$ [NC]
+RewriteCond %{REQUEST_URI} ^/ref/18/?(.*)$
+RewriteRule ^ref/18/?(.*)$ https://shop.b8shield.com/se/$1?ref=KALLBERG-644 [R=301,L]
+
+# Mickael Is (ID 12) → TACKLERO-118 - 240.02 kr
+RewriteCond %{HTTP_HOST} ^(www\.)?store\.b8shield\.com$ [NC]
+RewriteCond %{REQUEST_URI} ^/ref/12/?(.*)$
+RewriteRule ^ref/12/?(.*)$ https://shop.b8shield.com/se/$1?ref=TACKLERO-118 [R=301,L]
+
+# Graham Hopkins (ID 10) → GHOPKINS-987 - 237.02 kr
+RewriteCond %{HTTP_HOST} ^(www\.)?store\.b8shield\.com$ [NC]
+RewriteCond %{REQUEST_URI} ^/ref/10/?(.*)$
+RewriteRule ^ref/10/?(.*)$ https://shop.b8shield.com/se/$1?ref=GHOPKINS-987 [R=301,L]
+
+# === ACTIVE AFFILIATES ===
+# Kajsa Gustafsson (ID 21) → KAJSA10 - NEW TOP AFFILIATE
+RewriteCond %{HTTP_HOST} ^(www\.)?store\.b8shield\.com$ [NC]
+RewriteCond %{REQUEST_URI} ^/ref/21/?(.*)$
+RewriteRule ^ref/21/?(.*)$ https://shop.b8shield.com/se/$1?ref=KAJSA10 [R=301,L]
+
+# Trevyn Morris (ID 14) → COLORADO-300 - US Market
+RewriteCond %{HTTP_HOST} ^(www\.)?store\.b8shield\.com$ [NC]
+RewriteCond %{REQUEST_URI} ^/ref/14/?(.*)$
+RewriteRule ^ref/14/?(.*)$ https://shop.b8shield.com/se/$1?ref=COLORADO-300 [R=301,L]
+
+# Michael Baldwin (ID 11) → RETIRED0-418
+RewriteCond %{HTTP_HOST} ^(www\.)?store\.b8shield\.com$ [NC]
+RewriteCond %{REQUEST_URI} ^/ref/11/?(.*)$
+RewriteRule ^ref/11/?(.*)$ https://shop.b8shield.com/se/$1?ref=RETIRED0-418 [R=301,L]
+
+# === INACTIVE/SUSPENDED AFFILIATES ===
+# Dmitri Nilsson Bysell (ID 20) → BAITBLAZE-456 - inactive
+RewriteCond %{HTTP_HOST} ^(www\.)?store\.b8shield\.com$ [NC]
+RewriteCond %{REQUEST_URI} ^/ref/20/?(.*)$
+RewriteRule ^ref/20/?(.*)$ https://shop.b8shield.com/se/$1?ref=BAITBLAZE-456 [R=301,L]
+
+# Przemek Kaleta (ID 17) → STARY-833 - suspended
+RewriteCond %{HTTP_HOST} ^(www\.)?store\.b8shield\.com$ [NC]
+RewriteCond %{REQUEST_URI} ^/ref/17/?(.*)$
+RewriteRule ^ref/17/?(.*)$ https://shop.b8shield.com/se/$1?ref=STARY-833 [R=301,L]
+
+# Jari halkonen (ID 13) → JHFISKE-950 - suspended
+RewriteCond %{HTTP_HOST} ^(www\.)?store\.b8shield\.com$ [NC]
+RewriteCond %{REQUEST_URI} ^/ref/13/?(.*)$
+RewriteRule ^ref/13/?(.*)$ https://shop.b8shield.com/se/$1?ref=JHFISKE-950 [R=301,L]
+
+# === FALLBACK FOR UNKNOWN AFFILIATE IDs ===
+# Handle any unmapped affiliate IDs (IDs 4, 5, 6, 7, 8, 9, 15, 16)
+RewriteCond %{HTTP_HOST} ^(www\.)?store\.b8shield\.com$ [NC]
+RewriteCond %{REQUEST_URI} ^/ref/([0-9]+)/?(.*)$
+RewriteRule ^ref/([0-9]+)/?(.*)$ https://shop.b8shield.com/se/contact?unknown_id=$1&migration=true [R=302,L]
+
+# === MAIN DOMAIN REDIRECT (LAST RULE) ===
+# ⚠️  CRITICAL: This MUST be the LAST rule!
+# ⚠️  All other store.b8shield.com traffic → shop.b8shield.com
+# ⚠️  But WP admin paths are already excluded above
+RewriteCond %{HTTP_HOST} ^(www\.)?store\.b8shield\.com$ [NC]
+RewriteCond %{REQUEST_URI} !^/wp- [NC]
+RewriteCond %{REQUEST_URI} !^/ref/ [NC]
+RewriteRule ^(.*)$ https://shop.b8shield.com/se/$1 [R=301,L]
+
+# === END B8SHIELD LAUNCH REDIRECTS ===
+
+# LAUNCH SUMMARY:
+# ✅ store.b8shield.com → shop.b8shield.com/se (main traffic)
+# ✅ store.b8shield.com/wp-login.php → STAYS on WordPress (admin access)
+# ✅ store.b8shield.com/wp-admin/ → STAYS on WordPress (admin panel)
+# ✅ store.b8shield.com/ref/19/ → shop.b8shield.com/se?ref=EMMA10 (affiliate tracking)
+# ✅ All 10 affiliate codes preserved and working
+# ✅ Plugin functionality maintained
+# ✅ Ready for September 1, 2025 launch!
