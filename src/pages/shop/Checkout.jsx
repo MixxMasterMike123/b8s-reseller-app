@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase/config';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { db, auth } from '../../firebase/config';
 import { useCart } from '../../contexts/CartContext';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
@@ -188,6 +189,142 @@ const Checkout = () => {
     return `B8S-${timestamp}${random}`;
   };
 
+  // Helper function to create B2C customer account
+  const createB2CCustomerAccount = async () => {
+    if (!contactInfo.password || contactInfo.password.trim().length === 0) {
+      return { b2cCustomerId: null, b2cCustomerAuthId: null };
+    }
+
+    try {
+      console.log('Creating B2C customer account for:', contactInfo.email);
+      
+      // Check if customer already exists in b2cCustomers collection
+      const existingCustomerQuery = query(
+        collection(db, 'b2cCustomers'),
+        where('email', '==', contactInfo.email)
+      );
+      const existingCustomerSnapshot = await getDocs(existingCustomerQuery);
+      
+      if (!existingCustomerSnapshot.empty) {
+        // Customer already exists - use existing customer
+        const existingCustomer = existingCustomerSnapshot.docs[0];
+        const b2cCustomerId = existingCustomer.id;
+        const b2cCustomerAuthId = existingCustomer.data().firebaseAuthUid;
+        console.log('Using existing B2C customer:', b2cCustomerId);
+        return { b2cCustomerId, b2cCustomerAuthId };
+      } else {
+        // Create new Firebase Auth account
+        const userCredential = await createUserWithEmailAndPassword(
+          auth, 
+          contactInfo.email, 
+          contactInfo.password
+        );
+        const b2cCustomerAuthId = userCredential.user.uid;
+        console.log('Created Firebase Auth account:', b2cCustomerAuthId);
+        
+        // Send email verification
+        await sendEmailVerification(userCredential.user);
+        console.log('Email verification sent to:', contactInfo.email);
+        
+        // Create B2C customer document
+        const customerData = {
+          email: contactInfo.email,
+          firstName: shippingInfo.firstName,
+          lastName: shippingInfo.lastName,
+          phone: '', // Not collected in checkout yet
+          
+          // Address info
+          address: shippingInfo.address,
+          apartment: shippingInfo.apartment || '',
+          city: shippingInfo.city,
+          postalCode: shippingInfo.postalCode,
+          country: shippingInfo.country,
+          
+          // Account info
+          firebaseAuthUid: b2cCustomerAuthId,
+          emailVerified: false,
+          marketingConsent: contactInfo.marketing,
+          
+          // Analytics
+          stats: {
+            totalOrders: 0,
+            totalSpent: 0,
+            averageOrderValue: 0,
+            lastOrderDate: null,
+            firstOrderDate: serverTimestamp()
+          },
+          
+          // Metadata
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          lastLoginAt: null,
+          
+          // Integration
+          preferredLang: currentLanguage,
+          customerSegment: 'new',
+          source: 'b2c_checkout'
+        };
+        
+        const customerDocRef = await addDoc(collection(db, 'b2cCustomers'), customerData);
+        const b2cCustomerId = customerDocRef.id;
+        console.log('Created B2C customer document:', b2cCustomerId);
+        
+        toast.success(t('checkout_account_created', 'Konto skapat! Kontrollera din e-post för verifiering.'), {
+          duration: 5000
+        });
+        
+        return { b2cCustomerId, b2cCustomerAuthId };
+      }
+    } catch (customerError) {
+      console.error('Error creating B2C customer account:', customerError);
+      
+      // Handle the case where email already exists in Firebase Auth
+      if (customerError.code === 'auth/email-already-in-use') {
+        console.log('Email already exists in Firebase Auth, attempting to link to existing account...');
+        
+        try {
+          // Try to find existing B2C customer record by email
+          const existingCustomerQuery = query(
+            collection(db, 'b2cCustomers'),
+            where('email', '==', contactInfo.email)
+          );
+          const existingCustomerSnapshot = await getDocs(existingCustomerQuery);
+          
+          if (!existingCustomerSnapshot.empty) {
+            // B2C customer record exists - use it and update preferred language
+            const existingCustomer = existingCustomerSnapshot.docs[0];
+            const b2cCustomerId = existingCustomer.id;
+            const b2cCustomerAuthId = existingCustomer.data().firebaseAuthUid;
+            
+            // Update preferred language to reflect current language choice
+            await updateDoc(doc(db, 'b2cCustomers', b2cCustomerId), {
+              preferredLang: currentLanguage,
+              updatedAt: serverTimestamp()
+            });
+            
+            console.log('Linked to existing B2C customer and updated preferred language:', b2cCustomerId, currentLanguage);
+            toast.success(t('checkout_existing_account', 'Länkad till ditt befintliga konto.'), { duration: 5000 });
+            
+            return { b2cCustomerId, b2cCustomerAuthId };
+          } else {
+            // Email exists in Firebase Auth but no B2C customer record - this shouldn't happen but handle it
+            console.log('Email exists in Firebase Auth but no B2C customer record found');
+            toast.error(t('checkout_account_conflict', 'E-postadressen är redan registrerad. Vänligen kontakta support.'), { duration: 5000 });
+            return { b2cCustomerId: null, b2cCustomerAuthId: null };
+          }
+        } catch (linkError) {
+          console.error('Error linking to existing account:', linkError);
+          toast.error(t('checkout_account_error', 'Kunde inte skapa konto, men din beställning behandlas.'), { duration: 5000 });
+          return { b2cCustomerId: null, b2cCustomerAuthId: null };
+        }
+      } else {
+        // Other errors (not email-already-in-use)
+        toast.error(t('checkout_account_error', 'Kunde inte skapa konto, men din beställning behandlas.'), { duration: 5000 });
+        return { b2cCustomerId: null, b2cCustomerAuthId: null };
+      }
+    }
+  };
+
   // Handle successful Stripe payment
   const handlePaymentSuccess = async (paymentIntent) => {
     console.log('✅ Payment successful, creating order...', paymentIntent);
@@ -227,6 +364,9 @@ const Checkout = () => {
   const createOrderFromPayment = async (paymentIntent) => {
     const freshTotals = calculateTotals();
     const orderNumber = generateOrderNumber();
+
+    // Create B2C customer account if password provided
+    const { b2cCustomerId, b2cCustomerAuthId } = await createB2CCustomerAccount();
 
     // Extract cart items from payment intent metadata
     console.log('🔍 Payment Intent metadata:', paymentIntent.metadata);
@@ -294,6 +434,12 @@ const Checkout = () => {
         discountPercentage: freshTotals.discountPercentage,
         clickId: freshTotals.affiliateClickId
       } : null,
+      // B2C Customer reference (if account created)
+      ...(b2cCustomerId && { 
+        b2cCustomerId: b2cCustomerId,
+        b2cCustomerAuthId: b2cCustomerAuthId,
+        hasAccount: true 
+      }),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     };
