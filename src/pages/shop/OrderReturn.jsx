@@ -1,0 +1,259 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Elements, useStripe } from '@stripe/react-stripe-js';
+import { getStripe } from '../../utils/stripeClient';
+import { useCart } from '../../contexts/CartContext';
+import { useTranslation } from '../../contexts/TranslationContext';
+import { db } from '../../firebase/config';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getCountryAwareUrl } from '../../utils/productUrls';
+import toast from 'react-hot-toast';
+
+const OrderReturnInner = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const stripe = useStripe();
+  const { cart, calculateTotals, clearCart } = useCart();
+  const { t } = useTranslation();
+  const [status, setStatus] = useState('processing'); // 'processing', 'success', 'error'
+  const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    if (!stripe) return;
+
+    const clientSecret = searchParams.get('payment_intent_client_secret');
+    if (!clientSecret) {
+      setStatus('error');
+      setErrorMessage('Ingen betalningsinformation hittades');
+      return;
+    }
+
+    const handlePaymentReturn = async () => {
+      try {
+        console.log('🔄 Retrieving payment intent after return...');
+        
+        // Retrieve the payment intent
+        const { error, paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
+
+        if (error) {
+          console.error('❌ Error retrieving payment intent:', error);
+          setStatus('error');
+          setErrorMessage(error.message);
+          return;
+        }
+
+        console.log('💳 Payment Intent status after return:', paymentIntent.status);
+
+        if (paymentIntent.status === 'succeeded') {
+          // Payment was successful, create the order
+          console.log('✅ Klarna payment succeeded, creating order...');
+          
+          const orderId = await createOrderFromPayment(paymentIntent);
+          console.log('✅ Order created with ID:', orderId);
+          
+          // Clear cart and redirect to confirmation
+          clearCart();
+          setStatus('success');
+          
+          // Redirect to order confirmation
+          setTimeout(() => {
+            navigate(getCountryAwareUrl(`order-confirmation/${orderId}`));
+          }, 2000);
+          
+        } else if (paymentIntent.status === 'processing') {
+          console.log('⏳ Payment still processing...');
+          setStatus('processing');
+          
+          // Check again after a delay
+          setTimeout(() => {
+            window.location.reload();
+          }, 3000);
+          
+        } else if (paymentIntent.status === 'canceled') {
+          console.log('❌ Payment was canceled');
+          setStatus('error');
+          setErrorMessage('Betalning avbröts');
+          
+        } else {
+          console.log('❌ Payment failed with status:', paymentIntent.status);
+          setStatus('error');
+          setErrorMessage('Betalning misslyckades');
+        }
+
+      } catch (error) {
+        console.error('❌ Error handling payment return:', error);
+        setStatus('error');
+        setErrorMessage('Ett oväntat fel uppstod');
+      }
+    };
+
+    handlePaymentReturn();
+  }, [stripe, searchParams]);
+
+  const createOrderFromPayment = async (paymentIntent) => {
+    const freshTotals = calculateTotals();
+    const orderNumber = generateOrderNumber();
+
+    // Get customer info from localStorage or payment intent
+    const customerInfo = JSON.parse(localStorage.getItem('b8s_checkout_customer') || '{}');
+    const shippingInfo = JSON.parse(localStorage.getItem('b8s_checkout_shipping') || '{}');
+
+    // Extract cart items
+    const cartItems = cart.items.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      sku: item.sku,
+      image: item.image
+    }));
+
+    const orderData = {
+      orderNumber,
+      status: 'confirmed',
+      source: 'b2c',
+      items: cartItems,
+      customerInfo: {
+        email: customerInfo.email,
+        name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+        firstName: shippingInfo.firstName,
+        lastName: shippingInfo.lastName,
+        marketingOptIn: customerInfo.marketing || false,
+        preferredLang: 'sv-SE'
+      },
+      shippingInfo: {
+        address: shippingInfo.address,
+        apartment: shippingInfo.apartment || '',
+        city: shippingInfo.city,
+        postalCode: shippingInfo.postalCode,
+        country: shippingInfo.country
+      },
+      subtotal: freshTotals.subtotal,
+      shipping: freshTotals.shipping,
+      vat: freshTotals.vat,
+      discountAmount: freshTotals.discountAmount || 0,
+      total: freshTotals.total,
+      payment: {
+        method: 'klarna',
+        paymentIntentId: paymentIntent.id,
+        amount: paymentIntent.amount / 100,
+        currency: paymentIntent.currency,
+        status: paymentIntent.status
+      },
+      affiliate: freshTotals.discountCode ? {
+        code: freshTotals.discountCode,
+        discountPercentage: freshTotals.discountPercentage,
+        clickId: freshTotals.affiliateClickId
+      } : null,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+
+    // Add order to database
+    const orderRef = await addDoc(collection(db, 'orders'), orderData);
+    
+    // Call post-order processing function
+    try {
+      const response = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/processB2COrderCompletionHttpV2', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId: orderRef.id,
+          orderData: orderData
+        })
+      });
+
+      if (response.ok) {
+        console.log('✅ Post-order processing completed');
+      } else {
+        console.error('⚠️ Post-order processing failed:', await response.text());
+      }
+    } catch (error) {
+      console.error('⚠️ Error calling post-order processing:', error);
+    }
+
+    return orderRef.id;
+  };
+
+  const generateOrderNumber = () => {
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.random().toString(36).substr(2, 4).toUpperCase();
+    return `B8S-${timestamp}-${random}`;
+  };
+
+  if (status === 'processing') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-lg text-center max-w-md">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            {t('processing_payment', 'Behandlar betalning...')}
+          </h2>
+          <p className="text-gray-600">
+            {t('payment_processing_message', 'Vänta medan vi bekräftar din betalning.')}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'success') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-lg text-center max-w-md">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            {t('payment_successful', 'Betalning genomförd!')}
+          </h2>
+          <p className="text-gray-600">
+            {t('redirecting_to_confirmation', 'Omdirigerar till orderbekräftelse...')}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'error') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-lg text-center max-w-md">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            {t('payment_failed', 'Betalning misslyckades')}
+          </h2>
+          <p className="text-gray-600 mb-4">
+            {errorMessage || t('payment_error_message', 'Ett fel uppstod vid betalning.')}
+          </p>
+          <button
+            onClick={() => navigate(getCountryAwareUrl('checkout'))}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            {t('try_again', 'Försök igen')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+};
+
+const OrderReturn = () => {
+  return (
+    <Elements stripe={getStripe()}>
+      <OrderReturnInner />
+    </Elements>
+  );
+};
+
+export default OrderReturn;

@@ -86,6 +86,7 @@ import ScrollToTop from './components/ScrollToTop';
 
 // Order Confirmation
 import OrderConfirmation from './pages/shop/OrderConfirmation';
+import OrderReturn from './pages/shop/OrderReturn';
 
 import { Toaster } from 'react-hot-toast';
 
@@ -201,6 +202,7 @@ function App() {
               <Route path="/:countryCode/product/:slug" element={<CountryRouteValidator><PublicProductPage /></CountryRouteValidator>} />
               <Route path="/:countryCode/cart" element={<CountryRouteValidator><ShoppingCart /></CountryRouteValidator>} />
               <Route path="/:countryCode/checkout" element={<CountryRouteValidator><Checkout /></CountryRouteValidator>} />
+              <Route path="/:countryCode/order-return" element={<CountryRouteValidator><OrderReturn /></CountryRouteValidator>} />
               <Route path="/:countryCode/order-confirmation/:orderId" element={<CountryRouteValidator><OrderConfirmation /></CountryRouteValidator>} />
               <Route path="/:countryCode/account" element={<CountryRouteValidator><CustomerAccount /></CountryRouteValidator>} />
               <Route path="/account" element={<CustomerAccount />} />

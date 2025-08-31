@@ -81,6 +81,15 @@ const Checkout = () => {
     }
   }, [currentUser]);
 
+  // Save customer and shipping info to localStorage for Klarna return flow
+  useEffect(() => {
+    if (step === 'payment') {
+      localStorage.setItem('b8s_checkout_customer', JSON.stringify(contactInfo));
+      localStorage.setItem('b8s_checkout_shipping', JSON.stringify(shippingInfo));
+      console.log('💾 Saved checkout info to localStorage for payment return flow');
+    }
+  }, [step, contactInfo, shippingInfo]);
+
   const loadCustomerProfile = async () => {
     try {
       setLoadingProfile(true);

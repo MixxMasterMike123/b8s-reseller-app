@@ -51,7 +51,7 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/shop/order-success`,
+          return_url: `${window.location.origin}/order-return`,
           receipt_email: customerInfo.email,
         },
         redirect: 'if_required'
@@ -62,16 +62,39 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
         setPaymentError(error.message);
         onPaymentError?.(error);
         toast.error(`Betalning misslyckades: ${error.message}`);
-      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        console.log('✅ Payment succeeded!', paymentIntent);
+      } else if (paymentIntent) {
+        console.log('💳 Payment Intent status:', paymentIntent.status);
         
-        // Clear cart after successful payment
-        clearCart();
-        
-        // Call success callback
-        onPaymentSuccess?.(paymentIntent);
-        
-        toast.success('Betalning genomförd!');
+        if (paymentIntent.status === 'succeeded') {
+          // Payment completed immediately (cards)
+          console.log('✅ Payment succeeded immediately!', paymentIntent);
+          
+          // Clear cart after successful payment
+          clearCart();
+          
+          // Call success callback
+          onPaymentSuccess?.(paymentIntent);
+          
+          toast.success('Betalning genomförd!');
+          
+        } else if (paymentIntent.status === 'requires_action' || paymentIntent.status === 'requires_source_action') {
+          // Payment requires additional action (Klarna, 3D Secure, etc.)
+          console.log('🔄 Payment requires action, redirecting...', paymentIntent.status);
+          toast.info('Omdirigerar till betalningsleverantör...');
+          
+          // User will be redirected to complete payment, then return to return_url
+          // The order creation will happen on the return page
+          
+        } else if (paymentIntent.status === 'processing') {
+          // Payment is being processed (some payment methods)
+          console.log('⏳ Payment processing...', paymentIntent);
+          toast.info('Betalning behandlas...');
+          
+        } else {
+          // Other statuses
+          console.log('❓ Unexpected payment status:', paymentIntent.status);
+          toast.warning('Oväntat betalningsstatus. Kontakta support om problemet kvarstår.');
+        }
       }
 
     } catch (error) {
