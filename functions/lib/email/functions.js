@@ -1122,28 +1122,44 @@ exports.sendAffiliateCredentialsV2 = (0, https_1.onCall)(async (request) => {
           <li><strong>Tillfälligt lösenord:</strong> ${temporaryPassword}</li>
         </ul>
         <p>Vi rekommenderar starkt att du byter ditt lösenord efter första inloggningen.</p>`;
-        // Send welcome email using existing template
-        const emailTemplate = (0, emails_1.getEmail)('affiliateWelcome', 'sv-SE', {
+        // Normalize language code (GB -> en-GB, US -> en-US, etc.)
+        const normalizeLanguageCode = (lang) => {
+            if (!lang)
+                return 'sv-SE';
+            const normalized = lang.toLowerCase();
+            if (normalized === 'gb' || normalized === 'en-gb')
+                return 'en-GB';
+            if (normalized === 'us' || normalized === 'en-us')
+                return 'en-US';
+            if (normalized.startsWith('en'))
+                return 'en-GB'; // Default English to GB
+            return 'sv-SE'; // Default to Swedish
+        };
+        const preferredLang = normalizeLanguageCode(affiliateData.preferredLang);
+        console.log(`🌐 Affiliate ${affiliateData.email} preferredLang: "${affiliateData.preferredLang}" -> normalized: "${preferredLang}"`);
+        // Send welcome email using imported getEmail (consistent with other functions)
+        console.log(`📧 Getting email template for language: ${preferredLang}`);
+        const emailTemplate = (0, emails_1.getEmail)('affiliateWelcome', preferredLang, {
             appData: {
                 name: affiliateData.name,
                 email: affiliateData.email,
-                preferredLang: 'sv-SE'
+                preferredLang: preferredLang
             },
             affiliateCode: affiliateData.affiliateCode,
             tempPassword: temporaryPassword,
             loginInstructions,
             wasExistingAuthUser: isExistingUser
         });
-        const emailData = createEmailData(affiliateData.email, email_handler_1.EMAIL_FROM.affiliate, emailTemplate, {
-            userData: {
-                email: affiliateData.email,
-                companyName: affiliateData.name || '',
-                preferredLang: 'sv-SE'
-            },
-            affiliateData,
-            tempPassword: temporaryPassword,
-            wasExistingAuthUser: isExistingUser
-        });
+        console.log(`📧 Email template retrieved successfully for ${preferredLang}`);
+        // Send email using imported functions (consistent with other functions)
+        const emailData = {
+            to: affiliateData.email,
+            from: email_handler_1.EMAIL_FROM.affiliate,
+            subject: emailTemplate.subject,
+            html: emailTemplate.html,
+            text: emailTemplate.text
+        };
+        console.log(`📧 Sending email to ${affiliateData.email}...`);
         await (0, email_handler_1.sendEmail)(emailData);
         console.log(`${isExistingUser ? 'New credentials' : 'Welcome email'} sent successfully to affiliate ${affiliateData.email} for affiliate ${affiliateId}${isExistingUser ? ' (existing user)' : ''}`);
         return {
@@ -1160,12 +1176,15 @@ exports.sendAffiliateCredentialsV2 = (0, https_1.onCall)(async (request) => {
 });
 // Function to send custom password reset email
 exports.sendPasswordResetEmailV2 = (0, https_1.onCall)(async (request) => {
+    console.log('🔍 sendPasswordResetEmailV2 function started');
     const { email } = request.data;
+    console.log(`🔍 Email parameter received: ${email}`);
     if (!email || !isValidEmail(email)) {
+        console.log('❌ Invalid email provided');
         throw new https_1.HttpsError('invalid-argument', 'Valid email is required');
     }
     try {
-        console.log(`Processing password reset request for: ${email}`);
+        console.log(`🔍 Processing password reset request for: ${email}`);
         // Generate secure reset code
         const resetCode = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
@@ -1208,17 +1227,22 @@ exports.sendPasswordResetEmailV2 = (0, https_1.onCall)(async (request) => {
             userAgent
         });
         // Generate password reset email
+        console.log(`🔍 Getting email template for language: ${preferredLang}`);
         const emailTemplate = (0, emails_1.getEmail)('passwordReset', preferredLang, {
             email,
             resetCode,
             userAgent,
             timestamp
         });
+        console.log(`🔍 Email template retrieved successfully`);
         // Create email data
+        console.log(`🔍 Creating email data with createEmailData function`);
         const emailData = createEmailData(email, email_handler_1.EMAIL_FROM.system, emailTemplate);
+        console.log(`🔍 Email data created successfully`);
         // Send the email
+        console.log(`🔍 Calling sendEmail function...`);
         await (0, email_handler_1.sendEmail)(emailData);
-        console.log(`Password reset email sent successfully to ${email} in language ${preferredLang}`);
+        console.log(`✅ Password reset email sent successfully to ${email} in language ${preferredLang}`);
         return {
             success: true,
             email,

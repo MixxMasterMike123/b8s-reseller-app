@@ -16,3 +16,5 @@ export { deleteCustomerAccount as deleteCustomerAccountV2, deleteB2CCustomerAcco
 export { createPaymentIntentV2, createPaymentIntentMinimalV2 };
 export { scrapeWebsiteMeta as scrapeWebsiteMetaV2 };
 export declare const exampleProtectedFunction: import("firebase-functions/v2/https").HttpsFunction;
+export { testPasswordResetMinimal } from './email/testPasswordReset';
+export { sendPasswordResetV3 } from './email-v2/functions';

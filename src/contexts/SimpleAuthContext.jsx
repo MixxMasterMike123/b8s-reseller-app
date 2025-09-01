@@ -116,11 +116,11 @@ export function SimpleAuthContextProvider({ children }) {
     try {
       setError('');
       
-      // Call our custom Firebase Function to send branded password reset email
+      // Call our custom Firebase Function to send branded password reset email (V3)
       const functions = getFunctions();
-      const sendPasswordResetEmailV2 = httpsCallable(functions, 'sendPasswordResetEmailV2');
+      const sendPasswordResetV3 = httpsCallable(functions, 'sendPasswordResetV3');
       
-      const result = await sendPasswordResetEmailV2({ email });
+      const result = await sendPasswordResetV3({ email });
       
       console.log('Custom password reset email sent:', result.data);
       toast.success('Password reset email sent');

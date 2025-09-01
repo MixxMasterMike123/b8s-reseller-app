@@ -30,11 +30,11 @@ const nodemailer = __importStar(require("nodemailer"));
 const params_1 = require("firebase-functions/params");
 // Initialize Firebase Admin
 (0, app_1.initializeApp)();
-// Runtime configuration parameters
-const smtpHost = (0, params_1.defineString)('SMTP_HOST', { default: 'send.one.com' });
+// Runtime configuration parameters (Gmail SMTP)
+const smtpHost = (0, params_1.defineString)('SMTP_HOST', { default: 'smtp.gmail.com' });
 const smtpPort = (0, params_1.defineString)('SMTP_PORT', { default: '587' });
-const smtpUser = (0, params_1.defineString)('SMTP_USER', { default: 'info@jphinnovation.se' });
-const smtpPass = (0, params_1.defineString)('SMTP_PASS');
+const smtpUser = (0, params_1.defineString)('SMTP_USER', { default: 'b8shield.reseller@gmail.com' });
+const smtpPass = (0, params_1.defineString)('SMTP_PASS'); // Gmail App Password required
 // Initialize Firestore with named database
 exports.db = (0, firestore_1.getFirestore)('b8s-reseller-db');
 exports.db.settings({ ignoreUndefinedProperties: true });
@@ -65,6 +65,7 @@ exports.createTransporter = createTransporter;
 // Core email sending function
 const sendEmail = async (emailData) => {
     try {
+        console.log(`🔧 SMTP Config - Host: ${smtpHost.value()}, Port: ${smtpPort.value()}, User: ${smtpUser.value()}`);
         const transporter = (0, exports.createTransporter)();
         const mailOptions = {
             from: emailData.from || exports.EMAIL_FROM.system,

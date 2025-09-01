@@ -143,4 +143,10 @@ export const exampleProtectedFunction = onRequest(
     // Function logic here
     response.json({ message: 'Protected function executed successfully' });
   }
-); 
+);
+
+// Test function for debugging email issues
+export { testPasswordResetMinimal } from './email/testPasswordReset';
+
+// New V3 Email System Functions
+export { sendPasswordResetV3 } from './email-v2/functions'; 

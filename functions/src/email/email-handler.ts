@@ -7,11 +7,11 @@ import { EmailData } from './types';
 // Initialize Firebase Admin
 initializeApp();
 
-// Runtime configuration parameters
-const smtpHost = defineString('SMTP_HOST', { default: 'send.one.com' });
+// Runtime configuration parameters (Gmail SMTP)
+const smtpHost = defineString('SMTP_HOST', { default: 'smtp.gmail.com' });
 const smtpPort = defineString('SMTP_PORT', { default: '587' });
-const smtpUser = defineString('SMTP_USER', { default: 'info@jphinnovation.se' });
-const smtpPass = defineString('SMTP_PASS');
+const smtpUser = defineString('SMTP_USER', { default: 'b8shield.reseller@gmail.com' });
+const smtpPass = defineString('SMTP_PASS'); // Gmail App Password required
 
 // Initialize Firestore with named database
 export const db = getFirestore('b8s-reseller-db');
@@ -46,6 +46,7 @@ export const createTransporter = () => nodemailer.createTransport({
 // Core email sending function
 export const sendEmail = async (emailData: EmailData): Promise<void> => {
   try {
+    console.log(`🔧 SMTP Config - Host: ${smtpHost.value()}, Port: ${smtpPort.value()}, User: ${smtpUser.value()}`);
     const transporter = createTransporter();
     const mailOptions = {
       from: emailData.from || EMAIL_FROM.system,
