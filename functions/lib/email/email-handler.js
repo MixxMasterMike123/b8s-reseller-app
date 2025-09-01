@@ -40,11 +40,11 @@ exports.db = (0, firestore_1.getFirestore)('b8s-reseller-db');
 exports.db.settings({ ignoreUndefinedProperties: true });
 // Email constants
 exports.EMAIL_FROM = {
-    b2b: '"B8Shield Återförsäljarportal" <info@jphinnovation.se>',
-    affiliate: '"B8Shield Affiliate Program" <info@jphinnovation.se>',
-    b2c: '"B8Shield Shop" <info@jphinnovation.se>',
-    system: '"B8Shield System" <info@jphinnovation.se>',
-    support: '"B8Shield Support" <info@jphinnovation.se>'
+    b2b: '"B8Shield Återförsäljarportal" <b8shield.reseller@gmail.com>',
+    affiliate: '"B8Shield Affiliate Program" <b8shield.reseller@gmail.com>',
+    b2c: '"B8Shield Shop" <b8shield.reseller@gmail.com>',
+    system: '"B8Shield System" <b8shield.reseller@gmail.com>',
+    support: '"B8Shield Support" <b8shield.reseller@gmail.com>'
 };
 // Admin notification recipients
 exports.ADMIN_EMAILS = 'info@jphinnovation.se, micke.ohlen@gmail.com';
@@ -56,6 +56,9 @@ const createTransporter = () => nodemailer.createTransport({
     auth: {
         user: smtpUser.value(),
         pass: smtpPass.value()
+    },
+    tls: {
+        rejectUnauthorized: false // Allow Gmail's certificate
     }
 });
 exports.createTransporter = createTransporter;

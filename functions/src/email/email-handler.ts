@@ -19,11 +19,11 @@ db.settings({ ignoreUndefinedProperties: true });
 
 // Email constants
 export const EMAIL_FROM = {
-  b2b: '"B8Shield Återförsäljarportal" <info@jphinnovation.se>',
-  affiliate: '"B8Shield Affiliate Program" <info@jphinnovation.se>',
-  b2c: '"B8Shield Shop" <info@jphinnovation.se>',
-  system: '"B8Shield System" <info@jphinnovation.se>',
-  support: '"B8Shield Support" <info@jphinnovation.se>'
+  b2b: '"B8Shield Återförsäljarportal" <b8shield.reseller@gmail.com>',
+  affiliate: '"B8Shield Affiliate Program" <b8shield.reseller@gmail.com>',
+  b2c: '"B8Shield Shop" <b8shield.reseller@gmail.com>',
+  system: '"B8Shield System" <b8shield.reseller@gmail.com>',
+  support: '"B8Shield Support" <b8shield.reseller@gmail.com>'
 } as const;
 
 // Admin notification recipients
@@ -33,10 +33,13 @@ export const ADMIN_EMAILS = 'info@jphinnovation.se, micke.ohlen@gmail.com';
 export const createTransporter = () => nodemailer.createTransport({
   host: smtpHost.value(),
   port: parseInt(smtpPort.value()),
-  secure: false,
+  secure: false, // Use TLS (STARTTLS) for port 587
   auth: {
     user: smtpUser.value(),
     pass: smtpPass.value()
+  },
+  tls: {
+    rejectUnauthorized: false // Allow Gmail's certificate
   }
 });
 
