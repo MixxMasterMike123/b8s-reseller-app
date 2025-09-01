@@ -8,6 +8,7 @@ import { getAffiliateWelcomeTemplate, AffiliateWelcomeData } from './templates/a
 import { getB2COrderPendingTemplate, B2COrderPendingData } from './templates/b2cOrderPending';
 import { getAdminB2COrderNotificationTemplate, AdminB2COrderNotificationData } from './templates/adminB2COrderNotification';
 import { getB2BOrderConfirmationCustomerTemplate, B2BOrderConfirmationCustomerData } from './templates/b2bOrderConfirmationCustomer';
+import { getOrderStatusUpdateTemplate, OrderStatusUpdateData } from './templates/orderStatusUpdate';
 
 // Initialize Firestore with named database and Auth
 const db = getFirestore('b8s-reseller-db');
@@ -334,9 +335,61 @@ export const sendB2BOrderConfirmationCustomerV3 = onCall(async (request) => {
   }
 });
 
+// V3 Order Status Update Function
+export const sendOrderStatusEmailV3 = onCall(async (request) => {
+  console.log('🚀 sendOrderStatusEmailV3: Starting...');
+  
+  const { data } = request;
+  
+  const { orderData, userData, newStatus, previousStatus, trackingNumber, estimatedDelivery, notes } = data as OrderStatusUpdateData;
+  
+  if (!userData?.email || !isValidEmail(userData.email)) {
+    throw new HttpsError('invalid-argument', 'Valid customer email is required');
+  }
+  
+  if (!orderData?.orderNumber || !newStatus) {
+    throw new HttpsError('invalid-argument', 'Order data and new status are required');
+  }
+
+  try {
+    console.log(`🔍 Processing order status update for: ${userData.email} - ${orderData.orderNumber} → ${newStatus}`);
+
+    // Get user's preferred language
+    const preferredLang = await getUserPreferredLanguage(userData.email);
+
+    // Get email template
+    const template = getOrderStatusUpdateTemplate({
+      orderData,
+      userData,
+      newStatus,
+      previousStatus,
+      trackingNumber,
+      estimatedDelivery,
+      notes
+    }, preferredLang);
+
+    // Send the email
+    const messageId = await sendEmailV3(userData.email, template.subject, template.html);
+
+    console.log(`✅ Order status update sent successfully to ${userData.email}`);
+
+    return {
+      success: true,
+      email: userData.email,
+      orderNumber: orderData.orderNumber,
+      newStatus,
+      language: preferredLang,
+      messageId
+    };
+
+  } catch (error) {
+    console.error('❌ Order status update failed:', error);
+    throw new HttpsError('internal', 'Failed to send order status update');
+  }
+});
+
 // TODO: Add remaining V3 functions following the same pattern:
 // - sendB2BOrderConfirmationAdminV3
-// - sendOrderStatusEmailV3
 // - sendAffiliateCredentialsV3
 // - sendVerificationEmailV3
 // - updateCustomerEmailV3

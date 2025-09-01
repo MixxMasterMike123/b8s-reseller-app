@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendB2BOrderConfirmationCustomerV3 = exports.sendB2COrderNotificationAdminV3 = exports.sendB2COrderPendingEmailV3 = exports.sendAffiliateWelcomeEmailV3 = exports.sendCustomerWelcomeEmailV3 = void 0;
+exports.sendOrderStatusEmailV3 = exports.sendB2BOrderConfirmationCustomerV3 = exports.sendB2COrderNotificationAdminV3 = exports.sendB2COrderPendingEmailV3 = exports.sendAffiliateWelcomeEmailV3 = exports.sendCustomerWelcomeEmailV3 = void 0;
 // Main V3 email functions
 const https_1 = require("firebase-functions/v2/https");
 const firestore_1 = require("firebase-admin/firestore");
@@ -11,6 +11,7 @@ const affiliateWelcome_1 = require("./templates/affiliateWelcome");
 const b2cOrderPending_1 = require("./templates/b2cOrderPending");
 const adminB2COrderNotification_1 = require("./templates/adminB2COrderNotification");
 const b2bOrderConfirmationCustomer_1 = require("./templates/b2bOrderConfirmationCustomer");
+const orderStatusUpdate_1 = require("./templates/orderStatusUpdate");
 // Initialize Firestore with named database and Auth
 const db = (0, firestore_1.getFirestore)('b8s-reseller-db');
 // const auth = getAuth(); // TODO: Will be needed for future functions
@@ -263,9 +264,50 @@ exports.sendB2BOrderConfirmationCustomerV3 = (0, https_1.onCall)(async (request)
         throw new https_1.HttpsError('internal', 'Failed to send order confirmation');
     }
 });
+// V3 Order Status Update Function
+exports.sendOrderStatusEmailV3 = (0, https_1.onCall)(async (request) => {
+    console.log('🚀 sendOrderStatusEmailV3: Starting...');
+    const { data } = request;
+    const { orderData, userData, newStatus, previousStatus, trackingNumber, estimatedDelivery, notes } = data;
+    if (!userData?.email || !isValidEmail(userData.email)) {
+        throw new https_1.HttpsError('invalid-argument', 'Valid customer email is required');
+    }
+    if (!orderData?.orderNumber || !newStatus) {
+        throw new https_1.HttpsError('invalid-argument', 'Order data and new status are required');
+    }
+    try {
+        console.log(`🔍 Processing order status update for: ${userData.email} - ${orderData.orderNumber} → ${newStatus}`);
+        // Get user's preferred language
+        const preferredLang = await getUserPreferredLanguage(userData.email);
+        // Get email template
+        const template = (0, orderStatusUpdate_1.getOrderStatusUpdateTemplate)({
+            orderData,
+            userData,
+            newStatus,
+            previousStatus,
+            trackingNumber,
+            estimatedDelivery,
+            notes
+        }, preferredLang);
+        // Send the email
+        const messageId = await sendEmailV3(userData.email, template.subject, template.html);
+        console.log(`✅ Order status update sent successfully to ${userData.email}`);
+        return {
+            success: true,
+            email: userData.email,
+            orderNumber: orderData.orderNumber,
+            newStatus,
+            language: preferredLang,
+            messageId
+        };
+    }
+    catch (error) {
+        console.error('❌ Order status update failed:', error);
+        throw new https_1.HttpsError('internal', 'Failed to send order status update');
+    }
+});
 // TODO: Add remaining V3 functions following the same pattern:
 // - sendB2BOrderConfirmationAdminV3
-// - sendOrderStatusEmailV3
 // - sendAffiliateCredentialsV3
 // - sendVerificationEmailV3
 // - updateCustomerEmailV3
