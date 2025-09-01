@@ -154,13 +154,9 @@ class LabelPrinterService {
   }
 
   /**
-   * Print label to BT-M110 printer
+   * Print label - Primary method using system print dialog
    */
   async printLabel(order, userData = null) {
-    if (!this.isConnected) {
-      throw new Error('Printer not connected. Please connect first.');
-    }
-
     try {
       console.log('🖨️ Formatting label for order:', order.orderNumber || order.id);
       
@@ -168,12 +164,8 @@ class LabelPrinterService {
       const labelData = this.formatAddressLabel(order, userData);
       console.log('📋 Label data:', labelData);
       
-      // Generate print commands
-      const printCommands = this.generatePrintCommands(labelData);
-      
-      // For now, we'll use a fallback method since Web Bluetooth printing is complex
-      // This opens a print dialog with formatted text
-      this.printViaDialog(labelData);
+      // Always use system print dialog (most reliable)
+      this.printViaSystemDialog(labelData);
       
       return true;
     } catch (error) {
@@ -183,58 +175,176 @@ class LabelPrinterService {
   }
 
   /**
-   * Fallback: Print via browser dialog (works without Bluetooth)
+   * Advanced: Print via Bluetooth (for tech-savvy users)
    */
-  printViaDialog(labelData) {
+  async printViaBluetooth(order, userData = null) {
+    if (!this.isConnected) {
+      throw new Error('Bluetooth printer not connected. Use "Anslut BT-M110" button first.');
+    }
+
+    try {
+      console.log('📱 Printing via Bluetooth for order:', order.orderNumber || order.id);
+      
+      const labelData = this.formatAddressLabel(order, userData);
+      const printCommands = this.generatePrintCommands(labelData);
+      
+      // TODO: Implement actual Bluetooth printing
+      // For now, fallback to system dialog
+      this.printViaSystemDialog(labelData);
+      
+      return true;
+    } catch (error) {
+      console.error('❌ Bluetooth printing failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Primary: Print via system dialog (optimized for BT-M110 40x60mm labels)
+   */
+  printViaSystemDialog(labelData) {
     const printWindow = window.open('', '_blank', 'width=400,height=600');
     
     const html = `
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Shipping Label - ${labelData.orderNumber}</title>
+        <title>B8Shield Fraktetikett - ${labelData.orderNumber}</title>
+        <meta charset="utf-8">
         <style>
+          @page {
+            size: 40mm 60mm;
+            margin: 2mm;
+          }
+          
           body {
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.2;
-            margin: 20px;
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            font-size: 11px;
+            line-height: 1.1;
+            margin: 0;
+            padding: 2mm;
             background: white;
+            color: black;
+            width: 36mm;
+            height: 56mm;
           }
-          .label {
-            width: 40mm;
-            height: 60mm;
-            border: 2px dashed #ccc;
-            padding: 5mm;
-            box-sizing: border-box;
-            page-break-after: always;
+          
+          .label-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
           }
-          .order-number {
-            font-size: 10px;
+          
+          .order-header {
+            font-size: 8px;
             text-align: center;
-            margin-bottom: 3mm;
-            color: #666;
+            margin-bottom: 2mm;
+            color: #333;
+            font-weight: normal;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 1mm;
           }
+          
+          .address-section {
+            flex-grow: 1;
+          }
+          
           .address-line {
+            margin-bottom: 0.5mm;
+            font-weight: bold;
+            font-size: 10px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+          }
+          
+          .address-line:first-child {
+            font-size: 11px;
             margin-bottom: 1mm;
+          }
+          
+          .postal-line {
+            font-size: 10px;
+            font-weight: bold;
+            margin-top: 1mm;
+          }
+          
+          .country-line {
+            font-size: 9px;
+            margin-top: 1mm;
+            text-align: center;
             font-weight: bold;
           }
+          
           @media print {
-            body { margin: 0; }
-            .label { border: none; margin: 0; }
+            body { 
+              margin: 0; 
+              padding: 1mm;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .order-header {
+              border-bottom: 1px solid #000;
+            }
+          }
+          
+          /* Optimize for thermal printers */
+          @media print and (monochrome) {
+            * {
+              color: black !important;
+              background: white !important;
+            }
           }
         </style>
       </head>
       <body>
-        <div class="label">
-          <div class="order-number">Order: ${labelData.orderNumber}</div>
-          ${labelData.lines.map(line => `<div class="address-line">${line}</div>`).join('')}
+        <div class="label-container">
+          <div class="order-header">B8Shield Order: ${labelData.orderNumber}</div>
+          <div class="address-section">
+            ${labelData.lines.map((line, index) => {
+              // Detect postal code + city line
+              const isPostalLine = /^\d{5}\s+/.test(line);
+              const isCountryLine = line.length <= 8 && line.toUpperCase() === line;
+              
+              let className = 'address-line';
+              if (isPostalLine) className += ' postal-line';
+              if (isCountryLine) className += ' country-line';
+              
+              return `<div class="${className}">${line}</div>`;
+            }).join('')}
+          </div>
         </div>
+        
         <script>
+          // Enhanced printing for different systems
           window.onload = function() {
-            window.print();
-            setTimeout(() => window.close(), 1000);
-          }
+            // Small delay to ensure styles are loaded
+            setTimeout(() => {
+              // Trigger print dialog
+              window.print();
+              
+              // Auto-close after printing (or timeout)
+              setTimeout(() => {
+                try {
+                  window.close();
+                } catch (e) {
+                  // Some browsers block auto-close
+                  console.log('Print dialog opened successfully');
+                }
+              }, 2000);
+            }, 500);
+          };
+          
+          // Handle print events
+          window.addEventListener('beforeprint', function() {
+            console.log('🖨️ Opening print dialog for BT-M110 label');
+            document.title = 'Fraktetikett ${labelData.orderNumber} - Välj BT-M110 eller spara som PDF';
+          });
+          
+          window.addEventListener('afterprint', function() {
+            console.log('✅ Print dialog completed');
+          });
         </script>
       </body>
       </html>
