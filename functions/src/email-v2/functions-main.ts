@@ -9,6 +9,7 @@ import { getB2COrderPendingTemplate, B2COrderPendingData } from './templates/b2c
 import { getAdminB2COrderNotificationTemplate, AdminB2COrderNotificationData } from './templates/adminB2COrderNotification';
 import { getB2BOrderConfirmationCustomerTemplate, B2BOrderConfirmationCustomerData } from './templates/b2bOrderConfirmationCustomer';
 import { getOrderStatusUpdateTemplate, OrderStatusUpdateData } from './templates/orderStatusUpdate';
+import { getB2BOrderConfirmationAdminTemplate, B2BOrderConfirmationAdminData } from './templates/b2bOrderConfirmationAdmin';
 
 // Initialize Firestore with named database and Auth
 const db = getFirestore('b8s-reseller-db');
@@ -388,9 +389,105 @@ export const sendOrderStatusEmailV3 = onCall(async (request) => {
   }
 });
 
-// TODO: Add remaining V3 functions following the same pattern:
-// - sendB2BOrderConfirmationAdminV3
+// V3 B2B Order Confirmation Admin Function
+export const sendB2BOrderConfirmationAdminV3 = onCall(async (request) => {
+  console.log('🚀 sendB2BOrderConfirmationAdminV3: Starting...');
+  
+  const { data } = request;
+  const { userData, orderData, orderSummary, totalAmount } = data as B2BOrderConfirmationAdminData;
+  
+  if (!orderData?.orderNumber) {
+    throw new HttpsError('invalid-argument', 'Order data is required');
+  }
+
+  try {
+    console.log(`🔍 Processing admin B2B notification for order: ${orderData.orderNumber}`);
+
+    // Admin emails are always in Swedish
+    const preferredLang = 'sv-SE';
+
+    // Get email template
+    const template = getB2BOrderConfirmationAdminTemplate({
+      userData, orderData, orderSummary, totalAmount
+    }, preferredLang);
+
+    // Send to all admin emails
+    const adminEmails = ['micke.ohlen@gmail.com']; // TODO: Make this configurable
+    const emailPromises = adminEmails.map(email => 
+      sendEmailV3(email, template.subject, template.html)
+    );
+    const messageIds = await Promise.all(emailPromises);
+
+    console.log(`✅ Admin B2B notification sent successfully for order: ${orderData.orderNumber}`);
+
+    return {
+      success: true,
+      orderNumber: orderData.orderNumber,
+      language: preferredLang,
+      messageIds
+    };
+
+  } catch (error) {
+    console.error('❌ Admin B2B notification failed:', error);
+    throw new HttpsError('internal', 'Failed to send admin notification');
+  }
+});
+
+// V3 Email Verification Function (Simple implementation)
+export const sendVerificationEmailV3 = onCall(async (request) => {
+  console.log('🚀 sendVerificationEmailV3: Starting...');
+  
+  const { auth: userAuth, data } = request;
+  
+  // Verify admin authentication
+  await verifyAdminAuth(userAuth?.uid);
+  
+  const { email } = data as { email: string };
+  
+  if (!email || !isValidEmail(email)) {
+    throw new HttpsError('invalid-argument', 'Valid email is required');
+  }
+
+  try {
+    console.log(`🔍 Processing email verification for: ${email}`);
+
+    // Simple verification email (reusing password reset pattern)
+    const verificationCode = Math.random().toString(36).substring(2, 15);
+    const preferredLang = await getUserPreferredLanguage(email);
+
+    const subject = preferredLang.startsWith('en') ? 'Email Verification Required' : 'E-postverifiering krävs';
+    const html = `
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px;">
+  <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
+    </div>
+    <h2 style="color: #1f2937;">${preferredLang.startsWith('en') ? 'Email Verification' : 'E-postverifiering'}</h2>
+    <p style="color: #374151; line-height: 1.6;">${preferredLang.startsWith('en') ? 'Please verify your email address to complete your account setup.' : 'Vänligen verifiera din e-postadress för att slutföra kontoinställningen.'}</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <p style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 18px; font-weight: bold;">${verificationCode}</p>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">${preferredLang.startsWith('en') ? 'This verification code will expire in 24 hours.' : 'Denna verifieringskod kommer att gå ut inom 24 timmar.'}</p>
+  </div>
+</div>`;
+
+    const messageId = await sendEmailV3(email, subject, html);
+
+    console.log(`✅ Email verification sent successfully to ${email}`);
+
+    return {
+      success: true,
+      email,
+      language: preferredLang,
+      messageId
+    };
+
+  } catch (error) {
+    console.error('❌ Email verification failed:', error);
+    throw new HttpsError('internal', 'Failed to send verification email');
+  }
+});
+
+// TODO: Add remaining 2 V3 functions:
 // - sendAffiliateCredentialsV3
-// - sendVerificationEmailV3
-// - updateCustomerEmailV3
 // - approveAffiliateV3

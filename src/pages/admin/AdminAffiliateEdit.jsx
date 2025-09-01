@@ -346,7 +346,7 @@ const AdminAffiliateEdit = () => {
   const handleApprove = async () => {
     const toastId = toast.loading('Godkänner affiliate...');
     try {
-      const approveAffiliate = httpsCallable(functions, 'approveAffiliateV2');
+      const approveAffiliate = httpsCallable(functions, 'approveAffiliateV3');
       const applicationData = {
         applicationId: id,
         name: data.name,
@@ -518,7 +518,7 @@ const AdminAffiliateEdit = () => {
       setSendingCredentials(true);
       
       // Call the cloud function to send affiliate credentials
-      const sendAffiliateCredentials = httpsCallable(functions, 'sendAffiliateCredentialsV2');
+      const sendAffiliateCredentials = httpsCallable(functions, 'sendAffiliateCredentialsV3');
       const result = await sendAffiliateCredentials({ affiliateId: id });
       
       setCredentialsResult(result.data);

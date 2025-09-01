@@ -38,3 +38,9 @@ export declare const sendOrderStatusEmailV3: import("firebase-functions/v2/https
     language: string;
     messageId: string;
 }>, unknown>;
+export declare const sendB2BOrderConfirmationAdminV3: import("firebase-functions/v2/https").CallableFunction<any, Promise<{
+    success: boolean;
+    orderNumber: string;
+    language: string;
+    messageIds: string[];
+}>, unknown>;

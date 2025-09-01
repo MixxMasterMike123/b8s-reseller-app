@@ -321,7 +321,7 @@ const AdminB2CCustomerEdit = () => {
 
     try {
       setSaving(true);
-      const sendVerificationEmail = httpsCallable(functions, 'sendVerificationEmailV2');
+      const sendVerificationEmail = httpsCallable(functions, 'sendVerificationEmailV3');
       await sendVerificationEmail({ email: customer.email });
       toast.success('Verifieringsmejl skickat till kunden!');
     } catch (error) {

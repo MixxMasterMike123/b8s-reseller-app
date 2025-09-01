@@ -156,5 +156,7 @@ export {
   sendB2COrderPendingEmailV3,
   sendB2COrderNotificationAdminV3,
   sendB2BOrderConfirmationCustomerV3,
-  sendOrderStatusEmailV3
+  sendOrderStatusEmailV3,
+  sendB2BOrderConfirmationAdminV3,
+  sendVerificationEmailV3
 } from './email-v2/functions-main'; 

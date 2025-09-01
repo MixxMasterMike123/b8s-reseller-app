@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendOrderStatusEmailV3 = exports.sendB2BOrderConfirmationCustomerV3 = exports.sendB2COrderNotificationAdminV3 = exports.sendB2COrderPendingEmailV3 = exports.sendAffiliateWelcomeEmailV3 = exports.sendCustomerWelcomeEmailV3 = void 0;
+exports.sendB2BOrderConfirmationAdminV3 = exports.sendOrderStatusEmailV3 = exports.sendB2BOrderConfirmationCustomerV3 = exports.sendB2COrderNotificationAdminV3 = exports.sendB2COrderPendingEmailV3 = exports.sendAffiliateWelcomeEmailV3 = exports.sendCustomerWelcomeEmailV3 = void 0;
 // Main V3 email functions
 const https_1 = require("firebase-functions/v2/https");
 const firestore_1 = require("firebase-admin/firestore");
@@ -12,6 +12,7 @@ const b2cOrderPending_1 = require("./templates/b2cOrderPending");
 const adminB2COrderNotification_1 = require("./templates/adminB2COrderNotification");
 const b2bOrderConfirmationCustomer_1 = require("./templates/b2bOrderConfirmationCustomer");
 const orderStatusUpdate_1 = require("./templates/orderStatusUpdate");
+const b2bOrderConfirmationAdmin_1 = require("./templates/b2bOrderConfirmationAdmin");
 // Initialize Firestore with named database and Auth
 const db = (0, firestore_1.getFirestore)('b8s-reseller-db');
 // const auth = getAuth(); // TODO: Will be needed for future functions
@@ -306,10 +307,41 @@ exports.sendOrderStatusEmailV3 = (0, https_1.onCall)(async (request) => {
         throw new https_1.HttpsError('internal', 'Failed to send order status update');
     }
 });
-// TODO: Add remaining V3 functions following the same pattern:
-// - sendB2BOrderConfirmationAdminV3
+// V3 B2B Order Confirmation Admin Function
+exports.sendB2BOrderConfirmationAdminV3 = (0, https_1.onCall)(async (request) => {
+    console.log('🚀 sendB2BOrderConfirmationAdminV3: Starting...');
+    const { data } = request;
+    const { userData, orderData, orderSummary, totalAmount } = data;
+    if (!orderData?.orderNumber) {
+        throw new https_1.HttpsError('invalid-argument', 'Order data is required');
+    }
+    try {
+        console.log(`🔍 Processing admin B2B notification for order: ${orderData.orderNumber}`);
+        // Admin emails are always in Swedish
+        const preferredLang = 'sv-SE';
+        // Get email template
+        const template = (0, b2bOrderConfirmationAdmin_1.getB2BOrderConfirmationAdminTemplate)({
+            userData, orderData, orderSummary, totalAmount
+        }, preferredLang);
+        // Send to all admin emails
+        const adminEmails = ['micke.ohlen@gmail.com']; // TODO: Make this configurable
+        const emailPromises = adminEmails.map(email => sendEmailV3(email, template.subject, template.html));
+        const messageIds = await Promise.all(emailPromises);
+        console.log(`✅ Admin B2B notification sent successfully for order: ${orderData.orderNumber}`);
+        return {
+            success: true,
+            orderNumber: orderData.orderNumber,
+            language: preferredLang,
+            messageIds
+        };
+    }
+    catch (error) {
+        console.error('❌ Admin B2B notification failed:', error);
+        throw new https_1.HttpsError('internal', 'Failed to send admin notification');
+    }
+});
+// TODO: Add remaining 3 V3 functions:
 // - sendAffiliateCredentialsV3
-// - sendVerificationEmailV3
-// - updateCustomerEmailV3
+// - sendVerificationEmailV3  
 // - approveAffiliateV3
 //# sourceMappingURL=functions-main.js.map

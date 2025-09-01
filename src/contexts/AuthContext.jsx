@@ -631,7 +631,7 @@ export function AuthProvider({ children }) {
         // Real Firebase: Call the cloud function
         if (!isAdmin) throw new Error('Unauthorized - Admin access required');
         
-        const sendWelcomeEmail = httpsCallable(functions, 'sendCustomerWelcomeEmailV2');
+        const sendWelcomeEmail = httpsCallable(functions, 'sendCustomerWelcomeEmailV3');
         const result = await sendWelcomeEmail({ customerId });
         
         const data = result.data;
