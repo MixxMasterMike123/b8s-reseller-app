@@ -161,4 +161,7 @@ export {
   sendVerificationEmailV3,
   sendAffiliateCredentialsV3,
   approveAffiliateV3
-} from './email-v2/functions-main'; 
+} from './email-v2/functions-main';
+
+// V3 Email System Triggers
+export { sendOrderConfirmationEmailsV3 } from './email-v2/triggers'; 

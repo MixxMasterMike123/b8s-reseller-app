@@ -19,3 +19,4 @@ export declare const exampleProtectedFunction: import("firebase-functions/v2/htt
 export { testPasswordResetMinimal } from './email/testPasswordReset';
 export { sendPasswordResetV3, confirmPasswordResetV3 } from './email-v2/functions';
 export { sendCustomerWelcomeEmailV3, sendAffiliateWelcomeEmailV3, sendB2COrderPendingEmailV3, sendB2COrderNotificationAdminV3, sendB2BOrderConfirmationCustomerV3, sendOrderStatusEmailV3, sendB2BOrderConfirmationAdminV3, sendVerificationEmailV3, sendAffiliateCredentialsV3, approveAffiliateV3 } from './email-v2/functions-main';
+export { sendOrderConfirmationEmailsV3 } from './email-v2/triggers';
