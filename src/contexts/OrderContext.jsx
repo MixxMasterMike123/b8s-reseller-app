@@ -16,6 +16,7 @@ import {
   setDoc
 } from 'firebase/firestore';
 import { db, isDemoMode } from '../firebase/config';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
 import { onOrderCompleted } from '../wagons/dining-wagon/utils/customerStatusAutomation';
@@ -638,7 +639,7 @@ export const OrderProvider = ({ children }) => {
           ...additionalData // Include tracking number, carrier, admin notes, etc.
         });
         
-        // Trigger email notification via HTTP function
+        // Trigger email notification via V3 Firebase Function
         try {
           // Get user data for email
           const userDoc = await getDoc(doc(db, "users", orderData.userId));
@@ -648,27 +649,28 @@ export const OrderProvider = ({ children }) => {
             contactPerson: 'Unknown'
           };
           
-          const response = await fetch('https://sendstatusupdatehttpv2-csdvvcrpzq-uc.a.run.app', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
+          // Call V3 order status email function
+          const functions = getFunctions();
+          const sendOrderStatusEmailV3 = httpsCallable(functions, 'sendOrderStatusEmailV3');
+          
+          const result = await sendOrderStatusEmailV3({
+            orderData: { 
+              ...orderData, 
+              ...additionalData, 
+              status: newStatus,
+              orderNumber: orderData.orderNumber || `B8S-${orderId}`
             },
-            body: JSON.stringify({
-              orderId: orderId,
-              orderData: { ...orderData, ...additionalData, status: newStatus },
-              userData: userData,
-              oldStatus: previousStatus,
-              newStatus: newStatus
-            })
+            userData: userData,
+            newStatus: newStatus,
+            previousStatus: previousStatus,
+            trackingNumber: additionalData.trackingNumber || null,
+            estimatedDelivery: additionalData.estimatedDelivery || null,
+            notes: additionalData.notes || null
           });
           
-          if (response.ok) {
-            console.log('Status update emails sent successfully');
-          } else {
-            console.error('Failed to send status update emails:', await response.text());
-          }
+          console.log('✅ V3 Status update emails sent successfully:', result.data);
         } catch (emailError) {
-          console.error('Error sending status update emails:', emailError);
+          console.error('❌ Error sending V3 status update emails:', emailError);
           // Don't fail the status update if email fails
         }
         
