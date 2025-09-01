@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendB2BOrderConfirmationAdminV3 = exports.sendOrderStatusEmailV3 = exports.sendB2BOrderConfirmationCustomerV3 = exports.sendB2COrderNotificationAdminV3 = exports.sendB2COrderPendingEmailV3 = exports.sendAffiliateWelcomeEmailV3 = exports.sendCustomerWelcomeEmailV3 = void 0;
+exports.approveAffiliateV3 = exports.sendAffiliateCredentialsV3 = exports.sendVerificationEmailV3 = exports.sendB2BOrderConfirmationAdminV3 = exports.sendOrderStatusEmailV3 = exports.sendB2BOrderConfirmationCustomerV3 = exports.sendB2COrderNotificationAdminV3 = exports.sendB2COrderPendingEmailV3 = exports.sendAffiliateWelcomeEmailV3 = exports.sendCustomerWelcomeEmailV3 = void 0;
 // Main V3 email functions
 const https_1 = require("firebase-functions/v2/https");
 const firestore_1 = require("firebase-admin/firestore");
@@ -13,9 +13,11 @@ const adminB2COrderNotification_1 = require("./templates/adminB2COrderNotificati
 const b2bOrderConfirmationCustomer_1 = require("./templates/b2bOrderConfirmationCustomer");
 const orderStatusUpdate_1 = require("./templates/orderStatusUpdate");
 const b2bOrderConfirmationAdmin_1 = require("./templates/b2bOrderConfirmationAdmin");
+const affiliateCredentials_1 = require("./templates/affiliateCredentials");
 // Initialize Firestore with named database and Auth
 const db = (0, firestore_1.getFirestore)('b8s-reseller-db');
-// const auth = getAuth(); // TODO: Will be needed for future functions
+const { getAuth } = require('firebase-admin/auth');
+const auth = getAuth();
 // Helper function for email validation
 function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -340,8 +342,257 @@ exports.sendB2BOrderConfirmationAdminV3 = (0, https_1.onCall)(async (request) =>
         throw new https_1.HttpsError('internal', 'Failed to send admin notification');
     }
 });
-// TODO: Add remaining 3 V3 functions:
-// - sendAffiliateCredentialsV3
-// - sendVerificationEmailV3  
-// - approveAffiliateV3
+// V3 Email Verification Function (Simple implementation)
+exports.sendVerificationEmailV3 = (0, https_1.onCall)(async (request) => {
+    console.log('🚀 sendVerificationEmailV3: Starting...');
+    const { auth: userAuth, data } = request;
+    // Verify admin authentication
+    await verifyAdminAuth(userAuth?.uid);
+    const { email } = data;
+    if (!email || !isValidEmail(email)) {
+        throw new https_1.HttpsError('invalid-argument', 'Valid email is required');
+    }
+    try {
+        console.log(`🔍 Processing email verification for: ${email}`);
+        // Simple verification email (reusing password reset pattern)
+        const verificationCode = Math.random().toString(36).substring(2, 15);
+        const preferredLang = await getUserPreferredLanguage(email);
+        const subject = preferredLang.startsWith('en') ? 'Email Verification Required' : 'E-postverifiering krävs';
+        const { APP_URLS } = require('../config');
+        const html = `
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px;">
+  <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <img src="${APP_URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
+    </div>
+    <h2 style="color: #1f2937;">${preferredLang.startsWith('en') ? 'Email Verification' : 'E-postverifiering'}</h2>
+    <p style="color: #374151; line-height: 1.6;">${preferredLang.startsWith('en') ? 'Please verify your email address to complete your account setup.' : 'Vänligen verifiera din e-postadress för att slutföra kontoinställningen.'}</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <p style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 18px; font-weight: bold;">${verificationCode}</p>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">${preferredLang.startsWith('en') ? 'This verification code will expire in 24 hours.' : 'Denna verifieringskod kommer att gå ut inom 24 timmar.'}</p>
+  </div>
+</div>`;
+        const messageId = await sendEmailV3(email, subject, html);
+        console.log(`✅ Email verification sent successfully to ${email}`);
+        return {
+            success: true,
+            email,
+            language: preferredLang,
+            messageId
+        };
+    }
+    catch (error) {
+        console.error('❌ Email verification failed:', error);
+        throw new https_1.HttpsError('internal', 'Failed to send verification email');
+    }
+});
+// V3 Send Affiliate Credentials Function
+exports.sendAffiliateCredentialsV3 = (0, https_1.onCall)(async (request) => {
+    console.log('🚀 sendAffiliateCredentialsV3: Starting...');
+    const { auth: userAuth, data } = request;
+    // Verify admin authentication
+    await verifyAdminAuth(userAuth?.uid);
+    const { affiliateId } = data;
+    if (!affiliateId) {
+        throw new https_1.HttpsError('invalid-argument', 'Affiliate ID is required');
+    }
+    try {
+        console.log(`🔍 Processing affiliate credentials for: ${affiliateId}`);
+        // Get affiliate data
+        const affiliateDoc = await db.collection('affiliates').doc(affiliateId).get();
+        if (!affiliateDoc.exists) {
+            throw new https_1.HttpsError('not-found', 'Affiliate not found');
+        }
+        const affiliateData = affiliateDoc.data();
+        let isExistingUser = false;
+        let temporaryPassword = Math.random().toString(36).substring(2, 15);
+        let userRecord;
+        try {
+            // Try to create new Firebase Auth account
+            userRecord = await auth.createUser({
+                email: affiliateData.email,
+                password: temporaryPassword,
+                emailVerified: true,
+                displayName: affiliateData.name
+            });
+            console.log(`Created new Firebase Auth user for affiliate ${affiliateData.email}`);
+        }
+        catch (error) {
+            if (error.code === 'auth/email-already-exists') {
+                // If user exists, update their password
+                const existingUser = await auth.getUserByEmail(affiliateData.email);
+                await auth.updateUser(existingUser.uid, {
+                    password: temporaryPassword
+                });
+                userRecord = existingUser;
+                isExistingUser = true;
+                console.log(`Updated existing affiliate user password for ${affiliateData.email}`);
+            }
+            else {
+                throw error;
+            }
+        }
+        // Update affiliate document with new credentials info
+        await affiliateDoc.ref.update({
+            credentialsSent: true,
+            credentialsSentAt: new Date(),
+            credentialsSentBy: userAuth?.uid,
+            firebaseAuthUid: userRecord.uid,
+            requiresPasswordChange: true,
+            temporaryPassword, // Store for admin reference
+        });
+        // Generate login instructions
+        const loginInstructions = isExistingUser
+            ? `Du hade redan ett konto hos B8Shield, så du kan logga in med ditt befintliga lösenord. Om du har glömt det kan du återställa det på inloggningssidan.`
+            : `Användarnamn: ${affiliateData.email}<br>Tillfälligt lösenord: ${temporaryPassword}<br>Vi rekommenderar starkt att du byter ditt lösenord efter första inloggningen.`;
+        // Get user's preferred language
+        const preferredLang = await getUserPreferredLanguage(affiliateData.email);
+        // Get email template
+        const template = (0, affiliateCredentials_1.getAffiliateCredentialsTemplate)({
+            appData: {
+                name: affiliateData.name,
+                email: affiliateData.email,
+                preferredLang: preferredLang
+            },
+            affiliateCode: affiliateData.affiliateCode,
+            tempPassword: temporaryPassword,
+            loginInstructions,
+            wasExistingAuthUser: isExistingUser
+        }, preferredLang);
+        // Send the email
+        const messageId = await sendEmailV3(affiliateData.email, template.subject, template.html);
+        console.log(`✅ Affiliate credentials sent successfully to ${affiliateData.email}`);
+        return {
+            success: true,
+            email: affiliateData.email,
+            isExistingUser,
+            temporaryPassword,
+            language: preferredLang,
+            messageId
+        };
+    }
+    catch (error) {
+        console.error('❌ Send affiliate credentials failed:', error);
+        throw new https_1.HttpsError('internal', 'Failed to send affiliate credentials');
+    }
+});
+// V3 Approve Affiliate Function
+exports.approveAffiliateV3 = (0, https_1.onCall)(async (request) => {
+    console.log('🚀 approveAffiliateV3: Starting...');
+    const { auth: userAuth, data } = request;
+    // Verify admin authentication
+    await verifyAdminAuth(userAuth?.uid);
+    const { applicationId, checkoutDiscount, phone, address, postalCode, city, country, socials, promotionMethod, message } = data;
+    if (!applicationId) {
+        throw new https_1.HttpsError('invalid-argument', 'Application ID is required');
+    }
+    try {
+        console.log(`🔍 Processing affiliate approval for application: ${applicationId}`);
+        const applicationRef = db.collection('affiliateApplications').doc(applicationId);
+        const applicationDoc = await applicationRef.get();
+        if (!applicationDoc.exists) {
+            throw new https_1.HttpsError('not-found', 'Affiliate application not found');
+        }
+        const appData = applicationDoc.data();
+        if (!appData) {
+            throw new https_1.HttpsError('invalid-argument', 'Application data is missing');
+        }
+        // Create Firebase Auth user
+        const tempPassword = Math.random().toString(36).substring(2, 15);
+        let authUser;
+        let wasExistingAuthUser = false;
+        try {
+            authUser = await auth.createUser({
+                email: appData.email,
+                password: tempPassword,
+                displayName: appData.name,
+                emailVerified: true
+            });
+        }
+        catch (error) {
+            if (error.code === 'auth/email-already-exists') {
+                authUser = await auth.getUserByEmail(appData.email);
+                await auth.updateUser(authUser.uid, {
+                    password: tempPassword
+                });
+                wasExistingAuthUser = true;
+            }
+            else {
+                throw error;
+            }
+        }
+        // Generate unique affiliate code
+        const affiliateCode = `${appData.name.substring(0, 3).toUpperCase()}${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+        // Create affiliate record
+        const affiliateData = {
+            id: authUser.uid,
+            email: appData.email,
+            name: appData.name,
+            phone: phone || appData.phone,
+            address: address || appData.address,
+            postalCode: postalCode || appData.postalCode,
+            city: city || appData.city,
+            country: country || appData.country,
+            affiliateCode,
+            status: 'active',
+            commissionRate: 20,
+            checkoutDiscount: checkoutDiscount || 10,
+            stats: {
+                clicks: 0,
+                conversions: 0,
+                totalEarnings: 0,
+                balance: 0
+            },
+            socials: socials || appData.socials,
+            promotionMethod: promotionMethod || appData.promotionMethod,
+            message: message || appData.message,
+            approvedAt: new Date(),
+            approvedBy: userAuth?.uid,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            preferredLang: appData.preferredLang || 'sv-SE'
+        };
+        await db.collection('affiliates').doc(authUser.uid).set(affiliateData);
+        // Update application status
+        await applicationRef.update({
+            status: 'approved',
+            approvedAt: new Date(),
+            approvedBy: userAuth?.uid,
+            affiliateId: authUser.uid
+        });
+        // Get user's preferred language
+        const preferredLang = await getUserPreferredLanguage(appData.email);
+        // Generate login instructions
+        const loginInstructions = wasExistingAuthUser
+            ? 'Du hade redan ett konto hos B8Shield, så du kan logga in med ditt befintliga lösenord.'
+            : `Användarnamn: ${appData.email}<br>Tillfälligt lösenord: ${tempPassword}`;
+        // Send welcome email
+        const template = (0, affiliateWelcome_1.getAffiliateWelcomeTemplate)({
+            appData: {
+                name: appData.name,
+                email: appData.email
+            },
+            affiliateCode,
+            tempPassword,
+            loginInstructions,
+            wasExistingAuthUser
+        }, preferredLang);
+        const messageId = await sendEmailV3(appData.email, template.subject, template.html);
+        console.log(`✅ Affiliate approved and welcome email sent to ${appData.email}`);
+        return {
+            success: true,
+            email: appData.email,
+            affiliateCode,
+            affiliateId: authUser.uid,
+            wasExistingAuthUser,
+            language: preferredLang,
+            messageId
+        };
+    }
+    catch (error) {
+        console.error('❌ Affiliate approval failed:', error);
+        throw new https_1.HttpsError('internal', 'Failed to approve affiliate');
+    }
+});
 //# sourceMappingURL=functions-main.js.map

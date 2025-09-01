@@ -158,5 +158,7 @@ export {
   sendB2BOrderConfirmationCustomerV3,
   sendOrderStatusEmailV3,
   sendB2BOrderConfirmationAdminV3,
-  sendVerificationEmailV3
+  sendVerificationEmailV3,
+  sendAffiliateCredentialsV3,
+  approveAffiliateV3
 } from './email-v2/functions-main'; 

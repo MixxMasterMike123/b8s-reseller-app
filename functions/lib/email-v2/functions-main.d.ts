@@ -44,3 +44,26 @@ export declare const sendB2BOrderConfirmationAdminV3: import("firebase-functions
     language: string;
     messageIds: string[];
 }>, unknown>;
+export declare const sendVerificationEmailV3: import("firebase-functions/v2/https").CallableFunction<any, Promise<{
+    success: boolean;
+    email: string;
+    language: string;
+    messageId: string;
+}>, unknown>;
+export declare const sendAffiliateCredentialsV3: import("firebase-functions/v2/https").CallableFunction<any, Promise<{
+    success: boolean;
+    email: any;
+    isExistingUser: boolean;
+    temporaryPassword: string;
+    language: string;
+    messageId: string;
+}>, unknown>;
+export declare const approveAffiliateV3: import("firebase-functions/v2/https").CallableFunction<any, Promise<{
+    success: boolean;
+    email: any;
+    affiliateCode: string;
+    affiliateId: any;
+    wasExistingAuthUser: boolean;
+    language: string;
+    messageId: string;
+}>, unknown>;

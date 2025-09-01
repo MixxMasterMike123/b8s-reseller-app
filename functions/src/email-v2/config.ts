@@ -5,6 +5,7 @@ export const APP_URLS = {
   // Primary domains
   B2B_PORTAL: 'https://partner.b8shield.com',
   B2C_SHOP: 'https://shop.b8shield.com',
+  PARTNER_URL: 'https://partner.b8shield.com',
   
   // Legacy domain (keep for backward compatibility)
   B2B_LEGACY: 'https://b8shield-reseller-app.web.app',
