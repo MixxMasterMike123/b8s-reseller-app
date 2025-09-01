@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { parseReferrer, getReferrerCategory } from '../../utils/referrerParser';
+import { printMultipleShippingLabels } from '../../utils/labelPrinter';
 
 
 const getStatusStyles = (status) => {
@@ -34,6 +35,8 @@ const AdminOrders = () => {
   const { getAllOrders, updateOrderStatus, loading: contextLoading, error: contextError } = useOrder();
   const [affiliateClicks, setAffiliateClicks] = useState({});
   const [clicksLoading, setClicksLoading] = useState(false);
+  const [selectedOrders, setSelectedOrders] = useState(new Set());
+  const [printLoading, setPrintLoading] = useState(false);
 
   // Fetch affiliate click data for orders with affiliate information
   const fetchAffiliateClicks = async (orders) => {
@@ -201,6 +204,67 @@ const AdminOrders = () => {
       toast.error('Kunde inte uppdatera orderstatus');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOrderSelection = (orderId, isSelected) => {
+    const newSelection = new Set(selectedOrders);
+    if (isSelected) {
+      newSelection.add(orderId);
+    } else {
+      newSelection.delete(orderId);
+    }
+    setSelectedOrders(newSelection);
+  };
+
+  const handleSelectAll = (isSelected) => {
+    if (isSelected) {
+      setSelectedOrders(new Set(filteredOrders.map(order => order.id)));
+    } else {
+      setSelectedOrders(new Set());
+    }
+  };
+
+  const handlePrintSelectedLabels = async () => {
+    if (selectedOrders.size === 0) {
+      toast.error('Välj minst en beställning för att skriva ut etiketter');
+      return;
+    }
+
+    try {
+      setPrintLoading(true);
+      
+      // Get selected orders
+      const ordersToProcess = filteredOrders.filter(order => selectedOrders.has(order.id));
+      
+      // Create user data map for B2B orders (simplified - would need proper user fetching)
+      const userDataMap = {};
+      for (const order of ordersToProcess) {
+        if (order.userId && order.source !== 'b2c') {
+          userDataMap[order.userId] = {
+            contactPerson: 'Kund', // Simplified - would fetch from user data
+            companyName: 'Företag',
+            deliveryAddress: 'Leveransadress saknas',
+            deliveryPostalCode: '',
+            deliveryCity: '',
+            deliveryCountry: 'SE'
+          };
+        }
+      }
+      
+      console.log('🏷️ Printing labels for', ordersToProcess.length, 'orders');
+      
+      await printMultipleShippingLabels(ordersToProcess, userDataMap);
+      
+      toast.success(`${ordersToProcess.length} fraktetiketter skickade till skrivare!`);
+      
+      // Clear selection after printing
+      setSelectedOrders(new Set());
+    } catch (error) {
+      console.error('❌ Failed to print labels:', error);
+      toast.error(`Kunde inte skriva ut etiketter: ${error.message}`);
+    } finally {
+      setPrintLoading(false);
     }
   };
 

@@ -10,6 +10,7 @@ import OrderStatusMenu from '../../components/OrderStatusMenu';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
+import { printShippingLabel, connectLabelPrinter } from '../../utils/labelPrinter';
 
 // Add a helper function to parse and display order distribution data
 const getOrderDistribution = (order) => {
@@ -56,6 +57,7 @@ const AdminOrderDetail = () => {
   const [updateStatusLoading, setUpdateStatusLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [fetchAttempted, setFetchAttempted] = useState(false);
+  const [printLoading, setPrintLoading] = useState(false);
   const { getContentValue } = useContentTranslation();
 
   // Use guest data if it exists, otherwise use fetched user data
@@ -269,6 +271,41 @@ const AdminOrderDetail = () => {
     }
   };
 
+  const handlePrintLabel = async () => {
+    try {
+      setPrintLoading(true);
+      
+      console.log('🏷️ Printing shipping label for order:', order.orderNumber || order.id);
+      
+      // Print the label (uses browser print dialog as fallback)
+      await printShippingLabel(order, userData);
+      
+      toast.success('Fraktetikett skickad till skrivare!');
+    } catch (error) {
+      console.error('❌ Failed to print label:', error);
+      toast.error(`Kunde inte skriva ut etikett: ${error.message}`);
+    } finally {
+      setPrintLoading(false);
+    }
+  };
+
+  const handleConnectPrinter = async () => {
+    try {
+      setPrintLoading(true);
+      
+      console.log('📱 Connecting to BT-M110 printer...');
+      
+      await connectLabelPrinter();
+      
+      toast.success('Ansluten till BT-M110 etikettskrivare!');
+    } catch (error) {
+      console.error('❌ Failed to connect to printer:', error);
+      toast.error(`Kunde inte ansluta till skrivare: ${error.message}`);
+    } finally {
+      setPrintLoading(false);
+    }
+  };
+
   // Simple print functionality that actually works
   const handlePrint = () => {
     // Create a simple print window with order data
@@ -472,6 +509,30 @@ const AdminOrderDetail = () => {
                 className="bg-gray-600 dark:bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
               >
                 Print
+              </button>
+              <button
+                onClick={handlePrintLabel}
+                disabled={printLoading}
+                className="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {printLoading ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent"></div>
+                    Skriver ut...
+                  </>
+                ) : (
+                  <>
+                    🏷️ Skriv etikett
+                  </>
+                )}
+              </button>
+              <button
+                onClick={handleConnectPrinter}
+                disabled={printLoading}
+                className="bg-green-600 dark:bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors disabled:opacity-50 text-sm"
+                title="Anslut BT-M110 Bluetooth skrivare"
+              >
+                📱 BT-M110
               </button>
               <button
                 onClick={handleDeleteOrder}
