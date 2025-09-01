@@ -465,7 +465,7 @@ const AdminOrderDetail = () => {
     );
   }
 
-  const { text: statusText, color: statusColor } = getStatusInfo(order.status);
+
 
   return (
     <AppLayout>
@@ -483,9 +483,6 @@ const AdminOrderDetail = () => {
               <p className="text-gray-600 dark:text-gray-400 mt-2">Order Number: <span className="font-semibold">{order.orderNumber}</span></p>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColor}`}>
-                {statusText}
-              </span>
               {updateStatusLoading ? (
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 dark:border-blue-400 border-r-transparent"></div>
               ) : (
