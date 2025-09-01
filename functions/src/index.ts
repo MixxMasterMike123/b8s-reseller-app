@@ -149,4 +149,9 @@ export const exampleProtectedFunction = onRequest(
 export { testPasswordResetMinimal } from './email/testPasswordReset';
 
 // New V3 Email System Functions
-export { sendPasswordResetV3, confirmPasswordResetV3 } from './email-v2/functions'; 
+export { sendPasswordResetV3, confirmPasswordResetV3 } from './email-v2/functions';
+export { 
+  sendCustomerWelcomeEmailV3,
+  sendAffiliateWelcomeEmailV3,
+  sendB2COrderPendingEmailV3
+} from './email-v2/functions-main'; 
