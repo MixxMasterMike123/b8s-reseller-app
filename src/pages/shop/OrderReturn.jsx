@@ -151,29 +151,8 @@ const OrderReturnInner = () => {
 
     // Add order to database
     const orderRef = await addDoc(collection(db, 'orders'), orderData);
+    console.log('✅ Order added to database, V3 trigger will handle email notifications automatically');
     
-    // Call post-order processing function
-    try {
-      const response = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/processB2COrderCompletionHttpV2', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          orderId: orderRef.id,
-          orderData: orderData
-        })
-      });
-
-      if (response.ok) {
-        console.log('✅ Post-order processing completed');
-      } else {
-        console.error('⚠️ Post-order processing failed:', await response.text());
-      }
-    } catch (error) {
-      console.error('⚠️ Error calling post-order processing:', error);
-    }
-
     return orderRef.id;
   };
 

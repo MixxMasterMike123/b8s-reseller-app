@@ -8,6 +8,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { getStripe, STRIPE_CONFIG } from '../../utils/stripeClient';
 import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { getCountryAwareUrl } from '../../utils/productUrls';
 import toast from 'react-hot-toast';
 
 const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentError, clientSecret }) => {
@@ -51,7 +52,7 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/order-return`,
+          return_url: `${window.location.origin}${getCountryAwareUrl('order-return')}`,
           receipt_email: customerInfo.email,
         },
         redirect: 'if_required'
