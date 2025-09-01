@@ -6,6 +6,8 @@ import { EmailService } from './EmailService';
 import { getWelcomeCredentialsTemplate, WelcomeCredentialsData } from './templates/welcomeCredentials';
 import { getAffiliateWelcomeTemplate, AffiliateWelcomeData } from './templates/affiliateWelcome';
 import { getB2COrderPendingTemplate, B2COrderPendingData } from './templates/b2cOrderPending';
+import { getAdminB2COrderNotificationTemplate, AdminB2COrderNotificationData } from './templates/adminB2COrderNotification';
+import { getB2BOrderConfirmationCustomerTemplate, B2BOrderConfirmationCustomerData } from './templates/b2bOrderConfirmationCustomer';
 
 // Initialize Firestore with named database and Auth
 const db = getFirestore('b8s-reseller-db');
@@ -236,9 +238,103 @@ export const sendB2COrderPendingEmailV3 = onCall(async (request) => {
   }
 });
 
-// TODO: Add more V3 functions following the same pattern:
-// - sendB2COrderNotificationAdminV3
-// - sendB2BOrderConfirmationCustomerV3  
+// V3 Admin B2C Order Notification Function
+export const sendB2COrderNotificationAdminV3 = onCall(async (request) => {
+  console.log('🚀 sendB2COrderNotificationAdminV3: Starting...');
+  
+  const { data } = request;
+  
+  const { orderData } = data as AdminB2COrderNotificationData;
+  
+  if (!orderData?.orderNumber) {
+    throw new HttpsError('invalid-argument', 'Order data is required');
+  }
+
+  try {
+    console.log(`🔍 Processing admin B2C notification for order: ${orderData.orderNumber}`);
+
+    // Admin emails are always in Swedish
+    const preferredLang = 'sv-SE';
+
+    // Get email template
+    const template = getAdminB2COrderNotificationTemplate({
+      orderData
+    }, preferredLang);
+
+    // Send to all admin emails (hardcoded for now, could be made configurable)
+    const adminEmails = ['micke.ohlen@gmail.com']; // TODO: Make this configurable
+    
+    const emailPromises = adminEmails.map(email => 
+      sendEmailV3(email, template.subject, template.html)
+    );
+
+    const messageIds = await Promise.all(emailPromises);
+
+    console.log(`✅ Admin B2C notification sent successfully for order: ${orderData.orderNumber}`);
+
+    return {
+      success: true,
+      orderNumber: orderData.orderNumber,
+      language: preferredLang,
+      messageIds
+    };
+
+  } catch (error) {
+    console.error('❌ Admin B2C notification failed:', error);
+    throw new HttpsError('internal', 'Failed to send admin notification');
+  }
+});
+
+// V3 B2B Order Confirmation Customer Function
+export const sendB2BOrderConfirmationCustomerV3 = onCall(async (request) => {
+  console.log('🚀 sendB2BOrderConfirmationCustomerV3: Starting...');
+  
+  const { data } = request;
+  
+  const { userData, orderData, orderSummary, totalAmount } = data as B2BOrderConfirmationCustomerData;
+  
+  if (!userData?.email || !isValidEmail(userData.email)) {
+    throw new HttpsError('invalid-argument', 'Valid customer email is required');
+  }
+  
+  if (!orderData?.orderNumber) {
+    throw new HttpsError('invalid-argument', 'Order data is required');
+  }
+
+  try {
+    console.log(`🔍 Processing B2B order confirmation for: ${userData.email}`);
+
+    // Get user's preferred language
+    const preferredLang = await getUserPreferredLanguage(userData.email);
+
+    // Get email template
+    const template = getB2BOrderConfirmationCustomerTemplate({
+      userData,
+      orderData,
+      orderSummary,
+      totalAmount
+    }, preferredLang);
+
+    // Send the email
+    const messageId = await sendEmailV3(userData.email, template.subject, template.html);
+
+    console.log(`✅ B2B order confirmation sent successfully to ${userData.email}`);
+
+    return {
+      success: true,
+      email: userData.email,
+      orderNumber: orderData.orderNumber,
+      language: preferredLang,
+      messageId
+    };
+
+  } catch (error) {
+    console.error('❌ B2B order confirmation failed:', error);
+    throw new HttpsError('internal', 'Failed to send order confirmation');
+  }
+});
+
+// TODO: Add remaining V3 functions following the same pattern:
 // - sendB2BOrderConfirmationAdminV3
 // - sendOrderStatusEmailV3
 // - sendAffiliateCredentialsV3

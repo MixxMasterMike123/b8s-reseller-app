@@ -153,5 +153,7 @@ export { sendPasswordResetV3, confirmPasswordResetV3 } from './email-v2/function
 export { 
   sendCustomerWelcomeEmailV3,
   sendAffiliateWelcomeEmailV3,
-  sendB2COrderPendingEmailV3
+  sendB2COrderPendingEmailV3,
+  sendB2COrderNotificationAdminV3,
+  sendB2BOrderConfirmationCustomerV3
 } from './email-v2/functions-main'; 
