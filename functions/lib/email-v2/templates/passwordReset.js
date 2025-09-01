@@ -35,7 +35,7 @@ function getPasswordResetTemplate(data, lang = 'sv-SE') {
     <div style="background-color: #eff6ff; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
       <h4 style="color: #1e40af; margin-top: 0; margin-bottom: 15px;">[ÅTERSTÄLLNING] KLICKA HÄR FÖR ATT ÅTERSTÄLLA:</h4>
       <div style="text-align: center; margin: 20px 0;">
-        <a href="${resetUrl}" style="display: inline-block; background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">Återställ mitt lösenord</a>
+        <a href="${resetUrl}" style="display: inline-block; background-color: #1d4ed8; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; border: 2px solid #1d4ed8;">Återställ mitt lösenord</a>
       </div>
       <p style="color: #1e40af; margin-bottom: 10px; font-size: 14px;">Eller kopiera och klistra in denna länk i din webbläsare:</p>
       <div style="background-color: #dbeafe; padding: 12px; border-radius: 4px; border-left: 4px solid #2563eb; word-break: break-all;">
@@ -55,7 +55,7 @@ function getPasswordResetTemplate(data, lang = 'sv-SE') {
     
     <div style="text-align: center; margin: 30px 0;">
       <p style="color: #374151; line-height: 1.6; margin-bottom: 15px;">Efter att du återställt ditt lösenord kan du logga in här:</p>
-      <a href="${loginUrl}" style="display: inline-block; background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Logga in på Affiliate Portal</a>
+      <a href="${loginUrl}" style="display: inline-block; background-color: #047857; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; border: 2px solid #047857;">Logga in på Affiliate Portal</a>
     </div>
     
     <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 25px;">
@@ -100,7 +100,7 @@ function getPasswordResetTemplate(data, lang = 'sv-SE') {
     <div style="background-color: #eff6ff; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
       <h4 style="color: #1e40af; margin-top: 0; margin-bottom: 15px;">[RESET] CLICK HERE TO RESET:</h4>
       <div style="text-align: center; margin: 20px 0;">
-        <a href="${resetUrl}" style="display: inline-block; background-color: #2563eb; colour: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">Reset my password</a>
+        <a href="${resetUrl}" style="display: inline-block; background-color: #1d4ed8; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; border: 2px solid #1d4ed8;">Reset my password</a>
       </div>
       <p style="color: #1e40af; margin-bottom: 10px; font-size: 14px;">Or copy and paste this link into your browser:</p>
       <div style="background-color: #dbeafe; padding: 12px; border-radius: 4px; border-left: 4px solid #2563eb; word-break: break-all;">
@@ -120,7 +120,7 @@ function getPasswordResetTemplate(data, lang = 'sv-SE') {
     
     <div style="text-align: center; margin: 30px 0;">
       <p style="color: #374151; line-height: 1.6; margin-bottom: 15px;">After resetting your password, you can log in here:</p>
-      <a href="${loginUrl}" style="display: inline-block; background-color: #059669; colour: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Login to Affiliate Portal</a>
+      <a href="${loginUrl}" style="display: inline-block; background-color: #047857; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; border: 2px solid #047857;">Login to Affiliate Portal</a>
     </div>
     
     <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 25px;">
@@ -165,7 +165,7 @@ function getPasswordResetTemplate(data, lang = 'sv-SE') {
     <div style="background-color: #eff6ff; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
       <h4 style="color: #1e40af; margin-top: 0; margin-bottom: 15px;">[RESET] CLICK HERE TO RESET:</h4>
       <div style="text-align: center; margin: 20px 0;">
-        <a href="${resetUrl}" style="display: inline-block; background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">Reset my password</a>
+        <a href="${resetUrl}" style="display: inline-block; background-color: #1d4ed8; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; border: 2px solid #1d4ed8;">Reset my password</a>
       </div>
       <p style="color: #1e40af; margin-bottom: 10px; font-size: 14px;">Or copy and paste this link into your browser:</p>
       <div style="background-color: #dbeafe; padding: 12px; border-radius: 4px; border-left: 4px solid #2563eb; word-break: break-all;">
@@ -185,7 +185,7 @@ function getPasswordResetTemplate(data, lang = 'sv-SE') {
     
     <div style="text-align: center; margin: 30px 0;">
       <p style="color: #374151; line-height: 1.6; margin-bottom: 15px;">After resetting your password, you can log in here:</p>
-      <a href="${loginUrl}" style="display: inline-block; background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Login to Affiliate Portal</a>
+      <a href="${loginUrl}" style="display: inline-block; background-color: #047857; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; border: 2px solid #047857;">Login to Affiliate Portal</a>
     </div>
     
     <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 25px;">
