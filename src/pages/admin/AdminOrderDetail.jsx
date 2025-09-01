@@ -12,6 +12,7 @@ import { db } from '../../firebase/config';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { printShippingLabel } from '../../utils/labelPrinter';
 import LabelPrintInstructions from '../../components/LabelPrintInstructions';
+import LabelOrientationSelector from '../../components/LabelOrientationSelector';
 
 // Add a helper function to parse and display order distribution data
 const getOrderDistribution = (order) => {
@@ -272,16 +273,19 @@ const AdminOrderDetail = () => {
     }
   };
 
-  const handlePrintLabel = async () => {
+  const handlePrintLabel = async (orientation = null) => {
     try {
       setPrintLoading(true);
       
       console.log('🏷️ Printing shipping label for order:', order.orderNumber || order.id);
       
-      // Print the label (uses browser print dialog as fallback)
-      await printShippingLabel(order, userData);
+      // Print the label with specified orientation
+      const labelData = await printShippingLabel(order, userData, orientation);
       
-      toast.success('Utskriftsdialog öppnad! Välj BT-M110 eller spara som PDF.');
+      const orientationText = labelData.orientation === 'portrait' ? 'stående' : 'liggande';
+      const detectionText = labelData.autoDetected ? 'auto-vald' : 'manuellt vald';
+      
+      toast.success(`Utskriftsdialog öppnad! Format: ${orientationText} (${detectionText})`);
     } catch (error) {
       console.error('❌ Failed to print label:', error);
       toast.error(`Kunde inte skriva ut etikett: ${error.message}`);
@@ -496,23 +500,18 @@ const AdminOrderDetail = () => {
               >
                 Print
               </button>
-              <button
-                onClick={handlePrintLabel}
-                disabled={printLoading}
-                className="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center gap-2"
-                title="Öppnar systemets utskriftsdialog - fungerar med USB, WiFi eller Bluetooth"
-              >
-                {printLoading ? (
-                  <>
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent"></div>
-                    Öppnar...
-                  </>
-                ) : (
-                  <>
-                    🖨️ Skriv ut etikett
-                  </>
-                )}
-              </button>
+              {printLoading ? (
+                <div className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent"></div>
+                  Öppnar utskriftsdialog...
+                </div>
+              ) : (
+                <LabelOrientationSelector 
+                  order={order}
+                  userData={userData}
+                  onPrint={handlePrintLabel}
+                />
+              )}
               <LabelPrintInstructions />
               <button
                 onClick={handleDeleteOrder}

@@ -45,9 +45,39 @@ class LabelPrinterService {
   }
 
   /**
+   * Detect optimal label orientation based on address complexity
+   */
+  detectOptimalOrientation(addressData) {
+    const allLines = [
+      addressData.name,
+      addressData.company,
+      addressData.address,
+      addressData.apartment,
+      `${addressData.postalCode} ${addressData.city}`.trim(),
+      addressData.country !== 'SE' ? addressData.country : null
+    ].filter(Boolean);
+
+    // US addresses typically longer and need portrait
+    if (addressData.country === 'US') {
+      return 'portrait';
+    }
+
+    // Long addresses (>5 lines) or very long single lines need portrait
+    const hasLongLines = allLines.some(line => line.length > 25);
+    const manyLines = allLines.length > 5;
+    
+    if (hasLongLines || manyLines) {
+      return 'portrait';
+    }
+
+    // Default to landscape for shorter European addresses
+    return 'landscape';
+  }
+
+  /**
    * Format order address for label printing
    */
-  formatAddressLabel(order, userData = null) {
+  formatAddressLabel(order, userData = null, forceOrientation = null) {
     const isB2C = order.source === 'b2c';
     
     let addressData;
@@ -76,40 +106,62 @@ class LabelPrinterService {
       };
     }
 
-    // Format for 40x60mm label (approximately 6-7 lines)
+    // Detect optimal orientation
+    const autoOrientation = this.detectOptimalOrientation(addressData);
+    const orientation = forceOrientation || autoOrientation;
+    
+    // Format based on orientation
     const labelLines = [];
+    const maxChars = orientation === 'portrait' ? 20 : 28; // More chars in landscape
     
     // Line 1: Name (required)
     if (addressData.name) {
-      labelLines.push(addressData.name.substring(0, 20)); // Max 20 chars for name
+      labelLines.push(addressData.name.substring(0, maxChars));
     }
     
     // Line 2: Company (if B2B and different from name)
     if (addressData.company && addressData.company !== addressData.name) {
-      labelLines.push(addressData.company.substring(0, 20));
+      labelLines.push(addressData.company.substring(0, maxChars));
     }
     
     // Line 3: Street address
     if (addressData.address) {
-      labelLines.push(addressData.address.substring(0, 20));
+      // For long addresses in portrait, allow line wrapping
+      if (orientation === 'portrait' && addressData.address.length > maxChars) {
+        const words = addressData.address.split(' ');
+        let currentLine = '';
+        
+        for (const word of words) {
+          if ((currentLine + ' ' + word).length <= maxChars) {
+            currentLine += (currentLine ? ' ' : '') + word;
+          } else {
+            if (currentLine) labelLines.push(currentLine);
+            currentLine = word;
+          }
+        }
+        if (currentLine) labelLines.push(currentLine);
+      } else {
+        labelLines.push(addressData.address.substring(0, maxChars));
+      }
     }
     
     // Line 4: Apartment (if present)
     if (addressData.apartment) {
-      labelLines.push(addressData.apartment.substring(0, 20));
+      labelLines.push(addressData.apartment.substring(0, maxChars));
     }
     
     // Line 5: Postal code + City
     const postalCity = `${addressData.postalCode} ${addressData.city}`.trim();
     if (postalCity) {
-      labelLines.push(postalCity.substring(0, 20));
+      labelLines.push(postalCity.substring(0, maxChars));
     }
     
     // Line 6: Country (if not Sweden)
     if (addressData.country && addressData.country !== 'SE') {
       const countryName = addressData.country === 'NO' ? 'NORGE' : 
                          addressData.country === 'DK' ? 'DANMARK' : 
-                         addressData.country === 'FI' ? 'FINLAND' : 
+                         addressData.country === 'FI' ? 'FINLAND' :
+                         addressData.country === 'US' ? 'USA' :
                          addressData.country;
       labelLines.push(countryName);
     }
@@ -117,6 +169,8 @@ class LabelPrinterService {
     return {
       lines: labelLines,
       orderNumber: order.orderNumber || order.id,
+      orientation: orientation,
+      autoDetected: !forceOrientation,
       rawData: addressData
     };
   }
@@ -156,18 +210,19 @@ class LabelPrinterService {
   /**
    * Print label - Primary method using system print dialog
    */
-  async printLabel(order, userData = null) {
+  async printLabel(order, userData = null, orientation = null) {
     try {
       console.log('🖨️ Formatting label for order:', order.orderNumber || order.id);
       
       // Format address for label
-      const labelData = this.formatAddressLabel(order, userData);
+      const labelData = this.formatAddressLabel(order, userData, orientation);
       console.log('📋 Label data:', labelData);
+      console.log(`🔄 Using ${labelData.orientation} orientation (${labelData.autoDetected ? 'auto-detected' : 'manual'})`);
       
       // Always use system print dialog (most reliable)
       this.printViaSystemDialog(labelData);
       
-      return true;
+      return labelData; // Return data for UI feedback
     } catch (error) {
       console.error('❌ Failed to print label:', error);
       throw error;
@@ -213,20 +268,20 @@ class LabelPrinterService {
         <meta charset="utf-8">
         <style>
           @page {
-            size: 40mm 60mm;
+            size: ${labelData.orientation === 'portrait' ? '40mm 60mm' : '60mm 40mm'};
             margin: 2mm;
           }
           
           body {
             font-family: 'Arial', 'Helvetica', sans-serif;
-            font-size: 11px;
+            font-size: ${labelData.orientation === 'portrait' ? '10px' : '9px'};
             line-height: 1.1;
             margin: 0;
             padding: 2mm;
             background: white;
             color: black;
-            width: 36mm;
-            height: 56mm;
+            width: ${labelData.orientation === 'portrait' ? '36mm' : '56mm'};
+            height: ${labelData.orientation === 'portrait' ? '56mm' : '36mm'};
           }
           
           .label-container {
@@ -300,7 +355,13 @@ class LabelPrinterService {
       </head>
       <body>
         <div class="label-container">
-          <div class="order-header">B8Shield Order: ${labelData.orderNumber}</div>
+          <div class="order-header">
+            B8Shield Order: ${labelData.orderNumber}
+            <br><span style="font-size: 7px; color: #666;">
+              ${labelData.orientation === 'portrait' ? '📄 Stående' : '📄 Liggande'} 
+              ${labelData.autoDetected ? '(auto)' : '(manuell)'}
+            </span>
+          </div>
           <div class="address-section">
             ${labelData.lines.map((line, index) => {
               // Detect postal code + city line
@@ -449,12 +510,12 @@ const labelPrinter = new LabelPrinterService();
 export default labelPrinter;
 
 // Export utility functions
-export const formatAddressForLabel = (order, userData = null) => {
-  return labelPrinter.formatAddressLabel(order, userData);
+export const formatAddressForLabel = (order, userData = null, orientation = null) => {
+  return labelPrinter.formatAddressLabel(order, userData, orientation);
 };
 
-export const printShippingLabel = async (order, userData = null) => {
-  return labelPrinter.printLabel(order, userData);
+export const printShippingLabel = async (order, userData = null, orientation = null) => {
+  return labelPrinter.printLabel(order, userData, orientation);
 };
 
 export const printMultipleShippingLabels = async (orders, userDataMap = {}) => {
