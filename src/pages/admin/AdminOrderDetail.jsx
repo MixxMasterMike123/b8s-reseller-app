@@ -76,14 +76,14 @@ const AdminOrderDetail = () => {
   };
 
   const displayAddress = order?.source === 'b2c' ? {
-    company: `${order.shippingAddress?.firstName || ''} ${order.shippingAddress?.lastName || ''}`.trim() || 'Not specified',
-    contactPerson: `${order.shippingAddress?.firstName || ''} ${order.shippingAddress?.lastName || ''}`.trim() || 'Not specified',
+    company: `${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''}`.trim() || 'Not specified',
+    contactPerson: `${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''}`.trim() || 'Not specified',
     address: [
-      order.shippingAddress?.address,
-      order.shippingAddress?.apartment,
-      order.shippingAddress?.postalCode,
-      order.shippingAddress?.city,
-      order.shippingAddress?.country
+      order.shippingInfo?.address,
+      order.shippingInfo?.apartment,
+      order.shippingInfo?.postalCode,
+      order.shippingInfo?.city,
+      order.shippingInfo?.country
     ].filter(Boolean).join(', ') || 'Not specified'
   } : {
     company: userData?.companyName || 'Not specified',
