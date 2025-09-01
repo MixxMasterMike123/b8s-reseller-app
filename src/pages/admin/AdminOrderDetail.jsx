@@ -78,13 +78,23 @@ const AdminOrderDetail = () => {
   const displayAddress = order?.source === 'b2c' ? {
     company: `${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''}`.trim() || 'Not specified',
     contactPerson: `${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''}`.trim() || 'Not specified',
-    address: [
-      order.shippingInfo?.address,
-      order.shippingInfo?.apartment,
-      order.shippingInfo?.postalCode,
-      order.shippingInfo?.city,
-      order.shippingInfo?.country
-    ].filter(Boolean).join(', ') || 'Not specified'
+    address: (() => {
+      // B2C orders store address in shippingInfo
+      if (order.shippingInfo) {
+        const addressParts = [
+          order.shippingInfo.address,
+          order.shippingInfo.apartment && order.shippingInfo.apartment.trim() ? order.shippingInfo.apartment : null,
+          `${order.shippingInfo.postalCode} ${order.shippingInfo.city}`.trim(),
+          order.shippingInfo.country === 'SE' ? 'Sverige' : order.shippingInfo.country
+        ].filter(Boolean);
+        
+        if (addressParts.length > 0) {
+          return addressParts.join(', ');
+        }
+      }
+      
+      return 'Address information missing';
+    })()
   } : {
     company: userData?.companyName || 'Not specified',
     contactPerson: userData?.contactPerson || 'Not specified',
