@@ -18,7 +18,14 @@ const ProductSocialShare = ({ product, compact = true }) => {
   const shareContent = {
     title: product?.name || 'B8Shield Product',
     description: (() => {
-      // FIXED: Better handling of multilingual descriptions to prevent [object Object]
+      // DEBUG: Log description sources
+      console.log('📝 Description sources:', {
+        description: product?.description,
+        b2cDescription: product?.b2cDescription,
+        b2bDescription: product?.b2bDescription,
+        currentLanguage
+      });
+      
       let desc = '';
       
       // Try different description sources
@@ -29,17 +36,22 @@ const ProductSocialShare = ({ product, compact = true }) => {
         
         if (typeof source === 'string' && source.trim()) {
           desc = source;
+          console.log('✅ Found string description:', desc.substring(0, 50) + '...');
           break;
         } else if (typeof source === 'object' && source !== null) {
+          console.log('🔍 Checking multilingual object:', source);
           // Handle multilingual objects properly
           const langOptions = [currentLanguage, 'sv-SE', 'en-US', 'en-GB'];
           for (const lang of langOptions) {
             if (source[lang] && typeof source[lang] === 'string' && source[lang].trim()) {
               desc = source[lang];
+              console.log(`✅ Found ${lang} description:`, desc.substring(0, 50) + '...');
               break;
             }
           }
           if (desc) break;
+        } else {
+          console.log('⚠️ Unexpected source type:', typeof source, source);
         }
       }
       
@@ -48,16 +60,29 @@ const ProductSocialShare = ({ product, compact = true }) => {
         desc = isSwedish 
           ? `Premium fiskekroksskydd från B8Shield - ${product?.name || 'Skydda dina krokar'}!` 
           : `Premium fishing lure protection from B8Shield - ${product?.name || 'Protect your hooks'}!`;
+        console.log('🔄 Using fallback description:', desc);
       }
       
+      // Ensure we return a string, not an object
+      const finalDesc = String(desc);
+      console.log('📤 Final description for sharing:', finalDesc.substring(0, 100) + '...');
+      
       // Truncate to ~100 characters for social sharing
-      return desc.length > 100 ? desc.substring(0, 97) + '...' : desc;
+      return finalDesc.length > 100 ? finalDesc.substring(0, 97) + '...' : finalDesc;
     })(),
     image: (() => {
-      // FIXED: Ensure we get the actual product image URL, not the main page banner
+      // DEBUG: Log product data to see what's available
+      console.log('🔍 Product data for sharing:', {
+        name: product?.name,
+        b2cImageUrl: product?.b2cImageUrl,
+        imageUrl: product?.imageUrl,
+        b2bImageUrl: product?.b2bImageUrl,
+        imageData: product?.imageData ? 'has base64 data' : 'no base64'
+      });
+      
       let imageUrl = '';
       
-      // Priority: B2C image > general image > B2B image > fallback
+      // Priority: B2C image > general image > B2B image > base64 fallback
       const imageSources = [
         product?.b2cImageUrl, 
         product?.imageUrl, 
@@ -65,14 +90,37 @@ const ProductSocialShare = ({ product, compact = true }) => {
       ];
       
       for (const source of imageSources) {
-        if (source && typeof source === 'string' && source.trim() && !source.includes('b8s_top.webp')) {
+        if (source && typeof source === 'string' && source.trim() && 
+            !source.includes('b8s_top.webp') && !source.includes('data:')) {
           imageUrl = source;
           break;
         }
       }
       
-      // Fallback to main banner only if no product image found
-      return imageUrl || '/images/b8s_top.webp';
+      // If no URL found but we have base64 data, use that
+      if (!imageUrl && product?.imageData && typeof product.imageData === 'string') {
+        imageUrl = product.imageData;
+      }
+      
+      // CRITICAL FIX: WebP is not well supported by social media platforms
+      if (imageUrl && imageUrl.includes('.webp')) {
+        console.log('⚠️ WebP detected - social media platforms have poor WebP support');
+        // Since WebP files don't have JPEG equivalents, fall back to PNG logo for social sharing
+        console.log('🔄 Using PNG logo fallback for social media compatibility');
+        imageUrl = '';  // Clear WebP URL to trigger fallback
+      }
+      
+      // Convert relative URLs to absolute URLs for social sharing
+      if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('data:')) {
+        const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://shop.b8shield.com';
+        imageUrl = `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+      }
+      
+      console.log('📸 Final image URL for sharing:', imageUrl);
+      
+      // FIXED: Use PNG logo fallback instead of WebP for social media compatibility
+      const fallbackUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://shop.b8shield.com'}/images/B8S_logo.png`;
+      return imageUrl || fallbackUrl;
     })(),
     url: (() => {
       // FIXED: Use proper product URL generation instead of window.location.href
@@ -81,14 +129,16 @@ const ProductSocialShare = ({ product, compact = true }) => {
       return `${baseUrl}${productPath}`;
     })(),
     text: (() => {
-      const productName = product?.name || 'B8Shield Product';
+      const productName = String(product?.name || 'B8Shield Product');
       const baseText = isSwedish 
         ? `Kolla in ${productName} från B8Shield - Skydda dina beten från snags!`
         : `Check out ${productName} from B8Shield - Protect your lures from snags!`;
       const hashtags = isSwedish
         ? '#B8Shield #Fiske #Betesskydd #Snagfritt #Sverige'
         : '#B8Shield #Fishing #LureProtection #SnagFree #Sweden';
-      return `${baseText} ${hashtags}`;
+      const finalText = `${baseText} ${hashtags}`;
+      console.log('📱 Final share text:', finalText);
+      return finalText;
     })()
   };
   
