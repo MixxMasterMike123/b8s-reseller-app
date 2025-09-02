@@ -32,7 +32,7 @@ const GeoRedirect = () => {
           console.log('⚠️ CloudFlare country not available, using fallback detection...');
           
           // Try browser language as country hint
-          if (navigator.language) {
+          if (navigator.language && typeof navigator.language === 'string') {
             const langParts = navigator.language.toLowerCase().split('-');
             if (langParts.length > 1) {
               detectedCountry = langParts[1];
