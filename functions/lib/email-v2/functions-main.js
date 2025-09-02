@@ -14,10 +14,15 @@ const b2bOrderConfirmationCustomer_1 = require("./templates/b2bOrderConfirmation
 const orderStatusUpdate_1 = require("./templates/orderStatusUpdate");
 const b2bOrderConfirmationAdmin_1 = require("./templates/b2bOrderConfirmationAdmin");
 const affiliateCredentials_1 = require("./templates/affiliateCredentials");
+const smtp_config_1 = require("./smtp-config");
 // Initialize Firestore with named database and Auth
 const db = (0, firestore_1.getFirestore)('b8s-reseller-db');
 const { getAuth } = require('firebase-admin/auth');
 const auth = getAuth();
+// Helper function to parse admin emails from comma-separated string
+const getAdminEmailArray = () => {
+    return smtp_config_1.ADMIN_EMAILS.split(',').map(email => email.trim()).filter(email => email.length > 0);
+};
 // Helper function for email validation
 function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -212,8 +217,8 @@ exports.sendB2COrderNotificationAdminV3 = (0, https_1.onCall)(async (request) =>
         const template = (0, adminB2COrderNotification_1.getAdminB2COrderNotificationTemplate)({
             orderData
         }, preferredLang);
-        // Send to all admin emails (hardcoded for now, could be made configurable)
-        const adminEmails = ['micke.ohlen@gmail.com']; // TODO: Make this configurable
+        // Send to all admin emails
+        const adminEmails = getAdminEmailArray();
         const emailPromises = adminEmails.map(email => sendEmailV3(email, template.subject, template.html));
         const messageIds = await Promise.all(emailPromises);
         console.log(`✅ Admin B2C notification sent successfully for order: ${orderData.orderNumber}`);
@@ -326,7 +331,7 @@ exports.sendB2BOrderConfirmationAdminV3 = (0, https_1.onCall)(async (request) =>
             userData, orderData, orderSummary, totalAmount
         }, preferredLang);
         // Send to all admin emails
-        const adminEmails = ['micke.ohlen@gmail.com']; // TODO: Make this configurable
+        const adminEmails = getAdminEmailArray();
         const emailPromises = adminEmails.map(email => sendEmailV3(email, template.subject, template.html));
         const messageIds = await Promise.all(emailPromises);
         console.log(`✅ Admin B2B notification sent successfully for order: ${orderData.orderNumber}`);
