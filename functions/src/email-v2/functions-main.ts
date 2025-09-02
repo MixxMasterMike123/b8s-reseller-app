@@ -11,17 +11,11 @@ import { getB2BOrderConfirmationCustomerTemplate, B2BOrderConfirmationCustomerDa
 import { getOrderStatusUpdateTemplate, OrderStatusUpdateData } from './templates/orderStatusUpdate';
 import { getB2BOrderConfirmationAdminTemplate, B2BOrderConfirmationAdminData } from './templates/b2bOrderConfirmationAdmin';
 import { getAffiliateCredentialsTemplate } from './templates/affiliateCredentials';
-import { ADMIN_EMAILS } from './smtp-config';
 
 // Initialize Firestore with named database and Auth
 const db = getFirestore('b8s-reseller-db');
 const { getAuth } = require('firebase-admin/auth');
 const auth = getAuth();
-
-// Helper function to parse admin emails from comma-separated string
-const getAdminEmailArray = (): string[] => {
-  return ADMIN_EMAILS.split(',').map(email => email.trim()).filter(email => email.length > 0);
-};
 
 // Helper function for email validation
 function isValidEmail(email: string): boolean {
@@ -272,7 +266,7 @@ export const sendB2COrderNotificationAdminV3 = onCall(async (request) => {
     }, preferredLang);
 
     // Send to all admin emails
-    const adminEmails = getAdminEmailArray();
+    const adminEmails = ['micke.ohlen@gmail.com', 'info@jphinnovation.se'];
     
     const emailPromises = adminEmails.map(email => 
       sendEmailV3(email, template.subject, template.html)
@@ -420,7 +414,7 @@ export const sendB2BOrderConfirmationAdminV3 = onCall(async (request) => {
     }, preferredLang);
 
     // Send to all admin emails
-    const adminEmails = getAdminEmailArray();
+    const adminEmails = ['micke.ohlen@gmail.com', 'info@jphinnovation.se'];
     const emailPromises = adminEmails.map(email => 
       sendEmailV3(email, template.subject, template.html)
     );
