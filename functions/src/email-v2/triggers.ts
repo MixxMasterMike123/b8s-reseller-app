@@ -6,9 +6,15 @@ import { getB2COrderPendingTemplate } from './templates/b2cOrderPending';
 import { getAdminB2COrderNotificationTemplate } from './templates/adminB2COrderNotification';
 import { getB2BOrderConfirmationCustomerTemplate } from './templates/b2bOrderConfirmationCustomer';
 import { getB2BOrderConfirmationAdminTemplate } from './templates/b2bOrderConfirmationAdmin';
+import { ADMIN_EMAILS } from './smtp-config';
 
 // Initialize Firestore with named database
 const db = getFirestore('b8s-reseller-db');
+
+// Helper function to parse admin emails from comma-separated string
+const getAdminEmailArray = (): string[] => {
+  return ADMIN_EMAILS.split(',').map(email => email.trim()).filter(email => email.length > 0);
+};
 
 // Helper function for email validation
 function isValidEmail(email: string): boolean {
@@ -117,7 +123,7 @@ export const sendOrderConfirmationEmailsV3 = onDocumentCreated(
             orderData
           }, 'sv-SE');
 
-          const adminEmails = ['micke.ohlen@gmail.com']; // TODO: Make this configurable
+          const adminEmails = getAdminEmailArray();
           const adminPromises = adminEmails.map(email => 
             sendEmailV3(email, adminTemplate.subject, adminTemplate.html)
           );
@@ -175,7 +181,7 @@ export const sendOrderConfirmationEmailsV3 = onDocumentCreated(
             totalAmount
           }, 'sv-SE');
 
-          const adminEmails = ['micke.ohlen@gmail.com']; // TODO: Make this configurable
+          const adminEmails = getAdminEmailArray();
           const adminPromises = adminEmails.map(email => 
             sendEmailV3(email, adminTemplate.subject, adminTemplate.html)
           );
