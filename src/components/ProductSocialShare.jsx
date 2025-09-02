@@ -14,9 +14,20 @@ const ProductSocialShare = ({ product, compact = true }) => {
   const { t, currentLanguage } = useTranslation();
   const isSwedish = currentLanguage === 'sv-SE';
   
+  // DEBUG: Component loading
+  console.log('🚀 ProductSocialShare component loaded with product:', product?.name || 'No product');
+  
   // Generate product-specific share content with DYNAMIC data
   const shareContent = {
-    title: product?.name || 'B8Shield Product',
+    title: (() => {
+      // FIXED: Handle multilingual product names
+      const name = product?.name;
+      if (typeof name === 'string') return name;
+      if (typeof name === 'object' && name !== null) {
+        return name[currentLanguage] || name['sv-SE'] || name['en-US'] || String(name);
+      }
+      return 'B8Shield Product';
+    })(),
     description: (() => {
       // DEBUG: Log description sources
       console.log('📝 Description sources:', {
@@ -57,9 +68,19 @@ const ProductSocialShare = ({ product, compact = true }) => {
       
       // If no description found, use fallback
       if (!desc) {
+        // FIXED: Get string version of product name for fallback
+        const productName = (() => {
+          const name = product?.name;
+          if (typeof name === 'string') return name;
+          if (typeof name === 'object' && name !== null) {
+            return name[currentLanguage] || name['sv-SE'] || name['en-US'] || 'B8Shield Product';
+          }
+          return 'B8Shield Product';
+        })();
+        
         desc = isSwedish 
-          ? `Premium fiskekroksskydd från B8Shield - ${product?.name || 'Skydda dina krokar'}!` 
-          : `Premium fishing lure protection from B8Shield - ${product?.name || 'Protect your hooks'}!`;
+          ? `Premium fiskekroksskydd från B8Shield - ${productName}!` 
+          : `Premium fishing lure protection from B8Shield - ${productName}!`;
         console.log('🔄 Using fallback description:', desc);
       }
       
@@ -129,7 +150,16 @@ const ProductSocialShare = ({ product, compact = true }) => {
       return `${baseUrl}${productPath}`;
     })(),
     text: (() => {
-      const productName = String(product?.name || 'B8Shield Product');
+      // FIXED: Handle multilingual product names in share text
+      const productName = (() => {
+        const name = product?.name;
+        if (typeof name === 'string') return name;
+        if (typeof name === 'object' && name !== null) {
+          return name[currentLanguage] || name['sv-SE'] || name['en-US'] || 'B8Shield Product';
+        }
+        return 'B8Shield Product';
+      })();
+      
       const baseText = isSwedish 
         ? `Kolla in ${productName} från B8Shield - Skydda dina beten från snags!`
         : `Check out ${productName} from B8Shield - Protect your lures from snags!`;
@@ -208,6 +238,8 @@ const ProductSocialShare = ({ product, compact = true }) => {
   ];
   
   const handleShare = async (platform) => {
+    console.log('🔥 SHARE BUTTON CLICKED!', platform.name, shareContent);
+    
     if (platform.key === 'copy') {
       const success = await copyToClipboard(shareContent);
       if (success) {
@@ -224,6 +256,8 @@ const ProductSocialShare = ({ product, compact = true }) => {
       }
     }
   };
+  
+  console.log('🎯 About to render ProductSocialShare, compact:', compact);
   
   if (compact) {
     return (
