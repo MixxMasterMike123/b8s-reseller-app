@@ -266,7 +266,7 @@ export const sendB2COrderNotificationAdminV3 = onCall(async (request) => {
     }, preferredLang);
 
     // Send to all admin emails
-    const adminEmails = ['micke.ohlen@gmail.com', 'info@jphinnovation.se'];
+    const adminEmails = ['info@jphinnovation.se', 'micke.ohlen@gmail.com'];
     
     const emailPromises = adminEmails.map(email => 
       sendEmailV3(email, template.subject, template.html)
@@ -414,7 +414,7 @@ export const sendB2BOrderConfirmationAdminV3 = onCall(async (request) => {
     }, preferredLang);
 
     // Send to all admin emails
-    const adminEmails = ['micke.ohlen@gmail.com', 'info@jphinnovation.se'];
+    const adminEmails = ['info@jphinnovation.se', 'micke.ohlen@gmail.com'];
     const emailPromises = adminEmails.map(email => 
       sendEmailV3(email, template.subject, template.html)
     );

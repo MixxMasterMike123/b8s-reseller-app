@@ -51,19 +51,39 @@ async function getUserPreferredLanguage(email) {
 }
 // Helper function to send email using V3 system
 async function sendEmailV3(to, subject, html) {
-    const emailService = EmailService_1.EmailService.getInstance();
-    // Verify connection first
-    const connectionOk = await emailService.verifyConnection();
-    if (!connectionOk) {
-        throw new Error('SMTP connection failed');
+    console.log(`🔧 DEBUG: sendEmailV3 called with:`);
+    console.log(`   📧 To: ${to}`);
+    console.log(`   📝 Subject: ${subject}`);
+    console.log(`   📄 HTML length: ${html.length} chars`);
+    try {
+        const emailService = EmailService_1.EmailService.getInstance();
+        console.log(`🔧 DEBUG: EmailService instance created`);
+        // Verify connection first
+        console.log(`🔧 DEBUG: Verifying SMTP connection...`);
+        const connectionOk = await emailService.verifyConnection();
+        console.log(`🔧 DEBUG: SMTP connection result: ${connectionOk}`);
+        if (!connectionOk) {
+            throw new Error('SMTP connection failed');
+        }
+        // Send the email
+        console.log(`🔧 DEBUG: Sending email via EmailService...`);
+        const messageId = await emailService.sendEmail({
+            to,
+            subject,
+            html
+        });
+        console.log(`✅ DEBUG: EmailService.sendEmail successful, messageId: ${messageId}`);
+        return messageId;
     }
-    // Send the email
-    const messageId = await emailService.sendEmail({
-        to,
-        subject,
-        html
-    });
-    return messageId;
+    catch (error) {
+        console.error(`❌ DEBUG: EmailService failed for ${to}:`, error);
+        console.error(`❌ DEBUG: Error details:`, {
+            message: error instanceof Error ? error.message : String(error),
+            code: error?.code,
+            stack: error instanceof Error ? error.stack?.substring(0, 500) + '...' : undefined
+        });
+        throw error;
+    }
 }
 // V3 Order Confirmation Emails Trigger
 exports.sendOrderConfirmationEmailsV3 = (0, firestore_1.onDocumentCreated)({
@@ -78,9 +98,14 @@ exports.sendOrderConfirmationEmailsV3 = (0, firestore_1.onDocumentCreated)({
             return;
         }
         console.log(`🚀 V3 Email trigger fired for order ${orderData.orderNumber} (ID: ${orderId})`);
+        console.log(`🔍 DEBUG: Order source: ${orderData.source}`);
+        console.log(`🔍 DEBUG: Order data keys:`, Object.keys(orderData));
+        console.log(`🔍 DEBUG: Items count: ${orderData.items?.length || 0}`);
+        console.log(`🔍 DEBUG: Customer info:`, orderData.customerInfo ? 'Present' : 'Missing');
         let customerEmail = '';
         // Handle B2C vs B2B orders
         if (orderData.source === 'b2c') {
+            console.log(`📱 DEBUG: Processing B2C order path`);
             // B2C Order Processing
             customerEmail = orderData.customerInfo?.email || '';
             if (customerEmail && isValidEmail(customerEmail)) {
@@ -99,16 +124,40 @@ exports.sendOrderConfirmationEmailsV3 = (0, firestore_1.onDocumentCreated)({
                 const adminTemplate = (0, adminB2COrderNotification_1.getAdminB2COrderNotificationTemplate)({
                     orderData
                 }, 'sv-SE');
-                const adminEmails = ['micke.ohlen@gmail.com']; // TODO: Make this configurable
-                const adminPromises = adminEmails.map(email => sendEmailV3(email, adminTemplate.subject, adminTemplate.html));
-                const adminMessageIds = await Promise.all(adminPromises);
-                console.log(`✅ B2C admin notifications sent, messageIds: ${adminMessageIds.join(', ')}`);
+                const adminEmails = ['info@jphinnovation.se', 'micke.ohlen@gmail.com'];
+                console.log(`🔍 DEBUG: B2C Admin emails array (business email first):`, adminEmails);
+                console.log(`🔍 DEBUG: Admin template subject: ${adminTemplate.subject}`);
+                console.log(`🔍 DEBUG: Admin template HTML length: ${adminTemplate.html.length} chars`);
+                const adminPromises = adminEmails.map(async (email, index) => {
+                    console.log(`📧 DEBUG: Sending B2C admin email ${index + 1}/${adminEmails.length} to: ${email}`);
+                    try {
+                        const messageId = await sendEmailV3(email, adminTemplate.subject, adminTemplate.html);
+                        console.log(`✅ DEBUG: B2C admin email sent successfully to ${email}, messageId: ${messageId}`);
+                        return { email, success: true, messageId };
+                    }
+                    catch (error) {
+                        console.error(`❌ DEBUG: B2C admin email FAILED to ${email}:`, error);
+                        return { email, success: false, error: error instanceof Error ? error.message : String(error) };
+                    }
+                });
+                const adminResults = await Promise.all(adminPromises);
+                const successCount = adminResults.filter(r => r.success).length;
+                console.log(`🎉 DEBUG: B2C admin notifications completed. Success: ${successCount}/${adminResults.length}`);
+                adminResults.forEach(result => {
+                    if (result.success) {
+                        console.log(`  ✅ ${result.email}: ${result.messageId}`);
+                    }
+                    else {
+                        console.log(`  ❌ ${result.email}: ${result.error}`);
+                    }
+                });
             }
             else {
                 console.log(`❌ Invalid or missing customer email for B2C order: ${customerEmail}`);
             }
         }
         else {
+            console.log(`🏢 DEBUG: Processing B2B order path`);
             // B2B Order Processing
             if (!orderData.userId) {
                 console.error('B2B order missing userId:', orderData.orderNumber);
@@ -147,10 +196,24 @@ exports.sendOrderConfirmationEmailsV3 = (0, firestore_1.onDocumentCreated)({
                     orderSummary,
                     totalAmount
                 }, 'sv-SE');
-                const adminEmails = ['micke.ohlen@gmail.com']; // TODO: Make this configurable
-                const adminPromises = adminEmails.map(email => sendEmailV3(email, adminTemplate.subject, adminTemplate.html));
+                const adminEmails = ['info@jphinnovation.se', 'micke.ohlen@gmail.com'];
+                console.log(`🔍 DEBUG: B2B Admin emails array (business email first):`, adminEmails);
+                console.log(`🔍 DEBUG: B2B Admin template subject: ${adminTemplate.subject}`);
+                console.log(`🔍 DEBUG: B2B Admin template HTML length: ${adminTemplate.html.length} chars`);
+                const adminPromises = adminEmails.map((email, index) => {
+                    console.log(`📧 DEBUG: Sending B2B admin email ${index + 1}/${adminEmails.length} to: ${email}`);
+                    return sendEmailV3(email, adminTemplate.subject, adminTemplate.html)
+                        .then(messageId => {
+                        console.log(`✅ DEBUG: B2B admin email sent successfully to ${email}, messageId: ${messageId}`);
+                        return messageId;
+                    })
+                        .catch(error => {
+                        console.error(`❌ DEBUG: B2B admin email FAILED to ${email}:`, error);
+                        throw error;
+                    });
+                });
                 const adminMessageIds = await Promise.all(adminPromises);
-                console.log(`✅ B2B admin notifications sent, messageIds: ${adminMessageIds.join(', ')}`);
+                console.log(`🎉 DEBUG: All B2B admin notifications completed. MessageIds: ${adminMessageIds.join(', ')}`);
             }
             else {
                 console.log(`❌ Invalid or missing customer email for B2B order: ${customerEmail}`);

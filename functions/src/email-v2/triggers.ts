@@ -85,9 +85,9 @@ async function sendEmailV3(to: string, subject: string, html: string): Promise<s
   } catch (error) {
     console.error(`❌ DEBUG: EmailService failed for ${to}:`, error);
     console.error(`❌ DEBUG: Error details:`, {
-      message: error.message,
-      code: error.code,
-      stack: error.stack?.substring(0, 500) + '...'
+      message: error instanceof Error ? error.message : String(error),
+      code: (error as any)?.code,
+      stack: error instanceof Error ? error.stack?.substring(0, 500) + '...' : undefined
     });
     throw error;
   }
@@ -144,26 +144,33 @@ export const sendOrderConfirmationEmailsV3 = onDocumentCreated(
             orderData
           }, 'sv-SE');
 
-          const adminEmails = ['micke.ohlen@gmail.com', 'info@jphinnovation.se'];
-          console.log(`🔍 DEBUG: B2C Admin emails array:`, adminEmails);
+          const adminEmails = ['info@jphinnovation.se', 'micke.ohlen@gmail.com'];
+          console.log(`🔍 DEBUG: B2C Admin emails array (business email first):`, adminEmails);
           console.log(`🔍 DEBUG: Admin template subject: ${adminTemplate.subject}`);
           console.log(`🔍 DEBUG: Admin template HTML length: ${adminTemplate.html.length} chars`);
           
-          const adminPromises = adminEmails.map((email, index) => {
+          const adminPromises = adminEmails.map(async (email, index) => {
             console.log(`📧 DEBUG: Sending B2C admin email ${index + 1}/${adminEmails.length} to: ${email}`);
-            return sendEmailV3(email, adminTemplate.subject, adminTemplate.html)
-              .then(messageId => {
-                console.log(`✅ DEBUG: B2C admin email sent successfully to ${email}, messageId: ${messageId}`);
-                return messageId;
-              })
-              .catch(error => {
-                console.error(`❌ DEBUG: B2C admin email FAILED to ${email}:`, error);
-                throw error;
-              });
+            try {
+              const messageId = await sendEmailV3(email, adminTemplate.subject, adminTemplate.html);
+              console.log(`✅ DEBUG: B2C admin email sent successfully to ${email}, messageId: ${messageId}`);
+              return { email, success: true, messageId };
+            } catch (error) {
+              console.error(`❌ DEBUG: B2C admin email FAILED to ${email}:`, error);
+              return { email, success: false, error: error instanceof Error ? error.message : String(error) };
+            }
           });
           
-          const adminMessageIds = await Promise.all(adminPromises);
-          console.log(`🎉 DEBUG: All B2C admin notifications completed. MessageIds: ${adminMessageIds.join(', ')}`);
+          const adminResults = await Promise.all(adminPromises);
+          const successCount = adminResults.filter(r => r.success).length;
+          console.log(`🎉 DEBUG: B2C admin notifications completed. Success: ${successCount}/${adminResults.length}`);
+          adminResults.forEach(result => {
+            if (result.success) {
+              console.log(`  ✅ ${result.email}: ${result.messageId}`);
+            } else {
+              console.log(`  ❌ ${result.email}: ${result.error}`);
+            }
+          });
         } else {
           console.log(`❌ Invalid or missing customer email for B2C order: ${customerEmail}`);
         }
@@ -217,8 +224,8 @@ export const sendOrderConfirmationEmailsV3 = onDocumentCreated(
             totalAmount
           }, 'sv-SE');
 
-          const adminEmails = ['micke.ohlen@gmail.com', 'info@jphinnovation.se'];
-          console.log(`🔍 DEBUG: B2B Admin emails array:`, adminEmails);
+          const adminEmails = ['info@jphinnovation.se', 'micke.ohlen@gmail.com'];
+          console.log(`🔍 DEBUG: B2B Admin emails array (business email first):`, adminEmails);
           console.log(`🔍 DEBUG: B2B Admin template subject: ${adminTemplate.subject}`);
           console.log(`🔍 DEBUG: B2B Admin template HTML length: ${adminTemplate.html.length} chars`);
           
