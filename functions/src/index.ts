@@ -18,7 +18,7 @@ import {
   sendOrderStatusEmail,
   sendB2COrderNotificationAdmin,
   sendB2COrderPendingEmail,
-  sendOrderConfirmationEmails,
+  // sendOrderConfirmationEmails, // DISABLED: Using V3 instead
   sendUserActivationEmail,
   sendOrderStatusUpdateEmail,
   updateCustomerEmail,
@@ -33,7 +33,7 @@ import {
 
 // Import order processing functions directly with original names
 import {
-  processB2COrderCompletionHttp,
+  // processB2COrderCompletionHttp, // DISABLED: Using V3 instead
   processB2COrderCompletion,
   manualStatusUpdate
 } from './order-processing/functions';
@@ -79,7 +79,7 @@ export {
   sendOrderStatusEmail as sendOrderStatusEmailV2,
   sendB2COrderNotificationAdmin as sendB2COrderNotificationAdminV2,
   sendB2COrderPendingEmail as sendB2COrderPendingEmailV2,
-  sendOrderConfirmationEmails as sendOrderConfirmationEmailsV2,
+  // sendOrderConfirmationEmails as sendOrderConfirmationEmailsV2, // DISABLED: Using V3 instead
   sendUserActivationEmail as sendUserActivationEmailV2,
   sendOrderStatusUpdateEmail as sendOrderStatusUpdateEmailV2,
   updateCustomerEmail as updateCustomerEmailV2,
@@ -94,7 +94,7 @@ export {
 
 // Re-export order processing functions individually with V2 names (avoid V1 conflicts)
 export {
-  processB2COrderCompletionHttp as processB2COrderCompletionHttpV2,
+  // processB2COrderCompletionHttp as processB2COrderCompletionHttpV2, // DISABLED: Using V3 instead
   processB2COrderCompletion as processB2COrderCompletionV2,
   manualStatusUpdate as manualStatusUpdateV2
 };
