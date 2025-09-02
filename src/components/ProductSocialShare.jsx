@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from '../contexts/TranslationContext';
 import { toast } from 'react-hot-toast';
 import { shareToSocial, copyToClipboard } from '../config/socialMedia';
+import { getProductUrl } from '../utils/productUrls';
 
 /**
  * Product-Specific Social Share Component
@@ -17,28 +18,68 @@ const ProductSocialShare = ({ product, compact = true }) => {
   const shareContent = {
     title: product?.name || 'B8Shield Product',
     description: (() => {
-      // Try to get a short description from product data
-      const desc = product?.description || product?.b2cDescription || product?.b2bDescription;
-      if (desc && typeof desc === 'string') {
-        // Truncate to ~100 characters for social sharing
-        return desc.length > 100 ? desc.substring(0, 97) + '...' : desc;
-      } else if (desc && typeof desc === 'object') {
-        // Handle multilingual descriptions
-        const langDesc = desc[currentLanguage] || desc['sv-SE'] || desc['en-US'] || '';
-        return langDesc.length > 100 ? langDesc.substring(0, 97) + '...' : langDesc;
+      // FIXED: Better handling of multilingual descriptions to prevent [object Object]
+      let desc = '';
+      
+      // Try different description sources
+      const sources = [product?.description, product?.b2cDescription, product?.b2bDescription];
+      
+      for (const source of sources) {
+        if (!source) continue;
+        
+        if (typeof source === 'string' && source.trim()) {
+          desc = source;
+          break;
+        } else if (typeof source === 'object' && source !== null) {
+          // Handle multilingual objects properly
+          const langOptions = [currentLanguage, 'sv-SE', 'en-US', 'en-GB'];
+          for (const lang of langOptions) {
+            if (source[lang] && typeof source[lang] === 'string' && source[lang].trim()) {
+              desc = source[lang];
+              break;
+            }
+          }
+          if (desc) break;
+        }
       }
-      return isSwedish 
-        ? `Premium fiskekroksskydd från B8Shield - ${product?.name || 'Skydda dina krokar'}!` 
-        : `Premium fishing lure protection from B8Shield - ${product?.name || 'Protect your hooks'}!`;
+      
+      // If no description found, use fallback
+      if (!desc) {
+        desc = isSwedish 
+          ? `Premium fiskekroksskydd från B8Shield - ${product?.name || 'Skydda dina krokar'}!` 
+          : `Premium fishing lure protection from B8Shield - ${product?.name || 'Protect your hooks'}!`;
+      }
+      
+      // Truncate to ~100 characters for social sharing
+      return desc.length > 100 ? desc.substring(0, 97) + '...' : desc;
     })(),
     image: (() => {
+      // FIXED: Ensure we get the actual product image URL, not the main page banner
+      let imageUrl = '';
+      
       // Priority: B2C image > general image > B2B image > fallback
-      return product?.b2cImageUrl || 
-             product?.imageUrl || 
-             product?.b2bImageUrl || 
-             '/images/b8s_top.webp';
+      const imageSources = [
+        product?.b2cImageUrl, 
+        product?.imageUrl, 
+        product?.b2bImageUrl
+      ];
+      
+      for (const source of imageSources) {
+        if (source && typeof source === 'string' && source.trim() && !source.includes('b8s_top.webp')) {
+          imageUrl = source;
+          break;
+        }
+      }
+      
+      // Fallback to main banner only if no product image found
+      return imageUrl || '/images/b8s_top.webp';
     })(),
-    url: window.location.href,
+    url: (() => {
+      // FIXED: Use proper product URL generation instead of window.location.href
+      const productPath = getProductUrl(product);
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://shop.b8shield.com';
+      return `${baseUrl}${productPath}`;
+    })(),
     text: (() => {
       const productName = product?.name || 'B8Shield Product';
       const baseText = isSwedish 
