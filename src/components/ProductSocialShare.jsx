@@ -17,176 +17,75 @@ const ProductSocialShare = ({ product, compact = true }) => {
   // DEBUG: Component loading
   console.log('🚀 ProductSocialShare component loaded with product:', product?.name || 'No product');
   
-  // Generate product-specific share content with DYNAMIC data
-  const shareContent = {
-    title: (() => {
-      // FIXED: Handle multilingual product names
-      const name = product?.name;
-      if (typeof name === 'string') return name;
-      if (typeof name === 'object' && name !== null) {
-        return name[currentLanguage] || name['sv-SE'] || name['en-US'] || String(name);
-      }
-      return 'B8Shield Product';
-    })(),
-    description: (() => {
-      // DEBUG: Log description sources
-      console.log('📝 Description sources:', {
-        description: product?.description,
-        b2cDescription: product?.b2cDescription,
-        b2bDescription: product?.b2bDescription,
-        currentLanguage
-      });
-      
-      let desc = '';
-      
-      // Try different description sources
-      const sources = [product?.description, product?.b2cDescription, product?.b2bDescription];
-      
-      for (const source of sources) {
-        if (!source) continue;
-        
-        if (typeof source === 'string' && source.trim()) {
+  // Generate product title helper
+  const getProductTitle = () => {
+    // FIXED: Handle multilingual product names
+    const name = product?.name;
+    if (typeof name === 'string') return name;
+    if (typeof name === 'object' && name !== null) {
+      return name[currentLanguage] || name['sv-SE'] || name['en-US'] || String(name);
+    }
+    return 'B8Shield Product';
+  };
+
+  // Generate product description helper
+  const getProductDescription = () => {
+    // DEBUG: Log description sources
+    console.log('📝 Description sources:', {
+      description: product?.description,
+      b2cDescription: product?.b2cDescription,
+      b2bDescription: product?.b2bDescription,
+      currentLanguage
+    });
+    
+    let desc = '';
+    
+    // Try to get description from various sources
+    const sources = [
+      product?.b2cDescription,
+      product?.description,
+      product?.b2bDescription
+    ];
+    
+    for (const source of sources) {
+      if (source) {
+        if (typeof source === 'string') {
           desc = source;
-          console.log('✅ Found string description:', desc.substring(0, 50) + '...');
+          console.log('📝 Using string description:', desc.substring(0, 50) + '...');
           break;
         } else if (typeof source === 'object' && source !== null) {
-          console.log('🔍 Checking multilingual object:', source);
-          // Handle multilingual objects properly
-          const langOptions = [currentLanguage, 'sv-SE', 'en-US', 'en-GB'];
-          for (const lang of langOptions) {
-            if (source[lang] && typeof source[lang] === 'string' && source[lang].trim()) {
-              desc = source[lang];
-              console.log(`✅ Found ${lang} description:`, desc.substring(0, 50) + '...');
-              break;
-            }
+          // Handle multilingual objects
+          const langDesc = source[currentLanguage] || source['sv-SE'] || source['en-US'];
+          if (langDesc && typeof langDesc === 'string') {
+            desc = langDesc;
+            console.log('📝 Using multilingual description:', desc.substring(0, 50) + '...');
+            break;
           }
-          if (desc) break;
         } else {
           console.log('⚠️ Unexpected source type:', typeof source, source);
         }
       }
+    }
+    
+    // If no description found, use fallback
+    if (!desc) {
+      // FIXED: Get string version of product name for fallback
+      const productName = getProductTitle();
       
-      // If no description found, use fallback
-      if (!desc) {
-        // FIXED: Get string version of product name for fallback
-        const productName = (() => {
-          const name = product?.name;
-          if (typeof name === 'string') return name;
-          if (typeof name === 'object' && name !== null) {
-            return name[currentLanguage] || name['sv-SE'] || name['en-US'] || 'B8Shield Product';
-          }
-          return 'B8Shield Product';
-        })();
-        
-        desc = isSwedish 
-          ? `Premium fiskekroksskydd från B8Shield - ${productName}!` 
-          : `Premium fishing lure protection from B8Shield - ${productName}!`;
-        console.log('🔄 Using fallback description:', desc);
-      }
-      
-      // Ensure we return a string, not an object
-      const finalDesc = String(desc);
-      console.log('📤 Final description for sharing:', finalDesc.substring(0, 100) + '...');
-      
-      // Truncate to ~100 characters for social sharing
-      return finalDesc.length > 100 ? finalDesc.substring(0, 97) + '...' : finalDesc;
-    })(),
-    image: (() => {
-      // DEBUG: Log product data to see what's available
-      console.log('🔍 Product data for sharing:', {
-        name: product?.name,
-        b2cImageUrl: product?.b2cImageUrl,
-        imageUrl: product?.imageUrl,
-        b2bImageUrl: product?.b2bImageUrl,
-        imageData: product?.imageData ? 'has base64 data' : 'no base64'
-      });
-      
-      // EXTRA DEBUG: Log ALL product fields to see what's actually available
-      console.log('🔍 FULL PRODUCT OBJECT:', product);
-      
-      let imageUrl = '';
-      
-      // Priority: B2C image > general image > B2B image > base64 fallback
-      const imageSources = [
-        product?.b2cImageUrl, 
-        product?.imageUrl, 
-        product?.b2bImageUrl
-      ];
-      
-      for (const source of imageSources) {
-        console.log('🔍 Checking image source:', source, typeof source);
-        if (source && typeof source === 'string' && source.trim() && 
-            !source.includes('b8s_top.webp') && !source.includes('data:')) {
-          console.log('✅ Selected image source:', source);
-          imageUrl = source;
-          break;
-        } else {
-          console.log('❌ Rejected image source:', source, 'reasons:', {
-            exists: !!source,
-            isString: typeof source === 'string',
-            hasTrim: source && typeof source === 'string' ? source.trim() : 'N/A',
-            notWebP: source ? !source.includes('b8s_top.webp') : 'N/A',
-            notData: source ? !source.includes('data:') : 'N/A'
-          });
-        }
-      }
-      
-      // If no URL found but we have base64 data, use that
-      if (!imageUrl && product?.imageData && typeof product.imageData === 'string') {
-        imageUrl = product.imageData;
-      }
-      
-      // CRITICAL FIX: WebP is not well supported by social media platforms
-      if (imageUrl && imageUrl.includes('.webp')) {
-        console.log('⚠️ WebP detected - social media platforms have poor WebP support');
-        // Since WebP files don't have JPEG equivalents, fall back to PNG logo for social sharing
-        console.log('🔄 Using PNG logo fallback for social media compatibility');
-        imageUrl = '';  // Clear WebP URL to trigger fallback
-      }
-      
-      // Convert relative URLs to absolute URLs for social sharing
-      if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('data:')) {
-        const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://shop.b8shield.com';
-        imageUrl = `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
-      }
-      
-      console.log('📸 Final image URL for sharing:', imageUrl);
-      
-      // FIXED: Use PNG logo fallback instead of WebP for social media compatibility
-      const fallbackUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://shop.b8shield.com'}/images/B8S_logo.png`;
-      console.log('📸 Fallback URL:', fallbackUrl);
-      console.log('📸 Returning:', imageUrl || fallbackUrl);
-      return imageUrl || fallbackUrl;
-    })(),
-    url: (() => {
-      // FIXED: Use proper product URL generation instead of window.location.href
-      const productPath = getProductUrl(product);
-      const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://shop.b8shield.com';
-      return `${baseUrl}${productPath}`;
-    })(),
-    text: (() => {
-      // FIXED: Handle multilingual product names in share text
-      const productName = (() => {
-        const name = product?.name;
-        if (typeof name === 'string') return name;
-        if (typeof name === 'object' && name !== null) {
-          return name[currentLanguage] || name['sv-SE'] || name['en-US'] || 'B8Shield Product';
-        }
-        return 'B8Shield Product';
-      })();
-      
-      const baseText = isSwedish 
-        ? `Kolla in ${productName} från B8Shield - Skydda dina beten från snags!`
-        : `Check out ${productName} from B8Shield - Protect your lures from snags!`;
-      const hashtags = isSwedish
-        ? '#B8Shield #Fiske #Betesskydd #Snagfritt #Sverige'
-        : '#B8Shield #Fishing #LureProtection #SnagFree #Sweden';
-      const finalText = `${baseText} ${hashtags}`;
-      console.log('📱 Final share text:', finalText);
-      return finalText;
-    })()
+      desc = isSwedish 
+        ? `Premium fiskekroksskydd från B8Shield - ${productName}!` 
+        : `Premium fishing lure protection from B8Shield - ${productName}!`;
+      console.log('🔄 Using fallback description:', desc);
+    }
+    
+    // Ensure we return a string, not an object
+    const finalDesc = String(desc);
+    console.log('📤 Final description for sharing:', finalDesc.substring(0, 100) + '...');
+    
+    // Truncate to ~100 characters for social sharing
+    return finalDesc.length > 100 ? finalDesc.substring(0, 97) + '...' : finalDesc;
   };
-  
+
   // SHARING-ONLY platforms (follow links moved to footer)
   const sharingPlatforms = [
     {
@@ -239,7 +138,6 @@ const ProductSocialShare = ({ product, compact = true }) => {
         </svg>
       )
     },
-
     {
       key: 'copy',
       name: isSwedish ? 'Kopiera länk' : 'Copy Link',
@@ -251,9 +149,118 @@ const ProductSocialShare = ({ product, compact = true }) => {
       )
     }
   ];
+
+  // Generate share content with LIVE debugging
+  const generateShareContent = () => {
+    console.log('🔍 GENERATING SHARE CONTENT...');
+    
+    // DEBUG: Log product data to see what's available
+    console.log('🔍 Product data for sharing:', {
+      name: product?.name,
+      b2cImageUrl: product?.b2cImageUrl,
+      imageUrl: product?.imageUrl,
+      b2bImageUrl: product?.b2bImageUrl,
+      imageData: product?.imageData ? 'has base64 data' : 'no base64'
+    });
+    
+    // EXTRA DEBUG: Log ALL product fields to see what's actually available
+    console.log('🔍 FULL PRODUCT OBJECT:', product);
+    
+    // Generate product URL
+    const productPath = getProductUrl(product);
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://shop.b8shield.com';
+    const productUrl = `${baseUrl}${productPath}`;
+    console.log('🔗 Product URL:', productUrl);
+
+    return {
+      title: getProductTitle(),
+      description: getProductDescription(),
+      image: getProductImage(),
+      url: productUrl,
+      text: getProductShareText()
+    };
+  };
+
+  // Generate product image with LIVE debugging
+  const getProductImage = () => {
+    let imageUrl = '';
+    
+    // Priority: B2C image > general image > B2B image > base64 fallback
+    const imageSources = [
+      product?.b2cImageUrl, 
+      product?.imageUrl, 
+      product?.b2bImageUrl
+    ];
+    
+    for (const source of imageSources) {
+      console.log('🔍 Checking image source:', source, typeof source);
+      if (source && typeof source === 'string' && source.trim() && 
+          !source.includes('b8s_top.webp') && !source.includes('data:')) {
+        console.log('✅ Selected image source:', source);
+        imageUrl = source;
+        break;
+      } else {
+        console.log('❌ Rejected image source:', source, 'reasons:', {
+          exists: !!source,
+          isString: typeof source === 'string',
+          hasTrim: source && typeof source === 'string' ? source.trim() : 'N/A',
+          notWebP: source ? !source.includes('b8s_top.webp') : 'N/A',
+          notData: source ? !source.includes('data:') : 'N/A'
+        });
+      }
+    }
+    
+    // If no URL found but we have base64 data, use that
+    if (!imageUrl && product?.imageData && typeof product.imageData === 'string') {
+      console.log('🔄 Using base64 imageData as fallback');
+      imageUrl = product.imageData;
+    }
+    
+    // CRITICAL FIX: WebP is not well supported by social media platforms
+    if (imageUrl && imageUrl.includes('.webp')) {
+      console.log('⚠️ WebP detected - social media platforms have poor WebP support');
+      // Since WebP files don't have JPEG equivalents, fall back to PNG logo for social sharing
+      console.log('🔄 Using PNG logo fallback for social media compatibility');
+      imageUrl = '';  // Clear WebP URL to trigger fallback
+    }
+    
+    // Convert relative URLs to absolute URLs for social sharing
+    if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('data:')) {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://shop.b8shield.com';
+      imageUrl = `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+      console.log('🔄 Converted to absolute URL:', imageUrl);
+    }
+    
+    console.log('📸 Final image URL for sharing:', imageUrl);
+    
+    // FIXED: Use PNG logo fallback instead of WebP for social media compatibility
+    const fallbackUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://shop.b8shield.com'}/images/B8S_logo.png`;
+    console.log('📸 Fallback URL:', fallbackUrl);
+    console.log('📸 Returning:', imageUrl || fallbackUrl);
+    return imageUrl || fallbackUrl;
+  };
+
+  const getProductShareText = () => {
+    // FIXED: Handle multilingual product names in share text
+    const productName = getProductTitle();
+    
+    const baseText = isSwedish 
+      ? `Kolla in ${productName} från B8Shield - Skydda dina beten från snags!`
+      : `Check out ${productName} from B8Shield - Protect your lures from snags!`;
+    const hashtags = isSwedish
+      ? '#B8Shield #Fiske #Betesskydd #Snagfritt #Sverige'
+      : '#B8Shield #Fishing #LureProtection #SnagFree #Sweden';
+    const finalText = `${baseText} ${hashtags}`;
+    console.log('📱 Final share text:', finalText);
+    return finalText;
+  };
   
   const handleShare = async (platform) => {
-    console.log('🔥 SHARE BUTTON CLICKED!', platform.name, shareContent);
+    console.log('🔥 SHARE BUTTON CLICKED!', platform.name);
+    
+    // Generate share content FRESH each time button is clicked
+    const shareContent = generateShareContent();
+    console.log('📊 Generated share content:', shareContent);
     
     if (platform.key === 'copy') {
       const success = await copyToClipboard(shareContent);
@@ -276,53 +283,46 @@ const ProductSocialShare = ({ product, compact = true }) => {
   
   if (compact) {
     return (
-      <div className="mt-6">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">
-          {isSwedish ? 'Dela produkt' : 'Share product'}
-        </h4>
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3">
+        <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+          {isSwedish ? 'Dela produkt' : 'Share Product'}
+        </h3>
+        <div className="flex flex-wrap gap-2">
           {sharingPlatforms.map((platform) => (
             <button
               key={platform.key}
               onClick={() => handleShare(platform)}
-              className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-full text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-all duration-150 group"
-              style={{ '--platform-color': platform.color }}
+              className="flex items-center justify-center w-10 h-10 rounded-full text-white hover:scale-105 transition-transform duration-200 shadow-md hover:shadow-lg"
+              style={{ backgroundColor: platform.color }}
               title={`${isSwedish ? 'Dela på' : 'Share on'} ${platform.name}`}
             >
-              <div 
-                className="transition-colors duration-150 group-hover:text-[var(--platform-color)]"
-                style={{ color: 'inherit' }}
-              >
-                {platform.icon}
-              </div>
+              {platform.icon}
             </button>
           ))}
         </div>
       </div>
     );
   }
-  
-  // Non-compact version (if needed)
+
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-        {isSwedish ? 'Dela denna produkt' : 'Share this product'}
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        {isSwedish ? 'Dela denna produkt' : 'Share this Product'}
       </h3>
-      <div className="flex flex-wrap gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {sharingPlatforms.map((platform) => (
           <button
             key={platform.key}
             onClick={() => handleShare(platform)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors group"
-            style={{ '--platform-color': platform.color }}
+            className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
           >
             <div 
-              className="transition-colors duration-150 group-hover:text-[var(--platform-color)]"
-              style={{ color: platform.color }}
+              className="flex items-center justify-center w-8 h-8 rounded-full text-white"
+              style={{ backgroundColor: platform.color }}
             >
               {platform.icon}
             </div>
-            <span className="text-sm text-gray-700 dark:text-gray-300">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               {platform.name}
             </span>
           </button>
