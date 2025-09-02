@@ -24,10 +24,9 @@ import ReviewsSection from '../../components/ReviewsSection';
 import { getReviewStats } from '../../utils/trustpilotAPI';
 import SeoHreflang from '../../components/shop/SeoHreflang';
 import { Helmet } from 'react-helmet';
-import SocialShare from '../../components/shop/SocialShare';
 import SmartPrice from '../../components/shop/SmartPrice';
 import AddedToCartModal from '../../components/shop/AddedToCartModal';
-import SocialMediaShare from '../../components/SocialMediaShare';
+import ProductSocialShare from '../../components/ProductSocialShare';
 
 const PublicProductPage = () => {
   const { slug } = useParams();
@@ -577,11 +576,10 @@ const PublicProductPage = () => {
                   </button>
                 </div>
 
-                {/* Social Share */}
-                <SocialShare
-                  url={window.location.href}
-                  title={getContentValue(product?.name)}
-                  image={getProductImages(product)[0]}
+                {/* Social Share - Streamlined with working platforms only */}
+                <ProductSocialShare 
+                  product={product}
+                  compact={true}
                 />
 
                 {/* Payment Options */}
@@ -726,18 +724,6 @@ const PublicProductPage = () => {
                     productId={product.id}
                     productName={getContentValue(product.name)}
                     reviewCount={reviewCount}
-                  />
-                </div>
-
-                {/* Social Media Section */}
-                <div className="border-t pt-6">
-                  <SocialMediaShare 
-                    product={product}
-                    pageUrl={window.location.href}
-                    language={t.language}
-                    showFollowLinks={true}
-                    showShareButtons={true}
-                    compact={false}
                   />
                 </div>
               </div>
