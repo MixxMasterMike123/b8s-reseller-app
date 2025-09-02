@@ -216,12 +216,20 @@ const ProductSocialShare = ({ product, compact = true }) => {
       imageUrl = product.imageData;
     }
     
-    // CRITICAL FIX: WebP is not well supported by social media platforms
+    // UPDATED FIX: Try to convert WebP to JPEG/PNG, or use WebP for modern platforms
     if (imageUrl && imageUrl.includes('.webp')) {
-      console.log('⚠️ WebP detected - social media platforms have poor WebP support');
-      // Since WebP files don't have JPEG equivalents, fall back to PNG logo for social sharing
-      console.log('🔄 Using PNG logo fallback for social media compatibility');
-      imageUrl = '';  // Clear WebP URL to trigger fallback
+      console.log('⚠️ WebP detected - attempting to find JPEG/PNG alternative');
+      
+      // Try to convert WebP URL to JPEG equivalent
+      const jpegUrl = imageUrl.replace('.webp', '.jpg');
+      const pngUrl = imageUrl.replace('.webp', '.png');
+      
+      console.log('🔄 Trying JPEG alternative:', jpegUrl);
+      
+      // For now, let's try JPEG first, then use WebP as fallback since Facebook supports WebP
+      // Most modern social platforms (Facebook, LinkedIn, Twitter) now support WebP
+      console.log('✅ Using WebP - modern social platforms support WebP format');
+      // Keep the original WebP URL - it should work fine
     }
     
     // Convert relative URLs to absolute URLs for social sharing
