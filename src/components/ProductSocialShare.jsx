@@ -101,6 +101,9 @@ const ProductSocialShare = ({ product, compact = true }) => {
         imageData: product?.imageData ? 'has base64 data' : 'no base64'
       });
       
+      // EXTRA DEBUG: Log ALL product fields to see what's actually available
+      console.log('🔍 FULL PRODUCT OBJECT:', product);
+      
       let imageUrl = '';
       
       // Priority: B2C image > general image > B2B image > base64 fallback
@@ -111,10 +114,20 @@ const ProductSocialShare = ({ product, compact = true }) => {
       ];
       
       for (const source of imageSources) {
+        console.log('🔍 Checking image source:', source, typeof source);
         if (source && typeof source === 'string' && source.trim() && 
             !source.includes('b8s_top.webp') && !source.includes('data:')) {
+          console.log('✅ Selected image source:', source);
           imageUrl = source;
           break;
+        } else {
+          console.log('❌ Rejected image source:', source, 'reasons:', {
+            exists: !!source,
+            isString: typeof source === 'string',
+            hasTrim: source && typeof source === 'string' ? source.trim() : 'N/A',
+            notWebP: source ? !source.includes('b8s_top.webp') : 'N/A',
+            notData: source ? !source.includes('data:') : 'N/A'
+          });
         }
       }
       
@@ -141,6 +154,8 @@ const ProductSocialShare = ({ product, compact = true }) => {
       
       // FIXED: Use PNG logo fallback instead of WebP for social media compatibility
       const fallbackUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://shop.b8shield.com'}/images/B8S_logo.png`;
+      console.log('📸 Fallback URL:', fallbackUrl);
+      console.log('📸 Returning:', imageUrl || fallbackUrl);
       return imageUrl || fallbackUrl;
     })(),
     url: (() => {
