@@ -12,7 +12,7 @@ import { db } from '../../firebase/config';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { printShippingLabel } from '../../utils/labelPrinter';
 import LabelPrintInstructions from '../../components/LabelPrintInstructions';
-import LabelOrientationSelector from '../../components/LabelOrientationSelector';
+
 
 // Add a helper function to parse and display order distribution data
 const getOrderDistribution = (order) => {
@@ -273,19 +273,16 @@ const AdminOrderDetail = () => {
     }
   };
 
-  const handlePrintLabel = async (orientation = null) => {
+  const handlePrintLabel = async () => {
     try {
       setPrintLoading(true);
       
       console.log('🏷️ Printing shipping label for order:', order.orderNumber || order.id);
       
-      // Print the label with specified orientation
-      const labelData = await printShippingLabel(order, userData, orientation);
+      // Download the label HTML file for Preview app
+      const labelData = await printShippingLabel(order, userData);
       
-      const orientationText = labelData.orientation === 'portrait' ? 'stående' : 'liggande';
-      const detectionText = labelData.autoDetected ? 'auto-vald' : 'manuellt vald';
-      
-      toast.success(`Utskriftsdialog öppnad! Format: ${orientationText} (${detectionText})`);
+      toast.success(`Etikett nedladdad! Öppna HTML-filen i Preview app och tryck Cmd+P`);
     } catch (error) {
       console.error('❌ Failed to print label:', error);
       toast.error(`Kunde inte skriva ut etikett: ${error.message}`);
@@ -337,7 +334,7 @@ const AdminOrderDetail = () => {
         <div class="section">
           <div class="section-title">Order Information</div>
           <p><strong>Date:</strong> ${formatDate(order.createdAt)}</p>
-          <p><strong>Status:</strong> ${statusText}</p>
+          <p><strong>Status:</strong> ${order.status}</p>
           <p><strong>Payment Method:</strong> ${order.payment?.method === 'stripe' ? 'Stripe (Card)' : order.paymentMethod || 'Invoice'}</p>
           ${order.source ? `<p><strong>Source:</strong> ${order.source === 'b2c' ? 'B2C Shop' : 'B2B Portal'}</p>` : ''}
         </div>
@@ -497,18 +494,23 @@ const AdminOrderDetail = () => {
               >
                 Print
               </button>
+                          <button
+              onClick={handlePrintLabel}
+              disabled={printLoading}
+              className="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center gap-2"
+              title="Laddar ner HTML-fil som öppnas i Preview app för enkel utskrift"
+            >
               {printLoading ? (
-                <div className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg">
+                <>
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent"></div>
-                  Öppnar utskriftsdialog...
-                </div>
+                  Laddar ner...
+                </>
               ) : (
-                <LabelOrientationSelector 
-                  order={order}
-                  userData={userData}
-                  onPrint={handlePrintLabel}
-                />
+                <>
+                  📄 Ladda ner etikett
+                </>
               )}
+            </button>
               <LabelPrintInstructions />
               <button
                 onClick={handleDeleteOrder}
@@ -574,7 +576,7 @@ const AdminOrderDetail = () => {
                 <span className="font-medium">Date:</span> {formatDate(order.createdAt)}
               </p>
               <p className="text-gray-700 dark:text-gray-300">
-                <span className="font-medium">Status:</span> {statusText}
+                <span className="font-medium">Status:</span> {order.status}
               </p>
               <p className="text-gray-700 dark:text-gray-300">
                 <span className="font-medium">Payment Method:</span> {order.payment?.method === 'stripe' ? 'Stripe (Card)' : order.paymentMethod || 'Invoice'}

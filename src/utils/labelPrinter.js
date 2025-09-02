@@ -210,14 +210,14 @@ class LabelPrinterService {
   /**
    * Print label - Primary method using system print dialog
    */
-  async printLabel(order, userData = null, orientation = null) {
+  async printLabel(order, userData = null) {
     try {
       console.log('🖨️ Formatting label for order:', order.orderNumber || order.id);
       
-      // Format address for label
-      const labelData = this.formatAddressLabel(order, userData, orientation);
+      // Always use auto-detection, user can override in print dialog
+      const labelData = this.formatAddressLabel(order, userData);
       console.log('📋 Label data:', labelData);
-      console.log(`🔄 Using ${labelData.orientation} orientation (${labelData.autoDetected ? 'auto-detected' : 'manual'})`);
+      console.log(`💡 Recommended: ${labelData.orientation} (user can change in print dialog)`);
       
       // Always use system print dialog (most reliable)
       this.printViaSystemDialog(labelData);
@@ -255,69 +255,62 @@ class LabelPrinterService {
   }
 
   /**
-   * Primary: Print via system dialog (optimized for BT-M110 40x60mm labels)
+   * FOOLPROOF: Download HTML file for Preview app printing
    */
   printViaSystemDialog(labelData) {
-    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    console.log('📄 Creating label HTML file for Preview app...');
     
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>B8Shield Fraktetikett - ${labelData.orderNumber}</title>
-        <meta charset="utf-8">
-        <style>
-          @page {
-            size: ${labelData.orientation === 'portrait' ? '40mm 60mm' : '60mm 40mm'};
-            margin: 2mm;
-          }
-          
-          body {
-            font-family: 'Arial', 'Helvetica', sans-serif;
-            font-size: ${labelData.orientation === 'portrait' ? '10px' : '9px'};
-            line-height: 1.1;
-            margin: 0;
-            padding: 2mm;
-            background: white;
-            color: black;
-            width: ${labelData.orientation === 'portrait' ? '36mm' : '56mm'};
-            height: ${labelData.orientation === 'portrait' ? '56mm' : '36mm'};
-          }
-          
-          .label-container {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-          }
-          
-          .order-header {
-            font-size: 8px;
-            text-align: center;
-            margin-bottom: 2mm;
-            color: #333;
-            font-weight: normal;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 1mm;
-          }
-          
-          .address-section {
-            flex-grow: 1;
-          }
-          
-          .address-line {
-            margin-bottom: 0.5mm;
-            font-weight: bold;
-            font-size: 10px;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-          }
-          
-          .address-line:first-child {
-            font-size: 11px;
-            margin-bottom: 1mm;
-          }
+    // Create simple, clean HTML optimized for Preview app
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>B8Shield Fraktetikett - ${labelData.orderNumber}</title>
+  <meta charset="utf-8">
+  <style>
+    @page {
+      size: 40mm 60mm;
+      margin: 1mm;
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 10px;
+      line-height: 1.2;
+      margin: 0;
+      padding: 1mm;
+      width: 38mm;
+      height: 58mm;
+      background: white;
+      color: black;
+    }
+    
+    .order-header {
+      font-size: 8px;
+      font-weight: bold;
+      text-align: center;
+      border-bottom: 1px solid #000;
+      padding-bottom: 1mm;
+      margin-bottom: 2mm;
+    }
+    
+    .address-section {
+      text-align: left;
+    }
+    
+    .address-line {
+      margin: 1mm 0;
+    }
+    
+    .postal-line {
+      font-weight: bold;
+      margin-top: 2mm;
+    }
+    
+    .country-line {
+      font-weight: bold;
+      font-size: 9px;
+      margin-top: 1mm;
+    }
           
           .postal-line {
             font-size: 10px;
@@ -351,68 +344,47 @@ class LabelPrinterService {
               background: white !important;
             }
           }
-        </style>
-      </head>
-      <body>
-        <div class="label-container">
-          <div class="order-header">
-            B8Shield Order: ${labelData.orderNumber}
-            <br><span style="font-size: 7px; color: #666;">
-              ${labelData.orientation === 'portrait' ? '📄 Stående' : '📄 Liggande'} 
-              ${labelData.autoDetected ? '(auto)' : '(manuell)'}
-            </span>
-          </div>
-          <div class="address-section">
-            ${labelData.lines.map((line, index) => {
-              // Detect postal code + city line
-              const isPostalLine = /^\d{5}\s+/.test(line);
-              const isCountryLine = line.length <= 8 && line.toUpperCase() === line;
-              
-              let className = 'address-line';
-              if (isPostalLine) className += ' postal-line';
-              if (isCountryLine) className += ' country-line';
-              
-              return `<div class="${className}">${line}</div>`;
-            }).join('')}
-          </div>
-        </div>
-        
-        <script>
-          // Enhanced printing for different systems
-          window.onload = function() {
-            // Small delay to ensure styles are loaded
-            setTimeout(() => {
-              // Trigger print dialog
-              window.print();
-              
-              // Auto-close after printing (or timeout)
-              setTimeout(() => {
-                try {
-                  window.close();
-                } catch (e) {
-                  // Some browsers block auto-close
-                  console.log('Print dialog opened successfully');
-                }
-              }, 2000);
-            }, 500);
-          };
-          
-          // Handle print events
-          window.addEventListener('beforeprint', function() {
-            console.log('🖨️ Opening print dialog for BT-M110 label');
-            document.title = 'Fraktetikett ${labelData.orderNumber} - Välj BT-M110 eller spara som PDF';
-          });
-          
-          window.addEventListener('afterprint', function() {
-            console.log('✅ Print dialog completed');
-          });
-        </script>
-      </body>
-      </html>
-    `;
+  </style>
+</head>
+<body>
+  <div class="order-header">
+    B8Shield Order: ${labelData.orderNumber}
+  </div>
+  
+  <div class="address-section">
+    ${labelData.lines.map((line, index) => {
+      // Detect postal code + city line
+      const isPostalLine = /^\d{5}\s+/.test(line);
+      const isCountryLine = line.length <= 8 && line.toUpperCase() === line;
+      
+      let className = 'address-line';
+      if (isPostalLine) className = 'postal-line';
+      if (isCountryLine) className = 'country-line';
+      
+      return `<div class="${className}">${line}</div>`;
+    }).join('')}
+  </div>
+</body>
+</html>`;
     
-    printWindow.document.write(html);
-    printWindow.document.close();
+    // Create blob and download as HTML file
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create download link
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `B8Shield-Label-${labelData.orderNumber}.html`;
+    
+    // Trigger download
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    
+    // Clean up
+    URL.revokeObjectURL(url);
+    
+    console.log(`📄 Label downloaded: B8Shield-Label-${labelData.orderNumber}.html`);
   }
 
   /**
@@ -514,8 +486,8 @@ export const formatAddressForLabel = (order, userData = null, orientation = null
   return labelPrinter.formatAddressLabel(order, userData, orientation);
 };
 
-export const printShippingLabel = async (order, userData = null, orientation = null) => {
-  return labelPrinter.printLabel(order, userData, orientation);
+export const printShippingLabel = async (order, userData = null) => {
+  return labelPrinter.printLabel(order, userData);
 };
 
 export const printMultipleShippingLabels = async (orders, userDataMap = {}) => {

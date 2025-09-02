@@ -27,6 +27,7 @@ import { Helmet } from 'react-helmet';
 import SocialShare from '../../components/shop/SocialShare';
 import SmartPrice from '../../components/shop/SmartPrice';
 import AddedToCartModal from '../../components/shop/AddedToCartModal';
+import SocialMediaShare from '../../components/SocialMediaShare';
 
 const PublicProductPage = () => {
   const { slug } = useParams();
@@ -725,6 +726,18 @@ const PublicProductPage = () => {
                     productId={product.id}
                     productName={getContentValue(product.name)}
                     reviewCount={reviewCount}
+                  />
+                </div>
+
+                {/* Social Media Section */}
+                <div className="border-t pt-6">
+                  <SocialMediaShare 
+                    product={product}
+                    pageUrl={window.location.href}
+                    language={t.language}
+                    showFollowLinks={true}
+                    showShareButtons={true}
+                    compact={false}
                   />
                 </div>
               </div>

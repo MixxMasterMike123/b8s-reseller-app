@@ -36,10 +36,10 @@ const LabelPrintInstructions = () => {
                   📋 Så här fungerar det:
                 </h4>
                 <ol className="list-decimal list-inside space-y-1">
-                  <li>Klicka på "🖨️ Skriv ut etikett"</li>
-                  <li>Systemets utskriftsdialog öppnas</li>
-                  <li>Välj din BT-M110 skrivare i listan</li>
-                  <li>Klicka "Skriv ut" för att skriva ut etiketten</li>
+                  <li>Klicka på "📄 Ladda ner etikett"</li>
+                  <li>HTML-filen laddas ner och öppnas i Preview app</li>
+                  <li>Tryck Cmd+P i Preview för att skriva ut</li>
+                  <li>Välj din BT-M110 skrivare och tryck "Skriv ut"</li>
                 </ol>
               </div>
 
