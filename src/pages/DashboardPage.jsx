@@ -23,8 +23,8 @@ const DashboardPage = () => {
   const [isTrainingModalOpen, setIsTrainingModalOpen] = React.useState(false);
 
   // Debug info
-  const hostname = window.location.hostname;
-  const subdomain = hostname.split('.')[0];
+  const hostname = window.location.hostname || '';
+  const subdomain = hostname ? hostname.split('.')[0] : '';
 
   // Detect if user is on mobile
   const isMobile = () => {

@@ -125,7 +125,7 @@ function App() {
 
   // Detect subdomain to determine which app to show
   const hostname = window.location.hostname || '';
-  const subdomain = hostname && typeof hostname === 'string' ? hostname.split('.')[0] : '';
+  const subdomain = (hostname && typeof hostname === 'string') ? hostname.split('.')[0] : '';
   
   // Determine app mode based on subdomain
   const isShopSubdomain = subdomain === 'shop';

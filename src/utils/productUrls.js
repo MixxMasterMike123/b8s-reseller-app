@@ -135,7 +135,7 @@ export const getProductSeoDescription = (product) => {
  * @returns {string} The complete affiliate link
  */
 export const generateAffiliateLink = (affiliateCode, preferredLang, productPath = '') => {
-  const urlLang = preferredLang?.split('-')[1]?.toLowerCase() || 'se';
+  const urlLang = (preferredLang?.split('-')[1] || 'se').toLowerCase();
   
   const baseUrl = 'https://shop.b8shield.com';
   const langPath = `/${urlLang}`;
@@ -342,7 +342,7 @@ export const getLegalSeoDescription = (pageType = 'privacy', language = 'sv-SE')
  */
 export const generateShopStructuredData = (language = 'sv-SE') => {
   const baseUrl = 'https://shop.b8shield.com';
-  const langCode = language.split('-')[1]?.toLowerCase() || 'se';
+  const langCode = (language?.split('-')[1] || 'se').toLowerCase();
   
   return {
     "@context": "https://schema.org",

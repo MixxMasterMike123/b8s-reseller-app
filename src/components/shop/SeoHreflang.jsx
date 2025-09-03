@@ -11,7 +11,7 @@ const COUNTRY_CODES = [
 
 function getAlternateUrls(pathname) {
   // Remove country prefix from path
-  const segments = pathname.split('/').filter(Boolean);
+  const segments = (pathname || '/').split('/').filter(Boolean);
   const pathWithoutCountry = segments.length > 1 ? `/${segments.slice(1).join('/')}` : '/';
   return COUNTRY_CODES.map(({ code, hreflang }) => ({
     hreflang,

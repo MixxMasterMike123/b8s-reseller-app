@@ -38,7 +38,7 @@ const CountrySwitcher = () => {
     if (!country) return;
 
     // Get the path without the country prefix
-    const segments = location.pathname.split('/').filter(Boolean);
+    const segments = (location.pathname || '/').split('/').filter(Boolean);
     const pathWithoutCountry = segments.length > 1 ? `/${segments.slice(1).join('/')}` : '/';
     
     // Navigate to the new country URL

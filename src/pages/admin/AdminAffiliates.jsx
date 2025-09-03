@@ -253,7 +253,7 @@ const AdminAffiliates = () => {
                             <div className="flex-shrink-0 h-12 w-12 mr-4">
                               <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-800 dark:to-blue-700 flex items-center justify-center">
                                 <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                                  {affiliate.name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                                  {affiliate.name ? affiliate.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'AF'}
                                 </span>
                               </div>
                             </div>
@@ -371,7 +371,7 @@ const AdminAffiliates = () => {
                             )}
                             
                             <a
-                              href={`https://shop.b8shield.com/${(affiliate.preferredLang || 'sv-SE').split('-')[1].toLowerCase()}?ref=${affiliate.affiliateCode}`}
+                              href={`https://shop.b8shield.com/${((affiliate.preferredLang || 'sv-SE').split('-')[1] || 'se').toLowerCase()}?ref=${affiliate.affiliateCode}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded transition-colors"
