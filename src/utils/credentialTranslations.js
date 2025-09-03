@@ -37,7 +37,7 @@ class CredentialTranslations {
     }
     
     // Try cookie (unified key)
-    const cookie = document.cookie
+    const cookie = (document.cookie || '')
       .split('; ')
       .find(row => row.startsWith('b8shield-language='));
     
