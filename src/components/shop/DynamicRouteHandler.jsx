@@ -18,7 +18,7 @@ const DynamicRouteHandler = ({ children }) => {
   useEffect(() => {
     const checkForCmsPage = async () => {
       // Extract the path after country code
-      const pathSegments = location.pathname.split('/').filter(Boolean);
+      const pathSegments = (location.pathname || '/').split('/').filter(Boolean);
       if (pathSegments.length < 2) {
         setLoading(false);
         return;

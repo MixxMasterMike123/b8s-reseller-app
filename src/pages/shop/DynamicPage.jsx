@@ -37,7 +37,7 @@ const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => 
     if (paramSlug) return paramSlug;
     
     // Extract from full pathname
-    const pathname = location.pathname;
+    const pathname = location.pathname || '/';
     const pathParts = pathname.split('/').filter(Boolean);
     
     // Remove country code and get the rest as slug
