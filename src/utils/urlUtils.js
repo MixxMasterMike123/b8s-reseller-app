@@ -62,7 +62,7 @@ function decodePunycodeDomain(domain) {
   
   // Check for partial matches
   for (const [punycode, unicode] of Object.entries(punycodeMap)) {
-    if (domain.includes(punycode.split('.')[0])) {
+    if (punycode && unicode && domain.includes(punycode.split('.')[0])) {
       return domain.replace(punycode.split('.')[0], unicode.split('.')[0]);
     }
   }
