@@ -66,8 +66,11 @@ export const getStoredCountry = () => {
 // Get browser language preference
 export const getBrowserLanguage = () => {
   const browserLang = navigator.language || navigator.userLanguage;
-  if (browserLang.startsWith('sv')) return 'se';
-  if (browserLang.startsWith('en')) return 'gb'; // Default to UK for English
+  // Safety check: ensure browserLang is a string before calling startsWith
+  if (browserLang && typeof browserLang === 'string') {
+    if (browserLang.startsWith('sv')) return 'se';
+    if (browserLang.startsWith('en')) return 'gb'; // Default to UK for English
+  }
   return 'se'; // Default to Sweden
 };
 
