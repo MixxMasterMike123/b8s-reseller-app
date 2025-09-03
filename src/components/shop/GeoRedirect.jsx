@@ -31,12 +31,21 @@ const GeoRedirect = () => {
         if (!detectedCountry) {
           console.log('⚠️ CloudFlare country not available, using fallback detection...');
           
-          // Try browser language as country hint
+          // Try browser language as country hint (but be aware of incognito masking)
           if (navigator.language && typeof navigator.language === 'string') {
             const langParts = navigator.language.toLowerCase().split('-');
             if (langParts.length > 1) {
-              detectedCountry = langParts[1];
-              console.log(`🗣️ Country hint from browser language: ${detectedCountry}`);
+              const browserCountry = langParts[1];
+              
+              // Only trust browser language if it's not the common incognito mask (en-US)
+              // Chrome incognito often masks real language as 'en-US' for privacy
+              if (browserCountry !== 'us' || langParts[0] !== 'en') {
+                detectedCountry = browserCountry;
+                console.log(`🗣️ Country hint from browser language: ${detectedCountry}`);
+              } else {
+                console.log(`🕵️ Detected potential incognito language masking (${navigator.language}), using default`);
+                detectedCountry = DEFAULT_COUNTRY;
+              }
             }
           }
           
