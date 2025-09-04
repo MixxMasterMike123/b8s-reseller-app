@@ -505,7 +505,9 @@ const AdminOrders = () => {
                           {/* Payment Method */}
                           <div className="text-xs text-gray-500 dark:text-gray-400">
                             {order.source === 'b2c' 
-                              ? (order.payment?.method === 'stripe' ? 'Stripe' : 'Mock Payment')
+                              ? (order.payment?.method === 'stripe' ? 'Stripe' : 
+                                 order.payment?.method === 'klarna' ? 'Klarna' : 
+                                 order.payment?.method || 'Okänd betalning')
                               : 'B2B Order'
                             }
                           </div>

@@ -352,9 +352,13 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
                             <span className={`inline-flex items-center px-2 py-0.5 rounded font-medium ${
                               o.payment?.method === 'stripe' 
                                 ? 'bg-blue-100 text-blue-800'
+                                : o.payment?.method === 'klarna'
+                                ? 'bg-purple-100 text-purple-800'
                                 : 'bg-gray-100 text-gray-800'
                             }`}>
-                              {o.payment?.method === 'stripe' ? 'Stripe' : 'Mock'}
+                              {o.payment?.method === 'stripe' ? 'Stripe' : 
+                               o.payment?.method === 'klarna' ? 'Klarna' : 
+                               o.payment?.method || 'Okänd'}
                             </span>
                           </div>
                           
