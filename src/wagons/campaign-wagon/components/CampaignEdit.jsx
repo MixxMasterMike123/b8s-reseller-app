@@ -39,16 +39,19 @@ const CampaignEdit = () => {
   const [saving, setSaving] = useState(false);
   const [affiliates, setAffiliates] = useState([]);
   const [loadingAffiliates, setLoadingAffiliates] = useState(true);
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   // Multi-step form state
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
 
-  // Load campaign data and affiliates
+  // Load campaign data, affiliates, and products
   useEffect(() => {
     loadCampaignData();
     fetchAffiliates();
+    fetchProducts();
   }, [id]);
 
   const loadCampaignData = async () => {
@@ -91,6 +94,23 @@ const CampaignEdit = () => {
     }
   };
 
+  const fetchProducts = async () => {
+    try {
+      const productsQuery = query(collection(db, 'products'), orderBy('name', 'asc'));
+      const productsSnapshot = await getDocs(productsQuery);
+      const productsData = productsSnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(product => product.isActive !== false); // Only active products
+      
+      setProducts(productsData);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast.error('Kunde inte hämta produkter');
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
 
 
   // Handle form field updates
@@ -116,6 +136,24 @@ const CampaignEdit = () => {
       ...prev,
       affiliateIds: newSelected,
       selectedAffiliates: newSelected.length === 0 ? 'all' : 'selected'
+    }));
+  };
+
+  // Handle product selection
+  const handleProductSelection = (productId) => {
+    const currentSelected = formData.productIds || [];
+    let newSelected;
+    
+    if (currentSelected.includes(productId)) {
+      newSelected = currentSelected.filter(id => id !== productId);
+    } else {
+      newSelected = [...currentSelected, productId];
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      productIds: newSelected,
+      applicableProducts: newSelected.length === 0 ? 'all' : 'selected'
     }));
   };
 
@@ -579,6 +617,71 @@ const CampaignEdit = () => {
                               </div>
                               <div className="text-xs text-gray-500">
                                 Kod: {affiliate.affiliateCode} • Status: {affiliate.status}
+                              </div>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Product Targeting */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Produktmålgrupp
+                </label>
+                
+                <div className="space-y-3">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="productTargeting"
+                      value="all"
+                      checked={formData.applicableProducts === 'all'}
+                      onChange={(e) => handleFieldChange('applicableProducts', e.target.value)}
+                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm">Alla produkter ({products.length})</span>
+                  </label>
+                  
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="productTargeting"
+                      value="selected"
+                      checked={formData.applicableProducts === 'selected'}
+                      onChange={(e) => handleFieldChange('applicableProducts', e.target.value)}
+                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm">Valda produkter ({(formData.productIds || []).length} valda)</span>
+                  </label>
+                </div>
+
+                {/* Show product selection when "selected" is chosen */}
+                {formData.applicableProducts === 'selected' && (
+                  <div className="mt-4 border border-gray-200 rounded-lg max-h-64 overflow-y-auto">
+                    {loadingProducts ? (
+                      <div className="p-4 text-center text-gray-500">Laddar produkter...</div>
+                    ) : products.length === 0 ? (
+                      <div className="p-4 text-center text-gray-500">Inga aktiva produkter hittades</div>
+                    ) : (
+                      <div className="p-2">
+                        {products.map((product) => (
+                          <label key={product.id} className="flex items-center p-2 hover:bg-gray-50 rounded">
+                            <input
+                              type="checkbox"
+                              checked={(formData.productIds || []).includes(product.id)}
+                              onChange={() => handleProductSelection(product.id)}
+                              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                            />
+                            <div className="ml-3 flex-1">
+                              <div className="text-sm font-medium text-gray-900">
+                                {getContentValue(product.name) || product.name || 'Namnlös produkt'}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                SKU: {product.sku} • {product.color || 'Ingen färg'} • {product.size || 'Ingen storlek'}
                               </div>
                             </div>
                           </label>

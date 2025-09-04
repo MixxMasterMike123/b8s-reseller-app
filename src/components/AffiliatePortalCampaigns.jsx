@@ -17,6 +17,8 @@ import { useTranslation } from '../contexts/TranslationContext';
 import { useCampaigns } from '../wagons/campaign-wagon/hooks/useCampaigns';
 import { generateAffiliateLink, getCountryAwareUrl } from '../utils/productUrls';
 import { CAMPAIGN_STATUS } from '../wagons/campaign-wagon/utils/campaignUtils';
+import { db } from '../firebase/config';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 import QRCode from 'qrcode';
 
@@ -29,6 +31,7 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
   const [generatedLinks, setGeneratedLinks] = useState({});
   const [generatedQRs, setGeneratedQRs] = useState({});
   const [copyStatus, setCopyStatus] = useState({});
+  const [campaignStats, setCampaignStats] = useState({});
 
   // Filter campaigns available to this affiliate
   useEffect(() => {
@@ -51,6 +54,66 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
 
     setAvailableCampaigns(filtered);
   }, [campaigns, affiliateData]);
+
+  // Fetch campaign statistics for this affiliate
+  const fetchCampaignStats = async (campaignId) => {
+    if (!affiliateData?.id) return null;
+    
+    try {
+      // Fetch orders that include this campaign and this affiliate
+      const ordersRef = collection(db, 'orders');
+      const campaignOrdersQuery = query(
+        ordersRef,
+        where('campaignId', '==', campaignId),
+        where('affiliateId', '==', affiliateData.id)
+      );
+      
+      const ordersSnapshot = await getDocs(campaignOrdersQuery);
+      
+      let totalSales = 0;
+      let totalRevenue = 0;
+      let totalCommission = 0;
+      let totalCampaignShare = 0;
+      
+      ordersSnapshot.docs.forEach(doc => {
+        const order = doc.data();
+        totalSales += 1;
+        totalRevenue += order.total || 0;
+        totalCommission += order.affiliateCommission || 0;
+        totalCampaignShare += order.campaignShare || 0;
+      });
+      
+      return {
+        sales: totalSales,
+        revenue: totalRevenue,
+        commission: totalCommission,
+        campaignShare: totalCampaignShare
+      };
+    } catch (error) {
+      console.error('Error fetching campaign stats:', error);
+      return {
+        sales: 0,
+        revenue: 0,
+        commission: 0,
+        campaignShare: 0
+      };
+    }
+  };
+
+  // Load campaign statistics
+  useEffect(() => {
+    const loadStats = async () => {
+      if (availableCampaigns.length === 0) return;
+      
+      const stats = {};
+      for (const campaign of availableCampaigns) {
+        stats[campaign.id] = await fetchCampaignStats(campaign.id);
+      }
+      setCampaignStats(stats);
+    };
+    
+    loadStats();
+  }, [availableCampaigns, affiliateData]);
 
   // Generate campaign-specific affiliate link
   const generateCampaignLink = (campaign, productPath = '') => {
@@ -332,11 +395,57 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
                     </div>
                   </div>
 
+                  {/* Campaign Statistics */}
+                  {campaignStats[campaign.id] && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                      <h4 className="text-sm font-semibold text-blue-900 mb-3">
+                        {t('campaign_your_performance', 'Din prestanda i denna kampanj')}
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-blue-800">
+                            {campaignStats[campaign.id].sales || 0}
+                          </div>
+                          <div className="text-blue-600">{t('campaign_sales', 'Försäljningar')}</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-blue-800">
+                            {(campaignStats[campaign.id].revenue || 0).toFixed(2)} kr
+                          </div>
+                          <div className="text-blue-600">{t('campaign_revenue', 'Omsättning')}</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-blue-800">
+                            {(campaignStats[campaign.id].commission || 0).toFixed(2)} kr
+                          </div>
+                          <div className="text-blue-600">{t('campaign_commission', 'Din provision')}</div>
+                        </div>
+                        {campaignStats[campaign.id].campaignShare > 0 && (
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-blue-800">
+                              {(campaignStats[campaign.id].campaignShare || 0).toFixed(2)} kr
+                            </div>
+                            <div className="text-blue-600">{t('campaign_share', 'Kampanjandel')}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Campaign Performance Info */}
                   {campaign.customAffiliateRate > 0 && (
                     <div className="bg-green-50 border border-green-200 rounded-md p-3">
                       <p className="text-sm text-green-800">
                         <span className="font-medium">{t('campaign_your_commission', 'Din provision')}:</span> {campaign.customAffiliateRate}% {t('campaign_per_sale', 'per försäljning genom denna kampanj')}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Revenue Share Info for Special Campaigns */}
+                  {campaign.isRevenueShare && (
+                    <div className="bg-purple-50 border border-purple-200 rounded-md p-3">
+                      <p className="text-sm text-purple-800">
+                        <span className="font-medium">{t('campaign_revenue_share', 'Intäktsdelning')}:</span> {campaign.revenueShareRate}% {t('campaign_revenue_share_description', 'av återstående intäkter efter affiliate-provision')}
                       </p>
                     </div>
                   )}

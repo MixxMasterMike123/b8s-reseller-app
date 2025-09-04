@@ -302,6 +302,150 @@ export const isCampaignActive = (campaign) => {
 };
 
 /**
+ * Check if an order matches a campaign's criteria
+ * 
+ * @param {object} orderData - Order data from Firestore
+ * @param {object} campaign - Campaign configuration
+ * @param {string} affiliateCode - Affiliate code from order
+ * @returns {boolean} Whether order matches campaign
+ */
+export const doesOrderMatchCampaign = (orderData, campaign, affiliateCode) => {
+  // Campaign must be active
+  if (!isCampaignActive(campaign)) return false;
+  
+  // Check affiliate targeting
+  if (campaign.selectedAffiliates === 'selected') {
+    // Must have specific affiliate assigned to campaign
+    if (!campaign.affiliateIds || campaign.affiliateIds.length === 0) return false;
+    
+    // Find affiliate by code to get ID
+    // Note: This requires the affiliate ID to be passed or looked up
+    // For now, we'll check if the affiliate is in the campaign
+    // This will need to be enhanced with actual affiliate ID lookup
+  }
+  
+  // Check product targeting
+  if (campaign.applicableProducts === 'selected' && campaign.productIds) {
+    // Order must contain at least one targeted product
+    const orderProductIds = orderData.items?.map(item => item.id) || [];
+    const hasMatchingProduct = campaign.productIds.some(productId => 
+      orderProductIds.includes(productId)
+    );
+    if (!hasMatchingProduct) return false;
+  }
+  
+  // Check campaign code requirement
+  if (campaign.code) {
+    // If campaign has a specific code, order must use that code
+    const orderAffiliateCode = orderData.affiliateCode || orderData.affiliate?.code;
+    if (orderAffiliateCode !== affiliateCode) return false;
+  }
+  
+  return true;
+};
+
+/**
+ * Find matching campaigns for an order and affiliate
+ * 
+ * @param {object} orderData - Order data from Firestore
+ * @param {string} affiliateId - Affiliate ID
+ * @param {string} affiliateCode - Affiliate code
+ * @param {array} activeCampaigns - List of active campaigns
+ * @returns {array} Matching campaigns sorted by commission rate (highest first)
+ */
+export const findMatchingCampaigns = (orderData, affiliateId, affiliateCode, activeCampaigns = []) => {
+  const matchingCampaigns = activeCampaigns.filter(campaign => {
+    // Check affiliate targeting
+    if (campaign.selectedAffiliates === 'selected') {
+      if (!campaign.affiliateIds || !campaign.affiliateIds.includes(affiliateId)) {
+        return false;
+      }
+    }
+    
+    // Check if order matches campaign criteria
+    return doesOrderMatchCampaign(orderData, campaign, affiliateCode);
+  });
+  
+  // Sort by commission rate (highest first) to prioritize best campaigns
+  return matchingCampaigns.sort((a, b) => (b.customAffiliateRate || 0) - (a.customAffiliateRate || 0));
+};
+
+/**
+ * Calculate complex multi-tier commission structure
+ * Handles: Customer Discount → Affiliate Commission → Campaign Revenue Share
+ * 
+ * @param {object} orderData - Order data from Firestore
+ * @param {object} affiliate - Affiliate data (the one who brought the customer)
+ * @param {object} campaign - Campaign data (product-specific revenue share)
+ * @param {number} vatRate - VAT rate (default 0.25 for Sweden)
+ * @returns {object} Complex commission breakdown
+ */
+export const calculateComplexCommission = (orderData, affiliate, campaign = null, vatRate = 0.25) => {
+  const originalTotal = orderData.total || orderData.subtotal || 0;
+  const shipping = orderData.shipping || 0;
+  const discountAmount = orderData.discountAmount || 0;
+  
+  // Step 1: Calculate base product value (after customer discount, excluding shipping)
+  const productValueWithVAT = Math.max(0, originalTotal - shipping);
+  const productValueExcludingVAT = productValueWithVAT / (1 + vatRate);
+  const vatAmount = productValueWithVAT - productValueExcludingVAT;
+  
+  // Step 2: Calculate affiliate commission (from discounted price, excluding VAT)
+  const affiliateRate = (affiliate.commissionRate || 20) / 100;
+  const affiliateCommission = Math.round((productValueExcludingVAT * affiliateRate) * 100) / 100;
+  
+  // Step 3: Calculate remaining amount after affiliate commission
+  const remainingAfterAffiliate = productValueExcludingVAT - affiliateCommission;
+  
+  // Step 4: Calculate campaign revenue share (if applicable)
+  let campaignShare = 0;
+  let companyShare = remainingAfterAffiliate;
+  
+  if (campaign && campaign.isRevenueShare && remainingAfterAffiliate > 0) {
+    const shareRate = (campaign.revenueShareRate || 50) / 100;
+    campaignShare = Math.round((remainingAfterAffiliate * shareRate) * 100) / 100;
+    companyShare = remainingAfterAffiliate - campaignShare;
+  }
+  
+  return {
+    // Original amounts
+    originalTotal,
+    shipping,
+    discountAmount,
+    
+    // VAT breakdown
+    productValueWithVAT,
+    productValueExcludingVAT,
+    vatAmount,
+    
+    // Commission breakdown
+    affiliateCommission,
+    campaignShare,
+    companyShare,
+    
+    // Rates used
+    affiliateRate: affiliate.commissionRate || 20,
+    campaignShareRate: campaign?.revenueShareRate || 0,
+    
+    // Calculation steps for transparency
+    calculationSteps: {
+      step1_customerDiscount: discountAmount,
+      step2_priceAfterDiscount: productValueWithVAT,
+      step3_vatDeducted: vatAmount,
+      step4_baseForCommissions: productValueExcludingVAT,
+      step5_affiliateCommission: affiliateCommission,
+      step6_remainingForShare: remainingAfterAffiliate,
+      step7_campaignShare: campaignShare,
+      step8_companyShare: companyShare
+    },
+    
+    // Summary
+    totalCommissionsAndShares: affiliateCommission + campaignShare,
+    netCompanyRevenue: companyShare
+  };
+};
+
+/**
  * Get default campaign data structure
  * 
  * @returns {object} Default campaign object
@@ -337,6 +481,11 @@ export const getDefaultCampaign = () => {
     // Pricing
     customAffiliateRate: 15,
     customerDiscountRate: 10,
+    
+    // Revenue sharing (for product-specific campaigns)
+    isRevenueShare: false,
+    revenueShareRate: 50, // Percentage of remaining amount after affiliate commission
+    revenueShareType: 'fixed_percentage', // or 'sliding_scale'
     
     // Social media assets
     banners: {},

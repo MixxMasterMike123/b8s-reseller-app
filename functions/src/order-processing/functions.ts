@@ -156,12 +156,85 @@ const checkRateLimit = (clientIP: string): { allowed: boolean; bulkMode: boolean
   };
 };
 
+// Campaign matching function (simplified for Firebase Functions)
+function checkCampaignMatch(orderData: any, campaign: any, affiliateId: string, affiliateCode: string): boolean {
+  // Campaign must be active and within date range
+  if (campaign.status !== 'active') return false;
+  
+  const now = new Date();
+  const startDate = campaign.startDate?.toDate ? campaign.startDate.toDate() : new Date(campaign.startDate);
+  const endDate = campaign.endDate?.toDate ? campaign.endDate.toDate() : new Date(campaign.endDate);
+  
+  if (now < startDate || now > endDate) return false;
+  
+  // Check affiliate targeting
+  if (campaign.selectedAffiliates === 'selected') {
+    if (!campaign.affiliateIds || !campaign.affiliateIds.includes(affiliateId)) {
+      return false;
+    }
+  }
+  
+  // Check product targeting
+  if (campaign.applicableProducts === 'selected' && campaign.productIds) {
+    const orderProductIds = orderData.items?.map((item: any) => item.id) || [];
+    const hasMatchingProduct = campaign.productIds.some((productId: string) => 
+      orderProductIds.includes(productId)
+    );
+    if (!hasMatchingProduct) return false;
+  }
+  
+  // Check campaign code requirement (optional)
+  if (campaign.code) {
+    const orderAffiliateCode = orderData.affiliateCode || orderData.affiliate?.code;
+    if (orderAffiliateCode !== affiliateCode) return false;
+  }
+  
+  return true;
+}
+
+// Complex commission calculation for revenue share campaigns
+function calculateComplexCommission(orderData: any, affiliate: any, campaign: any, vatRate = 0.25) {
+  const originalTotal = orderData.total || orderData.subtotal || 0;
+  const shipping = orderData.shipping || 0;
+  
+  // Step 1: Calculate base product value (after customer discount, excluding shipping)
+  const productValueWithVAT = Math.max(0, originalTotal - shipping);
+  const productValueExcludingVAT = productValueWithVAT / (1 + vatRate);
+  
+  // Step 2: Calculate affiliate commission (from discounted price, excluding VAT)
+  const affiliateRate = (affiliate.commissionRate || 20) / 100;
+  const affiliateCommission = Math.round((productValueExcludingVAT * affiliateRate) * 100) / 100;
+  
+  // Step 3: Calculate remaining amount after affiliate commission
+  const remainingAfterAffiliate = productValueExcludingVAT - affiliateCommission;
+  
+  // Step 4: Calculate campaign revenue share (if applicable)
+  let campaignShare = 0;
+  let companyShare = remainingAfterAffiliate;
+  
+  if (campaign.isRevenueShare && remainingAfterAffiliate > 0) {
+    const shareRate = (campaign.revenueShareRate || 50) / 100;
+    campaignShare = Math.round((remainingAfterAffiliate * shareRate) * 100) / 100;
+    companyShare = remainingAfterAffiliate - campaignShare;
+  }
+  
+  return {
+    affiliateCommission,
+    campaignShare,
+    companyShare,
+    productValueExcludingVAT,
+    remainingAfterAffiliate
+  };
+}
+
 // Update the local calculateCommission function to fix double deduction bug
-function calculateCommission(orderData: OrderData, affiliate: AffiliateData, vatRate = 0.25) {
+function calculateCommission(orderData: OrderData, affiliate: AffiliateData, vatRate = 0.25, campaignRate?: number) {
   const orderTotal = orderData.total || orderData.subtotal || 0;
   const shipping = orderData.shipping || 0;
   const discountAmount = orderData.discountAmount || 0; // For reporting only
-  const rate = (affiliate.commissionRate || 15) / 100;
+  
+  // Use campaign rate if provided, otherwise use affiliate's default rate
+  const rate = (campaignRate || affiliate.commissionRate || 15) / 100;
 
   // Step 1: Deduct shipping from order total (shipping is separate service)
   // Note: orderTotal already has affiliate discount applied
@@ -379,10 +452,50 @@ export const processB2COrderCompletionHttp = onRequest(
       const affiliateDoc = affiliateSnap.docs[0];
       const affiliate = affiliateDoc.data() as AffiliateData;
 
-      // Calculate commission using unified function
-      const { commission: commissionAmount } = calculateCommission(orderData, affiliate);
+      // Check for active campaigns that might affect this order
+      console.log('Checking for active campaigns...');
+      const campaignsRef = localDb.collection('campaigns');
+      const activeCampaignsQuery = campaignsRef.where('status', '==', 'active');
+      const activeCampaignsSnap = await activeCampaignsQuery.get();
+      
+      let matchingCampaign: any = null;
+      let campaignShare = 0;
+      
+      if (!activeCampaignsSnap.empty) {
+        // Import campaign utilities (we'll need to make this available in functions)
+        for (const campaignDoc of activeCampaignsSnap.docs) {
+          const campaign = campaignDoc.data();
+          
+          // Check if this campaign matches the order
+          const isMatch = checkCampaignMatch(orderData, campaign, affiliateDoc.id, affiliateCode);
+          if (isMatch) {
+            matchingCampaign = { id: campaignDoc.id, ...campaign };
+            console.log(`Found matching campaign: ${campaign.name?.['sv-SE'] || 'Unknown Campaign'}`);
+            break;
+          }
+        }
+      }
 
-      console.log(`Commission calculation for order ${orderId}: ${orderData.total} * ${affiliate.commissionRate}% = ${commissionAmount}`);
+      // Calculate commission (standard or campaign-enhanced)
+      let commissionAmount;
+      let commissionBreakdown;
+      
+      if (matchingCampaign && matchingCampaign.isRevenueShare) {
+        // Use complex commission calculation for revenue share campaigns
+        commissionBreakdown = calculateComplexCommission(orderData, affiliate, matchingCampaign);
+        commissionAmount = commissionBreakdown.affiliateCommission;
+        campaignShare = commissionBreakdown.campaignShare;
+        
+        console.log(`Complex commission calculation for campaign "${matchingCampaign.name?.['sv-SE']}":
+          - Affiliate (${affiliateCode}): ${commissionAmount} SEK
+          - Campaign share: ${campaignShare} SEK
+          - Company share: ${commissionBreakdown.companyShare} SEK`);
+      } else {
+        // Standard commission calculation
+        const result = calculateCommission(orderData, affiliate);
+        commissionAmount = result.commission;
+        console.log(`Standard commission calculation for order ${orderId}: ${orderData.total} * ${affiliate.commissionRate}% = ${commissionAmount}`);
+      }
 
       // Update affiliate stats
       console.log(`Updating affiliate stats for ${affiliateDoc.id}`);
@@ -394,13 +507,48 @@ export const processB2COrderCompletionHttp = onRequest(
 
       // Update the order with commission information (CRITICAL FIX)
       console.log(`Updating order ${orderId} with commission ${commissionAmount}`);
-      await orderRef.update({ 
-        affiliateCommission: commissionAmount, 
+      const orderUpdateData: any = {
+        affiliateCommission: commissionAmount,
         affiliateId: affiliateDoc.id,
         conversionProcessed: true,
         conversionProcessedAt: FieldValue.serverTimestamp()
-      });
+      };
+
+      // Add campaign information if applicable
+      if (matchingCampaign) {
+        orderUpdateData.campaignId = matchingCampaign.id;
+        orderUpdateData.campaignName = matchingCampaign.name?.['sv-SE'] || 'Unknown Campaign';
+        
+        if (campaignShare > 0) {
+          orderUpdateData.campaignShare = campaignShare;
+          orderUpdateData.campaignCommissionBreakdown = commissionBreakdown;
+        }
+      }
+
+      await orderRef.update(orderUpdateData);
+      
       console.log(`Successfully updated order ${orderId} with commission data`);
+
+      // Update campaign statistics if applicable
+      if (matchingCampaign && campaignShare > 0) {
+        console.log(`Updating campaign stats for ${matchingCampaign.id}`);
+        const campaignRef = localDb.collection('campaigns').doc(matchingCampaign.id);
+        await campaignRef.update({
+          totalConversions: FieldValue.increment(1),
+          totalRevenue: FieldValue.increment(orderData.total || 0)
+        });
+        
+        // Create campaign participation record for tracking
+        await localDb.collection('campaignParticipants').add({
+          campaignId: matchingCampaign.id,
+          orderId: orderId,
+          affiliateId: affiliateDoc.id,
+          affiliateCode: affiliateCode,
+          campaignShare: campaignShare,
+          orderTotal: orderData.total || 0,
+          participatedAt: FieldValue.serverTimestamp()
+        });
+      }
 
       // Update the click to mark conversion
       if (affiliateClickId) {
