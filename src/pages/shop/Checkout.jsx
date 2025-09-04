@@ -436,7 +436,16 @@ const Checkout = () => {
         paymentIntentId: paymentIntent.id,
         amount: paymentIntent.amount / 100, // Convert from öre to SEK
         currency: paymentIntent.currency,
-        status: paymentIntent.status
+        status: paymentIntent.status,
+        // Enhanced payment method details from Stripe
+        paymentMethodType: paymentIntent.payment_method?.type,
+        paymentMethodDetails: paymentIntent.payment_method?.card ? {
+          brand: paymentIntent.payment_method.card.brand,
+          last4: paymentIntent.payment_method.card.last4,
+          wallet: paymentIntent.payment_method.card.wallet?.type // Apple Pay, Google Pay, etc.
+        } : paymentIntent.payment_method?.klarna ? {
+          type: 'klarna'
+        } : null
       },
       affiliate: freshTotals.discountCode ? {
         code: freshTotals.discountCode,

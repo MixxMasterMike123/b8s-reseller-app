@@ -10,6 +10,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { parseReferrer, getReferrerCategory } from '../../utils/referrerParser';
 import { printMultipleShippingLabels } from '../../utils/labelPrinter';
+import { formatPaymentMethodName, getPaymentMethodBadgeClasses } from '../../utils/paymentMethods';
 
 
 const getStatusStyles = (status) => {
@@ -503,13 +504,17 @@ const AdminOrders = () => {
                           })()}
                           
                           {/* Payment Method */}
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {order.source === 'b2c' 
-                              ? (order.payment?.method === 'stripe' ? 'Stripe' : 
-                                 order.payment?.method === 'klarna' ? 'Klarna' : 
-                                 order.payment?.method || 'Okänd betalning')
-                              : 'B2B Order'
-                            }
+                          <div className="text-xs">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded font-medium text-xs ${
+                              order.source === 'b2c' 
+                                ? getPaymentMethodBadgeClasses(order.payment)
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                            }`}>
+                              {order.source === 'b2c' 
+                                ? formatPaymentMethodName(order.payment)
+                                : 'B2B Order'
+                              }
+                            </span>
                           </div>
                         </div>
                       </td>

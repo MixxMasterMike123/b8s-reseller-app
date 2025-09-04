@@ -13,6 +13,7 @@ import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { printShippingLabel } from '../../utils/labelPrinter';
 import LabelPrintInstructions from '../../components/LabelPrintInstructions';
 import { getEnhancedOrderDistribution, getDisplayColor, getDisplaySize } from '../../utils/orderUtils';
+import { formatPaymentMethodName } from '../../utils/paymentMethods';
 
 
 // Legacy function - now using enhanced version from utils
@@ -309,7 +310,7 @@ const AdminOrderDetail = () => {
           <div class="section-title">Order Information</div>
           <p><strong>Date:</strong> ${formatDate(order.createdAt)}</p>
           <p><strong>Status:</strong> ${order.status}</p>
-          <p><strong>Payment Method:</strong> ${order.payment?.method === 'stripe' ? 'Stripe (Card)' : order.payment?.method === 'klarna' ? 'Klarna' : order.paymentMethod || 'Invoice'}</p>
+          <p><strong>Payment Method:</strong> ${formatPaymentMethodName(order.payment) || order.paymentMethod || 'Invoice'}</p>
           ${order.source ? `<p><strong>Source:</strong> ${order.source === 'b2c' ? 'B2C Shop' : 'B2B Portal'}</p>` : ''}
         </div>
 
@@ -553,7 +554,7 @@ const AdminOrderDetail = () => {
                 <span className="font-medium">Status:</span> {order.status}
               </p>
               <p className="text-gray-700 dark:text-gray-300">
-                <span className="font-medium">Payment Method:</span> {order.payment?.method === 'stripe' ? 'Stripe (Card)' : order.payment?.method === 'klarna' ? 'Klarna' : order.paymentMethod || 'Invoice'}
+                <span className="font-medium">Payment Method:</span> {formatPaymentMethodName(order.payment) || order.paymentMethod || 'Invoice'}
               </p>
               {order.deliveryMethod && (
                 <p className="text-gray-700 dark:text-gray-300">

@@ -8,6 +8,7 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend
 } from 'recharts';
 import { parseReferrer, getReferrerCategory } from '../../utils/referrerParser';
+import { formatPaymentMethodName, getPaymentMethodBadgeClasses } from '../../utils/paymentMethods';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -349,16 +350,8 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
                         <div className="space-y-1">
                           {/* Payment Method */}
                           <div className="text-xs">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded font-medium ${
-                              o.payment?.method === 'stripe' 
-                                ? 'bg-blue-100 text-blue-800'
-                                : o.payment?.method === 'klarna'
-                                ? 'bg-purple-100 text-purple-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
-                              {o.payment?.method === 'stripe' ? 'Stripe' : 
-                               o.payment?.method === 'klarna' ? 'Klarna' : 
-                               o.payment?.method || 'Okänd'}
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded font-medium ${getPaymentMethodBadgeClasses(o.payment)}`}>
+                              {formatPaymentMethodName(o.payment)}
                             </span>
                           </div>
                           
