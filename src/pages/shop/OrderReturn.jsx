@@ -139,15 +139,22 @@ const OrderReturnInner = () => {
         amount: paymentIntent.amount / 100,
         currency: paymentIntent.currency,
         status: paymentIntent.status,
-        // Enhanced payment method details from Stripe
-        paymentMethodType: paymentIntent.payment_method?.type,
-        paymentMethodDetails: paymentIntent.payment_method?.klarna ? {
-          type: 'klarna'
-        } : paymentIntent.payment_method?.card ? {
-          brand: paymentIntent.payment_method.card.brand,
-          last4: paymentIntent.payment_method.card.last4,
-          wallet: paymentIntent.payment_method.card.wallet?.type // Apple Pay, Google Pay, etc.
-        } : null
+        // Enhanced payment method details from Stripe (only store if defined)
+        ...(paymentIntent.payment_method?.type && {
+          paymentMethodType: paymentIntent.payment_method.type
+        }),
+        ...(paymentIntent.payment_method?.klarna && {
+          paymentMethodDetails: { type: 'klarna' }
+        }),
+        ...(paymentIntent.payment_method?.card && {
+          paymentMethodDetails: {
+            brand: paymentIntent.payment_method.card.brand,
+            last4: paymentIntent.payment_method.card.last4,
+            ...(paymentIntent.payment_method.card.wallet?.type && {
+              wallet: paymentIntent.payment_method.card.wallet.type
+            })
+          }
+        })
       },
       affiliate: freshTotals.discountCode ? {
         code: freshTotals.discountCode,
