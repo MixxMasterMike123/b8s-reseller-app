@@ -28,7 +28,8 @@ import {
   CalendarDaysIcon,
   ReceiptPercentIcon,
   PaperAirplaneIcon,
-  KeyIcon
+  KeyIcon,
+  EyeIcon
 } from '@heroicons/react/24/solid';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
@@ -565,6 +566,37 @@ const AdminAffiliateEdit = () => {
     );
   };
 
+  // Admin portal access function
+  const handleViewAffiliatePortal = () => {
+    if (!data?.affiliateCode) {
+      toast.error('Affiliate-kod saknas');
+      return;
+    }
+
+    // Store admin impersonation data in sessionStorage (temporary)
+    const adminImpersonation = {
+      isAdmin: true,
+      impersonatingAffiliate: {
+        id: id,
+        affiliateCode: data.affiliateCode,
+        name: data.name,
+        email: data.email
+      },
+      adminUser: {
+        // Add current admin info if needed
+        timestamp: Date.now()
+      }
+    };
+
+    sessionStorage.setItem('b8s_admin_impersonation', JSON.stringify(adminImpersonation));
+
+    // Open affiliate portal in new tab with the affiliate code on the B2C shop domain
+    const affiliatePortalUrl = `https://shop.b8shield.com/se/affiliate-portal?ref=${data.affiliateCode}&admin=true`;
+    window.open(affiliatePortalUrl, '_blank');
+    
+    toast.success(`Öppnar ${data.name}s affiliate-portal i ny flik`);
+  };
+
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -615,6 +647,16 @@ const AdminAffiliateEdit = () => {
                     )}
                   </button>
                 )}
+
+                {/* View Portal Button */}
+                <button
+                  onClick={handleViewAffiliatePortal}
+                  className="inline-flex items-center px-4 py-2 bg-indigo-600 dark:bg-indigo-500 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
+                  title="Visa affiliate-portal som admin"
+                >
+                  <EyeIcon className="h-4 w-4 mr-2" />
+                  Visa Portal
+                </button>
 
                 <button
                   onClick={() => setIsEditing(true)} 

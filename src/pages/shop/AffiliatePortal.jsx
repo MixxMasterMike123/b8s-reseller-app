@@ -146,8 +146,37 @@ const AffiliatePortal = () => {
     fetchAffiliateData();
   }, [currentUser]);
 
+  // Separate effect for admin impersonation - runs immediately on mount
+  useEffect(() => {
+    const adminImpersonation = sessionStorage.getItem('b8s_admin_impersonation');
+    if (adminImpersonation) {
+      console.log('🔧 Admin impersonation detected, fetching affiliate data immediately');
+      fetchAffiliateData();
+    }
+  }, []); // Run only on mount
+
   const fetchAffiliateData = async () => {
-    if (!currentUser?.email) {
+    // Check for admin impersonation
+    const adminImpersonation = sessionStorage.getItem('b8s_admin_impersonation');
+    let targetAffiliateCode = null;
+    let isAdminView = false;
+
+    if (adminImpersonation) {
+      try {
+        const impersonationData = JSON.parse(adminImpersonation);
+        if (impersonationData.isAdmin && impersonationData.impersonatingAffiliate) {
+          targetAffiliateCode = impersonationData.impersonatingAffiliate.affiliateCode;
+          isAdminView = true;
+          console.log('🔧 Admin impersonating affiliate:', targetAffiliateCode);
+        }
+      } catch (e) {
+        console.error('Error parsing admin impersonation data:', e);
+        sessionStorage.removeItem('b8s_admin_impersonation');
+      }
+    }
+
+    // If not admin impersonation and no user, return
+    if (!isAdminView && !currentUser?.email) {
       setAffiliateData(null);
       setLoading(false);
       return;
@@ -157,8 +186,17 @@ const AffiliatePortal = () => {
       setLoading(true);
       setError(null);
       const affiliatesRef = collection(db, 'affiliates');
-          const affiliateQuery = query(affiliatesRef, where('email', '==', currentUser.email), where('status', '==', 'active'));
-    const querySnapshot = await getDocs(affiliateQuery);
+      
+      let affiliateQuery;
+      if (isAdminView && targetAffiliateCode) {
+        // Admin impersonation: find by affiliate code
+        affiliateQuery = query(affiliatesRef, where('affiliateCode', '==', targetAffiliateCode));
+      } else {
+        // Normal user: find by email
+        affiliateQuery = query(affiliatesRef, where('email', '==', currentUser.email), where('status', '==', 'active'));
+      }
+      
+      const querySnapshot = await getDocs(affiliateQuery);
 
       if (!querySnapshot.empty) {
         const data = querySnapshot.docs[0].data();
@@ -665,7 +703,9 @@ const AffiliatePortal = () => {
   }
 
   // Only redirect if auth is fully loaded and user is definitely not logged in
-  if (!authLoading && !currentUser) {
+  // BUT allow admin impersonation to bypass login requirement
+  const hasAdminImpersonation = sessionStorage.getItem('b8s_admin_impersonation');
+  if (!authLoading && !currentUser && !hasAdminImpersonation) {
     // Redirect to affiliate login page
     navigate(getCountryAwareUrl('affiliate-login'));
     return null;
@@ -699,6 +739,40 @@ const AffiliatePortal = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <ShopNavigation />
+      
+      {/* Admin Impersonation Banner */}
+      {sessionStorage.getItem('b8s_admin_impersonation') && (
+        <div className="bg-yellow-50 border-b border-yellow-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-yellow-800">
+                    🔧 Admin-läge: Visar {affiliateData?.name}s affiliate-portal
+                  </p>
+                </div>
+              </div>
+              <div className="flex-shrink-0">
+                <button
+                  onClick={() => {
+                    sessionStorage.removeItem('b8s_admin_impersonation');
+                    window.close();
+                  }}
+                  className="text-yellow-600 hover:text-yellow-800 text-sm font-medium"
+                >
+                  Stäng
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         <header className="mb-6 lg:mb-8">
           <h1 className="text-xl lg:text-3xl font-bold text-gray-900 mb-2">
