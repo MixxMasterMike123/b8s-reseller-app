@@ -573,25 +573,16 @@ const AdminAffiliateEdit = () => {
       return;
     }
 
-    // Store admin impersonation data in sessionStorage (temporary)
-    const adminImpersonation = {
-      isAdmin: true,
-      impersonatingAffiliate: {
-        id: id,
-        affiliateCode: data.affiliateCode,
-        name: data.name,
-        email: data.email
-      },
-      adminUser: {
-        // Add current admin info if needed
-        timestamp: Date.now()
-      }
-    };
+    // Use URL parameters for cross-domain admin access (sessionStorage doesn't work across domains)
+    const adminParams = new URLSearchParams({
+      admin_code: data.affiliateCode,
+      admin_name: encodeURIComponent(data.name),
+      admin_access: 'true',
+      timestamp: Date.now().toString()
+    });
 
-    sessionStorage.setItem('b8s_admin_impersonation', JSON.stringify(adminImpersonation));
-
-    // Open affiliate portal in new tab with the affiliate code on the B2C shop domain
-    const affiliatePortalUrl = `https://shop.b8shield.com/se/affiliate-portal?ref=${data.affiliateCode}&admin=true`;
+    // Open affiliate portal in new tab with admin parameters
+    const affiliatePortalUrl = `https://shop.b8shield.com/se/affiliate-portal?${adminParams.toString()}`;
     window.open(affiliatePortalUrl, '_blank');
     
     toast.success(`Öppnar ${data.name}s affiliate-portal i ny flik`);

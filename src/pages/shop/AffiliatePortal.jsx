@@ -148,30 +148,52 @@ const AffiliatePortal = () => {
 
   // Separate effect for admin impersonation - runs immediately on mount
   useEffect(() => {
-    const adminImpersonation = sessionStorage.getItem('b8s_admin_impersonation');
-    if (adminImpersonation) {
-      console.log('🔧 Admin impersonation detected, fetching affiliate data immediately');
+    // Check URL parameters for admin access (works across domains)
+    const urlParams = new URLSearchParams(window.location.search);
+    const adminAccess = urlParams.get('admin_access');
+    const adminCode = urlParams.get('admin_code');
+    
+    if (adminAccess === 'true' && adminCode) {
+      console.log('🔧 Admin access detected via URL parameters for affiliate:', adminCode);
       fetchAffiliateData();
+    } else {
+      // Fallback: check sessionStorage (same domain)
+      const adminImpersonation = sessionStorage.getItem('b8s_admin_impersonation');
+      if (adminImpersonation) {
+        console.log('🔧 Admin impersonation detected via sessionStorage');
+        fetchAffiliateData();
+      }
     }
   }, []); // Run only on mount
 
   const fetchAffiliateData = async () => {
-    // Check for admin impersonation
-    const adminImpersonation = sessionStorage.getItem('b8s_admin_impersonation');
+    // Check for admin access via URL parameters (cross-domain)
+    const urlParams = new URLSearchParams(window.location.search);
+    const adminAccess = urlParams.get('admin_access');
+    const adminCode = urlParams.get('admin_code');
+    
     let targetAffiliateCode = null;
     let isAdminView = false;
 
-    if (adminImpersonation) {
-      try {
-        const impersonationData = JSON.parse(adminImpersonation);
-        if (impersonationData.isAdmin && impersonationData.impersonatingAffiliate) {
-          targetAffiliateCode = impersonationData.impersonatingAffiliate.affiliateCode;
-          isAdminView = true;
-          console.log('🔧 Admin impersonating affiliate:', targetAffiliateCode);
+    if (adminAccess === 'true' && adminCode) {
+      targetAffiliateCode = adminCode;
+      isAdminView = true;
+      console.log('🔧 Admin access via URL parameters for affiliate:', targetAffiliateCode);
+    } else {
+      // Fallback: check sessionStorage for same-domain admin access
+      const adminImpersonation = sessionStorage.getItem('b8s_admin_impersonation');
+      if (adminImpersonation) {
+        try {
+          const impersonationData = JSON.parse(adminImpersonation);
+          if (impersonationData.isAdmin && impersonationData.impersonatingAffiliate) {
+            targetAffiliateCode = impersonationData.impersonatingAffiliate.affiliateCode;
+            isAdminView = true;
+            console.log('🔧 Admin impersonating affiliate via sessionStorage:', targetAffiliateCode);
+          }
+        } catch (e) {
+          console.error('Error parsing admin impersonation data:', e);
+          sessionStorage.removeItem('b8s_admin_impersonation');
         }
-      } catch (e) {
-        console.error('Error parsing admin impersonation data:', e);
-        sessionStorage.removeItem('b8s_admin_impersonation');
       }
     }
 
@@ -703,9 +725,12 @@ const AffiliatePortal = () => {
   }
 
   // Only redirect if auth is fully loaded and user is definitely not logged in
-  // BUT allow admin impersonation to bypass login requirement
+  // BUT allow admin access to bypass login requirement
+  const urlParams = new URLSearchParams(window.location.search);
+  const hasAdminAccess = urlParams.get('admin_access') === 'true' && urlParams.get('admin_code');
   const hasAdminImpersonation = sessionStorage.getItem('b8s_admin_impersonation');
-  if (!authLoading && !currentUser && !hasAdminImpersonation) {
+  
+  if (!authLoading && !currentUser && !hasAdminAccess && !hasAdminImpersonation) {
     // Redirect to affiliate login page
     navigate(getCountryAwareUrl('affiliate-login'));
     return null;
@@ -741,7 +766,7 @@ const AffiliatePortal = () => {
       <ShopNavigation />
       
       {/* Admin Impersonation Banner */}
-      {sessionStorage.getItem('b8s_admin_impersonation') && (
+      {(hasAdminAccess || sessionStorage.getItem('b8s_admin_impersonation')) && (
         <div className="bg-yellow-50 border-b border-yellow-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <div className="flex items-center justify-between">
