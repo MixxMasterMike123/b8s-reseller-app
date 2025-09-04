@@ -8,38 +8,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/TranslationContext';
 import AppLayout from '../components/layout/AppLayout';
 import OrderStatusMenu from '../components/OrderStatusMenu';
+import { getEnhancedOrderDistribution, getDisplayColor, getDisplaySize } from '../utils/orderUtils';
 
 
-// Add a helper function to parse and display order distribution data
+// Legacy function - now using enhanced version from utils
 const getOrderDistribution = (order) => {
-  // If fordelning is already an array of objects with color, size, quantity
-  if (order.fordelning && Array.isArray(order.fordelning)) {
-    return order.fordelning;
-  }
-  
-  // If orderDetails.distribution exists (array of color/size/quantity objects)
-  if (order.orderDetails?.distribution && order.orderDetails.distribution.length > 0) {
-    return order.orderDetails.distribution;
-  }
-  
-  // If fordelning is old format (object with color_size keys)
-  if (order.fordelning && typeof order.fordelning === 'object' && !Array.isArray(order.fordelning)) {
-    return Object.entries(order.fordelning).map(([key, antal]) => {
-      const [farg, storlek] = key.split('_');
-      return {
-        color: farg,
-        size: storlek?.replace('storlek', '') || '',
-        quantity: antal
-      };
-    });
-  }
-  
-  // Fallback to creating a single entry with the total quantity
-  return [{
-    color: order.color || 'Blandade färger',
-    size: order.size || 'Blandade storlekar',
-    quantity: order.antalForpackningar || 0
-  }];
+  return getEnhancedOrderDistribution(order);
 };
 
 const OrderDetailPage = () => {
@@ -376,11 +350,11 @@ const OrderDetailPage = () => {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wider">{t('order_detail.color', 'Färg')}</p>
-                      <p className="text-sm font-medium text-gray-900">{item.color || '-'}</p>
+                      <p className="text-sm font-medium text-gray-900">{getDisplayColor(item.color)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wider">{t('order_detail.size', 'Storlek')}</p>
-                      <p className="text-sm font-medium text-gray-900">{item.size || '-'}</p>
+                      <p className="text-sm font-medium text-gray-900">{getDisplaySize(item.size)}</p>
                     </div>
                   </div>
                   <div className="mt-3 pt-3 border-t border-gray-300">
@@ -480,9 +454,9 @@ const OrderDetailPage = () => {
                         <div className="space-y-1">
                           <div className="text-sm font-semibold text-gray-900">{item.name}</div>
                           <div className="text-xs text-gray-600">
-                            {item.color && <span>{t('order_detail.color', 'Färg')}: {item.color}</span>}
+                            {item.color && <span>{t('order_detail.color', 'Färg')}: {getDisplayColor(item.color)}</span>}
                             {item.color && item.size && <span> • </span>}
-                            {item.size && <span>{t('order_detail.size', 'Storlek')}: {item.size}</span>}
+                            {item.size && <span>{t('order_detail.size', 'Storlek')}: {getDisplaySize(item.size)}</span>}
                           </div>
                         </div>
                       </td>
@@ -507,7 +481,7 @@ const OrderDetailPage = () => {
                         <div className="space-y-1">
                           <div className="text-sm font-semibold text-gray-900">B8 Shield</div>
                           <div className="text-xs text-gray-600">
-                            {t('order_detail.color', 'Färg')}: {item.color} • {t('order_detail.size', 'Storlek')}: {item.size}
+                            {t('order_detail.color', 'Färg')}: {getDisplayColor(item.color)} • {t('order_detail.size', 'Storlek')}: {getDisplaySize(item.size)}
                           </div>
                         </div>
                       </td>

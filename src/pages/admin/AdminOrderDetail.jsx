@@ -12,38 +12,12 @@ import { db } from '../../firebase/config';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { printShippingLabel } from '../../utils/labelPrinter';
 import LabelPrintInstructions from '../../components/LabelPrintInstructions';
+import { getEnhancedOrderDistribution, getDisplayColor, getDisplaySize } from '../../utils/orderUtils';
 
 
-// Add a helper function to parse and display order distribution data
+// Legacy function - now using enhanced version from utils
 const getOrderDistribution = (order) => {
-  // If fordelning is already an array of objects with color, size, quantity
-  if (order.fordelning && Array.isArray(order.fordelning)) {
-    return order.fordelning;
-  }
-  
-  // If orderDetails.distribution exists (array of color/size/quantity objects)
-  if (order.orderDetails?.distribution && order.orderDetails.distribution.length > 0) {
-    return order.orderDetails.distribution;
-  }
-  
-  // If fordelning is old format (object with color_size keys)
-  if (order.fordelning && typeof order.fordelning === 'object' && !Array.isArray(order.fordelning)) {
-    return Object.entries(order.fordelning).map(([key, antal]) => {
-      const [farg, storlek] = key.split('_');
-      return {
-        color: farg,
-        size: storlek?.replace('storlek', '') || '',
-        quantity: antal
-      };
-    });
-  }
-  
-  // Fallback to creating a single entry with the total quantity
-  return [{
-    color: order.color || 'Blandade färger',
-    size: order.size || 'Blandade storlekar',
-    quantity: order.antalForpackningar || 0
-  }];
+  return getEnhancedOrderDistribution(order);
 };
 
 const AdminOrderDetail = () => {
@@ -359,11 +333,11 @@ const AdminOrderDetail = () => {
               </tr>
             </thead>
             <tbody>
-              ${(order.items && order.items.length > 0 ? order.items : getOrderDistribution(order)).map(item => `
+              ${getEnhancedOrderDistribution(order).map(item => `
                 <tr>
                   <td>${item.name || 'B8 Shield'}</td>
-                  <td>${item.color || '-'}</td>
-                  <td>${item.size || '-'}</td>
+                  <td>${getDisplayColor(item.color)}</td>
+                  <td>${getDisplaySize(item.size)}</td>
                   <td>${item.quantity} st</td>
                   <td class="text-right">${item.price ? item.price.toLocaleString('sv-SE', { minimumFractionDigits: 2 }) + ' kr' : (order.prisInfo?.produktPris ? order.prisInfo.produktPris.toLocaleString('sv-SE', { minimumFractionDigits: 2 }) + ' kr' : '')}</td>
                 </tr>
@@ -653,16 +627,16 @@ const AdminOrderDetail = () => {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {(order.items && order.items.length > 0 ? order.items : getOrderDistribution(order)).map((item, index) => (
+                {getEnhancedOrderDistribution(order).map((item, index) => (
                   <tr key={index}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">
                       {getContentValue(item.name) || 'B8 Shield'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {getContentValue(item.color)}
+                      {getDisplayColor(item.color)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {getContentValue(item.size)}
+                      {getDisplaySize(item.size)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {item.quantity} st

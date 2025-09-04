@@ -12,6 +12,7 @@ import { sv } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
 import SeoHreflang from '../../components/shop/SeoHreflang';
 import { getCountryAwareUrl } from '../../utils/productUrls';
+import { getEnhancedOrderDistribution, getDisplayColor, getDisplaySize } from '../../utils/orderUtils';
 
 const OrderConfirmation = () => {
   const { orderId } = useParams();
@@ -177,7 +178,7 @@ const OrderConfirmation = () => {
                   {t('order_confirmation_order_contents', 'Orderinnehåll')}
                 </h2>
                 <div className="space-y-4">
-                  {order.items?.map((item, index) => {
+                  {getEnhancedOrderDistribution(order).map((item, index) => {
                     const itemName = getContentValue(item.name);
                     return (
                       <div key={index} className="flex items-center space-x-4 py-3 border-b border-gray-100 last:border-b-0">
@@ -193,7 +194,19 @@ const OrderConfirmation = () => {
                           <p className="text-sm text-gray-500">
                             {t('order_confirmation_quantity', 'Antal: {{quantity}}', { quantity: item.quantity })}
                           </p>
-                          {item.variant && <p className="text-sm text-gray-500">{item.variant}</p>}
+                          {/* Show color and size separately */}
+                          <div className="text-sm text-gray-500 space-x-2">
+                            {item.color && (
+                              <span className="inline-block bg-gray-100 px-2 py-1 rounded-full text-xs">
+                                {t('order_confirmation_color', 'Färg: {{color}}', { color: getDisplayColor(item.color) })}
+                              </span>
+                            )}
+                            {item.size && (
+                              <span className="inline-block bg-gray-100 px-2 py-1 rounded-full text-xs">
+                                {t('order_confirmation_size', 'Storlek: {{size}}', { size: getDisplaySize(item.size) })}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <div className="font-medium text-gray-900">
                           {formatPrice(item.price * item.quantity)}

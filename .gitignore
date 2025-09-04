@@ -151,3 +151,4 @@ node_modules/
 # Protect service account in public folder
 public/service-account.json
 service-account.json
+functions/merchant-service-account.json

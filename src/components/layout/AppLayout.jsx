@@ -28,7 +28,8 @@ import {
   SparklesIcon,
   CpuChipIcon,
   LanguageIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  CloudArrowUpIcon
 } from '@heroicons/react/24/outline';
 
 const AppLayout = ({ children }) => {
@@ -167,6 +168,12 @@ const AppLayout = ({ children }) => {
       path: '/admin/marketing',
       icon: MegaphoneIcon,
       description: t('nav.admin_marketing_desc', 'Hantera marknadsföringsmaterial'),
+    },
+    {
+      name: t('nav.admin_google_shopping', 'Google Shopping'),
+      path: '/admin/google-shopping',
+      icon: CloudArrowUpIcon,
+      description: t('nav.admin_google_shopping_desc', 'Synkronisera produkter till Google Shopping'),
     },
     {
       name: t('nav.admin_pages', 'Sidor'),

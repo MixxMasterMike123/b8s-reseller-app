@@ -44,6 +44,24 @@ import {
   testGeoHeaders
 } from './geo/functions';
 
+// Import Google Merchant Center sync functions
+import {
+  syncAllProductsToGoogle,
+  syncProductsToGoogleHttp,
+  syncSingleProductToGoogle,
+  testGoogleMerchantConnection,
+  onProductCreated as googleMerchantOnProductCreated,
+  onProductUpdated as googleMerchantOnProductUpdated,
+  onProductDeleted as googleMerchantOnProductDeleted
+} from './google-merchant/sync-functions';
+
+// Import Google Merchant Center admin functions
+import {
+  getGoogleMerchantStats,
+  getProductSyncStatus,
+  forceSyncProducts
+} from './google-merchant/admin-functions';
+
 // Import customer-admin functions directly with original names
 import {
   deleteCustomerAccount,
@@ -147,6 +165,20 @@ export const exampleProtectedFunction = onRequest(
 
 // Test function for debugging email issues
 export { testPasswordResetMinimal } from './email/testPasswordReset';
+
+// Google Merchant Center Integration
+export {
+  syncAllProductsToGoogle,
+  syncProductsToGoogleHttp,
+  syncSingleProductToGoogle,
+  testGoogleMerchantConnection,
+  googleMerchantOnProductCreated,
+  googleMerchantOnProductUpdated,
+  googleMerchantOnProductDeleted,
+  getGoogleMerchantStats,
+  getProductSyncStatus,
+  forceSyncProducts
+};
 
 // New V3 Email System Functions
 export { sendPasswordResetV3, confirmPasswordResetV3 } from './email-v2/functions';

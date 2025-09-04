@@ -4,6 +4,8 @@ import { processAffiliateConversionV2 } from './affiliate/triggers/processAffili
 import { sendCustomerWelcomeEmail, sendAffiliateWelcomeEmail, sendB2BOrderConfirmationAdmin, sendB2BOrderConfirmationCustomer, sendOrderStatusEmail, sendB2COrderNotificationAdmin, sendB2COrderPendingEmail, sendUserActivationEmail, sendOrderStatusUpdateEmail, updateCustomerEmail, testEmail, approveAffiliate, sendStatusUpdateHttp, sendVerificationEmail, sendAffiliateCredentialsV2, sendPasswordResetEmailV2, confirmPasswordResetV2 } from './email/functions';
 import { processB2COrderCompletion, manualStatusUpdate } from './order-processing/functions';
 import { getGeoData, testGeoHeaders } from './geo/functions';
+import { syncAllProductsToGoogle, syncProductsToGoogleHttp, syncSingleProductToGoogle, testGoogleMerchantConnection, onProductCreated as googleMerchantOnProductCreated, onProductUpdated as googleMerchantOnProductUpdated, onProductDeleted as googleMerchantOnProductDeleted } from './google-merchant/sync-functions';
+import { getGoogleMerchantStats, getProductSyncStatus, forceSyncProducts } from './google-merchant/admin-functions';
 import { deleteCustomerAccount, deleteB2CCustomerAccount, toggleCustomerActiveStatus, createAdminUser, checkNamedDatabase, debugDatabase } from './customer-admin/functions';
 import { createPaymentIntentV2 } from './payment/createPaymentIntent';
 import { createPaymentIntentMinimalV2 } from './payment/createPaymentIntentMinimal';
@@ -17,6 +19,7 @@ export { createPaymentIntentV2, createPaymentIntentMinimalV2 };
 export { scrapeWebsiteMeta as scrapeWebsiteMetaV2 };
 export declare const exampleProtectedFunction: import("firebase-functions/v2/https").HttpsFunction;
 export { testPasswordResetMinimal } from './email/testPasswordReset';
+export { syncAllProductsToGoogle, syncProductsToGoogleHttp, syncSingleProductToGoogle, testGoogleMerchantConnection, googleMerchantOnProductCreated, googleMerchantOnProductUpdated, googleMerchantOnProductDeleted, getGoogleMerchantStats, getProductSyncStatus, forceSyncProducts };
 export { sendPasswordResetV3, confirmPasswordResetV3 } from './email-v2/functions';
 export { sendCustomerWelcomeEmailV3, sendAffiliateWelcomeEmailV3, sendB2COrderPendingEmailV3, sendB2COrderNotificationAdminV3, sendB2BOrderConfirmationCustomerV3, sendOrderStatusEmailV3, sendB2BOrderConfirmationAdminV3, sendVerificationEmailV3, sendAffiliateCredentialsV3, approveAffiliateV3 } from './email-v2/functions-main';
 export { sendOrderConfirmationEmailsV3 } from './email-v2/triggers';

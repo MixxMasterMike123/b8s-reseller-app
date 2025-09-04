@@ -17,6 +17,7 @@
     "cors": "^2.8.5",
     "firebase-admin": "^11.8.0",
     "firebase-functions": "^6.3.2",
+    "google-auth-library": "^10.3.0",
     "nodemailer": "^7.0.5",
     "stripe": "^14.25.0"
   },

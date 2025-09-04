@@ -208,6 +208,7 @@ const PublicStorefront = () => {
       <Helmet>
         <title>{getShopSeoTitle(currentLanguage)}</title>
         <meta name="description" content={getShopSeoDescription(currentLanguage)} />
+        <meta name="google-site-verification" content="VdZaHTh4JwiHjxpsc_h3u8TMRxLZ1Tg2jU62SN-5fLo" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content={getShopSeoTitle(currentLanguage)} />
         <meta property="og:description" content={getShopSeoDescription(currentLanguage)} />
