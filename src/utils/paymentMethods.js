@@ -9,6 +9,12 @@
  */
 export const formatPaymentMethodName = (payment) => {
   if (!payment) return 'Okänd betalning';
+  
+  // DEBUG: Log payment object structure
+  console.log('🔍 PAYMENT DEBUG - Full payment object:', payment);
+  console.log('🔍 PAYMENT DEBUG - payment.method:', payment.method);
+  console.log('🔍 PAYMENT DEBUG - payment.paymentMethodType:', payment.paymentMethodType);
+  console.log('🔍 PAYMENT DEBUG - payment.paymentMethodDetails:', payment.paymentMethodDetails);
 
   // Handle enhanced payment method details (new format)
   if (payment.paymentMethodDetails) {

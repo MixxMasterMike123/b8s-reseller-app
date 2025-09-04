@@ -34,6 +34,11 @@ const OrderReturnInner = () => {
         
         // Retrieve the payment intent
         const { error, paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
+        
+        // DEBUG: Log the full payment intent structure for Klarna
+        console.log('🔍 KLARNA DEBUG - Full payment intent:', paymentIntent);
+        console.log('🔍 KLARNA DEBUG - Payment method:', paymentIntent?.payment_method);
+        console.log('🔍 KLARNA DEBUG - Payment method type:', paymentIntent?.payment_method?.type);
 
         if (error) {
           console.error('❌ Error retrieving payment intent:', error);
