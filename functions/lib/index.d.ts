@@ -2,7 +2,8 @@ import { logAffiliateClickV2 } from './affiliate/callable/logAffiliateClick';
 import { logAffiliateClickHttpV2 } from './affiliate/http/logAffiliateClickHttp';
 import { processAffiliateConversionV2 } from './affiliate/triggers/processAffiliateConversion';
 import { sendCustomerWelcomeEmail, sendAffiliateWelcomeEmail, sendB2BOrderConfirmationAdmin, sendB2BOrderConfirmationCustomer, sendOrderStatusEmail, sendB2COrderNotificationAdmin, sendB2COrderPendingEmail, sendUserActivationEmail, sendOrderStatusUpdateEmail, updateCustomerEmail, testEmail, approveAffiliate, sendStatusUpdateHttp, sendVerificationEmail, sendAffiliateCredentialsV2, sendPasswordResetEmailV2, confirmPasswordResetV2 } from './email/functions';
-import { processB2COrderCompletion, manualStatusUpdate } from './order-processing/functions';
+import { processB2COrderCompletionHttp, // RE-ENABLED: Critical for affiliate processing
+processB2COrderCompletion, manualStatusUpdate } from './order-processing/functions';
 import { getGeoData, testGeoHeaders } from './geo/functions';
 import { syncAllProductsToGoogle, syncProductsToGoogleHttp, syncSingleProductToGoogle, testGoogleMerchantConnection, onProductCreated as googleMerchantOnProductCreated, onProductUpdated as googleMerchantOnProductUpdated, onProductDeleted as googleMerchantOnProductDeleted } from './google-merchant/sync-functions';
 import { getGoogleMerchantStats, getProductSyncStatus, forceSyncProducts } from './google-merchant/admin-functions';
@@ -12,7 +13,8 @@ import { createPaymentIntentMinimalV2 } from './payment/createPaymentIntentMinim
 import { scrapeWebsiteMeta } from './website-scraper/functions';
 export { logAffiliateClickV2, logAffiliateClickHttpV2, processAffiliateConversionV2 };
 export { sendCustomerWelcomeEmail as sendCustomerWelcomeEmailV2, sendAffiliateWelcomeEmail as sendAffiliateWelcomeEmailV2, sendB2BOrderConfirmationAdmin as sendB2BOrderConfirmationAdminV2, sendB2BOrderConfirmationCustomer as sendB2BOrderConfirmationCustomerV2, sendOrderStatusEmail as sendOrderStatusEmailV2, sendB2COrderNotificationAdmin as sendB2COrderNotificationAdminV2, sendB2COrderPendingEmail as sendB2COrderPendingEmailV2, sendUserActivationEmail as sendUserActivationEmailV2, sendOrderStatusUpdateEmail as sendOrderStatusUpdateEmailV2, updateCustomerEmail as updateCustomerEmailV2, testEmail as testEmailV2, approveAffiliate as approveAffiliateV2, sendStatusUpdateHttp as sendStatusUpdateHttpV2, sendVerificationEmail as sendVerificationEmailV2, sendAffiliateCredentialsV2, sendPasswordResetEmailV2, confirmPasswordResetV2 };
-export { processB2COrderCompletion as processB2COrderCompletionV2, manualStatusUpdate as manualStatusUpdateV2 };
+export { processB2COrderCompletionHttp as processB2COrderCompletionHttpV2, // RE-ENABLED: Critical for affiliate processing
+processB2COrderCompletion as processB2COrderCompletionV2, manualStatusUpdate as manualStatusUpdateV2 };
 export { getGeoData as getGeoDataV2, testGeoHeaders as testGeoHeadersV2 };
 export { deleteCustomerAccount as deleteCustomerAccountV2, deleteB2CCustomerAccount as deleteB2CCustomerAccountV2, toggleCustomerActiveStatus as toggleCustomerActiveStatusV2, createAdminUser as createAdminUserV2, checkNamedDatabase as checkNamedDatabaseV2, debugDatabase as debugDatabaseV2 };
 export { createPaymentIntentV2, createPaymentIntentMinimalV2 };

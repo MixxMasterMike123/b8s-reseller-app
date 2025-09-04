@@ -9,6 +9,8 @@ import { logAffiliateClickV2 } from './affiliate/callable/logAffiliateClick';
 import { logAffiliateClickHttpV2 } from './affiliate/http/logAffiliateClickHttp';
 import { processAffiliateConversionV2 } from './affiliate/triggers/processAffiliateConversion';
 
+// Debug functions removed - found the real issue
+
 // Import email functions directly with original names from email/functions.ts
 import { 
   sendCustomerWelcomeEmail,
@@ -33,7 +35,7 @@ import {
 
 // Import order processing functions directly with original names
 import {
-  // processB2COrderCompletionHttp, // DISABLED: Using V3 instead
+  processB2COrderCompletionHttp, // RE-ENABLED: Critical for affiliate processing
   processB2COrderCompletion,
   manualStatusUpdate
 } from './order-processing/functions';
@@ -112,7 +114,7 @@ export {
 
 // Re-export order processing functions individually with V2 names (avoid V1 conflicts)
 export {
-  // processB2COrderCompletionHttp as processB2COrderCompletionHttpV2, // DISABLED: Using V3 instead
+  processB2COrderCompletionHttp as processB2COrderCompletionHttpV2, // RE-ENABLED: Critical for affiliate processing
   processB2COrderCompletion as processB2COrderCompletionV2,
   manualStatusUpdate as manualStatusUpdateV2
 };
@@ -194,6 +196,8 @@ export {
   sendAffiliateCredentialsV3,
   approveAffiliateV3
 } from './email-v2/functions-main';
+
+// Debug functions removed - found the real issue
 
 // V3 Email System Triggers
 export { sendOrderConfirmationEmailsV3 } from './email-v2/triggers'; 

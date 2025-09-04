@@ -279,8 +279,9 @@ export const CartProvider = ({ children }) => {
       const subtotal = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const discountValue = subtotal * (discountPercentage / 100);
 
-      // Round the discount to the nearest whole number to avoid floating point issues
-      const roundedDiscount = Math.round(discountValue);
+      // Use Math.ceil to ensure small discounts (like 0.2 SEK) are not rounded to 0
+      // This ensures customers always get their discount, even if it's small
+      const roundedDiscount = Math.ceil(discountValue);
 
       // Get the affiliate click ID from localStorage
       let affiliateClickId = null;
