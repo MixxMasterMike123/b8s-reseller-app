@@ -386,10 +386,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
                             
                             return (
                               <div className="text-xs text-gray-500">
-                                {o.customerInfo?.firstName ? 
-                                  `${o.customerInfo.firstName} ${o.customerInfo.lastName || ''}`.trim() : 
-                                  'Okänd kund'
-                                }
+                                Direct
                               </div>
                             );
                           })()}
