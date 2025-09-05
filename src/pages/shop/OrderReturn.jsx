@@ -94,9 +94,51 @@ const OrderReturnInner = () => {
     const freshTotals = calculateTotals();
     const orderNumber = generateOrderNumber();
 
-    // Get customer info from localStorage or payment intent
-    const customerInfo = JSON.parse(localStorage.getItem('b8s_checkout_customer') || '{}');
-    const shippingInfo = JSON.parse(localStorage.getItem('b8s_checkout_shipping') || '{}');
+    // Get customer info from localStorage with comprehensive validation
+    let customerInfo = {};
+    let shippingInfo = {};
+    
+    try {
+      customerInfo = JSON.parse(localStorage.getItem('b8s_checkout_customer') || '{}');
+      shippingInfo = JSON.parse(localStorage.getItem('b8s_checkout_shipping') || '{}');
+    } catch (error) {
+      console.error('❌ Failed to parse checkout data from localStorage:', error);
+    }
+
+    // CRITICAL VALIDATION: Prevent zero-value orders
+    const isValidCustomerInfo = customerInfo.email && customerInfo.email.includes('@');
+    const isValidShippingInfo = shippingInfo.firstName && shippingInfo.lastName && shippingInfo.address && shippingInfo.city;
+    const isValidCart = cart.items && cart.items.length > 0 && freshTotals.total > 0;
+
+    console.log('🔍 Order validation check:', {
+      customerValid: isValidCustomerInfo,
+      shippingValid: isValidShippingInfo,
+      cartValid: isValidCart,
+      cartItemCount: cart.items?.length || 0,
+      totalAmount: freshTotals.total,
+      customerEmail: customerInfo.email || 'MISSING',
+      paymentIntentId: paymentIntent.id
+    });
+
+    // PREVENT ZERO-VALUE ORDER CREATION
+    if (!isValidCustomerInfo || !isValidShippingInfo || !isValidCart) {
+      console.error('❌ CRITICAL: Invalid order data detected, preventing order creation', {
+        customerInfo: { email: customerInfo.email || 'MISSING' },
+        shippingInfo: { 
+          firstName: shippingInfo.firstName || 'MISSING',
+          lastName: shippingInfo.lastName || 'MISSING',
+          address: shippingInfo.address || 'MISSING'
+        },
+        cart: { itemCount: cart.items?.length || 0, total: freshTotals.total }
+      });
+
+      // Show user-friendly error message
+      setStatus('error');
+      setErrorMessage('Orderinformation saknas. Ingen betalning har genomförts. Vänligen försök igen från början.');
+      
+      // Return early to prevent order creation
+      return;
+    }
 
     // Extract cart items
     const cartItems = cart.items.map(item => ({

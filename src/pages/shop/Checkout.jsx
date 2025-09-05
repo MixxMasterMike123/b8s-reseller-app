@@ -374,6 +374,37 @@ const Checkout = () => {
     const freshTotals = calculateTotals();
     const orderNumber = generateOrderNumber();
 
+    // CRITICAL VALIDATION: Prevent zero-value orders (consistency with OrderReturn.jsx)
+    const isValidCustomerInfo = contactInfo.email && contactInfo.email.includes('@');
+    const isValidShippingInfo = shippingInfo.firstName && shippingInfo.lastName && shippingInfo.address && shippingInfo.city;
+    const isValidCart = cart.items && cart.items.length > 0 && freshTotals.total > 0;
+
+    console.log('🔍 Order validation check (Checkout):', {
+      customerValid: isValidCustomerInfo,
+      shippingValid: isValidShippingInfo,
+      cartValid: isValidCart,
+      cartItemCount: cart.items?.length || 0,
+      totalAmount: freshTotals.total,
+      customerEmail: contactInfo.email || 'MISSING',
+      paymentIntentId: paymentIntent.id
+    });
+
+    // PREVENT ZERO-VALUE ORDER CREATION
+    if (!isValidCustomerInfo || !isValidShippingInfo || !isValidCart) {
+      console.error('❌ CRITICAL: Invalid order data detected in Checkout, preventing order creation', {
+        contactInfo: { email: contactInfo.email || 'MISSING' },
+        shippingInfo: { 
+          firstName: shippingInfo.firstName || 'MISSING',
+          lastName: shippingInfo.lastName || 'MISSING',
+          address: shippingInfo.address || 'MISSING'
+        },
+        cart: { itemCount: cart.items?.length || 0, total: freshTotals.total }
+      });
+
+      // Throw error to be caught by handlePaymentSuccess
+      throw new Error('Orderinformation saknas. Kontakta support om problemet kvarstår.');
+    }
+
     // Create B2C customer account if password provided
     const { b2cCustomerId, b2cCustomerAuthId } = await createB2CCustomerAccount();
 
