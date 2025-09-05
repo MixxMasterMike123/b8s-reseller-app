@@ -333,8 +333,8 @@ const PublicStorefront = () => {
             <div className="hidden md:grid md:grid-cols-4 gap-4">
               {[
                 { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent', sku: 'B8S-4-tr' },
-                { src: '/images/b8s_red_nature.webp', colorKey: 'color_red', sku: 'B8S-4-re' },
-                { src: '/images/b8s_flour_nature.webp', colorKey: 'color_fluorescent', sku: 'B8S-4-fl' },
+                { src: '/images/b8s_red_nature_new.webp', colorKey: 'color_red', sku: 'B8S-4-re' },
+                { src: '/images/b8s_flour_nature_new.webp', colorKey: 'color_fluorescent', sku: 'B8S-4-fl' },
                 { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter', sku: 'B8S-4-gl' }
               ].map((image, index) => {
                 // Create a product object for getProductUrl function
@@ -368,8 +368,8 @@ const PublicStorefront = () => {
               <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory">
                 {[
                   { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent', sku: 'B8S-4-tr' },
-                  { src: '/images/b8s_red_nature.webp', colorKey: 'color_red', sku: 'B8S-4-re' },
-                  { src: '/images/b8s_flour_nature.webp', colorKey: 'color_fluorescent', sku: 'B8S-4-fl' },
+                  { src: '/images/b8s_red_nature_new.webp', colorKey: 'color_red', sku: 'B8S-4-re' },
+                  { src: '/images/b8s_flour_nature_new.webp', colorKey: 'color_fluorescent', sku: 'B8S-4-fl' },
                   { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter', sku: 'B8S-4-gl' }
                 ].map((image, index) => {
                   // Create a product object for getProductUrl function
