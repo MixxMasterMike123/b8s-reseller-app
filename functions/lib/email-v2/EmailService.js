@@ -28,7 +28,7 @@ const nodemailer = __importStar(require("nodemailer"));
 const smtp_config_1 = require("./smtp-config");
 class EmailService {
     constructor() {
-        console.log('🔧 EmailService: Initializing with One.com SMTP...');
+        console.log('🔧 EmailService: Initializing with Gmail SMTP...');
         console.log(`🔧 SMTP Config - Host: ${smtp_config_1.SMTP_CONFIG.host}, Port: ${smtp_config_1.SMTP_CONFIG.port}, User: ${smtp_config_1.SMTP_CONFIG.auth.user}`);
         this.transporter = nodemailer.createTransport(smtp_config_1.SMTP_CONFIG);
     }

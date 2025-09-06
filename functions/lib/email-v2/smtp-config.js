@@ -9,7 +9,7 @@ exports.SMTP_CONFIG = {
     secure: false,
     auth: {
         user: 'b8shield.reseller@gmail.com',
-        pass: 'ConsoleNeveV3!'
+        pass: 'rcfaridkvgluhzom'
     }
 };
 exports.EMAIL_FROM = {

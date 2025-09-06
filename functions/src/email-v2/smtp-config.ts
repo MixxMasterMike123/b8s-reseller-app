@@ -7,7 +7,7 @@ export const SMTP_CONFIG = {
   secure: false, // Use STARTTLS
   auth: {
     user: 'b8shield.reseller@gmail.com',
-    pass: 'ConsoleNeveV3!'
+    pass: 'rcfaridkvgluhzom'
   }
 };
 

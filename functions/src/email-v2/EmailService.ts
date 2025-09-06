@@ -14,7 +14,7 @@ export class EmailService {
   private transporter: nodemailer.Transporter;
 
   private constructor() {
-    console.log('🔧 EmailService: Initializing with One.com SMTP...');
+    console.log('🔧 EmailService: Initializing with Gmail SMTP...');
     console.log(`🔧 SMTP Config - Host: ${SMTP_CONFIG.host}, Port: ${SMTP_CONFIG.port}, User: ${SMTP_CONFIG.auth.user}`);
     
     this.transporter = nodemailer.createTransport(SMTP_CONFIG);
