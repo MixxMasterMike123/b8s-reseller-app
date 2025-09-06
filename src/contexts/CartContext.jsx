@@ -223,7 +223,7 @@ export const CartProvider = ({ children }) => {
       shippingTiers,
       baseShippingCost,
       totalShippingCost: baseShippingCost * shippingTiers,
-      explanation: `${totalQuantity} ${totalQuantity === 1 ? 'förpackning' : 'förpackningar'} (${totalWeight}g) = ${shippingTiers} ${shippingTiers === 1 ? 'fraktkostnad' : 'fraktkostnader'} (${baseShippingCost} kr × ${shippingTiers})`
+      explanation: `Frakt (${getShippingRegion(country)})`
     };
   };
 
