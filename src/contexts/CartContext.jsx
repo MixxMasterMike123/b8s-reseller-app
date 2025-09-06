@@ -376,6 +376,7 @@ export const CartProvider = ({ children }) => {
           sku: product.sku,
           color: product.color,
           size: product.size,
+          weight: product.weight, // Include weight for shipping calculations
           shipping: product.shipping, // Include shipping information
           // And update the quantity
           quantity: existingItem.quantity + quantity
@@ -395,6 +396,7 @@ export const CartProvider = ({ children }) => {
           sku: product.sku,
           color: product.color,
           size: product.size,
+          weight: product.weight, // Include weight for shipping calculations
           shipping: product.shipping, // Include shipping information
           quantity
         };
