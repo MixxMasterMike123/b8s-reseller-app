@@ -96,7 +96,7 @@ const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => 
         console.error('Error fetching page:', error);
         setError('Error loading page');
         setLoading(false);
-        toast.error('Fel vid laddning av sida');
+        toast.error(t('dynamic_page_loading_error', 'Fel vid laddning av sida'));
       }
     };
 
@@ -137,31 +137,30 @@ const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => 
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center max-w-2xl mx-auto px-4">
               <h1 className="text-3xl font-bold text-gray-900 mb-6">
-                Begär utbetalning
+                {t('payout_request_title', 'Begär utbetalning')}
               </h1>
               <div className="bg-white rounded-lg shadow-sm border p-8 mb-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Affiliate Utbetalning
+                  {t('payout_affiliate_title', 'Affiliate Utbetalning')}
                 </h2>
                 <p className="text-gray-600 mb-4">
-                  För att begära utbetalning av dina affiliate-intäkter, kontakta oss direkt:
+                  {t('payout_request_description', 'För att begära utbetalning av dina affiliate-intäkter, kontakta oss direkt:')}
                 </p>
                 <div className="space-y-3">
                   <div className="flex items-center justify-center space-x-2">
-                    <span className="text-gray-600">Email:</span>
+                    <span className="text-gray-600">{t('payout_contact_email_label', 'Email:')}</span>
                     <a href="mailto:info@jphinnovation.se" className="text-blue-600 hover:text-blue-800 font-medium">
   info@jphinnovation.se
                     </a>
                   </div>
                   <div className="flex items-center justify-center space-x-2">
-                    <span className="text-gray-600">Telefon:</span>
-                    <span className="font-medium">Mån-Fre: 09:00-17:00</span>
+                    <span className="text-gray-600">{t('payout_contact_phone_label', 'Telefon:')}</span>
+                    <span className="font-medium">{t('payout_business_hours', 'Mån-Fre: 09:00-17:00')}</span>
                   </div>
                 </div>
                 <div className="mt-6 p-4 bg-blue-50 rounded-lg">
                   <p className="text-sm text-blue-800">
-                    <strong>Viktig information:</strong> Vi behandlar utbetalningsförfrågningar inom 3-5 arbetsdagar. 
-                    Minimum utbetalningsbelopp är 100 kr.
+                    <strong>{t('payout_important_info_title', 'Viktig information:')}</strong> {t('payout_processing_info', 'Vi behandlar utbetalningsförfrågningar inom 3-5 arbetsdagar. Minimum utbetalningsbelopp är 100 kr.')}
                   </p>
                 </div>
               </div>
@@ -169,7 +168,7 @@ const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => 
                 onClick={() => navigate(-1)}
                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
               >
-                Gå tillbaka till Affiliate Portal
+{t('go_back_to_affiliate_portal', 'Gå tillbaka till Affiliate Portal')}
               </button>
             </div>
           </div>

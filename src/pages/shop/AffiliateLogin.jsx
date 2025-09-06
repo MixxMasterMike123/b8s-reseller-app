@@ -8,22 +8,22 @@ import { getCountryAwareUrl, getAffiliateSeoTitle, getAffiliateSeoDescription } 
 import { Helmet } from 'react-helmet-async';
 
 const AffiliateLogin = () => {
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const navigate = useNavigate();
 
   return (
     <>
       <Helmet>
-        <title>{getAffiliateSeoTitle('login')}</title>
-        <meta name="description" content={getAffiliateSeoDescription('login')} />
+        <title>{getAffiliateSeoTitle('login', currentLanguage)}</title>
+        <meta name="description" content={getAffiliateSeoDescription('login', currentLanguage)} />
         <meta property="og:type" content="website" />
-        <meta property="og:title" content={getAffiliateSeoTitle('login')} />
-        <meta property="og:description" content={getAffiliateSeoDescription('login')} />
+        <meta property="og:title" content={getAffiliateSeoTitle('login', currentLanguage)} />
+        <meta property="og:description" content={getAffiliateSeoDescription('login', currentLanguage)} />
         <meta property="og:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
         <meta property="og:url" content={window.location.href} />
         <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content={getAffiliateSeoTitle('login')} />
-        <meta name="twitter:description" content={getAffiliateSeoDescription('login')} />
+        <meta name="twitter:title" content={getAffiliateSeoTitle('login', currentLanguage)} />
+        <meta name="twitter:description" content={getAffiliateSeoDescription('login', currentLanguage)} />
         <meta name="twitter:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
       </Helmet>
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
