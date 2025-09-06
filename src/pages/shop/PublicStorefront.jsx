@@ -243,7 +243,7 @@ const PublicStorefront = () => {
               <div className="flex-1 text-left">
                 <img
                   src="/images/badge_of_honor_b8s.svg"
-                  alt={t('hero_innovation_badge_alt', 'Innovation from Sweden badge')}
+                  alt={t('hero_innovation_badge_alt', 'Innovation från Sverige märke')}
                   className="h-16 w-auto mb-6 drop-shadow-lg"
                 />
                 
@@ -289,10 +289,10 @@ const PublicStorefront = () => {
                     </h4>
                   )}
                   <blockquote className="text-gray-700 italic text-lg">
-                    "{heroReview?.text || 'Med B8Shield kunde jag obehindrat fiska på platser som annars hade varit omöjliga, utan att tappa ett enda fiskedrag – otroligt effektivt skydd!'}"
+                    "{heroReview?.text || t('hero_testimonial_fallback', 'Med B8Shield kunde jag obehindrat fiska på platser som annars hade varit omöjliga, utan att tappa ett enda fiskedrag – otroligt effektivt skydd!')}"
                   </blockquote>
                   <cite className="text-sm text-gray-500 mt-2 block">
-                    — {heroReview?.author || 'Paul W.'}{heroReview?.location ? `, ${heroReview.location}` : ', Sportfiskarna Sverige'}
+                    — {heroReview?.author || t('hero_testimonial_author_fallback', 'Paul W., Sportfiskarna Sverige').split(',')[0]}{heroReview?.location ? `, ${heroReview.location}` : `, ${t('hero_testimonial_author_fallback', 'Paul W., Sportfiskarna Sverige').split(',')[1]?.trim()}`}
                   </cite>
                 </div>
               </div>
@@ -302,7 +302,7 @@ const PublicStorefront = () => {
             <div className="lg:hidden text-center">
               <img
                 src="/images/badge_of_honor_b8s.svg"
-                alt={t('hero_innovation_badge_alt', 'Innovation from Sweden badge')}
+                alt={t('hero_innovation_badge_alt', 'Innovation från Sverige märke')}
                 className="h-16 w-auto mx-auto mb-4 drop-shadow-lg"
               />
               

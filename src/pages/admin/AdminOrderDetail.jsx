@@ -203,11 +203,11 @@ const AdminOrderDetail = () => {
       case 'confirmed':
         return { text: 'Bekräftad', color: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300' };
       case 'processing':
-        return { text: 'Behandlas', color: 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300' };
+        return { text: 'Behandlas', color: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300' };
       case 'shipped':
-        return { text: 'Skickad', color: 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-300' };
+        return { text: 'Skickad', color: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' };
       case 'delivered':
-        return { text: 'Levererad', color: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' };
+        return { text: 'Levererad', color: 'bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-300' };
       case 'cancelled':
         return { text: 'Avbruten', color: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300' };
       default:

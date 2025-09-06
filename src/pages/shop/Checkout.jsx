@@ -358,7 +358,7 @@ const Checkout = () => {
       
     } catch (error) {
       console.error('❌ Error creating order after payment:', error);
-      toast.error('Betalning genomförd men fel vid orderskapande. Kontakta support.');
+      toast.error(t('checkout_payment_success_order_error', 'Betalning genomförd men fel vid orderskapande. Kontakta support.'));
       setProcessingPayment(false);
     }
   };
@@ -366,7 +366,7 @@ const Checkout = () => {
   // Handle payment errors
   const handlePaymentError = (error) => {
     console.error('❌ Payment failed:', error);
-    toast.error(`Betalning misslyckades: ${error.message}`);
+    toast.error(t('checkout_payment_failed_with_message', 'Betalning misslyckades: {{message}}', { message: error.message }));
   };
 
   // Create order from successful payment
@@ -402,7 +402,7 @@ const Checkout = () => {
       });
 
       // Throw error to be caught by handlePaymentSuccess
-      throw new Error('Orderinformation saknas. Kontakta support om problemet kvarstår.');
+      throw new Error(t('checkout_order_info_missing_error', 'Orderinformation saknas. Kontakta support om problemet kvarstår.'));
     }
 
     // Create B2C customer account if password provided

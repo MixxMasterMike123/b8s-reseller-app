@@ -25,13 +25,13 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
 
     if (!stripe || !elements) {
       console.error('❌ Stripe not loaded');
-      toast.error('Betalningssystem inte redo. Vänta och försök igen.');
+      toast.error(t('stripe_payment_system_not_ready', 'Betalningssystem inte redo. Vänta och försök igen.'));
       return;
     }
 
     if (!isElementReady) {
       console.error('❌ Payment Element not ready');
-      toast.error('Betalningsformulär inte redo. Vänta och försök igen.');
+      toast.error(t('stripe_payment_form_not_ready', 'Betalningsformulär inte redo. Vänta och försök igen.'));
       return;
     }
 
@@ -76,12 +76,12 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
           // Call success callback
           onPaymentSuccess?.(paymentIntent);
           
-          toast.success('Betalning genomförd!');
+          toast.success(t('stripe_payment_completed', 'Betalning genomförd!'));
           
         } else if (paymentIntent.status === 'requires_action' || paymentIntent.status === 'requires_source_action') {
           // Payment requires additional action (Klarna, 3D Secure, etc.)
           console.log('🔄 Payment requires action, redirecting...', paymentIntent.status);
-          toast.info('Omdirigerar till betalningsleverantör...');
+          toast.info(t('stripe_redirecting_to_provider', 'Omdirigerar till betalningsleverantör...'));
           
           // User will be redirected to complete payment, then return to return_url
           // The order creation will happen on the return page
@@ -89,12 +89,12 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
         } else if (paymentIntent.status === 'processing') {
           // Payment is being processed (some payment methods)
           console.log('⏳ Payment processing...', paymentIntent);
-          toast.info('Betalning behandlas...');
+          toast.info(t('stripe_payment_processing', 'Betalning behandlas...'));
           
         } else {
           // Other statuses
           console.log('❓ Unexpected payment status:', paymentIntent.status);
-          toast.warning('Oväntat betalningsstatus. Kontakta support om problemet kvarstår.');
+          toast.warning(t('stripe_unexpected_payment_status', 'Oväntat betalningsstatus. Kontakta support om problemet kvarstår.'));
         }
       }
 

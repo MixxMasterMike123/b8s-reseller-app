@@ -24,7 +24,7 @@ const OrderReturnInner = () => {
     const clientSecret = searchParams.get('payment_intent_client_secret');
     if (!clientSecret) {
       setStatus('error');
-      setErrorMessage('Ingen betalningsinformation hittades');
+      setErrorMessage(t('order_return_no_payment_info', 'Ingen betalningsinformation hittades'));
       return;
     }
 
@@ -72,18 +72,18 @@ const OrderReturnInner = () => {
         } else if (paymentIntent.status === 'canceled') {
           console.log('❌ Payment was canceled');
           setStatus('error');
-          setErrorMessage('Betalning avbröts');
+          setErrorMessage(t('order_return_payment_cancelled', 'Betalning avbröts'));
           
         } else {
           console.log('❌ Payment failed with status:', paymentIntent.status);
           setStatus('error');
-          setErrorMessage('Betalning misslyckades');
+          setErrorMessage(t('order_return_payment_failed', 'Betalning misslyckades'));
         }
 
       } catch (error) {
         console.error('❌ Error handling payment return:', error);
         setStatus('error');
-        setErrorMessage('Ett oväntat fel uppstod');
+        setErrorMessage(t('order_return_unexpected_error', 'Ett oväntat fel uppstod'));
       }
     };
 
@@ -134,7 +134,7 @@ const OrderReturnInner = () => {
 
       // Show user-friendly error message
       setStatus('error');
-      setErrorMessage('Orderinformation saknas. Ingen betalning har genomförts. Vänligen försök igen från början.');
+      setErrorMessage(t('order_return_missing_order_info', 'Orderinformation saknas. Ingen betalning har genomförts. Vänligen försök igen från början.'));
       
       // Return early to prevent order creation
       return;

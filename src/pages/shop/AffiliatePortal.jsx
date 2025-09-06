@@ -49,25 +49,25 @@ const AffiliatePortal = () => {
     {
       id: 'transparent',
       name: 'B8Shield Transparent',
-      description: 'Diskret vasskydd för klart vatten',
+      description: t('affiliate_product_transparent_desc', 'Diskret vasskydd för klart vatten'),
       path: '/product/transparent'
     },
     {
       id: 'rod',
-      name: 'B8Shield Röd',
-      description: 'Vasskydd för mörkt vatten',
+      name: t('affiliate_product_red_name', 'B8Shield Röd'),
+      description: t('affiliate_product_red_desc', 'Vasskydd för mörkt vatten'),
       path: '/product/rod'
     },
     {
       id: 'fluorescerande',
       name: 'B8Shield Fluorescerande',
-      description: 'Vasskydd för djupt vatten',
+      description: t('affiliate_product_fluorescent_desc', 'Vasskydd för djupt vatten'),
       path: '/product/fluorescerande'
     },
     {
       id: 'glitter',
       name: 'B8Shield Glitter',
-      description: 'Vasskydd för extra synlighet',
+      description: t('affiliate_product_glitter_desc', 'Vasskydd för extra synlighet'),
       path: '/product/glitter'
     },
     {

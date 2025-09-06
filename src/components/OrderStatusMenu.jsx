@@ -8,11 +8,11 @@ const getStatusStyles = (status) => {
     case 'confirmed':
       return 'bg-blue-100 text-blue-800 border-blue-200'; // Confirmed
     case 'processing':
-      return 'bg-purple-100 text-purple-800 border-purple-200'; // Processing
+      return 'bg-orange-100 text-orange-800 border-orange-200'; // Processing
     case 'shipped':
-      return 'bg-indigo-100 text-indigo-800 border-indigo-200'; // Shipped
+      return 'bg-green-100 text-green-800 border-green-200'; // Shipped - GREEN for quick visual identification
     case 'delivered':
-      return 'bg-green-100 text-green-800 border-green-200'; // Delivered
+      return 'bg-emerald-100 text-emerald-800 border-emerald-200'; // Delivered - Darker green
     case 'cancelled':
       return 'bg-red-100 text-red-800 border-red-200'; // Cancelled
     default:

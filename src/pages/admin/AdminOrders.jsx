@@ -20,11 +20,11 @@ const getStatusStyles = (status) => {
     case 'confirmed':
       return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300'; // Confirmed
     case 'processing':
-      return 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300'; // Processing
+      return 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300'; // Processing
     case 'shipped':
-      return 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-300'; // Shipped
+      return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'; // Shipped - GREEN for quick visual identification
     case 'delivered':
-      return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'; // Delivered
+      return 'bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-300'; // Delivered - Darker green
     case 'cancelled':
       return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'; // Cancelled
     default:

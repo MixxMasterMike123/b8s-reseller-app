@@ -577,18 +577,6 @@ function ProductViewPage() {
             </div>
           </div>
         )}
-
-        {/* Social Media Section - Show on B2B product catalog */}
-        <div className="mt-8 pt-8 border-t border-gray-200">
-          <SocialMediaShare 
-            product={selectedProduct || (products.length > 0 ? products[0] : null)}
-            pageUrl={window.location.href}
-            language={t.language}
-            showFollowLinks={true}
-            showShareButtons={false} // B2B users might not need individual product sharing
-            compact={true}
-          />
-        </div>
       </div>
     </AppLayout>
   );
