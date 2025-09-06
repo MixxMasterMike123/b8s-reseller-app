@@ -54,11 +54,9 @@ const ShopFooter = () => {
             <p className="text-gray-300 text-sm mb-4">
               {t('footer_company_description', 'Professionellt skydd för dina fiskedon. Utvecklat av JPH Innovation AB för att maximera din framgång på vattnet.')}
             </p>
-            <div className="text-gray-400 text-sm">
-              <p>JPH Innovation AB</p>
-              <p>Östergatan 30c</p>
-              <p>152 43 Södertälje</p>
-            </div>
+            <div className="text-gray-400 text-sm" dangerouslySetInnerHTML={{
+              __html: t('footer_company_address', 'JPH Innovation AB<br>Östergatan 30c<br>152 43 Södertälje')
+            }} />
           </div>
 
           {/* Quick Links */}
