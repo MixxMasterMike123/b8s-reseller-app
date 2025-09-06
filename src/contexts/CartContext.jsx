@@ -143,53 +143,47 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Calculate shipping cost based on country and tiered quantity (every 3 packs = +1 shipping cost)
+  // Calculate shipping cost based on total weight (weight-based PostNord tiers)
   const getShippingCost = (country) => {
     // If no items in cart, return 0
     if (!cart.items || cart.items.length === 0) {
       return 0;
     }
 
-    // Calculate total quantity of all items in cart
-    const totalQuantity = cart.items.reduce((total, item) => total + item.quantity, 0);
+    // Calculate total product weight from all items
+    const totalProductWeight = cart.items.reduce((sum, item) => {
+      const itemWeight = item.weight?.value || 10; // Default 10g for single pack if weight missing
+      return sum + (itemWeight * item.quantity);
+    }, 0);
     
-    // Calculate number of shipping tiers needed (every 3 packs = 1 shipping cost)
-    const shippingTiers = Math.ceil(totalQuantity / 3);
+    // Add envelope/packaging weight (20g constant)
+    const totalWeight = totalProductWeight + 20;
+    
+    // Calculate shipping tiers (every 50g = 1 tier, matching PostNord weight limits)
+    const shippingTiers = Math.ceil(totalWeight / 50);
 
-    // Get base shipping cost per tier
-    let baseShippingCost = 0;
+    // Base shipping cost per tier (simplified, no product overrides)
+    const baseShippingCost = country === 'SE' ? 29 : 49;
 
-    // Use fallback to standard shipping costs if product doesn't have specific shipping
-    if (country === 'SE') {
-      // Sweden - use product shipping or fallback to 29 SEK
-      const productShipping = cart.items[0]?.shipping?.sweden?.cost;
-      baseShippingCost = productShipping || 29;
-    } else {
-      // All non-Sweden countries - use product shipping or fallback to 49 SEK
-      let productShipping = 0;
-      
-      if (SHIPPING_COSTS.NORDIC.countries.includes(country)) {
-        // Nordic countries
-        productShipping = cart.items[0]?.shipping?.nordic?.cost;
-      } else {
-        // International (EU and Rest of World)
-        const euCountries = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES'];
-        
-        if (euCountries.includes(country)) {
-          // EU countries
-          productShipping = cart.items[0]?.shipping?.eu?.cost;
-        } else {
-          // Rest of world
-          productShipping = cart.items[0]?.shipping?.worldwide?.cost;
-        }
-      }
-      
-      // All non-Sweden countries default to 49 SEK per tier
-      baseShippingCost = productShipping || 49;
-    }
+    // Log weight calculation for debugging (remove in production if needed)
+    console.log(`📦 Weight-based shipping calculation:`, {
+      country,
+      items: cart.items.map(item => ({ 
+        name: item.name, 
+        weight: item.weight?.value || 10, 
+        quantity: item.quantity,
+        totalWeight: (item.weight?.value || 10) * item.quantity
+      })),
+      totalProductWeight,
+      envelopeWeight: 20,
+      totalWeight,
+      shippingTiers,
+      baseShippingCost,
+      totalShippingCost: shippingTiers * baseShippingCost
+    });
 
     // Return base shipping cost multiplied by number of tiers
-    return baseShippingCost * shippingTiers;
+    return shippingTiers * baseShippingCost;
   };
 
   // Get total number of items in cart
@@ -197,18 +191,39 @@ export const CartProvider = ({ children }) => {
     return cart.items.reduce((total, item) => total + item.quantity, 0);
   };
 
-  // Get shipping tier information for display
+  // Get shipping tier information for display (weight-based)
   const getShippingTierInfo = (country) => {
+    // If no items in cart, return zero values
+    if (!cart.items || cart.items.length === 0) {
+      return {
+        totalQuantity: 0,
+        totalWeight: 0,
+        shippingTiers: 0,
+        baseShippingCost: country === 'SE' ? 29 : 49,
+        totalShippingCost: 0,
+        explanation: 'Ingen frakt - tom varukorg'
+      };
+    }
+
     const totalQuantity = getTotalItems();
-    const shippingTiers = Math.ceil(totalQuantity / 3);
+    
+    // Calculate total weight (same logic as getShippingCost)
+    const totalProductWeight = cart.items.reduce((sum, item) => {
+      const itemWeight = item.weight?.value || 10;
+      return sum + (itemWeight * item.quantity);
+    }, 0);
+    
+    const totalWeight = totalProductWeight + 20; // +envelope
+    const shippingTiers = Math.ceil(totalWeight / 50);
     const baseShippingCost = country === 'SE' ? 29 : 49;
     
     return {
       totalQuantity,
+      totalWeight,
       shippingTiers,
       baseShippingCost,
       totalShippingCost: baseShippingCost * shippingTiers,
-      explanation: `${totalQuantity} ${totalQuantity === 1 ? 'förpackning' : 'förpackningar'} = ${shippingTiers} ${shippingTiers === 1 ? 'fraktkostnad' : 'fraktkostnader'} (${baseShippingCost} kr × ${shippingTiers})`
+      explanation: `${totalQuantity} ${totalQuantity === 1 ? 'förpackning' : 'förpackningar'} (${totalWeight}g) = ${shippingTiers} ${shippingTiers === 1 ? 'fraktkostnad' : 'fraktkostnader'} (${baseShippingCost} kr × ${shippingTiers})`
     };
   };
 
