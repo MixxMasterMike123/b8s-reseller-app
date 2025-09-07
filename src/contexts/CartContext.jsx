@@ -143,47 +143,59 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Calculate shipping cost based on total weight (weight-based PostNord tiers)
+  // Calculate shipping cost using product shipping data (not hardcoded)
   const getShippingCost = (country) => {
     // If no items in cart, return 0
     if (!cart.items || cart.items.length === 0) {
       return 0;
     }
 
-    // Calculate total product weight from all items
-    const totalProductWeight = cart.items.reduce((sum, item) => {
-      const itemWeight = item.weight?.value || 10; // Default 10g for single pack if weight missing
-      return sum + (itemWeight * item.quantity);
-    }, 0);
-    
-    // Add envelope/packaging weight (20g constant)
-    const totalWeight = totalProductWeight + 20;
-    
-    // Calculate shipping tiers (every 50g = 1 tier, matching PostNord weight limits)
-    const shippingTiers = Math.ceil(totalWeight / 50);
+    // Get the shipping region for the country
+    const getShippingRegion = (country) => {
+      if (country === 'SE') return 'sweden';
+      if (['NO', 'DK', 'FI'].includes(country)) return 'nordic';
+      
+      const euCountries = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES'];
+      if (euCountries.includes(country)) return 'eu';
+      
+      return 'worldwide';
+    };
 
-    // Base shipping cost per tier (simplified, no product overrides)
-    const baseShippingCost = country === 'SE' ? 29 : 49;
-
-    // Log weight calculation for debugging (remove in production if needed)
-    console.log(`📦 Weight-based shipping calculation:`, {
-      country,
-      items: cart.items.map(item => ({ 
-        name: item.name, 
-        weight: item.weight?.value || 10, 
-        quantity: item.quantity,
-        totalWeight: (item.weight?.value || 10) * item.quantity
-      })),
-      totalProductWeight,
-      envelopeWeight: 20,
-      totalWeight,
-      shippingTiers,
-      baseShippingCost,
-      totalShippingCost: shippingTiers * baseShippingCost
+    const shippingRegion = getShippingRegion(country);
+    
+    // Calculate shipping cost based on products in cart
+    // For now, use the highest shipping cost among all products (simple approach)
+    // TODO: In future, could implement more complex logic like weight-based tiers
+    let maxShippingCost = 0;
+    
+    cart.items.forEach(item => {
+      const productShippingCost = item.shipping?.[shippingRegion]?.cost || 0;
+      if (productShippingCost > maxShippingCost) {
+        maxShippingCost = productShippingCost;
+      }
     });
 
-    // Return base shipping cost multiplied by number of tiers
-    return shippingTiers * baseShippingCost;
+    // Fallback to old hardcoded values if no product shipping data
+    if (maxShippingCost === 0) {
+      const fallbackCost = country === 'SE' ? 29 : 49;
+      console.warn(`⚠️ No product shipping data found for ${shippingRegion}, using fallback: ${fallbackCost} SEK`);
+      maxShippingCost = fallbackCost;
+    }
+
+    // Log shipping calculation for debugging
+    console.log(`🚚 Product-based shipping calculation:`, {
+      country,
+      shippingRegion,
+      items: cart.items.map(item => ({ 
+        name: item.name, 
+        quantity: item.quantity,
+        shippingCost: item.shipping?.[shippingRegion]?.cost || 0
+      })),
+      maxShippingCost,
+      totalShippingCost: maxShippingCost
+    });
+
+    return maxShippingCost;
   };
 
   // Get total number of items in cart
@@ -191,39 +203,37 @@ export const CartProvider = ({ children }) => {
     return cart.items.reduce((total, item) => total + item.quantity, 0);
   };
 
-  // Get shipping tier information for display (weight-based)
+  // Get shipping tier information for display (product-based)
   const getShippingTierInfo = (country) => {
     // If no items in cart, return zero values
     if (!cart.items || cart.items.length === 0) {
       return {
         totalQuantity: 0,
-        totalWeight: 0,
-        shippingTiers: 0,
-        baseShippingCost: country === 'SE' ? 29 : 49,
         totalShippingCost: 0,
         explanation: 'Ingen frakt - tom varukorg'
       };
     }
 
     const totalQuantity = getTotalItems();
+    const shippingCost = getShippingCost(country);
     
-    // Calculate total weight (same logic as getShippingCost)
-    const totalProductWeight = cart.items.reduce((sum, item) => {
-      const itemWeight = item.weight?.value || 10;
-      return sum + (itemWeight * item.quantity);
-    }, 0);
-    
-    const totalWeight = totalProductWeight + 20; // +envelope
-    const shippingTiers = Math.ceil(totalWeight / 50);
-    const baseShippingCost = country === 'SE' ? 29 : 49;
+    // Get the shipping region for the country
+    const getShippingRegion = (country) => {
+      if (country === 'SE') return 'sweden';
+      if (['NO', 'DK', 'FI'].includes(country)) return 'nordic';
+      
+      const euCountries = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES'];
+      if (euCountries.includes(country)) return 'eu';
+      
+      return 'worldwide';
+    };
+
+    const regionName = getShippingRegion(country);
     
     return {
       totalQuantity,
-      totalWeight,
-      shippingTiers,
-      baseShippingCost,
-      totalShippingCost: baseShippingCost * shippingTiers,
-      explanation: `Frakt (${getShippingRegion(country)})`
+      totalShippingCost: shippingCost,
+      explanation: `Frakt (${regionName})`
     };
   };
 
