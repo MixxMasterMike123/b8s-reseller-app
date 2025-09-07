@@ -641,6 +641,8 @@ export const OrderProvider = ({ children }) => {
         
         // Trigger email notification via V3 Firebase Function
         try {
+          console.log('🔧 DEBUG: Starting V3 order status email process...');
+          
           // Get user data for email
           const userDoc = await getDoc(doc(db, "users", orderData.userId));
           const userData = userDoc.exists() ? userDoc.data() : {
@@ -649,9 +651,13 @@ export const OrderProvider = ({ children }) => {
             contactPerson: 'Unknown'
           };
           
+          console.log('🔧 DEBUG: User data loaded:', { email: userData.email, companyName: userData.companyName });
+          
           // Call V3 order status email function
           const functions = getFunctions();
           const sendOrderStatusEmailV3 = httpsCallable(functions, 'sendOrderStatusEmailV3');
+          
+          console.log('🔧 DEBUG: Firebase Functions initialized, preparing data...');
           
           // Ensure all string fields are properly defined to avoid Firebase serialization errors
           const safeOrderData = {
@@ -667,7 +673,7 @@ export const OrderProvider = ({ children }) => {
             contactPerson: String(userData.contactPerson || userData.companyName || 'Unknown Contact')
           };
           
-          const result = await sendOrderStatusEmailV3({
+          const emailData = {
             orderData: safeOrderData,
             userData: safeUserData,
             newStatus: String(newStatus),
@@ -675,7 +681,11 @@ export const OrderProvider = ({ children }) => {
             trackingNumber: additionalData.trackingNumber ? String(additionalData.trackingNumber) : null,
             estimatedDelivery: additionalData.estimatedDelivery ? String(additionalData.estimatedDelivery) : null,
             notes: additionalData.notes ? String(additionalData.notes) : null
-          });
+          };
+          
+          console.log('🔧 DEBUG: About to call sendOrderStatusEmailV3 with data:', JSON.stringify(emailData, null, 2));
+          
+          const result = await sendOrderStatusEmailV3(emailData);
           
           console.log('✅ V3 Status update emails sent successfully:', result.data);
         } catch (emailError) {
