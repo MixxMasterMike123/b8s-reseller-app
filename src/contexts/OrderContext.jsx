@@ -642,21 +642,72 @@ export const OrderProvider = ({ children }) => {
         // Trigger email notification via V3 Firebase Function
         try {
           console.log('🔧 DEBUG: Starting V3 order status email process...');
-          console.log('🔧 DEBUG: Order data:', { orderId, userId: orderData.userId, orderNumber: orderData.orderNumber });
+          console.log('🔧 DEBUG: Full order data structure:', JSON.stringify(orderData, null, 2));
+          console.log('🔧 DEBUG: Order fields:', { 
+            orderId, 
+            userId: orderData.userId,
+            b2cCustomerId: orderData.b2cCustomerId,
+            customerInfo: orderData.customerInfo,
+            orderNumber: orderData.orderNumber,
+            source: orderData.source 
+          });
           
-          // Validate required data before proceeding
-          if (!orderData.userId) {
-            console.error('❌ ERROR: orderData.userId is undefined - cannot send email');
-            throw new Error('Order userId is required for email notification');
+          // Check for different user ID fields based on order type
+          let actualUserId = orderData.userId;
+          let userEmail = null;
+          
+          if (!actualUserId && orderData.b2cCustomerId) {
+            console.log('🔧 DEBUG: Using B2C customer ID instead of userId');
+            actualUserId = orderData.b2cCustomerId;
           }
           
-          // Get user data for email
-          const userDoc = await getDoc(doc(db, "users", orderData.userId));
-          const userData = userDoc.exists() ? userDoc.data() : {
+          if (!actualUserId && orderData.customerInfo?.email) {
+            console.log('🔧 DEBUG: Guest order detected - using email for user lookup');
+            userEmail = orderData.customerInfo.email;
+          }
+          
+          if (!actualUserId && !userEmail) {
+            console.error('❌ ERROR: No user identifier found - cannot send email');
+            console.error('Available fields:', Object.keys(orderData));
+            throw new Error('Order must have userId, b2cCustomerId, or customerInfo.email for email notification');
+          }
+          
+          // Get user data for email based on order type
+          let userData = {
             email: 'unknown@example.com',
             companyName: 'Unknown Company',
             contactPerson: 'Unknown'
           };
+          
+          if (actualUserId) {
+            console.log('🔧 DEBUG: Looking up user in "users" collection with ID:', actualUserId);
+            const userDoc = await getDoc(doc(db, "users", actualUserId));
+            if (userDoc.exists()) {
+              userData = userDoc.data();
+              console.log('🔧 DEBUG: Found B2B user data:', { email: userData.email, companyName: userData.companyName });
+            } else {
+              // Try B2C customers collection
+              console.log('🔧 DEBUG: User not found in "users", trying "b2cCustomers" collection');
+              const b2cDoc = await getDoc(doc(db, "b2cCustomers", actualUserId));
+              if (b2cDoc.exists()) {
+                const b2cData = b2cDoc.data();
+                userData = {
+                  email: b2cData.email,
+                  companyName: b2cData.name || 'B2C Customer',
+                  contactPerson: b2cData.name || 'Customer'
+                };
+                console.log('🔧 DEBUG: Found B2C customer data:', { email: userData.email, name: userData.companyName });
+              }
+            }
+          } else if (userEmail) {
+            // Guest order - use email from order data
+            console.log('🔧 DEBUG: Using guest order email:', userEmail);
+            userData = {
+              email: userEmail,
+              companyName: orderData.customerInfo?.name || 'Guest Customer',
+              contactPerson: orderData.customerInfo?.name || 'Guest'
+            };
+          }
           
           console.log('🔧 DEBUG: User data loaded:', { email: userData.email, companyName: userData.companyName });
           
