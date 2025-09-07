@@ -1,6 +1,10 @@
 // V2 FUNCTIONS BATCH 4 - Direct imports to avoid circular dependencies
 // EMAIL ORCHESTRATOR SYSTEM - Unified email functions
 
+// Initialize Firebase Admin SDK
+import { initializeApp } from 'firebase-admin/app';
+initializeApp();
+
 import { onRequest } from 'firebase-functions/v2/https';
 import { corsHandler } from './protection/cors/cors-handler';
 import { rateLimiter } from './protection/rate-limiting/rate-limiter';
