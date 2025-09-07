@@ -163,39 +163,54 @@ export const CartProvider = ({ children }) => {
 
     const shippingRegion = getShippingRegion(country);
     
-    // Calculate shipping cost based on products in cart
-    // For now, use the highest shipping cost among all products (simple approach)
-    // TODO: In future, could implement more complex logic like weight-based tiers
-    let maxShippingCost = 0;
-    
-    cart.items.forEach(item => {
-      const productShippingCost = item.shipping?.[shippingRegion]?.cost || 0;
-      if (productShippingCost > maxShippingCost) {
-        maxShippingCost = productShippingCost;
-      }
-    });
+    // Get base shipping cost from FIRST product in cart
+    const firstProduct = cart.items[0];
+    let baseShippingCost = firstProduct?.shipping?.[shippingRegion]?.cost || 0;
 
     // Fallback to old hardcoded values if no product shipping data
-    if (maxShippingCost === 0) {
-      const fallbackCost = country === 'SE' ? 29 : 49;
-      console.warn(`⚠️ No product shipping data found for ${shippingRegion}, using fallback: ${fallbackCost} SEK`);
-      maxShippingCost = fallbackCost;
+    if (baseShippingCost === 0) {
+      baseShippingCost = country === 'SE' ? 29 : 49;
+      console.warn(`⚠️ No product shipping data found for ${shippingRegion}, using fallback: ${baseShippingCost} SEK`);
     }
 
+    // Calculate total weight for shipping tiers
+    const totalProductWeight = cart.items.reduce((sum, item) => {
+      const itemWeight = item.weight?.value || 10; // Default 10g for single pack if weight missing
+      return sum + (itemWeight * item.quantity);
+    }, 0);
+    
+    // Add envelope/packaging weight (20g constant)
+    const totalWeight = totalProductWeight + 20;
+    
+    // Calculate shipping tiers (every 50g = 1 tier, matching PostNord weight limits)
+    const shippingTiers = Math.ceil(totalWeight / 50);
+
+    // Final shipping cost = base cost from first product * weight tiers
+    const totalShippingCost = baseShippingCost * shippingTiers;
+
     // Log shipping calculation for debugging
-    console.log(`🚚 Product-based shipping calculation:`, {
+    console.log(`🚚 Weight-based shipping calculation with product base cost:`, {
       country,
       shippingRegion,
+      firstProduct: {
+        name: firstProduct?.name,
+        baseShippingCost: baseShippingCost
+      },
       items: cart.items.map(item => ({ 
         name: item.name, 
+        weight: item.weight?.value || 10,
         quantity: item.quantity,
-        shippingCost: item.shipping?.[shippingRegion]?.cost || 0
+        totalWeight: (item.weight?.value || 10) * item.quantity
       })),
-      maxShippingCost,
-      totalShippingCost: maxShippingCost
+      totalProductWeight,
+      envelopeWeight: 20,
+      totalWeight,
+      shippingTiers,
+      baseShippingCost,
+      totalShippingCost
     });
 
-    return maxShippingCost;
+    return totalShippingCost;
   };
 
   // Get total number of items in cart
