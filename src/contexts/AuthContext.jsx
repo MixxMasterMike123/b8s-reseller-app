@@ -598,7 +598,7 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // Send Customer Welcome Email with Credentials - Admin only
+  // Send Customer Welcome Email with Credentials - Admin only (Updated to use orchestrator)
   async function sendCustomerWelcomeEmail(customerId) {
     try {
       if (isDemoMode) {
@@ -628,18 +628,43 @@ export function AuthProvider({ children }) {
           temporaryPassword: 'SnabbFisk2024'
         };
       } else {
-        // Real Firebase: Call the cloud function
+        // Real Firebase: Call the unified orchestrator function
         if (!isAdmin) throw new Error('Unauthorized - Admin access required');
         
-        const sendWelcomeEmail = httpsCallable(functions, 'sendCustomerWelcomeEmailV3');
-        const result = await sendWelcomeEmail({ customerId });
+        // First get customer data to send credentials
+        const customerDoc = await getDoc(doc(db, 'users', customerId));
+        if (!customerDoc.exists()) {
+          throw new Error('Customer not found');
+        }
+        
+        const customerData = customerDoc.data();
+        const tempPassword = 'SnabbFisk' + Math.random().toString(36).substring(2, 8);
+        
+        const sendLoginCredentialsEmail = httpsCallable(functions, 'sendLoginCredentialsEmail');
+        const result = await sendLoginCredentialsEmail({
+          userInfo: {
+            name: customerData.contactPerson || customerData.companyName,
+            email: customerData.email,
+            companyName: customerData.companyName,
+            contactPerson: customerData.contactPerson
+          },
+          credentials: {
+            email: customerData.email,
+            temporaryPassword: tempPassword
+          },
+          accountType: 'B2B',
+          wasExistingAuthUser: false,
+          userId: customerId,
+          language: 'sv-SE'
+        });
         
         const data = result.data;
-        const message = data.isExistingUser 
-          ? 'Welcome email sent and existing customer account updated successfully'
-          : 'Welcome email sent and new customer account created successfully';
-        toast.success(message);
-        return data;
+        toast.success('Welcome email sent and customer account activated successfully');
+        return {
+          ...data,
+          temporaryPassword: tempPassword,
+          message: 'Welcome email sent and customer account activated successfully'
+        };
       }
     } catch (error) {
       console.error('Error sending welcome email:', error);

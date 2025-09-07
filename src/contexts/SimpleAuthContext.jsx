@@ -111,18 +111,27 @@ export function SimpleAuthContextProvider({ children }) {
     }
   }
 
-  // Reset password using custom Firebase Function
+  // Reset password using unified orchestrator email system
   async function resetPassword(email) {
     try {
       setError('');
       
-      // Call our custom Firebase Function to send branded password reset email (V3)
+      // Call unified orchestrator Firebase Function to send branded password reset email
       const functions = getFunctions();
-      const sendPasswordResetV3 = httpsCallable(functions, 'sendPasswordResetV3');
+      const sendPasswordResetEmail = httpsCallable(functions, 'sendPasswordResetEmail');
       
-      const result = await sendPasswordResetV3({ email });
+      // Generate secure reset code (matching V3 pattern)
+      const resetCode = Math.random().toString(36).substring(2, 15) + 
+                       Math.random().toString(36).substring(2, 15);
       
-      console.log('Custom password reset email sent:', result.data);
+      const result = await sendPasswordResetEmail({ 
+        email,
+        resetCode,
+        userType: 'B2C',
+        language: 'sv-SE'
+      });
+      
+      console.log('Orchestrator password reset email sent:', result.data);
       toast.success('Password reset email sent');
       return true;
     } catch (error) {

@@ -4,11 +4,11 @@
 // Import all unified email functions
 export { sendOrderConfirmationEmail } from './sendOrderConfirmationEmail';
 export { sendOrderStatusUpdateEmail } from './sendOrderStatusUpdateEmail';
+export { sendOrderNotificationAdmin } from './sendOrderNotificationAdmin';
+export { sendPasswordResetEmail } from './sendPasswordResetEmail';
+export { sendLoginCredentialsEmail } from './sendLoginCredentialsEmail';
 
 // TODO: Implement remaining functions
-// export { sendOrderNotificationAdmin } from './sendOrderNotificationAdmin';
-// export { sendWelcomeEmail } from './sendWelcomeEmail';
-// export { sendPasswordResetEmail } from './sendPasswordResetEmail';
 // export { sendAffiliateWelcomeEmail } from './sendAffiliateWelcomeEmail';
 // export { sendVerificationEmail } from './sendVerificationEmail';
 

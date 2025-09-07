@@ -9,6 +9,9 @@ import { rateLimiter } from './protection/rate-limiting/rate-limiter';
 export { 
   sendOrderConfirmationEmail,
   sendOrderStatusUpdateEmail,
+  sendOrderNotificationAdmin,
+  sendPasswordResetEmail,
+  sendLoginCredentialsEmail,
   testEmailOrchestrator
 } from './email-orchestrator/functions';
 

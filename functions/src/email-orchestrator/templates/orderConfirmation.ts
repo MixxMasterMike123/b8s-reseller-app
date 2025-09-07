@@ -103,23 +103,19 @@ function generateB2CTemplate(
   const templates = {
     'sv-SE': {
       subject: `Tack för din beställning, ${customerName}! (Order ${orderNumber})`,
-      html: `
-<div style="font-family: ${EMAIL_CONFIG.TEMPLATES.FONT_FAMILY}; max-width: ${EMAIL_CONFIG.TEMPLATES.MAX_WIDTH}; margin: 0 auto; background-color: ${EMAIL_CONFIG.COLORS.BACKGROUND}; padding: 15px;">
+      html: `<div style="font-family: ${EMAIL_CONFIG.TEMPLATES.FONT_FAMILY}; max-width: ${EMAIL_CONFIG.TEMPLATES.MAX_WIDTH}; margin: 0 auto; background-color: ${EMAIL_CONFIG.COLORS.BACKGROUND}; padding: 15px;">
   <div style="background-color: white; border-radius: ${EMAIL_CONFIG.TEMPLATES.BORDER_RADIUS}; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
     <div style="text-align: center; margin-bottom: 25px;">
       <img src="${EMAIL_CONFIG.URLS.LOGO_URL}" alt="B8Shield" style="max-width: 180px; height: auto; display: block; margin: 0 auto;">
     </div>
-    
     <h2 style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-bottom: 20px; font-size: 20px; line-height: 1.3;">Hej ${customerName},</h2>
     <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">Tack för din beställning från B8Shield! Vi har mottagit din order och kommer att behandla den snarast.</p>
-    
     <div style="background-color: #f3f4f6; border-radius: 6px; padding: 20px; margin-bottom: 25px;">
       <h3 style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-top: 0; margin-bottom: 15px;">[ORDER] ORDERDETALJER:</h3>
       <p style="margin: 8px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Ordernummer:</strong> ${orderNumber}</p>
       <p style="margin: 8px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Status:</strong> <span style="color: ${EMAIL_CONFIG.COLORS.SUCCESS}; font-weight: bold;">Mottagen</span></p>
       <p style="margin: 8px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>E-post:</strong> ${customerInfo.email}</p>
     </div>
-
     <div style="background-color: #ecfdf5; padding: 15px; border-radius: 6px; margin-bottom: 25px;">
       <h4 style="color: #065f46; margin-top: 0; margin-bottom: 15px; font-size: 16px;">[PRODUKTER] DINA PRODUKTER:</h4>
       <div style="background-color: white; border-radius: 4px; padding: 10px;">
@@ -143,58 +139,36 @@ function generateB2CTemplate(
         `).join('')}
       </div>
     </div>
-
     <div style="background-color: #fef3c7; border-left: 4px solid ${EMAIL_CONFIG.COLORS.WARNING}; padding: 15px; margin-bottom: 25px;">
       <h4 style="color: #92400e; margin-top: 0; margin-bottom: 15px;">[SAMMANFATTNING] ORDERSAMMANFATTNING:</h4>
       <div style="background-color: white; border-radius: 4px; padding: 15px;">
         <table style="width: 100%; border-collapse: collapse;">
-          <tr style="margin-bottom: 8px;">
-            <td style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; padding: 4px 0;">Delsumma:</td>
-            <td style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; font-weight: bold; text-align: right; padding: 4px 0;">${formatPrice(subtotal)}</td>
-          </tr>
-          <tr style="margin-bottom: 8px;">
-            <td style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; padding: 4px 0;">Frakt:</td>
-            <td style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; font-weight: bold; text-align: right; padding: 4px 0;">${formatPrice(shipping)}</td>
-          </tr>
-          ${discountAmount > 0 ? `
-          <tr style="margin-bottom: 8px;">
-            <td style="color: ${EMAIL_CONFIG.COLORS.SUCCESS}; padding: 4px 0;">Rabatt ${affiliateCode ? '(' + affiliateCode + ')' : ''}:</td>
-            <td style="color: ${EMAIL_CONFIG.COLORS.SUCCESS}; font-weight: bold; text-align: right; padding: 4px 0;">-${formatPrice(discountAmount)}</td>
-          </tr>
-          ` : ''}
-          <tr style="margin-bottom: 8px;">
-            <td style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; padding: 4px 0;">Moms (25%):</td>
-            <td style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; font-weight: bold; text-align: right; padding: 4px 0;">${formatPrice(vat)}</td>
-          </tr>
-          <tr>
-            <td colspan="2" style="border-top: 2px solid ${EMAIL_CONFIG.COLORS.WARNING}; padding: 15px 0 0 0;"></td>
-          </tr>
-          <tr>
-            <td style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; font-size: 18px; font-weight: bold; padding: 4px 0;">TOTALT:</td>
-            <td style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; font-size: 18px; font-weight: bold; text-align: right; padding: 4px 0;">${formatPrice(total)}</td>
-          </tr>
+          <tr><td style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; padding: 4px 0;">Delsumma:</td><td style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; font-weight: bold; text-align: right; padding: 4px 0;">${formatPrice(subtotal)}</td></tr>
+          <tr><td style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; padding: 4px 0;">Frakt:</td><td style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; font-weight: bold; text-align: right; padding: 4px 0;">${formatPrice(shipping)}</td></tr>
+          ${discountAmount > 0 ? `<tr><td style="color: ${EMAIL_CONFIG.COLORS.SUCCESS}; padding: 4px 0;">Rabatt ${affiliateCode ? '(' + affiliateCode + ')' : ''}:</td><td style="color: ${EMAIL_CONFIG.COLORS.SUCCESS}; font-weight: bold; text-align: right; padding: 4px 0;">-${formatPrice(discountAmount)}</td></tr>` : ''}
+          <tr><td style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; padding: 4px 0;">Moms (25%):</td><td style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; font-weight: bold; text-align: right; padding: 4px 0;">${formatPrice(vat)}</td></tr>
+          <tr><td colspan="2" style="border-top: 2px solid ${EMAIL_CONFIG.COLORS.WARNING}; padding: 15px 0 0 0;"></td></tr>
+          <tr><td style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; font-size: 18px; font-weight: bold; padding: 4px 0;">TOTALT:</td><td style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; font-size: 18px; font-weight: bold; text-align: right; padding: 4px 0;">${formatPrice(total)}</td></tr>
         </table>
       </div>
     </div>
-
     <div style="text-align: center; margin: 30px 0;">
       <a href="${orderUrl}" style="display: inline-block; background-color: ${EMAIL_CONFIG.COLORS.PRIMARY}; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; border: 2px solid ${EMAIL_CONFIG.COLORS.PRIMARY};">Följ din order</a>
     </div>
-
-    <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 25px;">
-      <h4 style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; margin-top: 0; margin-bottom: 10px;">[SUPPORT] BEHÖVER DU HJÄLP?</h4>
-      <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; margin: 0; font-size: 14px;">Om du har några frågor om din beställning, kontakta vår support på <a href="${supportUrl}" style="color: #2563eb;">${supportUrl}</a></p>
-    </div>
-
-    <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">Du kommer att få ytterligare uppdateringar när din order behandlas och skickas.</p>
-    
     <div style="border-top: 1px solid ${EMAIL_CONFIG.COLORS.BORDER}; padding-top: 20px; margin-top: 30px;">
       <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin: 0;">Med vänliga hälsningar,<br><strong>B8Shield Team</strong><br>JPH Innovation AB</p>
     </div>
   </div>
 </div>`
     },
-    // English templates follow same pattern...
+    'en-GB': {
+      subject: `Thank you for your order, ${customerName}! (Order ${orderNumber})`,
+      html: `<div>English B2C template</div>`
+    },
+    'en-US': {
+      subject: `Thank you for your order, ${customerName}! (Order ${orderNumber})`,
+      html: `<div>US English B2C template</div>`
+    }
   };
 
   const template = templates[lang as keyof typeof templates] || templates['sv-SE'];
@@ -204,7 +178,7 @@ function generateB2CTemplate(
   };
 }
 
-// B2B Template (Business-focused) - TO BE EXTRACTED FROM b2bOrderConfirmationCustomer.ts
+// B2B Template (Business-focused)
 function generateB2BTemplate(
   data: OrderConfirmationData, 
   lang: string, 
@@ -212,9 +186,56 @@ function generateB2BTemplate(
   orderUrl: string, 
   supportUrl: string
 ) {
-  // TO BE IMPLEMENTED - Extract from B2B template
+  const { orderData } = data;
+  const { orderNumber, total } = orderData;
+
+  const templates = {
+    'sv-SE': {
+      subject: `Orderbekräftelse: ${orderNumber}`,
+      html: `<div style="font-family: ${EMAIL_CONFIG.TEMPLATES.FONT_FAMILY}; max-width: ${EMAIL_CONFIG.TEMPLATES.MAX_WIDTH}; margin: 0 auto; background-color: ${EMAIL_CONFIG.COLORS.BACKGROUND}; padding: 20px;">
+  <div style="background-color: white; border-radius: ${EMAIL_CONFIG.TEMPLATES.BORDER_RADIUS}; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <img src="${EMAIL_CONFIG.URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
+    </div>
+    <h2 style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-bottom: 20px;">Orderbekräftelse</h2>
+    <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">Hej ${customerName},</p>
+    <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 25px;">Tack för din beställning! Vi har mottagit din order och kommer att behandla den snarast.</p>
+    <div style="background-color: #f3f4f6; border-radius: 6px; padding: 20px; margin-bottom: 25px;">
+      <h3 style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-top: 0; margin-bottom: 15px;">[ORDER] ORDERDETALJER:</h3>
+      <p style="margin: 8px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Ordernummer:</strong> ${orderNumber}</p>
+      <p style="margin: 8px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Företag:</strong> ${customerName}</p>
+    </div>
+    <div style="background-color: #fef3c7; border-left: 4px solid ${EMAIL_CONFIG.COLORS.WARNING}; padding: 20px; margin-bottom: 25px;">
+      <h3 style="color: #92400e; margin-top: 0; margin-bottom: 15px;">[TOTALT] ORDERSAMMANFATTNING:</h3>
+      <div style="background-color: white; border-radius: 4px; padding: 15px;">
+        <div style="text-align: right;">
+          <div style="font-size: 24px; font-weight: bold; color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY};">${formatPrice(total)}</div>
+          <div style="font-size: 14px; color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; margin-top: 4px;">Inklusive din återförsäljarmarginal</div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${EMAIL_CONFIG.URLS.B2B_PORTAL}" style="display: inline-block; background-color: ${EMAIL_CONFIG.COLORS.PRIMARY}; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; border: 2px solid ${EMAIL_CONFIG.COLORS.PRIMARY};">Gå till portalen</a>
+    </div>
+    <div style="border-top: 1px solid ${EMAIL_CONFIG.COLORS.BORDER}; padding-top: 20px; margin-top: 30px;">
+      <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin: 0;">Med vänliga hälsningar,<br><strong>B8Shield Team</strong><br>JPH Innovation AB</p>
+    </div>
+  </div>
+</div>`
+    },
+    'en-GB': {
+      subject: `Order Confirmation: ${orderNumber}`,
+      html: `<div>English B2B template</div>`
+    },
+    'en-US': {
+      subject: `Order Confirmation: ${orderNumber}`,
+      html: `<div>US English B2B template</div>`
+    }
+  };
+
+  const template = templates[lang as keyof typeof templates] || templates['sv-SE'];
   return {
-    subject: `B2B Order Confirmation - ${data.orderData.orderNumber}`,
-    html: `<h1>B2B Template Coming Soon</h1>`
+    subject: template.subject,
+    html: template.html
   };
 }

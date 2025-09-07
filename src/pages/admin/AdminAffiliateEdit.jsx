@@ -511,16 +511,34 @@ const AdminAffiliateEdit = () => {
     }
   };
 
-  // Handle sending affiliate credentials
+  // Handle sending affiliate credentials (Updated to use orchestrator)
   const handleSendCredentials = async () => {
     if (!id || !data) return;
     
     try {
       setSendingCredentials(true);
       
-      // Call the cloud function to send affiliate credentials
-      const sendAffiliateCredentials = httpsCallable(functions, 'sendAffiliateCredentialsV3');
-      const result = await sendAffiliateCredentials({ affiliateId: id });
+      // Call the unified orchestrator function to send affiliate credentials
+      const sendLoginCredentialsEmail = httpsCallable(functions, 'sendLoginCredentialsEmail');
+      
+      // Determine if this is an existing Firebase Auth user
+      const wasExistingAuthUser = !!data.firebaseAuthUid;
+      
+      const result = await sendLoginCredentialsEmail({
+        userInfo: {
+          name: data.name,
+          email: data.email
+        },
+        credentials: {
+          email: data.email,
+          affiliateCode: data.affiliateCode,
+          temporaryPassword: wasExistingAuthUser ? undefined : 'Affiliate' + Math.random().toString(36).substring(2, 8)
+        },
+        accountType: 'AFFILIATE',
+        wasExistingAuthUser: wasExistingAuthUser,
+        userId: id,
+        language: data.preferredLang || 'sv-SE'
+      });
       
       setCredentialsResult(result.data);
       

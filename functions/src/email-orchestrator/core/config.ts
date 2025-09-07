@@ -50,9 +50,9 @@ export function getLanguageSegment(lang: string): string {
   return 'se';
 }
 
-// Helper function to format prices
+// Helper function to format prices (V3 compatible)
 export function formatPrice(amount: number): string {
-  return `${amount.toFixed(2).replace('.', ',')} kr`;
+  return `${amount.toFixed(0)} SEK`;
 }
 
 // Helper function to get support URL
