@@ -7,9 +7,10 @@ export { sendOrderStatusUpdateEmail } from './sendOrderStatusUpdateEmail';
 export { sendOrderNotificationAdmin } from './sendOrderNotificationAdmin';
 export { sendPasswordResetEmail } from './sendPasswordResetEmail';
 export { sendLoginCredentialsEmail } from './sendLoginCredentialsEmail';
+export { sendAffiliateWelcomeEmail } from './sendAffiliateWelcomeEmail';
+export { approveAffiliate } from './approveAffiliate';
 
 // TODO: Implement remaining functions
-// export { sendAffiliateWelcomeEmail } from './sendAffiliateWelcomeEmail';
 // export { sendVerificationEmail } from './sendVerificationEmail';
 
 // Test function for EmailOrchestrator system

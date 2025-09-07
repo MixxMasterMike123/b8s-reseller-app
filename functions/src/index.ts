@@ -12,6 +12,8 @@ export {
   sendOrderNotificationAdmin,
   sendPasswordResetEmail,
   sendLoginCredentialsEmail,
+  sendAffiliateWelcomeEmail,
+  approveAffiliate,
   testEmailOrchestrator
 } from './email-orchestrator/functions';
 

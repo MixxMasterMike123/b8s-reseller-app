@@ -8,6 +8,7 @@ import { generateOrderStatusUpdateTemplate, OrderStatusUpdateData } from '../tem
 import { generateOrderNotificationAdminTemplate, AdminOrderNotificationData } from '../templates/orderNotificationAdmin';
 import { generatePasswordResetTemplate, PasswordResetData } from '../templates/passwordReset';
 import { generateLoginCredentialsTemplate, LoginCredentialsData } from '../templates/loginCredentials';
+import { generateAffiliateWelcomeTemplate, AffiliateWelcomeData } from '../templates/affiliateWelcome';
 
 export type EmailType = 
   | 'ORDER_CONFIRMATION'
@@ -15,6 +16,7 @@ export type EmailType =
   | 'ORDER_NOTIFICATION_ADMIN'
   | 'PASSWORD_RESET'
   | 'LOGIN_CREDENTIALS'
+  | 'AFFILIATE_WELCOME'
   | 'VERIFICATION';
 
 export interface EmailContext extends OrderContext {
@@ -247,6 +249,20 @@ export class EmailOrchestrator {
         
         return generatePasswordResetTemplate(passwordResetData, data.language);
 
+      case 'AFFILIATE_WELCOME':
+        if (!data.additionalData?.affiliateInfo || !data.additionalData?.credentials) {
+          throw new Error('Affiliate info and credentials are required for affiliate welcome email');
+        }
+        
+        const affiliateWelcomeData: AffiliateWelcomeData = {
+          affiliateInfo: data.additionalData.affiliateInfo,
+          credentials: data.additionalData.credentials,
+          wasExistingAuthUser: data.additionalData.wasExistingAuthUser || false,
+          language: data.language
+        };
+        
+        return generateAffiliateWelcomeTemplate(affiliateWelcomeData);
+
       case 'VERIFICATION':
         // TO BE IMPLEMENTED
         throw new Error('Verification email template not yet implemented');
@@ -268,6 +284,7 @@ export class EmailOrchestrator {
       'ORDER_NOTIFICATION_ADMIN': '"B8Shield System" <b8shield.reseller@gmail.com>',
       'LOGIN_CREDENTIALS': '"B8Shield" <b8shield.reseller@gmail.com>',
       'PASSWORD_RESET': '"B8Shield Security" <b8shield.reseller@gmail.com>',
+      'AFFILIATE_WELCOME': '"B8Shield Affiliate Program" <b8shield.reseller@gmail.com>',
       'VERIFICATION': '"B8Shield" <b8shield.reseller@gmail.com>'
     };
 
