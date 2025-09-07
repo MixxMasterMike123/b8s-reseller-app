@@ -9,9 +9,11 @@ export { sendPasswordResetEmail } from './sendPasswordResetEmail';
 export { sendLoginCredentialsEmail } from './sendLoginCredentialsEmail';
 export { sendAffiliateWelcomeEmail } from './sendAffiliateWelcomeEmail';
 export { approveAffiliate } from './approveAffiliate';
+export { sendEmailVerification } from './sendEmailVerification';
+export { sendCustomEmailVerification } from './sendCustomEmailVerification';
+export { verifyEmailCode } from './verifyEmailCode';
 
 // TODO: Implement remaining functions
-// export { sendVerificationEmail } from './sendVerificationEmail';
 
 // Test function for EmailOrchestrator system
 import { onCall } from 'firebase-functions/v2/https';

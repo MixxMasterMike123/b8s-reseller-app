@@ -9,6 +9,7 @@ import { generateOrderNotificationAdminTemplate, AdminOrderNotificationData } fr
 import { generatePasswordResetTemplate, PasswordResetData } from '../templates/passwordReset';
 import { generateLoginCredentialsTemplate, LoginCredentialsData } from '../templates/loginCredentials';
 import { generateAffiliateWelcomeTemplate, AffiliateWelcomeData } from '../templates/affiliateWelcome';
+import { generateEmailVerificationTemplate, EmailVerificationData } from '../templates/emailVerification';
 
 export type EmailType = 
   | 'ORDER_CONFIRMATION'
@@ -17,7 +18,7 @@ export type EmailType =
   | 'PASSWORD_RESET'
   | 'LOGIN_CREDENTIALS'
   | 'AFFILIATE_WELCOME'
-  | 'VERIFICATION';
+  | 'EMAIL_VERIFICATION';
 
 export interface EmailContext extends OrderContext {
   emailType: EmailType;
@@ -263,9 +264,24 @@ export class EmailOrchestrator {
         
         return generateAffiliateWelcomeTemplate(affiliateWelcomeData);
 
-      case 'VERIFICATION':
-        // TO BE IMPLEMENTED
-        throw new Error('Verification email template not yet implemented');
+      case 'EMAIL_VERIFICATION':
+        if (!data.additionalData?.verificationCode) {
+          throw new Error('Verification code is required for email verification');
+        }
+        
+        const emailVerificationData: EmailVerificationData = {
+          customerInfo: {
+            firstName: data.context.customerInfo?.firstName,
+            lastName: data.context.customerInfo?.lastName,
+            name: data.context.customerInfo?.name || data.userData.name,
+            email: data.userData.email
+          },
+          verificationCode: data.additionalData.verificationCode,
+          language: data.language,
+          source: data.additionalData.source
+        };
+        
+        return generateEmailVerificationTemplate(emailVerificationData);
 
       default:
         throw new Error(`Unknown email type: ${emailType}`);
@@ -285,7 +301,7 @@ export class EmailOrchestrator {
       'LOGIN_CREDENTIALS': '"B8Shield" <b8shield.reseller@gmail.com>',
       'PASSWORD_RESET': '"B8Shield Security" <b8shield.reseller@gmail.com>',
       'AFFILIATE_WELCOME': '"B8Shield Affiliate Program" <b8shield.reseller@gmail.com>',
-      'VERIFICATION': '"B8Shield" <b8shield.reseller@gmail.com>'
+      'EMAIL_VERIFICATION': '"B8Shield Shop" <b8shield.reseller@gmail.com>'
     };
 
     return fromAddresses[emailType] || '"B8Shield" <b8shield.reseller@gmail.com>';

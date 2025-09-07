@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { applyActionCode } from 'firebase/auth';
+import { httpsCallable, getFunctions } from 'firebase/functions';
 import { auth } from '../../firebase/config';
+
+// Initialize Firebase Functions
+const functions = getFunctions();
 import toast from 'react-hot-toast';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
@@ -27,9 +31,37 @@ const EmailVerificationHandler = () => {
       }
 
       try {
-        console.log('Verifying email with action code:', actionCode);
+        console.log('Verifying email with code:', actionCode);
         
-        // Apply the email verification
+        // Try custom verification first (our new system)
+        if (actionCode.length >= 20 && !actionCode.includes('-')) {
+          console.log('Using custom verification system...');
+          
+          const verifyEmailCode = httpsCallable(functions, 'verifyEmailCode');
+          const result = await verifyEmailCode({ verificationCode: actionCode });
+          
+          if (result.data.success) {
+            console.log('Custom verification successful:', result.data.email);
+            
+            // Force refresh the current user if logged in
+            if (auth.currentUser) {
+              await auth.currentUser.reload();
+              await updateB2CCustomerEmailStatus(auth.currentUser);
+            }
+            
+            setVerificationStatus('success');
+            toast.success(t('email_verification_success', 'E-post verifierad! Du kan nu logga in.'));
+            
+            // Redirect to login page after 3 seconds
+            setTimeout(() => {
+              navigate('/login');
+            }, 3000);
+            return;
+          }
+        }
+        
+        // Fallback to Firebase default verification
+        console.log('Using Firebase default verification...');
         await applyActionCode(auth, actionCode);
         
         // Force refresh the current user to get updated emailVerified status

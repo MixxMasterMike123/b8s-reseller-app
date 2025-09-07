@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { httpsCallable, getFunctions } from 'firebase/functions';
 import { db, auth } from '../../firebase/config';
+
+// Initialize Firebase Functions
+const functions = getFunctions();
 import { useCart } from '../../contexts/CartContext';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
@@ -231,9 +235,27 @@ const Checkout = () => {
         const b2cCustomerAuthId = userCredential.user.uid;
         console.log('Created Firebase Auth account:', b2cCustomerAuthId);
         
-        // Send email verification
-        await sendEmailVerification(userCredential.user);
-        console.log('Email verification sent to:', contactInfo.email);
+        // Send custom email verification via orchestrator
+        try {
+          const sendCustomEmailVerification = httpsCallable(functions, 'sendCustomEmailVerification');
+          await sendCustomEmailVerification({
+            customerInfo: {
+              firstName: shippingInfo.firstName,
+              lastName: shippingInfo.lastName,
+              email: contactInfo.email,
+              preferredLang: currentLanguage
+            },
+            firebaseAuthUid: userCredential.user.uid,
+            source: 'checkout',
+            language: currentLanguage
+          });
+          console.log('Custom verification email sent to:', contactInfo.email);
+        } catch (verificationError) {
+          console.error('Error sending custom verification email:', verificationError);
+          // Fallback to Firebase default if custom fails
+          await sendEmailVerification(userCredential.user);
+          console.log('Fallback verification email sent to:', contactInfo.email);
+        }
         
         // Create B2C customer document
         const customerData = {

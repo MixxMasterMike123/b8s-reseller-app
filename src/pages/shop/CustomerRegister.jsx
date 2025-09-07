@@ -4,7 +4,11 @@ import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { sendEmailVerification } from 'firebase/auth';
+import { httpsCallable, getFunctions } from 'firebase/functions';
 import { db } from '../../firebase/config';
+
+// Initialize Firebase Functions
+const functions = getFunctions();
 import toast from 'react-hot-toast';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
@@ -104,13 +108,31 @@ const CustomerRegister = () => {
       const userCredential = await register(formData.email, formData.password);
       const firebaseUser = userCredential;
       
-      // 2. Send email verification
+      // 2. Send custom email verification via orchestrator
       try {
-        await sendEmailVerification(firebaseUser);
-        console.log('Verification email sent to:', firebaseUser.email);
+        const sendCustomEmailVerification = httpsCallable(functions, 'sendCustomEmailVerification');
+        await sendCustomEmailVerification({
+          customerInfo: {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            preferredLang: currentLanguage
+          },
+          firebaseAuthUid: firebaseUser.uid,
+          source: 'registration',
+          language: currentLanguage
+        });
+        console.log('Custom verification email sent to:', firebaseUser.email);
       } catch (verificationError) {
-        console.error('Error sending verification email:', verificationError);
-        // Don't fail registration if verification email fails
+        console.error('Error sending custom verification email:', verificationError);
+        // Fallback to Firebase default if custom fails
+        try {
+          await sendEmailVerification(firebaseUser);
+          console.log('Fallback verification email sent to:', firebaseUser.email);
+        } catch (fallbackError) {
+          console.error('Error sending fallback verification email:', fallbackError);
+          // Don't fail registration if verification email fails
+        }
       }
 
       // 2. Create B2C customer document

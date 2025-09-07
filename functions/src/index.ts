@@ -14,6 +14,9 @@ export {
   sendLoginCredentialsEmail,
   sendAffiliateWelcomeEmail,
   approveAffiliate,
+  sendEmailVerification,
+  sendCustomEmailVerification,
+  verifyEmailCode,
   testEmailOrchestrator
 } from './email-orchestrator/functions';
 
