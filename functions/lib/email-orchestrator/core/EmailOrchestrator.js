@@ -7,6 +7,11 @@ const UserResolver_1 = require("../services/UserResolver");
 const EmailService_1 = require("../services/EmailService");
 const orderConfirmation_1 = require("../templates/orderConfirmation");
 const orderStatusUpdate_1 = require("../templates/orderStatusUpdate");
+const orderNotificationAdmin_1 = require("../templates/orderNotificationAdmin");
+const passwordReset_1 = require("../templates/passwordReset");
+const loginCredentials_1 = require("../templates/loginCredentials");
+const affiliateWelcome_1 = require("../templates/affiliateWelcome");
+const emailVerification_1 = require("../templates/emailVerification");
 class EmailOrchestrator {
     constructor() {
         this.userResolver = new UserResolver_1.UserResolver();
@@ -130,20 +135,97 @@ class EmailOrchestrator {
                 };
                 return (0, orderStatusUpdate_1.generateOrderStatusUpdateTemplate)(orderStatusData, data.language, data.context.orderId);
             case 'ORDER_NOTIFICATION_ADMIN':
-                // TO BE IMPLEMENTED  
-                throw new Error('Admin notification template not yet implemented');
-            case 'WELCOME':
-                // TO BE IMPLEMENTED
-                throw new Error('Welcome email template not yet implemented');
+                if (!data.orderData) {
+                    throw new Error('Order data is required for admin notification email');
+                }
+                const adminNotificationData = {
+                    orderData: {
+                        orderNumber: data.orderData.orderNumber || data.context.orderId || '',
+                        source: data.context.source,
+                        customerInfo: {
+                            firstName: data.context.customerInfo?.firstName,
+                            lastName: data.context.customerInfo?.lastName,
+                            name: data.userData.name,
+                            email: data.userData.email,
+                            companyName: data.userData.companyName,
+                            contactPerson: data.userData.contactPerson,
+                            phone: data.userData.phone,
+                            address: data.userData.address,
+                            city: data.userData.city,
+                            postalCode: data.userData.postalCode,
+                            marginal: data.userData.marginal,
+                        },
+                        shippingInfo: data.orderData.shippingInfo,
+                        items: data.orderData.items || [],
+                        subtotal: data.orderData.subtotal || 0,
+                        shipping: data.orderData.shipping || 0,
+                        vat: data.orderData.vat || 0,
+                        total: data.orderData.total || 0,
+                        discountAmount: data.orderData.discountAmount,
+                        affiliateCode: data.orderData.affiliateCode,
+                        affiliate: data.orderData.affiliate,
+                        payment: data.orderData.payment,
+                        createdAt: data.orderData.createdAt,
+                    },
+                    orderSummary: data.additionalData?.orderSummary,
+                    orderType: data.userData.type === 'B2B' ? 'B2B' : 'B2C'
+                };
+                return (0, orderNotificationAdmin_1.generateOrderNotificationAdminTemplate)(adminNotificationData, data.language);
+            case 'LOGIN_CREDENTIALS':
+                if (!data.additionalData?.credentials) {
+                    throw new Error('Credentials data is required for login credentials email');
+                }
+                const loginCredentialsData = {
+                    userInfo: {
+                        name: data.userData.name || data.userData.contactPerson || '',
+                        email: data.userData.email,
+                        companyName: data.userData.companyName,
+                        contactPerson: data.userData.contactPerson
+                    },
+                    credentials: data.additionalData.credentials,
+                    accountType: (data.additionalData.accountType === 'AFFILIATE') ? 'AFFILIATE' : 'B2B',
+                    wasExistingAuthUser: data.additionalData.wasExistingAuthUser || false
+                };
+                return (0, loginCredentials_1.generateLoginCredentialsTemplate)(loginCredentialsData, data.language);
             case 'PASSWORD_RESET':
-                // TO BE IMPLEMENTED
-                throw new Error('Password reset template not yet implemented');
+                if (!data.additionalData?.resetCode) {
+                    throw new Error('Reset code is required for password reset email');
+                }
+                const passwordResetData = {
+                    email: data.userData.email,
+                    resetCode: data.additionalData.resetCode,
+                    userAgent: data.additionalData.userAgent,
+                    timestamp: data.additionalData.timestamp,
+                    userType: data.additionalData.userType || (data.userData.type === 'B2B' ? 'B2B' : 'B2C')
+                };
+                return (0, passwordReset_1.generatePasswordResetTemplate)(passwordResetData, data.language);
             case 'AFFILIATE_WELCOME':
-                // TO BE IMPLEMENTED
-                throw new Error('Affiliate welcome template not yet implemented');
-            case 'VERIFICATION':
-                // TO BE IMPLEMENTED
-                throw new Error('Verification email template not yet implemented');
+                if (!data.additionalData?.affiliateInfo || !data.additionalData?.credentials) {
+                    throw new Error('Affiliate info and credentials are required for affiliate welcome email');
+                }
+                const affiliateWelcomeData = {
+                    affiliateInfo: data.additionalData.affiliateInfo,
+                    credentials: data.additionalData.credentials,
+                    wasExistingAuthUser: data.additionalData.wasExistingAuthUser || false,
+                    language: data.language
+                };
+                return (0, affiliateWelcome_1.generateAffiliateWelcomeTemplate)(affiliateWelcomeData);
+            case 'EMAIL_VERIFICATION':
+                if (!data.additionalData?.verificationCode) {
+                    throw new Error('Verification code is required for email verification');
+                }
+                const emailVerificationData = {
+                    customerInfo: {
+                        firstName: data.context.customerInfo?.firstName,
+                        lastName: data.context.customerInfo?.lastName,
+                        name: data.context.customerInfo?.name || data.userData.name,
+                        email: data.userData.email
+                    },
+                    verificationCode: data.additionalData.verificationCode,
+                    language: data.language,
+                    source: data.additionalData.source
+                };
+                return (0, emailVerification_1.generateEmailVerificationTemplate)(emailVerificationData);
             default:
                 throw new Error(`Unknown email type: ${emailType}`);
         }
@@ -158,10 +240,10 @@ class EmailOrchestrator {
                 : '"B8Shield Shop" <b8shield.reseller@gmail.com>',
             'ORDER_STATUS_UPDATE': '"B8Shield" <b8shield.reseller@gmail.com>',
             'ORDER_NOTIFICATION_ADMIN': '"B8Shield System" <b8shield.reseller@gmail.com>',
-            'WELCOME': '"B8Shield" <b8shield.reseller@gmail.com>',
+            'LOGIN_CREDENTIALS': '"B8Shield" <b8shield.reseller@gmail.com>',
             'PASSWORD_RESET': '"B8Shield Security" <b8shield.reseller@gmail.com>',
             'AFFILIATE_WELCOME': '"B8Shield Affiliate Program" <b8shield.reseller@gmail.com>',
-            'VERIFICATION': '"B8Shield" <b8shield.reseller@gmail.com>'
+            'EMAIL_VERIFICATION': '"B8Shield Shop" <b8shield.reseller@gmail.com>'
         };
         return fromAddresses[emailType] || '"B8Shield" <b8shield.reseller@gmail.com>';
     }

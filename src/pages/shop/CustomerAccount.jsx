@@ -5,7 +5,8 @@ import { useTranslation } from '../../contexts/TranslationContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
-import { updatePassword, sendEmailVerification } from 'firebase/auth';
+import { updatePassword } from 'firebase/auth';
+import { httpsCallable, getFunctions } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
@@ -211,7 +212,21 @@ const CustomerAccount = () => {
 
   const handleResendVerification = async () => {
     try {
-      await sendEmailVerification(currentUser);
+      const functions = getFunctions();
+      const sendCustomEmailVerification = httpsCallable(functions, 'sendCustomEmailVerification');
+      
+      await sendCustomEmailVerification({
+        customerInfo: {
+          firstName: customer?.firstName || '',
+          lastName: customer?.lastName || '',
+          name: customer?.name || currentUser?.displayName || '',
+          email: currentUser?.email || ''
+        },
+        firebaseAuthUid: currentUser?.uid || '',
+        source: 'account_resend',
+        language: language
+      });
+      
       toast.success(t('customer_account_verification_sent', 'Verifieringslänk skickad till din e-post'));
     } catch (error) {
       console.error('Error sending verification:', error);

@@ -321,8 +321,18 @@ const AdminB2CCustomerEdit = () => {
 
     try {
       setSaving(true);
-      const sendVerificationEmail = httpsCallable(functions, 'sendVerificationEmailV3');
-      await sendVerificationEmail({ email: customer.email });
+      const sendCustomEmailVerification = httpsCallable(functions, 'sendCustomEmailVerification');
+      await sendCustomEmailVerification({ 
+        customerInfo: {
+          firstName: customer.firstName || '',
+          lastName: customer.lastName || '',
+          name: customer.name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim(),
+          email: customer.email
+        },
+        firebaseAuthUid: customer.firebaseAuthUid || 'admin-resend',
+        source: 'admin_resend',
+        language: customer.language || 'sv-SE'
+      });
       toast.success('Verifieringsmejl skickat till kunden!');
     } catch (error) {
       console.error('Error sending verification email:', error);

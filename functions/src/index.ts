@@ -48,11 +48,9 @@ import { processAffiliateConversionV2 } from './affiliate/triggers/processAffili
 //   confirmPasswordResetV2           // → Use confirmPasswordResetV3
 // } from './email/functions';
 
-// Keep only non-email functions from the legacy system
-import { 
-  sendStatusUpdateHttp,
-  sendUserActivationEmail  // TODO: Migrate to V3
-} from './email/functions';
+// OLD EMAIL FUNCTIONS MOVED TO QUARANTINE - NO LONGER AVAILABLE
+// sendStatusUpdateHttp and sendUserActivationEmail moved to quarantine
+// All email functionality now handled by Email Orchestrator system
 
 // Import order processing functions directly with original names
 import {
@@ -111,12 +109,9 @@ import {
 // Re-export affiliate functions individually with V2 names (avoid V1 conflicts)
 export { logAffiliateClickV2, logAffiliateClickHttpV2, processAffiliateConversionV2 };
 
-// LEGACY EMAIL FUNCTIONS DISABLED - ALL EMAIL NOW USES V3 SYSTEM
-// Only keep non-email functions from legacy system
-export { 
-  sendStatusUpdateHttp as sendStatusUpdateHttpV2,
-  sendUserActivationEmail as sendUserActivationEmailV2  // TODO: Migrate to V3
-};
+// OLD EMAIL FUNCTIONS MOVED TO QUARANTINE - NO LONGER EXPORTED
+// All email functionality now handled by Email Orchestrator system
+// sendStatusUpdateHttp and sendUserActivationEmail moved to quarantine
 
 // Re-export order processing functions individually with V2 names (avoid V1 conflicts)
 export {
@@ -172,7 +167,8 @@ export const exampleProtectedFunction = onRequest(
 );
 
 // Test function for debugging email issues
-export { testPasswordResetMinimal } from './email/testPasswordReset';
+// OLD FUNCTION MOVED TO QUARANTINE - testPasswordResetMinimal no longer available
+// Use Email Orchestrator system for password reset testing
 
 // Google Merchant Center Integration
 export {
@@ -188,22 +184,7 @@ export {
   forceSyncProducts
 };
 
-// New V3 Email System Functions
-export { sendPasswordResetV3, confirmPasswordResetV3 } from './email-v2/functions';
-export { 
-  sendCustomerWelcomeEmailV3,
-  sendAffiliateWelcomeEmailV3,
-  sendB2COrderPendingEmailV3,
-  sendB2COrderNotificationAdminV3,
-  sendB2BOrderConfirmationCustomerV3,
-  sendOrderStatusEmailV3,
-  sendB2BOrderConfirmationAdminV3,
-  sendVerificationEmailV3,
-  sendAffiliateCredentialsV3,
-  approveAffiliateV3
-} from './email-v2/functions-main';
-
-// Debug functions removed - found the real issue
-
-// V3 Email System Triggers
-export { sendOrderConfirmationEmailsV3 } from './email-v2/triggers'; 
+// OLD V1/V2/V3 EMAIL SYSTEM FUNCTIONS - MOVED TO QUARANTINE
+// All old email functions have been migrated to the new Email Orchestrator system
+// Old files moved to: functions/quarantine/old-email-systems/
+// New system: functions/src/email-orchestrator/ 

@@ -16,6 +16,9 @@ export declare const EMAIL_CONFIG: {
         readonly BORDER_RADIUS: "8px";
         readonly FONT_FAMILY: "'Segoe UI', Arial, sans-serif";
     };
+    readonly FONTS: {
+        readonly PRIMARY: "'Segoe UI', Arial, sans-serif";
+    };
     readonly COLORS: {
         readonly PRIMARY: "#1d4ed8";
         readonly SUCCESS: "#059669";
@@ -25,6 +28,7 @@ export declare const EMAIL_CONFIG: {
         readonly TEXT_SECONDARY: "#374151";
         readonly TEXT_MUTED: "#6b7280";
         readonly BORDER: "#e5e7eb";
+        readonly LINK: "#2563eb";
     };
     readonly LANGUAGES: {
         readonly DEFAULT: "sv-SE";

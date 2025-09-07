@@ -2,7 +2,7 @@ import { onRequest, onCall } from 'firebase-functions/v2/https';
 import { getApp } from 'firebase-admin/app';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
-import { db } from '../email/email-handler';
+import { db } from '../config/database';
 
 // Get Firebase Auth from already initialized app
 const auth = getAuth(getApp());

@@ -24,6 +24,10 @@ exports.EMAIL_CONFIG = {
         BORDER_RADIUS: '8px',
         FONT_FAMILY: "'Segoe UI', Arial, sans-serif",
     },
+    // Font settings
+    FONTS: {
+        PRIMARY: "'Segoe UI', Arial, sans-serif",
+    },
     // Brand colors
     COLORS: {
         PRIMARY: '#1d4ed8',
@@ -34,6 +38,7 @@ exports.EMAIL_CONFIG = {
         TEXT_SECONDARY: '#374151',
         TEXT_MUTED: '#6b7280',
         BORDER: '#e5e7eb',
+        LINK: '#2563eb',
     },
     // Language settings
     LANGUAGES: {
@@ -48,9 +53,9 @@ function getLanguageSegment(lang) {
     return 'se';
 }
 exports.getLanguageSegment = getLanguageSegment;
-// Helper function to format prices
+// Helper function to format prices (V3 compatible)
 function formatPrice(amount) {
-    return `${amount.toFixed(2).replace('.', ',')} kr`;
+    return `${amount.toFixed(0)} SEK`;
 }
 exports.formatPrice = formatPrice;
 // Helper function to get support URL

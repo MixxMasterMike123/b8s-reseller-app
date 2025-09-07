@@ -25,6 +25,11 @@ export const EMAIL_CONFIG = {
     FONT_FAMILY: "'Segoe UI', Arial, sans-serif",
   },
   
+  // Font settings
+  FONTS: {
+    PRIMARY: "'Segoe UI', Arial, sans-serif",
+  },
+  
   // Brand colors
   COLORS: {
     PRIMARY: '#1d4ed8',
@@ -35,6 +40,7 @@ export const EMAIL_CONFIG = {
     TEXT_SECONDARY: '#374151',
     TEXT_MUTED: '#6b7280',
     BORDER: '#e5e7eb',
+    LINK: '#2563eb',
   },
   
   // Language settings

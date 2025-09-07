@@ -5,7 +5,7 @@ const https_1 = require("firebase-functions/v2/https");
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const auth_1 = require("firebase-admin/auth");
-const email_handler_1 = require("../email/email-handler");
+const database_1 = require("../config/database");
 // Get Firebase Auth from already initialized app
 const auth = (0, auth_1.getAuth)((0, app_1.getApp)());
 // Delete Customer Account (Admin Only)
@@ -16,7 +16,7 @@ exports.deleteCustomerAccount = (0, https_1.onCall)(async (request) => {
     }
     try {
         // Get admin user data to verify permissions
-        const adminDoc = await email_handler_1.db.collection('users').doc(userAuth.uid).get();
+        const adminDoc = await database_1.db.collection('users').doc(userAuth.uid).get();
         if (!adminDoc.exists || adminDoc.data()?.role !== 'admin') {
             throw new Error('Måste vara administratör');
         }
@@ -25,7 +25,7 @@ exports.deleteCustomerAccount = (0, https_1.onCall)(async (request) => {
             throw new Error('Customer ID krävs');
         }
         // Get customer data
-        const customerDoc = await email_handler_1.db.collection('users').doc(customerId).get();
+        const customerDoc = await database_1.db.collection('users').doc(customerId).get();
         if (!customerDoc.exists) {
             throw new Error('Kunden kunde inte hittas');
         }
@@ -78,7 +78,7 @@ exports.deleteCustomerAccount = (0, https_1.onCall)(async (request) => {
         };
         // Delete customer's orders
         try {
-            const ordersQuery = await email_handler_1.db.collection('orders').where('userId', '==', customerId).get();
+            const ordersQuery = await database_1.db.collection('orders').where('userId', '==', customerId).get();
             const orderDeletePromises = ordersQuery.docs.map(doc => doc.ref.delete());
             await Promise.all(orderDeletePromises);
             deletionResults.orders = ordersQuery.size;
@@ -89,7 +89,7 @@ exports.deleteCustomerAccount = (0, https_1.onCall)(async (request) => {
         }
         // Delete customer's marketing materials
         try {
-            const materialsQuery = await email_handler_1.db.collection('users').doc(customerId).collection('marketingMaterials').get();
+            const materialsQuery = await database_1.db.collection('users').doc(customerId).collection('marketingMaterials').get();
             const materialDeletePromises = materialsQuery.docs.map(doc => doc.ref.delete());
             await Promise.all(materialDeletePromises);
             deletionResults.marketingMaterials = materialsQuery.size;
@@ -100,7 +100,7 @@ exports.deleteCustomerAccount = (0, https_1.onCall)(async (request) => {
         }
         // Delete admin documents for this customer
         try {
-            const adminDocsQuery = await email_handler_1.db.collection('adminCustomerDocuments').where('customerId', '==', customerId).get();
+            const adminDocsQuery = await database_1.db.collection('adminCustomerDocuments').where('customerId', '==', customerId).get();
             const adminDocDeletePromises = adminDocsQuery.docs.map(doc => doc.ref.delete());
             await Promise.all(adminDocDeletePromises);
             deletionResults.adminDocuments = adminDocsQuery.size;
@@ -110,7 +110,7 @@ exports.deleteCustomerAccount = (0, https_1.onCall)(async (request) => {
             console.error('Error deleting admin documents:', error);
         }
         // Finally, delete the customer document
-        await email_handler_1.db.collection('users').doc(customerId).delete();
+        await database_1.db.collection('users').doc(customerId).delete();
         deletionResults.customer = true;
         console.log(`Customer ${customerId} (${customerData.email}) deleted successfully by admin ${userAuth.uid}`);
         return {
@@ -135,7 +135,7 @@ exports.deleteB2CCustomerAccount = (0, https_1.onCall)(async (request) => {
     }
     try {
         // Get admin user data to verify permissions
-        const adminDoc = await email_handler_1.db.collection('users').doc(userAuth.uid).get();
+        const adminDoc = await database_1.db.collection('users').doc(userAuth.uid).get();
         if (!adminDoc.exists || adminDoc.data()?.role !== 'admin') {
             throw new Error('Måste vara administratör');
         }
@@ -144,7 +144,7 @@ exports.deleteB2CCustomerAccount = (0, https_1.onCall)(async (request) => {
             throw new Error('Customer ID krävs');
         }
         // Get B2C customer data
-        const customerDoc = await email_handler_1.db.collection('b2cCustomers').doc(customerId).get();
+        const customerDoc = await database_1.db.collection('b2cCustomers').doc(customerId).get();
         if (!customerDoc.exists) {
             throw new Error('B2C-kunden kunde inte hittas');
         }
@@ -191,7 +191,7 @@ exports.deleteB2CCustomerAccount = (0, https_1.onCall)(async (request) => {
         let ordersAffected = 0;
         try {
             // Find orders with b2cCustomerId
-            const ordersWithAccountQuery = await email_handler_1.db.collection('orders').where('b2cCustomerId', '==', customerId).get();
+            const ordersWithAccountQuery = await database_1.db.collection('orders').where('b2cCustomerId', '==', customerId).get();
             const accountOrderUpdates = ordersWithAccountQuery.docs.map(doc => doc.ref.update({
                 customerDeleted: true,
                 customerDeletedAt: firestore_1.FieldValue.serverTimestamp(),
@@ -199,7 +199,7 @@ exports.deleteB2CCustomerAccount = (0, https_1.onCall)(async (request) => {
                 updatedAt: firestore_1.FieldValue.serverTimestamp()
             }));
             // Find orders by email (guest orders)
-            const ordersWithEmailQuery = await email_handler_1.db.collection('orders')
+            const ordersWithEmailQuery = await database_1.db.collection('orders')
                 .where('source', '==', 'b2c')
                 .where('customerInfo.email', '==', customerData.email)
                 .get();
@@ -219,7 +219,7 @@ exports.deleteB2CCustomerAccount = (0, https_1.onCall)(async (request) => {
         }
         // Create audit log entry
         try {
-            await email_handler_1.db.collection('auditLogs').add({
+            await database_1.db.collection('auditLogs').add({
                 action: 'delete_b2c_customer',
                 targetId: customerId,
                 targetType: 'b2cCustomer',
@@ -240,7 +240,7 @@ exports.deleteB2CCustomerAccount = (0, https_1.onCall)(async (request) => {
             // Continue even if audit logging fails
         }
         // Finally, delete the B2C customer document
-        await email_handler_1.db.collection('b2cCustomers').doc(customerId).delete();
+        await database_1.db.collection('b2cCustomers').doc(customerId).delete();
         console.log(`B2C Customer ${customerId} (${customerData.email}) deleted successfully by admin ${userAuth.uid}`);
         return {
             success: true,
@@ -268,7 +268,7 @@ exports.toggleCustomerActiveStatus = (0, https_1.onCall)(async (request) => {
     }
     try {
         // Get admin user data to verify permissions
-        const adminDoc = await email_handler_1.db.collection('users').doc(userAuth.uid).get();
+        const adminDoc = await database_1.db.collection('users').doc(userAuth.uid).get();
         if (!adminDoc.exists || adminDoc.data()?.role !== 'admin') {
             throw new Error('Måste vara administratör');
         }
@@ -277,7 +277,7 @@ exports.toggleCustomerActiveStatus = (0, https_1.onCall)(async (request) => {
             throw new Error('Customer ID och aktiv status krävs');
         }
         // Get customer data
-        const customerDoc = await email_handler_1.db.collection('users').doc(customerId).get();
+        const customerDoc = await database_1.db.collection('users').doc(customerId).get();
         if (!customerDoc.exists) {
             throw new Error('Kunden kunde inte hittas');
         }
@@ -313,7 +313,7 @@ exports.toggleCustomerActiveStatus = (0, https_1.onCall)(async (request) => {
                 authUpdateResult = 'updated_by_email';
                 console.log(`Updated Firebase Auth user status by email: ${customerData.email} (disabled: ${!activeStatus})`);
                 // Update Firestore with the found auth UID
-                await email_handler_1.db.collection('users').doc(customerId).update({
+                await database_1.db.collection('users').doc(customerId).update({
                     firebaseAuthUid: authUser.uid,
                     updatedAt: firestore_1.FieldValue.serverTimestamp()
                 });
@@ -330,7 +330,7 @@ exports.toggleCustomerActiveStatus = (0, https_1.onCall)(async (request) => {
             }
         }
         // Update customer status in Firestore
-        await email_handler_1.db.collection('users').doc(customerId).update({
+        await database_1.db.collection('users').doc(customerId).update({
             active: activeStatus,
             isActive: activeStatus,
             updatedAt: firestore_1.FieldValue.serverTimestamp()
@@ -371,13 +371,13 @@ exports.createAdminUser = (0, https_1.onRequest)({
             updatedAt: firestore_1.FieldValue.serverTimestamp()
         };
         // Check if admin user already exists
-        const existingAdmin = await email_handler_1.db.collection('users')
+        const existingAdmin = await database_1.db.collection('users')
             .where('email', '==', adminUserData.email)
             .get();
         if (!existingAdmin.empty) {
             console.log('Admin user already exists, updating...');
             const adminDoc = existingAdmin.docs[0];
-            await email_handler_1.db.collection('users').doc(adminDoc.id).update({
+            await database_1.db.collection('users').doc(adminDoc.id).update({
                 ...adminUserData,
                 updatedAt: firestore_1.FieldValue.serverTimestamp()
             });
@@ -390,7 +390,7 @@ exports.createAdminUser = (0, https_1.onRequest)({
         }
         else {
             // Create new admin user
-            const docRef = await email_handler_1.db.collection('users').add(adminUserData);
+            const docRef = await database_1.db.collection('users').add(adminUserData);
             console.log(`Created admin user with ID: ${docRef.id}`);
             res.status(200).json({
                 success: true,
@@ -421,7 +421,7 @@ exports.checkNamedDatabase = (0, https_1.onRequest)({
         const results = {};
         for (const collectionName of collections) {
             try {
-                const snapshot = await email_handler_1.db.collection(collectionName).get();
+                const snapshot = await database_1.db.collection(collectionName).get();
                 results[collectionName] = {
                     count: snapshot.size,
                     docs: snapshot.docs.slice(0, 5).map(doc => ({
@@ -460,7 +460,7 @@ exports.debugDatabase = (0, https_1.onRequest)({
     try {
         console.log('Debugging database contents...');
         // Check orders
-        const ordersSnapshot = await email_handler_1.db.collection('orders').get();
+        const ordersSnapshot = await database_1.db.collection('orders').get();
         const orders = [];
         ordersSnapshot.forEach(doc => {
             orders.push({
@@ -472,7 +472,7 @@ exports.debugDatabase = (0, https_1.onRequest)({
             });
         });
         // Check users
-        const usersSnapshot = await email_handler_1.db.collection('users').get();
+        const usersSnapshot = await database_1.db.collection('users').get();
         const users = [];
         usersSnapshot.forEach(doc => {
             users.push({
@@ -484,7 +484,7 @@ exports.debugDatabase = (0, https_1.onRequest)({
             });
         });
         // Check products
-        const productsSnapshot = await email_handler_1.db.collection('products').get();
+        const productsSnapshot = await database_1.db.collection('products').get();
         const products = [];
         productsSnapshot.forEach(doc => {
             products.push({
@@ -495,7 +495,7 @@ exports.debugDatabase = (0, https_1.onRequest)({
             });
         });
         // Check affiliates
-        const affiliatesSnapshot = await email_handler_1.db.collection('affiliates').get();
+        const affiliatesSnapshot = await database_1.db.collection('affiliates').get();
         const affiliates = [];
         affiliatesSnapshot.forEach(doc => {
             affiliates.push({

@@ -30,7 +30,7 @@ const firestore_1 = require("firebase-admin/firestore");
 const app_urls_1 = require("../config/app-urls");
 const rate_limits_1 = require("../config/rate-limits");
 // V3 Email System - imports handled dynamically in functions
-const email_handler_1 = require("../email/email-handler");
+const database_1 = require("../config/database");
 /**
  * Enhanced rate limiting with bulk operation detection
  */
@@ -254,7 +254,7 @@ exports.processB2COrderCompletionHttp = (0, https_1.onRequest)({
             return;
         }
         console.log(`Processing B2C order completion for orderId: ${orderId}`);
-        const localDb = email_handler_1.db; // Use the correct named database
+        const localDb = database_1.db; // Use the correct named database
         // --- Start of Affiliate Conversion Logic ---
         const orderRef = localDb.collection('orders').doc(orderId);
         const orderSnap = await orderRef.get();
@@ -295,37 +295,43 @@ exports.processB2COrderCompletionHttp = (0, https_1.onRequest)({
             const customerEmail = orderData.customerInfo?.email;
             // customerLang removed - V3 functions handle language detection automatically
             if (customerEmail) {
-                // Send customer confirmation email using V3 system
-                console.log(`Sending customer confirmation email to ${customerEmail} using V3 system`);
+                // Send customer confirmation email using orchestrator system
+                console.log(`Sending customer confirmation email to ${customerEmail} using orchestrator system`);
                 try {
-                    // Call V3 customer email function directly
-                    const { sendB2COrderPendingEmailV3 } = require('../email-v2/functions-main');
-                    await sendB2COrderPendingEmailV3({
-                        data: {
-                            orderData,
-                            customerInfo: orderData.customerInfo,
-                            orderId
-                        }
+                    // Call orchestrator customer email function
+                    const { EmailOrchestrator } = require('../email-orchestrator/core/EmailOrchestrator');
+                    const orchestrator = new EmailOrchestrator();
+                    await orchestrator.sendEmail({
+                        emailType: 'ORDER_CONFIRMATION',
+                        customerInfo: orderData.customerInfo,
+                        orderId: orderId,
+                        source: 'b2c',
+                        language: orderData.customerInfo?.language || 'sv-SE',
+                        orderData: orderData
                     });
-                    console.log(`✅ V3 Customer confirmation email sent to ${customerEmail}`);
+                    console.log(`✅ Orchestrator Customer confirmation email sent to ${customerEmail}`);
                 }
                 catch (customerEmailError) {
-                    console.error(`❌ V3 Customer email failed for ${customerEmail}:`, customerEmailError);
+                    console.error(`❌ Orchestrator Customer email failed for ${customerEmail}:`, customerEmailError);
                 }
                 try {
-                    // Send admin notification email using V3 system
-                    console.log('Sending admin notification email using V3 system');
-                    const { sendB2COrderNotificationAdminV3 } = require('../email-v2/functions-main');
-                    await sendB2COrderNotificationAdminV3({
-                        data: {
-                            orderData,
-                            orderId
-                        }
+                    // Send admin notification email using orchestrator system
+                    console.log('Sending admin notification email using orchestrator system');
+                    const { EmailOrchestrator } = require('../email-orchestrator/core/EmailOrchestrator');
+                    const orchestrator = new EmailOrchestrator();
+                    await orchestrator.sendEmail({
+                        emailType: 'ORDER_NOTIFICATION_ADMIN',
+                        customerInfo: orderData.customerInfo,
+                        orderId: orderId,
+                        source: 'b2c',
+                        language: 'sv-SE',
+                        orderData: orderData,
+                        adminEmail: true
                     });
-                    console.log(`✅ V3 Admin notification email sent for order ${orderData.orderNumber}`);
+                    console.log(`✅ Orchestrator Admin notification email sent for order ${orderData.orderNumber}`);
                 }
                 catch (adminEmailError) {
-                    console.error(`❌ V3 Admin email failed for order ${orderId}:`, adminEmailError);
+                    console.error(`❌ Orchestrator Admin email failed for order ${orderId}:`, adminEmailError);
                 }
             }
             else {
@@ -503,7 +509,7 @@ exports.processB2COrderCompletion = (0, https_1.onCall)({
         throw new functions.https.HttpsError('invalid-argument', 'The function must be called with an "orderId".');
     }
     console.log(`Processing B2C order completion for orderId: ${orderId}`);
-    const localDb = email_handler_1.db; // Use the correct named database
+    const localDb = database_1.db; // Use the correct named database
     try {
         // --- Start of Affiliate Conversion Logic ---
         const orderRef = localDb.collection('orders').doc(orderId);
@@ -627,7 +633,7 @@ exports.manualStatusUpdate = (0, https_1.onRequest)(async (req, res) => {
     try {
         console.log('Manual status update test...');
         // Get an order with a known valid userId (for testing email functionality)
-        const ordersSnapshot = await email_handler_1.db.collection('orders')
+        const ordersSnapshot = await database_1.db.collection('orders')
             .where('userId', 'in', ['9AudFilG8VeYHcFnKgUtQkByAmn1', 'hC7lYEBKFBcg8y36s0wzJ0onSqt1', 'hCu3TDpe5XZ0adTp5eGLpGxDvL13'])
             .limit(1).get();
         if (ordersSnapshot.empty) {
@@ -642,7 +648,7 @@ exports.manualStatusUpdate = (0, https_1.onRequest)(async (req, res) => {
         const orderId = orderDoc.id;
         console.log(`Updating order ${orderData.orderNumber} from ${orderData.status} to "delivered"`);
         // Update the order status - this should trigger sendOrderStatusUpdateEmail
-        await email_handler_1.db.collection('orders').doc(orderId).update({
+        await database_1.db.collection('orders').doc(orderId).update({
             status: 'delivered',
             updatedAt: firestore_1.FieldValue.serverTimestamp(),
             trackingNumber: 'TEST-MANUAL-123',
@@ -673,7 +679,7 @@ exports.testOrderUpdate = (0, https_1.onRequest)(async (req, res) => {
     try {
         console.log('Testing order status update email...');
         // Get an order with a known valid userId (for testing email functionality)
-        const ordersSnapshot = await email_handler_1.db.collection('orders')
+        const ordersSnapshot = await database_1.db.collection('orders')
             .where('userId', 'in', ['9AudFilG8VeYHcFnKgUtQkByAmn1', 'hC7lYEBKFBcg8y36s0wzJ0onSqt1', 'hCu3TDpe5XZ0adTp5eGLpGxDvL13'])
             .limit(1).get();
         if (ordersSnapshot.empty) {
@@ -694,7 +700,7 @@ exports.testOrderUpdate = (0, https_1.onRequest)(async (req, res) => {
             });
             return;
         }
-        const userSnapshot = await email_handler_1.db.collection('users').doc(orderData.userId).get();
+        const userSnapshot = await database_1.db.collection('users').doc(orderData.userId).get();
         if (!userSnapshot.exists) {
             res.status(404).json({
                 success: false,
@@ -704,22 +710,29 @@ exports.testOrderUpdate = (0, https_1.onRequest)(async (req, res) => {
         }
         const userData = userSnapshot.data();
         console.log(`Found user: ${userData.email}`);
-        // TODO: Update test function to use V3 email system
-        // For now, use V3 order status email function
+        // Use orchestrator email system for order status updates
         try {
-            const { sendOrderStatusEmailV3 } = require('../email-v2/functions-main');
-            await sendOrderStatusEmailV3({
-                data: {
-                    orderData,
-                    userData,
+            const { EmailOrchestrator } = require('../email-orchestrator/core/EmailOrchestrator');
+            const orchestrator = new EmailOrchestrator();
+            await orchestrator.sendEmail({
+                emailType: 'ORDER_STATUS_UPDATE',
+                userData: userData,
+                orderId: orderDoc.id,
+                language: userData.preferredLang || 'sv-SE',
+                orderData: orderData,
+                additionalData: {
                     newStatus: 'shipped',
-                    isTest: true
+                    previousStatus: orderData.status,
+                    trackingNumber: 'TEST-123456789SE',
+                    estimatedDelivery: '2025-01-25',
+                    notes: 'Test order status update email',
+                    userType: 'B2B'
                 }
             });
-            console.log(`✅ V3 Order status test email sent to ${userData.email}`);
+            console.log(`✅ Orchestrator Order status test email sent to ${userData.email}`);
         }
         catch (emailError) {
-            console.error(`❌ V3 Order status test email failed:`, emailError);
+            console.error(`❌ Orchestrator Order status test email failed:`, emailError);
             // Fallback: just log the test
             console.log(`TEST: Would send order status update to ${userData.email} for order ${orderData.orderNumber}`);
         }

@@ -1,5 +1,5 @@
 import { OrderContext } from '../services/UserResolver';
-export type EmailType = 'ORDER_CONFIRMATION' | 'ORDER_STATUS_UPDATE' | 'ORDER_NOTIFICATION_ADMIN' | 'WELCOME' | 'PASSWORD_RESET' | 'AFFILIATE_WELCOME' | 'VERIFICATION';
+export type EmailType = 'ORDER_CONFIRMATION' | 'ORDER_STATUS_UPDATE' | 'ORDER_NOTIFICATION_ADMIN' | 'PASSWORD_RESET' | 'LOGIN_CREDENTIALS' | 'AFFILIATE_WELCOME' | 'EMAIL_VERIFICATION';
 export interface EmailContext extends OrderContext {
     emailType: EmailType;
     orderData?: any;

@@ -1,8 +1,7 @@
-export { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail, testEmailOrchestrator } from './email-orchestrator/functions';
+export { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail, sendOrderNotificationAdmin, sendPasswordResetEmail, sendLoginCredentialsEmail, sendAffiliateWelcomeEmail, approveAffiliate, sendEmailVerification, sendCustomEmailVerification, verifyEmailCode, testEmailOrchestrator } from './email-orchestrator/functions';
 import { logAffiliateClickV2 } from './affiliate/callable/logAffiliateClick';
 import { logAffiliateClickHttpV2 } from './affiliate/http/logAffiliateClickHttp';
 import { processAffiliateConversionV2 } from './affiliate/triggers/processAffiliateConversion';
-import { sendStatusUpdateHttp, sendUserActivationEmail } from './email/functions';
 import { processB2COrderCompletionHttp, // RE-ENABLED: Critical for affiliate processing
 processB2COrderCompletion, manualStatusUpdate } from './order-processing/functions';
 import { getGeoData, testGeoHeaders } from './geo/functions';
@@ -13,7 +12,6 @@ import { createPaymentIntentV2 } from './payment/createPaymentIntent';
 import { createPaymentIntentMinimalV2 } from './payment/createPaymentIntentMinimal';
 import { scrapeWebsiteMeta } from './website-scraper/functions';
 export { logAffiliateClickV2, logAffiliateClickHttpV2, processAffiliateConversionV2 };
-export { sendStatusUpdateHttp as sendStatusUpdateHttpV2, sendUserActivationEmail as sendUserActivationEmailV2 };
 export { processB2COrderCompletionHttp as processB2COrderCompletionHttpV2, // RE-ENABLED: Critical for affiliate processing
 processB2COrderCompletion as processB2COrderCompletionV2, manualStatusUpdate as manualStatusUpdateV2 };
 export { getGeoData as getGeoDataV2, testGeoHeaders as testGeoHeadersV2 };
@@ -21,8 +19,4 @@ export { deleteCustomerAccount as deleteCustomerAccountV2, deleteB2CCustomerAcco
 export { createPaymentIntentV2, createPaymentIntentMinimalV2 };
 export { scrapeWebsiteMeta as scrapeWebsiteMetaV2 };
 export declare const exampleProtectedFunction: import("firebase-functions/v2/https").HttpsFunction;
-export { testPasswordResetMinimal } from './email/testPasswordReset';
 export { syncAllProductsToGoogle, syncProductsToGoogleHttp, syncSingleProductToGoogle, testGoogleMerchantConnection, googleMerchantOnProductCreated, googleMerchantOnProductUpdated, googleMerchantOnProductDeleted, getGoogleMerchantStats, getProductSyncStatus, forceSyncProducts };
-export { sendPasswordResetV3, confirmPasswordResetV3 } from './email-v2/functions';
-export { sendCustomerWelcomeEmailV3, sendAffiliateWelcomeEmailV3, sendB2COrderPendingEmailV3, sendB2COrderNotificationAdminV3, sendB2BOrderConfirmationCustomerV3, sendOrderStatusEmailV3, sendB2BOrderConfirmationAdminV3, sendVerificationEmailV3, sendAffiliateCredentialsV3, approveAffiliateV3 } from './email-v2/functions-main';
-export { sendOrderConfirmationEmailsV3 } from './email-v2/triggers';
