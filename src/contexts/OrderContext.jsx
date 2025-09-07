@@ -642,6 +642,13 @@ export const OrderProvider = ({ children }) => {
         // Trigger email notification via V3 Firebase Function
         try {
           console.log('🔧 DEBUG: Starting V3 order status email process...');
+          console.log('🔧 DEBUG: Order data:', { orderId, userId: orderData.userId, orderNumber: orderData.orderNumber });
+          
+          // Validate required data before proceeding
+          if (!orderData.userId) {
+            console.error('❌ ERROR: orderData.userId is undefined - cannot send email');
+            throw new Error('Order userId is required for email notification');
+          }
           
           // Get user data for email
           const userDoc = await getDoc(doc(db, "users", orderData.userId));
