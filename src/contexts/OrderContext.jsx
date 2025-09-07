@@ -653,19 +653,28 @@ export const OrderProvider = ({ children }) => {
           const functions = getFunctions();
           const sendOrderStatusEmailV3 = httpsCallable(functions, 'sendOrderStatusEmailV3');
           
+          // Ensure all string fields are properly defined to avoid Firebase serialization errors
+          const safeOrderData = {
+            orderNumber: String(orderData.orderNumber || `B8S-${orderId}`),
+            status: String(newStatus),
+            totalAmount: orderData.totalAmount || 0,
+            items: orderData.items || []
+          };
+          
+          const safeUserData = {
+            email: String(userData.email || 'unknown@example.com'),
+            companyName: String(userData.companyName || 'Unknown Company'),
+            contactPerson: String(userData.contactPerson || userData.companyName || 'Unknown Contact')
+          };
+          
           const result = await sendOrderStatusEmailV3({
-            orderData: { 
-              ...orderData, 
-              ...additionalData, 
-              status: newStatus,
-              orderNumber: orderData.orderNumber || `B8S-${orderId}`
-            },
-            userData: userData,
-            newStatus: newStatus,
-            previousStatus: previousStatus,
-            trackingNumber: additionalData.trackingNumber || null,
-            estimatedDelivery: additionalData.estimatedDelivery || null,
-            notes: additionalData.notes || null
+            orderData: safeOrderData,
+            userData: safeUserData,
+            newStatus: String(newStatus),
+            previousStatus: String(previousStatus || 'unknown'),
+            trackingNumber: additionalData.trackingNumber ? String(additionalData.trackingNumber) : null,
+            estimatedDelivery: additionalData.estimatedDelivery ? String(additionalData.estimatedDelivery) : null,
+            notes: additionalData.notes ? String(additionalData.notes) : null
           });
           
           console.log('✅ V3 Status update emails sent successfully:', result.data);
