@@ -2,7 +2,7 @@
 // V2 FUNCTIONS BATCH 4 - Direct imports to avoid circular dependencies
 // EMAIL ORCHESTRATOR SYSTEM - Unified email functions
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.forceSyncProducts = exports.getProductSyncStatus = exports.getGoogleMerchantStats = exports.googleMerchantOnProductDeleted = exports.googleMerchantOnProductUpdated = exports.googleMerchantOnProductCreated = exports.testGoogleMerchantConnection = exports.syncSingleProductToGoogle = exports.syncProductsToGoogleHttp = exports.syncAllProductsToGoogle = exports.exampleProtectedFunction = exports.scrapeWebsiteMetaV2 = exports.createPaymentIntentMinimalV2 = exports.createPaymentIntentV2 = exports.debugDatabaseV2 = exports.checkNamedDatabaseV2 = exports.createAdminUserV2 = exports.toggleCustomerActiveStatusV2 = exports.deleteB2CCustomerAccountV2 = exports.deleteCustomerAccountV2 = exports.testGeoHeadersV2 = exports.getGeoDataV2 = exports.manualStatusUpdateV2 = exports.processB2COrderCompletionV2 = exports.processB2COrderCompletionHttpV2 = exports.processAffiliateConversionV2 = exports.logAffiliateClickHttpV2 = exports.logAffiliateClickV2 = exports.testEmailOrchestrator = exports.verifyEmailCode = exports.sendCustomEmailVerification = exports.sendEmailVerification = exports.approveAffiliate = exports.sendAffiliateWelcomeEmail = exports.sendLoginCredentialsEmail = exports.sendPasswordResetEmail = exports.sendOrderNotificationAdmin = exports.sendOrderStatusUpdateEmail = exports.sendOrderConfirmationEmail = void 0;
+exports.forceSyncProducts = exports.getProductSyncStatus = exports.getGoogleMerchantStats = exports.googleMerchantOnProductDeleted = exports.googleMerchantOnProductUpdated = exports.googleMerchantOnProductCreated = exports.testGoogleMerchantConnection = exports.syncSingleProductToGoogle = exports.syncProductsToGoogleHttp = exports.syncAllProductsToGoogle = exports.exampleProtectedFunction = exports.confirmPasswordReset = exports.confirmPasswordResetV2 = exports.scrapeWebsiteMetaV2 = exports.createPaymentIntentMinimalV2 = exports.createPaymentIntentV2 = exports.debugDatabaseV2 = exports.checkNamedDatabaseV2 = exports.createAdminUserV2 = exports.toggleCustomerActiveStatusV2 = exports.deleteB2CCustomerAccountV2 = exports.deleteCustomerAccountV2 = exports.testGeoHeadersV2 = exports.getGeoDataV2 = exports.manualStatusUpdateV2 = exports.processB2COrderCompletionV2 = exports.processB2COrderCompletionHttpV2 = exports.processAffiliateConversionV2 = exports.logAffiliateClickHttpV2 = exports.logAffiliateClickV2 = exports.testEmailOrchestrator = exports.sendAffiliateApplicationEmails = exports.verifyEmailCode = exports.sendCustomEmailVerification = exports.sendEmailVerification = exports.approveAffiliate = exports.sendAffiliateWelcomeEmail = exports.sendLoginCredentialsEmail = exports.sendPasswordResetEmail = exports.sendOrderNotificationAdmin = exports.sendOrderStatusUpdateEmail = exports.sendOrderConfirmationEmail = void 0;
 // Initialize Firebase Admin SDK
 const app_1 = require("firebase-admin/app");
 (0, app_1.initializeApp)();
@@ -21,7 +21,12 @@ Object.defineProperty(exports, "approveAffiliate", { enumerable: true, get: func
 Object.defineProperty(exports, "sendEmailVerification", { enumerable: true, get: function () { return functions_1.sendEmailVerification; } });
 Object.defineProperty(exports, "sendCustomEmailVerification", { enumerable: true, get: function () { return functions_1.sendCustomEmailVerification; } });
 Object.defineProperty(exports, "verifyEmailCode", { enumerable: true, get: function () { return functions_1.verifyEmailCode; } });
+Object.defineProperty(exports, "sendAffiliateApplicationEmails", { enumerable: true, get: function () { return functions_1.sendAffiliateApplicationEmails; } });
 Object.defineProperty(exports, "testEmailOrchestrator", { enumerable: true, get: function () { return functions_1.testEmailOrchestrator; } });
+// Import confirmPasswordReset separately for aliasing
+const functions_2 = require("./email-orchestrator/functions");
+Object.defineProperty(exports, "confirmPasswordResetV2", { enumerable: true, get: function () { return functions_2.confirmPasswordReset; } });
+Object.defineProperty(exports, "confirmPasswordReset", { enumerable: true, get: function () { return functions_2.confirmPasswordReset; } });
 // Import affiliate functions directly (avoiding export * circular imports)
 const logAffiliateClick_1 = require("./affiliate/callable/logAffiliateClick");
 Object.defineProperty(exports, "logAffiliateClickV2", { enumerable: true, get: function () { return logAffiliateClick_1.logAffiliateClickV2; } });
@@ -54,14 +59,14 @@ Object.defineProperty(exports, "processAffiliateConversionV2", { enumerable: tru
 // sendStatusUpdateHttp and sendUserActivationEmail moved to quarantine
 // All email functionality now handled by Email Orchestrator system
 // Import order processing functions directly with original names
-const functions_2 = require("./order-processing/functions");
-Object.defineProperty(exports, "processB2COrderCompletionHttpV2", { enumerable: true, get: function () { return functions_2.processB2COrderCompletionHttp; } });
-Object.defineProperty(exports, "processB2COrderCompletionV2", { enumerable: true, get: function () { return functions_2.processB2COrderCompletion; } });
-Object.defineProperty(exports, "manualStatusUpdateV2", { enumerable: true, get: function () { return functions_2.manualStatusUpdate; } });
+const functions_3 = require("./order-processing/functions");
+Object.defineProperty(exports, "processB2COrderCompletionHttpV2", { enumerable: true, get: function () { return functions_3.processB2COrderCompletionHttp; } });
+Object.defineProperty(exports, "processB2COrderCompletionV2", { enumerable: true, get: function () { return functions_3.processB2COrderCompletion; } });
+Object.defineProperty(exports, "manualStatusUpdateV2", { enumerable: true, get: function () { return functions_3.manualStatusUpdate; } });
 // Import geo functions for B2C shop currency detection
-const functions_3 = require("./geo/functions");
-Object.defineProperty(exports, "getGeoDataV2", { enumerable: true, get: function () { return functions_3.getGeoData; } });
-Object.defineProperty(exports, "testGeoHeadersV2", { enumerable: true, get: function () { return functions_3.testGeoHeaders; } });
+const functions_4 = require("./geo/functions");
+Object.defineProperty(exports, "getGeoDataV2", { enumerable: true, get: function () { return functions_4.getGeoData; } });
+Object.defineProperty(exports, "testGeoHeadersV2", { enumerable: true, get: function () { return functions_4.testGeoHeaders; } });
 // Import Google Merchant Center sync functions
 const sync_functions_1 = require("./google-merchant/sync-functions");
 Object.defineProperty(exports, "syncAllProductsToGoogle", { enumerable: true, get: function () { return sync_functions_1.syncAllProductsToGoogle; } });
@@ -77,21 +82,21 @@ Object.defineProperty(exports, "getGoogleMerchantStats", { enumerable: true, get
 Object.defineProperty(exports, "getProductSyncStatus", { enumerable: true, get: function () { return admin_functions_1.getProductSyncStatus; } });
 Object.defineProperty(exports, "forceSyncProducts", { enumerable: true, get: function () { return admin_functions_1.forceSyncProducts; } });
 // Import customer-admin functions directly with original names
-const functions_4 = require("./customer-admin/functions");
-Object.defineProperty(exports, "deleteCustomerAccountV2", { enumerable: true, get: function () { return functions_4.deleteCustomerAccount; } });
-Object.defineProperty(exports, "deleteB2CCustomerAccountV2", { enumerable: true, get: function () { return functions_4.deleteB2CCustomerAccount; } });
-Object.defineProperty(exports, "toggleCustomerActiveStatusV2", { enumerable: true, get: function () { return functions_4.toggleCustomerActiveStatus; } });
-Object.defineProperty(exports, "createAdminUserV2", { enumerable: true, get: function () { return functions_4.createAdminUser; } });
-Object.defineProperty(exports, "checkNamedDatabaseV2", { enumerable: true, get: function () { return functions_4.checkNamedDatabase; } });
-Object.defineProperty(exports, "debugDatabaseV2", { enumerable: true, get: function () { return functions_4.debugDatabase; } });
+const functions_5 = require("./customer-admin/functions");
+Object.defineProperty(exports, "deleteCustomerAccountV2", { enumerable: true, get: function () { return functions_5.deleteCustomerAccount; } });
+Object.defineProperty(exports, "deleteB2CCustomerAccountV2", { enumerable: true, get: function () { return functions_5.deleteB2CCustomerAccount; } });
+Object.defineProperty(exports, "toggleCustomerActiveStatusV2", { enumerable: true, get: function () { return functions_5.toggleCustomerActiveStatus; } });
+Object.defineProperty(exports, "createAdminUserV2", { enumerable: true, get: function () { return functions_5.createAdminUser; } });
+Object.defineProperty(exports, "checkNamedDatabaseV2", { enumerable: true, get: function () { return functions_5.checkNamedDatabase; } });
+Object.defineProperty(exports, "debugDatabaseV2", { enumerable: true, get: function () { return functions_5.debugDatabase; } });
 // Import payment functions for Stripe integration
 const createPaymentIntent_1 = require("./payment/createPaymentIntent");
 Object.defineProperty(exports, "createPaymentIntentV2", { enumerable: true, get: function () { return createPaymentIntent_1.createPaymentIntentV2; } });
 const createPaymentIntentMinimal_1 = require("./payment/createPaymentIntentMinimal");
 Object.defineProperty(exports, "createPaymentIntentMinimalV2", { enumerable: true, get: function () { return createPaymentIntentMinimal_1.createPaymentIntentMinimalV2; } });
 // Import website scraper functions for DiningWagon
-const functions_5 = require("./website-scraper/functions");
-Object.defineProperty(exports, "scrapeWebsiteMetaV2", { enumerable: true, get: function () { return functions_5.scrapeWebsiteMeta; } });
+const functions_6 = require("./website-scraper/functions");
+Object.defineProperty(exports, "scrapeWebsiteMetaV2", { enumerable: true, get: function () { return functions_6.scrapeWebsiteMeta; } });
 // Example protected HTTP function - TESTING
 exports.exampleProtectedFunction = (0, https_1.onRequest)({ cors: true }, async (request, response) => {
     // Apply CORS protection

@@ -1,4 +1,5 @@
-export { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail, sendOrderNotificationAdmin, sendPasswordResetEmail, sendLoginCredentialsEmail, sendAffiliateWelcomeEmail, approveAffiliate, sendEmailVerification, sendCustomEmailVerification, verifyEmailCode, testEmailOrchestrator } from './email-orchestrator/functions';
+export { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail, sendOrderNotificationAdmin, sendPasswordResetEmail, sendLoginCredentialsEmail, sendAffiliateWelcomeEmail, approveAffiliate, sendEmailVerification, sendCustomEmailVerification, verifyEmailCode, sendAffiliateApplicationEmails, testEmailOrchestrator } from './email-orchestrator/functions';
+import { confirmPasswordReset } from './email-orchestrator/functions';
 import { logAffiliateClickV2 } from './affiliate/callable/logAffiliateClick';
 import { logAffiliateClickHttpV2 } from './affiliate/http/logAffiliateClickHttp';
 import { processAffiliateConversionV2 } from './affiliate/triggers/processAffiliateConversion';
@@ -18,5 +19,7 @@ export { getGeoData as getGeoDataV2, testGeoHeaders as testGeoHeadersV2 };
 export { deleteCustomerAccount as deleteCustomerAccountV2, deleteB2CCustomerAccount as deleteB2CCustomerAccountV2, toggleCustomerActiveStatus as toggleCustomerActiveStatusV2, createAdminUser as createAdminUserV2, checkNamedDatabase as checkNamedDatabaseV2, debugDatabase as debugDatabaseV2 };
 export { createPaymentIntentV2, createPaymentIntentMinimalV2 };
 export { scrapeWebsiteMeta as scrapeWebsiteMetaV2 };
+export { confirmPasswordReset as confirmPasswordResetV2 };
+export { confirmPasswordReset };
 export declare const exampleProtectedFunction: import("firebase-functions/v2/https").HttpsFunction;
 export { syncAllProductsToGoogle, syncProductsToGoogleHttp, syncSingleProductToGoogle, testGoogleMerchantConnection, googleMerchantOnProductCreated, googleMerchantOnProductUpdated, googleMerchantOnProductDeleted, getGoogleMerchantStats, getProductSyncStatus, forceSyncProducts };

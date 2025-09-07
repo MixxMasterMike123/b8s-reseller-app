@@ -12,6 +12,8 @@ export { approveAffiliate } from './approveAffiliate';
 export { sendEmailVerification } from './sendEmailVerification';
 export { sendCustomEmailVerification } from './sendCustomEmailVerification';
 export { verifyEmailCode } from './verifyEmailCode';
+export { confirmPasswordReset } from './confirmPasswordReset';
+export { sendAffiliateApplicationEmails } from './sendAffiliateApplicationEmails';
 
 // TODO: Implement remaining functions
 

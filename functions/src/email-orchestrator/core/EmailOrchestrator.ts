@@ -10,6 +10,8 @@ import { generatePasswordResetTemplate, PasswordResetData } from '../templates/p
 import { generateLoginCredentialsTemplate, LoginCredentialsData } from '../templates/loginCredentials';
 import { generateAffiliateWelcomeTemplate, AffiliateWelcomeData } from '../templates/affiliateWelcome';
 import { generateEmailVerificationTemplate, EmailVerificationData } from '../templates/emailVerification';
+import { generateAffiliateApplicationReceivedTemplate } from '../templates/affiliateApplicationReceived';
+import { generateAffiliateApplicationNotificationAdminTemplate } from '../templates/affiliateApplicationNotificationAdmin';
 
 export type EmailType = 
   | 'ORDER_CONFIRMATION'
@@ -18,7 +20,9 @@ export type EmailType =
   | 'PASSWORD_RESET'
   | 'LOGIN_CREDENTIALS'
   | 'AFFILIATE_WELCOME'
-  | 'EMAIL_VERIFICATION';
+  | 'EMAIL_VERIFICATION'
+  | 'AFFILIATE_APPLICATION_RECEIVED'
+  | 'AFFILIATE_APPLICATION_NOTIFICATION_ADMIN';
 
 export interface EmailContext extends OrderContext {
   emailType: EmailType;
@@ -283,6 +287,38 @@ export class EmailOrchestrator {
         
         return generateEmailVerificationTemplate(emailVerificationData);
 
+      case 'AFFILIATE_APPLICATION_RECEIVED':
+        if (!data.additionalData?.applicantInfo || !data.additionalData?.applicationId) {
+          throw new Error('Affiliate application received requires applicantInfo and applicationId');
+        }
+        
+        return {
+          subject: data.language === 'en-GB' || data.language === 'en-US' 
+            ? 'Affiliate Application Received - B8Shield'
+            : 'Affiliate-ansökan mottagen - B8Shield',
+          html: generateAffiliateApplicationReceivedTemplate({
+            applicantInfo: data.additionalData.applicantInfo,
+            applicationId: data.additionalData.applicationId,
+            language: data.language
+          }),
+          text: `Thank you for your affiliate application! Your application ID: ${data.additionalData.applicationId}`
+        };
+
+      case 'AFFILIATE_APPLICATION_NOTIFICATION_ADMIN':
+        if (!data.additionalData?.applicantInfo || !data.additionalData?.applicationId) {
+          throw new Error('Affiliate application admin notification requires applicantInfo and applicationId');
+        }
+        
+        return {
+          subject: `Ny Affiliate-ansökan: ${data.additionalData.applicantInfo.name}`,
+          html: generateAffiliateApplicationNotificationAdminTemplate({
+            applicantInfo: data.additionalData.applicantInfo,
+            applicationId: data.additionalData.applicationId,
+            adminPortalUrl: data.additionalData.adminPortalUrl || 'https://partner.b8shield.com'
+          }),
+          text: `New affiliate application from ${data.additionalData.applicantInfo.name} (${data.additionalData.applicantInfo.email}). Application ID: ${data.additionalData.applicationId}`
+        };
+
       default:
         throw new Error(`Unknown email type: ${emailType}`);
     }
@@ -301,7 +337,9 @@ export class EmailOrchestrator {
       'LOGIN_CREDENTIALS': '"B8Shield" <b8shield.reseller@gmail.com>',
       'PASSWORD_RESET': '"B8Shield Security" <b8shield.reseller@gmail.com>',
       'AFFILIATE_WELCOME': '"B8Shield Affiliate Program" <b8shield.reseller@gmail.com>',
-      'EMAIL_VERIFICATION': '"B8Shield Shop" <b8shield.reseller@gmail.com>'
+      'EMAIL_VERIFICATION': '"B8Shield Shop" <b8shield.reseller@gmail.com>',
+      'AFFILIATE_APPLICATION_RECEIVED': '"B8Shield Affiliate Program" <b8shield.reseller@gmail.com>',
+      'AFFILIATE_APPLICATION_NOTIFICATION_ADMIN': '"B8Shield System" <b8shield.reseller@gmail.com>'
     };
 
     return fromAddresses[emailType] || '"B8Shield" <b8shield.reseller@gmail.com>';

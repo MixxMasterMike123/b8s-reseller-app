@@ -21,8 +21,12 @@ export {
   sendEmailVerification,
   sendCustomEmailVerification,
   verifyEmailCode,
+  sendAffiliateApplicationEmails,
   testEmailOrchestrator
 } from './email-orchestrator/functions';
+
+// Import confirmPasswordReset separately for aliasing
+import { confirmPasswordReset } from './email-orchestrator/functions';
 
 // Import affiliate functions directly (avoiding export * circular imports)
 import { logAffiliateClickV2 } from './affiliate/callable/logAffiliateClick';
@@ -151,6 +155,12 @@ export {
   scrapeWebsiteMeta as scrapeWebsiteMetaV2
 };
 
+// Re-export orchestrator functions with V2 aliases for backward compatibility
+export { confirmPasswordReset as confirmPasswordResetV2 };
+
+// Also export the main function
+export { confirmPasswordReset };
+
 // Example protected HTTP function - TESTING
 export const exampleProtectedFunction = onRequest(
   { cors: true },
@@ -173,6 +183,9 @@ export const exampleProtectedFunction = onRequest(
 // Test function for debugging email issues
 // OLD FUNCTION MOVED TO QUARANTINE - testPasswordResetMinimal no longer available
 // Use Email Orchestrator system for password reset testing
+
+// Create V2 alias for backward compatibility with existing frontend code
+// (moved to re-export section below)
 
 // Google Merchant Center Integration
 export {

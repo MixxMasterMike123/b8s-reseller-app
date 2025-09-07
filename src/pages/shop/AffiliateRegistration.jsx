@@ -6,6 +6,7 @@ import ShopFooter from '../../components/shop/ShopFooter';
 import toast from 'react-hot-toast';
 import { db } from '../../firebase/config';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { httpsCallable, getFunctions } from 'firebase/functions';
 
 const AffiliateRegistration = () => {
   const { t, currentLanguage } = useTranslation();
@@ -54,16 +55,62 @@ const AffiliateRegistration = () => {
       return;
     }
     setLoading(true);
+    
     try {
-      await addDoc(collection(db, 'affiliateApplications'), {
+      // 1. Create application document in Firestore
+      const applicationDoc = await addDoc(collection(db, 'affiliateApplications'), {
         ...formData,
         status: 'pending',
         createdAt: serverTimestamp(),
       });
+      
+      console.log('✅ Affiliate application created:', applicationDoc.id);
+      
+      // 2. Send emails via orchestrator (applicant confirmation + admin notification)
+      try {
+        const functions = getFunctions();
+        const sendAffiliateApplicationEmails = httpsCallable(functions, 'sendAffiliateApplicationEmails');
+        
+        const emailResult = await sendAffiliateApplicationEmails({
+          applicantInfo: {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            address: formData.address,
+            city: formData.city,
+            country: formData.country,
+            promotionMethod: formData.promotionMethod,
+            message: formData.message,
+            socials: formData.socials
+          },
+          applicationId: applicationDoc.id,
+          language: formData.preferredLang || currentLanguage || 'sv-SE'
+        });
+        
+        console.log('✅ Affiliate application emails sent:', emailResult.data);
+        
+        if (emailResult.data.applicantEmailSent) {
+          toast.success(t('affiliate_reg_success_with_email', 'Tack för din ansökan! Du har fått en bekräftelse via e-post.'));
+        } else {
+          toast.success(t('affiliate_reg_success', 'Tack för din ansökan! Vi återkommer inom kort.'));
+          console.warn('⚠️ Applicant confirmation email failed to send');
+        }
+        
+        if (!emailResult.data.adminEmailSent) {
+          console.warn('⚠️ Admin notification email failed to send');
+        }
+        
+      } catch (emailError) {
+        console.error('❌ Error sending affiliate application emails:', emailError);
+        // Don't fail the entire process if emails fail
+        toast.success(t('affiliate_reg_success', 'Tack för din ansökan! Vi återkommer inom kort.'));
+        console.warn('⚠️ Application created but emails failed');
+      }
+      
       setSubmitted(true);
-      toast.success(t('affiliate_reg_success', 'Tack för din ansökan! Vi återkommer inom kort.'));
+      
     } catch (error) {
-      console.error('Error submitting affiliate application:', error);
+      console.error('❌ Error submitting affiliate application:', error);
       toast.error(t('affiliate_reg_error', 'Ett fel uppstod. Försök igen.'));
     } finally {
       setLoading(false);

@@ -5,6 +5,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendPasswordResetEmail = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const EmailOrchestrator_1 = require("../core/EmailOrchestrator");
+const database_1 = require("../../config/database");
 exports.sendPasswordResetEmail = (0, https_1.onCall)({
     region: 'us-central1',
     memory: '256MiB',
@@ -26,6 +27,18 @@ exports.sendPasswordResetEmail = (0, https_1.onCall)({
         if (!request.data.resetCode) {
             throw new Error('Reset code is required');
         }
+        // Store reset code in Firestore (matching V3 behavior)
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 1); // 1 hour expiry
+        await database_1.db.collection('passwordResets').add({
+            email: request.data.email,
+            resetCode: request.data.resetCode,
+            expiresAt,
+            used: false,
+            createdAt: new Date(),
+            userType: request.data.userType || 'B2C'
+        });
+        console.log('✅ Reset code stored in Firestore with 1 hour expiry');
         // Initialize EmailOrchestrator
         const orchestrator = new EmailOrchestrator_1.EmailOrchestrator();
         // Send password reset email via orchestrator

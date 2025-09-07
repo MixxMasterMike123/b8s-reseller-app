@@ -2,7 +2,7 @@
 // EmailOrchestrator Functions Index
 // Unified email functions replacing ALL V1/V2/V3 email functions
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.testEmailOrchestrator = exports.verifyEmailCode = exports.sendCustomEmailVerification = exports.sendEmailVerification = exports.approveAffiliate = exports.sendAffiliateWelcomeEmail = exports.sendLoginCredentialsEmail = exports.sendPasswordResetEmail = exports.sendOrderNotificationAdmin = exports.sendOrderStatusUpdateEmail = exports.sendOrderConfirmationEmail = void 0;
+exports.testEmailOrchestrator = exports.sendAffiliateApplicationEmails = exports.confirmPasswordReset = exports.verifyEmailCode = exports.sendCustomEmailVerification = exports.sendEmailVerification = exports.approveAffiliate = exports.sendAffiliateWelcomeEmail = exports.sendLoginCredentialsEmail = exports.sendPasswordResetEmail = exports.sendOrderNotificationAdmin = exports.sendOrderStatusUpdateEmail = exports.sendOrderConfirmationEmail = void 0;
 // Import all unified email functions
 var sendOrderConfirmationEmail_1 = require("./sendOrderConfirmationEmail");
 Object.defineProperty(exports, "sendOrderConfirmationEmail", { enumerable: true, get: function () { return sendOrderConfirmationEmail_1.sendOrderConfirmationEmail; } });
@@ -24,6 +24,10 @@ var sendCustomEmailVerification_1 = require("./sendCustomEmailVerification");
 Object.defineProperty(exports, "sendCustomEmailVerification", { enumerable: true, get: function () { return sendCustomEmailVerification_1.sendCustomEmailVerification; } });
 var verifyEmailCode_1 = require("./verifyEmailCode");
 Object.defineProperty(exports, "verifyEmailCode", { enumerable: true, get: function () { return verifyEmailCode_1.verifyEmailCode; } });
+var confirmPasswordReset_1 = require("./confirmPasswordReset");
+Object.defineProperty(exports, "confirmPasswordReset", { enumerable: true, get: function () { return confirmPasswordReset_1.confirmPasswordReset; } });
+var sendAffiliateApplicationEmails_1 = require("./sendAffiliateApplicationEmails");
+Object.defineProperty(exports, "sendAffiliateApplicationEmails", { enumerable: true, get: function () { return sendAffiliateApplicationEmails_1.sendAffiliateApplicationEmails; } });
 // TODO: Implement remaining functions
 // Test function for EmailOrchestrator system
 const https_1 = require("firebase-functions/v2/https");

@@ -3,6 +3,7 @@
 
 import { onCall } from 'firebase-functions/v2/https';
 import { EmailOrchestrator } from '../core/EmailOrchestrator';
+import { db } from '../../config/database';
 
 interface PasswordResetRequest {
   email: string;
@@ -38,6 +39,21 @@ export const sendPasswordResetEmail = onCall<PasswordResetRequest>(
       if (!request.data.resetCode) {
         throw new Error('Reset code is required');
       }
+
+      // Store reset code in Firestore (matching V3 behavior)
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 1); // 1 hour expiry
+      
+      await db.collection('passwordResets').add({
+        email: request.data.email,
+        resetCode: request.data.resetCode,
+        expiresAt,
+        used: false,
+        createdAt: new Date(),
+        userType: request.data.userType || 'B2C'
+      });
+
+      console.log('✅ Reset code stored in Firestore with 1 hour expiry');
 
       // Initialize EmailOrchestrator
       const orchestrator = new EmailOrchestrator();
