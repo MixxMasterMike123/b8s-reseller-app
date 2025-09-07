@@ -6,6 +6,7 @@ exports.EmailOrchestrator = void 0;
 const UserResolver_1 = require("../services/UserResolver");
 const EmailService_1 = require("../services/EmailService");
 const orderConfirmation_1 = require("../templates/orderConfirmation");
+const orderStatusUpdate_1 = require("../templates/orderStatusUpdate");
 class EmailOrchestrator {
     constructor() {
         this.userResolver = new UserResolver_1.UserResolver();
@@ -114,8 +115,20 @@ class EmailOrchestrator {
                 };
                 return (0, orderConfirmation_1.generateOrderConfirmationTemplate)(orderConfirmationData, data.language);
             case 'ORDER_STATUS_UPDATE':
-                // TO BE IMPLEMENTED
-                throw new Error('Order status update template not yet implemented');
+                if (!data.orderData) {
+                    throw new Error('Order data is required for order status update email');
+                }
+                const orderStatusData = {
+                    orderData: data.orderData,
+                    userData: data.userData,
+                    newStatus: data.additionalData?.newStatus || data.orderData.status,
+                    previousStatus: data.additionalData?.previousStatus,
+                    trackingNumber: data.additionalData?.trackingNumber,
+                    estimatedDelivery: data.additionalData?.estimatedDelivery,
+                    notes: data.additionalData?.notes,
+                    userType: data.userData.type
+                };
+                return (0, orderStatusUpdate_1.generateOrderStatusUpdateTemplate)(orderStatusData, data.language, data.context.orderId);
             case 'ORDER_NOTIFICATION_ADMIN':
                 // TO BE IMPLEMENTED  
                 throw new Error('Admin notification template not yet implemented');

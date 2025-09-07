@@ -754,9 +754,10 @@ export const OrderProvider = ({ children }) => {
           // Don't fail the status update if email fails
         }
         
-        // ZEN Automation: Trigger customer status update on order completion
-        if (['delivered', 'shipped', 'completed'].includes(newStatus)) {
+        // ZEN Automation: Trigger customer status update on order completion (B2B only)
+        if (['delivered', 'shipped', 'completed'].includes(newStatus) && orderData.userId) {
           try {
+            console.log('📦 Order completed, running automation...');
             await onOrderCompleted({ 
               ...orderData, 
               ...additionalData, 
@@ -765,8 +766,10 @@ export const OrderProvider = ({ children }) => {
               totalAmount: orderData.totalAmount || orderData.total
             });
           } catch (automationError) {
-            console.error('Order automation error (non-critical):', automationError);
+            console.error('❌ Error in status automation:', automationError);
           }
+        } else if (['delivered', 'shipped', 'completed'].includes(newStatus)) {
+          console.log('📦 Order completed (B2C/Guest order - skipping B2B automation)');
         }
         
         toast.success(`Order status updated to ${newStatus}`);

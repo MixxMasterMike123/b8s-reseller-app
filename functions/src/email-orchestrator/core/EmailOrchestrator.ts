@@ -4,6 +4,7 @@
 import { UserResolver, ResolvedUser, OrderContext } from '../services/UserResolver';
 import { EmailService, EmailTemplate, EmailOptions } from '../services/EmailService';
 import { generateOrderConfirmationTemplate, OrderConfirmationData } from '../templates/orderConfirmation';
+import { generateOrderStatusUpdateTemplate, OrderStatusUpdateData } from '../templates/orderStatusUpdate';
 
 export type EmailType = 
   | 'ORDER_CONFIRMATION'
@@ -153,8 +154,22 @@ export class EmailOrchestrator {
         return generateOrderConfirmationTemplate(orderConfirmationData, data.language);
 
       case 'ORDER_STATUS_UPDATE':
-        // TO BE IMPLEMENTED
-        throw new Error('Order status update template not yet implemented');
+        if (!data.orderData) {
+          throw new Error('Order data is required for order status update email');
+        }
+        
+        const orderStatusData: OrderStatusUpdateData = {
+          orderData: data.orderData,
+          userData: data.userData,
+          newStatus: data.additionalData?.newStatus || data.orderData.status,
+          previousStatus: data.additionalData?.previousStatus,
+          trackingNumber: data.additionalData?.trackingNumber,
+          estimatedDelivery: data.additionalData?.estimatedDelivery,
+          notes: data.additionalData?.notes,
+          userType: data.userData.type
+        };
+        
+        return generateOrderStatusUpdateTemplate(orderStatusData, data.language, data.context.orderId);
 
       case 'ORDER_NOTIFICATION_ADMIN':
         // TO BE IMPLEMENTED  
