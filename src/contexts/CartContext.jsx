@@ -188,26 +188,34 @@ export const CartProvider = ({ children }) => {
     // Final shipping cost = base cost from first product * weight tiers
     const totalShippingCost = baseShippingCost * shippingTiers;
 
-    // Log shipping calculation for debugging
-    console.log(`🚚 Weight-based shipping calculation with product base cost:`, {
+    // Enhanced logging for debugging shipping issues
+    console.log(`🚚 ENHANCED SHIPPING DEBUG:`, {
       country,
       shippingRegion,
       firstProduct: {
         name: firstProduct?.name,
+        id: firstProduct?.id,
+        fullShippingData: firstProduct?.shipping,
+        specificRegionData: firstProduct?.shipping?.[shippingRegion],
         baseShippingCost: baseShippingCost
       },
-      items: cart.items.map(item => ({ 
+      allCartItems: cart.items.map(item => ({ 
         name: item.name, 
+        id: item.id,
         weight: item.weight?.value || 10,
         quantity: item.quantity,
-        totalWeight: (item.weight?.value || 10) * item.quantity
+        hasShippingData: !!item.shipping,
+        shippingData: item.shipping,
+        regionCost: item.shipping?.[shippingRegion]?.cost
       })),
-      totalProductWeight,
-      envelopeWeight: 20,
-      totalWeight,
-      shippingTiers,
-      baseShippingCost,
-      totalShippingCost
+      calculation: {
+        totalProductWeight,
+        envelopeWeight: 20,
+        totalWeight,
+        shippingTiers,
+        baseShippingCost,
+        totalShippingCost
+      }
     });
 
     return totalShippingCost;
