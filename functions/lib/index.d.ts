@@ -1,3 +1,4 @@
+export { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail, testEmailOrchestrator } from './email-orchestrator/functions';
 import { logAffiliateClickV2 } from './affiliate/callable/logAffiliateClick';
 import { logAffiliateClickHttpV2 } from './affiliate/http/logAffiliateClickHttp';
 import { processAffiliateConversionV2 } from './affiliate/triggers/processAffiliateConversion';

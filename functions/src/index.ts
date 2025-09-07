@@ -1,8 +1,16 @@
 // V2 FUNCTIONS BATCH 4 - Direct imports to avoid circular dependencies
+// EMAIL ORCHESTRATOR SYSTEM - Unified email functions
 
 import { onRequest } from 'firebase-functions/v2/https';
 import { corsHandler } from './protection/cors/cors-handler';
 import { rateLimiter } from './protection/rate-limiting/rate-limiter';
+
+// NEW UNIFIED EMAIL ORCHESTRATOR FUNCTIONS
+export { 
+  sendOrderConfirmationEmail,
+  sendOrderStatusUpdateEmail,
+  testEmailOrchestrator
+} from './email-orchestrator/functions';
 
 // Import affiliate functions directly (avoiding export * circular imports)
 import { logAffiliateClickV2 } from './affiliate/callable/logAffiliateClick';

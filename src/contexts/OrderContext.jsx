@@ -711,9 +711,9 @@ export const OrderProvider = ({ children }) => {
           
           console.log('🔧 DEBUG: User data loaded:', { email: userData.email, companyName: userData.companyName });
           
-          // Call V3 order status email function
+          // Call NEW EmailOrchestrator order status email function
           const functions = getFunctions();
-          const sendOrderStatusEmailV3 = httpsCallable(functions, 'sendOrderStatusEmailV3');
+          const sendOrderStatusUpdateEmail = httpsCallable(functions, 'sendOrderStatusUpdateEmail');
           
           console.log('🔧 DEBUG: Firebase Functions initialized, preparing data...');
           
@@ -738,16 +738,19 @@ export const OrderProvider = ({ children }) => {
             previousStatus: String(previousStatus || 'unknown'),
             trackingNumber: additionalData.trackingNumber ? String(additionalData.trackingNumber) : null,
             estimatedDelivery: additionalData.estimatedDelivery ? String(additionalData.estimatedDelivery) : null,
-            notes: additionalData.notes ? String(additionalData.notes) : null
+            notes: additionalData.notes ? String(additionalData.notes) : null,
+            userId: orderData.userId,
+            b2cCustomerId: orderData.b2cCustomerId,
+            orderId: orderId
           };
           
-          console.log('🔧 DEBUG: About to call sendOrderStatusEmailV3 with data:', JSON.stringify(emailData, null, 2));
+          console.log('🔧 DEBUG: About to call NEW sendOrderStatusUpdateEmail with data:', JSON.stringify(emailData, null, 2));
           
-          const result = await sendOrderStatusEmailV3(emailData);
+          const result = await sendOrderStatusUpdateEmail(emailData);
           
-          console.log('✅ V3 Status update emails sent successfully:', result.data);
+          console.log('✅ EmailOrchestrator Status update emails sent successfully:', result.data);
         } catch (emailError) {
-          console.error('❌ Error sending V3 status update emails:', emailError);
+          console.error('❌ Error sending EmailOrchestrator status update emails:', emailError);
           // Don't fail the status update if email fails
         }
         
