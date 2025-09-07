@@ -359,8 +359,10 @@ export const sendOrderStatusEmailV3 = onCall(async (request) => {
 
     // Get user's preferred language
     const preferredLang = await getUserPreferredLanguage(userData.email);
+    console.log(`🌍 User preferred language: ${preferredLang}`);
 
-    // Get email template
+    // Get email template with better error handling
+    console.log(`📧 Generating template for status: ${newStatus}`);
     const template = getOrderStatusUpdateTemplate({
       orderData,
       userData,
@@ -370,6 +372,13 @@ export const sendOrderStatusEmailV3 = onCall(async (request) => {
       estimatedDelivery,
       notes
     }, preferredLang);
+
+    // Validate template before sending
+    if (!template.subject || !template.html) {
+      throw new Error('Template generation failed - missing subject or html');
+    }
+    
+    console.log(`📧 Template generated successfully. Subject: ${template.subject}`);
 
     // Send the email
     const messageId = await sendEmailV3(userData.email, template.subject, template.html);

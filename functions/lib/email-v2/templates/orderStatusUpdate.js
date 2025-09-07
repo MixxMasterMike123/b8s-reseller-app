@@ -124,10 +124,18 @@ function getNextSteps(status, lang) {
 }
 function getOrderStatusUpdateTemplate(data, lang = 'sv-SE') {
     const { orderData, userData, newStatus, trackingNumber, estimatedDelivery, notes } = data;
+    // Ensure all required fields are present and valid
+    if (!orderData?.orderNumber || !userData?.email || !newStatus) {
+        throw new Error('Missing required data for order status update template');
+    }
     const contactPerson = userData.contactPerson || userData.companyName || '';
     const statusInfo = getStatusInfo(newStatus, lang);
     const nextSteps = getNextSteps(newStatus, lang);
     const supportUrl = `${config_1.APP_URLS.B2B_PORTAL}/contact`;
+    // Ensure statusInfo has valid properties
+    if (!statusInfo || !statusInfo.name) {
+        throw new Error(`Invalid status: ${newStatus}`);
+    }
     const templates = {
         'sv-SE': {
             subject: `Orderuppdatering: ${orderData.orderNumber} - ${statusInfo.name}`,

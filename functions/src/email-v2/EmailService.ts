@@ -63,6 +63,12 @@ export class EmailService {
   }
 
   private htmlToText(html: string): string {
+    // Handle undefined or null HTML
+    if (!html || typeof html !== 'string') {
+      console.warn('⚠️ htmlToText received invalid HTML:', typeof html);
+      return '';
+    }
+    
     // Simple HTML to text conversion
     return html
       .replace(/<[^>]*>/g, '') // Remove HTML tags
