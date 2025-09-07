@@ -3,8 +3,8 @@ import { onRequest, onCall } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { appUrls } from '../config/app-urls';
 import { RATE_LIMITS } from '../config/rate-limits';
-import { sendEmail, db } from '../email/email-handler';
-import { getEmail } from '../../emails';
+// V3 Email System - imports handled dynamically in functions
+import { db } from '../email/email-handler';
 
 // Global type declarations for enhanced rate limiting
 declare global {
@@ -373,52 +373,41 @@ export const processB2COrderCompletionHttp = onRequest(
       console.log(`Sending B2C order confirmation emails for order ${orderId}`);
       try {
         const customerEmail = orderData.customerInfo?.email;
-        const customerLang = orderData.customerInfo?.preferredLang || 'sv-SE';
+        // customerLang removed - V3 functions handle language detection automatically
         
         if (customerEmail) {
-          // Send customer confirmation email
-          console.log(`Sending customer confirmation email to ${customerEmail}`);
+          // Send customer confirmation email using V3 system
+          console.log(`Sending customer confirmation email to ${customerEmail} using V3 system`);
           
-          // Get email template
-          const { getEmail } = require('../../emails');
-          const customerTemplate = getEmail('b2cOrderPending', customerLang, {
-            orderData,
-            customerInfo: orderData.customerInfo,
-            orderId
-          });
+          try {
+            // Call V3 customer email function directly
+            const { sendB2COrderPendingEmailV3 } = require('../email-v2/functions-main');
+            await sendB2COrderPendingEmailV3({
+              data: {
+                orderData,
+                customerInfo: orderData.customerInfo,
+                orderId
+              }
+            });
+            console.log(`✅ V3 Customer confirmation email sent to ${customerEmail}`);
+          } catch (customerEmailError) {
+            console.error(`❌ V3 Customer email failed for ${customerEmail}:`, customerEmailError);
+          }
           
-          // Send customer email using sendEmail function
-          const { sendEmail, EMAIL_FROM } = require('../email/email-handler');
-          const customerEmailData = {
-            to: customerEmail,
-            from: EMAIL_FROM.b2c,
-            subject: customerTemplate.subject,
-            html: customerTemplate.html,
-            text: customerTemplate.text
-          };
-          
-          await sendEmail(customerEmailData);
-          console.log(`✅ Customer confirmation email sent to ${customerEmail}`);
-          
-          // Send admin notification email
-          console.log('Sending admin notification email');
-          const adminTemplate = getEmail('adminB2COrderNotification', 'sv-SE', {
-            orderData,
-            customerInfo: orderData.customerInfo,
-            orderId
-          });
-          
-          const { ADMIN_EMAILS } = require('../email/email-handler');
-          const adminEmailData = {
-            to: ADMIN_EMAILS,
-            from: EMAIL_FROM.system,
-            subject: adminTemplate.subject,
-            html: adminTemplate.html,
-            text: adminTemplate.text
-          };
-          
-          await sendEmail(adminEmailData);
-          console.log(`✅ Admin notification email sent for order ${orderData.orderNumber}`);
+          try {
+            // Send admin notification email using V3 system
+            console.log('Sending admin notification email using V3 system');
+            const { sendB2COrderNotificationAdminV3 } = require('../email-v2/functions-main');
+            await sendB2COrderNotificationAdminV3({
+              data: {
+                orderData,
+                orderId
+              }
+            });
+            console.log(`✅ V3 Admin notification email sent for order ${orderData.orderNumber}`);
+          } catch (adminEmailError) {
+            console.error(`❌ V3 Admin email failed for order ${orderId}:`, adminEmailError);
+          }
           
         } else {
           console.warn(`No customer email found for order ${orderId}, skipping customer confirmation`);
@@ -866,29 +855,24 @@ export const testOrderUpdate = onRequest(async (req, res) => {
     const userData = userSnapshot.data() as UserData;
     console.log(`Found user: ${userData.email}`);
     
-    // Create a test status update email
-    const template = getEmail('orderShipped', userData.preferredLang || 'sv-SE', { orderData, userData });
-    
-    const testEmail = {
-      to: userData.email,
-      from: `"B8Shield" <info@jphinnovation.se>`,
-      subject: template.subject,
-      text: template.text,
-      html: template.html,
-    };
-    
-    // Also send to admin
-    const adminEmail = {
-      to: "micke.ohlen@gmail.com",
-      from: `"B8Shield System" <info@jphinnovation.se>`,
-      subject: `Manual Test: Order Status Update - ${orderData.orderNumber}`,
-      text: `This is a manual test of the order status update email system.\n\nOrder: ${orderData.orderNumber}\nCustomer: ${userData.email}\nTest Status: shipped`,
-      html: `<h2>Manual Test: Order Status Update</h2><p>This is a manual test of the order status update email system.</p><p><strong>Order:</strong> ${orderData.orderNumber}</p><p><strong>Customer:</strong> ${userData.email}</p><p><strong>Test Status:</strong> shipped</p>`
-    };
-    
-    // Send both emails
-    await sendEmail(testEmail);
-    await sendEmail(adminEmail);
+    // TODO: Update test function to use V3 email system
+    // For now, use V3 order status email function
+    try {
+      const { sendOrderStatusEmailV3 } = require('../email-v2/functions-main');
+      await sendOrderStatusEmailV3({
+        data: {
+          orderData,
+          userData,
+          newStatus: 'shipped',
+          isTest: true
+        }
+      });
+      console.log(`✅ V3 Order status test email sent to ${userData.email}`);
+    } catch (emailError) {
+      console.error(`❌ V3 Order status test email failed:`, emailError);
+      // Fallback: just log the test
+      console.log(`TEST: Would send order status update to ${userData.email} for order ${orderData.orderNumber}`);
+    }
     
     console.log('Order status update emails sent successfully');
     

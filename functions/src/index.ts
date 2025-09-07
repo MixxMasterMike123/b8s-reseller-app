@@ -11,26 +11,31 @@ import { processAffiliateConversionV2 } from './affiliate/triggers/processAffili
 
 // Debug functions removed - found the real issue
 
-// Import email functions directly with original names from email/functions.ts
+// LEGACY EMAIL FUNCTIONS DISABLED - ALL EMAIL NOW USES V3 SYSTEM WITH GMAIL SMTP
+// import { 
+//   sendCustomerWelcomeEmail,        // → Use sendCustomerWelcomeEmailV3
+//   sendAffiliateWelcomeEmail,       // → Use sendAffiliateWelcomeEmailV3
+//   sendB2BOrderConfirmationAdmin,   // → Use sendB2BOrderConfirmationAdminV3
+//   sendB2BOrderConfirmationCustomer,// → Use sendB2BOrderConfirmationCustomerV3
+//   sendOrderStatusEmail,            // → Use sendOrderStatusEmailV3
+//   sendB2COrderNotificationAdmin,   // → Use sendB2COrderNotificationAdminV3
+//   sendB2COrderPendingEmail,        // → Use sendB2COrderPendingEmailV3
+//   sendOrderConfirmationEmails,     // → Use sendOrderConfirmationEmailsV3 (trigger)
+//   sendUserActivationEmail,         // → TODO: Create sendUserActivationEmailV3
+//   sendOrderStatusUpdateEmail,      // → TODO: Create sendOrderStatusUpdateEmailV3
+//   updateCustomerEmail,             // → TODO: Create updateCustomerEmailV3
+//   testEmail,                       // → TODO: Create testEmailV3
+//   approveAffiliate,                // → Use approveAffiliateV3
+//   sendVerificationEmail,           // → Use sendVerificationEmailV3
+//   sendAffiliateCredentialsV2,      // → Use sendAffiliateCredentialsV3
+//   sendPasswordResetEmailV2,        // → Use sendPasswordResetV3
+//   confirmPasswordResetV2           // → Use confirmPasswordResetV3
+// } from './email/functions';
+
+// Keep only non-email functions from the legacy system
 import { 
-  sendCustomerWelcomeEmail,
-  sendAffiliateWelcomeEmail,
-  sendB2BOrderConfirmationAdmin,
-  sendB2BOrderConfirmationCustomer,
-  sendOrderStatusEmail,
-  sendB2COrderNotificationAdmin,
-  sendB2COrderPendingEmail,
-  // sendOrderConfirmationEmails, // DISABLED: Using V3 instead
-  sendUserActivationEmail,
-  sendOrderStatusUpdateEmail,
-  updateCustomerEmail,
-  testEmail,
-  approveAffiliate,
   sendStatusUpdateHttp,
-  sendVerificationEmail,
-  sendAffiliateCredentialsV2,
-  sendPasswordResetEmailV2,
-  confirmPasswordResetV2
+  sendUserActivationEmail  // TODO: Migrate to V3
 } from './email/functions';
 
 // Import order processing functions directly with original names
@@ -90,26 +95,11 @@ import {
 // Re-export affiliate functions individually with V2 names (avoid V1 conflicts)
 export { logAffiliateClickV2, logAffiliateClickHttpV2, processAffiliateConversionV2 };
 
-// Re-export email functions individually with V2 names (avoid V1 conflicts)
+// LEGACY EMAIL FUNCTIONS DISABLED - ALL EMAIL NOW USES V3 SYSTEM
+// Only keep non-email functions from legacy system
 export { 
-  sendCustomerWelcomeEmail as sendCustomerWelcomeEmailV2,
-  sendAffiliateWelcomeEmail as sendAffiliateWelcomeEmailV2,
-  sendB2BOrderConfirmationAdmin as sendB2BOrderConfirmationAdminV2,
-  sendB2BOrderConfirmationCustomer as sendB2BOrderConfirmationCustomerV2,
-  sendOrderStatusEmail as sendOrderStatusEmailV2,
-  sendB2COrderNotificationAdmin as sendB2COrderNotificationAdminV2,
-  sendB2COrderPendingEmail as sendB2COrderPendingEmailV2,
-  // sendOrderConfirmationEmails as sendOrderConfirmationEmailsV2, // DISABLED: Using V3 instead
-  sendUserActivationEmail as sendUserActivationEmailV2,
-  sendOrderStatusUpdateEmail as sendOrderStatusUpdateEmailV2,
-  updateCustomerEmail as updateCustomerEmailV2,
-  testEmail as testEmailV2,
-  approveAffiliate as approveAffiliateV2,
   sendStatusUpdateHttp as sendStatusUpdateHttpV2,
-  sendVerificationEmail as sendVerificationEmailV2,
-  sendAffiliateCredentialsV2,
-  sendPasswordResetEmailV2,
-  confirmPasswordResetV2
+  sendUserActivationEmail as sendUserActivationEmailV2  // TODO: Migrate to V3
 };
 
 // Re-export order processing functions individually with V2 names (avoid V1 conflicts)

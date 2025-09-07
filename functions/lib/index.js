@@ -1,8 +1,7 @@
 "use strict";
 // V2 FUNCTIONS BATCH 4 - Direct imports to avoid circular dependencies
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendAffiliateWelcomeEmailV3 = exports.sendCustomerWelcomeEmailV3 = exports.confirmPasswordResetV3 = exports.sendPasswordResetV3 = exports.forceSyncProducts = exports.getProductSyncStatus = exports.getGoogleMerchantStats = exports.googleMerchantOnProductDeleted = exports.googleMerchantOnProductUpdated = exports.googleMerchantOnProductCreated = exports.testGoogleMerchantConnection = exports.syncSingleProductToGoogle = exports.syncProductsToGoogleHttp = exports.syncAllProductsToGoogle = exports.testPasswordResetMinimal = exports.exampleProtectedFunction = exports.scrapeWebsiteMetaV2 = exports.createPaymentIntentMinimalV2 = exports.createPaymentIntentV2 = exports.debugDatabaseV2 = exports.checkNamedDatabaseV2 = exports.createAdminUserV2 = exports.toggleCustomerActiveStatusV2 = exports.deleteB2CCustomerAccountV2 = exports.deleteCustomerAccountV2 = exports.testGeoHeadersV2 = exports.getGeoDataV2 = exports.manualStatusUpdateV2 = exports.processB2COrderCompletionV2 = exports.processB2COrderCompletionHttpV2 = exports.confirmPasswordResetV2 = exports.sendPasswordResetEmailV2 = exports.sendAffiliateCredentialsV2 = exports.sendVerificationEmailV2 = exports.sendStatusUpdateHttpV2 = exports.approveAffiliateV2 = exports.testEmailV2 = exports.updateCustomerEmailV2 = exports.sendOrderStatusUpdateEmailV2 = exports.sendUserActivationEmailV2 = exports.sendB2COrderPendingEmailV2 = exports.sendB2COrderNotificationAdminV2 = exports.sendOrderStatusEmailV2 = exports.sendB2BOrderConfirmationCustomerV2 = exports.sendB2BOrderConfirmationAdminV2 = exports.sendAffiliateWelcomeEmailV2 = exports.sendCustomerWelcomeEmailV2 = exports.processAffiliateConversionV2 = exports.logAffiliateClickHttpV2 = exports.logAffiliateClickV2 = void 0;
-exports.sendOrderConfirmationEmailsV3 = exports.approveAffiliateV3 = exports.sendAffiliateCredentialsV3 = exports.sendVerificationEmailV3 = exports.sendB2BOrderConfirmationAdminV3 = exports.sendOrderStatusEmailV3 = exports.sendB2BOrderConfirmationCustomerV3 = exports.sendB2COrderNotificationAdminV3 = exports.sendB2COrderPendingEmailV3 = void 0;
+exports.sendOrderConfirmationEmailsV3 = exports.approveAffiliateV3 = exports.sendAffiliateCredentialsV3 = exports.sendVerificationEmailV3 = exports.sendB2BOrderConfirmationAdminV3 = exports.sendOrderStatusEmailV3 = exports.sendB2BOrderConfirmationCustomerV3 = exports.sendB2COrderNotificationAdminV3 = exports.sendB2COrderPendingEmailV3 = exports.sendAffiliateWelcomeEmailV3 = exports.sendCustomerWelcomeEmailV3 = exports.confirmPasswordResetV3 = exports.sendPasswordResetV3 = exports.forceSyncProducts = exports.getProductSyncStatus = exports.getGoogleMerchantStats = exports.googleMerchantOnProductDeleted = exports.googleMerchantOnProductUpdated = exports.googleMerchantOnProductCreated = exports.testGoogleMerchantConnection = exports.syncSingleProductToGoogle = exports.syncProductsToGoogleHttp = exports.syncAllProductsToGoogle = exports.testPasswordResetMinimal = exports.exampleProtectedFunction = exports.scrapeWebsiteMetaV2 = exports.createPaymentIntentMinimalV2 = exports.createPaymentIntentV2 = exports.debugDatabaseV2 = exports.checkNamedDatabaseV2 = exports.createAdminUserV2 = exports.toggleCustomerActiveStatusV2 = exports.deleteB2CCustomerAccountV2 = exports.deleteCustomerAccountV2 = exports.testGeoHeadersV2 = exports.getGeoDataV2 = exports.manualStatusUpdateV2 = exports.processB2COrderCompletionV2 = exports.processB2COrderCompletionHttpV2 = exports.sendUserActivationEmailV2 = exports.sendStatusUpdateHttpV2 = exports.processAffiliateConversionV2 = exports.logAffiliateClickHttpV2 = exports.logAffiliateClickV2 = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const cors_handler_1 = require("./protection/cors/cors-handler");
 const rate_limiter_1 = require("./protection/rate-limiting/rate-limiter");
@@ -14,27 +13,31 @@ Object.defineProperty(exports, "logAffiliateClickHttpV2", { enumerable: true, ge
 const processAffiliateConversion_1 = require("./affiliate/triggers/processAffiliateConversion");
 Object.defineProperty(exports, "processAffiliateConversionV2", { enumerable: true, get: function () { return processAffiliateConversion_1.processAffiliateConversionV2; } });
 // Debug functions removed - found the real issue
-// Import email functions directly with original names from email/functions.ts
+// LEGACY EMAIL FUNCTIONS DISABLED - ALL EMAIL NOW USES V3 SYSTEM WITH GMAIL SMTP
+// import { 
+//   sendCustomerWelcomeEmail,        // → Use sendCustomerWelcomeEmailV3
+//   sendAffiliateWelcomeEmail,       // → Use sendAffiliateWelcomeEmailV3
+//   sendB2BOrderConfirmationAdmin,   // → Use sendB2BOrderConfirmationAdminV3
+//   sendB2BOrderConfirmationCustomer,// → Use sendB2BOrderConfirmationCustomerV3
+//   sendOrderStatusEmail,            // → Use sendOrderStatusEmailV3
+//   sendB2COrderNotificationAdmin,   // → Use sendB2COrderNotificationAdminV3
+//   sendB2COrderPendingEmail,        // → Use sendB2COrderPendingEmailV3
+//   sendOrderConfirmationEmails,     // → Use sendOrderConfirmationEmailsV3 (trigger)
+//   sendUserActivationEmail,         // → TODO: Create sendUserActivationEmailV3
+//   sendOrderStatusUpdateEmail,      // → TODO: Create sendOrderStatusUpdateEmailV3
+//   updateCustomerEmail,             // → TODO: Create updateCustomerEmailV3
+//   testEmail,                       // → TODO: Create testEmailV3
+//   approveAffiliate,                // → Use approveAffiliateV3
+//   sendVerificationEmail,           // → Use sendVerificationEmailV3
+//   sendAffiliateCredentialsV2,      // → Use sendAffiliateCredentialsV3
+//   sendPasswordResetEmailV2,        // → Use sendPasswordResetV3
+//   confirmPasswordResetV2           // → Use confirmPasswordResetV3
+// } from './email/functions';
+// Keep only non-email functions from the legacy system
 const functions_1 = require("./email/functions");
-Object.defineProperty(exports, "sendCustomerWelcomeEmailV2", { enumerable: true, get: function () { return functions_1.sendCustomerWelcomeEmail; } });
-Object.defineProperty(exports, "sendAffiliateWelcomeEmailV2", { enumerable: true, get: function () { return functions_1.sendAffiliateWelcomeEmail; } });
-Object.defineProperty(exports, "sendB2BOrderConfirmationAdminV2", { enumerable: true, get: function () { return functions_1.sendB2BOrderConfirmationAdmin; } });
-Object.defineProperty(exports, "sendB2BOrderConfirmationCustomerV2", { enumerable: true, get: function () { return functions_1.sendB2BOrderConfirmationCustomer; } });
-Object.defineProperty(exports, "sendOrderStatusEmailV2", { enumerable: true, get: function () { return functions_1.sendOrderStatusEmail; } });
-Object.defineProperty(exports, "sendB2COrderNotificationAdminV2", { enumerable: true, get: function () { return functions_1.sendB2COrderNotificationAdmin; } });
-Object.defineProperty(exports, "sendB2COrderPendingEmailV2", { enumerable: true, get: function () { return functions_1.sendB2COrderPendingEmail; } });
-Object.defineProperty(exports, "sendUserActivationEmailV2", { enumerable: true, get: function () { return 
-    // sendOrderConfirmationEmails, // DISABLED: Using V3 instead
-    functions_1.sendUserActivationEmail; } });
-Object.defineProperty(exports, "sendOrderStatusUpdateEmailV2", { enumerable: true, get: function () { return functions_1.sendOrderStatusUpdateEmail; } });
-Object.defineProperty(exports, "updateCustomerEmailV2", { enumerable: true, get: function () { return functions_1.updateCustomerEmail; } });
-Object.defineProperty(exports, "testEmailV2", { enumerable: true, get: function () { return functions_1.testEmail; } });
-Object.defineProperty(exports, "approveAffiliateV2", { enumerable: true, get: function () { return functions_1.approveAffiliate; } });
 Object.defineProperty(exports, "sendStatusUpdateHttpV2", { enumerable: true, get: function () { return functions_1.sendStatusUpdateHttp; } });
-Object.defineProperty(exports, "sendVerificationEmailV2", { enumerable: true, get: function () { return functions_1.sendVerificationEmail; } });
-Object.defineProperty(exports, "sendAffiliateCredentialsV2", { enumerable: true, get: function () { return functions_1.sendAffiliateCredentialsV2; } });
-Object.defineProperty(exports, "sendPasswordResetEmailV2", { enumerable: true, get: function () { return functions_1.sendPasswordResetEmailV2; } });
-Object.defineProperty(exports, "confirmPasswordResetV2", { enumerable: true, get: function () { return functions_1.confirmPasswordResetV2; } });
+Object.defineProperty(exports, "sendUserActivationEmailV2", { enumerable: true, get: function () { return functions_1.sendUserActivationEmail // TODO: Migrate to V3
+    ; } });
 // Import order processing functions directly with original names
 const functions_2 = require("./order-processing/functions");
 Object.defineProperty(exports, "processB2COrderCompletionHttpV2", { enumerable: true, get: function () { return functions_2.processB2COrderCompletionHttp; } });
