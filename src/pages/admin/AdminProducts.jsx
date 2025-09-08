@@ -1898,6 +1898,7 @@ function AdminProducts() {
                   )}
                 </button>
               </div>
+            </div>
             </form>
           </div>
         ) : (
