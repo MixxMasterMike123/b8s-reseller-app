@@ -21,7 +21,7 @@ export const getGoogleMerchantStats = onCall(
     memory: '256MiB',
     timeoutSeconds: 30,
     region: 'us-central1',
-    cors: true
+    cors: ['https://partner.b8shield.com', 'https://shop.b8shield.com']
   },
   async (request) => {
     try {
@@ -109,7 +109,7 @@ export const getProductSyncStatus = onCall(
     memory: '512MiB',
     timeoutSeconds: 60,
     region: 'us-central1',
-    cors: true
+    cors: ['https://partner.b8shield.com', 'https://shop.b8shield.com']
   },
   async (request) => {
     try {
@@ -226,7 +226,7 @@ export const forceSyncProducts = onCall(
     memory: '512MiB',
     timeoutSeconds: 120,
     region: 'us-central1',
-    cors: true
+    cors: ['https://partner.b8shield.com', 'https://shop.b8shield.com']
   },
   async (request) => {
     try {

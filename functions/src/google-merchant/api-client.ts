@@ -249,7 +249,7 @@ export const updateProductInventory = async (
  * Get account information
  */
 export const getAccountInfo = async (): Promise<MerchantApiResponse> => {
-  const endpoint = `${MERCHANT_CONFIG.MERCHANT_ID}`;
+  const endpoint = `accounts/${MERCHANT_CONFIG.MERCHANT_ID}`;
   
   console.log(`ℹ️  Getting account info for merchant: ${MERCHANT_CONFIG.MERCHANT_ID}`);
   return await makeApiRequest('GET', endpoint);

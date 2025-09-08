@@ -182,7 +182,7 @@ exports.updateProductInventory = updateProductInventory;
  * Get account information
  */
 const getAccountInfo = async () => {
-    const endpoint = `${config_1.MERCHANT_CONFIG.MERCHANT_ID}`;
+    const endpoint = `accounts/${config_1.MERCHANT_CONFIG.MERCHANT_ID}`;
     console.log(`ℹ️  Getting account info for merchant: ${config_1.MERCHANT_CONFIG.MERCHANT_ID}`);
     return await makeApiRequest('GET', endpoint);
 };

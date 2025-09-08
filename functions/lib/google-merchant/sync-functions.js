@@ -26,7 +26,7 @@ exports.syncAllProductsToGoogle = (0, https_1.onCall)({
     memory: '1GiB',
     timeoutSeconds: 540,
     region: 'us-central1',
-    cors: true
+    cors: ['https://partner.b8shield.com', 'https://shop.b8shield.com']
 }, async (request) => {
     try {
         console.log('🚀 Starting manual sync of all products to Google Merchant Center');
@@ -118,7 +118,7 @@ exports.syncSingleProductToGoogle = (0, https_1.onCall)({
     memory: '512MiB',
     timeoutSeconds: 60,
     region: 'us-central1',
-    cors: true
+    cors: ['https://partner.b8shield.com', 'https://shop.b8shield.com']
 }, async (request) => {
     try {
         const { productId, targetMarket = 'b2c' } = request.data;
@@ -173,7 +173,7 @@ exports.testGoogleMerchantConnection = (0, https_1.onCall)({
     memory: '256MiB',
     timeoutSeconds: 30,
     region: 'us-central1',
-    cors: true
+    cors: ['https://partner.b8shield.com', 'https://shop.b8shield.com']
 }, async (request) => {
     try {
         console.log('🧪 Testing Google Merchant Center connection');

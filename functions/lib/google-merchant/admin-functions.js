@@ -43,7 +43,7 @@ exports.getGoogleMerchantStats = (0, https_1.onCall)({
     memory: '256MiB',
     timeoutSeconds: 30,
     region: 'us-central1',
-    cors: true
+    cors: ['https://partner.b8shield.com', 'https://shop.b8shield.com']
 }, async (request) => {
     try {
         console.log('📊 Getting Google Merchant Center statistics');
@@ -118,7 +118,7 @@ exports.getProductSyncStatus = (0, https_1.onCall)({
     memory: '512MiB',
     timeoutSeconds: 60,
     region: 'us-central1',
-    cors: true
+    cors: ['https://partner.b8shield.com', 'https://shop.b8shield.com']
 }, async (request) => {
     try {
         const { limit = 50, offset = 0 } = request.data;
@@ -223,7 +223,7 @@ exports.forceSyncProducts = (0, https_1.onCall)({
     memory: '512MiB',
     timeoutSeconds: 120,
     region: 'us-central1',
-    cors: true
+    cors: ['https://partner.b8shield.com', 'https://shop.b8shield.com']
 }, async (request) => {
     try {
         const { productIds } = request.data;

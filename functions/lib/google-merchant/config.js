@@ -38,7 +38,7 @@ exports.MERCHANT_CONFIG = {
     // Your Google Merchant Center ID (you'll need to get this from Google Merchant Center)
     MERCHANT_ID: process.env.GOOGLE_MERCHANT_ID || '5351419444',
     // API version
-    API_VERSION: 'v2.1',
+    API_VERSION: 'v2',
     // Base API URL (Google Shopping Content API)
     BASE_URL: 'https://shoppingcontent.googleapis.com',
     // Scopes required for Merchant API

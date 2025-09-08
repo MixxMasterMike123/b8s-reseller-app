@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { collection, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage, auth } from '../../firebase/config';
@@ -26,6 +26,7 @@ function AdminProducts() {
   const { isAdmin, user } = useAuth();
   const { currentLanguage, getContentValue, setContentValue } = useContentTranslation();
   const { t } = useTranslation();
+  const location = useLocation();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -158,6 +159,18 @@ function AdminProducts() {
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  // Reset form state when navigating back to products page
+  useEffect(() => {
+    // If we're navigating to the products page without any hash or query params,
+    // reset the form state to show the product list
+    if (location.pathname === '/admin/products' && !location.search && !location.hash) {
+      setIsAddingProduct(false);
+      setSelectedProduct(null);
+      setFilteredProduct(null);
+      setActiveTab('general');
+    }
+  }, [location]);
 
   const handleAddNewClick = () => {
     setSelectedProduct(null);
@@ -853,6 +866,13 @@ function AdminProducts() {
           console.log('📊 Products after deletion:', newProducts.length);
           return newProducts;
         });
+        
+        // Close the edit form if we're currently editing this product
+        if (selectedProduct && selectedProduct.id === productId) {
+          setSelectedProduct(null);
+          setIsAddingProduct(false);
+        }
+        
         toast.success('Produkten har tagits bort');
         console.log('✅ Deletion process completed successfully');
       } else {
@@ -1834,19 +1854,35 @@ function AdminProducts() {
               )}
 
               {/* Form Actions */}
-              <div className="mt-8 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsAddingProduct(false)}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                >
-                  Avbryt
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading || uploading}
-                  className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
+              <div className="mt-8 flex justify-between items-center">
+                {/* Delete button - only show when editing existing product */}
+                <div>
+                  {selectedProduct && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteProduct(selectedProduct.id)}
+                      disabled={loading}
+                      className="px-4 py-2 border border-red-300 dark:border-red-600 text-sm font-medium rounded-md text-red-600 dark:text-red-400 bg-white dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900 hover:text-red-900 dark:hover:text-red-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading ? 'Tar bort...' : 'Ta bort produkt'}
+                    </button>
+                  )}
+                </div>
+
+                {/* Save/Cancel buttons */}
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingProduct(false)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                  >
+                    Avbryt
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading || uploading}
+                    className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                   {uploading ? (
                     <span className="flex items-center">
                       <span className="animate-spin h-4 w-4 mr-2 border-b-2 border-white rounded-full"></span>
@@ -2060,22 +2096,13 @@ function AdminProducts() {
 
                         {/* Column 4: Actions */}
                         <td className="px-4 md:px-6 py-4 text-right">
-                          <div className="flex flex-col gap-2">
-                            <button 
-                              onClick={() => handleEditClick(product)} 
-                              disabled={loading}
-                              className="min-h-[32px] inline-flex items-center px-4 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              Redigera
-                            </button>
-                            <button 
-                              onClick={() => handleDeleteProduct(product.id)} 
-                              disabled={loading}
-                              className="min-h-[32px] inline-flex items-center px-4 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900 border border-red-300 dark:border-red-600 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {loading ? 'Tar bort...' : 'Ta bort'}
-                            </button>
-                          </div>
+                          <button 
+                            onClick={() => handleEditClick(product)} 
+                            disabled={loading}
+                            className="min-h-[32px] inline-flex items-center px-4 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Redigera
+                          </button>
                         </td>
                       </tr>
                     ))
