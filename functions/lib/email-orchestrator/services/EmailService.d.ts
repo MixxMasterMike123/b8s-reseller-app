@@ -30,7 +30,7 @@ export declare class EmailService {
         error?: string;
     }>;
     /**
-     * Validate email address format
+     * Validate email address format (supports single email or comma-separated multiple emails)
      */
     private isValidEmail;
     /**

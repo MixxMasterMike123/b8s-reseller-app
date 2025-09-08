@@ -93,18 +93,24 @@ class EmailService {
      * Send email to admin addresses
      */
     async sendAdminEmail(template, options) {
-        const adminEmails = 'info@jphinnovation.se, micke.ohlen@gmail.com';
+        const adminEmails = ['info@jphinnovation.se', 'micke.ohlen@gmail.com'];
         return this.sendEmail(template, {
             ...options,
-            to: adminEmails
+            to: adminEmails.join(', ')
         });
     }
     /**
-     * Validate email address format
+     * Validate email address format (supports single email or comma-separated multiple emails)
      */
     isValidEmail(email) {
+        if (!email || email.trim() === '') {
+            return false;
+        }
+        // Handle comma-separated emails
+        const emails = email.split(',').map(e => e.trim());
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
+        // All emails must be valid
+        return emails.every(e => emailRegex.test(e));
     }
     /**
      * Convert HTML to plain text
