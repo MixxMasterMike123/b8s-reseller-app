@@ -72,46 +72,48 @@ function getDisplayColor(color: any): string {
   return String(color);
 }
 
-// Helper function to get product display name with color and size for admin emails
-function getProductDisplayNameAdmin(item: any): string {
-  // DEBUG: Log the actual item data to see what we're working with
-  console.log('🔍 Admin Email - Item data:', JSON.stringify(item, null, 2));
-  console.log('🔍 Admin Email - item.color:', item.color, 'type:', typeof item.color);
-  console.log('🔍 Admin Email - item.size:', item.size, 'type:', typeof item.size);
-  
-  // Handle multilingual product names
-  const baseName = typeof item.name === 'object' 
+// Helper function to get clean product name without color/size (for pill design)
+function getCleanProductNameAdmin(item: any): string {
+  return typeof item.name === 'object' 
     ? (item.name['sv-SE'] || item.name['en-GB'] || item.name['en-US'] || JSON.stringify(item.name))
     : item.name || 'Unknown Product';
-  
-  // Use the same logic as frontend
+}
+
+// Helper function to generate color pill HTML for admin emails
+function getColorPillAdmin(item: any): string {
   const color = getDisplayColor(item.color);
+  if (!color || color === '-' || color === 'Blandade färger' || color === 'Mixed colors') {
+    return '';
+  }
+  
+  return `<span style="display: inline-block; background-color: #f3f4f6; color: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; margin-right: 6px; border: 1px solid #d1d5db;">Färg: ${color}</span>`;
+}
+
+// Helper function to generate size pill HTML for admin emails
+function getSizePillAdmin(item: any): string {
   const size = getDisplaySize(item.size);
-  
-  console.log('🔍 Admin Email - processed color:', color);
-  console.log('🔍 Admin Email - processed size:', size);
-  
-  let displayName = baseName;
-  
-  // Add color if available (not default values)
-  if (color && color !== '-' && color !== 'Blandade färger' && color !== 'Mixed colors') {
-    displayName += ` ${color}`;
-    console.log('🔍 Admin Email - Added color to displayName:', displayName);
-  } else {
-    console.log('🔍 Admin Email - Color NOT added, color value:', color);
+  if (!size || size === '-' || size === 'Blandade storlekar' || size === 'Mixed sizes') {
+    return '';
   }
   
-  // Add size if available (not default values)
-  if (size && size !== '-' && size !== 'Blandade storlekar' && size !== 'Mixed sizes') {
-    displayName += `, stl. ${size}`;
-    console.log('🔍 Admin Email - Added size to displayName:', displayName);
-  } else {
-    console.log('🔍 Admin Email - Size NOT added, size value:', size, 'condition check:', 
-                size && size !== '-' && size !== 'Blandade storlekar' && size !== 'Mixed sizes');
+  return `<span style="display: inline-block; background-color: #f3f4f6; color: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; margin-right: 6px; border: 1px solid #d1d5db;">Storlek: ${size}</span>`;
+}
+
+// Helper function to generate pills row HTML for admin emails
+function getPillsRowAdmin(item: any): string {
+  const colorPill = getColorPillAdmin(item);
+  const sizePill = getSizePillAdmin(item);
+  
+  if (!colorPill && !sizePill) {
+    return '';
   }
   
-  console.log('🔍 Admin Email - Final displayName:', displayName);
-  return displayName;
+  return `<div style="margin-top: 6px; margin-bottom: 4px;">${colorPill}${sizePill}</div>`;
+}
+
+// DEPRECATED: Keep for backward compatibility but use pill design instead
+function getProductDisplayNameAdmin(item: any): string {
+  return getCleanProductNameAdmin(item);
 }
 
 // Format payment method display
@@ -191,7 +193,8 @@ function generateB2CAdminTemplate(
         ${orderData.items.map(item => `
           <div style="display: block; padding: 10px 0; border-bottom: 1px solid #d1fae5;">
             <div style="margin-bottom: 8px;">
-              <div style="font-weight: bold; color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; font-size: 15px; margin-bottom: 4px;">${getProductDisplayNameAdmin(item)}</div>
+              <div style="font-weight: bold; color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; font-size: 15px; margin-bottom: 2px;">${getCleanProductNameAdmin(item)}</div>
+              ${getPillsRowAdmin(item)}
               <div style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 13px;">${item.quantity} st × ${formatPrice(item.price)}</div>
             </div>
             <div style="text-align: right;">

@@ -59,36 +59,47 @@ function getDisplayColor(color: any): string {
   return String(color);
 }
 
-// Helper function to get product display name with color and size (same logic as admin email)
-function getProductDisplayName(item: any, lang: string): string {
-  // DEBUG: Log the actual item data to see what we're working with
-  console.log('🔍 Customer Email - Item data:', JSON.stringify(item, null, 2));
-  console.log('🔍 Customer Email - item.color:', item.color, 'type:', typeof item.color);
-  console.log('🔍 Customer Email - item.size:', item.size, 'type:', typeof item.size);
-  
-  // Handle multilingual product names
-  const baseName = getProductName(item, lang);
-  
-  // Use the same logic as frontend and admin email
+// Helper function to get clean product name without color/size (for pill design)
+function getCleanProductName(item: any, lang: string): string {
+  return getProductName(item, lang);
+}
+
+// Helper function to generate color pill HTML
+function getColorPill(item: any): string {
   const color = getDisplayColor(item.color);
+  if (!color || color === '-' || color === 'Blandade färger' || color === 'Mixed colors') {
+    return '';
+  }
+  
+  return `<span style="display: inline-block; background-color: #f3f4f6; color: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; margin-right: 6px; border: 1px solid #d1d5db;">Färg: ${color}</span>`;
+}
+
+// Helper function to generate size pill HTML
+function getSizePill(item: any, lang: string): string {
   const size = getDisplaySize(item.size);
-  
-  let displayName = baseName;
-  
-  // Add color if available (not default values)
-  if (color && color !== '-' && color !== 'Blandade färger' && color !== 'Mixed colors') {
-    displayName += ` ${color}`;
+  if (!size || size === '-' || size === 'Blandade storlekar' || size === 'Mixed sizes') {
+    return '';
   }
   
-  // Add size if available (not default values)
-  if (size && size !== '-' && size !== 'Blandade storlekar' && size !== 'Mixed sizes') {
-    const sizeText = lang.startsWith('en') ? 'size' : 'stl.';
-    displayName += `, ${sizeText} ${size}`;
+  const sizeLabel = lang.startsWith('en') ? 'Size' : 'Storlek';
+  return `<span style="display: inline-block; background-color: #f3f4f6; color: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; margin-right: 6px; border: 1px solid #d1d5db;">${sizeLabel}: ${size}</span>`;
+}
+
+// Helper function to generate pills row HTML
+function getPillsRow(item: any, lang: string): string {
+  const colorPill = getColorPill(item);
+  const sizePill = getSizePill(item, lang);
+  
+  if (!colorPill && !sizePill) {
+    return '';
   }
   
-  console.log('🔍 Customer Email - Final display name:', displayName);
-  
-  return displayName;
+  return `<div style="margin-top: 6px; margin-bottom: 4px;">${colorPill}${sizePill}</div>`;
+}
+
+// DEPRECATED: Keep for backward compatibility but use pill design instead
+function getProductDisplayName(item: any, lang: string): string {
+  return getCleanProductName(item, lang);
 }
 
 export function generateOrderConfirmationTemplate(data: OrderConfirmationData, lang: string = 'sv-SE', orderId?: string) {
@@ -147,11 +158,12 @@ function generateB2CTemplate(
             <div style="display: flex; align-items: flex-start; margin-bottom: 8px;">
               ${item.image ? `
               <div style="flex-shrink: 0; margin-right: 12px;">
-                <img src="${item.image}" alt="${getProductDisplayName(item, lang)}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid ${EMAIL_CONFIG.COLORS.BORDER}; display: block;" />
+                <img src="${item.image}" alt="${getCleanProductName(item, lang)}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid ${EMAIL_CONFIG.COLORS.BORDER}; display: block;" />
               </div>
               ` : ''}
               <div style="flex: 1; min-width: 0;">
-                <div style="font-weight: bold; color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; font-size: 16px; line-height: 1.4; margin-bottom: 6px;">${getProductDisplayName(item, lang)}</div>
+                <div style="font-weight: bold; color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; font-size: 16px; line-height: 1.4; margin-bottom: 2px;">${getCleanProductName(item, lang)}</div>
+                ${getPillsRow(item, lang)}
                 <div style="font-size: 14px; color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; margin-bottom: 8px;">Kvantitet: ${item.quantity} st × ${formatPrice(item.price)}</div>
               </div>
             </div>
