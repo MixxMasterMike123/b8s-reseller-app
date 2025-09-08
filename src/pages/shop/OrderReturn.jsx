@@ -147,6 +147,8 @@ const OrderReturnInner = () => {
       price: item.price,
       quantity: item.quantity,
       sku: item.sku,
+      color: item.color, // CRITICAL: Include color for emails
+      size: item.size,   // CRITICAL: Include size for emails
       image: item.image
     }));
 

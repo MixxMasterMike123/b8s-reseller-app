@@ -160,7 +160,7 @@ export class EmailOrchestrator {
           orderType: data.userData.type === 'B2B' ? 'B2B' : 'B2C'
         };
         
-        return generateOrderConfirmationTemplate(orderConfirmationData, data.language);
+        return generateOrderConfirmationTemplate(orderConfirmationData, data.language, data.context.orderId);
 
       case 'ORDER_STATUS_UPDATE':
         if (!data.orderData) {

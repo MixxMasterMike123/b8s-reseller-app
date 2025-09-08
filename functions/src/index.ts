@@ -201,8 +201,9 @@ export {
   forceSyncProducts
 };
 
-// Debug function
+// Debug functions
 export { debugOrderData } from './debug-order-data';
+export { debugProductFields } from './debug-product-fields';
 
 // OLD V1/V2/V3 EMAIL SYSTEM FUNCTIONS - MOVED TO QUARANTINE
 // All old email functions have been migrated to the new Email Orchestrator system

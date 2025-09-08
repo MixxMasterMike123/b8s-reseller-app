@@ -407,8 +407,8 @@ export const CartProvider = ({ children }) => {
           price: product.b2cPrice || product.basePrice,
           image: getB2cProductImage(product),
           sku: product.sku,
-          color: product.color,
-          size: product.size,
+          color: product.color || null,  // Use actual product.color field from database
+          size: product.size || null,    // Use actual product.size field from database
           weight: product.weight, // Include weight for shipping calculations
           shipping: product.shipping, // Include shipping information
           // And update the quantity
@@ -420,15 +420,25 @@ export const CartProvider = ({ children }) => {
           formattedPrice: `${product.b2cPrice || product.basePrice} kr`
         };
       } else {
-        // Add new item
+        // DEBUG: Log the product structure to see multilingual objects
+        console.log('🔍 CartContext - Adding product to cart:', {
+          id: product.id,
+          name: product.name,
+          color: product.color,
+          size: product.size,
+          colorType: typeof product.color,
+          sizeType: typeof product.size
+        });
+        
+        // Add new item - CRITICAL: Use actual product database fields for color and size
         const newItem = {
           id: product.id,
           name: product.name,
           price: product.b2cPrice || product.basePrice,
           image: getB2cProductImage(product),
           sku: product.sku,
-          color: product.color,
-          size: product.size,
+          color: product.color || null,  // Use actual product.color field from database
+          size: product.size || null,    // Use actual product.size field from database
           weight: product.weight, // Include weight for shipping calculations
           shipping: product.shipping, // Include shipping information
           quantity

@@ -91,15 +91,16 @@ function getProductDisplayName(item: any, lang: string): string {
   return displayName;
 }
 
-export function generateOrderConfirmationTemplate(data: OrderConfirmationData, lang: string = 'sv-SE') {
-  const { orderData, customerInfo, orderType, orderId } = data;
+export function generateOrderConfirmationTemplate(data: OrderConfirmationData, lang: string = 'sv-SE', orderId?: string) {
+  const { orderData, customerInfo, orderType } = data;
   
   // Handle different affiliate data structures (Stripe vs Mock payments)
   const affiliateCode = orderData.affiliateCode || orderData.affiliate?.code;
   const customerName = customerInfo.firstName + (customerInfo.lastName ? ' ' + customerInfo.lastName : '') || customerInfo.name || 'Kund';
   
-  // Generate URLs - USE ORDER DB ID NOT ORDER NUMBER
-  const orderUrl = getOrderTrackingUrl(orderId, lang);
+  // Generate URLs - USE ORDER DB ID NOT ORDER NUMBER (same pattern as status update)
+  const finalOrderId = orderId || data.orderId;
+  const orderUrl = getOrderTrackingUrl(finalOrderId, lang);
   const supportUrl = getSupportUrl(lang);
 
   // Choose template based on order type

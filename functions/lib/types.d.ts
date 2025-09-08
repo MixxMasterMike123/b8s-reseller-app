@@ -40,6 +40,13 @@ export interface OrderData {
         productId: string;
         quantity: number;
         price: number;
+        color?: string;
+        size?: string;
+        name?: string | {
+            [key: string]: string;
+        };
+        sku?: string;
+        image?: string;
     }>;
     totalAmount: number;
     createdAt: Date;
