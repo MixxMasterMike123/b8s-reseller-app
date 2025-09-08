@@ -153,7 +153,7 @@ function generateOrderStatusUpdateTemplate(data, lang = 'sv-SE', orderId) {
     ` : ''}
 
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/se/order-confirmation/${orderId || orderNumber}" style="display: inline-block; background-color: ${config_1.EMAIL_CONFIG.COLORS.PRIMARY}; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; border: 2px solid ${config_1.EMAIL_CONFIG.COLORS.PRIMARY};">Visa orderdetaljer</a>
+      <a href="${(0, config_1.getOrderTrackingUrl)(orderId || orderNumber, 'sv-SE')}" style="display: inline-block; background-color: ${config_1.EMAIL_CONFIG.COLORS.PRIMARY}; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; border: 2px solid ${config_1.EMAIL_CONFIG.COLORS.PRIMARY};">Visa orderdetaljer</a>
     </div>
 
     <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 25px;">

@@ -68,7 +68,7 @@ export function getSupportUrl(lang: string): string {
 }
 
 // Helper function to get order tracking URL
-export function getOrderTrackingUrl(orderNumber: string, lang: string): string {
+export function getOrderTrackingUrl(orderId: string, lang: string): string {
   const segment = getLanguageSegment(lang);
-  return `${EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/order-status?order=${orderNumber}`;
+  return `${EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/order-confirmation/${orderId}`;
 }

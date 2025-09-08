@@ -4,31 +4,61 @@ exports.generateOrderNotificationAdminTemplate = void 0;
 // Admin Order Notification Email Template
 // Extracted from V3 Admin Templates - DESIGN PRESERVED + MOBILE OPTIMIZED
 const config_1 = require("../core/config");
+// Helper function to format size for display (replicates frontend getDisplaySize logic)
+function getDisplaySize(size) {
+    if (!size)
+        return '-';
+    if (typeof size === 'string')
+        return size;
+    if (typeof size === 'object') {
+        return size['sv-SE'] || size['en-GB'] || size['en-US'] || Object.values(size)[0] || '-';
+    }
+    return String(size);
+}
+// Helper function to format color for display (replicates frontend getDisplayColor logic)
+function getDisplayColor(color) {
+    if (!color)
+        return '-';
+    if (typeof color === 'string')
+        return color;
+    if (typeof color === 'object') {
+        return color['sv-SE'] || color['en-GB'] || color['en-US'] || Object.values(color)[0] || '-';
+    }
+    return String(color);
+}
 // Helper function to get product display name with color and size for admin emails
 function getProductDisplayNameAdmin(item) {
+    // DEBUG: Log the actual item data to see what we're working with
+    console.log('🔍 Admin Email - Item data:', JSON.stringify(item, null, 2));
+    console.log('🔍 Admin Email - item.color:', item.color, 'type:', typeof item.color);
+    console.log('🔍 Admin Email - item.size:', item.size, 'type:', typeof item.size);
     // Handle multilingual product names
     const baseName = typeof item.name === 'object'
         ? (item.name['sv-SE'] || item.name['en-GB'] || item.name['en-US'] || JSON.stringify(item.name))
         : item.name || 'Unknown Product';
-    const color = item.color;
-    const size = item.size;
+    // Use the same logic as frontend
+    const color = getDisplayColor(item.color);
+    const size = getDisplaySize(item.size);
+    console.log('🔍 Admin Email - processed color:', color);
+    console.log('🔍 Admin Email - processed size:', size);
     let displayName = baseName;
-    // Add color if available
-    if (color && color !== 'Blandade färger' && color !== 'Mixed colors') {
+    // Add color if available (not default values)
+    if (color && color !== '-' && color !== 'Blandade färger' && color !== 'Mixed colors') {
         displayName += ` ${color}`;
+        console.log('🔍 Admin Email - Added color to displayName:', displayName);
     }
-    // Add size if available
-    if (size && size !== 'Blandade storlekar' && size !== 'Mixed sizes') {
-        // Convert size to readable format
-        if (size.includes('Storlek') || size.includes('Size')) {
-            // Extract number from "Storlek 2" -> "stl. 2"
-            const sizeNumber = size.replace(/Storlek|Size/i, '').trim();
-            displayName += `, stl. ${sizeNumber}`;
-        }
-        else {
-            displayName += `, stl. ${size}`;
-        }
+    else {
+        console.log('🔍 Admin Email - Color NOT added, color value:', color);
     }
+    // Add size if available (not default values)
+    if (size && size !== '-' && size !== 'Blandade storlekar' && size !== 'Mixed sizes') {
+        displayName += `, stl. ${size}`;
+        console.log('🔍 Admin Email - Added size to displayName:', displayName);
+    }
+    else {
+        console.log('🔍 Admin Email - Size NOT added, size value:', size, 'condition check:', size && size !== '-' && size !== 'Blandade storlekar' && size !== 'Mixed sizes');
+    }
+    console.log('🔍 Admin Email - Final displayName:', displayName);
     return displayName;
 }
 // Format payment method display

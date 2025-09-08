@@ -1,6 +1,6 @@
 // Order Status Update Email Template
 // Extracted from V3 orderStatusUpdate template - DESIGN PRESERVED
-import { EMAIL_CONFIG, getSupportUrl } from '../core/config';
+import { EMAIL_CONFIG, getSupportUrl, getOrderTrackingUrl } from '../core/config';
 
 export interface OrderStatusUpdateData {
   orderData: {
@@ -183,7 +183,7 @@ export function generateOrderStatusUpdateTemplate(data: OrderStatusUpdateData, l
     ` : ''}
 
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${EMAIL_CONFIG.URLS.B2C_SHOP}/se/order-confirmation/${orderId || orderNumber}" style="display: inline-block; background-color: ${EMAIL_CONFIG.COLORS.PRIMARY}; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; border: 2px solid ${EMAIL_CONFIG.COLORS.PRIMARY};">Visa orderdetaljer</a>
+      <a href="${getOrderTrackingUrl(orderId || orderNumber, 'sv-SE')}" style="display: inline-block; background-color: ${EMAIL_CONFIG.COLORS.PRIMARY}; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; border: 2px solid ${EMAIL_CONFIG.COLORS.PRIMARY};">Visa orderdetaljer</a>
     </div>
 
     <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 25px;">

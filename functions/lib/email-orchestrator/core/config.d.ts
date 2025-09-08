@@ -38,4 +38,4 @@ export declare const EMAIL_CONFIG: {
 export declare function getLanguageSegment(lang: string): string;
 export declare function formatPrice(amount: number): string;
 export declare function getSupportUrl(lang: string): string;
-export declare function getOrderTrackingUrl(orderNumber: string, lang: string): string;
+export declare function getOrderTrackingUrl(orderId: string, lang: string): string;

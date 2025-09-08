@@ -267,6 +267,16 @@ exports.processB2COrderCompletionHttp = (0, https_1.onRequest)({
             return;
         }
         const orderData = orderSnap.data();
+        // DEBUG: Log the actual order data structure to see what items look like
+        console.log('🔍 Order Processing - Full order data:', JSON.stringify(orderData, null, 2));
+        const orderItems = orderData.items;
+        console.log('🔍 Order Processing - Order items:', JSON.stringify(orderItems, null, 2));
+        if (orderItems && orderItems.length > 0) {
+            console.log('🔍 Order Processing - First item details:');
+            console.log('🔍 Order Processing - item.color:', orderItems[0].color);
+            console.log('🔍 Order Processing - item.size:', orderItems[0].size);
+            console.log('🔍 Order Processing - item.name:', orderItems[0].name);
+        }
         // Handle different affiliate data structures (Stripe vs Mock payments)
         const affiliateCode = orderData.affiliateCode || orderData.affiliate?.code;
         const discountCode = orderData.discountCode || orderData.affiliate?.code;

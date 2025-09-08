@@ -1897,8 +1897,8 @@ function AdminProducts() {
                     'Spara Produkt'
                   )}
                 </button>
+                </div>
               </div>
-            </div>
             </form>
           </div>
         ) : (

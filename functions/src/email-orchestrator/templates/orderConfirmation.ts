@@ -39,45 +39,67 @@ function getProductName(item: any, lang: string): string {
   return item.name || 'Okänd produkt';
 }
 
-// Helper function to get product display name with color and size
+// Helper function to format size for display (replicates frontend getDisplaySize logic)
+function getDisplaySize(size: any): string {
+  if (!size) return '-';
+  if (typeof size === 'string') return size;
+  if (typeof size === 'object') {
+    return size['sv-SE'] || size['en-GB'] || size['en-US'] || Object.values(size)[0] || '-';
+  }
+  return String(size);
+}
+
+// Helper function to format color for display (replicates frontend getDisplayColor logic)
+function getDisplayColor(color: any): string {
+  if (!color) return '-';
+  if (typeof color === 'string') return color;
+  if (typeof color === 'object') {
+    return color['sv-SE'] || color['en-GB'] || color['en-US'] || Object.values(color)[0] || '-';
+  }
+  return String(color);
+}
+
+// Helper function to get product display name with color and size (same logic as admin email)
 function getProductDisplayName(item: any, lang: string): string {
+  // DEBUG: Log the actual item data to see what we're working with
+  console.log('🔍 Customer Email - Item data:', JSON.stringify(item, null, 2));
+  console.log('🔍 Customer Email - item.color:', item.color, 'type:', typeof item.color);
+  console.log('🔍 Customer Email - item.size:', item.size, 'type:', typeof item.size);
+  
+  // Handle multilingual product names
   const baseName = getProductName(item, lang);
-  const color = item.color;
-  const size = item.size;
+  
+  // Use the same logic as frontend and admin email
+  const color = getDisplayColor(item.color);
+  const size = getDisplaySize(item.size);
   
   let displayName = baseName;
   
-  // Add color if available
-  if (color && color !== 'Blandade färger' && color !== 'Mixed colors') {
+  // Add color if available (not default values)
+  if (color && color !== '-' && color !== 'Blandade färger' && color !== 'Mixed colors') {
     displayName += ` ${color}`;
   }
   
-  // Add size if available
-  if (size && size !== 'Blandade storlekar' && size !== 'Mixed sizes') {
-    // Convert size to readable format
+  // Add size if available (not default values)
+  if (size && size !== '-' && size !== 'Blandade storlekar' && size !== 'Mixed sizes') {
     const sizeText = lang.startsWith('en') ? 'size' : 'stl.';
-    if (size.includes('Storlek') || size.includes('Size')) {
-      // Extract number from "Storlek 2" -> "stl. 2"
-      const sizeNumber = size.replace(/Storlek|Size/i, '').trim();
-      displayName += `, ${sizeText} ${sizeNumber}`;
-    } else {
-      displayName += `, ${sizeText} ${size}`;
-    }
+    displayName += `, ${sizeText} ${size}`;
   }
+  
+  console.log('🔍 Customer Email - Final display name:', displayName);
   
   return displayName;
 }
 
 export function generateOrderConfirmationTemplate(data: OrderConfirmationData, lang: string = 'sv-SE') {
-  const { orderData, customerInfo, orderType } = data;
-  const { orderNumber } = orderData;
+  const { orderData, customerInfo, orderType, orderId } = data;
   
   // Handle different affiliate data structures (Stripe vs Mock payments)
   const affiliateCode = orderData.affiliateCode || orderData.affiliate?.code;
   const customerName = customerInfo.firstName + (customerInfo.lastName ? ' ' + customerInfo.lastName : '') || customerInfo.name || 'Kund';
   
-  // Generate URLs
-  const orderUrl = getOrderTrackingUrl(orderNumber, lang);
+  // Generate URLs - USE ORDER DB ID NOT ORDER NUMBER
+  const orderUrl = getOrderTrackingUrl(orderId, lang);
   const supportUrl = getSupportUrl(lang);
 
   // Choose template based on order type
