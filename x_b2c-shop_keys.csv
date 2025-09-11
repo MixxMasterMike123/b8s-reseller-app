@@ -834,3 +834,8 @@
 "analytics_conversions","Konverteringar","Conversions","Conversions","B2C affiliate analytics - conversions label","Pending","","","Label for conversions metric"
 "analytics_earnings","Intäkter","Earnings","Earnings","B2C affiliate analytics - earnings label","Pending","","","Label for earnings metric"
 "analytics_conversion_rate","Konverteringsgrad","Conversion Rate","Conversion Rate","B2C affiliate analytics - conversion rate label","Pending","","","Label for conversion rate metric"
+"coming_soon_button","Kommer snart","Coming Soon","Coming Soon","Button text for upcoming products","Pending","","","Simple coming soon button for products with future launch dates"
+"clothing_section_title","Kläder & Accessoarer","Clothing & Accessories","Clothing & Accessories","Title for clothing products section","Pending","","","Section title for clothing products"
+"clothing_section_description","Stilfulla kläder och accessoarer för den passionerade fiskaren","Stylish clothing and accessories for the passionate angler","Stylish clothing and accessories for the passionate angler","Description for clothing products section","Pending","","","Section description for clothing products"
+"clothing_badge","KLÄDER","CLOTHING","CLOTHING","Badge text for clothing products","Pending","","","Badge displayed on clothing product cards"
+"clothing_cta","Se Produkt","View Product","View Product","Call-to-action button for clothing products","Pending","","","CTA button text for clothing products"

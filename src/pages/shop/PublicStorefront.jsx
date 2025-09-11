@@ -32,6 +32,7 @@ const PublicStorefront = () => {
   const [products, setProducts] = useState([]);
   const [groupedProducts, setGroupedProducts] = useState([]);
   const [specialEditionProducts, setSpecialEditionProducts] = useState([]);
+  const [clothingProducts, setClothingProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [heroReview, setHeroReview] = useState(null);
 
@@ -96,20 +97,24 @@ const PublicStorefront = () => {
       });
       setProducts(productList);
       
-      // Separate special edition products from regular products
+      // Separate products by category
       const specialEditions = productList.filter(product => 
         product.group === 'B8Shield-special-edition'
       );
+      const clothingItems = productList.filter(product => 
+        product.group === 'Clothing'
+      );
       const regularProducts = productList.filter(product => 
-        product.group !== 'B8Shield-special-edition'
+        product.group !== 'B8Shield-special-edition' && product.group !== 'Clothing'
       );
       
       // Group regular products dynamically by their group field and load representative products
       const grouped = await groupProductsByGroup(regularProducts);
       setGroupedProducts(grouped);
       
-      // Set special edition products separately
+      // Set special categories separately
       setSpecialEditionProducts(specialEditions);
+      setClothingProducts(clothingItems);
       
     } catch (error) {
       console.error('Error loading products:', error);
@@ -618,6 +623,87 @@ const PublicStorefront = () => {
                   </svg>
                 </div>
                 <p className="text-gray-500 text-lg">{t('no_products_available', 'Inga produkter tillgängliga för tillfället.')}</p>
+              </div>
+            )}
+
+            {/* Clothing Products Section - Below Regular Products */}
+            {!loading && clothingProducts.length > 0 && (
+              <div className="mt-16">
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+                    {t('clothing_section_title', 'Kläder & Accessoarer')}
+                  </h2>
+                  <p className="text-gray-600 max-w-2xl mx-auto">
+                    {t('clothing_section_description', 'Stilfulla kläder och accessoarer för den passionerade fiskaren')}
+                  </p>
+                </div>
+                
+                {/* Clothing Products Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+                  {clothingProducts.map((product, index) => {
+                    const productUrl = getProductUrl(product);
+                    
+                    return (
+                      <Link
+                        key={`clothing-${product.id}-${index}`}
+                        to={productUrl}
+                        className="group block"
+                      >
+                        <div className="bg-white h-full flex flex-col rounded-lg shadow-lg overflow-hidden border-2 border-green-200 hover:border-green-400 transition-colors">
+                          {/* Clothing Badge */}
+                          <div className="relative">
+                            <div className="absolute top-4 left-4 z-10">
+                              <span className="bg-gradient-to-r from-green-500 to-teal-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                                {t('clothing_badge', 'KLÄDER')}
+                              </span>
+                            </div>
+                            
+                            {/* Product Image */}
+                            <div className="relative aspect-square bg-gray-50 overflow-hidden">
+                              <img
+                                src={getB2cProductImage(product)}
+                                alt={getContentValue(product.name)}
+                                className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Product Info - Match regular product card styling */}
+                          <div className="flex flex-col flex-1 p-4">
+                            {/* Product Name */}
+                            <h3 className="text-base font-medium text-gray-900 leading-tight mb-2">
+                              {getContentValue(product.name) || t('product_name_fallback', 'B8Shield Kläder')}
+                            </h3>
+                            
+                            {/* Product Description */}
+                            <p className="text-xs text-gray-600 leading-tight mb-2 flex-1">
+                              {getB2cProductDescription(product)}
+                            </p>
+                            
+                            {/* Bottom section with price and CTA */}
+                            <div className="mt-auto space-y-2">
+                              {/* Price */}
+                              <div className="text-lg font-medium text-gray-900">
+                                <SmartPrice 
+                                  sekPrice={product.b2cPrice || product.basePrice} 
+                                  variant="compact"
+                                  showOriginal={false}
+                                />
+                              </div>
+                              
+                              {/* CTA Button */}
+                              <div className="pt-2">
+                                <div className="bg-gradient-to-r from-green-500 to-teal-500 text-white text-center py-2 px-4 rounded-full text-sm font-medium hover:from-green-600 hover:to-teal-600 transition-colors">
+                                  {t('clothing_cta', 'Se Produkt')}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>

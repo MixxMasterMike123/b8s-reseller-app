@@ -76,6 +76,7 @@ function AdminProducts() {
     b2bImageUrl: '',
     b2cImageUrl: '',
     b2cPrice: 0,
+    launchDate: '', // Optional launch date for "coming soon" products
     availability: {
       b2b: true,
       b2c: true,
@@ -192,6 +193,7 @@ function AdminProducts() {
       b2bImageUrl: '',
       b2cImageUrl: '',
       b2cPrice: 0,
+      launchDate: '', // Reset launch date for new products
       availability: {
         b2b: true,
         b2c: true,
@@ -270,6 +272,7 @@ function AdminProducts() {
       b2bImageUrl: product.b2bImageUrl || '',
       b2cImageUrl: product.b2cImageUrl || '',
       b2cPrice: product.b2cPrice || 0,
+      launchDate: product.launchDate ? new Date(product.launchDate.toDate ? product.launchDate.toDate() : product.launchDate).toISOString().slice(0, 16) : '', // Convert Firebase timestamp to datetime-local format
       availability: {
         b2b: product.availability?.b2b !== false,
         b2c: product.availability?.b2c !== false,
@@ -636,6 +639,14 @@ function AdminProducts() {
         ...formData,
         updatedAt: serverTimestamp()
       };
+      
+      // Convert launchDate from datetime-local string to Firebase timestamp
+      if (formData.launchDate) {
+        finalProductData.launchDate = new Date(formData.launchDate);
+      } else {
+        // Remove launchDate field if empty (don't store empty string)
+        delete finalProductData.launchDate;
+      }
       
       // Generate product ID for new products (for storage path)
       const productId = selectedProduct ? selectedProduct.id : `prod_${Date.now()}`;
@@ -1681,6 +1692,24 @@ function AdminProducts() {
                     />
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                       Detta pris visas för konsumenter på shop.b8shield.com och inkluderar 25% moms
+                    </p>
+                  </div>
+
+                  {/* Launch Date */}
+                  <div className="sm:col-span-2">
+                    <label htmlFor="launchDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Lanseringsdatum (valfritt)
+                    </label>
+                    <input
+                      type="datetime-local"
+                      id="launchDate"
+                      name="launchDate"
+                      value={formData.launchDate}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                    />
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Lämna tomt för omedelbar tillgänglighet. Sätt framtida datum för "Kommer snart"-läge.
                     </p>
                   </div>
                   

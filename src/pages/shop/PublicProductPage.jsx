@@ -28,6 +28,38 @@ import SmartPrice from '../../components/shop/SmartPrice';
 import AddedToCartModal from '../../components/shop/AddedToCartModal';
 import ProductSocialShare from '../../components/ProductSocialShare';
 
+// Helper function to determine button state based on launch date
+const getButtonState = (product, t) => {
+  // No launch date = normal product
+  if (!product.launchDate) {
+    return { 
+      text: t('add_to_shopping_bag', 'Lägg i shoppingbagen'),
+      disabled: false,
+      isComingSoon: false
+    };
+  }
+  
+  // Has launch date - check if it's future or past
+  const now = new Date();
+  const launchDate = new Date(product.launchDate.toDate ? product.launchDate.toDate() : product.launchDate);
+  
+  if (launchDate > now) {
+    // Still coming soon
+    return {
+      text: t('coming_soon_button', 'Kommer snart'),
+      disabled: true,
+      isComingSoon: true
+    };
+  } else {
+    // Launch date has passed - now available
+    return {
+      text: t('add_to_shopping_bag', 'Lägg i shoppingbagen'),
+      disabled: false,
+      isComingSoon: false
+    };
+  }
+};
+
 const PublicProductPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -70,6 +102,9 @@ const PublicProductPage = () => {
 
   // Calculate productImages early to avoid temporal dead zone issues
   const productImages = getProductImages(product);
+  
+  // Calculate button state based on launch date
+  const buttonState = product ? getButtonState(product, t) : { text: '', disabled: true, isComingSoon: false };
 
   useEffect(() => {
     if (slug) {
@@ -413,10 +448,15 @@ const PublicProductPage = () => {
             {/* Nike Mobile: Regular Add to Cart button (tracked for visibility) */}
             <div className="space-y-3" ref={regularButtonRef}>
               <button
-                onClick={handleAddToCart}
-                className="w-full bg-black text-white py-3 px-6 rounded-full text-base font-medium hover:bg-gray-800 transition-colors"
+                onClick={buttonState.disabled ? undefined : handleAddToCart}
+                disabled={buttonState.disabled}
+                className={`w-full py-3 px-6 rounded-full text-base font-medium transition-colors ${
+                  buttonState.isComingSoon 
+                    ? 'bg-gray-400 text-white cursor-not-allowed' 
+                    : 'bg-black text-white hover:bg-gray-800'
+                }`}
               >
-                {t('add_to_shopping_bag', 'Lägg i shoppingbagen')}
+                {buttonState.text}
               </button>
               
               <button className="w-full border border-gray-300 py-3 px-6 rounded-full text-base font-medium hover:border-gray-400 transition-colors">
@@ -565,10 +605,15 @@ const PublicProductPage = () => {
                 {/* Add to Cart */}
                 <div className="space-y-4">
                   <button
-                    onClick={handleAddToCart}
-                    className="w-full bg-black text-white py-4 px-8 rounded-full text-base font-medium hover:bg-gray-800 transition-colors"
+                    onClick={buttonState.disabled ? undefined : handleAddToCart}
+                    disabled={buttonState.disabled}
+                    className={`w-full py-4 px-8 rounded-full text-base font-medium transition-colors ${
+                      buttonState.isComingSoon 
+                        ? 'bg-gray-400 text-white cursor-not-allowed' 
+                        : 'bg-black text-white hover:bg-gray-800'
+                    }`}
                   >
-                    {t('add_to_shopping_bag', 'Lägg i shoppingbagen')}
+                    {buttonState.text}
                   </button>
                   
                   <button className="w-full border border-gray-300 py-4 px-8 rounded-full text-base font-medium hover:border-gray-400 transition-colors">
@@ -739,10 +784,15 @@ const PublicProductPage = () => {
         `}>
           <div className="bg-white border-t border-gray-200 px-4 py-4 safe-area-inset-bottom">
             <button
-              onClick={handleAddToCart}
-              className="w-full bg-black text-white py-4 px-8 rounded-lg text-base font-medium hover:bg-gray-800 transition-colors"
+              onClick={buttonState.disabled ? undefined : handleAddToCart}
+              disabled={buttonState.disabled}
+              className={`w-full py-4 px-8 rounded-lg text-base font-medium transition-colors ${
+                buttonState.isComingSoon 
+                  ? 'bg-gray-400 text-white cursor-not-allowed' 
+                  : 'bg-black text-white hover:bg-gray-800'
+              }`}
             >
-              {t('add_to_shopping_bag', 'Lägg i shoppingbagen')}
+              {buttonState.text}
             </button>
           </div>
         </div>
