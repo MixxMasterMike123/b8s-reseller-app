@@ -24,3 +24,4 @@ export { confirmPasswordReset };
 export declare const exampleProtectedFunction: import("firebase-functions/v2/https").HttpsFunction;
 export { syncAllProductsToGoogle, syncProductsToGoogleHttp, syncSingleProductToGoogle, testGoogleMerchantConnection, googleMerchantOnProductCreated, googleMerchantOnProductUpdated, googleMerchantOnProductDeleted, getGoogleMerchantStats, getProductSyncStatus, forceSyncProducts };
 export { debugOrderData } from './debug-order-data';
+export { debugProductFields } from './debug-product-fields';

@@ -221,7 +221,8 @@ const AffiliatePortal = () => {
       const querySnapshot = await getDocs(affiliateQuery);
 
       if (!querySnapshot.empty) {
-        const data = querySnapshot.docs[0].data();
+        const doc = querySnapshot.docs[0];
+        const data = { id: doc.id, ...doc.data() };
         setAffiliateData(data);
         setProfileForm({
           name: data.name || '',

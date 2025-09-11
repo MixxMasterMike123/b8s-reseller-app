@@ -120,7 +120,7 @@ class EmailOrchestrator {
                     orderId: data.context.orderId || '',
                     orderType: data.userData.type === 'B2B' ? 'B2B' : 'B2C'
                 };
-                return (0, orderConfirmation_1.generateOrderConfirmationTemplate)(orderConfirmationData, data.language);
+                return (0, orderConfirmation_1.generateOrderConfirmationTemplate)(orderConfirmationData, data.language, data.context.orderId);
             case 'ORDER_STATUS_UPDATE':
                 if (!data.orderData) {
                     throw new Error('Order data is required for order status update email');

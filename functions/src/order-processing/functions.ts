@@ -192,6 +192,142 @@ function checkCampaignMatch(orderData: any, campaign: any, affiliateId: string, 
   return true;
 }
 
+// Universal Campaign Revenue Tracking for Special Edition Products
+async function processUniversalCampaignRevenue(orderData: any, db: any) {
+  try {
+    // Check if this order contains special edition products
+    const specialEditionItems = orderData.items?.filter((item: any) => 
+      item.group === 'B8Shield-special-edition'
+    ) || [];
+    
+    if (specialEditionItems.length === 0) {
+      console.log('📊 No special edition products found in order');
+      return;
+    }
+    
+    console.log(`📊 Found ${specialEditionItems.length} special edition products`);
+    
+    // Get active revenue share campaigns
+    const campaignsRef = db.collection('campaigns');
+    const campaignsQuery = campaignsRef.where('status', '==', 'active').where('isRevenueShare', '==', true);
+    const campaignsSnap = await campaignsQuery.get();
+    
+    if (campaignsSnap.empty) {
+      console.log('📊 No active revenue share campaigns found');
+      return;
+    }
+    
+    // Process each special edition item for each applicable campaign
+    for (const item of specialEditionItems) {
+      const itemRevenue = calculateItemRevenue(item, orderData);
+      
+      console.log(`📊 Processing item: ${item.name} (Revenue: ${itemRevenue.campaignEligibleRevenue} SEK)`);
+      
+      campaignsSnap.docs.forEach(async (campaignDoc: any) => {
+        const campaign = campaignDoc.data();
+        const campaignId = campaignDoc.id;
+        
+        // Check if campaign applies to this product
+        if (shouldCampaignTrackProduct(campaign, item)) {
+          const campaignShare = itemRevenue.campaignEligibleRevenue * (campaign.revenueShareRate || 50) / 100;
+          
+          console.log(`📊 ${campaign.name?.['sv-SE']} gets ${campaignShare} SEK from ${item.name}`);
+          
+          // Update campaign statistics
+          await campaignDoc.ref.update({
+            totalConversions: FieldValue.increment(1),
+            totalRevenue: FieldValue.increment(itemRevenue.campaignEligibleRevenue),
+            totalCampaignShare: FieldValue.increment(campaignShare)
+          });
+          
+          // Create detailed tracking record
+          await db.collection('campaignRevenueTracking').add({
+            campaignId: campaignId,
+            orderId: orderData.id || 'unknown',
+            productId: item.id,
+            productName: item.name,
+            productGroup: item.group,
+            itemQuantity: item.quantity || 1,
+            itemPrice: item.price || 0,
+            customerDiscount: itemRevenue.customerDiscount,
+            affiliateCommission: itemRevenue.affiliateCommission,
+            vatAmount: itemRevenue.vatAmount,
+            campaignEligibleRevenue: itemRevenue.campaignEligibleRevenue,
+            campaignShare: campaignShare,
+            companyShare: itemRevenue.campaignEligibleRevenue - campaignShare,
+            affiliateCode: orderData.affiliateCode || null,
+            hasAffiliateAttribution: !!orderData.affiliateCode,
+            trackedAt: FieldValue.serverTimestamp()
+          });
+        }
+      });
+    }
+    
+    console.log('📊 Universal campaign revenue tracking completed');
+    
+  } catch (error) {
+    console.error('📊 Error in universal campaign revenue tracking:', error);
+    // Don't throw - this shouldn't break order processing
+  }
+}
+
+// Calculate revenue breakdown for a single item
+function calculateItemRevenue(item: any, orderData: any, vatRate = 0.25) {
+  const itemTotal = (item.price || 0) * (item.quantity || 1);
+  const itemDiscountRate = orderData.discountPercentage ? (orderData.discountPercentage / 100) : 0;
+  
+  // Step 1: Apply customer discount
+  const customerDiscount = itemTotal * itemDiscountRate;
+  const afterDiscount = itemTotal - customerDiscount;
+  
+  // Step 2: Remove VAT
+  const vatAmount = afterDiscount * vatRate / (1 + vatRate);
+  const afterVAT = afterDiscount - vatAmount;
+  
+  // Step 3: Calculate affiliate commission (if any)
+  let affiliateCommission = 0;
+  if (orderData.affiliateCode) {
+    // Assume 20% commission rate (could be made dynamic)
+    affiliateCommission = afterVAT * 0.20;
+  }
+  
+  // Step 4: Campaign eligible revenue (after all deductions)
+  const campaignEligibleRevenue = afterVAT - affiliateCommission;
+  
+  return {
+    itemTotal,
+    customerDiscount,
+    afterDiscount,
+    vatAmount,
+    afterVAT,
+    affiliateCommission,
+    campaignEligibleRevenue
+  };
+}
+
+// Check if campaign should track this product
+function shouldCampaignTrackProduct(campaign: any, item: any): boolean {
+  // For KAJJAN and EMMA campaigns, track their respective special edition products
+  const campaignName = campaign.name?.['sv-SE'] || '';
+  const itemName = item.name || '';
+  
+  if (campaignName.includes('KAJJAN') && itemName.includes('KAJJAN')) {
+    return true;
+  }
+  
+  if (campaignName.includes('EMMA') && itemName.includes('EMMA')) {
+    return true;
+  }
+  
+  // Fallback: if campaign targets specific products
+  if (campaign.applicableProducts === 'selected' && campaign.productIds) {
+    return campaign.productIds.includes(item.id);
+  }
+  
+  // Default: track all special edition products for revenue share campaigns
+  return item.group === 'B8Shield-special-edition';
+}
+
 // Complex commission calculation for revenue share campaigns
 function calculateComplexCommission(orderData: any, affiliate: any, campaign: any, vatRate = 0.25) {
   const originalTotal = orderData.total || orderData.subtotal || 0;
@@ -330,6 +466,9 @@ export const processB2COrderCompletionHttp = onRequest(
 
       console.log(`Processing B2C order completion for orderId: ${orderId}`);
       const localDb = db; // Use the correct named database
+      
+      // Initialize commission amount (will be calculated if there's an affiliate)
+      let commissionAmount = 0;
 
       // --- Start of Affiliate Conversion Logic ---
       const orderRef = localDb.collection('orders').doc(orderId);
@@ -400,7 +539,7 @@ export const processB2COrderCompletionHttp = onRequest(
               customerInfo: orderData.customerInfo,
               orderId: orderId,
               source: 'b2c',
-              language: orderData.customerInfo?.language || 'sv-SE',
+              language: orderData.customerInfo?.preferredLang || 'sv-SE',
               orderData: orderData
             });
             console.log(`✅ Orchestrator Customer confirmation email sent to ${customerEmail}`);
@@ -437,11 +576,17 @@ export const processB2COrderCompletionHttp = onRequest(
         // Don't fail the whole process if emails fail - log error and continue
       }
 
+      // --- Universal Campaign Revenue Tracking (ALWAYS runs) ---
+      // Track revenue for special campaigns regardless of affiliate attribution
+      console.log('🎯 Processing universal campaign revenue tracking...');
+      await processUniversalCampaignRevenue(orderData, localDb);
+
+      let commissionProcessed = false;
+      
       if (!affiliateCode) {
         console.log('No affiliate code found for order, skipping commission.');
-        res.json({ success: true, message: 'Order processed (no affiliate)' });
-        return;
-      }
+        commissionProcessed = false;
+      } else {
 
       // Get affiliate details
       const affiliateSnap = await localDb
@@ -485,7 +630,6 @@ export const processB2COrderCompletionHttp = onRequest(
       }
 
       // Calculate commission (standard or campaign-enhanced)
-      let commissionAmount;
       let commissionBreakdown;
       
       if (matchingCampaign && matchingCampaign.isRevenueShare) {
@@ -584,11 +728,15 @@ export const processB2COrderCompletionHttp = onRequest(
         await orderRef.update({ attributionMethod });
       }
 
-      console.log(`Successfully processed affiliate commission for order ${orderId}`);
+        console.log(`Successfully processed affiliate commission for order ${orderId}`);
+        commissionProcessed = true;
+      }
+
+      // Send final response
       res.json({ 
         success: true, 
-        message: 'Order processed with affiliate commission',
-        commission: commissionAmount 
+        message: commissionProcessed ? 'Order processed with affiliate commission' : 'Order processed (no affiliate)',
+        commission: commissionAmount
       });
 
     } catch (error) {

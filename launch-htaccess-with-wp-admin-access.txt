@@ -32,17 +32,17 @@ RewriteRule ^ref/19/?(.*)$ https://shop.b8shield.com/se/$1?ref=EMMA10 [R=301,L]
 # Bill Kallberg (ID 18) → KALLBERG-644 - 268.32 kr
 RewriteCond %{HTTP_HOST} ^(www\.)?store\.b8shield\.com$ [NC]
 RewriteCond %{REQUEST_URI} ^/ref/18/?(.*)$
-RewriteRule ^ref/18/?(.*)$ https://shop.b8shield.com/se/$1?ref=KALLBERG-644 [R=301,L]
+RewriteRule ^ref/18/?(.*)$ https://shop.b8shield.com/se/$1?ref=KALLBERG10 [R=301,L]
 
 # Mickael Is (ID 12) → TACKLERO-118 - 240.02 kr
 RewriteCond %{HTTP_HOST} ^(www\.)?store\.b8shield\.com$ [NC]
 RewriteCond %{REQUEST_URI} ^/ref/12/?(.*)$
-RewriteRule ^ref/12/?(.*)$ https://shop.b8shield.com/se/$1?ref=TACKLERO-118 [R=301,L]
+RewriteRule ^ref/12/?(.*)$ https://shop.b8shield.com/se/$1?ref=TACKLEROOM10 [R=301,L]
 
 # Graham Hopkins (ID 10) → GHOPKINS-987 - 237.02 kr
 RewriteCond %{HTTP_HOST} ^(www\.)?store\.b8shield\.com$ [NC]
 RewriteCond %{REQUEST_URI} ^/ref/10/?(.*)$
-RewriteRule ^ref/10/?(.*)$ https://shop.b8shield.com/se/$1?ref=GHOPKINS-987 [R=301,L]
+RewriteRule ^ref/10/?(.*)$ https://shop.b8shield.com/se/$1?ref=GHOPKINS10 [R=301,L]
 
 # === ACTIVE AFFILIATES ===
 # Kajsa Gustafsson (ID 21) → KAJSA10 - NEW TOP AFFILIATE
@@ -53,7 +53,7 @@ RewriteRule ^ref/21/?(.*)$ https://shop.b8shield.com/se/$1?ref=KAJSA10 [R=301,L]
 # Trevyn Morris (ID 14) → COLORADO-300 - US Market
 RewriteCond %{HTTP_HOST} ^(www\.)?store\.b8shield\.com$ [NC]
 RewriteCond %{REQUEST_URI} ^/ref/14/?(.*)$
-RewriteRule ^ref/14/?(.*)$ https://shop.b8shield.com/se/$1?ref=COLORADO-300 [R=301,L]
+RewriteRule ^ref/14/?(.*)$ https://shop.b8shield.com/se/$1?ref=COLORADO10 [R=301,L]
 
 # Michael Baldwin (ID 11) → RETIRED0-418
 RewriteCond %{HTTP_HOST} ^(www\.)?store\.b8shield\.com$ [NC]

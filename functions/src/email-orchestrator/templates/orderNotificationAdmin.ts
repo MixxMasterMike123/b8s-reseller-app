@@ -112,9 +112,10 @@ function getPillsRowAdmin(item: any): string {
 }
 
 // DEPRECATED: Keep for backward compatibility but use pill design instead
-function getProductDisplayNameAdmin(item: any): string {
-  return getCleanProductNameAdmin(item);
-}
+// Helper function for admin product display names (currently unused but kept for future use)
+// function getProductDisplayNameAdmin(item: any): string {
+//   return getCleanProductNameAdmin(item);
+// }
 
 // Format payment method display
 function formatPaymentMethod(method: string): string {

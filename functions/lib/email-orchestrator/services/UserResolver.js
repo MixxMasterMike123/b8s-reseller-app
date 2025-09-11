@@ -74,7 +74,7 @@ class UserResolver {
                 companyName: userData.companyName,
                 contactPerson: userData.contactPerson,
                 type: 'B2B',
-                language: userData.preferredLanguage || 'sv-SE'
+                language: userData.preferredLang || 'sv-SE'
             };
         }
         catch (error) {
@@ -97,7 +97,7 @@ class UserResolver {
                 email: customerData.email,
                 name: customerData.name || 'B2C Customer',
                 type: 'B2C',
-                language: customerData.preferredLanguage || 'sv-SE'
+                language: customerData.preferredLang || 'sv-SE'
             };
         }
         catch (error) {

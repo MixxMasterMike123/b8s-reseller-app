@@ -33,37 +33,49 @@ function getDisplayColor(color) {
     }
     return String(color);
 }
-// Helper function to get product display name with color and size (same logic as admin email)
-function getProductDisplayName(item, lang) {
-    // DEBUG: Log the actual item data to see what we're working with
-    console.log('🔍 Customer Email - Item data:', JSON.stringify(item, null, 2));
-    console.log('🔍 Customer Email - item.color:', item.color, 'type:', typeof item.color);
-    console.log('🔍 Customer Email - item.size:', item.size, 'type:', typeof item.size);
-    // Handle multilingual product names
-    const baseName = getProductName(item, lang);
-    // Use the same logic as frontend and admin email
-    const color = getDisplayColor(item.color);
-    const size = getDisplaySize(item.size);
-    let displayName = baseName;
-    // Add color if available (not default values)
-    if (color && color !== '-' && color !== 'Blandade färger' && color !== 'Mixed colors') {
-        displayName += ` ${color}`;
-    }
-    // Add size if available (not default values)
-    if (size && size !== '-' && size !== 'Blandade storlekar' && size !== 'Mixed sizes') {
-        const sizeText = lang.startsWith('en') ? 'size' : 'stl.';
-        displayName += `, ${sizeText} ${size}`;
-    }
-    console.log('🔍 Customer Email - Final display name:', displayName);
-    return displayName;
+// Helper function to get clean product name without color/size (for pill design)
+function getCleanProductName(item, lang) {
+    return getProductName(item, lang);
 }
-function generateOrderConfirmationTemplate(data, lang = 'sv-SE') {
-    const { orderData, customerInfo, orderType, orderId } = data;
+// Helper function to generate color pill HTML
+function getColorPill(item) {
+    const color = getDisplayColor(item.color);
+    if (!color || color === '-' || color === 'Blandade färger' || color === 'Mixed colors') {
+        return '';
+    }
+    return `<span style="display: inline-block; background-color: #f3f4f6; color: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; margin-right: 6px; border: 1px solid #d1d5db;">Färg: ${color}</span>`;
+}
+// Helper function to generate size pill HTML
+function getSizePill(item, lang) {
+    const size = getDisplaySize(item.size);
+    if (!size || size === '-' || size === 'Blandade storlekar' || size === 'Mixed sizes') {
+        return '';
+    }
+    const sizeLabel = lang.startsWith('en') ? 'Size' : 'Storlek';
+    return `<span style="display: inline-block; background-color: #f3f4f6; color: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; margin-right: 6px; border: 1px solid #d1d5db;">${sizeLabel}: ${size}</span>`;
+}
+// Helper function to generate pills row HTML
+function getPillsRow(item, lang) {
+    const colorPill = getColorPill(item);
+    const sizePill = getSizePill(item, lang);
+    if (!colorPill && !sizePill) {
+        return '';
+    }
+    return `<div style="margin-top: 6px; margin-bottom: 4px;">${colorPill}${sizePill}</div>`;
+}
+// DEPRECATED: Keep for backward compatibility but use pill design instead
+// Helper function for product display names (currently unused but kept for future use)
+// function getProductDisplayName(item: any, lang: string): string {
+//   return getCleanProductName(item, lang);
+// }
+function generateOrderConfirmationTemplate(data, lang = 'sv-SE', orderId) {
+    const { orderData, customerInfo, orderType } = data;
     // Handle different affiliate data structures (Stripe vs Mock payments)
     const affiliateCode = orderData.affiliateCode || orderData.affiliate?.code;
     const customerName = customerInfo.firstName + (customerInfo.lastName ? ' ' + customerInfo.lastName : '') || customerInfo.name || 'Kund';
-    // Generate URLs - USE ORDER DB ID NOT ORDER NUMBER
-    const orderUrl = (0, config_1.getOrderTrackingUrl)(orderId, lang);
+    // Generate URLs - USE ORDER DB ID NOT ORDER NUMBER (same pattern as status update)
+    const finalOrderId = orderId || data.orderId;
+    const orderUrl = (0, config_1.getOrderTrackingUrl)(finalOrderId, lang);
     const supportUrl = (0, config_1.getSupportUrl)(lang);
     // Choose template based on order type
     if (orderType === 'B2B') {
@@ -102,11 +114,12 @@ function generateB2CTemplate(data, lang, customerName, orderUrl, supportUrl, aff
             <div style="display: flex; align-items: flex-start; margin-bottom: 8px;">
               ${item.image ? `
               <div style="flex-shrink: 0; margin-right: 12px;">
-                <img src="${item.image}" alt="${getProductDisplayName(item, lang)}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid ${config_1.EMAIL_CONFIG.COLORS.BORDER}; display: block;" />
+                <img src="${item.image}" alt="${getCleanProductName(item, lang)}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid ${config_1.EMAIL_CONFIG.COLORS.BORDER}; display: block;" />
               </div>
               ` : ''}
               <div style="flex: 1; min-width: 0;">
-                <div style="font-weight: bold; color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; font-size: 16px; line-height: 1.4; margin-bottom: 6px;">${getProductDisplayName(item, lang)}</div>
+                <div style="font-weight: bold; color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; font-size: 16px; line-height: 1.4; margin-bottom: 2px;">${getCleanProductName(item, lang)}</div>
+                ${getPillsRow(item, lang)}
                 <div style="font-size: 14px; color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; margin-bottom: 8px;">Kvantitet: ${item.quantity} st × ${(0, config_1.formatPrice)(item.price)}</div>
               </div>
             </div>

@@ -98,9 +98,10 @@ function getPillsRow(item: any, lang: string): string {
 }
 
 // DEPRECATED: Keep for backward compatibility but use pill design instead
-function getProductDisplayName(item: any, lang: string): string {
-  return getCleanProductName(item, lang);
-}
+// Helper function for product display names (currently unused but kept for future use)
+// function getProductDisplayName(item: any, lang: string): string {
+//   return getCleanProductName(item, lang);
+// }
 
 export function generateOrderConfirmationTemplate(data: OrderConfirmationData, lang: string = 'sv-SE', orderId?: string) {
   const { orderData, customerInfo, orderType } = data;
