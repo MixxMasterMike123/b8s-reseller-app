@@ -439,8 +439,8 @@ const PublicStorefront = () => {
                       </p>
                     </div>
                     
-                    {/* Special Edition Grid - 2 columns */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    {/* Special Edition Grid - 3 columns for desktop */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
                       {specialEditionProducts.map((product, index) => {
                         const productUrl = getProductUrl(product);
                         
