@@ -243,7 +243,9 @@ const AffiliateRegistration = () => {
                     <option value="FI">{t('affiliate_reg_country_finland', 'Finland')}</option>
                     <option value="DE">{t('affiliate_reg_country_germany', 'Tyskland')}</option>
                     <option value="GB">{t('affiliate_reg_country_uk', 'Storbritannien')}</option>
-                    {/* Add more countries as needed */}
+                    <option value="US">{t('affiliate_reg_country_us', 'United States')}</option>
+                    <option value="CA">{t('affiliate_reg_country_ca', 'Canada')}</option>
+                    <option value="AU">{t('affiliate_reg_country_au', 'Australia')}</option>
                   </select>
                 </div>
 
