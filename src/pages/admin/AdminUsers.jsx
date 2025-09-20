@@ -54,17 +54,25 @@ const AdminUsers = () => {
         return matchesSearch && matchesTab;
       }
       
-      // 🎯 CUSTOMER TAB FILTERING (CORRECTED LOGIC)
+      // 🎯 CUSTOMER TAB FILTERING - ONLY B2B APPLICATIONS (HIDE MANUAL PROSPECTS)
       let matchesCustomerFilter = true;
-      if (activeCustomerTab === 'active') {
-        // TAB 1: Only active B2B customers (including manual prospects that are activated)
-        matchesCustomerFilter = user.active === true;
-      } else if (activeCustomerTab === 'applicants') {
-        // TAB 2: Only inactive customers (form applications + manual prospects awaiting activation)
-        matchesCustomerFilter = user.active === false || user.active === undefined;
-      } else if (activeCustomerTab === 'all') {
-        // TAB 3: All customers (active + inactive, regardless of source)
-        matchesCustomerFilter = true; // Show all non-admin users
+      
+      // EXCLUDE manual prospects completely - they belong in Dining Wagon only
+      const isManualProspect = user.createdByAdmin === true;
+      if (isManualProspect) {
+        matchesCustomerFilter = false;
+      } else {
+        // Only show genuine B2B applications from registration form
+        if (activeCustomerTab === 'active') {
+          // TAB 1: Active B2B customers from registration form
+          matchesCustomerFilter = user.active === true && user.createdByAdmin !== true;
+        } else if (activeCustomerTab === 'applicants') {
+          // TAB 2: B2B applications awaiting activation (from registration form)
+          matchesCustomerFilter = (user.active === false || user.active === undefined) && user.createdByAdmin !== true;
+        } else if (activeCustomerTab === 'all') {
+          // TAB 3: All genuine B2B applications (active + pending, exclude manual prospects)
+          matchesCustomerFilter = user.createdByAdmin !== true;
+        }
       }
       
       return matchesSearch && matchesTab && matchesCustomerFilter;
@@ -155,7 +163,7 @@ const AdminUsers = () => {
         <div className="px-4 py-5 border-b border-gray-200 dark:border-gray-700 sm:px-6 flex justify-between items-center">
           <h1 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
             {/* 🆕 ENHANCE: Dynamic header based on active tab */}
-            {activeTab === 'customers' ? 'Kundhantering' : 'Admin Användare'}
+            {activeTab === 'customers' ? 'B2B Kundhantering' : 'Admin Användare'}
           </h1>
           <div className="flex gap-3">
             <Link
@@ -185,7 +193,7 @@ const AdminUsers = () => {
                   : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
-              Aktiva B2B Kunder ({users.filter(u => u.role !== 'admin' && u.active === true).length})
+              B2B Kunder ({users.filter(u => u.role !== 'admin' && u.createdByAdmin !== true).length})
             </button>
             <button
               onClick={() => setActiveTab('admins')}
@@ -212,7 +220,7 @@ const AdminUsers = () => {
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                Aktiva Kunder ({users.filter(u => u.role !== 'admin' && u.active === true).length})
+                Aktiva B2B Kunder ({users.filter(u => u.role !== 'admin' && u.active === true && u.createdByAdmin !== true).length})
               </button>
               <button
                 onClick={() => setActiveCustomerTab('applicants')}
@@ -222,7 +230,7 @@ const AdminUsers = () => {
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                Inaktiva / Prospects ({users.filter(u => u.role !== 'admin' && (u.active === false || u.active === undefined)).length})
+                B2B Ansökningar ({users.filter(u => u.role !== 'admin' && (u.active === false || u.active === undefined) && u.createdByAdmin !== true).length})
               </button>
               <button
                 onClick={() => setActiveCustomerTab('all')}
@@ -232,7 +240,7 @@ const AdminUsers = () => {
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                Alla Kunder ({users.filter(u => u.role !== 'admin').length})
+                Alla B2B ({users.filter(u => u.role !== 'admin' && u.createdByAdmin !== true).length})
               </button>
             </nav>
           </div>
