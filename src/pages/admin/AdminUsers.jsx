@@ -54,25 +54,18 @@ const AdminUsers = () => {
         return matchesSearch && matchesTab;
       }
       
-      // 🎯 CUSTOMER TAB FILTERING - ONLY B2B APPLICATIONS FROM REGISTRATION FORM
+      // 🎯 SIMPLE CUSTOMER TAB FILTERING - SHOW ACTIVE CUSTOMERS
       let matchesCustomerFilter = true;
       
-      // ONLY show users with role 'reseller' (from partner.b8shield.com/register)
-      // HIDE all users with role 'user' (manual prospects - belong in Dining Wagon)
-      if (user.role !== 'reseller') {
-        matchesCustomerFilter = false;
-      } else {
-        // Only show B2B applications from registration form (role: 'reseller')
-        if (activeCustomerTab === 'active') {
-          // TAB 1: B2B customers that WE activated (reseller + active)
-          matchesCustomerFilter = user.active === true;
-        } else if (activeCustomerTab === 'applicants') {
-          // TAB 2: NEW B2B applications awaiting activation (reseller + inactive)
-          matchesCustomerFilter = user.active === false || user.active === undefined;
-        } else if (activeCustomerTab === 'all') {
-          // TAB 3: All B2B applications (reseller role, active + pending)
-          matchesCustomerFilter = true; // Already filtered by role above
-        }
+      if (activeCustomerTab === 'active') {
+        // TAB 1: Active customers (any role, just active=true)
+        matchesCustomerFilter = user.active === true;
+      } else if (activeCustomerTab === 'applicants') {
+        // TAB 2: Inactive/pending customers 
+        matchesCustomerFilter = user.active === false || user.active === undefined;
+      } else if (activeCustomerTab === 'all') {
+        // TAB 3: All customers
+        matchesCustomerFilter = true;
       }
       
       return matchesSearch && matchesTab && matchesCustomerFilter;
@@ -193,7 +186,7 @@ const AdminUsers = () => {
                   : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
-              B2B Kunder ({users.filter(u => u.role === 'reseller').length})
+              Kunder ({users.filter(u => u.role !== 'admin').length})
             </button>
             <button
               onClick={() => setActiveTab('admins')}
@@ -220,7 +213,7 @@ const AdminUsers = () => {
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                Aktiva B2B Kunder ({users.filter(u => u.role === 'reseller' && u.active === true).length})
+                Aktiva Kunder ({users.filter(u => u.role !== 'admin' && u.active === true).length})
               </button>
               <button
                 onClick={() => setActiveCustomerTab('applicants')}
@@ -230,7 +223,7 @@ const AdminUsers = () => {
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                B2B Ansökningar ({users.filter(u => u.role === 'reseller' && (u.active === false || u.active === undefined)).length})
+                Inaktiva Kunder ({users.filter(u => u.role !== 'admin' && (u.active === false || u.active === undefined)).length})
               </button>
               <button
                 onClick={() => setActiveCustomerTab('all')}
@@ -240,7 +233,7 @@ const AdminUsers = () => {
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                Alla B2B ({users.filter(u => u.role === 'reseller').length})
+                Alla Kunder ({users.filter(u => u.role !== 'admin').length})
               </button>
             </nav>
           </div>
