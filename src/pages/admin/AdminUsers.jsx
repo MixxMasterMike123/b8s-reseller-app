@@ -54,24 +54,24 @@ const AdminUsers = () => {
         return matchesSearch && matchesTab;
       }
       
-      // 🎯 CUSTOMER TAB FILTERING - ONLY B2B APPLICATIONS (HIDE MANUAL PROSPECTS)
+      // 🎯 CUSTOMER TAB FILTERING - ONLY B2B APPLICATIONS FROM REGISTRATION FORM
       let matchesCustomerFilter = true;
       
-      // EXCLUDE manual prospects completely - they belong in Dining Wagon only
-      const isManualProspect = user.createdByAdmin === true;
-      if (isManualProspect) {
+      // ONLY show users with role 'reseller' (from partner.b8shield.com/register)
+      // HIDE all users with role 'user' (manual prospects - belong in Dining Wagon)
+      if (user.role !== 'reseller') {
         matchesCustomerFilter = false;
       } else {
-        // Only show genuine B2B applications from registration form
+        // Only show B2B applications from registration form (role: 'reseller')
         if (activeCustomerTab === 'active') {
-          // TAB 1: Active B2B customers from registration form
-          matchesCustomerFilter = user.active === true && user.createdByAdmin !== true;
+          // TAB 1: B2B customers that WE activated (reseller + active)
+          matchesCustomerFilter = user.active === true;
         } else if (activeCustomerTab === 'applicants') {
-          // TAB 2: B2B applications awaiting activation (from registration form)
-          matchesCustomerFilter = (user.active === false || user.active === undefined) && user.createdByAdmin !== true;
+          // TAB 2: NEW B2B applications awaiting activation (reseller + inactive)
+          matchesCustomerFilter = user.active === false || user.active === undefined;
         } else if (activeCustomerTab === 'all') {
-          // TAB 3: All genuine B2B applications (active + pending, exclude manual prospects)
-          matchesCustomerFilter = user.createdByAdmin !== true;
+          // TAB 3: All B2B applications (reseller role, active + pending)
+          matchesCustomerFilter = true; // Already filtered by role above
         }
       }
       
@@ -193,7 +193,7 @@ const AdminUsers = () => {
                   : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
-              B2B Kunder ({users.filter(u => u.role !== 'admin' && u.createdByAdmin !== true).length})
+              B2B Kunder ({users.filter(u => u.role === 'reseller').length})
             </button>
             <button
               onClick={() => setActiveTab('admins')}
@@ -220,7 +220,7 @@ const AdminUsers = () => {
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                Aktiva B2B Kunder ({users.filter(u => u.role !== 'admin' && u.active === true && u.createdByAdmin !== true).length})
+                Aktiva B2B Kunder ({users.filter(u => u.role === 'reseller' && u.active === true).length})
               </button>
               <button
                 onClick={() => setActiveCustomerTab('applicants')}
@@ -230,7 +230,7 @@ const AdminUsers = () => {
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                B2B Ansökningar ({users.filter(u => u.role !== 'admin' && (u.active === false || u.active === undefined) && u.createdByAdmin !== true).length})
+                B2B Ansökningar ({users.filter(u => u.role === 'reseller' && (u.active === false || u.active === undefined)).length})
               </button>
               <button
                 onClick={() => setActiveCustomerTab('all')}
@@ -240,7 +240,7 @@ const AdminUsers = () => {
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                Alla B2B ({users.filter(u => u.role !== 'admin' && u.createdByAdmin !== true).length})
+                Alla B2B ({users.filter(u => u.role === 'reseller').length})
               </button>
             </nav>
           </div>
