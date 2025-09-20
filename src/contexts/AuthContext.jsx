@@ -149,7 +149,7 @@ export function AuthProvider({ children }) {
           id: newUserId,
           email,
           ...userData,
-          role: 'user',
+          role: userData.role || 'user', // Preserve role from registration form
           active: false,
           isActive: false,
           createdAt: new Date().toISOString(),
@@ -167,7 +167,7 @@ export function AuthProvider({ children }) {
         const userProfile = {
           ...userData,
           email,
-          role: 'user',
+          role: userData.role || 'user', // Preserve role from registration form
           active: false, // Require admin activation
           isActive: false,
           marginal: 35, // Default margin percentage
@@ -574,6 +574,7 @@ export function AuthProvider({ children }) {
           uid: newUserId,
           email,
           ...userData,
+          createdByAdmin: true, // Mark as admin-created
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
@@ -589,6 +590,7 @@ export function AuthProvider({ children }) {
         const userProfile = {
           ...userData,
           email,
+          createdByAdmin: true, // Mark as admin-created
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
