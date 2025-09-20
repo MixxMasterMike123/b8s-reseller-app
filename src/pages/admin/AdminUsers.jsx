@@ -11,8 +11,7 @@ const AdminUsers = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('active'); // Default to active customers
-  const [sourceFilter, setSourceFilter] = useState('all'); // New: source filter
+  const [activeCustomerTab, setActiveCustomerTab] = useState('active'); // Simplified tab system
   const [roleUpdateLoading, setRoleUpdateLoading] = useState(false);
   const [marginalUpdateLoading, setMarginalUpdateLoading] = useState(false);
   const [editingMarginals, setEditingMarginals] = useState({});
@@ -39,40 +38,40 @@ const AdminUsers = () => {
   }, [getAllUsers]);
 
   useEffect(() => {
-    // 🎯 FILTER: Apply status and source filters
+    // 🎯 SIMPLIFIED TAB FILTERING
     const filtered = users.filter(user => {
       const matchesSearch = 
         user.companyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.contactPerson?.toLowerCase().includes(searchTerm.toLowerCase());
       
-      // 🔥 Status-based filtering
-      let matchesStatus = true;
-      if (statusFilter === 'active') {
-        matchesStatus = user.active === true;
-      } else if (statusFilter === 'inactive') {
-        matchesStatus = user.active === false || user.active === undefined;
-      }
-      // If statusFilter === 'all', matchesStatus remains true
-      
-      // 🆕 NEW: Source-based filtering (prospects vs self-registered)
-      let matchesSource = true;
-      if (sourceFilter === 'admin_created') {
-        matchesSource = user.createdByAdmin === true;
-      } else if (sourceFilter === 'self_registered') {
-        matchesSource = user.createdByAdmin !== true;
-      }
-      // If sourceFilter === 'all', matchesSource remains true
-      
       // 🆕 Tab-based filtering (customers vs admins)
       const matchesTab = 
         activeTab === 'customers' ? user.role !== 'admin' : user.role === 'admin';
       
-      return matchesSearch && matchesStatus && matchesSource && matchesTab;
+      // Skip admin tab filtering - only apply to customer tab
+      if (activeTab === 'admins') {
+        return matchesSearch && matchesTab;
+      }
+      
+      // 🎯 CUSTOMER TAB FILTERING
+      let matchesCustomerFilter = true;
+      if (activeCustomerTab === 'active') {
+        // TAB 1: Only active B2B customers (exclude manual prospects)
+        matchesCustomerFilter = user.active === true && user.createdByAdmin !== true;
+      } else if (activeCustomerTab === 'applicants') {
+        // TAB 2: Only B2B applicants from form, not yet activated
+        matchesCustomerFilter = user.active === false && user.createdByAdmin !== true;
+      } else if (activeCustomerTab === 'all') {
+        // TAB 3: All customers (active + applicants, but exclude manual prospects)
+        matchesCustomerFilter = user.createdByAdmin !== true;
+      }
+      
+      return matchesSearch && matchesTab && matchesCustomerFilter;
     });
     
     setFilteredUsers(filtered);
-  }, [searchTerm, statusFilter, sourceFilter, users, activeTab]);
+  }, [searchTerm, activeCustomerTab, users, activeTab]);
 
 
 
@@ -201,56 +200,62 @@ const AdminUsers = () => {
           </nav>
         </div>
 
-        {/* Filter and search */}
+        {/* Customer Sub-tabs (only shown when on customers tab) */}
+        {activeTab === 'customers' && (
+          <div className="border-b border-gray-200 dark:border-gray-700">
+            <nav className="-mb-px flex space-x-8 px-6">
+              <button
+                onClick={() => setActiveCustomerTab('active')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeCustomerTab === 'active'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                }`}
+              >
+                Aktiva Kunder ({users.filter(u => u.role !== 'admin' && u.active === true && u.createdByAdmin !== true).length})
+              </button>
+              <button
+                onClick={() => setActiveCustomerTab('applicants')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeCustomerTab === 'applicants'
+                    ? 'border-orange-500 text-orange-600 dark:text-orange-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                }`}
+              >
+                Nya Ansökningar ({users.filter(u => u.role !== 'admin' && u.active === false && u.createdByAdmin !== true).length})
+              </button>
+              <button
+                onClick={() => setActiveCustomerTab('all')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeCustomerTab === 'all'
+                    ? 'border-gray-500 text-gray-600 dark:text-gray-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                }`}
+              >
+                Alla Kunder ({users.filter(u => u.role !== 'admin' && u.createdByAdmin !== true).length})
+              </button>
+            </nav>
+          </div>
+        )}
+
+        {/* Search */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder={
-                  /* 🆕 ENHANCE: Dynamic placeholder based on active tab */
-                  activeTab === 'customers' 
-                    ? "Sök efter namn, e-post eller företag..." 
-                    : "Sök efter namn, e-post eller admin..."
-                }
-                className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm focus:border-primary-500 focus:ring-primary-500 pl-10 py-2"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                </svg>
-              </div>
-            </div>
-            
-            {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-3">
-              {/* Source Filter */}
-              <div className="flex-shrink-0">
-                <select
-                  value={sourceFilter}
-                  onChange={(e) => setSourceFilter(e.target.value)}
-                  className="block rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2 px-3"
-                >
-                  <option value="all">Alla källor</option>
-                  <option value="admin_created">Prospects (Admin)</option>
-                  <option value="self_registered">Registrerade (Form)</option>
-                </select>
-              </div>
-              
-              {/* Status Filter */}
-              <div className="flex-shrink-0">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="block rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2 px-3"
-                >
-                  <option value="active">Aktiva kunder</option>
-                  <option value="inactive">Inaktiva kunder</option>
-                  <option value="all">Alla kunder</option>
-                </select>
-              </div>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder={
+                activeTab === 'customers' 
+                  ? "Sök efter namn, e-post eller företag..." 
+                  : "Sök efter namn, e-post eller admin..."
+              }
+              className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm focus:border-primary-500 focus:ring-primary-500 pl-10 py-2"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+              </svg>
             </div>
           </div>
         </div>
@@ -387,26 +392,15 @@ const AdminUsers = () => {
                           <div className="space-y-2">
                             <div>
                               <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                user.active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
+                                user.active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' : 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300'
                               }`}>
-                                {user.active ? 'Aktiv' : 'Inaktiv'}
-                              </span>
-                            </div>
-                            
-                            {/* Source Indicator */}
-                            <div>
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                user.createdByAdmin 
-                                  ? 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300'
-                                  : 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300'
-                              }`}>
-                                {user.createdByAdmin ? 'Prospect' : 'Registrerad'}
+                                {user.active ? 'Aktiv' : 'Väntar aktivering'}
                               </span>
                             </div>
                             
                             {/* Creation Date */}
                             <div className="text-xs text-gray-500 dark:text-gray-400">
-                              Skapad: {user.createdAt ? new Date(user.createdAt).toLocaleDateString('sv-SE') : 'Okänt datum'}
+                              Ansökte: {user.createdAt ? new Date(user.createdAt).toLocaleDateString('sv-SE') : 'Okänt datum'}
                             </div>
                           </div>
                         </div>
