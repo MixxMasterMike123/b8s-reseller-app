@@ -179,6 +179,30 @@ export function AuthProvider({ children }) {
 
         // CRM auto-import no longer needed - using unified users collection
 
+        // Send B2B application emails (customer confirmation + admin notification)
+        if (userData.role === 'reseller') {
+          try {
+            const sendB2BApplicationEmails = httpsCallable(functions, 'sendB2BApplicationEmails');
+            await sendB2BApplicationEmails({
+              applicantInfo: {
+                name: userData.contactPerson || userData.companyName,
+                email: email,
+                companyName: userData.companyName,
+                contactPerson: userData.contactPerson,
+                phone: userData.phone,
+                orgNumber: userData.orgNumber,
+                vatNumber: userData.vatNumber
+              },
+              applicationId: user.uid,
+              language: userData.preferredLang || 'sv-SE'
+            });
+            console.log('✅ B2B application emails sent successfully');
+          } catch (emailError) {
+            console.error('❌ Failed to send B2B application emails:', emailError);
+            // Don't fail the registration if emails fail
+          }
+        }
+
         return user;
       }
     } catch (error) {

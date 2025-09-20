@@ -184,20 +184,15 @@ const RegisterPage = () => {
                 
                 <div>
                   <label htmlFor="vatNumber" className="block text-sm font-medium text-gray-700 mb-1">
-                    {t('register.fields.vat_number', 'Momsregistreringsnummer')} *
+                    {t('register.fields.vat_number', 'Momsregistreringsnummer')}
                   </label>
                   <input
                     id="vatNumber"
                     type="text"
                     placeholder="SE123456789001"
-                    {...register('vatNumber', { required: t('register.errors.vat_number_required', 'Momsregistreringsnummer krävs') })}
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.vatNumber ? 'border-red-300' : 'border-gray-300'
-                    }`}
+                    {...register('vatNumber')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
-                  {errors.vatNumber && (
-                    <p className="mt-1 text-sm text-red-600">{errors.vatNumber.message}</p>
-                  )}
                 </div>
               </div>
             </div>

@@ -22,6 +22,7 @@ export {
   sendCustomEmailVerification,
   verifyEmailCode,
   sendAffiliateApplicationEmails,
+  sendB2BApplicationEmails,
   testEmailOrchestrator
 } from './email-orchestrator/functions';
 
