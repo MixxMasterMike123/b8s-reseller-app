@@ -12,6 +12,7 @@ const AdminUsers = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('active'); // Default to active customers
+  const [sourceFilter, setSourceFilter] = useState('all'); // New: source filter
   const [roleUpdateLoading, setRoleUpdateLoading] = useState(false);
   const [marginalUpdateLoading, setMarginalUpdateLoading] = useState(false);
   const [editingMarginals, setEditingMarginals] = useState({});
@@ -38,14 +39,14 @@ const AdminUsers = () => {
   }, [getAllUsers]);
 
   useEffect(() => {
-    // 🎯 FILTER: Apply status filter (active/inactive/all)
+    // 🎯 FILTER: Apply status and source filters
     const filtered = users.filter(user => {
       const matchesSearch = 
         user.companyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.contactPerson?.toLowerCase().includes(searchTerm.toLowerCase());
       
-      // 🔥 NEW: Status-based filtering
+      // 🔥 Status-based filtering
       let matchesStatus = true;
       if (statusFilter === 'active') {
         matchesStatus = user.active === true;
@@ -54,15 +55,24 @@ const AdminUsers = () => {
       }
       // If statusFilter === 'all', matchesStatus remains true
       
-      // 🆕 ADD: Tab-based filtering (customers vs admins)
+      // 🆕 NEW: Source-based filtering (prospects vs self-registered)
+      let matchesSource = true;
+      if (sourceFilter === 'admin_created') {
+        matchesSource = user.createdByAdmin === true;
+      } else if (sourceFilter === 'self_registered') {
+        matchesSource = user.createdByAdmin !== true;
+      }
+      // If sourceFilter === 'all', matchesSource remains true
+      
+      // 🆕 Tab-based filtering (customers vs admins)
       const matchesTab = 
         activeTab === 'customers' ? user.role !== 'admin' : user.role === 'admin';
       
-      return matchesSearch && matchesStatus && matchesTab;
+      return matchesSearch && matchesStatus && matchesSource && matchesTab;
     });
     
     setFilteredUsers(filtered);
-  }, [searchTerm, statusFilter, users, activeTab]);
+  }, [searchTerm, statusFilter, sourceFilter, users, activeTab]);
 
 
 
@@ -214,17 +224,33 @@ const AdminUsers = () => {
               </div>
             </div>
             
-            {/* Status Filter */}
-            <div className="flex-shrink-0">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="block rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2 px-3"
-              >
-                <option value="active">Aktiva kunder</option>
-                <option value="inactive">Inaktiva kunder</option>
-                <option value="all">Alla kunder</option>
-              </select>
+            {/* Filters */}
+            <div className="flex flex-col md:flex-row gap-3">
+              {/* Source Filter */}
+              <div className="flex-shrink-0">
+                <select
+                  value={sourceFilter}
+                  onChange={(e) => setSourceFilter(e.target.value)}
+                  className="block rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2 px-3"
+                >
+                  <option value="all">Alla källor</option>
+                  <option value="admin_created">Prospects (Admin)</option>
+                  <option value="self_registered">Registrerade (Form)</option>
+                </select>
+              </div>
+              
+              {/* Status Filter */}
+              <div className="flex-shrink-0">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="block rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2 px-3"
+                >
+                  <option value="active">Aktiva kunder</option>
+                  <option value="inactive">Inaktiva kunder</option>
+                  <option value="all">Alla kunder</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -358,12 +384,30 @@ const AdminUsers = () => {
                           </div>
 
                           {/* Status Section */}
-                          <div>
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              user.active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
-                            }`}>
-                              {user.active ? 'Aktiv' : 'Inaktiv'}
-                            </span>
+                          <div className="space-y-2">
+                            <div>
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                user.active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
+                              }`}>
+                                {user.active ? 'Aktiv' : 'Inaktiv'}
+                              </span>
+                            </div>
+                            
+                            {/* Source Indicator */}
+                            <div>
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                user.createdByAdmin 
+                                  ? 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300'
+                                  : 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300'
+                              }`}>
+                                {user.createdByAdmin ? 'Prospect' : 'Registrerad'}
+                              </span>
+                            </div>
+                            
+                            {/* Creation Date */}
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              Skapad: {user.createdAt ? new Date(user.createdAt).toLocaleDateString('sv-SE') : 'Okänt datum'}
+                            </div>
                           </div>
                         </div>
                       </td>
