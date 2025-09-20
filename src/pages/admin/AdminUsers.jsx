@@ -61,8 +61,8 @@ const AdminUsers = () => {
         // TAB 1: Active customers (any role, just active=true)
         matchesCustomerFilter = user.active === true;
       } else if (activeCustomerTab === 'applicants') {
-        // TAB 2: Inactive/pending customers 
-        matchesCustomerFilter = user.active === false || user.active === undefined;
+        // TAB 2: B2B Applications - inactive customers with role='reseller' 
+        matchesCustomerFilter = user.role === 'reseller' && (user.active === false || user.active === undefined);
       } else if (activeCustomerTab === 'all') {
         // TAB 3: All customers
         matchesCustomerFilter = true;
@@ -223,7 +223,7 @@ const AdminUsers = () => {
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                Inaktiva Kunder ({users.filter(u => u.role !== 'admin' && (u.active === false || u.active === undefined)).length})
+                B2B Ansökningar ({users.filter(u => u.role === 'reseller' && (u.active === false || u.active === undefined)).length})
               </button>
               <button
                 onClick={() => setActiveCustomerTab('all')}
