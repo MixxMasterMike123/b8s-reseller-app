@@ -11,7 +11,7 @@ const AdminUsers = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('active'); // Default to active customers
   const [roleUpdateLoading, setRoleUpdateLoading] = useState(false);
   const [marginalUpdateLoading, setMarginalUpdateLoading] = useState(false);
   const [editingMarginals, setEditingMarginals] = useState({});
@@ -38,21 +38,27 @@ const AdminUsers = () => {
   }, [getAllUsers]);
 
   useEffect(() => {
-    // 🎯 FILTER: Show only ACTIVE paying customers (active: true)
+    // 🎯 FILTER: Apply status filter (active/inactive/all)
     const filtered = users.filter(user => {
       const matchesSearch = 
         user.companyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.contactPerson?.toLowerCase().includes(searchTerm.toLowerCase());
       
-      // 🔥 CRITICAL: Only show active customers (paying customers with portal access)
-      const isActiveCustomer = user.active === true;
+      // 🔥 NEW: Status-based filtering
+      let matchesStatus = true;
+      if (statusFilter === 'active') {
+        matchesStatus = user.active === true;
+      } else if (statusFilter === 'inactive') {
+        matchesStatus = user.active === false || user.active === undefined;
+      }
+      // If statusFilter === 'all', matchesStatus remains true
       
       // 🆕 ADD: Tab-based filtering (customers vs admins)
       const matchesTab = 
         activeTab === 'customers' ? user.role !== 'admin' : user.role === 'admin';
       
-      return matchesSearch && isActiveCustomer && matchesTab;
+      return matchesSearch && matchesStatus && matchesTab;
     });
     
     setFilteredUsers(filtered);
@@ -208,11 +214,17 @@ const AdminUsers = () => {
               </div>
             </div>
             
+            {/* Status Filter */}
             <div className="flex-shrink-0">
-              <div className="inline-flex items-center px-3 py-2 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-md text-sm text-green-800 dark:text-green-300">
-                <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                Endast aktiva kunder visas
-              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="block rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2 px-3"
+              >
+                <option value="active">Aktiva kunder</option>
+                <option value="inactive">Inaktiva kunder</option>
+                <option value="all">Alla kunder</option>
+              </select>
             </div>
           </div>
         </div>
