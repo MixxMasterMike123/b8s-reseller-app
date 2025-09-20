@@ -54,17 +54,17 @@ const AdminUsers = () => {
         return matchesSearch && matchesTab;
       }
       
-      // 🎯 CUSTOMER TAB FILTERING
+      // 🎯 CUSTOMER TAB FILTERING (CORRECTED LOGIC)
       let matchesCustomerFilter = true;
       if (activeCustomerTab === 'active') {
-        // TAB 1: Only active B2B customers (exclude manual prospects)
-        matchesCustomerFilter = user.active === true && user.createdByAdmin !== true;
+        // TAB 1: Only active B2B customers (including manual prospects that are activated)
+        matchesCustomerFilter = user.active === true;
       } else if (activeCustomerTab === 'applicants') {
-        // TAB 2: Only B2B applicants from form, not yet activated
-        matchesCustomerFilter = user.active === false && user.createdByAdmin !== true;
+        // TAB 2: Only inactive customers (form applications + manual prospects awaiting activation)
+        matchesCustomerFilter = user.active === false || user.active === undefined;
       } else if (activeCustomerTab === 'all') {
-        // TAB 3: All customers (active + applicants, but exclude manual prospects)
-        matchesCustomerFilter = user.createdByAdmin !== true;
+        // TAB 3: All customers (active + inactive, regardless of source)
+        matchesCustomerFilter = true; // Show all non-admin users
       }
       
       return matchesSearch && matchesTab && matchesCustomerFilter;
@@ -212,7 +212,7 @@ const AdminUsers = () => {
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                Aktiva Kunder ({users.filter(u => u.role !== 'admin' && u.active === true && u.createdByAdmin !== true).length})
+                Aktiva Kunder ({users.filter(u => u.role !== 'admin' && u.active === true).length})
               </button>
               <button
                 onClick={() => setActiveCustomerTab('applicants')}
@@ -222,7 +222,7 @@ const AdminUsers = () => {
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                Nya Ansökningar ({users.filter(u => u.role !== 'admin' && u.active === false && u.createdByAdmin !== true).length})
+                Inaktiva / Prospects ({users.filter(u => u.role !== 'admin' && (u.active === false || u.active === undefined)).length})
               </button>
               <button
                 onClick={() => setActiveCustomerTab('all')}
@@ -232,7 +232,7 @@ const AdminUsers = () => {
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                Alla Kunder ({users.filter(u => u.role !== 'admin' && u.createdByAdmin !== true).length})
+                Alla Kunder ({users.filter(u => u.role !== 'admin').length})
               </button>
             </nav>
           </div>
@@ -400,7 +400,7 @@ const AdminUsers = () => {
                             
                             {/* Creation Date */}
                             <div className="text-xs text-gray-500 dark:text-gray-400">
-                              Ansökte: {user.createdAt ? new Date(user.createdAt).toLocaleDateString('sv-SE') : 'Okänt datum'}
+                              {user.createdByAdmin ? 'Skapad av admin:' : 'Ansökte:'} {user.createdAt ? new Date(user.createdAt).toLocaleDateString('sv-SE') : 'Okänt datum'}
                             </div>
                           </div>
                         </div>
