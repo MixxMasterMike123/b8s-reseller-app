@@ -217,7 +217,9 @@ export const createPaymentIntentV2 = onRequest(
             // System identifiers
             source: 'b2c_shop',
             platform: 'b8shield',
-            version: 'enhanced_v1' // For tracking metadata versions
+            version: 'enhanced_v1', // For tracking metadata versions
+            debugTimestamp: Date.now().toString(), // TEMP: Track if this function is called
+            debugTest: 'ENHANCED_METADATA_ACTIVE' // TEMP: Confirm enhanced function
           },
           receipt_email: customerInfo.email,
           description: `B8Shield Order - ${cartItems.length} item${cartItems.length > 1 ? 's' : ''}`,

@@ -51,7 +51,7 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
             response.status(400).json({ error: 'Request body is required' });
             return;
         }
-        const { amount, currency = 'sek', cartItems, customerInfo, shippingInfo, discountInfo, affiliateInfo } = request.body;
+        const { amount, currency = 'sek', cartItems, customerInfo, shippingInfo, discountInfo, affiliateInfo, totals } = request.body;
         // Validate required fields
         if (!amount || amount <= 0) {
             response.status(400).json({ error: 'Valid amount is required' });
@@ -84,28 +84,62 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
                     enabled: true,
                 },
                 metadata: {
-                    // Store order information in metadata
+                    // ✅ ENHANCED METADATA FOR COMPLETE ORDER RECOVERY
+                    // Customer Information (enhanced)
                     customerEmail: customerInfo.email,
                     customerName: customerInfo.name || '',
-                    itemCount: cartItems.length.toString(),
+                    customerFirstName: customerInfo.firstName || shippingInfo.firstName || '',
+                    customerLastName: customerInfo.lastName || shippingInfo.lastName || '',
+                    customerMarketing: (customerInfo.marketing || false).toString(),
+                    customerLang: customerInfo.preferredLang || 'sv-SE',
+                    // Shipping Information (complete address)
+                    shippingFirstName: shippingInfo.firstName || '',
+                    shippingLastName: shippingInfo.lastName || '',
+                    shippingAddress: shippingInfo.address || '',
+                    shippingApartment: shippingInfo.apartment || '',
+                    shippingCity: shippingInfo.city || '',
+                    shippingPostalCode: shippingInfo.postalCode || '',
                     shippingCountry: shippingInfo.country || 'SE',
                     shippingCost: (shippingInfo.cost || 0).toString(),
+                    // Order Totals (complete breakdown)
+                    subtotal: (totals?.subtotal || 0).toString(),
+                    vat: (totals?.vat || 0).toString(),
+                    shipping: (totals?.shipping || shippingInfo.cost || 0).toString(),
+                    discountAmount: (totals?.discountAmount || discountInfo?.amount || 0).toString(),
+                    total: (totals?.total || amount).toString(),
+                    // Discount Information
                     ...(discountInfo && {
                         discountCode: discountInfo.code,
-                        discountAmount: discountInfo.amount.toString(),
                         discountPercentage: discountInfo.percentage?.toString() || '',
                     }),
+                    // Affiliate Information (enhanced)
                     ...(affiliateInfo && {
                         affiliateCode: affiliateInfo.code,
                         affiliateClickId: affiliateInfo.clickId,
                     }),
-                    // Store minimal cart data for metadata (Stripe 500-char limit)
-                    // Full cart items with images are used from current cart during order creation
+                    // Cart Items (detailed for recovery)
+                    itemCount: cartItems.length.toString(),
                     totalItems: cartItems.reduce((sum, item) => sum + item.quantity, 0).toString(),
+                    // Store complete item details as JSON (within Stripe limits)
+                    itemDetails: JSON.stringify(cartItems.map(item => ({
+                        id: item.id,
+                        sku: item.sku,
+                        name: typeof item.name === 'string' ? item.name : item.name?.['sv-SE'] || item.name?.['en-US'] || 'B8Shield',
+                        price: item.price,
+                        quantity: item.quantity,
+                        color: item.color || '',
+                        size: item.size || '',
+                        image: item.image || ''
+                    }))),
+                    // Legacy compatibility (keep existing fields)
                     itemIds: cartItems.map(item => item.id.substring(0, 8)).join(','),
                     cartSummary: cartItems.map(item => `${item.quantity}x${item.sku}`).join(','),
+                    // System identifiers
                     source: 'b2c_shop',
-                    platform: 'b8shield'
+                    platform: 'b8shield',
+                    version: 'enhanced_v1',
+                    debugTimestamp: Date.now().toString(),
+                    debugTest: 'ENHANCED_METADATA_ACTIVE' // TEMP: Confirm enhanced function
                 },
                 receipt_email: customerInfo.email,
                 description: `B8Shield Order - ${cartItems.length} item${cartItems.length > 1 ? 's' : ''}`,

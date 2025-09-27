@@ -1,4 +1,4 @@
-export { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail, sendOrderNotificationAdmin, sendPasswordResetEmail, sendLoginCredentialsEmail, sendAffiliateWelcomeEmail, approveAffiliate, sendEmailVerification, sendCustomEmailVerification, verifyEmailCode, sendAffiliateApplicationEmails, testEmailOrchestrator } from './email-orchestrator/functions';
+export { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail, sendOrderNotificationAdmin, sendPasswordResetEmail, sendLoginCredentialsEmail, sendAffiliateWelcomeEmail, approveAffiliate, sendEmailVerification, sendCustomEmailVerification, verifyEmailCode, sendAffiliateApplicationEmails, sendB2BApplicationEmails, testEmailOrchestrator } from './email-orchestrator/functions';
 import { confirmPasswordReset } from './email-orchestrator/functions';
 import { logAffiliateClickV2 } from './affiliate/callable/logAffiliateClick';
 import { logAffiliateClickHttpV2 } from './affiliate/http/logAffiliateClickHttp';
