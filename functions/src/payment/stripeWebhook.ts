@@ -30,9 +30,14 @@ export const stripeWebhookV2 = onRequest(
   },
   async (request, response) => {
     try {
-      // Handle CORS
-      if (!corsHandler(request, response)) {
-        return;
+      // Skip CORS for webhook requests (server-to-server, no origin header)
+      // Webhooks are authenticated via signature verification instead
+      const origin = request.headers.origin;
+      if (origin) {
+        // Only apply CORS if there's an origin (browser request)
+        if (!corsHandler(request, response)) {
+          return;
+        }
       }
 
       // Only allow POST requests
