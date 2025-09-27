@@ -8,7 +8,7 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions';
 import Stripe from 'stripe';
 import { getFirestore } from 'firebase-admin/firestore';
-import { corsHandler } from '../protection/cors/cors-handler';
+// CORS not needed for webhooks - server-to-server communication
 
 // Initialize Firestore with named database
 const db = getFirestore('b8s-reseller-db');
@@ -27,18 +27,18 @@ export const stripeWebhookV2 = onRequest(
     memory: '256MiB',
     timeoutSeconds: 60,
     secrets: ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'],
+    invoker: 'public', // Allow Stripe to call this webhook
   },
   async (request, response) => {
     try {
-      // Skip CORS for webhook requests (server-to-server, no origin header)
-      // Webhooks are authenticated via signature verification instead
-      const origin = request.headers.origin;
-      if (origin) {
-        // Only apply CORS if there's an origin (browser request)
-        if (!corsHandler(request, response)) {
-          return;
-        }
-      }
+      logger.info('🔍 Webhook received', { 
+        method: request.method,
+        headers: Object.keys(request.headers),
+        hasSignature: !!request.headers['stripe-signature']
+      });
+
+      // Webhooks are server-to-server - no CORS needed
+      // Authentication is handled via Stripe signature verification
 
       // Only allow POST requests
       if (request.method !== 'POST') {

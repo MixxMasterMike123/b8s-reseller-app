@@ -22,7 +22,7 @@ export {
   sendCustomEmailVerification,
   verifyEmailCode,
   sendAffiliateApplicationEmails,
-  sendB2BApplicationEmails,
+  // sendB2BApplicationEmails, // TEMPORARILY DISABLED - compilation errors
   testEmailOrchestrator
 } from './email-orchestrator/functions';
 
@@ -112,6 +112,9 @@ import {
 import {
   stripeWebhookV2
 } from './payment/stripeWebhook';
+import {
+  stripeWebhookSimple
+} from './payment/stripeWebhookSimple';
 
 // Import website scraper functions for DiningWagon
 import {
@@ -152,7 +155,8 @@ export {
 export {
   createPaymentIntentV2,
   createPaymentIntentMinimalV2,
-  stripeWebhookV2
+  stripeWebhookV2,
+  stripeWebhookSimple
 };
 
 // Re-export website scraper functions for DiningWagon

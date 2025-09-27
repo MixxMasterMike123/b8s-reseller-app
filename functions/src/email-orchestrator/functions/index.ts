@@ -14,7 +14,7 @@ export { sendCustomEmailVerification } from './sendCustomEmailVerification';
 export { verifyEmailCode } from './verifyEmailCode';
 export { confirmPasswordReset } from './confirmPasswordReset';
 export { sendAffiliateApplicationEmails } from './sendAffiliateApplicationEmails';
-export { sendB2BApplicationEmails } from './sendB2BApplicationEmails';
+// export { sendB2BApplicationEmails } from './sendB2BApplicationEmails'; // TEMPORARILY DISABLED
 
 // TODO: Implement remaining functions
 
