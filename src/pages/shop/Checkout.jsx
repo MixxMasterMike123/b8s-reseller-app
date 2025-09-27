@@ -930,11 +930,18 @@ const Checkout = () => {
                   <StripePaymentForm
                     customerInfo={{
                       email: contactInfo.email,
-                      name: `${shippingInfo.firstName} ${shippingInfo.lastName}`
+                      name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+                      firstName: shippingInfo.firstName,
+                      lastName: shippingInfo.lastName,
+                      marketing: contactInfo.marketing,
+                      preferredLang: currentLanguage
                     }}
                     shippingInfo={{
                       country: shippingInfo.country,
-                      address: `${shippingInfo.address}${shippingInfo.apartment ? `, ${shippingInfo.apartment}` : ''}`,
+                      firstName: shippingInfo.firstName,
+                      lastName: shippingInfo.lastName,
+                      address: shippingInfo.address,
+                      apartment: shippingInfo.apartment,
                       city: shippingInfo.city,
                       postalCode: shippingInfo.postalCode
                     }}
