@@ -251,7 +251,17 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPay
             customerInfo,
             shippingInfo: {
               country: cart.shippingCountry,
-              cost: totals.shipping
+              cost: totals.shipping,
+              // Enhanced shipping info will be passed from checkout context
+              ...shippingInfo
+            },
+            // Enhanced totals breakdown for complete order recovery
+            totals: {
+              subtotal: totals.subtotal,
+              vat: totals.vat,
+              shipping: totals.shipping,
+              discountAmount: totals.discountAmount,
+              total: totals.total
             },
             ...(totals.discountCode && {
               discountInfo: {
