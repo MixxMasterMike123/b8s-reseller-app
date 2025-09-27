@@ -109,6 +109,9 @@ import {
 import {
   createPaymentIntentMinimalV2
 } from './payment/createPaymentIntentMinimal';
+import {
+  stripeWebhookV2
+} from './payment/stripeWebhook';
 
 // Import website scraper functions for DiningWagon
 import {
@@ -148,7 +151,8 @@ export {
 // Re-export payment functions for Stripe integration
 export {
   createPaymentIntentV2,
-  createPaymentIntentMinimalV2
+  createPaymentIntentMinimalV2,
+  stripeWebhookV2
 };
 
 // Re-export website scraper functions for DiningWagon

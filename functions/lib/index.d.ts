@@ -11,13 +11,14 @@ import { getGoogleMerchantStats, getProductSyncStatus, forceSyncProducts } from 
 import { deleteCustomerAccount, deleteB2CCustomerAccount, toggleCustomerActiveStatus, createAdminUser, checkNamedDatabase, debugDatabase } from './customer-admin/functions';
 import { createPaymentIntentV2 } from './payment/createPaymentIntent';
 import { createPaymentIntentMinimalV2 } from './payment/createPaymentIntentMinimal';
+import { stripeWebhookV2 } from './payment/stripeWebhook';
 import { scrapeWebsiteMeta } from './website-scraper/functions';
 export { logAffiliateClickV2, logAffiliateClickHttpV2, processAffiliateConversionV2 };
 export { processB2COrderCompletionHttp as processB2COrderCompletionHttpV2, // RE-ENABLED: Critical for affiliate processing
 processB2COrderCompletion as processB2COrderCompletionV2, manualStatusUpdate as manualStatusUpdateV2 };
 export { getGeoData as getGeoDataV2, testGeoHeaders as testGeoHeadersV2 };
 export { deleteCustomerAccount as deleteCustomerAccountV2, deleteB2CCustomerAccount as deleteB2CCustomerAccountV2, toggleCustomerActiveStatus as toggleCustomerActiveStatusV2, createAdminUser as createAdminUserV2, checkNamedDatabase as checkNamedDatabaseV2, debugDatabase as debugDatabaseV2 };
-export { createPaymentIntentV2, createPaymentIntentMinimalV2 };
+export { createPaymentIntentV2, createPaymentIntentMinimalV2, stripeWebhookV2 };
 export { scrapeWebsiteMeta as scrapeWebsiteMetaV2 };
 export { confirmPasswordReset as confirmPasswordResetV2 };
 export { confirmPasswordReset };

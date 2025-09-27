@@ -393,6 +393,27 @@ const Checkout = () => {
 
   // Create order from successful payment
   const createOrderFromPayment = async (paymentIntent) => {
+    // IDEMPOTENCY CHECK: Prevent duplicate orders
+    console.log('🔍 Checking for existing order with payment intent:', paymentIntent.id);
+    
+    try {
+      const existingOrderQuery = query(
+        collection(db, 'orders'),
+        where('payment.paymentIntentId', '==', paymentIntent.id)
+      );
+      const existingOrders = await getDocs(existingOrderQuery);
+      
+      if (!existingOrders.empty) {
+        const existingOrder = existingOrders.docs[0];
+        console.log('✅ Order already exists for this payment intent:', existingOrder.id);
+        console.log('🔄 Returning existing order ID instead of creating duplicate');
+        return existingOrder.id;
+      }
+    } catch (error) {
+      console.error('❌ Error checking for existing order:', error);
+      // Continue with order creation if check fails
+    }
+
     const freshTotals = calculateTotals();
     const orderNumber = generateOrderNumber();
 
