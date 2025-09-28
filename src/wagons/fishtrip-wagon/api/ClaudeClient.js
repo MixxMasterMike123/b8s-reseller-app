@@ -5,7 +5,7 @@
 class ClaudeClient {
   constructor() {
     // Use Firebase Functions as proxy instead of direct API calls
-    this.baseUrl = 'https://us-central1-b8shield-reseller-app.cloudfunctions.net';
+    this.baseUrl = 'https://api.b8shield.com';
     this.model = 'claude-3-5-sonnet-20241022';
   }
 

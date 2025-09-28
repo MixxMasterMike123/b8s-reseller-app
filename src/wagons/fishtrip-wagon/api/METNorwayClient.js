@@ -5,7 +5,7 @@
 class METNorwayClient {
   constructor() {
     // Use Firebase Functions as proxy to avoid CORS issues
-    this.baseUrl = 'https://us-central1-b8shield-reseller-app.cloudfunctions.net';
+    this.baseUrl = 'https://api.b8shield.com';
     
     // Firebase Function endpoints for MET Norway APIs
     this.endpoints = {

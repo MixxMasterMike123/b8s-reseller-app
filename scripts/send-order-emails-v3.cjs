@@ -67,7 +67,7 @@ async function sendOrderEmails(orderId) {
     console.log('📧 Sending customer confirmation email via V3...');
     
     // Send customer email using V3 callable function
-    const customerResponse = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/sendB2COrderPendingEmailV3', {
+    const customerResponse = await fetch('https://api.b8shield.com/sendB2COrderPendingEmailV3', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -103,7 +103,7 @@ async function sendOrderEmails(orderId) {
     };
     
     // Send admin email using V3 callable function  
-    const adminResponse = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/sendB2COrderNotificationAdminV3', {
+    const adminResponse = await fetch('https://api.b8shield.com/sendB2COrderNotificationAdminV3', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

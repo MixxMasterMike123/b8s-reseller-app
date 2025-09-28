@@ -79,7 +79,7 @@ const WritersWagonPanel = ({ productData, onContentGenerated, onClose }) => {
     
     try {
       // Check if user has configured their wagon
-      const testResponse = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/setupWritersWagon', {
+      const testResponse = await fetch('https://api.b8shield.com/setupWritersWagon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -128,7 +128,7 @@ const WritersWagonPanel = ({ productData, onContentGenerated, onClose }) => {
       setSetupStep(2);
 
       // Step 2: Configure wagon with user's API key
-      const setupResponse = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/setupWritersWagon', {
+      const setupResponse = await fetch('https://api.b8shield.com/setupWritersWagon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -148,7 +148,7 @@ const WritersWagonPanel = ({ productData, onContentGenerated, onClose }) => {
       setSetupStep(3);
 
       // Step 3: Test connection
-      const connectionTestResponse = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/setupWritersWagon', {
+      const connectionTestResponse = await fetch('https://api.b8shield.com/setupWritersWagon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

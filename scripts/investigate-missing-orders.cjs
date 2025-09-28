@@ -114,7 +114,7 @@ async function investigateMissingOrders() {
       console.log(`Testing with order: ${testOrderId}`);
       
       try {
-        const functionUrl = 'https://us-central1-b8shield-reseller-app.cloudfunctions.net/processB2COrderCompletionHttpV2';
+        const functionUrl = 'https://api.b8shield.com/processB2COrderCompletionHttpV2';
         const response = await fetch(functionUrl, {
           method: 'POST',
           headers: {
