@@ -239,7 +239,7 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPay
         });
 
         // Create payment intent on server via HTTP
-        const response = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/createPaymentIntentV2', {
+        const response = await fetch('https://api.b8shield.com/createPaymentIntentV2', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

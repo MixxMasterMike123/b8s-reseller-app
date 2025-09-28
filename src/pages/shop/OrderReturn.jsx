@@ -238,7 +238,7 @@ const OrderReturnInner = () => {
     try {
       console.log('Calling post-order processing function for Klarna order...');
       const timestamp = Date.now();
-      const functionUrl = `https://us-central1-b8shield-reseller-app.cloudfunctions.net/processB2COrderCompletionHttpV2?_=${timestamp}`;
+      const functionUrl = `https://api.b8shield.com/processB2COrderCompletionHttpV2?_=${timestamp}`;
       
       const response = await fetch(functionUrl, {
         method: 'POST',

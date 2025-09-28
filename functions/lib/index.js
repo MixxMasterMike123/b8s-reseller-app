@@ -9,12 +9,21 @@ const Stripe = require('stripe');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const fetch = require('node-fetch');
+const { webhookRateLimit } = require('./rateLimiter');
 
 // Initialize Firebase Admin SDK
 initializeApp();
 
 // Initialize Firestore with named database
 const db = getFirestore('b8s-reseller-db');
+
+// Import recovery function
+const { recoverMissingOrderV2 } = require('./recovery');
+exports.recoverMissingOrderV2 = recoverMissingOrderV2;
+
+// Import fix function
+const { fixOrderSourceV2 } = require('./fixOrderSource');
+exports.fixOrderSourceV2 = fixOrderSourceV2;
 
 exports.stripeWebhookV2 = onRequest({
   region: 'us-central1',
@@ -24,10 +33,16 @@ exports.stripeWebhookV2 = onRequest({
   invoker: 'public', // Allow Stripe to call this webhook
 }, async (request, response) => {
   try {
+    // 🛡️ DDOS PROTECTION: Rate limiting
+    if (!webhookRateLimit(request, response)) {
+      return; // Rate limit exceeded, response already sent
+    }
+
     logger.info('🔍 Webhook received', { 
       method: request.method,
       headers: Object.keys(request.headers),
-      hasSignature: !!request.headers['stripe-signature']
+      hasSignature: !!request.headers['stripe-signature'],
+      ip: request.ip || 'unknown'
     });
 
     // Only allow POST requests

@@ -355,7 +355,7 @@ export const testCommissionProcessing = async (orderId) => {
     
     // Test the Firebase Function call
     console.log(`🔄 Testing Firebase Function call...`);
-    const functionUrl = `https://us-central1-b8shield-reseller-app.cloudfunctions.net/processB2COrderCompletionHttpV2`;
+    const functionUrl = `https://api.b8shield.com/processB2COrderCompletionHttpV2`;
     
     try {
       const response = await fetch(functionUrl, {
