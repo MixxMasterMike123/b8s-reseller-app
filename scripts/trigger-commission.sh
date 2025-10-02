@@ -25,7 +25,7 @@ fi
 echo "📋 Processing commission for order ID: $ORDER_ID"
 echo ""
 
-curl -X POST https://api.b8shield.com/processB2COrderCompletionHttpV2 \
+curl -X POST https://us-central1-b8shield-reseller-app.cloudfunctions.net/processB2COrderCompletionHttpV2 \
   -H 'Content-Type: application/json' \
   -d "{\"orderId\": \"$ORDER_ID\"}" \
   --verbose

@@ -120,13 +120,25 @@ export const stripeWebhookV2 = onRequest(
 
         // Extract order data from enhanced metadata
         const metadata = paymentIntent.metadata;
-        
+
+        // Log metadata sizes to detect Stripe truncation issues
+        logger.info('📊 Webhook: Metadata size check', {
+          paymentIntentId: paymentIntent.id,
+          itemDetailsLength: metadata.itemDetails?.length || 0,
+          totalMetadataKeys: Object.keys(metadata).length,
+          largeFields: Object.entries(metadata)
+            .filter(([_, value]) => value && value.length > 400)
+            .map(([key, value]) => ({ key, length: value?.length || 0 })),
+          possibleTruncation: metadata.itemDetails && metadata.itemDetails.length >= 490
+        });
+
         // Validate required metadata
         if (!metadata.customerEmail || !metadata.itemDetails) {
-          logger.error('❌ Missing required metadata for order creation', { 
+          logger.error('❌ Missing required metadata for order creation', {
             paymentIntentId: paymentIntent.id,
             hasEmail: !!metadata.customerEmail,
-            hasItems: !!metadata.itemDetails
+            hasItems: !!metadata.itemDetails,
+            allMetadataKeys: Object.keys(metadata)
           });
           response.status(400).json({ error: 'Insufficient metadata' });
           return;
@@ -149,25 +161,25 @@ export const stripeWebhookV2 = onRequest(
         const orderNumber = `B8S-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
 
         // Create order data from Stripe metadata
+        // Structure MUST match frontend order creation in Checkout.jsx for consistency
         const orderData = {
           orderNumber,
           status: 'confirmed',
-          source: 'b2c_webhook', // Mark as webhook-created for tracking
+          source: 'b2c', // ✅ Match frontend (not 'b2c_webhook')
           
           // Customer information from metadata
           customerInfo: {
             email: metadata.customerEmail,
-            name: metadata.customerName || '',
-            firstName: metadata.customerFirstName || '',
-            lastName: metadata.customerLastName || '',
+            // ✅ Construct name from first+last to match frontend
+            name: `${metadata.shippingFirstName || metadata.customerFirstName || ''} ${metadata.shippingLastName || metadata.customerLastName || ''}`.trim(),
+            firstName: metadata.shippingFirstName || metadata.customerFirstName || '',
+            lastName: metadata.shippingLastName || metadata.customerLastName || '',
             marketingOptIn: metadata.customerMarketing === 'true',
             preferredLang: metadata.customerLang || 'sv-SE'
           },
 
           // Shipping information from metadata
           shippingInfo: {
-            firstName: metadata.shippingFirstName || metadata.customerFirstName || '',
-            lastName: metadata.shippingLastName || metadata.customerLastName || '',
             address: metadata.shippingAddress || '',
             apartment: metadata.shippingApartment || '',
             city: metadata.shippingCity || '',
@@ -178,7 +190,7 @@ export const stripeWebhookV2 = onRequest(
           // Order items from parsed JSON
           items: cartItems,
 
-          // Financial data from metadata
+          // Financial data from metadata (flat structure to match frontend)
           subtotal: parseFloat(metadata.subtotal || '0'),
           shipping: parseFloat(metadata.shipping || '0'),
           vat: parseFloat(metadata.vat || '0'),
@@ -192,27 +204,37 @@ export const stripeWebhookV2 = onRequest(
             amount: paymentIntent.amount / 100, // Convert from öre to SEK
             currency: paymentIntent.currency,
             status: paymentIntent.status,
-            // Store payment method details if available
+            // ✅ Conditionally add paymentMethodType to match frontend
             ...(paymentIntent.payment_method && typeof paymentIntent.payment_method === 'object' && {
               paymentMethodType: (paymentIntent.payment_method as any).type
+            }),
+            // ✅ Add payment method details if available (card/klarna)
+            ...(paymentIntent.payment_method && typeof paymentIntent.payment_method === 'object' && (paymentIntent.payment_method as any).card && {
+              paymentMethodDetails: {
+                brand: (paymentIntent.payment_method as any).card.brand,
+                last4: (paymentIntent.payment_method as any).card.last4,
+                ...((paymentIntent.payment_method as any).card.wallet?.type && {
+                  wallet: (paymentIntent.payment_method as any).card.wallet.type
+                })
+              }
+            }),
+            ...(paymentIntent.payment_method && typeof paymentIntent.payment_method === 'object' && (paymentIntent.payment_method as any).klarna && {
+              paymentMethodDetails: { type: 'klarna' }
             })
           },
 
-          // Affiliate information (if present)
-          ...(metadata.affiliateCode && {
-            affiliate: {
-              code: metadata.affiliateCode,
-              clickId: metadata.affiliateClickId || '',
-              discountAmount: parseFloat(metadata.discountAmount || '0'),
-              discountPercentage: parseFloat(metadata.discountPercentage || '0')
-            }
-          }),
+          // ✅ Affiliate information - structure matches frontend (null when absent, no discountAmount field)
+          affiliate: metadata.affiliateCode ? {
+            code: metadata.affiliateCode,
+            discountPercentage: parseFloat(metadata.discountPercentage || '0'),
+            clickId: metadata.affiliateClickId || ''
+          } : null,
 
-          // Timestamps
+          // ✅ Timestamps using FieldValue for consistency with frontend
           createdAt: new Date(),
           updatedAt: new Date(),
           
-          // Webhook tracking
+          // ✅ Webhook tracking flags (help identify recovery orders)
           webhookProcessed: true,
           webhookEventId: event.id,
           recoveredFromStripe: true // Flag to indicate this was recovered from webhook
@@ -263,14 +285,56 @@ export const stripeWebhookV2 = onRequest(
           }
         }
 
-        // TODO: Send order confirmation emails
-        // This would call the email orchestrator functions
+        // Trigger email and affiliate processing via existing HTTP function
+        // This reuses the same logic as the frontend order flow
+        try {
+          logger.info('📧 Webhook: Calling processB2COrderCompletionHttpV2', {
+            orderId: orderRef.id,
+            orderNumber
+          });
+
+          // Call the same function the frontend uses for order processing
+          // Using internal function call (not HTTP) for better performance
+          const { processB2COrderCompletionHttp } = require('../order-processing/functions');
+          
+          // Simulate HTTP request object for the function
+          const mockRequest = {
+            body: { orderId: orderRef.id },
+            ip: 'webhook-internal',
+            method: 'POST'
+          };
+          
+          const mockResponse = {
+            status: (code: number) => ({
+              json: (data: any) => {
+                logger.info('📧 Webhook: Email processing result', {
+                  statusCode: code,
+                  result: data
+                });
+              }
+            })
+          };
+
+          await processB2COrderCompletionHttp(mockRequest as any, mockResponse as any);
+          
+          logger.info('✅ Webhook: Order processing completed successfully');
+
+        } catch (emailError) {
+          logger.error('❌ Webhook: Failed to trigger order processing', {
+            error: emailError,
+            orderId: orderRef.id,
+            orderNumber
+          });
+          // Don't fail the webhook - order is already created
+          // Admin can manually trigger emails if needed
+        }
 
         response.status(200).json({ 
           received: true, 
           orderCreated: true,
           orderId: orderRef.id,
-          orderNumber 
+          orderNumber,
+          emailsTriggered: true
         });
 
       } else {

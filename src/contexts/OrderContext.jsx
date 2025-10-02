@@ -263,7 +263,7 @@ export const OrderProvider = ({ children }) => {
         
         // Trigger email notification via HTTP function
         try {
-          const response = await fetch('https://api.b8shield.com/sendOrderConfirmationHttp', {
+          const response = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/sendOrderConfirmationHttp', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

@@ -1,320 +1,181 @@
-/**
- * Complete Stripe Webhook Implementation - JavaScript Version
- * Handles payment_intent.succeeded events to create orders from Stripe metadata
- */
-
-const { onRequest } = require('firebase-functions/v2/https');
-const { logger } = require('firebase-functions');
-const Stripe = require('stripe');
-const { initializeApp } = require('firebase-admin/app');
-const { getFirestore } = require('firebase-admin/firestore');
-const fetch = require('node-fetch');
-const { webhookRateLimit } = require('./rateLimiter');
-
-// Initialize Firebase Admin SDK
-initializeApp();
-
-// Initialize Firestore with named database
-const db = getFirestore('b8s-reseller-db');
-
-// Import recovery function
-const { recoverMissingOrderV2 } = require('./recovery');
-exports.recoverMissingOrderV2 = recoverMissingOrderV2;
-
-// Import fix function
-const { fixOrderSourceV2 } = require('./fixOrderSource');
-exports.fixOrderSourceV2 = fixOrderSourceV2;
-
-exports.stripeWebhookV2 = onRequest({
-  region: 'us-central1',
-  memory: '256MiB',
-  timeoutSeconds: 60,
-  secrets: ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'],
-  invoker: 'public', // Allow Stripe to call this webhook
-}, async (request, response) => {
-  try {
-    // 🛡️ DDOS PROTECTION: Rate limiting
-    if (!webhookRateLimit(request, response)) {
-      return; // Rate limit exceeded, response already sent
+"use strict";
+// V2 FUNCTIONS BATCH 4 - Direct imports to avoid circular dependencies
+// EMAIL ORCHESTRATOR SYSTEM - Unified email functions
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
     }
-
-    logger.info('🔍 Webhook received', { 
-      method: request.method,
-      headers: Object.keys(request.headers),
-      hasSignature: !!request.headers['stripe-signature'],
-      ip: request.ip || 'unknown'
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
-
-    // Only allow POST requests
-    if (request.method !== 'POST') {
-      response.status(405).json({ error: 'Method not allowed' });
-      return;
-    }
-
-    // Get Stripe webhook secret
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    if (!webhookSecret) {
-      logger.error('❌ STRIPE_WEBHOOK_SECRET not found in environment');
-      response.status(500).json({ error: 'Webhook configuration error' });
-      return;
-    }
-
-    // Initialize Stripe
-    const stripeSecretKey = (process.env.STRIPE_SECRET_KEY || '').trim();
-    if (!stripeSecretKey) {
-      logger.error('❌ STRIPE_SECRET_KEY not found in environment');
-      response.status(500).json({ error: 'Stripe configuration error' });
-      return;
-    }
-
-    const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: '2023-10-16',
-    });
-
-    // Verify webhook signature
-    const sig = request.headers['stripe-signature'];
-    if (!sig) {
-      logger.error('❌ Missing Stripe signature');
-      response.status(400).json({ error: 'Missing signature' });
-      return;
-    }
-
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent(
-        request.rawBody || request.body,
-        sig,
-        webhookSecret
-      );
-    } catch (err) {
-      logger.error('❌ Webhook signature verification failed', { error: err.message });
-      response.status(400).json({ error: `Webhook Error: ${err.message}` });
-      return;
-    }
-
-    logger.info('🔔 Stripe webhook received', { 
-      type: event.type, 
-      id: event.id,
-      paymentIntentId: event.data.object.id 
-    });
-
-    // Handle payment_intent.succeeded events
-    if (event.type === 'payment_intent.succeeded') {
-      const paymentIntent = event.data.object;
-      
-      // Check if this is a B2C order (has our enhanced metadata)
-      if (!paymentIntent.metadata?.source || paymentIntent.metadata.source !== 'b2c_shop') {
-        logger.info('⏭️ Skipping non-B2C payment intent', { paymentIntentId: paymentIntent.id });
-        response.status(200).json({ received: true, skipped: 'not_b2c' });
-        return;
-      }
-
-      // Check if order already exists (idempotency)
-      const existingOrders = await db.collection('orders')
-        .where('payment.paymentIntentId', '==', paymentIntent.id)
-        .get();
-      
-      if (!existingOrders.empty) {
-        logger.info('✅ Order already exists for payment intent', { 
-          paymentIntentId: paymentIntent.id,
-          orderId: existingOrders.docs[0].id 
-        });
-        response.status(200).json({ received: true, existing: true });
-        return;
-      }
-
-      // Extract order data from enhanced metadata
-      const metadata = paymentIntent.metadata;
-      
-      // Validate required metadata
-      if (!metadata.customerEmail || !metadata.itemDetails) {
-        logger.error('❌ Missing required metadata for order creation', { 
-          paymentIntentId: paymentIntent.id,
-          hasEmail: !!metadata.customerEmail,
-          hasItems: !!metadata.itemDetails
-        });
-        response.status(400).json({ error: 'Insufficient metadata' });
-        return;
-      }
-
-      // Parse item details from JSON
-      let cartItems;
-      try {
-        cartItems = JSON.parse(metadata.itemDetails);
-      } catch (err) {
-        logger.error('❌ Failed to parse itemDetails JSON', { 
-          paymentIntentId: paymentIntent.id,
-          itemDetails: metadata.itemDetails 
-        });
-        response.status(400).json({ error: 'Invalid itemDetails format' });
-        return;
-      }
-
-      // Generate order number
-      const orderNumber = `B8S-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
-
-      // Create order data matching the exact structure from normal checkout
-      const orderData = {
-        orderNumber,
-        status: 'confirmed',
-        source: 'b2c_webhook', // Mark as webhook-created for tracking
-        
-        // Customer information (matching checkout structure)
-        customerInfo: {
-          email: metadata.customerEmail,
-          firstName: metadata.customerFirstName || metadata.shippingFirstName || '',
-          lastName: metadata.customerLastName || metadata.shippingLastName || '',
-          marketingOptIn: metadata.customerMarketing === 'true',
-          preferredLang: metadata.customerLang || 'sv-SE'
-        },
-
-        // Shipping information (matching checkout structure)
-        shippingInfo: {
-          firstName: metadata.shippingFirstName || metadata.customerFirstName || '',
-          lastName: metadata.shippingLastName || metadata.customerLastName || '',
-          address: metadata.shippingAddress || '',
-          apartment: metadata.shippingApartment || '',
-          city: metadata.shippingCity || '',
-          postalCode: metadata.shippingPostalCode || '',
-          country: metadata.shippingCountry || 'SE'
-        },
-
-        // Order items (matching checkout structure)
-        items: cartItems.map(item => ({
-          productId: item.id,
-          sku: item.sku,
-          name: item.name,
-          price: parseFloat(item.price || '0'),
-          quantity: parseInt(item.quantity || '1', 10),
-          color: item.color || '',
-          size: item.size || '',
-          image: item.image || '',
-          total: parseFloat(item.price || '0') * parseInt(item.quantity || '1', 10)
-        })),
-
-        // Financial totals (matching checkout structure)
-        subtotal: parseFloat(metadata.subtotal || '0'),
-        vat: parseFloat(metadata.vat || '0'),
-        shipping: parseFloat(metadata.shipping || metadata.shippingCost || '0'),
-        discountAmount: parseFloat(metadata.discountAmount || '0'),
-        total: parseFloat(metadata.total || '0'),
-
-        // Affiliate information (matching checkout structure)
-        ...(metadata.affiliateCode && {
-          affiliate: {
-            code: metadata.affiliateCode,
-            discountPercentage: parseFloat(metadata.discountPercentage || '0'),
-            clickId: metadata.affiliateClickId || null
-          },
-          affiliateCode: metadata.affiliateCode, // Also add at root level for compatibility
-          affiliateClickId: metadata.affiliateClickId || null
-        }),
-
-        // Discount code (matching checkout structure)
-        ...(metadata.discountCode && {
-          discountCode: metadata.discountCode
-        }),
-
-        // Payment information (matching checkout structure)
-        payment: {
-          method: 'stripe',
-          paymentIntentId: paymentIntent.id,
-          amount: paymentIntent.amount / 100, // Convert from cents
-          currency: paymentIntent.currency.toUpperCase(),
-          status: paymentIntent.status,
-          // Enhanced payment method details (matching checkout)
-          ...(paymentIntent.payment_method?.type && {
-            paymentMethodType: paymentIntent.payment_method.type
-          }),
-          ...(paymentIntent.payment_method?.card && {
-            paymentMethodDetails: {
-              brand: paymentIntent.payment_method.card.brand,
-              last4: paymentIntent.payment_method.card.last4,
-              ...(paymentIntent.payment_method.card.wallet?.type && {
-                wallet: paymentIntent.payment_method.card.wallet.type
-              })
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
             }
-          }),
-          ...(paymentIntent.payment_method?.klarna && {
-            paymentMethodDetails: { type: 'klarna' }
-          })
-        },
-
-        // Timestamps (using Firestore serverTimestamp would be better, but this works)
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      // Create order in Firestore
-      logger.info('📦 Creating order from webhook', { 
-        paymentIntentId: paymentIntent.id,
-        orderNumber,
-        customerEmail: metadata.customerEmail,
-        itemCount: cartItems.length
-      });
-
-      const orderRef = await db.collection('orders').add(orderData);
-
-      logger.info('✅ Order created successfully from webhook', { 
-        paymentIntentId: paymentIntent.id,
-        orderId: orderRef.id,
-        orderNumber
-      });
-
-      // Call post-order processing function (same as normal checkout)
-      try {
-        logger.info('📧 Calling post-order processing function for webhook order...');
-        const timestamp = Date.now();
-        const functionUrl = `https://us-central1-b8shield-reseller-app.cloudfunctions.net/processB2COrderCompletionHttpV2?_=${timestamp}`;
-        
-        const fetchResponse = await fetch(functionUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache',
-          },
-          body: JSON.stringify({ orderId: orderRef.id }),
-        });
-
-        if (!fetchResponse.ok) {
-          logger.error('❌ Failed to call post-order processing function for webhook order', { 
-            status: fetchResponse.status,
-            statusText: fetchResponse.statusText,
-            orderId: orderRef.id
-          });
-        } else {
-          const result = await fetchResponse.json();
-          logger.info('✅ Post-order processing completed successfully for webhook order', { 
-            orderId: orderRef.id,
-            result
-          });
-        }
-      } catch (error) {
-        logger.error('❌ Error calling post-order processing function for webhook order', { 
-          error: error.message,
-          orderId: orderRef.id
-        });
-        // Don't fail the webhook - order was created successfully
-      }
-
-      response.status(200).json({ 
-        received: true, 
-        created: true,
-        orderId: orderRef.id,
-        orderNumber
-      });
-      return;
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
-
-    // For other event types, just acknowledge receipt
-    logger.info('✅ Webhook processed successfully (non-payment event)', { 
-      type: event.type,
-      id: event.id 
+};
+exports.__esModule = true;
+exports.debugProductFields = exports.debugOrderData = exports.forceSyncProducts = exports.getProductSyncStatus = exports.getGoogleMerchantStats = exports.googleMerchantOnProductDeleted = exports.googleMerchantOnProductUpdated = exports.googleMerchantOnProductCreated = exports.testGoogleMerchantConnection = exports.syncSingleProductToGoogle = exports.syncProductsToGoogleHttp = exports.syncAllProductsToGoogle = exports.exampleProtectedFunction = exports.confirmPasswordReset = exports.confirmPasswordResetV2 = exports.scrapeWebsiteMetaV2 = exports.stripeWebhookSimple = exports.stripeWebhookV2 = exports.createPaymentIntentMinimalV2 = exports.createPaymentIntentV2 = exports.debugDatabaseV2 = exports.checkNamedDatabaseV2 = exports.createAdminUserV2 = exports.toggleCustomerActiveStatusV2 = exports.deleteB2CCustomerAccountV2 = exports.deleteCustomerAccountV2 = exports.testGeoHeadersV2 = exports.getGeoDataV2 = exports.manualStatusUpdateV2 = exports.processB2COrderCompletionV2 = exports.processB2COrderCompletionHttpV2 = exports.processAffiliateConversionV2 = exports.logAffiliateClickHttpV2 = exports.logAffiliateClickV2 = exports.testEmailOrchestrator = exports.sendAffiliateApplicationEmails = exports.verifyEmailCode = exports.sendCustomEmailVerification = exports.sendEmailVerification = exports.approveAffiliate = exports.sendAffiliateWelcomeEmail = exports.sendLoginCredentialsEmail = exports.sendPasswordResetEmail = exports.sendOrderNotificationAdmin = exports.sendOrderStatusUpdateEmail = exports.sendOrderConfirmationEmail = void 0;
+// Initialize Firebase Admin SDK
+var app_1 = require("firebase-admin/app");
+(0, app_1.initializeApp)();
+var https_1 = require("firebase-functions/v2/https");
+var cors_handler_1 = require("./protection/cors/cors-handler");
+var rate_limiter_1 = require("./protection/rate-limiting/rate-limiter");
+// NEW UNIFIED EMAIL ORCHESTRATOR FUNCTIONS
+var functions_1 = require("./email-orchestrator/functions");
+__createBinding(exports, functions_1, "sendOrderConfirmationEmail");
+__createBinding(exports, functions_1, "sendOrderStatusUpdateEmail");
+__createBinding(exports, functions_1, "sendOrderNotificationAdmin");
+__createBinding(exports, functions_1, "sendPasswordResetEmail");
+__createBinding(exports, functions_1, "sendLoginCredentialsEmail");
+__createBinding(exports, functions_1, "sendAffiliateWelcomeEmail");
+__createBinding(exports, functions_1, "approveAffiliate");
+__createBinding(exports, functions_1, "sendEmailVerification");
+__createBinding(exports, functions_1, "sendCustomEmailVerification");
+__createBinding(exports, functions_1, "verifyEmailCode");
+__createBinding(exports, functions_1, "sendAffiliateApplicationEmails");
+// sendB2BApplicationEmails, // TEMPORARILY DISABLED - compilation errors
+__createBinding(exports, functions_1, "testEmailOrchestrator");
+// Import confirmPasswordReset separately for aliasing
+var functions_2 = require("./email-orchestrator/functions");
+exports.confirmPasswordResetV2 = functions_2.confirmPasswordReset;
+exports.confirmPasswordReset = functions_2.confirmPasswordReset;
+// Import affiliate functions directly (avoiding export * circular imports)
+var logAffiliateClick_1 = require("./affiliate/callable/logAffiliateClick");
+exports.logAffiliateClickV2 = logAffiliateClick_1.logAffiliateClickV2;
+var logAffiliateClickHttp_1 = require("./affiliate/http/logAffiliateClickHttp");
+exports.logAffiliateClickHttpV2 = logAffiliateClickHttp_1.logAffiliateClickHttpV2;
+var processAffiliateConversion_1 = require("./affiliate/triggers/processAffiliateConversion");
+exports.processAffiliateConversionV2 = processAffiliateConversion_1.processAffiliateConversionV2;
+// Debug functions removed - found the real issue
+// LEGACY EMAIL FUNCTIONS DISABLED - ALL EMAIL NOW USES V3 SYSTEM WITH GMAIL SMTP
+// import { 
+//   sendCustomerWelcomeEmail,        // → Use sendCustomerWelcomeEmailV3
+//   sendAffiliateWelcomeEmail,       // → Use sendAffiliateWelcomeEmailV3
+//   sendB2BOrderConfirmationAdmin,   // → Use sendB2BOrderConfirmationAdminV3
+//   sendB2BOrderConfirmationCustomer,// → Use sendB2BOrderConfirmationCustomerV3
+//   sendOrderStatusEmail,            // → Use sendOrderStatusEmailV3
+//   sendB2COrderNotificationAdmin,   // → Use sendB2COrderNotificationAdminV3
+//   sendB2COrderPendingEmail,        // → Use sendB2COrderPendingEmailV3
+//   sendOrderConfirmationEmails,     // → Use sendOrderConfirmationEmailsV3 (trigger)
+//   sendUserActivationEmail,         // → TODO: Create sendUserActivationEmailV3
+//   sendOrderStatusUpdateEmail,      // → TODO: Create sendOrderStatusUpdateEmailV3
+//   updateCustomerEmail,             // → TODO: Create updateCustomerEmailV3
+//   testEmail,                       // → TODO: Create testEmailV3
+//   approveAffiliate,                // → Use approveAffiliateV3
+//   sendVerificationEmail,           // → Use sendVerificationEmailV3
+//   sendAffiliateCredentialsV2,      // → Use sendAffiliateCredentialsV3
+//   sendPasswordResetEmailV2,        // → Use sendPasswordResetV3
+//   confirmPasswordResetV2           // → Use confirmPasswordResetV3
+// } from './email/functions';
+// OLD EMAIL FUNCTIONS MOVED TO QUARANTINE - NO LONGER AVAILABLE
+// sendStatusUpdateHttp and sendUserActivationEmail moved to quarantine
+// All email functionality now handled by Email Orchestrator system
+// Import order processing functions directly with original names
+var functions_3 = require("./order-processing/functions");
+exports.processB2COrderCompletionHttpV2 = functions_3.processB2COrderCompletionHttp;
+exports.processB2COrderCompletionV2 = functions_3.processB2COrderCompletion;
+exports.manualStatusUpdateV2 = functions_3.manualStatusUpdate;
+// Import geo functions for B2C shop currency detection
+var functions_4 = require("./geo/functions");
+exports.getGeoDataV2 = functions_4.getGeoData;
+exports.testGeoHeadersV2 = functions_4.testGeoHeaders;
+// Import Google Merchant Center sync functions
+var sync_functions_1 = require("./google-merchant/sync-functions");
+exports.syncAllProductsToGoogle = sync_functions_1.syncAllProductsToGoogle;
+exports.syncProductsToGoogleHttp = sync_functions_1.syncProductsToGoogleHttp;
+exports.syncSingleProductToGoogle = sync_functions_1.syncSingleProductToGoogle;
+exports.testGoogleMerchantConnection = sync_functions_1.testGoogleMerchantConnection;
+exports.googleMerchantOnProductCreated = sync_functions_1.onProductCreated;
+exports.googleMerchantOnProductUpdated = sync_functions_1.onProductUpdated;
+exports.googleMerchantOnProductDeleted = sync_functions_1.onProductDeleted;
+// Import Google Merchant Center admin functions
+var admin_functions_1 = require("./google-merchant/admin-functions");
+exports.getGoogleMerchantStats = admin_functions_1.getGoogleMerchantStats;
+exports.getProductSyncStatus = admin_functions_1.getProductSyncStatus;
+exports.forceSyncProducts = admin_functions_1.forceSyncProducts;
+// Import customer-admin functions directly with original names
+var functions_5 = require("./customer-admin/functions");
+exports.deleteCustomerAccountV2 = functions_5.deleteCustomerAccount;
+exports.deleteB2CCustomerAccountV2 = functions_5.deleteB2CCustomerAccount;
+exports.toggleCustomerActiveStatusV2 = functions_5.toggleCustomerActiveStatus;
+exports.createAdminUserV2 = functions_5.createAdminUser;
+exports.checkNamedDatabaseV2 = functions_5.checkNamedDatabase;
+exports.debugDatabaseV2 = functions_5.debugDatabase;
+// Import payment functions for Stripe integration
+var createPaymentIntent_1 = require("./payment/createPaymentIntent");
+exports.createPaymentIntentV2 = createPaymentIntent_1.createPaymentIntentV2;
+var createPaymentIntentMinimal_1 = require("./payment/createPaymentIntentMinimal");
+exports.createPaymentIntentMinimalV2 = createPaymentIntentMinimal_1.createPaymentIntentMinimalV2;
+var stripeWebhook_1 = require("./payment/stripeWebhook");
+exports.stripeWebhookV2 = stripeWebhook_1.stripeWebhookV2;
+var stripeWebhookSimple_1 = require("./payment/stripeWebhookSimple");
+exports.stripeWebhookSimple = stripeWebhookSimple_1.stripeWebhookSimple;
+// Import website scraper functions for DiningWagon
+var functions_6 = require("./website-scraper/functions");
+exports.scrapeWebsiteMetaV2 = functions_6.scrapeWebsiteMeta;
+// Example protected HTTP function - TESTING
+exports.exampleProtectedFunction = (0, https_1.onRequest)({ cors: true }, function (request, response) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                // Apply CORS protection
+                if (!(0, cors_handler_1.corsHandler)(request, response)) {
+                    return [2 /*return*/];
+                }
+                return [4 /*yield*/, (0, rate_limiter_1.rateLimiter)(request, response)];
+            case 1:
+                // Apply rate limiting
+                if (!(_a.sent())) {
+                    return [2 /*return*/];
+                }
+                // Function logic here
+                response.json({ message: 'Protected function executed successfully' });
+                return [2 /*return*/];
+        }
     });
-    response.status(200).json({ received: true });
-
-  } catch (error) {
-    logger.error('❌ Webhook error:', error);
-    response.status(500).json({ error: 'Internal server error' });
-  }
-});
+}); });
+// Debug functions
+var debug_order_data_1 = require("./debug-order-data");
+__createBinding(exports, debug_order_data_1, "debugOrderData");
+var debug_product_fields_1 = require("./debug-product-fields");
+__createBinding(exports, debug_product_fields_1, "debugProductFields");
+// OLD V1/V2/V3 EMAIL SYSTEM FUNCTIONS - MOVED TO QUARANTINE
+// All old email functions have been migrated to the new Email Orchestrator system
+// Old files moved to: functions/quarantine/old-email-systems/
+// New system: functions/src/email-orchestrator/ 

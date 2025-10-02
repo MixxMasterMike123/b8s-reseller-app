@@ -13,7 +13,7 @@ export const APP_URLS = {
   LOGO_URL: 'https://partner.b8shield.com/images/B8S_logo.png',
   
   // API endpoints
-  FIREBASE_FUNCTIONS_BASE: 'https://api.b8shield.com',
+  FIREBASE_FUNCTIONS_BASE: 'https://us-central1-b8shield-reseller-app.cloudfunctions.net',
   
   // Email template URLs
   getPortalUrl: () => APP_URLS.B2B_PORTAL,

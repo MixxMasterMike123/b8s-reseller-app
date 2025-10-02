@@ -5,7 +5,7 @@
 class SMHIClient {
   constructor() {
     // Use Firebase Functions as proxy instead of direct API calls
-    this.baseUrl = 'https://api.b8shield.com';
+    this.baseUrl = 'https://us-central1-b8shield-reseller-app.cloudfunctions.net';
     
     // Real SMHI water monitoring stations (verified working IDs only)
     // Note: SMHI has limited water monitoring coverage, especially in northern Sweden

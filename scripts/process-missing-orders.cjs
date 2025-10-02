@@ -88,7 +88,7 @@ async function testOrderProcessingFunction() {
   console.log('🔧 Testing Order Processing Function');
   console.log('===================================');
   
-  const functionUrl = 'https://api.b8shield.com/processB2COrderCompletionHttpV2';
+  const functionUrl = 'https://us-central1-b8shield-reseller-app.cloudfunctions.net/processB2COrderCompletionHttpV2';
   
   // Test with a dummy order ID to see if the function works
   console.log('\n1. Testing function with dummy order ID...');
@@ -108,7 +108,7 @@ async function testOrderProcessingFunction() {
   console.log('\n2. Attempting to check for orders by email...');
   
   // Check if we can find any of these orders in Firebase
-  const debugUrl = 'https://api.b8shield.com/debugOrderData';
+  const debugUrl = 'https://us-central1-b8shield-reseller-app.cloudfunctions.net/debugOrderData';
   
   for (const missingOrder of MISSING_ORDERS.slice(0, 3)) { // Test first 3
     console.log(`\n🔍 Checking for order: ${missingOrder.email} (${missingOrder.amount})`);

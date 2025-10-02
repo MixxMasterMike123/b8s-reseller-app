@@ -11,7 +11,7 @@ async function sendOrderEmails(orderId) {
     // which should fetch order data and send emails
     console.log('📧 Triggering order completion function to send emails...');
     
-    const orderCompletionResponse = await fetch('https://api.b8shield.com/processB2COrderCompletionHttpV2', {
+    const orderCompletionResponse = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/processB2COrderCompletionHttpV2', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -65,7 +65,7 @@ async function sendOrderEmails(orderId) {
     
     // Try V3 customer email
     console.log('📧 Sending V3 customer confirmation email...');
-    const customerResponse = await fetch('https://api.b8shield.com/sendB2COrderPendingEmailV3', {
+    const customerResponse = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/sendB2COrderPendingEmailV3', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -96,7 +96,7 @@ async function sendOrderEmails(orderId) {
       }
     };
     
-    const adminResponse = await fetch('https://api.b8shield.com/sendB2COrderNotificationAdminV3', {
+    const adminResponse = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/sendB2COrderNotificationAdminV3', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

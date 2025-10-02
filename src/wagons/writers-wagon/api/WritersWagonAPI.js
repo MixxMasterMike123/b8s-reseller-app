@@ -4,7 +4,7 @@ import { getAPIKey, getContentTypeConfig, WRITERS_WAGON_CONFIG } from './Writers
 class WritersWagonAPI {
   constructor() {
     // Use Firebase Function proxy instead of direct Claude API
-    this.baseURL = 'https://api.b8shield.com/generateContentWithClaude';
+    this.baseURL = 'https://us-central1-b8shield-reseller-app.cloudfunctions.net/generateContentWithClaude';
     this.apiKey = null; // Not needed - handled by Firebase Function
     this.requestCount = 0;
     this.costTracking = {
