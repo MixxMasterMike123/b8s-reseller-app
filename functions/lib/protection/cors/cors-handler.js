@@ -1,9 +1,9 @@
 "use strict";
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.corsHandler = void 0;
-var app_urls_1 = require("../../config/app-urls");
-var corsHandler = function (request, response) {
-    var origin = request.headers.origin;
+const app_urls_1 = require("../../config/app-urls");
+const corsHandler = (request, response) => {
+    const origin = request.headers.origin;
     // Allow requests from configured domains
     if (origin && isAllowedOrigin(origin)) {
         response.set('Access-Control-Allow-Origin', origin);
@@ -19,3 +19,4 @@ exports.corsHandler = corsHandler;
 function isAllowedOrigin(origin) {
     return app_urls_1.appUrls.CORS_ORIGINS.includes(origin);
 }
+//# sourceMappingURL=cors-handler.js.map

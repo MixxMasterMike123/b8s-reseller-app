@@ -1,7 +1,7 @@
 "use strict";
 // EmailOrchestrator Configuration
 // Centralized configuration for all email templates and URLs
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.getOrderTrackingUrl = exports.getSupportUrl = exports.formatPrice = exports.getLanguageSegment = exports.EMAIL_CONFIG = void 0;
 exports.EMAIL_CONFIG = {
     // Application URLs
@@ -10,23 +10,23 @@ exports.EMAIL_CONFIG = {
         B2C_SHOP: 'https://shop.b8shield.com',
         PARTNER_URL: 'https://partner.b8shield.com',
         B2B_LEGACY: 'https://b8shield-reseller-app.web.app',
-        LOGO_URL: 'https://partner.b8shield.com/images/B8S_logo.png'
+        LOGO_URL: 'https://partner.b8shield.com/images/B8S_logo.png',
     },
     // Email settings
     SMTP: {
         FROM_NAME: 'B8Shield',
         FROM_EMAIL: 'b8shield.reseller@gmail.com',
-        REPLY_TO: 'info@jphinnovation.se'
+        REPLY_TO: 'info@jphinnovation.se',
     },
     // Template settings
     TEMPLATES: {
         MAX_WIDTH: '600px',
         BORDER_RADIUS: '8px',
-        FONT_FAMILY: "'Segoe UI', Arial, sans-serif"
+        FONT_FAMILY: "'Segoe UI', Arial, sans-serif",
     },
     // Font settings
     FONTS: {
-        PRIMARY: "'Segoe UI', Arial, sans-serif"
+        PRIMARY: "'Segoe UI', Arial, sans-serif",
     },
     // Brand colors
     COLORS: {
@@ -38,13 +38,13 @@ exports.EMAIL_CONFIG = {
         TEXT_SECONDARY: '#374151',
         TEXT_MUTED: '#6b7280',
         BORDER: '#e5e7eb',
-        LINK: '#2563eb'
+        LINK: '#2563eb',
     },
     // Language settings
     LANGUAGES: {
         DEFAULT: 'sv-SE',
-        SUPPORTED: ['sv-SE', 'en-GB', 'en-US']
-    }
+        SUPPORTED: ['sv-SE', 'en-GB', 'en-US'],
+    },
 };
 // Helper function to get language segment for URLs
 function getLanguageSegment(lang) {
@@ -55,18 +55,19 @@ function getLanguageSegment(lang) {
 exports.getLanguageSegment = getLanguageSegment;
 // Helper function to format prices (V3 compatible)
 function formatPrice(amount) {
-    return "".concat(amount.toFixed(0), " SEK");
+    return `${amount.toFixed(0)} SEK`;
 }
 exports.formatPrice = formatPrice;
 // Helper function to get support URL
 function getSupportUrl(lang) {
-    var segment = getLanguageSegment(lang);
-    return "".concat(exports.EMAIL_CONFIG.URLS.B2C_SHOP, "/").concat(segment, "/contact");
+    const segment = getLanguageSegment(lang);
+    return `${exports.EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/contact`;
 }
 exports.getSupportUrl = getSupportUrl;
 // Helper function to get order tracking URL
 function getOrderTrackingUrl(orderId, lang) {
-    var segment = getLanguageSegment(lang);
-    return "".concat(exports.EMAIL_CONFIG.URLS.B2C_SHOP, "/").concat(segment, "/order-confirmation/").concat(orderId);
+    const segment = getLanguageSegment(lang);
+    return `${exports.EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/order-confirmation/${orderId}`;
 }
 exports.getOrderTrackingUrl = getOrderTrackingUrl;
+//# sourceMappingURL=config.js.map

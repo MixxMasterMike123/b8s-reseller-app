@@ -2,21 +2,21 @@
 // Affiliate Welcome Email Template - New Affiliate Onboarding
 // Extracted from V3 affiliateWelcome.ts with orchestrator integration
 // Used for: New affiliate approval and welcome (different from login credentials)
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateAffiliateWelcomeTemplate = void 0;
-var config_1 = require("../core/config");
+const config_1 = require("../core/config");
 function generateAffiliateWelcomeTemplate(data) {
-    var affiliateInfo = data.affiliateInfo, credentials = data.credentials, wasExistingAuthUser = data.wasExistingAuthUser, language = data.language;
+    const { affiliateInfo, credentials, wasExistingAuthUser, language } = data;
     // Generate URLs with proper language segments
-    var languageSegment = language === 'sv-SE' ? 'se' : language === 'en-GB' ? 'uk' : 'us';
-    var portalUrl = "".concat(config_1.EMAIL_CONFIG.URLS.B2C_SHOP, "/").concat(languageSegment, "/affiliate-portal");
-    var referralUrl = "".concat(config_1.EMAIL_CONFIG.URLS.B2C_SHOP, "/").concat(languageSegment, "/?ref=").concat(affiliateInfo.affiliateCode);
-    var supportUrl = "".concat(config_1.EMAIL_CONFIG.URLS.B2B_PORTAL, "/contact");
+    const languageSegment = language === 'sv-SE' ? 'se' : language === 'en-GB' ? 'uk' : 'us';
+    const portalUrl = `${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/${languageSegment}/affiliate-portal`;
+    const referralUrl = `${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/${languageSegment}/?ref=${affiliateInfo.affiliateCode}`;
+    const supportUrl = `${config_1.EMAIL_CONFIG.URLS.B2B_PORTAL}/contact`;
     // Generate login instructions based on user type
-    var loginInstructions = wasExistingAuthUser
+    const loginInstructions = wasExistingAuthUser
         ? getExistingUserInstructions(language, credentials.email)
         : getNewUserInstructions(language, credentials.email, credentials.temporaryPassword);
-    var templates = {
+    const templates = {
         'sv-SE': {
             subject: 'Välkommen till B8Shield Affiliate Program! - Dina inloggningsuppgifter',
             html: generateSwedishTemplate(affiliateInfo, loginInstructions, portalUrl, referralUrl, supportUrl)
@@ -30,7 +30,7 @@ function generateAffiliateWelcomeTemplate(data) {
             html: generateEnglishTemplate(affiliateInfo, loginInstructions, portalUrl, referralUrl, supportUrl, 'program', 'Best regards')
         }
     };
-    var template = templates[language] || templates['sv-SE'];
+    const template = templates[language] || templates['sv-SE'];
     return {
         subject: template.subject,
         html: template.html
@@ -38,24 +38,160 @@ function generateAffiliateWelcomeTemplate(data) {
 }
 exports.generateAffiliateWelcomeTemplate = generateAffiliateWelcomeTemplate;
 function getExistingUserInstructions(language, email) {
-    var instructions = {
-        'sv-SE': "<p style=\"color: #374151; margin: 0;\">Du hade redan ett konto hos B8Shield, s\u00E5 du kan logga in med ditt befintliga l\u00F6senord. Om du har gl\u00F6mt det kan du \u00E5terst\u00E4lla det p\u00E5 inloggningssidan.</p>\n              <p style=\"color: #374151; margin: 10px 0 0 0;\"><strong>E-post:</strong> ".concat(email, "</p>"),
-        'en-GB': "<p style=\"color: #374151; margin: 0;\">You already had an account with B8Shield, so you can log in with your existing password. If you've forgotten it, you can reset it on the login page.</p>\n              <p style=\"color: #374151; margin: 10px 0 0 0;\"><strong>Email:</strong> ".concat(email, "</p>"),
-        'en-US': "<p style=\"color: #374151; margin: 0;\">You already had an account with B8Shield, so you can log in with your existing password. If you've forgotten it, you can reset it on the login page.</p>\n              <p style=\"color: #374151; margin: 10px 0 0 0;\"><strong>Email:</strong> ".concat(email, "</p>")
+    const instructions = {
+        'sv-SE': `<p style="color: #374151; margin: 0;">Du hade redan ett konto hos B8Shield, så du kan logga in med ditt befintliga lösenord. Om du har glömt det kan du återställa det på inloggningssidan.</p>
+              <p style="color: #374151; margin: 10px 0 0 0;"><strong>E-post:</strong> ${email}</p>`,
+        'en-GB': `<p style="color: #374151; margin: 0;">You already had an account with B8Shield, so you can log in with your existing password. If you've forgotten it, you can reset it on the login page.</p>
+              <p style="color: #374151; margin: 10px 0 0 0;"><strong>Email:</strong> ${email}</p>`,
+        'en-US': `<p style="color: #374151; margin: 0;">You already had an account with B8Shield, so you can log in with your existing password. If you've forgotten it, you can reset it on the login page.</p>
+              <p style="color: #374151; margin: 10px 0 0 0;"><strong>Email:</strong> ${email}</p>`
     };
     return instructions[language] || instructions['sv-SE'];
 }
 function getNewUserInstructions(language, email, temporaryPassword) {
-    var instructions = {
-        'sv-SE': "<ul style=\"color: #374151; margin: 0; padding-left: 20px;\">\n                <li><strong>Anv\u00E4ndarnamn:</strong> ".concat(email, "</li>\n                <li><strong>Tillf\u00E4lligt l\u00F6senord:</strong> ").concat(temporaryPassword || '[GENERERAS]', "</li>\n              </ul>\n              <p style=\"color: #374151; margin: 10px 0 0 0;\">Vi rekommenderar starkt att du byter ditt l\u00F6senord efter f\u00F6rsta inloggningen.</p>"),
-        'en-GB': "<ul style=\"color: #374151; margin: 0; padding-left: 20px;\">\n                <li><strong>Username:</strong> ".concat(email, "</li>\n                <li><strong>Temporary password:</strong> ").concat(temporaryPassword || '[GENERATED]', "</li>\n              </ul>\n              <p style=\"color: #374151; margin: 10px 0 0 0;\">We strongly recommend that you change your password after your first login.</p>"),
-        'en-US': "<ul style=\"color: #374151; margin: 0; padding-left: 20px;\">\n                <li><strong>Username:</strong> ".concat(email, "</li>\n                <li><strong>Temporary password:</strong> ").concat(temporaryPassword || '[GENERATED]', "</li>\n              </ul>\n              <p style=\"color: #374151; margin: 10px 0 0 0;\">We strongly recommend that you change your password after your first login.</p>")
+    const instructions = {
+        'sv-SE': `<ul style="color: #374151; margin: 0; padding-left: 20px;">
+                <li><strong>Användarnamn:</strong> ${email}</li>
+                <li><strong>Tillfälligt lösenord:</strong> ${temporaryPassword || '[GENERERAS]'}</li>
+              </ul>
+              <p style="color: #374151; margin: 10px 0 0 0;">Vi rekommenderar starkt att du byter ditt lösenord efter första inloggningen.</p>`,
+        'en-GB': `<ul style="color: #374151; margin: 0; padding-left: 20px;">
+                <li><strong>Username:</strong> ${email}</li>
+                <li><strong>Temporary password:</strong> ${temporaryPassword || '[GENERATED]'}</li>
+              </ul>
+              <p style="color: #374151; margin: 10px 0 0 0;">We strongly recommend that you change your password after your first login.</p>`,
+        'en-US': `<ul style="color: #374151; margin: 0; padding-left: 20px;">
+                <li><strong>Username:</strong> ${email}</li>
+                <li><strong>Temporary password:</strong> ${temporaryPassword || '[GENERATED]'}</li>
+              </ul>
+              <p style="color: #374151; margin: 10px 0 0 0;">We strongly recommend that you change your password after your first login.</p>`
     };
     return instructions[language] || instructions['sv-SE'];
 }
 function generateSwedishTemplate(affiliateInfo, loginInstructions, portalUrl, referralUrl, supportUrl) {
-    return "\n<div style=\"font-family: ".concat(config_1.EMAIL_CONFIG.FONTS.PRIMARY, "; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px;\">\n  <div style=\"background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">\n    <div style=\"text-align: center; margin-bottom: 30px;\">\n      <img src=\"").concat(config_1.EMAIL_CONFIG.URLS.LOGO_URL, "\" alt=\"B8Shield\" style=\"max-width: 200px; height: auto;\">\n    </div>\n    \n    <h2 style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY, "; margin-bottom: 20px; font-size: 24px;\">Grattis, ").concat(affiliateInfo.name, "!</h2>\n    <p style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY, "; line-height: 1.6; margin-bottom: 20px;\">Din ans\u00F6kan till B8Shields affiliate-program har blivit godk\u00E4nd!</p>\n    <p style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY, "; line-height: 1.6; margin-bottom: 25px;\">Du \u00E4r nu en officiell B8Shield-affiliate och kan b\u00F6rja tj\u00E4na provision p\u00E5 alla f\u00F6rs\u00E4ljningar.</p>\n    \n    <div style=\"background-color: #f3f4f6; border-radius: 6px; padding: 20px; margin-bottom: 25px;\">\n      <h3 style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY, "; margin-top: 0; margin-bottom: 15px; font-size: 18px;\">[INLOGGNING] DINA INLOGGNINGSUPPGIFTER:</h3>\n      ").concat(loginInstructions, "\n    </div>\n    \n    <div style=\"background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 25px;\">\n      <h4 style=\"color: #92400e; margin-top: 0; margin-bottom: 10px; font-size: 16px;\">[VIKTIGT] VIKTIG INFORMATION:</h4>\n      <ul style=\"color: #92400e; margin: 0; padding-left: 20px;\">\n        <li>Du m\u00E5ste \u00E4ndra ditt l\u00F6senord vid f\u00F6rsta inloggningen</li>\n        <li>Affiliate-portalen finns p\u00E5: <a href=\"").concat(portalUrl, "\" style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.LINK, "; font-weight: bold;\">").concat(portalUrl, "</a></li>\n        <li>Ditt konto har aktiverats och du har nu tillg\u00E5ng till alla affiliate-funktioner</li>\n      </ul>\n    </div>\n    \n    <div style=\"background-color: #ecfdf5; padding: 20px; border-radius: 6px; margin-bottom: 25px;\">\n      <h4 style=\"color: #065f46; margin-top: 0; margin-bottom: 15px; font-size: 16px;\">[AFFILIATE] DIN UNIKA AFFILIATE-L\u00C4NK:</h4>\n      <p style=\"color: #065f46; margin-bottom: 15px;\">Anv\u00E4nd denna l\u00E4nk f\u00F6r att tj\u00E4na provision p\u00E5 alla k\u00F6p:</p>\n      <div style=\"background-color: #d1fae5; padding: 12px; border-radius: 4px; border-left: 4px solid #10b981;\">\n        <a href=\"").concat(referralUrl, "\" style=\"color: #065f46; text-decoration: none; font-weight: bold; word-break: break-all; font-size: 14px;\">").concat(referralUrl, "</a>\n      </div>\n      ").concat(affiliateInfo.commissionRate ? "<p style=\"color: #065f46; margin-top: 10px; font-size: 14px;\"><strong>Din provision:</strong> ".concat(affiliateInfo.commissionRate, "% p\u00E5 alla f\u00F6rs\u00E4ljningar</p>") : '', "\n    </div>\n    \n    <div style=\"background-color: #eff6ff; padding: 20px; border-radius: 6px; margin-bottom: 25px;\">\n      <h4 style=\"color: #1e40af; margin-top: 0; margin-bottom: 15px; font-size: 16px;\">[FUNKTIONER] VAD KAN DU G\u00D6RA I AFFILIATE-PORTALEN:</h4>\n      <ul style=\"color: #1e40af; margin: 0; padding-left: 20px;\">\n        <li>Se dina f\u00F6rs\u00E4ljningsstatistik och int\u00E4kter</li>\n        <li>Sp\u00E5ra klick och konverteringar</li>\n        <li>Ladda ner marknadsf\u00F6ringsmaterial</li>\n        <li>Hantera dina utbetalningar</li>\n        <li>F\u00E5 support och hj\u00E4lp</li>\n      </ul>\n    </div>\n    \n    <div style=\"text-align: center; margin: 30px 0;\">\n      <a href=\"").concat(portalUrl, "\" style=\"display: inline-block; background-color: ").concat(config_1.EMAIL_CONFIG.COLORS.PRIMARY, "; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; border: 2px solid ").concat(config_1.EMAIL_CONFIG.COLORS.PRIMARY, ";\">Logga in p\u00E5 affiliate-portalen</a>\n    </div>\n    \n    <div style=\"background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 25px;\">\n      <h4 style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY, "; margin-top: 0; margin-bottom: 10px; font-size: 16px;\">[SUPPORT] BEH\u00D6VER DU HJ\u00C4LP?</h4>\n      <p style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED, "; margin: 0; font-size: 14px;\">Om du har n\u00E5gra fr\u00E5gor eller beh\u00F6ver hj\u00E4lp, kontakta v\u00E5r support p\u00E5 <a href=\"").concat(supportUrl, "\" style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.LINK, ";\">").concat(supportUrl, "</a></p>\n    </div>\n    \n    <p style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY, "; line-height: 1.6; margin-bottom: 20px;\">Vi ser fram emot ett framg\u00E5ngsrikt samarbete!</p>\n    \n    <div style=\"border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;\">\n      <p style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED, "; font-size: 14px; margin: 0;\">Med v\u00E4nliga h\u00E4lsningar,<br><strong>B8Shield Team</strong><br>JPH Innovation AB</p>\n    </div>\n  </div>\n</div>");
+    return `
+<div style="font-family: ${config_1.EMAIL_CONFIG.FONTS.PRIMARY}; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px;">
+  <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <img src="${config_1.EMAIL_CONFIG.URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
+    </div>
+    
+    <h2 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-bottom: 20px; font-size: 24px;">Grattis, ${affiliateInfo.name}!</h2>
+    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">Din ansökan till B8Shields affiliate-program har blivit godkänd!</p>
+    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 25px;">Du är nu en officiell B8Shield-affiliate och kan börja tjäna provision på alla försäljningar.</p>
+    
+    <div style="background-color: #f3f4f6; border-radius: 6px; padding: 20px; margin-bottom: 25px;">
+      <h3 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-top: 0; margin-bottom: 15px; font-size: 18px;">[INLOGGNING] DINA INLOGGNINGSUPPGIFTER:</h3>
+      ${loginInstructions}
+    </div>
+    
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 25px;">
+      <h4 style="color: #92400e; margin-top: 0; margin-bottom: 10px; font-size: 16px;">[VIKTIGT] VIKTIG INFORMATION:</h4>
+      <ul style="color: #92400e; margin: 0; padding-left: 20px;">
+        <li>Du måste ändra ditt lösenord vid första inloggningen</li>
+        <li>Affiliate-portalen finns på: <a href="${portalUrl}" style="color: ${config_1.EMAIL_CONFIG.COLORS.LINK}; font-weight: bold;">${portalUrl}</a></li>
+        <li>Ditt konto har aktiverats och du har nu tillgång till alla affiliate-funktioner</li>
+      </ul>
+    </div>
+    
+    <div style="background-color: #ecfdf5; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
+      <h4 style="color: #065f46; margin-top: 0; margin-bottom: 15px; font-size: 16px;">[AFFILIATE] DIN UNIKA AFFILIATE-LÄNK:</h4>
+      <p style="color: #065f46; margin-bottom: 15px;">Använd denna länk för att tjäna provision på alla köp:</p>
+      <div style="background-color: #d1fae5; padding: 12px; border-radius: 4px; border-left: 4px solid #10b981;">
+        <a href="${referralUrl}" style="color: #065f46; text-decoration: none; font-weight: bold; word-break: break-all; font-size: 14px;">${referralUrl}</a>
+      </div>
+      ${affiliateInfo.commissionRate ? `<p style="color: #065f46; margin-top: 10px; font-size: 14px;"><strong>Din provision:</strong> ${affiliateInfo.commissionRate}% på alla försäljningar</p>` : ''}
+    </div>
+    
+    <div style="background-color: #eff6ff; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
+      <h4 style="color: #1e40af; margin-top: 0; margin-bottom: 15px; font-size: 16px;">[FUNKTIONER] VAD KAN DU GÖRA I AFFILIATE-PORTALEN:</h4>
+      <ul style="color: #1e40af; margin: 0; padding-left: 20px;">
+        <li>Se dina försäljningsstatistik och intäkter</li>
+        <li>Spåra klick och konverteringar</li>
+        <li>Ladda ner marknadsföringsmaterial</li>
+        <li>Hantera dina utbetalningar</li>
+        <li>Få support och hjälp</li>
+      </ul>
+    </div>
+    
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${portalUrl}" style="display: inline-block; background-color: ${config_1.EMAIL_CONFIG.COLORS.PRIMARY}; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; border: 2px solid ${config_1.EMAIL_CONFIG.COLORS.PRIMARY};">Logga in på affiliate-portalen</a>
+    </div>
+    
+    <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 25px;">
+      <h4 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; margin-top: 0; margin-bottom: 10px; font-size: 16px;">[SUPPORT] BEHÖVER DU HJÄLP?</h4>
+      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; margin: 0; font-size: 14px;">Om du har några frågor eller behöver hjälp, kontakta vår support på <a href="${supportUrl}" style="color: ${config_1.EMAIL_CONFIG.COLORS.LINK};">${supportUrl}</a></p>
+    </div>
+    
+    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">Vi ser fram emot ett framgångsrikt samarbete!</p>
+    
+    <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
+      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin: 0;">Med vänliga hälsningar,<br><strong>B8Shield Team</strong><br>JPH Innovation AB</p>
+    </div>
+  </div>
+</div>`;
 }
 function generateEnglishTemplate(affiliateInfo, loginInstructions, portalUrl, referralUrl, supportUrl, programWord, signOff) {
-    return "\n<div style=\"font-family: ".concat(config_1.EMAIL_CONFIG.FONTS.PRIMARY, "; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px;\">\n  <div style=\"background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">\n    <div style=\"text-align: center; margin-bottom: 30px;\">\n      <img src=\"").concat(config_1.EMAIL_CONFIG.URLS.LOGO_URL, "\" alt=\"B8Shield\" style=\"max-width: 200px; height: auto;\">\n    </div>\n    \n    <h2 style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY, "; margin-bottom: 20px; font-size: 24px;\">Congratulations, ").concat(affiliateInfo.name, "!</h2>\n    <p style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY, "; line-height: 1.6; margin-bottom: 20px;\">Your application to the B8Shield affiliate ").concat(programWord, " has been approved!</p>\n    <p style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY, "; line-height: 1.6; margin-bottom: 25px;\">You are now an official B8Shield affiliate and can start earning commission on all sales.</p>\n    \n    <div style=\"background-color: #f3f4f6; border-radius: 6px; padding: 20px; margin-bottom: 25px;\">\n      <h3 style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY, "; margin-top: 0; margin-bottom: 15px; font-size: 18px;\">[LOGIN] YOUR LOGIN CREDENTIALS:</h3>\n      ").concat(loginInstructions, "\n    </div>\n    \n    <div style=\"background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 25px;\">\n      <h4 style=\"color: #92400e; margin-top: 0; margin-bottom: 10px; font-size: 16px;\">[IMPORTANT] IMPORTANT INFORMATION:</h4>\n      <ul style=\"color: #92400e; margin: 0; padding-left: 20px;\">\n        <li>You must change your password on first login</li>\n        <li>The Affiliate Portal is available at: <a href=\"").concat(portalUrl, "\" style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.LINK, "; font-weight: bold;\">").concat(portalUrl, "</a></li>\n        <li>Your account has been activated and you now have access to all affiliate functions</li>\n      </ul>\n    </div>\n    \n    <div style=\"background-color: #ecfdf5; padding: 20px; border-radius: 6px; margin-bottom: 25px;\">\n      <h4 style=\"color: #065f46; margin-top: 0; margin-bottom: 15px; font-size: 16px;\">[AFFILIATE] YOUR UNIQUE AFFILIATE LINK:</h4>\n      <p style=\"color: #065f46; margin-bottom: 15px;\">Use this link to earn commission on ").concat(programWord === 'programme' ? 'every' : 'all', " purchase").concat(programWord === 'programme' ? '' : 's', ":</p>\n      <div style=\"background-color: #d1fae5; padding: 12px; border-radius: 4px; border-left: 4px solid #10b981;\">\n        <a href=\"").concat(referralUrl, "\" style=\"color: #065f46; text-decoration: none; font-weight: bold; word-break: break-all; font-size: 14px;\">").concat(referralUrl, "</a>\n      </div>\n      ").concat(affiliateInfo.commissionRate ? "<p style=\"color: #065f46; margin-top: 10px; font-size: 14px;\"><strong>Your commission:</strong> ".concat(affiliateInfo.commissionRate, "% on all sales</p>") : '', "\n    </div>\n    \n    <div style=\"background-color: #eff6ff; padding: 20px; border-radius: 6px; margin-bottom: 25px;\">\n      <h4 style=\"color: #1e40af; margin-top: 0; margin-bottom: 15px; font-size: 16px;\">[FUNCTIONS] WHAT YOU CAN DO IN THE AFFILIATE PORTAL:</h4>\n      <ul style=\"color: #1e40af; margin: 0; padding-left: 20px;\">\n        <li>View your sales statistics and earnings</li>\n        <li>Track clicks and conversions</li>\n        <li>Download marketing materials</li>\n        <li>Manage your payouts</li>\n        <li>Get support and help</li>\n      </ul>\n    </div>\n    \n    <div style=\"text-align: center; margin: 30px 0;\">\n      <a href=\"").concat(portalUrl, "\" style=\"display: inline-block; background-color: ").concat(config_1.EMAIL_CONFIG.COLORS.PRIMARY, "; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; border: 2px solid ").concat(config_1.EMAIL_CONFIG.COLORS.PRIMARY, ";\">Login to Affiliate Portal</a>\n    </div>\n    \n    <div style=\"background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 25px;\">\n      <h4 style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY, "; margin-top: 0; margin-bottom: 10px; font-size: 16px;\">[SUPPORT] NEED HELP?</h4>\n      <p style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED, "; margin: 0; font-size: 14px;\">If you have any questions or need assistance, please contact our support at <a href=\"").concat(supportUrl, "\" style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.LINK, ";\">").concat(supportUrl, "</a></p>\n    </div>\n    \n    <p style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY, "; line-height: 1.6; margin-bottom: 20px;\">We look forward to a successful partnership!</p>\n    \n    <div style=\"border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;\">\n      <p style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED, "; font-size: 14px; margin: 0;\">").concat(signOff, ",<br><strong>The B8Shield Team</strong><br>JPH Innovation AB</p>\n    </div>\n  </div>\n</div>");
+    return `
+<div style="font-family: ${config_1.EMAIL_CONFIG.FONTS.PRIMARY}; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px;">
+  <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <img src="${config_1.EMAIL_CONFIG.URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
+    </div>
+    
+    <h2 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-bottom: 20px; font-size: 24px;">Congratulations, ${affiliateInfo.name}!</h2>
+    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">Your application to the B8Shield affiliate ${programWord} has been approved!</p>
+    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 25px;">You are now an official B8Shield affiliate and can start earning commission on all sales.</p>
+    
+    <div style="background-color: #f3f4f6; border-radius: 6px; padding: 20px; margin-bottom: 25px;">
+      <h3 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-top: 0; margin-bottom: 15px; font-size: 18px;">[LOGIN] YOUR LOGIN CREDENTIALS:</h3>
+      ${loginInstructions}
+    </div>
+    
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 25px;">
+      <h4 style="color: #92400e; margin-top: 0; margin-bottom: 10px; font-size: 16px;">[IMPORTANT] IMPORTANT INFORMATION:</h4>
+      <ul style="color: #92400e; margin: 0; padding-left: 20px;">
+        <li>You must change your password on first login</li>
+        <li>The Affiliate Portal is available at: <a href="${portalUrl}" style="color: ${config_1.EMAIL_CONFIG.COLORS.LINK}; font-weight: bold;">${portalUrl}</a></li>
+        <li>Your account has been activated and you now have access to all affiliate functions</li>
+      </ul>
+    </div>
+    
+    <div style="background-color: #ecfdf5; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
+      <h4 style="color: #065f46; margin-top: 0; margin-bottom: 15px; font-size: 16px;">[AFFILIATE] YOUR UNIQUE AFFILIATE LINK:</h4>
+      <p style="color: #065f46; margin-bottom: 15px;">Use this link to earn commission on ${programWord === 'programme' ? 'every' : 'all'} purchase${programWord === 'programme' ? '' : 's'}:</p>
+      <div style="background-color: #d1fae5; padding: 12px; border-radius: 4px; border-left: 4px solid #10b981;">
+        <a href="${referralUrl}" style="color: #065f46; text-decoration: none; font-weight: bold; word-break: break-all; font-size: 14px;">${referralUrl}</a>
+      </div>
+      ${affiliateInfo.commissionRate ? `<p style="color: #065f46; margin-top: 10px; font-size: 14px;"><strong>Your commission:</strong> ${affiliateInfo.commissionRate}% on all sales</p>` : ''}
+    </div>
+    
+    <div style="background-color: #eff6ff; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
+      <h4 style="color: #1e40af; margin-top: 0; margin-bottom: 15px; font-size: 16px;">[FUNCTIONS] WHAT YOU CAN DO IN THE AFFILIATE PORTAL:</h4>
+      <ul style="color: #1e40af; margin: 0; padding-left: 20px;">
+        <li>View your sales statistics and earnings</li>
+        <li>Track clicks and conversions</li>
+        <li>Download marketing materials</li>
+        <li>Manage your payouts</li>
+        <li>Get support and help</li>
+      </ul>
+    </div>
+    
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${portalUrl}" style="display: inline-block; background-color: ${config_1.EMAIL_CONFIG.COLORS.PRIMARY}; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; border: 2px solid ${config_1.EMAIL_CONFIG.COLORS.PRIMARY};">Login to Affiliate Portal</a>
+    </div>
+    
+    <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 25px;">
+      <h4 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; margin-top: 0; margin-bottom: 10px; font-size: 16px;">[SUPPORT] NEED HELP?</h4>
+      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; margin: 0; font-size: 14px;">If you have any questions or need assistance, please contact our support at <a href="${supportUrl}" style="color: ${config_1.EMAIL_CONFIG.COLORS.LINK};">${supportUrl}</a></p>
+    </div>
+    
+    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">We look forward to a successful partnership!</p>
+    
+    <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
+      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin: 0;">${signOff},<br><strong>The B8Shield Team</strong><br>JPH Innovation AB</p>
+    </div>
+  </div>
+</div>`;
 }
+//# sourceMappingURL=affiliateWelcome.js.map

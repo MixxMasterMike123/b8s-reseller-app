@@ -1,3 +1,4 @@
 "use strict";
 // Affiliate System Types for V2 Functions
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
+//# sourceMappingURL=types.js.map

@@ -5,63 +5,52 @@
  * This module converts B8Shield Firestore product data to Google Shopping format.
  * Handles B2B/B2C availability, pricing, images, and product attributes.
  */
-var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
-};
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateGoogleShoppingProduct = exports.mapProductsToGoogleShopping = exports.mapProductToGoogleShopping = void 0;
-var config_1 = require("./config");
+const config_1 = require("./config");
 /**
  * Convert B8Shield product to Google Shopping format
  */
-var mapProductToGoogleShopping = function (product, options) {
-    var _a, _b, _c, _d;
-    if (options === void 0) { options = {}; }
-    var _e = options.targetMarket, targetMarket = _e === void 0 ? 'b2c' : _e, _f = options.language, language = _f === void 0 ? 'sv' : _f, _g = options.country, country = _g === void 0 ? 'SE' : _g;
+const mapProductToGoogleShopping = (product, options = {}) => {
+    const { targetMarket = 'b2c', language = 'sv', country = 'SE' } = options;
     // Skip if product is not active
     if (!product.isActive) {
-        console.log("\u23ED\uFE0F  Skipping inactive product: ".concat(product.name));
+        console.log(`⏭️  Skipping inactive product: ${product.name}`);
         return null;
     }
     // Skip if not available for target market
-    if (targetMarket === 'b2c' && !((_a = product.availability) === null || _a === void 0 ? void 0 : _a.b2c)) {
-        console.log("\u23ED\uFE0F  Skipping B2C unavailable product: ".concat(product.name));
+    if (targetMarket === 'b2c' && !product.availability?.b2c) {
+        console.log(`⏭️  Skipping B2C unavailable product: ${product.name}`);
         return null;
     }
-    if (targetMarket === 'b2b' && !((_b = product.availability) === null || _b === void 0 ? void 0 : _b.b2b)) {
-        console.log("\u23ED\uFE0F  Skipping B2B unavailable product: ".concat(product.name));
+    if (targetMarket === 'b2b' && !product.availability?.b2b) {
+        console.log(`⏭️  Skipping B2B unavailable product: ${product.name}`);
         return null;
     }
     // Determine price based on target market
-    var price = targetMarket === 'b2c'
+    const price = targetMarket === 'b2c'
         ? (product.b2cPrice || product.basePrice)
         : product.basePrice;
     // Determine description based on target market
-    var description = targetMarket === 'b2c'
-        ? (((_c = product.descriptions) === null || _c === void 0 ? void 0 : _c.b2c) || product.description)
-        : (((_d = product.descriptions) === null || _d === void 0 ? void 0 : _d.b2b) || product.description);
+    const description = targetMarket === 'b2c'
+        ? (product.descriptions?.b2c || product.description)
+        : (product.descriptions?.b2b || product.description);
     // Determine image based on target market
-    var imageUrl = targetMarket === 'b2c'
+    const imageUrl = targetMarket === 'b2c'
         ? (product.b2cImageUrl || product.imageUrl)
         : (product.b2bImageUrl || product.imageUrl);
     // Additional images for B2C
-    var additionalImages = targetMarket === 'b2c' && product.b2cImageGallery
-        ? product.b2cImageGallery.filter(function (url) { return url !== imageUrl; })
+    const additionalImages = targetMarket === 'b2c' && product.b2cImageGallery
+        ? product.b2cImageGallery.filter(url => url !== imageUrl)
         : [];
     // Generate product URL
-    var productUrl = targetMarket === 'b2c'
-        ? "https://shop.b8shield.com/".concat(country.toLowerCase(), "/product/").concat(product.id)
-        : "https://partner.b8shield.com/products/".concat(product.id);
+    const productUrl = targetMarket === 'b2c'
+        ? `https://shop.b8shield.com/${country.toLowerCase()}/product/${product.id}`
+        : `https://partner.b8shield.com/products/${product.id}`;
     // Create unique offer ID for this market
-    var offerId = "".concat(product.id, "_").concat(targetMarket, "_").concat(country);
+    const offerId = `${product.id}_${targetMarket}_${country}`;
     // Build Google Shopping product
-    var googleProduct = {
+    const googleProduct = {
         productId: product.id,
         contentLanguage: language,
         targetCountry: country,
@@ -82,7 +71,7 @@ var mapProductToGoogleShopping = function (product, options) {
         customLabel0: product.size || 'Standard',
         customLabel1: product.color || 'Default',
         customLabel2: targetMarket.toUpperCase(),
-        customLabel3: product.sku || product.id
+        customLabel3: product.sku || product.id,
     };
     // Add additional images if available
     if (additionalImages.length > 0) {
@@ -156,26 +145,23 @@ exports.mapProductToGoogleShopping = mapProductToGoogleShopping;
 /**
  * Batch convert multiple products
  */
-var mapProductsToGoogleShopping = function (products, options) {
-    if (options === void 0) { options = {}; }
-    var mappedProducts = [];
-    for (var _i = 0, products_1 = products; _i < products_1.length; _i++) {
-        var product = products_1[_i];
-        var mapped = (0, exports.mapProductToGoogleShopping)(product, options);
+const mapProductsToGoogleShopping = (products, options = {}) => {
+    const mappedProducts = [];
+    for (const product of products) {
+        const mapped = (0, exports.mapProductToGoogleShopping)(product, options);
         if (mapped) {
             mappedProducts.push(mapped);
         }
     }
-    console.log("\uD83D\uDCE6 Mapped ".concat(mappedProducts.length, "/").concat(products.length, " products to Google Shopping format"));
+    console.log(`📦 Mapped ${mappedProducts.length}/${products.length} products to Google Shopping format`);
     return mappedProducts;
 };
 exports.mapProductsToGoogleShopping = mapProductsToGoogleShopping;
 /**
  * Validate Google Shopping product data
  */
-var validateGoogleShoppingProduct = function (product) {
-    var _a, _b;
-    var errors = [];
+const validateGoogleShoppingProduct = (product) => {
+    const errors = [];
     // Required fields
     if (!product.productId)
         errors.push('Missing productId');
@@ -187,7 +173,7 @@ var validateGoogleShoppingProduct = function (product) {
         errors.push('Missing link');
     if (!product.imageLink)
         errors.push('Missing imageLink');
-    if (!((_a = product.price) === null || _a === void 0 ? void 0 : _a.value))
+    if (!product.price?.value)
         errors.push('Missing price');
     if (!product.brand)
         errors.push('Missing brand');
@@ -196,17 +182,17 @@ var validateGoogleShoppingProduct = function (product) {
     if (!product.availability)
         errors.push('Missing availability');
     // Validate price format
-    if (((_b = product.price) === null || _b === void 0 ? void 0 : _b.value) && isNaN(Number(product.price.value))) {
+    if (product.price?.value && isNaN(Number(product.price.value))) {
         errors.push('Invalid price format');
     }
     // Validate URLs
-    var urlFields = __spreadArray(['link', 'imageLink'], (product.additionalImageLinks || []), true);
-    for (var _i = 0, urlFields_1 = urlFields; _i < urlFields_1.length; _i++) {
-        var url = urlFields_1[_i];
+    const urlFields = ['link', 'imageLink', ...(product.additionalImageLinks || [])];
+    for (const url of urlFields) {
         if (url && !url.startsWith('http')) {
-            errors.push("Invalid URL: ".concat(url));
+            errors.push(`Invalid URL: ${url}`);
         }
     }
     return errors;
 };
 exports.validateGoogleShoppingProduct = validateGoogleShoppingProduct;
+//# sourceMappingURL=product-mapper.js.map

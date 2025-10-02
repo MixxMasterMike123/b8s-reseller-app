@@ -1,5 +1,5 @@
 "use strict";
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.COST_THRESHOLDS = exports.RATE_LIMITS = void 0;
 exports.RATE_LIMITS = {
     // AI/Content Generation (expensive operations)
@@ -41,3 +41,4 @@ exports.COST_THRESHOLDS = {
     MONTHLY_WARNING: 500,
     MONTHLY_EMERGENCY: 1000 // Emergency shutdown at 1000 SEK/month
 };
+//# sourceMappingURL=rate-limits.js.map

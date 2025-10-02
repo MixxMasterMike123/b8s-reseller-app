@@ -1,28 +1,301 @@
 "use strict";
 // affiliateApplicationNotificationAdmin.ts - Admin notification when new affiliate applies
 // Notifies admins of new affiliate applications requiring review
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateAffiliateApplicationNotificationAdminTemplate = void 0;
-var config_1 = require("../core/config");
+const config_1 = require("../core/config");
 function generateAffiliateApplicationNotificationAdminTemplate(data) {
-    var applicantInfo = data.applicantInfo, applicationId = data.applicationId, adminPortalUrl = data.adminPortalUrl;
+    const { applicantInfo, applicationId, adminPortalUrl } = data;
     // Format social media links
-    var formatSocialLinks = function (socials) {
+    const formatSocialLinks = (socials) => {
         if (!socials)
             return 'Inga sociala medier angivna';
-        var links = [];
+        const links = [];
         if (socials.website)
-            links.push("<strong>Webbplats:</strong> <a href=\"".concat(socials.website, "\" style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.LINK, ";\">").concat(socials.website, "</a>"));
+            links.push(`<strong>Webbplats:</strong> <a href="${socials.website}" style="color: ${config_1.EMAIL_CONFIG.COLORS.LINK};">${socials.website}</a>`);
         if (socials.instagram)
-            links.push("<strong>Instagram:</strong> <a href=\"".concat(socials.instagram, "\" style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.LINK, ";\">").concat(socials.instagram, "</a>"));
+            links.push(`<strong>Instagram:</strong> <a href="${socials.instagram}" style="color: ${config_1.EMAIL_CONFIG.COLORS.LINK};">${socials.instagram}</a>`);
         if (socials.youtube)
-            links.push("<strong>YouTube:</strong> <a href=\"".concat(socials.youtube, "\" style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.LINK, ";\">").concat(socials.youtube, "</a>"));
+            links.push(`<strong>YouTube:</strong> <a href="${socials.youtube}" style="color: ${config_1.EMAIL_CONFIG.COLORS.LINK};">${socials.youtube}</a>`);
         if (socials.facebook)
-            links.push("<strong>Facebook:</strong> <a href=\"".concat(socials.facebook, "\" style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.LINK, ";\">").concat(socials.facebook, "</a>"));
+            links.push(`<strong>Facebook:</strong> <a href="${socials.facebook}" style="color: ${config_1.EMAIL_CONFIG.COLORS.LINK};">${socials.facebook}</a>`);
         if (socials.tiktok)
-            links.push("<strong>TikTok:</strong> <a href=\"".concat(socials.tiktok, "\" style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.LINK, ";\">").concat(socials.tiktok, "</a>"));
+            links.push(`<strong>TikTok:</strong> <a href="${socials.tiktok}" style="color: ${config_1.EMAIL_CONFIG.COLORS.LINK};">${socials.tiktok}</a>`);
         return links.length > 0 ? links.join('<br>') : 'Inga sociala medier angivna';
     };
-    return "\n<!DOCTYPE html>\n<html lang=\"sv-SE\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Ny Affiliate-ans\u00F6kan - ".concat(applicantInfo.name, "</title>\n  <style>\n    body {\n      font-family: ").concat(config_1.EMAIL_CONFIG.FONTS.PRIMARY, ";\n      line-height: 1.6;\n      color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY, ";\n      margin: 0;\n      padding: 0;\n      background-color: ").concat(config_1.EMAIL_CONFIG.COLORS.BACKGROUND, ";\n    }\n    .container {\n      max-width: ").concat(config_1.EMAIL_CONFIG.TEMPLATES.MAX_WIDTH, ";\n      margin: 0 auto;\n      background: white;\n      border-radius: ").concat(config_1.EMAIL_CONFIG.TEMPLATES.BORDER_RADIUS, ";\n      overflow: hidden;\n      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\n    }\n    .header {\n      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);\n      color: white;\n      padding: 30px;\n      text-align: center;\n    }\n    .header-icon {\n      font-size: 48px;\n      margin-bottom: 15px;\n    }\n    .header-title {\n      font-size: 24px;\n      font-weight: 600;\n      margin: 0;\n    }\n    .urgent-banner {\n      background: #fef3c7;\n      border: 2px solid #f59e0b;\n      color: #92400e;\n      padding: 15px;\n      text-align: center;\n      font-weight: 600;\n      font-size: 16px;\n    }\n    .content {\n      padding: 40px 30px;\n    }\n    .application-summary {\n      background: ").concat(config_1.EMAIL_CONFIG.COLORS.BACKGROUND, ";\n      border-radius: 12px;\n      padding: 25px;\n      margin: 25px 0;\n      border-left: 5px solid ").concat(config_1.EMAIL_CONFIG.COLORS.PRIMARY, ";\n    }\n    .summary-title {\n      font-size: 18px;\n      font-weight: 600;\n      color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY, ";\n      margin-bottom: 20px;\n      display: flex;\n      align-items: center;\n    }\n    .summary-icon {\n      margin-right: 10px;\n      font-size: 20px;\n    }\n    .info-grid {\n      display: grid;\n      grid-template-columns: 1fr 1fr;\n      gap: 20px;\n      margin-bottom: 25px;\n    }\n    .info-item {\n      background: white;\n      padding: 20px;\n      border-radius: 8px;\n      border: 1px solid ").concat(config_1.EMAIL_CONFIG.COLORS.BORDER, ";\n    }\n    .info-label {\n      font-size: 12px;\n      font-weight: 600;\n      color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED, ";\n      text-transform: uppercase;\n      letter-spacing: 0.5px;\n      margin-bottom: 8px;\n    }\n    .info-value {\n      font-size: 15px;\n      color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY, ";\n      font-weight: 500;\n    }\n    .full-width {\n      grid-column: 1 / -1;\n    }\n    .social-links {\n      font-size: 14px;\n      line-height: 1.8;\n    }\n    .action-section {\n      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);\n      border-radius: 12px;\n      padding: 30px;\n      text-align: center;\n      margin: 30px 0;\n      border: 2px solid #0ea5e9;\n    }\n    .action-title {\n      font-size: 20px;\n      font-weight: 600;\n      color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY, ";\n      margin-bottom: 15px;\n    }\n    .action-description {\n      font-size: 16px;\n      color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY, ";\n      margin-bottom: 25px;\n    }\n    .cta-button {\n      display: inline-block;\n      background: linear-gradient(135deg, ").concat(config_1.EMAIL_CONFIG.COLORS.PRIMARY, " 0%, #1e40af 100%);\n      color: white;\n      padding: 15px 35px;\n      text-decoration: none;\n      border-radius: 8px;\n      font-weight: 600;\n      font-size: 16px;\n      box-shadow: 0 4px 12px rgba(29, 78, 216, 0.3);\n      transition: all 0.3s ease;\n    }\n    .application-id {\n      font-family: 'Monaco', 'Menlo', monospace;\n      background: #1f2937;\n      color: #10b981;\n      padding: 12px 20px;\n      border-radius: 6px;\n      font-size: 14px;\n      font-weight: 600;\n      margin: 20px 0;\n      text-align: center;\n      border: 1px solid #374151;\n    }\n    .footer {\n      background: ").concat(config_1.EMAIL_CONFIG.COLORS.BACKGROUND, ";\n      padding: 30px;\n      text-align: center;\n      border-top: 1px solid ").concat(config_1.EMAIL_CONFIG.COLORS.BORDER, ";\n    }\n    .footer-text {\n      font-size: 14px;\n      color: ").concat(config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED, ";\n      margin: 0;\n    }\n    \n    /* Mobile responsiveness */\n    @media only screen and (max-width: 600px) {\n      .container {\n        margin: 0;\n        border-radius: 0;\n      }\n      .header, .content, .footer {\n        padding: 20px;\n      }\n      .info-grid {\n        grid-template-columns: 1fr;\n        gap: 15px;\n      }\n      .action-section {\n        padding: 20px;\n      }\n      .cta-button {\n        padding: 12px 25px;\n        font-size: 15px;\n      }\n    }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <div class=\"header-icon\">\uD83D\uDEA8</div>\n      <h1 class=\"header-title\">Ny Affiliate-ans\u00F6kan</h1>\n    </div>\n    \n    <div class=\"urgent-banner\">\n      \u26A1 KR\u00C4VER GRANSKNING: Ny affiliate v\u00E4ntar p\u00E5 godk\u00E4nnande\n    </div>\n    \n    <div class=\"content\">\n      <div class=\"application-summary\">\n        <div class=\"summary-title\">\n          <span class=\"summary-icon\">\uD83D\uDC64</span>\n          Ans\u00F6kaninformation\n        </div>\n        \n        <div class=\"info-grid\">\n          <div class=\"info-item\">\n            <div class=\"info-label\">Namn</div>\n            <div class=\"info-value\">").concat(applicantInfo.name, "</div>\n          </div>\n          \n          <div class=\"info-item\">\n            <div class=\"info-label\">E-post</div>\n            <div class=\"info-value\">\n              <a href=\"mailto:").concat(applicantInfo.email, "\" style=\"color: ").concat(config_1.EMAIL_CONFIG.COLORS.LINK, "; text-decoration: none;\">\n                ").concat(applicantInfo.email, "\n              </a>\n            </div>\n          </div>\n          \n          ").concat(applicantInfo.phone ? "\n          <div class=\"info-item\">\n            <div class=\"info-label\">Telefon</div>\n            <div class=\"info-value\">".concat(applicantInfo.phone, "</div>\n          </div>\n          ") : '', "\n          \n          <div class=\"info-item\">\n            <div class=\"info-label\">Land</div>\n            <div class=\"info-value\">").concat(applicantInfo.country || 'Ej angivet', "</div>\n          </div>\n          \n          ").concat(applicantInfo.promotionMethod ? "\n          <div class=\"info-item full-width\">\n            <div class=\"info-label\">Marknadsf\u00F6ringsmetod</div>\n            <div class=\"info-value\">".concat(applicantInfo.promotionMethod, "</div>\n          </div>\n          ") : '', "\n          \n          <div class=\"info-item full-width\">\n            <div class=\"info-label\">Sociala Medier</div>\n            <div class=\"info-value social-links\">\n              ").concat(formatSocialLinks(applicantInfo.socials), "\n            </div>\n          </div>\n          \n          ").concat(applicantInfo.message ? "\n          <div class=\"info-item full-width\">\n            <div class=\"info-label\">Meddelande</div>\n            <div class=\"info-value\">".concat(applicantInfo.message, "</div>\n          </div>\n          ") : '', "\n        </div>\n        \n        <div class=\"application-id\">\n          Ans\u00F6knings-ID: ").concat(applicationId, "\n        </div>\n      </div>\n      \n      <div class=\"action-section\">\n        <div class=\"action-title\">Granska och Godk\u00E4nn</div>\n        <div class=\"action-description\">\n          Klicka nedan f\u00F6r att granska ans\u00F6kan och fatta beslut om godk\u00E4nnande.\n        </div>\n        <a href=\"").concat(adminPortalUrl, "/admin/affiliates\" class=\"cta-button\">\n          \u00D6ppna Admin Panel \u2192\n        </a>\n      </div>\n    </div>\n    \n    <div class=\"footer\">\n      <p class=\"footer-text\">\n        Detta meddelande skickades automatiskt fr\u00E5n B8Shield Affiliate System.<br>\n        <strong>JPH Innovation AB</strong> | B8Shield Admin\n      </p>\n    </div>\n  </div>\n</body>\n</html>\n  ").trim();
+    return `
+<!DOCTYPE html>
+<html lang="sv-SE">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ny Affiliate-ansökan - ${applicantInfo.name}</title>
+  <style>
+    body {
+      font-family: ${config_1.EMAIL_CONFIG.FONTS.PRIMARY};
+      line-height: 1.6;
+      color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY};
+      margin: 0;
+      padding: 0;
+      background-color: ${config_1.EMAIL_CONFIG.COLORS.BACKGROUND};
+    }
+    .container {
+      max-width: ${config_1.EMAIL_CONFIG.TEMPLATES.MAX_WIDTH};
+      margin: 0 auto;
+      background: white;
+      border-radius: ${config_1.EMAIL_CONFIG.TEMPLATES.BORDER_RADIUS};
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    .header-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+    .header-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin: 0;
+    }
+    .urgent-banner {
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+      color: #92400e;
+      padding: 15px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .content {
+      padding: 40px 30px;
+    }
+    .application-summary {
+      background: ${config_1.EMAIL_CONFIG.COLORS.BACKGROUND};
+      border-radius: 12px;
+      padding: 25px;
+      margin: 25px 0;
+      border-left: 5px solid ${config_1.EMAIL_CONFIG.COLORS.PRIMARY};
+    }
+    .summary-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY};
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+    }
+    .summary-icon {
+      margin-right: 10px;
+      font-size: 20px;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+    .info-item {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid ${config_1.EMAIL_CONFIG.COLORS.BORDER};
+    }
+    .info-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED};
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .info-value {
+      font-size: 15px;
+      color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY};
+      font-weight: 500;
+    }
+    .full-width {
+      grid-column: 1 / -1;
+    }
+    .social-links {
+      font-size: 14px;
+      line-height: 1.8;
+    }
+    .action-section {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      margin: 30px 0;
+      border: 2px solid #0ea5e9;
+    }
+    .action-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY};
+      margin-bottom: 15px;
+    }
+    .action-description {
+      font-size: 16px;
+      color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY};
+      margin-bottom: 25px;
+    }
+    .cta-button {
+      display: inline-block;
+      background: linear-gradient(135deg, ${config_1.EMAIL_CONFIG.COLORS.PRIMARY} 0%, #1e40af 100%);
+      color: white;
+      padding: 15px 35px;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 16px;
+      box-shadow: 0 4px 12px rgba(29, 78, 216, 0.3);
+      transition: all 0.3s ease;
+    }
+    .application-id {
+      font-family: 'Monaco', 'Menlo', monospace;
+      background: #1f2937;
+      color: #10b981;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      margin: 20px 0;
+      text-align: center;
+      border: 1px solid #374151;
+    }
+    .footer {
+      background: ${config_1.EMAIL_CONFIG.COLORS.BACKGROUND};
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid ${config_1.EMAIL_CONFIG.COLORS.BORDER};
+    }
+    .footer-text {
+      font-size: 14px;
+      color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED};
+      margin: 0;
+    }
+    
+    /* Mobile responsiveness */
+    @media only screen and (max-width: 600px) {
+      .container {
+        margin: 0;
+        border-radius: 0;
+      }
+      .header, .content, .footer {
+        padding: 20px;
+      }
+      .info-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+      }
+      .action-section {
+        padding: 20px;
+      }
+      .cta-button {
+        padding: 12px 25px;
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-icon">🚨</div>
+      <h1 class="header-title">Ny Affiliate-ansökan</h1>
+    </div>
+    
+    <div class="urgent-banner">
+      ⚡ KRÄVER GRANSKNING: Ny affiliate väntar på godkännande
+    </div>
+    
+    <div class="content">
+      <div class="application-summary">
+        <div class="summary-title">
+          <span class="summary-icon">👤</span>
+          Ansökaninformation
+        </div>
+        
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Namn</div>
+            <div class="info-value">${applicantInfo.name}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">E-post</div>
+            <div class="info-value">
+              <a href="mailto:${applicantInfo.email}" style="color: ${config_1.EMAIL_CONFIG.COLORS.LINK}; text-decoration: none;">
+                ${applicantInfo.email}
+              </a>
+            </div>
+          </div>
+          
+          ${applicantInfo.phone ? `
+          <div class="info-item">
+            <div class="info-label">Telefon</div>
+            <div class="info-value">${applicantInfo.phone}</div>
+          </div>
+          ` : ''}
+          
+          <div class="info-item">
+            <div class="info-label">Land</div>
+            <div class="info-value">${applicantInfo.country || 'Ej angivet'}</div>
+          </div>
+          
+          ${applicantInfo.promotionMethod ? `
+          <div class="info-item full-width">
+            <div class="info-label">Marknadsföringsmetod</div>
+            <div class="info-value">${applicantInfo.promotionMethod}</div>
+          </div>
+          ` : ''}
+          
+          <div class="info-item full-width">
+            <div class="info-label">Sociala Medier</div>
+            <div class="info-value social-links">
+              ${formatSocialLinks(applicantInfo.socials)}
+            </div>
+          </div>
+          
+          ${applicantInfo.message ? `
+          <div class="info-item full-width">
+            <div class="info-label">Meddelande</div>
+            <div class="info-value">${applicantInfo.message}</div>
+          </div>
+          ` : ''}
+        </div>
+        
+        <div class="application-id">
+          Ansöknings-ID: ${applicationId}
+        </div>
+      </div>
+      
+      <div class="action-section">
+        <div class="action-title">Granska och Godkänn</div>
+        <div class="action-description">
+          Klicka nedan för att granska ansökan och fatta beslut om godkännande.
+        </div>
+        <a href="${adminPortalUrl}/admin/affiliates" class="cta-button">
+          Öppna Admin Panel →
+        </a>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p class="footer-text">
+        Detta meddelande skickades automatiskt från B8Shield Affiliate System.<br>
+        <strong>JPH Innovation AB</strong> | B8Shield Admin
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
 }
 exports.generateAffiliateApplicationNotificationAdminTemplate = generateAffiliateApplicationNotificationAdminTemplate;
+//# sourceMappingURL=affiliateApplicationNotificationAdmin.js.map

@@ -252,38 +252,10 @@ export const stripeWebhookV2 = onRequest(
           hasAffiliate: !!metadata.affiliateCode
         });
 
-        // Process affiliate commission if present
-        if (metadata.affiliateCode && metadata.affiliateClickId) {
-          try {
-            // Update affiliate click with conversion
-            const clickDocs = await db.collection('affiliateClicks')
-              .where('id', '==', metadata.affiliateClickId)
-              .get();
-            
-            if (!clickDocs.empty) {
-              const clickDoc = clickDocs.docs[0];
-              await clickDoc.ref.update({
-                converted: true,
-                orderId: orderRef.id,
-                commissionAmount: parseFloat(metadata.discountAmount || '0'),
-                convertedAt: new Date()
-              });
-
-              logger.info('✅ Affiliate commission processed', {
-                affiliateCode: metadata.affiliateCode,
-                clickId: metadata.affiliateClickId,
-                commission: metadata.discountAmount
-              });
-            }
-          } catch (affiliateError) {
-            logger.error('❌ Failed to process affiliate commission', {
-              error: affiliateError,
-              affiliateCode: metadata.affiliateCode,
-              clickId: metadata.affiliateClickId
-            });
-            // Don't fail the order creation if affiliate processing fails
-          }
-        }
+        // ⚠️ CRITICAL: Do NOT process affiliate commission here!
+        // The processB2COrderCompletionHttp function handles ALL affiliate processing
+        // to avoid duplicate commission credits. The order data contains the affiliate
+        // structure, so the processing function will handle it correctly.
 
         // Trigger email and affiliate processing via existing HTTP function
         // This reuses the same logic as the frontend order flow
