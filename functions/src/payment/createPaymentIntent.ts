@@ -145,6 +145,13 @@ export const createPaymentIntentV2 = onRequest(
         customerEmail: customerInfo.email
       });
 
+      // DEBUG: Log received data
+      logger.info('🔍 DEBUG: createPaymentIntent received data', {
+        customerInfo,
+        shippingInfo,
+        totals
+      });
+
       // Create Payment Intent with simplified configuration for live mode
       let paymentIntent;
       try {

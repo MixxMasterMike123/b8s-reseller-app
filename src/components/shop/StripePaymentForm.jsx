@@ -238,45 +238,50 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPay
           items: cart.items.length
         });
 
+        // 🔍 DEBUG: Log what we're sending to createPaymentIntentV2
+        const paymentData = {
+          amount: totals.total, // Amount in SEK
+          currency: 'sek',
+          cartItems: cart.items,
+          customerInfo,
+          shippingInfo: {
+            // Use complete shipping info from checkout form
+            ...shippingInfo,
+            // Add shipping cost for payment processing
+            cost: totals.shipping
+          },
+          // Enhanced totals breakdown for complete order recovery
+          totals: {
+            subtotal: totals.subtotal,
+            vat: totals.vat,
+            shipping: totals.shipping,
+            discountAmount: totals.discountAmount,
+            total: totals.total
+          },
+          ...(totals.discountCode && {
+            discountInfo: {
+              code: totals.discountCode,
+              amount: totals.discountAmount,
+              percentage: totals.discountPercentage
+            }
+          }),
+          ...(totals.affiliateClickId && {
+            affiliateInfo: {
+              code: totals.discountCode,
+              clickId: totals.affiliateClickId
+            }
+          })
+        };
+        
+        console.log('🔍 DEBUG: Sending to createPaymentIntentV2:', JSON.stringify(paymentData, null, 2));
+
         // Create payment intent on server via HTTP
-        const response = await fetch('https://api.b8shield.com/createPaymentIntentV2', {
+        const response = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/createPaymentIntentV2', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            amount: totals.total, // Amount in SEK
-            currency: 'sek',
-            cartItems: cart.items,
-            customerInfo,
-            shippingInfo: {
-              country: cart.shippingCountry,
-              cost: totals.shipping,
-              // Enhanced shipping info will be passed from checkout context
-              ...shippingInfo
-            },
-            // Enhanced totals breakdown for complete order recovery
-            totals: {
-              subtotal: totals.subtotal,
-              vat: totals.vat,
-              shipping: totals.shipping,
-              discountAmount: totals.discountAmount,
-              total: totals.total
-            },
-            ...(totals.discountCode && {
-              discountInfo: {
-                code: totals.discountCode,
-                amount: totals.discountAmount,
-                percentage: totals.discountPercentage
-              }
-            }),
-            ...(totals.affiliateClickId && {
-              affiliateInfo: {
-                code: totals.discountCode,
-                clickId: totals.affiliateClickId
-              }
-            })
-          })
+          body: JSON.stringify(paymentData)
         });
 
         if (!response.ok) {
