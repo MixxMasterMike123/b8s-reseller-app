@@ -11,6 +11,8 @@ import { db } from '../../firebase/config';
 import { parseReferrer, getReferrerCategory } from '../../utils/referrerParser';
 import { printMultipleShippingLabels } from '../../utils/labelPrinter';
 import { formatPaymentMethodName, getPaymentMethodBadgeClasses } from '../../utils/paymentMethods';
+import { exportOrdersToCSV } from '../../utils/orderExport';
+import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
 
 const getStatusStyles = (status) => {
@@ -38,6 +40,7 @@ const AdminOrders = () => {
   const [clicksLoading, setClicksLoading] = useState(false);
   const [selectedOrders, setSelectedOrders] = useState(new Set());
   const [printLoading, setPrintLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
 
   // Fetch affiliate click data for orders with affiliate information
   const fetchAffiliateClicks = async (orders) => {
@@ -110,6 +113,34 @@ const AdminOrders = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeSourceTab, setActiveSourceTab] = useState('all'); // 'all', 'b2b', 'b2c'
   const [activeStatusTab, setActiveStatusTab] = useState('all');
+
+  // Handle export orders to CSV
+  const handleExportOrders = async () => {
+    try {
+      setExportLoading(true);
+      
+      // Export filtered orders (respects current filters)
+      const ordersToExport = sortedOrders.length > 0 ? sortedOrders : orders;
+      
+      if (ordersToExport.length === 0) {
+        toast.error('Inga ordrar att exportera');
+        return;
+      }
+
+      const result = exportOrdersToCSV(ordersToExport);
+      
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error('Error exporting orders:', error);
+      toast.error('Kunde inte exportera ordrar');
+    } finally {
+      setExportLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -304,13 +335,32 @@ const AdminOrders = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Orderhantering</h1>
-          <input
-            type="text"
-            placeholder="Sök på ordernr, kundinfo..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full md:w-64 px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-lg focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
-          />
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <input
+              type="text"
+              placeholder="Sök på ordernr, kundinfo..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full sm:w-64 px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-lg focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
+            />
+            <button
+              onClick={handleExportOrders}
+              disabled={exportLoading || loading || orders.length === 0}
+              className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {exportLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Exporterar...
+                </>
+              ) : (
+                <>
+                  <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
+                  Exportera CSV
+                </>
+              )}
+            </button>
+          </div>
         </div>
         
         <div className="mb-6 space-y-4">
