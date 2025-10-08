@@ -67,16 +67,43 @@ const getSourceLabel = (source) => {
 };
 
 /**
+ * Extract product name from multilingual object or string
+ */
+const getProductName = (nameField) => {
+  if (!nameField) return 'Produkt';
+  
+  // If it's a string, return it
+  if (typeof nameField === 'string') return nameField;
+  
+  // If it's a multilingual object, try Swedish first, then English, then first available
+  if (typeof nameField === 'object') {
+    return nameField['sv-SE'] || nameField['sv'] || 
+           nameField['en-GB'] || nameField['en-US'] || nameField['en'] ||
+           Object.values(nameField)[0] || 'Produkt';
+  }
+  
+  return 'Produkt';
+};
+
+/**
  * Format order items as readable string
  */
 const formatOrderItems = (items) => {
   if (!items || items.length === 0) return '';
   
   return items.map(item => {
-    const name = item.productName || item.name || 'Produkt';
+    // Handle multilingual name field
+    const name = getProductName(item.name || item.productName);
     const quantity = item.quantity || 0;
     const price = item.price || 0;
-    return `${name} x ${quantity} (${price} kr)`;
+    
+    // Include color and size if available
+    const details = [];
+    if (item.color) details.push(item.color);
+    if (item.size) details.push(item.size);
+    
+    const detailsStr = details.length > 0 ? ` (${details.join(', ')})` : '';
+    return `${name}${detailsStr} x ${quantity} (${price} kr)`;
   }).join('; ');
 };
 
@@ -86,26 +113,29 @@ const formatOrderItems = (items) => {
 const calculateOrderTotals = (order) => {
   const items = order.items || [];
   
-  // Subtotal (items only)
-  const subtotal = items.reduce((sum, item) => {
+  // Subtotal (items only) - use order.subtotal if available, otherwise calculate
+  const subtotal = order.subtotal || items.reduce((sum, item) => {
     return sum + ((item.price || 0) * (item.quantity || 0));
   }, 0);
   
-  // Shipping cost
-  const shipping = order.shippingCost || order.shipping?.cost || 0;
+  // Shipping cost - check multiple possible locations
+  // B2C orders: order.shipping is a number
+  // B2B orders: order.shippingCost or order.shipping.cost or order.prisInfo.frakt
+  const shipping = (typeof order.shipping === 'number' ? order.shipping : 
+                   (order.shipping?.cost || order.shippingCost || order.prisInfo?.frakt)) || 
+                   0;
   
   // Discount
-  const discount = order.discountAmount || 0;
+  const discount = order.discountAmount || order.discount || 0;
   
-  // Total before VAT
-  const totalBeforeVAT = subtotal + shipping - discount;
+  // VAT - use order.vat if available, otherwise calculate
+  const vat = order.vat || (order.subtotal && order.total ? order.total - order.subtotal - shipping + discount : 0);
   
-  // VAT (25% for Swedish sales)
-  const vatRate = order.vatRate || 0.25;
-  const vat = totalBeforeVAT * vatRate;
+  // Total including VAT - use order total if available
+  const totalAmount = order.total || order.totalAmount || (subtotal + shipping + vat - discount);
   
-  // Total including VAT
-  const totalAmount = order.totalAmount || (totalBeforeVAT + vat);
+  // Calculate total before VAT
+  const totalBeforeVAT = totalAmount - vat;
   
   return {
     subtotal: subtotal.toFixed(2),
