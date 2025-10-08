@@ -12,7 +12,8 @@ import { parseReferrer, getReferrerCategory } from '../../utils/referrerParser';
 import { printMultipleShippingLabels } from '../../utils/labelPrinter';
 import { formatPaymentMethodName, getPaymentMethodBadgeClasses } from '../../utils/paymentMethods';
 import { exportOrdersToCSV } from '../../utils/orderExport';
-import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { exportSingleOrderVerification, exportAllOrderVerifications } from '../../utils/orderVerification';
+import { ArrowDownTrayIcon, DocumentTextIcon, PrinterIcon } from '@heroicons/react/24/outline';
 
 
 const getStatusStyles = (status) => {
@@ -139,6 +140,43 @@ const AdminOrders = () => {
       toast.error('Kunde inte exportera ordrar');
     } finally {
       setExportLoading(false);
+    }
+  };
+
+  // Handle export individual order verification
+  const handleExportVerification = (order) => {
+    try {
+      const result = exportSingleOrderVerification(order);
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error('Error exporting verification:', error);
+      toast.error('Kunde inte skapa verifikation');
+    }
+  };
+
+  // Handle export all verifications
+  const handleExportAllVerifications = () => {
+    try {
+      const ordersToExport = sortedOrders.length > 0 ? sortedOrders : orders;
+      
+      if (ordersToExport.length === 0) {
+        toast.error('Inga ordrar att exportera');
+        return;
+      }
+
+      const result = exportAllOrderVerifications(ordersToExport);
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error('Error exporting verifications:', error);
+      toast.error('Kunde inte exportera verifikationer');
     }
   };
 
@@ -346,7 +384,7 @@ const AdminOrders = () => {
             <button
               onClick={handleExportOrders}
               disabled={exportLoading || loading || orders.length === 0}
-              className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
             >
               {exportLoading ? (
                 <>
@@ -359,6 +397,15 @@ const AdminOrders = () => {
                   Exportera CSV
                 </>
               )}
+            </button>
+            <button
+              onClick={handleExportAllVerifications}
+              disabled={loading || orders.length === 0}
+              className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+              title="Exportera varje order som separat verifikation för bokföring"
+            >
+              <DocumentTextIcon className="h-5 w-5 mr-2" />
+              Verifikationer
             </button>
           </div>
         </div>
@@ -571,7 +618,7 @@ const AdminOrders = () => {
 
                       {/* Column 4: Status & Action */}
                       <td className="px-4 md:px-6 py-4 text-right">
-                        <div className="flex flex-col items-end gap-3">
+                        <div className="flex flex-col items-end gap-2">
                           <div className="w-full max-w-[120px]">
                             <OrderStatusMenu 
                               currentStatus={order.status}
@@ -579,12 +626,22 @@ const AdminOrders = () => {
                               disabled={loading}
                             />
                           </div>
-                          <Link
-                            to={`/admin/orders/${order.id}`}
-                            className="min-h-[32px] inline-flex items-center px-4 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded transition-colors"
-                          >
-                            Hantera
-                          </Link>
+                          <div className="flex flex-col gap-1 w-full max-w-[120px]">
+                            <Link
+                              to={`/admin/orders/${order.id}`}
+                              className="min-h-[32px] inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded transition-colors"
+                            >
+                              Hantera
+                            </Link>
+                            <button
+                              onClick={() => handleExportVerification(order)}
+                              className="min-h-[32px] inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded transition-colors"
+                              title="Exportera som verifikation för bokföring"
+                            >
+                              <PrinterIcon className="h-3.5 w-3.5 mr-1" />
+                              Verifikation
+                            </button>
+                          </div>
                         </div>
                       </td>
                     </tr>
