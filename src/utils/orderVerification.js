@@ -8,6 +8,8 @@
 
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 /**
  * Format date for verification documents
@@ -442,31 +444,82 @@ export const createOrderVerificationHTML = (order) => {
 };
 
 /**
- * Export single order as HTML verification (opens in new window for print/save as PDF)
+ * Convert HTML to PDF and download
  */
-export const exportSingleOrderVerification = (order) => {
+const htmlToPDF = async (html, filename) => {
+  return new Promise((resolve, reject) => {
+    try {
+      // Create temporary container
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      container.style.width = '210mm'; // A4 width
+      container.innerHTML = html;
+      document.body.appendChild(container);
+      
+      // Wait for content to render
+      setTimeout(async () => {
+        try {
+          // Convert HTML to canvas
+          const canvas = await html2canvas(container, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            windowWidth: 794, // A4 width in pixels at 96 DPI
+            windowHeight: 1123 // A4 height in pixels at 96 DPI
+          });
+          
+          // Create PDF
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+          });
+          
+          const imgWidth = 210; // A4 width in mm
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          
+          pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+          
+          // Download PDF
+          pdf.save(filename);
+          
+          // Cleanup
+          document.body.removeChild(container);
+          
+          resolve({
+            success: true,
+            message: `${filename} nedladdad`
+          });
+        } catch (error) {
+          // Cleanup on error
+          if (document.body.contains(container)) {
+            document.body.removeChild(container);
+          }
+          reject(error);
+        }
+      }, 100);
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+/**
+ * Export single order as PDF verification (downloads automatically)
+ */
+export const exportSingleOrderVerification = async (order) => {
   try {
     const html = createOrderVerificationHTML(order);
+    const filename = `Verifikation-${order.orderNumber || order.id}-${formatDate(order.createdAt)}.pdf`;
     
-    // Open in new window for printing/saving as PDF
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      throw new Error('Kunde inte öppna nytt fönster. Kontrollera popup-blockerare.');
-    }
-    
-    printWindow.document.write(html);
-    printWindow.document.close();
-    
-    // Auto-trigger print dialog after content loads
-    printWindow.onload = () => {
-      setTimeout(() => {
-        printWindow.print();
-      }, 250);
-    };
+    const result = await htmlToPDF(html, filename);
     
     return {
       success: true,
-      message: `Verifikation för order ${order.orderNumber || order.id} öppnad`
+      message: `Verifikation för order ${order.orderNumber || order.id} nedladdad`
     };
   } catch (error) {
     console.error('Error exporting order verification:', error);
@@ -478,23 +531,23 @@ export const exportSingleOrderVerification = (order) => {
 };
 
 /**
- * Export all orders as individual verification files
- * Opens each in separate tab for printing/saving as PDF
+ * Export all orders as individual PDF verification files (downloads automatically)
+ * Downloads each PDF sequentially with progress updates
  */
-export const exportAllOrderVerifications = (orders, options = {}) => {
+export const exportAllOrderVerifications = async (orders, options = {}) => {
   try {
     if (!orders || orders.length === 0) {
       throw new Error('Inga ordrar att exportera');
     }
     
-    const maxSimultaneous = options.maxSimultaneous || 5;
-    const delay = options.delay || 500;
+    const delay = options.delay || 1000; // Delay between downloads
+    const onProgress = options.onProgress || (() => {}); // Progress callback
     
-    // Warning for large batches
+    // Confirmation for large batches
     if (orders.length > 10) {
       const confirmed = window.confirm(
-        `Du är på väg att öppna ${orders.length} verifikationer.\n\n` +
-        `Detta kan ta en stund och öppnar flera fönster.\n\n` +
+        `Du är på väg att ladda ner ${orders.length} verifikationer som separata PDF-filer.\n\n` +
+        `Detta kan ta ungefär ${Math.ceil(orders.length / 2)} minuter.\n\n` +
         `Fortsätt?`
       );
       
@@ -506,31 +559,36 @@ export const exportAllOrderVerifications = (orders, options = {}) => {
       }
     }
     
-    // Export in batches to avoid overwhelming browser
+    // Export orders sequentially
     let exported = 0;
-    const exportBatch = (startIndex) => {
-      const endIndex = Math.min(startIndex + maxSimultaneous, orders.length);
-      
-      for (let i = startIndex; i < endIndex; i++) {
-        setTimeout(() => {
-          exportSingleOrderVerification(orders[i]);
-          exported++;
-        }, (i - startIndex) * delay);
-      }
-      
-      if (endIndex < orders.length) {
-        setTimeout(() => {
-          exportBatch(endIndex);
-        }, maxSimultaneous * delay + 1000);
-      }
-    };
+    let failed = 0;
     
-    exportBatch(0);
+    for (let i = 0; i < orders.length; i++) {
+      try {
+        onProgress({
+          current: i + 1,
+          total: orders.length,
+          order: orders[i]
+        });
+        
+        await exportSingleOrderVerification(orders[i]);
+        exported++;
+        
+        // Delay between downloads to avoid overwhelming browser
+        if (i < orders.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      } catch (error) {
+        console.error(`Failed to export order ${orders[i].orderNumber || orders[i].id}:`, error);
+        failed++;
+      }
+    }
     
     return {
       success: true,
-      message: `Exporterar ${orders.length} verifikationer...`,
-      count: orders.length
+      message: `${exported} verifikationer nedladdade${failed > 0 ? `, ${failed} misslyckades` : ''}`,
+      count: exported,
+      failed
     };
   } catch (error) {
     console.error('Error exporting order verifications:', error);
