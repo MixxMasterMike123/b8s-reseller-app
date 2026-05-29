@@ -59,8 +59,7 @@ import { processAffiliateConversionV2 } from './affiliate/triggers/processAffili
 // Import order processing functions directly with original names
 import {
   processB2COrderCompletionHttp, // RE-ENABLED: Critical for affiliate processing
-  processB2COrderCompletion,
-  manualStatusUpdate
+  processB2COrderCompletion
 } from './order-processing/functions';
 
 // Import geo functions for B2C shop currency detection
@@ -101,8 +100,7 @@ export { logAffiliateClickV2, logAffiliateClickHttpV2, processAffiliateConversio
 // Re-export order processing functions individually with V2 names (avoid V1 conflicts)
 export {
   processB2COrderCompletionHttp as processB2COrderCompletionHttpV2, // RE-ENABLED: Critical for affiliate processing
-  processB2COrderCompletion as processB2COrderCompletionV2,
-  manualStatusUpdate as manualStatusUpdateV2
+  processB2COrderCompletion as processB2COrderCompletionV2
 };
 
 // Re-export geo functions for B2C shop currency detection
