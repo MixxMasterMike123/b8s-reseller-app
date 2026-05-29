@@ -5,6 +5,12 @@
   "targets": {
     "b8shield-reseller-app": {
       "hosting": {
+        "admin": [
+          "b8shield-reseller-app"
+        ],
+        "shop": [
+          "shop-b8shield"
+        ],
         "partner": [
           "partner.b8shield.com"
         ]

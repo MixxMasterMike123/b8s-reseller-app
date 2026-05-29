@@ -130,8 +130,11 @@ function App() {
   const hostname = window.location.hostname || '';
   const subdomain = (hostname && typeof hostname === 'string') ? hostname.split('.')[0] : '';
   
-  // Determine app mode based on subdomain
-  const isShopSubdomain = subdomain === 'shop';
+  // Determine app mode based on subdomain.
+  // Accept a `shop-` prefix too, so Firebase hosting sites like
+  // `shop-b8shield.web.app` trigger shop mode (the .web.app first segment is the
+  // whole site ID, which can't be exactly "shop"). `shop.b8shield.com` still matches.
+  const isShopSubdomain = subdomain === 'shop' || subdomain.startsWith('shop-');
   const isResellerSubdomain = subdomain === 'partner' || subdomain === 'reseller' || hostname.includes('b8shield-reseller-app');
   
   // Default to reseller for now (existing behavior)
