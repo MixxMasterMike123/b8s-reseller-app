@@ -19,12 +19,4 @@ export declare const processB2COrderCompletionHttp: functions.https.HttpsFunctio
  * [V2] Callable function for B2C order completion with affiliate processing
  */
 export declare const processB2COrderCompletion: functions.https.CallableFunction<OrderProcessingData, any, unknown>;
-/**
- * [V2] Manual function to update order status and test triggers
- */
-export declare const manualStatusUpdate: functions.https.HttpsFunction;
-/**
- * [V2] Manual order status update test function
- */
-export declare const testOrderUpdate: functions.https.HttpsFunction;
 export {};

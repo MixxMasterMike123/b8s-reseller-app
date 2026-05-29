@@ -5,7 +5,7 @@
  * ONLY for shop.b8shield.com (B2B portal stays in SEK)
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.testGeoHeaders = exports.getGeoData = void 0;
+exports.getGeoData = void 0;
 const https_1 = require("firebase-functions/v2/https");
 /**
  * HTTP endpoint that returns CloudFlare geo data
@@ -78,54 +78,6 @@ exports.getGeoData = (0, https_1.onRequest)({
                 timestamp: Date.now(),
                 source: 'error-fallback'
             }
-        });
-    }
-});
-/**
- * Test endpoint to check CloudFlare headers
- * Useful for debugging geo-targeting setup
- */
-exports.testGeoHeaders = (0, https_1.onRequest)({
-    cors: true,
-    region: 'us-central1',
-    memory: '128MiB',
-    timeoutSeconds: 30
-}, async (req, res) => {
-    try {
-        console.log('Testing CloudFlare geo headers...');
-        // Get all CloudFlare headers
-        const cfHeaders = {};
-        Object.keys(req.headers).forEach(key => {
-            if (key.toLowerCase().startsWith('cf-')) {
-                cfHeaders[key] = req.headers[key];
-            }
-        });
-        // Get other relevant headers
-        const otherHeaders = {
-            'x-forwarded-for': req.headers['x-forwarded-for'],
-            'user-agent': req.headers['user-agent'],
-            'accept-language': req.headers['accept-language']
-        };
-        const testData = {
-            timestamp: Date.now(),
-            cloudflareHeaders: cfHeaders,
-            otherHeaders: otherHeaders,
-            allHeaders: req.headers,
-            hasCloudFlareGeo: !!req.headers['cf-ipcountry'],
-            detectedCountry: req.headers['cf-ipcountry'] || 'UNKNOWN'
-        };
-        console.log('CloudFlare test data:', testData);
-        res.status(200).json({
-            success: true,
-            message: 'CloudFlare geo headers test',
-            data: testData
-        });
-    }
-    catch (error) {
-        console.error('Error testing geo headers:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message
         });
     }
 });

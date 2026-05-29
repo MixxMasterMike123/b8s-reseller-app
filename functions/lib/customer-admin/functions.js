@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.debugDatabase = exports.checkNamedDatabase = exports.createAdminUser = exports.toggleCustomerActiveStatus = exports.deleteB2CCustomerAccount = exports.deleteCustomerAccount = void 0;
+exports.createAdminUser = exports.toggleCustomerActiveStatus = exports.deleteB2CCustomerAccount = exports.deleteCustomerAccount = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
@@ -8,6 +8,38 @@ const auth_1 = require("firebase-admin/auth");
 const database_1 = require("../config/database");
 // Get Firebase Auth from already initialized app
 const auth = (0, auth_1.getAuth)((0, app_1.getApp)());
+// 🛡️ SECURITY: Shared-secret guard for the createAdminUser bootstrap endpoint.
+// This onRequest endpoint is an operator-only tool, NOT called by the client app.
+// Previously it was fully unauthenticated — anyone who knew the URL could promote
+// an admin. It now requires an ADMIN_MAINTENANCE_SECRET, supplied via the
+// `x-admin-secret` header or `?secret=` query param.
+// (The former checkNamedDatabase / debugDatabase debug endpoints were removed.)
+//
+// Set the secret before deploying, e.g.:
+//   firebase functions:config:set admin.maintenance_secret="<random-64-char-hex>"
+// or via process.env.ADMIN_MAINTENANCE_SECRET in the runtime environment.
+// If no secret is configured, the endpoints are DENIED by default (fail closed).
+function isMaintenanceAuthorized(req) {
+    const configured = process.env.ADMIN_MAINTENANCE_SECRET;
+    // Fail closed: no secret configured means these endpoints are disabled.
+    if (!configured) {
+        return false;
+    }
+    const provided = req.headers['x-admin-secret'] ||
+        req.query?.secret;
+    if (!provided) {
+        return false;
+    }
+    // Constant-time-ish comparison to avoid trivial timing leaks.
+    if (provided.length !== configured.length) {
+        return false;
+    }
+    let diff = 0;
+    for (let i = 0; i < configured.length; i++) {
+        diff |= provided.charCodeAt(i) ^ configured.charCodeAt(i);
+    }
+    return diff === 0;
+}
 // Delete Customer Account (Admin Only)
 exports.deleteCustomerAccount = (0, https_1.onCall)(async (request) => {
     const { auth: userAuth, data } = request;
@@ -356,6 +388,10 @@ exports.createAdminUser = (0, https_1.onRequest)({
     memory: '256MiB',
     region: 'us-central1'
 }, async (req, res) => {
+    if (!isMaintenanceAuthorized(req)) {
+        res.status(403).json({ success: false, error: 'Forbidden' });
+        return;
+    }
     try {
         console.log('Creating admin user in named database...');
         // Admin user data based on your login credentials
@@ -402,127 +438,6 @@ exports.createAdminUser = (0, https_1.onRequest)({
     }
     catch (error) {
         console.error('Error creating admin user:', error);
-        res.status(500).json({
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error'
-        });
-    }
-});
-// Check Named Database Contents (HTTP endpoint)
-exports.checkNamedDatabase = (0, https_1.onRequest)({
-    timeoutSeconds: 60,
-    memory: '256MiB',
-    region: 'us-central1'
-}, async (req, res) => {
-    try {
-        console.log('Checking named database contents...');
-        // Check all collections in named database
-        const collections = ['users', 'orders', 'products', 'orderStatuses', 'settings', 'order-statuses', 'app-settings', 'affiliates', 'marketingMaterials'];
-        const results = {};
-        for (const collectionName of collections) {
-            try {
-                const snapshot = await database_1.db.collection(collectionName).get();
-                results[collectionName] = {
-                    count: snapshot.size,
-                    docs: snapshot.docs.slice(0, 5).map(doc => ({
-                        id: doc.id,
-                        data: doc.data()
-                    }))
-                };
-                console.log(`Collection ${collectionName}: ${snapshot.size} documents`);
-            }
-            catch (error) {
-                console.log(`Collection ${collectionName}: Error accessing - ${error instanceof Error ? error.message : 'Unknown error'}`);
-                results[collectionName] = { error: error instanceof Error ? error.message : 'Unknown error' };
-            }
-        }
-        res.status(200).json({
-            success: true,
-            message: 'Named database check completed',
-            database: 'b8s-reseller-db',
-            collections: results
-        });
-    }
-    catch (error) {
-        console.error('Error checking named database:', error);
-        res.status(500).json({
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error'
-        });
-    }
-});
-// Debug Database Contents (HTTP endpoint)
-exports.debugDatabase = (0, https_1.onRequest)({
-    timeoutSeconds: 60,
-    memory: '256MiB',
-    region: 'us-central1'
-}, async (req, res) => {
-    try {
-        console.log('Debugging database contents...');
-        // Check orders
-        const ordersSnapshot = await database_1.db.collection('orders').get();
-        const orders = [];
-        ordersSnapshot.forEach(doc => {
-            orders.push({
-                id: doc.id,
-                orderNumber: doc.data().orderNumber,
-                status: doc.data().status,
-                userId: doc.data().userId,
-                createdAt: doc.data().createdAt
-            });
-        });
-        // Check users
-        const usersSnapshot = await database_1.db.collection('users').get();
-        const users = [];
-        usersSnapshot.forEach(doc => {
-            users.push({
-                id: doc.id,
-                email: doc.data().email,
-                companyName: doc.data().companyName,
-                role: doc.data().role,
-                active: doc.data().active || doc.data().isActive
-            });
-        });
-        // Check products
-        const productsSnapshot = await database_1.db.collection('products').get();
-        const products = [];
-        productsSnapshot.forEach(doc => {
-            products.push({
-                id: doc.id,
-                name: doc.data().name,
-                sku: doc.data().sku,
-                isActive: doc.data().isActive
-            });
-        });
-        // Check affiliates
-        const affiliatesSnapshot = await database_1.db.collection('affiliates').get();
-        const affiliates = [];
-        affiliatesSnapshot.forEach(doc => {
-            affiliates.push({
-                id: doc.id,
-                email: doc.data().email,
-                affiliateCode: doc.data().affiliateCode,
-                status: doc.data().status
-            });
-        });
-        console.log(`Found ${orders.length} orders, ${users.length} users, ${products.length} products, ${affiliates.length} affiliates`);
-        res.status(200).json({
-            success: true,
-            database: 'b8s-reseller-db',
-            orders: orders,
-            users: users,
-            products: products,
-            affiliates: affiliates,
-            counts: {
-                orders: orders.length,
-                users: users.length,
-                products: products.length,
-                affiliates: affiliates.length
-            }
-        });
-    }
-    catch (error) {
-        console.error('Error debugging database:', error);
         res.status(500).json({
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error'

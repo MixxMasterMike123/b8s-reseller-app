@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.testOrderUpdate = exports.manualStatusUpdate = exports.processB2COrderCompletion = exports.processB2COrderCompletionHttp = void 0;
+exports.processB2COrderCompletion = exports.processB2COrderCompletionHttp = void 0;
 const functions = __importStar(require("firebase-functions"));
 const https_1 = require("firebase-functions/v2/https");
 const firestore_1 = require("firebase-admin/firestore");
@@ -753,133 +753,6 @@ exports.processB2COrderCompletion = (0, https_1.onCall)({
             success: false,
             error: `Processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`
         };
-    }
-});
-/**
- * [V2] Manual function to update order status and test triggers
- */
-exports.manualStatusUpdate = (0, https_1.onRequest)(async (req, res) => {
-    try {
-        console.log('Manual status update test...');
-        // Get an order with a known valid userId (for testing email functionality)
-        const ordersSnapshot = await database_1.db.collection('orders')
-            .where('userId', 'in', ['9AudFilG8VeYHcFnKgUtQkByAmn1', 'hC7lYEBKFBcg8y36s0wzJ0onSqt1', 'hCu3TDpe5XZ0adTp5eGLpGxDvL13'])
-            .limit(1).get();
-        if (ordersSnapshot.empty) {
-            res.status(404).json({
-                success: false,
-                error: 'No orders found'
-            });
-            return;
-        }
-        const orderDoc = ordersSnapshot.docs[0];
-        const orderData = orderDoc.data();
-        const orderId = orderDoc.id;
-        console.log(`Updating order ${orderData.orderNumber} from ${orderData.status} to "delivered"`);
-        // Update the order status - this should trigger sendOrderStatusUpdateEmail
-        await database_1.db.collection('orders').doc(orderId).update({
-            status: 'delivered',
-            updatedAt: firestore_1.FieldValue.serverTimestamp(),
-            trackingNumber: 'TEST-MANUAL-123',
-            carrier: 'PostNord'
-        });
-        console.log('Order status updated successfully - Firebase Function should trigger');
-        res.status(200).json({
-            success: true,
-            message: 'Order status updated - check logs for Firebase Function trigger',
-            orderId: orderId,
-            orderNumber: orderData.orderNumber,
-            oldStatus: orderData.status,
-            newStatus: 'delivered'
-        });
-    }
-    catch (error) {
-        console.error('Error in manual status update:', error);
-        res.status(500).json({
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error'
-        });
-    }
-});
-/**
- * [V2] Manual order status update test function
- */
-exports.testOrderUpdate = (0, https_1.onRequest)(async (req, res) => {
-    try {
-        console.log('Testing order status update email...');
-        // Get an order with a known valid userId (for testing email functionality)
-        const ordersSnapshot = await database_1.db.collection('orders')
-            .where('userId', 'in', ['9AudFilG8VeYHcFnKgUtQkByAmn1', 'hC7lYEBKFBcg8y36s0wzJ0onSqt1', 'hCu3TDpe5XZ0adTp5eGLpGxDvL13'])
-            .limit(1).get();
-        if (ordersSnapshot.empty) {
-            res.status(404).json({
-                success: false,
-                error: 'No orders found in database'
-            });
-            return;
-        }
-        const orderDoc = ordersSnapshot.docs[0];
-        const orderData = orderDoc.data();
-        console.log(`Found order: ${orderData.orderNumber} with status: ${orderData.status}`);
-        // Get user data
-        if (!orderData.userId) {
-            res.status(400).json({
-                success: false,
-                error: 'Order has no associated user'
-            });
-            return;
-        }
-        const userSnapshot = await database_1.db.collection('users').doc(orderData.userId).get();
-        if (!userSnapshot.exists) {
-            res.status(404).json({
-                success: false,
-                error: `User ${orderData.userId} not found`
-            });
-            return;
-        }
-        const userData = userSnapshot.data();
-        console.log(`Found user: ${userData.email}`);
-        // Use orchestrator email system for order status updates
-        try {
-            const { EmailOrchestrator } = require('../email-orchestrator/core/EmailOrchestrator');
-            const orchestrator = new EmailOrchestrator();
-            await orchestrator.sendEmail({
-                emailType: 'ORDER_STATUS_UPDATE',
-                userData: userData,
-                orderId: orderDoc.id,
-                language: userData.preferredLang || 'sv-SE',
-                orderData: orderData,
-                additionalData: {
-                    newStatus: 'shipped',
-                    previousStatus: orderData.status,
-                    trackingNumber: 'TEST-123456789SE',
-                    estimatedDelivery: '2025-01-25',
-                    notes: 'Test order status update email',
-                    userType: 'B2B'
-                }
-            });
-            console.log(`✅ Orchestrator Order status test email sent to ${userData.email}`);
-        }
-        catch (emailError) {
-            console.error(`❌ Orchestrator Order status test email failed:`, emailError);
-            // Fallback: just log the test
-            console.log(`TEST: Would send order status update to ${userData.email} for order ${orderData.orderNumber}`);
-        }
-        console.log('Order status update emails sent successfully');
-        res.status(200).json({
-            success: true,
-            message: 'Order status update emails sent successfully',
-            order: orderData.orderNumber,
-            customer: userData.email,
-            status: 'shipped (test)'
-        });
-    }
-    catch (error) {
-        console.error('Error testing order status update:', error);
-        res.status(500).json({
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error'
-        });
     }
 });
 //# sourceMappingURL=functions.js.map
