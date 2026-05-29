@@ -24,6 +24,7 @@ import {
   ShoppingBagIcon 
 } from '@heroicons/react/24/outline';
 import StripePaymentForm from '../../components/shop/StripePaymentForm';
+import { STORE } from '../../config/store';
 
 const Checkout = () => {
   const { cart, calculateTotals, clearCart } = useCart();
@@ -652,7 +653,7 @@ const Checkout = () => {
                   {t('checkout_back_to_cart', 'Tillbaka till varukorg')}
                 </button>
               </div>
-              <div className="text-2xl font-bold text-gray-900">B8Shield</div>
+              <div className="text-2xl font-bold text-gray-900">{STORE.shopName}</div>
               <div className="flex items-center text-gray-500">
                 <LockClosedIcon className="h-5 w-5 mr-2" />
                 {t('checkout_secure_checkout', 'Säker kassa')}

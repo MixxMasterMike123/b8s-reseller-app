@@ -1,7 +1,7 @@
 {
-  "name": "B8Shield Portal",
-  "short_name": "B8Shield",
-  "description": "B8Shield Reseller Portal & Shop - JPH Innovation AB",
+  "name": "My Shop",
+  "short_name": "My Shop",
+  "description": "Quality products, delivered.",
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#1f2937",

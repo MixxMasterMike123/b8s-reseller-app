@@ -6,6 +6,7 @@ import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { db } from '../../firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import LanguageCurrencySelector from './LanguageCurrencySelector';
+import { STORE } from '../../config/store';
 
 const ShopFooter = () => {
   const { t } = useTranslation();
@@ -50,12 +51,12 @@ const ShopFooter = () => {
           
           {/* Company Info */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">B8Shield</h3>
+            <h3 className="text-lg font-semibold mb-4">{STORE.shopName}</h3>
             <p className="text-gray-300 text-sm mb-4">
-              {t('footer_company_description', 'Professionellt skydd för dina fiskedon. Utvecklat av JPH Innovation AB för att maximera din framgång på vattnet.')}
+              {t('footer_company_description', STORE.tagline)}
             </p>
             <div className="text-gray-400 text-sm" dangerouslySetInnerHTML={{
-              __html: t('footer_company_address', 'JPH Innovation AB<br>Östergatan 30c<br>152 43 Södertälje')
+              __html: t('footer_company_address', STORE.address)
             }} />
           </div>
 
@@ -79,7 +80,7 @@ const ShopFooter = () => {
                 </Link>
               </li>
               <li>
-                <a href="mailto:info@jphinnovation.se" className="text-gray-300 hover:text-white transition-colors">
+                <a href={`mailto:${STORE.supportEmail}`} className="text-gray-300 hover:text-white transition-colors">
                   {t('footer_contact', 'Kontakt')}
                 </a>
               </li>
@@ -129,7 +130,7 @@ const ShopFooter = () => {
                 </Link>
               </li>
               <li>
-                <a href="mailto:info@jphinnovation.se" className="text-gray-300 hover:text-white transition-colors">
+                <a href={`mailto:${STORE.supportEmail}`} className="text-gray-300 hover:text-white transition-colors">
                   {t('footer_customer_support', 'Kundtjänst')}
                 </a>
               </li>
@@ -293,7 +294,7 @@ const ShopFooter = () => {
         <div className="border-t border-gray-800 pt-8">
           <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
             <div className="text-gray-400 text-sm">
-              <p>{t('footer_copyright', '© {{year}} JPH Innovation AB. Alla rättigheter förbehållna.', { year: currentYear })}</p>
+              <p>{t('footer_copyright', `© {{year}} ${STORE.legalName}. Alla rättigheter förbehållna.`, { year: currentYear })}</p>
             </div>
             
             <div className="flex flex-col md:flex-row items-center gap-6">

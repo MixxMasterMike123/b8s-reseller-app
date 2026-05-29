@@ -16,6 +16,7 @@ import { db } from '../../firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { getCountryAwareUrl } from '../../utils/productUrls';
+import { STORE } from '../../config/store';
 
 const ShopNavigation = ({ breadcrumb }) => {
   const { cart } = useCart();
@@ -71,7 +72,7 @@ const ShopNavigation = ({ breadcrumb }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link to={getCountryAwareUrl('')} className="flex items-center">
-            <img src="/images/B8S_full_logo.svg" alt="B8Shield" className="h-8 w-auto" />
+            <img src={STORE.logoUrl} alt={STORE.shopName} className="h-8 w-auto" />
           </Link>
           
           {/* Breadcrumb */}
