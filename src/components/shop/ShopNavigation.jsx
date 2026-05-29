@@ -16,11 +16,12 @@ import { db } from '../../firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { getCountryAwareUrl } from '../../utils/productUrls';
-import { STORE } from '../../config/store';
+import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 
 const ShopNavigation = ({ breadcrumb }) => {
   const { cart } = useCart();
   const { t } = useTranslation();
+  const store = useStoreSettings();
   const navigate = useNavigate();
   const { currentUser, logout } = useSimpleAuth();
   const [affiliateData, setAffiliateData] = useState(null);
@@ -72,7 +73,7 @@ const ShopNavigation = ({ breadcrumb }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link to={getCountryAwareUrl('')} className="flex items-center">
-            <img src={STORE.logoUrl} alt={STORE.shopName} className="h-8 w-auto" />
+            <img src={store.logoUrl} alt={store.shopName} className="h-8 w-auto" />
           </Link>
           
           {/* Breadcrumb */}

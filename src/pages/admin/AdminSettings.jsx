@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import AppLayout from '../../components/layout/AppLayout';
 import toast from 'react-hot-toast';
 import wagonRegistry from '../../wagons/WagonRegistry.js';
+import { STORE } from '../../config/store';
 
 // Icons
 import { 
@@ -15,7 +16,6 @@ import {
   CheckIcon,
   XMarkIcon,
   SparklesIcon,
-  ExclamationTriangleIcon,
   InformationCircleIcon
 } from '@heroicons/react/24/outline';
 
@@ -27,7 +27,36 @@ const AdminSettings = () => {
   const [availableWagons, setAvailableWagons] = useState([]);
   const [userWagonSettings, setUserWagonSettings] = useState({});
   const [appSettings, setAppSettings] = useState({});
+  const [storeForm, setStoreForm] = useState(STORE);
   const [activeTab, setActiveTab] = useState('wagons');
+
+  // Seed the store-identity form from saved settings/app (falling back to STORE
+  // defaults for any empty field) whenever appSettings loads.
+  useEffect(() => {
+    const saved = appSettings?.storeIdentity || {};
+    setStoreForm({ ...STORE, ...Object.fromEntries(
+      Object.entries(saved).filter(([, v]) => v !== undefined && v !== null && v !== '')
+    ) });
+  }, [appSettings]);
+
+  // Save store identity to settings/app
+  const saveStoreIdentity = useCallback(async () => {
+    try {
+      setSaving(true);
+      await setDoc(
+        doc(db, 'settings', 'app'),
+        { storeIdentity: storeForm, updatedAt: new Date().toISOString() },
+        { merge: true }
+      );
+      setAppSettings(prev => ({ ...prev, storeIdentity: storeForm }));
+      toast.success('Butiksinställningar sparade. Ladda om butiken för att se ändringarna.');
+    } catch (error) {
+      console.error('Error saving store identity:', error);
+      toast.error('Fel vid sparande av butiksinställningar');
+    } finally {
+      setSaving(false);
+    }
+  }, [storeForm]);
 
   // Load all data
   useEffect(() => {
@@ -411,32 +440,85 @@ const AdminSettings = () => {
 
             {activeTab === 'app' && (
               <div className="space-y-6">
-                <div className="bg-yellow-50 dark:bg-yellow-900 rounded-lg p-4 border border-yellow-200 dark:border-yellow-700">
+                <div className="bg-blue-50 dark:bg-blue-900 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
                   <div className="flex items-start space-x-3">
-                    <ExclamationTriangleIcon className="h-6 w-6 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                    <InformationCircleIcon className="h-6 w-6 text-blue-600 dark:text-blue-400 mt-0.5" />
                     <div>
-                      <h3 className="text-lg font-medium text-yellow-900 dark:text-yellow-100">
-                        Applikationsinställningar
+                      <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100">
+                        Butiksidentitet
                       </h3>
-                      <p className="text-yellow-800 dark:text-yellow-200 mt-1">
-                        Grundläggande systeminställningar kommer att implementeras här i framtiden.
+                      <p className="text-blue-800 dark:text-blue-200 mt-1">
+                        Ställ in butikens namn, logotyp och kontaktuppgifter. Dessa värden visas
+                        i butiken (navigering, sidfot, kassa). Ladda om butiken efter sparande
+                        för att se ändringarna.
                       </p>
                     </div>
                   </div>
                 </div>
-                
-                {/* App Settings Preview */}
-                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">Aktuella appinställningar</h4>
-                  <div className="space-y-2 text-sm">
-                    {Object.entries(appSettings).map(([key, value]) => (
-                      <div key={key} className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">{key}:</span>
-                        <span className="font-mono text-gray-900 dark:text-gray-100">
-                          {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                        </span>
+
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {[
+                      { key: 'shopName', label: 'Butiksnamn', type: 'text', placeholder: STORE.shopName },
+                      { key: 'legalName', label: 'Juridiskt företagsnamn', type: 'text', placeholder: STORE.legalName },
+                      { key: 'tagline', label: 'Slogan', type: 'text', placeholder: STORE.tagline },
+                      { key: 'supportEmail', label: 'Support-e-post', type: 'email', placeholder: STORE.supportEmail },
+                      { key: 'logoUrl', label: 'Logotyp-URL', type: 'text', placeholder: STORE.logoUrl },
+                      { key: 'currency', label: 'Valuta', type: 'text', placeholder: STORE.currency },
+                    ].map((field) => (
+                      <div key={field.key}>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          {field.label}
+                        </label>
+                        <input
+                          type={field.type}
+                          value={storeForm[field.key] ?? ''}
+                          placeholder={field.placeholder}
+                          onChange={(e) => setStoreForm(prev => ({ ...prev, [field.key]: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
                       </div>
                     ))}
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Moms (t.ex. 0.25 = 25%)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="1"
+                        value={storeForm.vatRate ?? ''}
+                        placeholder={String(STORE.vatRate)}
+                        onChange={(e) => setStoreForm(prev => ({ ...prev, vatRate: parseFloat(e.target.value) }))}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Adress (HTML tillåten, t.ex. {'<br>'} för radbrytning)
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={storeForm.address ?? ''}
+                        placeholder={STORE.address}
+                        onChange={(e) => setStoreForm(prev => ({ ...prev, address: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex justify-end">
+                    <button
+                      onClick={saveStoreIdentity}
+                      disabled={saving}
+                      className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                      <CheckIcon className="h-5 w-5 mr-2" />
+                      {saving ? 'Sparar…' : 'Spara butiksinställningar'}
+                    </button>
                   </div>
                 </div>
               </div>

@@ -102,8 +102,15 @@ service cloud.firestore {
     }
     
     // Settings collection
+    // 🛡️ The 'app' doc holds non-sensitive store identity (shop name, logo,
+    // support email) that the PUBLIC storefront must render for anonymous
+    // visitors — so it is world-readable. All other settings docs stay gated.
+    match /settings/app {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
     match /settings/{settingId} {
-      // Any active user can read settings
+      // Any active user can read other settings
       allow read: if isActiveUser();
       // Only admins can create/update/delete settings
       allow write: if isAdmin();

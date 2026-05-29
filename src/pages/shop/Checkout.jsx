@@ -24,10 +24,11 @@ import {
   ShoppingBagIcon 
 } from '@heroicons/react/24/outline';
 import StripePaymentForm from '../../components/shop/StripePaymentForm';
-import { STORE } from '../../config/store';
+import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 
 const Checkout = () => {
   const { cart, calculateTotals, clearCart } = useCart();
+  const store = useStoreSettings();
   const { currentUser, login } = useSimpleAuth();
   const { t, currentLanguage } = useTranslation();
   const { getContentValue } = useContentTranslation();
@@ -653,7 +654,7 @@ const Checkout = () => {
                   {t('checkout_back_to_cart', 'Tillbaka till varukorg')}
                 </button>
               </div>
-              <div className="text-2xl font-bold text-gray-900">{STORE.shopName}</div>
+              <div className="text-2xl font-bold text-gray-900">{store.shopName}</div>
               <div className="flex items-center text-gray-500">
                 <LockClosedIcon className="h-5 w-5 mr-2" />
                 {t('checkout_secure_checkout', 'Säker kassa')}
