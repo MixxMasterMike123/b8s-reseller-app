@@ -28,8 +28,7 @@ import {
   SparklesIcon,
   CpuChipIcon,
   LanguageIcon,
-  DocumentTextIcon,
-  CloudArrowUpIcon
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 
 const AppLayout = ({ children }) => {
@@ -169,12 +168,7 @@ const AppLayout = ({ children }) => {
       icon: MegaphoneIcon,
       description: t('nav.admin_marketing_desc', 'Hantera marknadsföringsmaterial'),
     },
-    {
-      name: t('nav.admin_google_shopping', 'Google Shopping'),
-      path: '/admin/google-shopping',
-      icon: CloudArrowUpIcon,
-      description: t('nav.admin_google_shopping_desc', 'Synkronisera produkter till Google Shopping'),
-    },
+    // 🛒 Google Shopping admin removed — Google Merchant feature cut (POD shops don't need it).
     {
       name: t('nav.admin_pages', 'Sidor'),
       path: '/admin/pages',

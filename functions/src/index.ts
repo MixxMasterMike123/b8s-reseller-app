@@ -5,10 +5,6 @@
 import { initializeApp } from 'firebase-admin/app';
 initializeApp();
 
-import { onRequest } from 'firebase-functions/v2/https';
-import { corsHandler } from './protection/cors/cors-handler';
-import { rateLimiter } from './protection/rate-limiting/rate-limiter';
-
 // NEW UNIFIED EMAIL ORCHESTRATOR FUNCTIONS
 export { 
   sendOrderConfirmationEmail,
@@ -21,9 +17,8 @@ export {
   sendEmailVerification,
   sendCustomEmailVerification,
   verifyEmailCode,
-  sendAffiliateApplicationEmails,
+  sendAffiliateApplicationEmails
   // sendB2BApplicationEmails, // TEMPORARILY DISABLED - compilation errors
-  testEmailOrchestrator
 } from './email-orchestrator/functions';
 
 // Import confirmPasswordReset separately for aliasing
@@ -70,36 +65,17 @@ import {
 
 // Import geo functions for B2C shop currency detection
 import {
-  getGeoData,
-  testGeoHeaders
+  getGeoData
 } from './geo/functions';
 
-// Import Google Merchant Center sync functions
-import {
-  syncAllProductsToGoogle,
-  syncProductsToGoogleHttp,
-  syncSingleProductToGoogle,
-  testGoogleMerchantConnection,
-  onProductCreated as googleMerchantOnProductCreated,
-  onProductUpdated as googleMerchantOnProductUpdated,
-  onProductDeleted as googleMerchantOnProductDeleted
-} from './google-merchant/sync-functions';
-
-// Import Google Merchant Center admin functions
-import {
-  getGoogleMerchantStats,
-  getProductSyncStatus,
-  forceSyncProducts
-} from './google-merchant/admin-functions';
+// Google Merchant Center integration removed (POD shops don't need Google Shopping feeds).
 
 // Import customer-admin functions directly with original names
 import {
   deleteCustomerAccount,
   deleteB2CCustomerAccount,
   toggleCustomerActiveStatus,
-  createAdminUser,
-  checkNamedDatabase,
-  debugDatabase
+  createAdminUser
 } from './customer-admin/functions';
 
 // Import payment functions for Stripe integration
@@ -107,14 +83,8 @@ import {
   createPaymentIntentV2
 } from './payment/createPaymentIntent';
 import {
-  createPaymentIntentMinimalV2
-} from './payment/createPaymentIntentMinimal';
-import {
   stripeWebhookV2
 } from './payment/stripeWebhook';
-import {
-  stripeWebhookSimple
-} from './payment/stripeWebhookSimple';
 
 // Import website scraper functions for DiningWagon
 import {
@@ -137,8 +107,7 @@ export {
 
 // Re-export geo functions for B2C shop currency detection
 export {
-  getGeoData as getGeoDataV2,
-  testGeoHeaders as testGeoHeadersV2
+  getGeoData as getGeoDataV2
 };
 
 // Re-export customer-admin functions individually with V2 names (avoid V1 conflicts)
@@ -146,17 +115,13 @@ export {
   deleteCustomerAccount as deleteCustomerAccountV2,
   deleteB2CCustomerAccount as deleteB2CCustomerAccountV2,
   toggleCustomerActiveStatus as toggleCustomerActiveStatusV2,
-  createAdminUser as createAdminUserV2,
-  checkNamedDatabase as checkNamedDatabaseV2,
-  debugDatabase as debugDatabaseV2
+  createAdminUser as createAdminUserV2
 };
 
 // Re-export payment functions for Stripe integration
 export {
   createPaymentIntentV2,
-  createPaymentIntentMinimalV2,
-  stripeWebhookV2,
-  stripeWebhookSimple
+  stripeWebhookV2
 };
 
 // Re-export website scraper functions for DiningWagon
@@ -169,50 +134,6 @@ export { confirmPasswordReset as confirmPasswordResetV2 };
 
 // Also export the main function
 export { confirmPasswordReset };
-
-// Example protected HTTP function - TESTING
-export const exampleProtectedFunction = onRequest(
-  { cors: true },
-  async (request, response) => {
-    // Apply CORS protection
-    if (!corsHandler(request, response)) {
-      return;
-    }
-
-    // Apply rate limiting
-    if (!await rateLimiter(request, response)) {
-      return;
-    }
-
-    // Function logic here
-    response.json({ message: 'Protected function executed successfully' });
-  }
-);
-
-// Test function for debugging email issues
-// OLD FUNCTION MOVED TO QUARANTINE - testPasswordResetMinimal no longer available
-// Use Email Orchestrator system for password reset testing
-
-// Create V2 alias for backward compatibility with existing frontend code
-// (moved to re-export section below)
-
-// Google Merchant Center Integration
-export {
-  syncAllProductsToGoogle,
-  syncProductsToGoogleHttp,
-  syncSingleProductToGoogle,
-  testGoogleMerchantConnection,
-  googleMerchantOnProductCreated,
-  googleMerchantOnProductUpdated,
-  googleMerchantOnProductDeleted,
-  getGoogleMerchantStats,
-  getProductSyncStatus,
-  forceSyncProducts
-};
-
-// Debug functions
-export { debugOrderData } from './debug-order-data';
-export { debugProductFields } from './debug-product-fields';
 
 // OLD V1/V2/V3 EMAIL SYSTEM FUNCTIONS - MOVED TO QUARANTINE
 // All old email functions have been migrated to the new Email Orchestrator system
