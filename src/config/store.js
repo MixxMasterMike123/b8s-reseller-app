@@ -16,14 +16,31 @@ export const STORE = {
   legalName: 'My Company',
   tagline: 'Quality products, delivered.',
 
-  // Logo: no neutral asset exists yet — still points at the legacy asset.
-  // TODO: replace with a per-shop logo asset (e.g. /images/logo.svg).
-  logoUrl: '/images/B8S_full_logo.svg',
+  // Generic placeholder logo. Admins can override via the Store Identity form.
+  logoUrl: '/images/logo.svg',
 
   // Contact
   supportEmail: 'hello@example.com',
   // HTML allowed (rendered via dangerouslySetInnerHTML in the footer).
   address: 'My Company<br>123 Main Street<br>City',
+
+  // Footer company / legal info. Rendered DIRECTLY (not via the translation
+  // layer) so saved translations can't override per-shop identity.
+  companyDescription: 'Quality products, delivered.',
+  orgNumber: '',   // e.g. company/VAT registration number; empty hides the line
+  businessInfo: '', // e.g. 'Registered for VAT'; empty hides the line
+
+  // Social links. Empty string = icon hidden. If all empty, the whole
+  // "Follow us" block is hidden.
+  social: {
+    facebook: '',
+    instagram: '',
+    youtube: '',
+    tiktok: '',
+    pinterest: '',
+    linkedin: '',
+    website: '',
+  },
 
   // Currency / VAT — included for completeness. NOT wired into pricing math
   // in this slice; parameterizing currency/VAT is a later step.

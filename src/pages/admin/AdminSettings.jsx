@@ -508,6 +508,63 @@ const AdminSettings = () => {
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Företagsbeskrivning (sidfot)
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={storeForm.companyDescription ?? ''}
+                        placeholder={STORE.companyDescription}
+                        onChange={(e) => setStoreForm(prev => ({ ...prev, companyDescription: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    {[
+                      { key: 'orgNumber', label: 'Organisationsnummer', placeholder: 'T.ex. 556677-8899' },
+                      { key: 'businessInfo', label: 'Företagsinfo (sidfot)', placeholder: 'T.ex. Registrerad för F-skatt' },
+                    ].map((field) => (
+                      <div key={field.key}>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          {field.label}
+                        </label>
+                        <input
+                          type="text"
+                          value={storeForm[field.key] ?? ''}
+                          placeholder={field.placeholder}
+                          onChange={(e) => setStoreForm(prev => ({ ...prev, [field.key]: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Social links — empty fields hide the matching footer icon */}
+                  <div className="mt-6">
+                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                      Sociala länkar (lämna tomt för att dölja)
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {['facebook', 'instagram', 'youtube', 'tiktok', 'pinterest', 'linkedin', 'website'].map((key) => (
+                        <div key={key}>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 capitalize">
+                            {key}
+                          </label>
+                          <input
+                            type="url"
+                            value={storeForm.social?.[key] ?? ''}
+                            placeholder="https://…"
+                            onChange={(e) => setStoreForm(prev => ({
+                              ...prev,
+                              social: { ...(prev.social || {}), [key]: e.target.value },
+                            }))}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="mt-6 flex justify-end">
