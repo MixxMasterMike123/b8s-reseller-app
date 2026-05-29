@@ -7,6 +7,40 @@ import { db } from '../config/database';
 // Get Firebase Auth from already initialized app
 const auth = getAuth(getApp());
 
+// 🛡️ SECURITY: Shared-secret guard for maintenance/bootstrap HTTP endpoints.
+// These onRequest endpoints (createAdminUser, checkNamedDatabase, debugDatabase)
+// are operator-only tools, NOT called by the client app. Previously they were
+// fully unauthenticated — anyone who knew the URL could promote an admin or dump
+// the entire database. They now require an ADMIN_MAINTENANCE_SECRET, supplied via
+// the `x-admin-secret` header or `?secret=` query param.
+//
+// Set the secret before deploying, e.g.:
+//   firebase functions:config:set admin.maintenance_secret="<random-64-char-hex>"
+// or via process.env.ADMIN_MAINTENANCE_SECRET in the runtime environment.
+// If no secret is configured, the endpoints are DENIED by default (fail closed).
+function isMaintenanceAuthorized(req: { headers: Record<string, any>; query: Record<string, any> }): boolean {
+  const configured = process.env.ADMIN_MAINTENANCE_SECRET;
+  // Fail closed: no secret configured means these endpoints are disabled.
+  if (!configured) {
+    return false;
+  }
+  const provided =
+    (req.headers['x-admin-secret'] as string | undefined) ||
+    (req.query?.secret as string | undefined);
+  if (!provided) {
+    return false;
+  }
+  // Constant-time-ish comparison to avoid trivial timing leaks.
+  if (provided.length !== configured.length) {
+    return false;
+  }
+  let diff = 0;
+  for (let i = 0; i < configured.length; i++) {
+    diff |= provided.charCodeAt(i) ^ configured.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
 // Types for customer and admin functions
 interface DeleteCustomerData {
   customerId: string;
@@ -415,6 +449,10 @@ export const createAdminUser = onRequest(
     region: 'us-central1'
   },
   async (req, res) => {
+    if (!isMaintenanceAuthorized(req)) {
+      res.status(403).json({ success: false, error: 'Forbidden' });
+      return;
+    }
     try {
       console.log('Creating admin user in named database...');
       
@@ -481,6 +519,10 @@ export const checkNamedDatabase = onRequest(
     region: 'us-central1'
   },
   async (req, res) => {
+    if (!isMaintenanceAuthorized(req)) {
+      res.status(403).json({ success: false, error: 'Forbidden' });
+      return;
+    }
     try {
       console.log('Checking named database contents...');
       
@@ -530,6 +572,10 @@ export const debugDatabase = onRequest(
     region: 'us-central1'
   },
   async (req, res) => {
+    if (!isMaintenanceAuthorized(req)) {
+      res.status(403).json({ success: false, error: 'Forbidden' });
+      return;
+    }
     try {
       console.log('Debugging database contents...');
       

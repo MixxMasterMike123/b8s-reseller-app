@@ -56,8 +56,11 @@ service cloud.firestore {
     match /products/{productId} {
       // 🛡️ IMPORTANT: Only authenticated users can read products (prevents bot scraping)
       allow read: if isActiveUser();
-      // Only authenticated users can write products (changed from admin-only for permissions issue)
-      allow write: if isAuthenticated();
+      // 🛡️ SECURITY: Only admins can write products. Both client write paths
+      // (AdminProducts.jsx and OrderContext.createDefaultProducts via AdminPage)
+      // run in admin-only contexts, so this does not break legitimate flows.
+      // Previously `isAuthenticated()` — any logged-in user could rewrite prices (revenue theft).
+      allow write: if isAdmin();
     }
     
     // Orders collection
@@ -133,8 +136,11 @@ service cloud.firestore {
     match /affiliateClicks/{clickId} {
       // Only admins can read click data (prevents gaming the system)
       allow read: if isAdmin();
-      // Allow creates for click tracking (but limit in Cloud Functions)
-      allow create: if isAuthenticated();
+      // 🛡️ SECURITY: Clicks are written ONLY server-side via the logAffiliateClickV2
+      // cloud function (Admin SDK bypasses these rules). No client path writes here,
+      // so client creates are denied to prevent forged clicks inflating commissions.
+      // Previously `isAuthenticated()` — any logged-in user could fabricate clicks.
+      allow create: if false;
       // Only admins can update/delete
       allow update, delete: if isAdmin();
     }
