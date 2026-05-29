@@ -764,9 +764,9 @@ const PublicStorefront = () => {
               </p>
             </div>
             
-            <ReviewsSection 
+            <ReviewsSection
               businessId="" // Will be set when Trustpilot profile is ready
-              domain="shop.b8shield.com"
+              domain="" // Set per-shop when a live Trustpilot profile is configured (was shop.b8shield.com)
               showTrustpilot={false} // Start with manual reviews, enable when Trustpilot is set up
               showManualReviews={true}
               className="w-full"

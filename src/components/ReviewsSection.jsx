@@ -79,6 +79,13 @@ const ReviewsSection = ({
     });
   };
 
+  // Dormant when there are no reviews: render nothing rather than an empty
+  // "0 av 5 / Baserat på 0 recensioner" section. A real shop populates reviews
+  // via CSV import or a live Trustpilot integration to bring this back.
+  if (!loading && allReviews.length === 0 && reviews.length === 0) {
+    return null;
+  }
+
   return (
     <div className={`reviews-section ${className}`}>
       {/* Header with Rating Summary */}
