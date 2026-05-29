@@ -181,12 +181,16 @@ const AppLayout = ({ children }) => {
       icon: DocumentTextIcon,
       description: t('nav.admin_pages_desc', 'Hantera webbsidor och innehåll'),
     },
-    {
-      name: t('nav.admin_translations', 'Översättningar'),
-      path: '/admin/translations',
-      icon: LanguageIcon,
-      description: t('nav.admin_translations_desc', 'Hantera språk och översättningar'),
-    },
+    // 🇸🇪 SE-ONLY LAUNCH: Translations admin hidden — single-language (Swedish)
+    // for now. The runtime i18n engine stays active (Swedish via fallbacks).
+    // Re-enable this menu item (and the route in App.jsx + the footer
+    // LanguageCurrencySelector) to offer internationalization later.
+    // {
+    //   name: t('nav.admin_translations', 'Översättningar'),
+    //   path: '/admin/translations',
+    //   icon: LanguageIcon,
+    //   description: t('nav.admin_translations_desc', 'Hantera språk och översättningar'),
+    // },
     {
       name: t('nav.admin_affiliates', 'Affiliates'),
       path: '/admin/affiliates',

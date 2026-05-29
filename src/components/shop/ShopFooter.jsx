@@ -5,7 +5,8 @@ import { useTranslation } from '../../contexts/TranslationContext';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { db } from '../../firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import LanguageCurrencySelector from './LanguageCurrencySelector';
+// 🇸🇪 SE-ONLY LAUNCH: hidden with its usage below. Re-enable for internationalization.
+// import LanguageCurrencySelector from './LanguageCurrencySelector';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 
 const ShopFooter = () => {
@@ -299,11 +300,12 @@ const ShopFooter = () => {
             </div>
             
             <div className="flex flex-col md:flex-row items-center gap-6">
-              {/* Nike-style Language/Currency Selector */}
-              <div className="flex items-center">
+              {/* 🇸🇪 SE-ONLY LAUNCH: Language/currency selector hidden (Swedish/SEK only).
+                  Re-enable for internationalization. */}
+              {/* <div className="flex items-center">
                 <LanguageCurrencySelector />
-              </div>
-              
+              </div> */}
+
               {/* Trust Badges */}
               <div className="flex items-center space-x-2 text-xs text-gray-400">
                 <span className="bg-green-600 text-white px-2 py-1 rounded">

@@ -51,7 +51,8 @@ import AdminCustomerMarketingMaterialEdit from './pages/admin/AdminCustomerMarke
 import AdminPages from './pages/admin/AdminPages';
 import AdminPageEdit from './pages/admin/AdminPageEdit';
 import AdminSettings from './pages/admin/AdminSettings';
-import AdminTranslations from './pages/admin/AdminTranslations';
+// 🇸🇪 SE-ONLY LAUNCH: AdminTranslations hidden (single-language). Re-enable with its route below.
+// import AdminTranslations from './pages/admin/AdminTranslations';
 
 // B2C Shop Components (new)
 import PublicStorefront from './pages/shop/PublicStorefront';
@@ -430,11 +431,13 @@ function App() {
                 </AdminRoute>
               } />
 
-              <Route path="/admin/translations" element={
+              {/* 🇸🇪 SE-ONLY LAUNCH: Translations admin route hidden (single-language).
+                  Runtime i18n engine stays active. Re-enable for internationalization. */}
+              {/* <Route path="/admin/translations" element={
                 <AdminRoute>
                   <AdminTranslations />
                 </AdminRoute>
-              } />
+              } /> */}
 
               {/* �� WAGON SYSTEM: Auto-generated wagon routes */}
               {wagonRoutes.map(({ path, component: Component, adminOnly, private: isPrivate, wagonId }) => (
