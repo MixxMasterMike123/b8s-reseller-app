@@ -49,13 +49,6 @@ interface OrderData {
   shipping?: number;
 }
 
-interface UserData {
-  email: string;
-  companyName?: string;
-  contactPerson?: string;
-  preferredLang?: string;
-}
-
 interface AffiliateData {
   name: string;
   affiliateCode: string;
@@ -975,95 +968,3 @@ export const manualStatusUpdate = onRequest(async (req, res) => {
   }
 });
 
-/**
- * [V2] Manual order status update test function
- */
-export const testOrderUpdate = onRequest(async (req, res) => {
-  try {
-    console.log('Testing order status update email...');
-    
-    // Get an order with a known valid userId (for testing email functionality)
-    const ordersSnapshot = await db.collection('orders')
-      .where('userId', 'in', ['9AudFilG8VeYHcFnKgUtQkByAmn1', 'hC7lYEBKFBcg8y36s0wzJ0onSqt1', 'hCu3TDpe5XZ0adTp5eGLpGxDvL13'])
-      .limit(1).get();
-    
-    if (ordersSnapshot.empty) {
-      res.status(404).json({ 
-        success: false, 
-        error: 'No orders found in database' 
-      });
-      return;
-    }
-    
-    const orderDoc = ordersSnapshot.docs[0];
-    const orderData = orderDoc.data() as OrderData;
-    
-    console.log(`Found order: ${orderData.orderNumber} with status: ${orderData.status}`);
-    
-    // Get user data
-    if (!orderData.userId) {
-      res.status(400).json({ 
-        success: false, 
-        error: 'Order has no associated user' 
-      });
-      return;
-    }
-    
-    const userSnapshot = await db.collection('users').doc(orderData.userId).get();
-    
-    if (!userSnapshot.exists) {
-      res.status(404).json({ 
-        success: false, 
-        error: `User ${orderData.userId} not found` 
-      });
-      return;
-    }
-    
-    const userData = userSnapshot.data() as UserData;
-    console.log(`Found user: ${userData.email}`);
-    
-    // Use orchestrator email system for order status updates
-    try {
-      const { EmailOrchestrator } = require('../email-orchestrator/core/EmailOrchestrator');
-      const orchestrator = new EmailOrchestrator();
-      
-      await orchestrator.sendEmail({
-        emailType: 'ORDER_STATUS_UPDATE',
-        userData: userData,
-        orderId: orderDoc.id,
-        language: userData.preferredLang || 'sv-SE',
-        orderData: orderData,
-        additionalData: {
-          newStatus: 'shipped',
-          previousStatus: orderData.status,
-          trackingNumber: 'TEST-123456789SE',
-          estimatedDelivery: '2025-01-25',
-          notes: 'Test order status update email',
-          userType: 'B2B'
-        }
-      });
-      console.log(`✅ Orchestrator Order status test email sent to ${userData.email}`);
-    } catch (emailError) {
-      console.error(`❌ Orchestrator Order status test email failed:`, emailError);
-      // Fallback: just log the test
-      console.log(`TEST: Would send order status update to ${userData.email} for order ${orderData.orderNumber}`);
-    }
-    
-    console.log('Order status update emails sent successfully');
-    
-    res.status(200).json({ 
-      success: true, 
-      message: 'Order status update emails sent successfully',
-      order: orderData.orderNumber,
-      customer: userData.email,
-      status: 'shipped (test)'
-    });
-    
-  } catch (error) {
-    console.error('Error testing order status update:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
-}); 
