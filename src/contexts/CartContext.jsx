@@ -62,7 +62,7 @@ export const CartProvider = ({ children }) => {
               // Check if this is a different code than currently applied
               if (cart.discountCode !== affiliateInfo.code) {
                 console.log(`🔄 Applying new affiliate code: ${affiliateInfo.code} (was: ${cart.discountCode || 'none'})`);
-                applyDiscountCode(affiliateInfo.code, { silent: true });
+                applyDiscountCode(affiliateInfo.code, { silent: true, source: 'link' });
                 return;
               }
             } else {
@@ -89,15 +89,16 @@ export const CartProvider = ({ children }) => {
             removeDiscount();
           }
         }
-      } else if (cart.discountCode) {
-        // No affiliate ref but discount is applied - this shouldn't happen, clear it
-        console.log('🧹 No affiliate ref found but discount applied, clearing');
+      } else if (cart.discountCode && cart.discountSource !== 'manual') {
+        // No affiliate ref but an auto-applied discount remains - clear it.
+        // Manually entered codes are kept; they don't depend on the affiliate ref.
+        console.log('🧹 No affiliate ref found but auto-applied discount remains, clearing');
         removeDiscount();
       }
 
       // If a discount code is already applied, just recalculate the discount amount
       if (cart.discountCode) {
-        applyDiscountCode(cart.discountCode, { silent: true });
+        applyDiscountCode(cart.discountCode, { silent: true, source: cart.discountSource });
       }
     };
 
@@ -117,7 +118,7 @@ export const CartProvider = ({ children }) => {
               const affiliateInfo = JSON.parse(affiliateRef);
               if (affiliateInfo && affiliateInfo.code && cart.discountCode !== affiliateInfo.code) {
                 console.log(`🔄 Storage event: Applying affiliate code ${affiliateInfo.code}`);
-                applyDiscountCode(affiliateInfo.code, { silent: true });
+                applyDiscountCode(affiliateInfo.code, { silent: true, source: 'link' });
               }
             } catch (error) {
               console.error('❌ Error parsing affiliate code from storage event:', error);
@@ -316,7 +317,7 @@ export const CartProvider = ({ children }) => {
       const querySnapshot = await getDocs(affiliateQuery);
 
       if (querySnapshot.empty) {
-        setCart(prev => ({ ...prev, discountCode: null, discountAmount: 0, discountPercentage: 0, affiliateClickId: null }));
+        setCart(prev => ({ ...prev, discountCode: null, discountAmount: 0, discountPercentage: 0, affiliateClickId: null, discountSource: null }));
         return { success: false, message: 'Ogiltig rabattkod.' };
       }
 
@@ -351,6 +352,7 @@ export const CartProvider = ({ children }) => {
         discountAmount: roundedDiscount,
         discountPercentage: discountPercentage,
         affiliateClickId: affiliateClickId,
+        discountSource: options.source || 'manual',
       }));
       
       if (!options.silent) {
@@ -374,6 +376,7 @@ export const CartProvider = ({ children }) => {
       discountAmount: 0,
       discountPercentage: 0,
       affiliateClickId: null,
+      discountSource: null,
     }));
   };
 

@@ -23,7 +23,7 @@ import SizeGuideModal from '../../components/SizeGuideModal';
 import ReviewsSection from '../../components/ReviewsSection';
 import { getReviewStats } from '../../utils/trustpilotAPI';
 import SeoHreflang from '../../components/shop/SeoHreflang';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import SmartPrice from '../../components/shop/SmartPrice';
 import AddedToCartModal from '../../components/shop/AddedToCartModal';
 import ProductSocialShare from '../../components/ProductSocialShare';

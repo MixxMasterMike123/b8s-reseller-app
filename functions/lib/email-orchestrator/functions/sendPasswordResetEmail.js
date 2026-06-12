@@ -4,6 +4,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendPasswordResetEmail = void 0;
 const https_1 = require("firebase-functions/v2/https");
+const crypto_1 = require("crypto");
 const EmailOrchestrator_1 = require("../core/EmailOrchestrator");
 const database_1 = require("../../config/database");
 exports.sendPasswordResetEmail = (0, https_1.onCall)({
@@ -17,22 +18,22 @@ exports.sendPasswordResetEmail = (0, https_1.onCall)({
         console.log('📧 Request data:', {
             email: request.data.email,
             userType: request.data.userType,
-            language: request.data.language,
-            hasResetCode: !!request.data.resetCode
+            language: request.data.language
         });
         // Validate required data
         if (!request.data.email) {
             throw new Error('Email is required');
         }
-        if (!request.data.resetCode) {
-            throw new Error('Reset code is required');
-        }
+        // SECURITY: the reset code MUST be generated server-side. Accepting a
+        // client-supplied code lets an attacker pre-choose the code for any
+        // email address and take over the account.
+        const resetCode = (0, crypto_1.randomBytes)(32).toString('hex');
         // Store reset code in Firestore (matching V3 behavior)
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 1); // 1 hour expiry
         await database_1.db.collection('passwordResets').add({
             email: request.data.email,
-            resetCode: request.data.resetCode,
+            resetCode,
             expiresAt,
             used: false,
             createdAt: new Date(),
@@ -49,7 +50,7 @@ exports.sendPasswordResetEmail = (0, https_1.onCall)({
             },
             language: request.data.language || 'sv-SE',
             additionalData: {
-                resetCode: request.data.resetCode,
+                resetCode,
                 userAgent: request.data.userAgent,
                 timestamp: request.data.timestamp,
                 userType: request.data.userType || 'B2C'

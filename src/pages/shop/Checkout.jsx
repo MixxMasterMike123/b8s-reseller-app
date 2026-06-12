@@ -27,7 +27,7 @@ import StripePaymentForm from '../../components/shop/StripePaymentForm';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 
 const Checkout = () => {
-  const { cart, calculateTotals, clearCart } = useCart();
+  const { cart, calculateTotals, clearCart, updateShippingCountry } = useCart();
   const store = useStoreSettings();
   const { currentUser, login } = useSimpleAuth();
   const { t, currentLanguage } = useTranslation();
@@ -88,13 +88,22 @@ const Checkout = () => {
   }, [currentUser]);
 
   // Save customer and shipping info to localStorage for Klarna return flow
+  // (never persist the password — only email/marketing are needed on return)
   useEffect(() => {
     if (step === 'payment') {
-      localStorage.setItem('b8s_checkout_customer', JSON.stringify(contactInfo));
+      const { password, ...safeContactInfo } = contactInfo;
+      localStorage.setItem('b8s_checkout_customer', JSON.stringify(safeContactInfo));
       localStorage.setItem('b8s_checkout_shipping', JSON.stringify(shippingInfo));
-      console.log('💾 Saved checkout info to localStorage for payment return flow');
     }
   }, [step, contactInfo, shippingInfo]);
+
+  // Keep cart shipping country in sync with the address chosen at checkout,
+  // so shipping cost and totals reflect the actual destination
+  useEffect(() => {
+    if (shippingInfo.country && shippingInfo.country !== cart.shippingCountry) {
+      updateShippingCountry(shippingInfo.country);
+    }
+  }, [shippingInfo.country, cart.shippingCountry, updateShippingCountry]);
 
   const loadCustomerProfile = async () => {
     try {

@@ -116,17 +116,13 @@ export function SimpleAuthContextProvider({ children }) {
     try {
       setError('');
       
-      // Call unified orchestrator Firebase Function to send branded password reset email
+      // Call unified orchestrator Firebase Function to send branded password reset email.
+      // The reset code is generated server-side for security.
       const functions = getFunctions();
       const sendPasswordResetEmail = httpsCallable(functions, 'sendPasswordResetEmail');
-      
-      // Generate secure reset code (matching V3 pattern)
-      const resetCode = Math.random().toString(36).substring(2, 15) + 
-                       Math.random().toString(36).substring(2, 15);
-      
-      const result = await sendPasswordResetEmail({ 
+
+      const result = await sendPasswordResetEmail({
         email,
-        resetCode,
         userType: 'B2C',
         language: 'sv-SE'
       });

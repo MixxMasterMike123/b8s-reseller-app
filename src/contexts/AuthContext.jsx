@@ -290,15 +290,12 @@ export function AuthProvider({ children }) {
         toast.success('Password reset email sent (Demo Mode)');
         return true;
       } else {
-        // Use our custom orchestrator password reset for B2B users
+        // Use our custom orchestrator password reset for B2B users.
+        // The reset code is generated server-side for security.
         const sendPasswordResetEmailOrchestrator = httpsCallable(functions, 'sendPasswordResetEmail');
-        
-        // Generate secure reset code (matching pattern from SimpleAuthContext)
-        const resetCode = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        
+
         await sendPasswordResetEmailOrchestrator({
           email: email,
-          resetCode: resetCode,
           userAgent: navigator.userAgent || 'Unknown',
           timestamp: new Date().toLocaleString('sv-SE'),
           userType: 'B2B',

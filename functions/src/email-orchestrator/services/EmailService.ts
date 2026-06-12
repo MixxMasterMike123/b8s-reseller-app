@@ -22,18 +22,26 @@ export class EmailService {
   private transporter: nodemailer.Transporter;
 
   constructor() {
-    // Gmail SMTP Configuration (V3 Working Configuration)
+    // SMTP credentials come from the runtime environment
+    // (functions/.env.<project-id> or deployed secrets) — never hardcode them.
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+
+    if (!smtpUser || !smtpPass) {
+      throw new Error('EmailService: SMTP_USER and SMTP_PASS must be set in the environment');
+    }
+
     this.transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT || '587', 10),
       secure: false, // Use STARTTLS
       auth: {
-        user: 'b8shield.reseller@gmail.com',
-        pass: 'rcfaridkvgluhzom' // Gmail App Password
+        user: smtpUser,
+        pass: smtpPass
       }
     });
 
-    console.log('📧 EmailService: Initialized with Gmail SMTP');
+    console.log('📧 EmailService: Initialized with SMTP host', process.env.SMTP_HOST || 'smtp.gmail.com');
   }
 
   /**

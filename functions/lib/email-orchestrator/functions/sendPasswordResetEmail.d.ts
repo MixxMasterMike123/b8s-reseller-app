@@ -1,6 +1,7 @@
 interface PasswordResetRequest {
     email: string;
-    resetCode: string;
+    /** @deprecated Ignored — the reset code is generated server-side. */
+    resetCode?: string;
     userAgent?: string;
     timestamp?: string;
     userType?: 'B2B' | 'B2C' | 'AFFILIATE';

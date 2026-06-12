@@ -162,11 +162,22 @@ const OrderConfirmation = () => {
                       {t('order_confirmation_shipping_address', 'Leveransadress')}
                     </h3>
                     <div className="text-gray-600">
-                      <p>{order.shippingAddress?.firstName} {order.shippingAddress?.lastName}</p>
-                      <p>{order.shippingAddress?.address}</p>
-                      {order.shippingAddress?.apartment && <p>{order.shippingAddress.apartment}</p>}
-                      <p>{order.shippingAddress?.postalCode} {order.shippingAddress?.city}</p>
-                      <p>{order.shippingAddress?.country}</p>
+                      {(() => {
+                        // Orders store the address in shippingInfo (name lives in customerInfo);
+                        // fall back to the legacy shippingAddress shape for old orders
+                        const addr = order.shippingInfo || order.shippingAddress || {};
+                        const firstName = order.customerInfo?.firstName || addr.firstName;
+                        const lastName = order.customerInfo?.lastName || addr.lastName;
+                        return (
+                          <>
+                            <p>{firstName} {lastName}</p>
+                            <p>{addr.address}</p>
+                            {addr.apartment && <p>{addr.apartment}</p>}
+                            <p>{addr.postalCode} {addr.city}</p>
+                            <p>{addr.country}</p>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -329,7 +340,7 @@ const OrderConfirmation = () => {
                   </div>
                   <div className="flex justify-between font-bold text-lg text-gray-900 pt-3 border-t border-gray-300">
                     <span>{t('order_confirmation_total', 'Totalt')}</span>
-                    <span>SEK {formatPrice(order.total)}</span>
+                    <span>{formatPrice(order.total)}</span>
                   </div>
                 </div>
 
@@ -338,9 +349,18 @@ const OrderConfirmation = () => {
                     <p className="text-sm text-gray-600 mb-4">
                       {t('order_confirmation_payment_status', 'Betalningsstatus')}
                     </p>
-                    <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-                      {t('order_confirmation_payment_pending', 'Väntar på betalning (Test)')}
-                    </div>
+                    {(() => {
+                      const isPaid = ['succeeded', 'paid'].includes(order.payment?.status) || order.status === 'confirmed';
+                      return isPaid ? (
+                        <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                          {t('order_confirmation_payment_paid', 'Betald')}
+                        </div>
+                      ) : (
+                        <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                          {t('order_confirmation_payment_pending', 'Väntar på betalning')}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 

@@ -477,7 +477,28 @@ export const processB2COrderCompletionHttp = onRequest(
       }
 
       const orderData = orderSnap.data() as OrderData;
-      
+
+      // IDEMPOTENCY GUARD: this endpoint is reachable from both the storefront
+      // and the Stripe webhook, and either may retry. Claim the order in a
+      // transaction so emails, customer stats and affiliate commission can
+      // only ever be processed once per order.
+      const claim = await localDb.runTransaction(async (tx) => {
+        const snap = await tx.get(orderRef);
+        if (!snap.exists) return 'missing';
+        if (snap.data()?.completionProcessed || snap.data()?.conversionProcessed) return 'already';
+        tx.update(orderRef, {
+          completionProcessed: true,
+          completionProcessedAt: FieldValue.serverTimestamp()
+        });
+        return 'claimed';
+      });
+
+      if (claim !== 'claimed') {
+        console.log(`Order ${orderId} already processed (idempotency guard), skipping.`);
+        res.json({ success: true, message: 'Order already processed', alreadyProcessed: true });
+        return;
+      }
+
       // DEBUG: Log the actual order data structure to see what items look like
       console.log('🔍 Order Processing - Full order data:', JSON.stringify(orderData, null, 2));
       const orderItems = (orderData as any).items;

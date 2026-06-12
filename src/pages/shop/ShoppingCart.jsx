@@ -65,10 +65,15 @@ const ShoppingCart = () => {
 
   const handleApplyDiscount = async () => {
     if (!discountCodeInput.trim()) return;
-    
+
     try {
-      await applyDiscountCode(discountCodeInput.trim());
-      toast.success(t('discount_code_applied', 'Rabattkod applicerad!'));
+      const result = await applyDiscountCode(discountCodeInput.trim());
+      if (result?.success) {
+        toast.success(t('discount_code_applied', 'Rabattkod applicerad!'));
+        setDiscountCodeInput('');
+      } else {
+        toast.error(result?.message || t('invalid_discount_code', 'Ogiltig rabattkod'));
+      }
     } catch (error) {
       console.error('Error applying discount code:', error);
       toast.error(t('invalid_discount_code', 'Ogiltig rabattkod'));

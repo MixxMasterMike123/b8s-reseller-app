@@ -5,7 +5,7 @@ import { getStripe } from '../../utils/stripeClient';
 import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { db } from '../../firebase/config';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { getCountryAwareUrl } from '../../utils/productUrls';
 import toast from 'react-hot-toast';
 
@@ -51,8 +51,10 @@ const OrderReturnInner = () => {
           const orderId = await createOrderFromPayment(paymentIntent);
           console.log('✅ Order created with ID:', orderId);
           
-          // Clear cart and redirect to confirmation
+          // Clear cart, saved checkout info, and redirect to confirmation
           clearCart();
+          localStorage.removeItem('b8s_checkout_customer');
+          localStorage.removeItem('b8s_checkout_shipping');
           setStatus('success');
           
           // Redirect to order confirmation
