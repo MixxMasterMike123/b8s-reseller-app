@@ -4,12 +4,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendAffiliateApplicationEmails = void 0;
 const https_1 = require("firebase-functions/v2/https");
+const app_urls_1 = require("../../config/app-urls");
 const EmailOrchestrator_1 = require("../core/EmailOrchestrator");
+const config_1 = require("../core/config");
 exports.sendAffiliateApplicationEmails = (0, https_1.onCall)({
     region: 'us-central1',
     memory: '256MiB',
     timeoutSeconds: 60,
-    cors: ['https://partner.b8shield.com', 'https://shop.b8shield.com']
+    cors: app_urls_1.appUrls.CORS_ORIGINS
 }, async (request) => {
     try {
         console.log('📧 sendAffiliateApplicationEmails: Starting dual email send');
@@ -52,14 +54,14 @@ exports.sendAffiliateApplicationEmails = (0, https_1.onCall)({
         const adminResult = await orchestrator.sendEmail({
             emailType: 'AFFILIATE_APPLICATION_NOTIFICATION_ADMIN',
             customerInfo: {
-                email: 'micke.ohlen@gmail.com',
-                name: 'B8Shield Admin'
+                email: config_1.EMAIL_CONFIG.ADMIN_RECIPIENTS.join(', '),
+                name: `${config_1.EMAIL_CONFIG.SMTP.FROM_NAME} Admin`
             },
             language: 'sv-SE',
             additionalData: {
                 applicantInfo: request.data.applicantInfo,
                 applicationId: request.data.applicationId,
-                adminPortalUrl: 'https://partner.b8shield.com'
+                adminPortalUrl: app_urls_1.appUrls.B2B_PORTAL
             },
             adminEmail: true
         });

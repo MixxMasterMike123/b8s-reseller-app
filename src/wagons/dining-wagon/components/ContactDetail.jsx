@@ -6,6 +6,7 @@ import AppLayout from '../../../components/layout/AppLayout';
 import UserBadge, { UserBadgeGroup } from '../../../components/UserBadge';
 import { useDiningContacts } from '../hooks/useDiningContacts';
 import { useDiningActivities } from '../hooks/useDiningActivities';
+import { functionUrl } from '../../../config/urls';
 import {
   ArrowLeftIcon,
   PhoneIcon,
@@ -1054,7 +1055,7 @@ const ContactDetail = () => {
 
     try {
       // Call Firebase Function for META scraping
-      const response = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/scrapeWebsiteMetaV2', {
+      const response = await fetch(functionUrl('scrapeWebsiteMetaV2'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

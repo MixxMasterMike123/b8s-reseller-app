@@ -17,6 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import { normalizeWebsiteUrl, normalizeEmail } from '../../../utils/urlUtils';
+import { functionUrl } from '../../../config/urls';
 
 const ContactForm = () => {
   const navigate = useNavigate();
@@ -136,7 +137,7 @@ const ContactForm = () => {
 
     try {
       // Call Firebase Function for META scraping
-      const response = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/scrapeWebsiteMetaV2', {
+      const response = await fetch(functionUrl('scrapeWebsiteMetaV2'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

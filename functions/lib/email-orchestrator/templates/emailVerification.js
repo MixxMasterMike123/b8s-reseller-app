@@ -5,6 +5,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateEmailVerificationTemplate = void 0;
 const config_1 = require("../core/config");
+// Display-friendly shop domain (no protocol) for link text
+const shopDomain = config_1.EMAIL_CONFIG.URLS.B2C_SHOP.replace(/^https?:\/\//, '');
 function generateEmailVerificationTemplate(data) {
     const { customerInfo, verificationCode, language, source } = data;
     // Generate verification URL
@@ -85,7 +87,7 @@ function generateSwedishTemplate(customerName, verificationUrl, shopUrl, support
       <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin-bottom: 15px;">
         Eller besök vår butik direkt:
       </p>
-      <a href="${shopUrl}" style="color: ${config_1.EMAIL_CONFIG.COLORS.LINK}; text-decoration: none; font-weight: 600;">shop.b8shield.com</a>
+      <a href="${shopUrl}" style="color: ${config_1.EMAIL_CONFIG.COLORS.LINK}; text-decoration: none; font-weight: 600;">${shopDomain}</a>
     </div>
     
     <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 25px;">
@@ -154,7 +156,7 @@ function generateEnglishTemplate(customerName, verificationUrl, shopUrl, support
       <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin-bottom: 15px;">
         Or visit our shop directly:
       </p>
-      <a href="${shopUrl}" style="color: ${config_1.EMAIL_CONFIG.COLORS.LINK}; text-decoration: none; font-weight: 600;">shop.b8shield.com</a>
+      <a href="${shopUrl}" style="color: ${config_1.EMAIL_CONFIG.COLORS.LINK}; text-decoration: none; font-weight: 600;">${shopDomain}</a>
     </div>
     
     <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 25px;">

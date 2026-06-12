@@ -1,23 +1,32 @@
 "use strict";
 // EmailOrchestrator Configuration
-// Centralized configuration for all email templates and URLs
+// Centralized configuration for all email templates and URLs.
+// Identity values are env-overridable (functions/.env.<project-id>) so a
+// per-shop deploy needs no code edits; defaults are current staging values.
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getOrderTrackingUrl = exports.getSupportUrl = exports.formatPrice = exports.getLanguageSegment = exports.EMAIL_CONFIG = void 0;
+const app_urls_1 = require("../../config/app-urls");
 exports.EMAIL_CONFIG = {
-    // Application URLs
+    // Application URLs (single source: config/app-urls.ts)
     URLS: {
-        B2B_PORTAL: 'https://partner.b8shield.com',
-        B2C_SHOP: 'https://shop.b8shield.com',
-        PARTNER_URL: 'https://partner.b8shield.com',
-        B2B_LEGACY: 'https://b8shield-reseller-app.web.app',
-        LOGO_URL: 'https://partner.b8shield.com/images/B8S_logo.png',
+        B2B_PORTAL: app_urls_1.appUrls.B2B_PORTAL,
+        B2C_SHOP: app_urls_1.appUrls.B2C_SHOP,
+        PARTNER_URL: app_urls_1.appUrls.B2B_PORTAL,
+        B2B_LEGACY: app_urls_1.appUrls.B2B_LEGACY,
+        LOGO_URL: app_urls_1.appUrls.LOGO_URL,
     },
-    // Email settings
+    // Email identity
     SMTP: {
-        FROM_NAME: 'B8Shield',
-        FROM_EMAIL: 'b8shield.reseller@gmail.com',
-        REPLY_TO: 'info@jphinnovation.se',
+        FROM_NAME: process.env.EMAIL_FROM_NAME || 'B8Shield',
+        FROM_EMAIL: process.env.EMAIL_FROM_EMAIL || process.env.SMTP_USER || 'b8shield.reseller@gmail.com',
+        REPLY_TO: process.env.EMAIL_REPLY_TO || 'info@jphinnovation.se',
     },
+    // Where admin notifications (new orders, affiliate applications) go.
+    // Comma-separated list in ADMIN_NOTIFICATION_EMAILS.
+    ADMIN_RECIPIENTS: (process.env.ADMIN_NOTIFICATION_EMAILS || 'info@jphinnovation.se,micke.ohlen@gmail.com')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
     // Template settings
     TEMPLATES: {
         MAX_WIDTH: '600px',
@@ -55,7 +64,7 @@ function getLanguageSegment(lang) {
 exports.getLanguageSegment = getLanguageSegment;
 // Helper function to format prices (V3 compatible)
 function formatPrice(amount) {
-    return `${amount.toFixed(0)} SEK`;
+    return `${amount.toFixed(0)} ${app_urls_1.commerceConfig.currency}`;
 }
 exports.formatPrice = formatPrice;
 // Helper function to get support URL

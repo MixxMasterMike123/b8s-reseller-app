@@ -3,6 +3,7 @@ import { getApp } from 'firebase-admin/app';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { db } from '../config/database';
+import { adminSeedConfig, commerceConfig } from '../config/app-urls';
 
 // Get Firebase Auth from already initialized app
 const auth = getAuth(getApp());
@@ -458,8 +459,8 @@ export const createAdminUser = onRequest(
       
       // Admin user data based on your login credentials
       const adminUserData = {
-        email: 'micke.ohlen@gmail.com',
-        companyName: 'B8Shield Admin',
+        email: adminSeedConfig.email,
+        companyName: `${commerceConfig.shopName} Admin`,
         role: 'admin',
         isActive: true,
         active: true,

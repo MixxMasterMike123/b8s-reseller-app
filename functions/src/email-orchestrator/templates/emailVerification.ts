@@ -4,6 +4,9 @@
 
 import { EMAIL_CONFIG } from '../core/config';
 
+// Display-friendly shop domain (no protocol) for link text
+const shopDomain = EMAIL_CONFIG.URLS.B2C_SHOP.replace(/^https?:\/\//, '');
+
 export interface EmailVerificationData {
   customerInfo: {
     firstName?: string;
@@ -101,7 +104,7 @@ function generateSwedishTemplate(customerName: string, verificationUrl: string, 
       <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin-bottom: 15px;">
         Eller besök vår butik direkt:
       </p>
-      <a href="${shopUrl}" style="color: ${EMAIL_CONFIG.COLORS.LINK}; text-decoration: none; font-weight: 600;">shop.b8shield.com</a>
+      <a href="${shopUrl}" style="color: ${EMAIL_CONFIG.COLORS.LINK}; text-decoration: none; font-weight: 600;">${shopDomain}</a>
     </div>
     
     <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 25px;">
@@ -172,7 +175,7 @@ function generateEnglishTemplate(customerName: string, verificationUrl: string, 
       <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin-bottom: 15px;">
         Or visit our shop directly:
       </p>
-      <a href="${shopUrl}" style="color: ${EMAIL_CONFIG.COLORS.LINK}; text-decoration: none; font-weight: 600;">shop.b8shield.com</a>
+      <a href="${shopUrl}" style="color: ${EMAIL_CONFIG.COLORS.LINK}; text-decoration: none; font-weight: 600;">${shopDomain}</a>
     </div>
     
     <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 25px;">

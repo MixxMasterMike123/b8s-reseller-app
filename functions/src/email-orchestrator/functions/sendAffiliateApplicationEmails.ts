@@ -2,7 +2,9 @@
 // Replaces missing affiliate application notification system
 
 import { onCall } from 'firebase-functions/v2/https';
+import { appUrls } from '../../config/app-urls';
 import { EmailOrchestrator } from '../core/EmailOrchestrator';
+import { EMAIL_CONFIG } from '../core/config';
 
 interface AffiliateApplicationEmailsRequest {
   applicantInfo: {
@@ -31,7 +33,7 @@ export const sendAffiliateApplicationEmails = onCall<AffiliateApplicationEmailsR
     region: 'us-central1',
     memory: '256MiB',
     timeoutSeconds: 60,
-    cors: ['https://partner.b8shield.com', 'https://shop.b8shield.com']
+    cors: appUrls.CORS_ORIGINS
   },
   async (request) => {
     try {
@@ -81,14 +83,14 @@ export const sendAffiliateApplicationEmails = onCall<AffiliateApplicationEmailsR
       const adminResult = await orchestrator.sendEmail({
         emailType: 'AFFILIATE_APPLICATION_NOTIFICATION_ADMIN',
         customerInfo: {
-          email: 'micke.ohlen@gmail.com', // Admin email
-          name: 'B8Shield Admin'
+          email: EMAIL_CONFIG.ADMIN_RECIPIENTS.join(', '), // Admin email(s)
+          name: `${EMAIL_CONFIG.SMTP.FROM_NAME} Admin`
         },
         language: 'sv-SE', // Admin emails always in Swedish
         additionalData: {
           applicantInfo: request.data.applicantInfo,
           applicationId: request.data.applicationId,
-          adminPortalUrl: 'https://partner.b8shield.com'
+          adminPortalUrl: appUrls.B2B_PORTAL
         },
         adminEmail: true
       });

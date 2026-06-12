@@ -1,6 +1,7 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import { corsHandler } from '../protection/cors/cors-handler';
 import { rateLimiter } from '../protection/rate-limiting/rate-limiter';
+import { appUrls, commerceConfig } from '../config/app-urls';
 
 // Simple language detection patterns
 const LANGUAGE_PATTERNS = {
@@ -209,7 +210,7 @@ export const scrapeWebsiteMeta = onRequest(
         response = await fetch(websiteUrl, {
           method: 'GET',
           headers: {
-            'User-Agent': 'B8Shield-MetaScraper/1.0 (+https://partner.b8shield.com)'
+            'User-Agent': `${commerceConfig.shopName}-MetaScraper/1.0 (+${appUrls.B2B_PORTAL})`
           },
           // Timeout after 20 seconds
           signal: AbortSignal.timeout(20000)

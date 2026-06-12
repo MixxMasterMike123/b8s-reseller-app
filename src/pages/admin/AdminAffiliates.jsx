@@ -5,6 +5,7 @@ import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
+import { APP_URLS } from '../../config/urls';
 import { 
   UsersIcon, 
   CheckCircleIcon, 
@@ -371,7 +372,7 @@ const AdminAffiliates = () => {
                             )}
                             
                             <a
-                              href={`https://shop.b8shield.com/${((affiliate.preferredLang || 'sv-SE').split('-')[1] || 'se').toLowerCase()}?ref=${affiliate.affiliateCode}`}
+                              href={`${APP_URLS.B2C_SHOP}/${((affiliate.preferredLang || 'sv-SE').split('-')[1] || 'se').toLowerCase()}?ref=${affiliate.affiliateCode}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded transition-colors"

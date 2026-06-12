@@ -32,7 +32,7 @@ export function generateAffiliateApplicationReceivedTemplate(data: AffiliateAppl
         'Du får ett e-postmeddelande med vårt beslut',
         'Vid godkännande får du dina inloggningsuppgifter och affiliate-länk'
       ],
-      contactInfo: 'Har du frågor? Kontakta oss på info@jphinnovation.se',
+      contactInfo: `Har du frågor? Kontakta oss på ${EMAIL_CONFIG.SMTP.REPLY_TO}`,
       thanks: 'Tack för ditt intresse för B8Shield!',
       teamSignature: 'Vänliga hälsningar,<br/>B8Shield Affiliate Team'
     },
@@ -49,7 +49,7 @@ export function generateAffiliateApplicationReceivedTemplate(data: AffiliateAppl
         'You will receive an email with our decision',
         'If approved, you will receive your login credentials and affiliate link'
       ],
-      contactInfo: 'Have questions? Contact us at info@jphinnovation.se',
+      contactInfo: `Have questions? Contact us at ${EMAIL_CONFIG.SMTP.REPLY_TO}`,
       thanks: 'Thank you for your interest in B8Shield!',
       teamSignature: 'Best regards,<br/>B8Shield Affiliate Team'
     },
@@ -66,7 +66,7 @@ export function generateAffiliateApplicationReceivedTemplate(data: AffiliateAppl
         'You will receive an email with our decision',
         'If approved, you will receive your login credentials and affiliate link'
       ],
-      contactInfo: 'Have questions? Contact us at info@jphinnovation.se',
+      contactInfo: `Have questions? Contact us at ${EMAIL_CONFIG.SMTP.REPLY_TO}`,
       thanks: 'Thank you for your interest in B8Shield!',
       teamSignature: 'Best regards,<br/>B8Shield Affiliate Team'
     }

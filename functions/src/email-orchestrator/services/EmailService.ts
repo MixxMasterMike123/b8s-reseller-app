@@ -104,8 +104,8 @@ export class EmailService {
    * Send email to admin addresses
    */
   async sendAdminEmail(template: EmailTemplate, options: Omit<EmailOptions, 'to'>): Promise<{ success: boolean; messageId?: string; error?: string }> {
-    const adminEmails = ['info@jphinnovation.se', 'micke.ohlen@gmail.com'];
-    
+    const adminEmails = EMAIL_CONFIG.ADMIN_RECIPIENTS;
+
     return this.sendEmail(template, {
       ...options,
       to: adminEmails.join(', ')

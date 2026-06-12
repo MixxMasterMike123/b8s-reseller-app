@@ -1,10 +1,11 @@
 // WritersWagonAPI.js - React-adapted Claude API manager for The Writer's Wagon™
 import { getAPIKey, getContentTypeConfig, WRITERS_WAGON_CONFIG } from './WritersWagonConfig.js';
+import { functionUrl } from '../../../config/urls';
 
 class WritersWagonAPI {
   constructor() {
     // Use Firebase Function proxy instead of direct Claude API
-    this.baseURL = 'https://us-central1-b8shield-reseller-app.cloudfunctions.net/generateContentWithClaude';
+    this.baseURL = functionUrl('generateContentWithClaude');
     this.apiKey = null; // Not needed - handled by Firebase Function
     this.requestCount = 0;
     this.costTracking = {

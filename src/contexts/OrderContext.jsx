@@ -16,6 +16,7 @@ import {
   setDoc
 } from 'firebase/firestore';
 import { db, isDemoMode } from '../firebase/config';
+import { functionUrl } from '../config/urls';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
@@ -263,7 +264,7 @@ export const OrderProvider = ({ children }) => {
         
         // Trigger email notification via HTTP function
         try {
-          const response = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/sendOrderConfirmationHttp', {
+          const response = await fetch(functionUrl('sendOrderConfirmationHttp'), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

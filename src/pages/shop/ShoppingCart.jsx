@@ -12,6 +12,7 @@ import SeoHreflang from '../../components/shop/SeoHreflang';
 import { getCountryAwareUrl, getCartSeoTitle, getCartSeoDescription } from '../../utils/productUrls';
 import SmartPrice from '../../components/shop/SmartPrice';
 import { Helmet } from 'react-helmet-async';
+import { STORE } from '../../config/store';
 
 const ShoppingCart = () => {
   const { cart, updateQuantity, removeFromCart, updateShippingCountry, calculateTotals, applyDiscountCode, removeDiscount, getTotalItems, getShippingTierInfo } = useCart();
@@ -92,12 +93,12 @@ const ShoppingCart = () => {
         <meta property="og:type" content="website" />
         <meta property="og:title" content={getCartSeoTitle()} />
         <meta property="og:description" content={getCartSeoDescription()} />
-        <meta property="og:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
+        <meta property="og:image" content={`${window.location.origin}/images/B8S_full_logo.svg`} />
         <meta property="og:url" content={window.location.href} />
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content={getCartSeoTitle()} />
         <meta name="twitter:description" content={getCartSeoDescription()} />
-        <meta name="twitter:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
+        <meta name="twitter:image" content={`${window.location.origin}/images/B8S_full_logo.svg`} />
       </Helmet>
       <SeoHreflang />
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -326,8 +327,9 @@ const ShoppingCart = () => {
                     </div>
                     <div className="flex justify-end text-xs sm:text-sm text-gray-500">
                       <span>
-                        {t('vat_included', 'Varav Moms (25%) {{amount}}', {
-                          amount: vat // We'll handle VAT conversion in the translation
+                        {t('vat_included_rate', 'Varav Moms ({{rate}}%) {{amount}} kr', {
+                          rate: Math.round(STORE.vatRate * 100),
+                          amount: vat.toFixed(2)
                         })}
                       </span>
                     </div>

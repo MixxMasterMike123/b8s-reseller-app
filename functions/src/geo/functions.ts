@@ -1,10 +1,11 @@
 /**
  * Geo-targeting Firebase Functions for B2C Shop
  * Provides CloudFlare geo data for currency detection
- * ONLY for shop.b8shield.com (B2B portal stays in SEK)
+ * ONLY for allowed shop origins (B2B portal stays in SEK)
  */
 
 import { onRequest } from 'firebase-functions/v2/https';
+import { appUrls } from '../config/app-urls';
 
 /**
  * HTTP endpoint that returns CloudFlare geo data
@@ -21,7 +22,7 @@ export const getGeoData = onRequest(
     try {
       // Only serve geo data for B2C shop domain
       const origin = req.headers.origin || req.headers.referer;
-      const isShopDomain = origin?.includes('shop.b8shield.com');
+      const isShopDomain = !!origin && appUrls.CORS_ORIGINS.some((allowed) => origin.startsWith(allowed));
       
       if (!isShopDomain) {
         console.log(`Geo data request from non-shop domain: ${origin}`);

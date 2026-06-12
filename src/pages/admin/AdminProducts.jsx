@@ -8,6 +8,7 @@ import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { useTranslation } from '../../contexts/TranslationContext';
 import toast from 'react-hot-toast';
 import ProductMenu from '../../components/ProductMenu';
+import { APP_URLS } from '../../config/urls';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import AppLayout from '../../components/layout/AppLayout';
@@ -1691,7 +1692,7 @@ function AdminProducts() {
                       placeholder="Konsumentpris inklusive moms"
                     />
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      Detta pris visas för konsumenter på shop.b8shield.com och inkluderar 25% moms
+                      Detta pris visas för konsumenter på {APP_URLS.B2C_SHOP.replace(/^https?:\/\//, '')} och inkluderar 25% moms
                     </p>
                   </div>
 

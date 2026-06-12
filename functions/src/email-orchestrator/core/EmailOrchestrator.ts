@@ -12,6 +12,7 @@ import { generateAffiliateWelcomeTemplate, AffiliateWelcomeData } from '../templ
 import { generateEmailVerificationTemplate, EmailVerificationData } from '../templates/emailVerification';
 import { generateAffiliateApplicationReceivedTemplate } from '../templates/affiliateApplicationReceived';
 import { generateAffiliateApplicationNotificationAdminTemplate } from '../templates/affiliateApplicationNotificationAdmin';
+import { EMAIL_CONFIG } from './config';
 
 export type EmailType = 
   | 'ORDER_CONFIRMATION'
@@ -314,7 +315,7 @@ export class EmailOrchestrator {
           html: generateAffiliateApplicationNotificationAdminTemplate({
             applicantInfo: data.additionalData.applicantInfo,
             applicationId: data.additionalData.applicationId,
-            adminPortalUrl: data.additionalData.adminPortalUrl || 'https://partner.b8shield.com'
+            adminPortalUrl: data.additionalData.adminPortalUrl || EMAIL_CONFIG.URLS.B2B_PORTAL
           }),
           text: `New affiliate application from ${data.additionalData.applicantInfo.name} (${data.additionalData.applicantInfo.email}). Application ID: ${data.additionalData.applicationId}`
         };
@@ -328,21 +329,24 @@ export class EmailOrchestrator {
    * Get appropriate from address based on email type and user type
    */
   private getFromAddress(emailType: EmailType, userType: ResolvedUser['type']): string {
+    const brand = EMAIL_CONFIG.SMTP.FROM_NAME;
+    const from = (displayName: string) => `"${displayName}" <${EMAIL_CONFIG.SMTP.FROM_EMAIL}>`;
+
     const fromAddresses = {
-      'ORDER_CONFIRMATION': userType === 'B2B' 
-        ? '"B8Shield Återförsäljarportal" <b8shield.reseller@gmail.com>'
-        : '"B8Shield Shop" <b8shield.reseller@gmail.com>',
-      'ORDER_STATUS_UPDATE': '"B8Shield" <b8shield.reseller@gmail.com>',
-      'ORDER_NOTIFICATION_ADMIN': '"B8Shield System" <b8shield.reseller@gmail.com>',
-      'LOGIN_CREDENTIALS': '"B8Shield" <b8shield.reseller@gmail.com>',
-      'PASSWORD_RESET': '"B8Shield Security" <b8shield.reseller@gmail.com>',
-      'AFFILIATE_WELCOME': '"B8Shield Affiliate Program" <b8shield.reseller@gmail.com>',
-      'EMAIL_VERIFICATION': '"B8Shield Shop" <b8shield.reseller@gmail.com>',
-      'AFFILIATE_APPLICATION_RECEIVED': '"B8Shield Affiliate Program" <b8shield.reseller@gmail.com>',
-      'AFFILIATE_APPLICATION_NOTIFICATION_ADMIN': '"B8Shield System" <b8shield.reseller@gmail.com>'
+      'ORDER_CONFIRMATION': userType === 'B2B'
+        ? from(`${brand} Återförsäljarportal`)
+        : from(`${brand} Shop`),
+      'ORDER_STATUS_UPDATE': from(brand),
+      'ORDER_NOTIFICATION_ADMIN': from(`${brand} System`),
+      'LOGIN_CREDENTIALS': from(brand),
+      'PASSWORD_RESET': from(`${brand} Security`),
+      'AFFILIATE_WELCOME': from(`${brand} Affiliate Program`),
+      'EMAIL_VERIFICATION': from(`${brand} Shop`),
+      'AFFILIATE_APPLICATION_RECEIVED': from(`${brand} Affiliate Program`),
+      'AFFILIATE_APPLICATION_NOTIFICATION_ADMIN': from(`${brand} System`)
     };
 
-    return fromAddresses[emailType] || '"B8Shield" <b8shield.reseller@gmail.com>';
+    return fromAddresses[emailType] || from(brand);
   }
 
   /**

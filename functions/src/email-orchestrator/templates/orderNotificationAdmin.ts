@@ -244,7 +244,7 @@ function generateB2CAdminTemplate(
     </div>
     
     <div style="border-top: 1px solid ${EMAIL_CONFIG.COLORS.BORDER}; padding-top: 15px; margin-top: 25px; text-align: center;">
-      <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 13px; margin: 0;">Denna beställning gjordes på B2C-butiken på shop.b8shield.com<br><strong>B8Shield Admin Notification</strong></p>
+      <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 13px; margin: 0;">Denna beställning gjordes på B2C-butiken på ${EMAIL_CONFIG.URLS.B2C_SHOP.replace(/^https?:\/\//, '')}<br><strong>B8Shield Admin Notification</strong></p>
     </div>
   </div>
 </div>`

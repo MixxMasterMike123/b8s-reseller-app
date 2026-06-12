@@ -2,7 +2,8 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 
-const BASE_URL = 'https://shop.b8shield.com';
+// SEO tags must reflect the actual serving domain.
+const BASE_URL = typeof window !== 'undefined' ? window.location.origin : '';
 const COUNTRY_CODES = [
   { code: 'se', hreflang: 'sv-SE' },
   { code: 'gb', hreflang: 'en-GB' },

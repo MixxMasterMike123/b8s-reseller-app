@@ -216,12 +216,6 @@ const Checkout = () => {
     else if (step === 'payment') setStep('shipping');
   };
 
-  const generateOrderNumber = () => {
-    const timestamp = Date.now().toString().slice(-6);
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `B8S-${timestamp}${random}`;
-  };
-
   // Helper function to create B2C customer account
   const createB2CCustomerAccount = async () => {
     if (!contactInfo.password || contactInfo.password.trim().length === 0) {
@@ -850,7 +844,7 @@ const Checkout = () => {
                     </span>
                   </div>
                   <div className="flex justify-between text-xs text-gray-500 -mt-1 sm:-mt-2">
-                      <span>{t('checkout_vat', 'Varav Moms (25%)')}</span>
+                      <span>{t('checkout_vat_rate', 'Varav Moms ({{rate}}%)', { rate: Math.round(store.vatRate * 100) })}</span>
                       <span>
                         <SmartPrice 
                           sekPrice={vat} 

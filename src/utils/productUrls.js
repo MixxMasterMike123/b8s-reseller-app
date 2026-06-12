@@ -1,4 +1,6 @@
 // Product URL utilities for clean, SEO-friendly URLs
+import { APP_URLS } from '../config/urls';
+import { STORE } from '../config/store';
 
 // Helper to safely get content from multilingual fields without using hooks
 const safeGetContent = (field) => {
@@ -136,8 +138,8 @@ export const getProductSeoDescription = (product) => {
  */
 export const generateAffiliateLink = (affiliateCode, preferredLang, productPath = '') => {
   const urlLang = (preferredLang?.split('-')[1] || 'se').toLowerCase();
-  
-  const baseUrl = 'https://shop.b8shield.com';
+
+  const baseUrl = APP_URLS.B2C_SHOP;
   const langPath = `/${urlLang}`;
   const path = productPath ? `/${productPath}` : '';
   
@@ -341,32 +343,28 @@ export const getLegalSeoDescription = (pageType = 'privacy', language = 'sv-SE')
  * Generate structured data for shop homepage
  */
 export const generateShopStructuredData = (language = 'sv-SE') => {
-  const baseUrl = 'https://shop.b8shield.com';
+  // Structured data must reflect the actual serving domain.
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : APP_URLS.B2C_SHOP;
   const langCode = (language?.split('-')[1] || 'se').toLowerCase();
-  
+
+  // Social profiles from store config (empty values are hidden).
+  const sameAs = Object.values(STORE.social || {}).filter(Boolean);
+
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "B8Shield",
+    "name": STORE.shopName,
     "url": `${baseUrl}/${langCode}`,
-    "logo": `${baseUrl}/images/B8S_full_logo.svg`,
+    "logo": STORE.logoUrl?.startsWith('http') ? STORE.logoUrl : `${baseUrl}${STORE.logoUrl}`,
     "description": getShopSeoDescription(language),
-    "address": {
-      "@type": "PostalAddress",
-      "streetAddress": "Östergatan 30 C",
-      "addressLocality": "Södertälje",
-      "postalCode": "152 43",
-      "addressCountry": "SE"
-    },
+    // NOTE: STORE has no structured postal-address or phone fields, so the
+    // PostalAddress block and telephone are intentionally omitted rather
+    // than inventing data.
     "contactPoint": {
       "@type": "ContactPoint",
-      "telephone": "+46-8-123-4567",
       "contactType": "customer service",
-      "email": "info@jphinnovation.se"
+      "email": STORE.supportEmail
     },
-    "sameAs": [
-      "https://www.facebook.com/b8shield",
-      "https://www.instagram.com/b8shield"
-    ]
+    ...(sameAs.length > 0 && { "sameAs": sameAs })
   };
-}; 
+};

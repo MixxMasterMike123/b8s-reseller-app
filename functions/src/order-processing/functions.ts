@@ -1,6 +1,7 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { RATE_LIMITS } from '../config/rate-limits';
+import { commerceConfig } from '../config/app-urls';
 // V3 Email System - imports handled dynamically in functions
 import { db } from '../config/database';
 
@@ -258,7 +259,7 @@ async function processUniversalCampaignRevenue(orderData: any, db: any) {
 }
 
 // Calculate revenue breakdown for a single item
-function calculateItemRevenue(item: any, orderData: any, vatRate = 0.25) {
+function calculateItemRevenue(item: any, orderData: any, vatRate = commerceConfig.vatRate) {
   const itemTotal = (item.price || 0) * (item.quantity || 1);
   const itemDiscountRate = orderData.discountPercentage ? (orderData.discountPercentage / 100) : 0;
   
@@ -315,7 +316,7 @@ function shouldCampaignTrackProduct(campaign: any, item: any): boolean {
 }
 
 // Complex commission calculation for revenue share campaigns
-function calculateComplexCommission(orderData: any, affiliate: any, campaign: any, vatRate = 0.25) {
+function calculateComplexCommission(orderData: any, affiliate: any, campaign: any, vatRate = commerceConfig.vatRate) {
   const originalTotal = orderData.total || orderData.subtotal || 0;
   const shipping = orderData.shipping || 0;
   
@@ -350,7 +351,7 @@ function calculateComplexCommission(orderData: any, affiliate: any, campaign: an
 }
 
 // Update the local calculateCommission function to fix double deduction bug
-function calculateCommission(orderData: OrderData, affiliate: AffiliateData, vatRate = 0.25, campaignRate?: number) {
+function calculateCommission(orderData: OrderData, affiliate: AffiliateData, vatRate = commerceConfig.vatRate, campaignRate?: number) {
   const orderTotal = orderData.total || orderData.subtotal || 0;
   const shipping = orderData.shipping || 0;
   const discountAmount = orderData.discountAmount || 0; // For reporting only

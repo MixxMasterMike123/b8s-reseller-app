@@ -1,7 +1,7 @@
 /**
  * Geo-targeting Firebase Functions for B2C Shop
  * Provides CloudFlare geo data for currency detection
- * ONLY for shop.b8shield.com (B2B portal stays in SEK)
+ * ONLY for allowed shop origins (B2B portal stays in SEK)
  */
 /**
  * HTTP endpoint that returns CloudFlare geo data

@@ -7,6 +7,7 @@ import { getAffiliatePayoutHistory, formatCurrency as formatPayoutCurrency, form
 import { validateCustomAffiliateCode, generateSimpleAffiliateCode } from '../../utils/affiliateCalculations';
 import toast from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
+import { APP_URLS } from '../../config/urls';
 import { 
   ArrowLeftIcon, 
   PencilIcon, 
@@ -600,7 +601,7 @@ const AdminAffiliateEdit = () => {
     });
 
     // Open affiliate portal in new tab with admin parameters
-    const affiliatePortalUrl = `https://shop.b8shield.com/se/affiliate-portal?${adminParams.toString()}`;
+    const affiliatePortalUrl = `${APP_URLS.B2C_SHOP}/se/affiliate-portal?${adminParams.toString()}`;
     window.open(affiliatePortalUrl, '_blank');
     
     toast.success(`Öppnar ${data.name}s affiliate-portal i ny flik`);

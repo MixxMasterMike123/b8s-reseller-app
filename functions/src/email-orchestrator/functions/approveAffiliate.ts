@@ -3,6 +3,7 @@
 // Complete workflow: Creates Firebase Auth user + Affiliate record + Sends welcome email via orchestrator
 
 import { onCall } from 'firebase-functions/v2/https';
+import { appUrls } from '../../config/app-urls';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { EmailOrchestrator } from '../core/EmailOrchestrator';
@@ -50,7 +51,7 @@ export const approveAffiliate = onCall<AffiliateApprovalRequest>(
     region: 'us-central1',
     memory: '256MiB',
     timeoutSeconds: 120,
-    cors: ['https://partner.b8shield.com', 'https://shop.b8shield.com']
+    cors: appUrls.CORS_ORIGINS
   },
   async (request) => {
     try {

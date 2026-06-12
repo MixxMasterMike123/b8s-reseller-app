@@ -4,6 +4,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendPasswordResetEmail = void 0;
 const https_1 = require("firebase-functions/v2/https");
+const app_urls_1 = require("../../config/app-urls");
 const crypto_1 = require("crypto");
 const EmailOrchestrator_1 = require("../core/EmailOrchestrator");
 const database_1 = require("../../config/database");
@@ -11,7 +12,7 @@ exports.sendPasswordResetEmail = (0, https_1.onCall)({
     region: 'us-central1',
     memory: '256MiB',
     timeoutSeconds: 60,
-    cors: ['https://partner.b8shield.com', 'https://shop.b8shield.com']
+    cors: app_urls_1.appUrls.CORS_ORIGINS
 }, async (request) => {
     try {
         console.log('📧 sendPasswordResetEmail: Starting unified password reset');

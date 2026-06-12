@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { httpsCallable, getFunctions } from 'firebase/functions';
 import { normalizeAffiliateCode } from '../utils/affiliateCalculations';
 import { getProductImage } from '../utils/productImages';
+import { STORE } from '../config/store';
 
 // Shipping cost constants
 export const SHIPPING_COSTS = {
@@ -285,8 +286,8 @@ export const CartProvider = ({ children }) => {
 
     // The VAT is the portion of the final total that is tax.
     // It's not added to the total, but extracted from it.
-    // Formula: Total - (Total / 1.25)
-    const vat = total - (total / 1.25);
+    // Formula: Total - (Total / (1 + vatRate)) — rate from store config
+    const vat = total - (total / (1 + STORE.vatRate));
 
     return {
       subtotal,

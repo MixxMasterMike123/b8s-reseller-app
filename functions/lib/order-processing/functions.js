@@ -4,6 +4,7 @@ exports.processOrderCompletion = exports.processB2COrderCompletionHttp = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const firestore_1 = require("firebase-admin/firestore");
 const rate_limits_1 = require("../config/rate-limits");
+const app_urls_1 = require("../config/app-urls");
 // V3 Email System - imports handled dynamically in functions
 const database_1 = require("../config/database");
 /**
@@ -180,7 +181,7 @@ async function processUniversalCampaignRevenue(orderData, db) {
     }
 }
 // Calculate revenue breakdown for a single item
-function calculateItemRevenue(item, orderData, vatRate = 0.25) {
+function calculateItemRevenue(item, orderData, vatRate = app_urls_1.commerceConfig.vatRate) {
     const itemTotal = (item.price || 0) * (item.quantity || 1);
     const itemDiscountRate = orderData.discountPercentage ? (orderData.discountPercentage / 100) : 0;
     // Step 1: Apply customer discount
@@ -226,7 +227,7 @@ function shouldCampaignTrackProduct(campaign, item) {
     return item.group === 'B8Shield-special-edition';
 }
 // Complex commission calculation for revenue share campaigns
-function calculateComplexCommission(orderData, affiliate, campaign, vatRate = 0.25) {
+function calculateComplexCommission(orderData, affiliate, campaign, vatRate = app_urls_1.commerceConfig.vatRate) {
     const originalTotal = orderData.total || orderData.subtotal || 0;
     const shipping = orderData.shipping || 0;
     // Step 1: Calculate base product value (after customer discount, excluding shipping)
@@ -254,7 +255,7 @@ function calculateComplexCommission(orderData, affiliate, campaign, vatRate = 0.
     };
 }
 // Update the local calculateCommission function to fix double deduction bug
-function calculateCommission(orderData, affiliate, vatRate = 0.25, campaignRate) {
+function calculateCommission(orderData, affiliate, vatRate = app_urls_1.commerceConfig.vatRate, campaignRate) {
     const orderTotal = orderData.total || orderData.subtotal || 0;
     const shipping = orderData.shipping || 0;
     const discountAmount = orderData.discountAmount || 0; // For reporting only

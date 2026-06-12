@@ -2,6 +2,7 @@
 // Replaces: sendPasswordResetV3, sendPasswordReset
 
 import { onCall } from 'firebase-functions/v2/https';
+import { appUrls } from '../../config/app-urls';
 import { randomBytes } from 'crypto';
 import { EmailOrchestrator } from '../core/EmailOrchestrator';
 import { db } from '../../config/database';
@@ -21,7 +22,7 @@ export const sendPasswordResetEmail = onCall<PasswordResetRequest>(
     region: 'us-central1',
     memory: '256MiB',
     timeoutSeconds: 60,
-    cors: ['https://partner.b8shield.com', 'https://shop.b8shield.com']
+    cors: appUrls.CORS_ORIGINS
   },
   async (request) => {
     try {

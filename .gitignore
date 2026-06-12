@@ -153,3 +153,4 @@ node_modules/
 public/service-account.json
 service-account.json
 functions/merchant-service-account.json
+.gstack/

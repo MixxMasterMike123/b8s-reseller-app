@@ -99,7 +99,7 @@ class EmailService {
      * Send email to admin addresses
      */
     async sendAdminEmail(template, options) {
-        const adminEmails = ['info@jphinnovation.se', 'micke.ohlen@gmail.com'];
+        const adminEmails = config_1.EMAIL_CONFIG.ADMIN_RECIPIENTS;
         return this.sendEmail(template, {
             ...options,
             to: adminEmails.join(', ')

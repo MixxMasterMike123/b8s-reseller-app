@@ -1,16 +1,17 @@
 export declare const EMAIL_CONFIG: {
     readonly URLS: {
-        readonly B2B_PORTAL: "https://partner.b8shield.com";
-        readonly B2C_SHOP: "https://shop.b8shield.com";
-        readonly PARTNER_URL: "https://partner.b8shield.com";
-        readonly B2B_LEGACY: "https://b8shield-reseller-app.web.app";
-        readonly LOGO_URL: "https://partner.b8shield.com/images/B8S_logo.png";
+        readonly B2B_PORTAL: string;
+        readonly B2C_SHOP: string;
+        readonly PARTNER_URL: string;
+        readonly B2B_LEGACY: string;
+        readonly LOGO_URL: string;
     };
     readonly SMTP: {
-        readonly FROM_NAME: "B8Shield";
-        readonly FROM_EMAIL: "b8shield.reseller@gmail.com";
-        readonly REPLY_TO: "info@jphinnovation.se";
+        readonly FROM_NAME: string;
+        readonly FROM_EMAIL: string;
+        readonly REPLY_TO: string;
     };
+    readonly ADMIN_RECIPIENTS: string[];
     readonly TEMPLATES: {
         readonly MAX_WIDTH: "600px";
         readonly BORDER_RADIUS: "8px";

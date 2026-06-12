@@ -13,6 +13,7 @@ import { toast } from 'react-hot-toast';
 import SeoHreflang from '../../components/shop/SeoHreflang';
 import { getCountryAwareUrl } from '../../utils/productUrls';
 import { getEnhancedOrderDistribution, getDisplayColor, getDisplaySize } from '../../utils/orderUtils';
+import { STORE } from '../../config/store';
 
 const OrderConfirmation = () => {
   const { orderId } = useParams();
@@ -354,7 +355,7 @@ const OrderConfirmation = () => {
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">{t('order_confirmation_vat', 'Moms (25%)')}</span>
+                    <span className="text-gray-600">{t('order_confirmation_vat_rate', 'Moms ({{rate}}%)', { rate: Math.round(STORE.vatRate * 100) })}</span>
                     <span className="font-medium">{formatPrice(order.vat)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-lg text-gray-900 pt-3 border-t border-gray-300">

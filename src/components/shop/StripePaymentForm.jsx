@@ -9,6 +9,7 @@ import { getStripe, STRIPE_CONFIG } from '../../utils/stripeClient';
 import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { getCountryAwareUrl } from '../../utils/productUrls';
+import { functionUrl } from '../../config/urls';
 import toast from 'react-hot-toast';
 
 const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentError, clientSecret }) => {
@@ -280,7 +281,7 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, customerLinkage, onPaym
         };
 
         // Create payment intent on server via HTTP
-        const response = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/createPaymentIntentV2', {
+        const response = await fetch(functionUrl('createPaymentIntentV2'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

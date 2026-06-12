@@ -11,6 +11,7 @@ exports.createPaymentIntentV2 = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const firebase_functions_1 = require("firebase-functions");
 const stripe_1 = __importDefault(require("stripe"));
+const app_urls_1 = require("../config/app-urls");
 const cors_handler_1 = require("../protection/cors/cors-handler");
 const database_1 = require("../config/database");
 /**
@@ -78,7 +79,7 @@ async function computeOrderTotalsSek(cartItems, shippingCountry, discountCode) {
     const totalWeight = loaded.reduce((sum, { product, quantity }) => sum + ((product.weight?.value || 10) * quantity), 0) + 20;
     const shipping = baseShippingCost * Math.ceil(totalWeight / 50);
     const total = subtotal - discountAmount + shipping;
-    const vat = total - (total / 1.25);
+    const vat = total - (total / (1 + app_urls_1.commerceConfig.vatRate));
     return { subtotal, discountAmount, discountPercentage, shipping, vat, total, serverPrices };
 }
 exports.createPaymentIntentV2 = (0, https_1.onRequest)({
@@ -122,7 +123,7 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
             response.status(400).json({ error: 'Request body is required' });
             return;
         }
-        const { amount, currency = 'sek', cartItems, customerInfo, shippingInfo, discountInfo, affiliateInfo } = request.body;
+        const { amount, currency = app_urls_1.commerceConfig.currency.toLowerCase(), cartItems, customerInfo, shippingInfo, discountInfo, affiliateInfo } = request.body;
         // Validate required fields
         if (!cartItems || cartItems.length === 0 || cartItems.length > 100) {
             response.status(400).json({ error: 'Cart items are required' });
@@ -132,7 +133,7 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
             response.status(400).json({ error: 'Customer email is required' });
             return;
         }
-        if (currency.toLowerCase() !== 'sek') {
+        if (currency.toLowerCase() !== app_urls_1.commerceConfig.currency.toLowerCase()) {
             // Payments are charged in SEK; other currencies are display-only
             response.status(400).json({ error: 'Unsupported currency' });
             return;
@@ -234,7 +235,7 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
                     version: 'enhanced_v2' // server-priced metadata
                 },
                 receipt_email: customerInfo.email,
-                description: `B8Shield Order - ${cartItems.length} item${cartItems.length > 1 ? 's' : ''}`,
+                description: `${app_urls_1.commerceConfig.shopName} Order - ${cartItems.length} item${cartItems.length > 1 ? 's' : ''}`,
             });
         }
         catch (stripeError) {

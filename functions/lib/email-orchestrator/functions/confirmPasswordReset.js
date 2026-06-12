@@ -4,13 +4,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.confirmPasswordReset = void 0;
 const https_1 = require("firebase-functions/v2/https");
+const app_urls_1 = require("../../config/app-urls");
 const auth_1 = require("firebase-admin/auth");
 const database_1 = require("../../config/database");
 exports.confirmPasswordReset = (0, https_1.onCall)({
     region: 'us-central1',
     memory: '256MiB',
     timeoutSeconds: 60,
-    cors: ['https://partner.b8shield.com', 'https://shop.b8shield.com']
+    cors: app_urls_1.appUrls.CORS_ORIGINS
 }, async (request) => {
     const { resetCode, newPassword } = request.data;
     if (!resetCode || !newPassword) {

@@ -3,6 +3,7 @@
 // Updates Firebase Auth user emailVerified status + B2C customer records
 
 import { onCall } from 'firebase-functions/v2/https';
+import { appUrls } from '../../config/app-urls';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 
@@ -19,7 +20,7 @@ export const verifyEmailCode = onCall<VerifyEmailCodeRequest>(
     region: 'us-central1',
     memory: '256MiB',
     timeoutSeconds: 60,
-    cors: ['https://partner.b8shield.com', 'https://shop.b8shield.com']
+    cors: appUrls.CORS_ORIGINS
   },
   async (request) => {
     try {

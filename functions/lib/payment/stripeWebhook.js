@@ -12,6 +12,7 @@ exports.stripeWebhookV2 = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const firebase_functions_1 = require("firebase-functions");
 const stripe_1 = __importDefault(require("stripe"));
+const app_urls_1 = require("../config/app-urls");
 const firestore_1 = require("firebase-admin/firestore");
 // CORS not needed for webhooks - server-to-server communication
 // Initialize Firestore with named database
@@ -137,7 +138,7 @@ exports.stripeWebhookV2 = (0, https_1.onRequest)({
                 return;
             }
             // Generate order number
-            const orderNumber = `B8S-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+            const orderNumber = `${app_urls_1.commerceConfig.orderNumberPrefix}-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
             // Create order data from Stripe metadata
             // Structure MUST match frontend order creation in Checkout.jsx for consistency
             const orderData = {

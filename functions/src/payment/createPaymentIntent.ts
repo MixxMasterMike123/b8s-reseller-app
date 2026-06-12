@@ -6,6 +6,7 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions';
 import Stripe from 'stripe';
+import { commerceConfig } from '../config/app-urls';
 import { corsHandler } from '../protection/cors/cors-handler';
 import { db } from '../config/database';
 
@@ -83,7 +84,7 @@ async function computeOrderTotalsSek(
   const shipping = baseShippingCost * Math.ceil(totalWeight / 50);
 
   const total = subtotal - discountAmount + shipping;
-  const vat = total - (total / 1.25);
+  const vat = total - (total / (1 + commerceConfig.vatRate));
 
   return { subtotal, discountAmount, discountPercentage, shipping, vat, total, serverPrices };
 }
@@ -193,7 +194,7 @@ export const createPaymentIntentV2 = onRequest(
 
       const {
         amount,
-        currency = 'sek',
+        currency = commerceConfig.currency.toLowerCase(),
         cartItems,
         customerInfo,
         shippingInfo,
@@ -212,7 +213,7 @@ export const createPaymentIntentV2 = onRequest(
         return;
       }
 
-      if (currency.toLowerCase() !== 'sek') {
+      if (currency.toLowerCase() !== commerceConfig.currency.toLowerCase()) {
         // Payments are charged in SEK; other currencies are display-only
         response.status(400).json({ error: 'Unsupported currency' });
         return;
@@ -332,7 +333,7 @@ export const createPaymentIntentV2 = onRequest(
             version: 'enhanced_v2' // server-priced metadata
           },
           receipt_email: customerInfo.email,
-          description: `B8Shield Order - ${cartItems.length} item${cartItems.length > 1 ? 's' : ''}`,
+          description: `${commerceConfig.shopName} Order - ${cartItems.length} item${cartItems.length > 1 ? 's' : ''}`,
         });
       } catch (stripeError: any) {
         logger.error('❌ Stripe Payment Intent creation failed', {

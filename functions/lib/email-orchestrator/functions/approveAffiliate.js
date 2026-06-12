@@ -5,6 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.approveAffiliate = void 0;
 const https_1 = require("firebase-functions/v2/https");
+const app_urls_1 = require("../../config/app-urls");
 const firestore_1 = require("firebase-admin/firestore");
 const auth_1 = require("firebase-admin/auth");
 const EmailOrchestrator_1 = require("../core/EmailOrchestrator");
@@ -32,7 +33,7 @@ exports.approveAffiliate = (0, https_1.onCall)({
     region: 'us-central1',
     memory: '256MiB',
     timeoutSeconds: 120,
-    cors: ['https://partner.b8shield.com', 'https://shop.b8shield.com']
+    cors: app_urls_1.appUrls.CORS_ORIGINS
 }, async (request) => {
     try {
         console.log('🎉 approveAffiliate: Starting unified affiliate approval workflow');

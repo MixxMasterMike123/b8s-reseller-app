@@ -6,6 +6,7 @@ const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const auth_1 = require("firebase-admin/auth");
 const database_1 = require("../config/database");
+const app_urls_1 = require("../config/app-urls");
 // Get Firebase Auth from already initialized app
 const auth = (0, auth_1.getAuth)((0, app_1.getApp)());
 // 🛡️ SECURITY: Shared-secret guard for the createAdminUser bootstrap endpoint.
@@ -396,8 +397,8 @@ exports.createAdminUser = (0, https_1.onRequest)({
         console.log('Creating admin user in named database...');
         // Admin user data based on your login credentials
         const adminUserData = {
-            email: 'micke.ohlen@gmail.com',
-            companyName: 'B8Shield Admin',
+            email: app_urls_1.adminSeedConfig.email,
+            companyName: `${app_urls_1.commerceConfig.shopName} Admin`,
             role: 'admin',
             isActive: true,
             active: true,
