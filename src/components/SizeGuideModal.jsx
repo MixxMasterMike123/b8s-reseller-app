@@ -2,6 +2,7 @@ import React from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from '../contexts/TranslationContext';
 import { useContentTranslation } from '../hooks/useContentTranslation';
+import DOMPurify from 'dompurify';
 
 const SizeGuideModal = ({ isOpen, onClose, groupContent, productName }) => {
   const { t } = useTranslation();
@@ -43,7 +44,7 @@ const SizeGuideModal = ({ isOpen, onClose, groupContent, productName }) => {
             {groupContent?.sizeGuide ? (
               <div 
                 className="prose prose-sm max-w-none text-gray-600"
-                dangerouslySetInnerHTML={{ __html: getContentValue(groupContent.sizeGuide) }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(getContentValue(groupContent.sizeGuide) || '') }}
               />
             ) : (
               <p className="text-gray-500 text-center py-8">

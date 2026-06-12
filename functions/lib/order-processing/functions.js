@@ -1,33 +1,8 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.processB2COrderCompletion = exports.processB2COrderCompletionHttp = void 0;
-const functions = __importStar(require("firebase-functions"));
+exports.processOrderCompletion = exports.processB2COrderCompletionHttp = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const firestore_1 = require("firebase-admin/firestore");
-const app_urls_1 = require("../config/app-urls");
 const rate_limits_1 = require("../config/rate-limits");
 // V3 Email System - imports handled dynamically in functions
 const database_1 = require("../config/database");
@@ -162,7 +137,7 @@ async function processUniversalCampaignRevenue(orderData, db) {
         for (const item of specialEditionItems) {
             const itemRevenue = calculateItemRevenue(item, orderData);
             console.log(`📊 Processing item: ${item.name} (Revenue: ${itemRevenue.campaignEligibleRevenue} SEK)`);
-            campaignsSnap.docs.forEach(async (campaignDoc) => {
+            for (const campaignDoc of campaignsSnap.docs) {
                 const campaign = campaignDoc.data();
                 const campaignId = campaignDoc.id;
                 // Check if campaign applies to this product
@@ -195,7 +170,7 @@ async function processUniversalCampaignRevenue(orderData, db) {
                         trackedAt: firestore_1.FieldValue.serverTimestamp()
                     });
                 }
-            });
+            }
         }
         console.log('📊 Universal campaign revenue tracking completed');
     }
@@ -363,270 +338,8 @@ exports.processB2COrderCompletionHttp = (0, https_1.onRequest)({
             });
             return;
         }
-        console.log(`Processing B2C order completion for orderId: ${orderId}`);
-        const localDb = database_1.db; // Use the correct named database
-        // Initialize commission amount (will be calculated if there's an affiliate)
-        let commissionAmount = 0;
-        // --- Start of Affiliate Conversion Logic ---
-        const orderRef = localDb.collection('orders').doc(orderId);
-        const orderSnap = await orderRef.get();
-        if (!orderSnap.exists) {
-            console.error(`Order ${orderId} not found in b8s-reseller-db.`);
-            res.status(404).json({
-                success: false,
-                error: `Order ${orderId} not found in database`
-            });
-            return;
-        }
-        const orderData = orderSnap.data();
-        // IDEMPOTENCY GUARD: this endpoint is reachable from both the storefront
-        // and the Stripe webhook, and either may retry. Claim the order in a
-        // transaction so emails, customer stats and affiliate commission can
-        // only ever be processed once per order.
-        const claim = await localDb.runTransaction(async (tx) => {
-            const snap = await tx.get(orderRef);
-            if (!snap.exists)
-                return 'missing';
-            if (snap.data()?.completionProcessed || snap.data()?.conversionProcessed)
-                return 'already';
-            tx.update(orderRef, {
-                completionProcessed: true,
-                completionProcessedAt: firestore_1.FieldValue.serverTimestamp()
-            });
-            return 'claimed';
-        });
-        if (claim !== 'claimed') {
-            console.log(`Order ${orderId} already processed (idempotency guard), skipping.`);
-            res.json({ success: true, message: 'Order already processed', alreadyProcessed: true });
-            return;
-        }
-        // DEBUG: Log the actual order data structure to see what items look like
-        console.log('🔍 Order Processing - Full order data:', JSON.stringify(orderData, null, 2));
-        const orderItems = orderData.items;
-        console.log('🔍 Order Processing - Order items:', JSON.stringify(orderItems, null, 2));
-        if (orderItems && orderItems.length > 0) {
-            console.log('🔍 Order Processing - First item details:');
-            console.log('🔍 Order Processing - item.color:', orderItems[0].color);
-            console.log('🔍 Order Processing - item.size:', orderItems[0].size);
-            console.log('🔍 Order Processing - item.name:', orderItems[0].name);
-        }
-        // Handle different affiliate data structures (Stripe vs Mock payments)
-        const affiliateCode = orderData.affiliateCode || orderData.affiliate?.code;
-        const discountCode = orderData.discountCode || orderData.affiliate?.code;
-        const affiliateClickId = orderData.affiliateClickId || orderData.affiliate?.clickId;
-        // --- Update B2C Customer Statistics ---
-        if (orderData.b2cCustomerId && orderData.total) {
-            console.log(`Updating B2C customer stats for customer: ${orderData.b2cCustomerId}`);
-            try {
-                const customerRef = localDb.collection('b2cCustomers').doc(orderData.b2cCustomerId);
-                await customerRef.update({
-                    'stats.totalOrders': firestore_1.FieldValue.increment(1),
-                    'stats.totalSpent': firestore_1.FieldValue.increment(orderData.total),
-                    'stats.lastOrderDate': firestore_1.FieldValue.serverTimestamp(),
-                    'updatedAt': firestore_1.FieldValue.serverTimestamp()
-                });
-                console.log(`Successfully updated customer stats for ${orderData.b2cCustomerId}`);
-            }
-            catch (customerError) {
-                console.error(`Error updating customer stats:`, customerError);
-                // Don't fail the whole process if customer stats update fails
-            }
-        }
-        // --- Send B2C Order Confirmation Emails ---
-        console.log(`Sending B2C order confirmation emails for order ${orderId}`);
-        try {
-            const customerEmail = orderData.customerInfo?.email;
-            // customerLang removed - V3 functions handle language detection automatically
-            if (customerEmail) {
-                // Send customer confirmation email using orchestrator system
-                console.log(`Sending customer confirmation email to ${customerEmail} using orchestrator system`);
-                try {
-                    // Call orchestrator customer email function
-                    const { EmailOrchestrator } = require('../email-orchestrator/core/EmailOrchestrator');
-                    const orchestrator = new EmailOrchestrator();
-                    await orchestrator.sendEmail({
-                        emailType: 'ORDER_CONFIRMATION',
-                        customerInfo: orderData.customerInfo,
-                        orderId: orderId,
-                        source: 'b2c',
-                        language: orderData.customerInfo?.preferredLang || 'sv-SE',
-                        orderData: orderData
-                    });
-                    console.log(`✅ Orchestrator Customer confirmation email sent to ${customerEmail}`);
-                }
-                catch (customerEmailError) {
-                    console.error(`❌ Orchestrator Customer email failed for ${customerEmail}:`, customerEmailError);
-                }
-                try {
-                    // Send admin notification email using orchestrator system
-                    console.log('Sending admin notification email using orchestrator system');
-                    const { EmailOrchestrator } = require('../email-orchestrator/core/EmailOrchestrator');
-                    const orchestrator = new EmailOrchestrator();
-                    await orchestrator.sendEmail({
-                        emailType: 'ORDER_NOTIFICATION_ADMIN',
-                        customerInfo: orderData.customerInfo,
-                        orderId: orderId,
-                        source: 'b2c',
-                        language: 'sv-SE',
-                        orderData: orderData,
-                        adminEmail: true
-                    });
-                    console.log(`✅ Orchestrator Admin notification email sent for order ${orderData.orderNumber}`);
-                }
-                catch (adminEmailError) {
-                    console.error(`❌ Orchestrator Admin email failed for order ${orderId}:`, adminEmailError);
-                }
-            }
-            else {
-                console.warn(`No customer email found for order ${orderId}, skipping customer confirmation`);
-            }
-        }
-        catch (emailError) {
-            console.error(`Error sending B2C order emails for order ${orderId}:`, emailError);
-            // Don't fail the whole process if emails fail - log error and continue
-        }
-        // --- Universal Campaign Revenue Tracking (ALWAYS runs) ---
-        // Track revenue for special campaigns regardless of affiliate attribution
-        console.log('🎯 Processing universal campaign revenue tracking...');
-        await processUniversalCampaignRevenue(orderData, localDb);
-        let commissionProcessed = false;
-        if (!affiliateCode) {
-            console.log('No affiliate code found for order, skipping commission.');
-            commissionProcessed = false;
-        }
-        else {
-            // Get affiliate details
-            const affiliateSnap = await localDb
-                .collection('affiliates')
-                .where('affiliateCode', '==', affiliateCode)
-                .where('status', '==', 'active')
-                .limit(1)
-                .get();
-            if (affiliateSnap.empty) {
-                console.error(`No active affiliate found for code: ${affiliateCode}`);
-                res.json({ success: true, message: 'Order processed (invalid affiliate)' });
-                return;
-            }
-            const affiliateDoc = affiliateSnap.docs[0];
-            const affiliate = affiliateDoc.data();
-            // Check for active campaigns that might affect this order
-            console.log('Checking for active campaigns...');
-            const campaignsRef = localDb.collection('campaigns');
-            const activeCampaignsQuery = campaignsRef.where('status', '==', 'active');
-            const activeCampaignsSnap = await activeCampaignsQuery.get();
-            let matchingCampaign = null;
-            let campaignShare = 0;
-            if (!activeCampaignsSnap.empty) {
-                // Import campaign utilities (we'll need to make this available in functions)
-                for (const campaignDoc of activeCampaignsSnap.docs) {
-                    const campaign = campaignDoc.data();
-                    // Check if this campaign matches the order
-                    const isMatch = checkCampaignMatch(orderData, campaign, affiliateDoc.id, affiliateCode);
-                    if (isMatch) {
-                        matchingCampaign = { id: campaignDoc.id, ...campaign };
-                        console.log(`Found matching campaign: ${campaign.name?.['sv-SE'] || 'Unknown Campaign'}`);
-                        break;
-                    }
-                }
-            }
-            // Calculate commission (standard or campaign-enhanced)
-            let commissionBreakdown;
-            if (matchingCampaign && matchingCampaign.isRevenueShare) {
-                // Use complex commission calculation for revenue share campaigns
-                commissionBreakdown = calculateComplexCommission(orderData, affiliate, matchingCampaign);
-                commissionAmount = commissionBreakdown.affiliateCommission;
-                campaignShare = commissionBreakdown.campaignShare;
-                console.log(`Complex commission calculation for campaign "${matchingCampaign.name?.['sv-SE']}":
-          - Affiliate (${affiliateCode}): ${commissionAmount} SEK
-          - Campaign share: ${campaignShare} SEK
-          - Company share: ${commissionBreakdown.companyShare} SEK`);
-            }
-            else {
-                // Standard commission calculation
-                const result = calculateCommission(orderData, affiliate);
-                commissionAmount = result.commission;
-                console.log(`Standard commission calculation for order ${orderId}: ${orderData.total} * ${affiliate.commissionRate}% = ${commissionAmount}`);
-            }
-            // Update affiliate stats
-            console.log(`Updating affiliate stats for ${affiliateDoc.id}`);
-            await affiliateDoc.ref.update({
-                'stats.conversions': firestore_1.FieldValue.increment(1),
-                'stats.totalEarnings': firestore_1.FieldValue.increment(commissionAmount),
-                'stats.balance': firestore_1.FieldValue.increment(commissionAmount)
-            });
-            // Update the order with commission information (CRITICAL FIX)
-            console.log(`Updating order ${orderId} with commission ${commissionAmount}`);
-            const orderUpdateData = {
-                affiliateCommission: commissionAmount,
-                affiliateId: affiliateDoc.id,
-                conversionProcessed: true,
-                conversionProcessedAt: firestore_1.FieldValue.serverTimestamp()
-            };
-            // Add campaign information if applicable
-            if (matchingCampaign) {
-                orderUpdateData.campaignId = matchingCampaign.id;
-                orderUpdateData.campaignName = matchingCampaign.name?.['sv-SE'] || 'Unknown Campaign';
-                if (campaignShare > 0) {
-                    orderUpdateData.campaignShare = campaignShare;
-                    orderUpdateData.campaignCommissionBreakdown = commissionBreakdown;
-                }
-            }
-            await orderRef.update(orderUpdateData);
-            console.log(`Successfully updated order ${orderId} with commission data`);
-            // Update campaign statistics if applicable
-            if (matchingCampaign && campaignShare > 0) {
-                console.log(`Updating campaign stats for ${matchingCampaign.id}`);
-                const campaignRef = localDb.collection('campaigns').doc(matchingCampaign.id);
-                await campaignRef.update({
-                    totalConversions: firestore_1.FieldValue.increment(1),
-                    totalRevenue: firestore_1.FieldValue.increment(orderData.total || 0)
-                });
-                // Create campaign participation record for tracking
-                await localDb.collection('campaignParticipants').add({
-                    campaignId: matchingCampaign.id,
-                    orderId: orderId,
-                    affiliateId: affiliateDoc.id,
-                    affiliateCode: affiliateCode,
-                    campaignShare: campaignShare,
-                    orderTotal: orderData.total || 0,
-                    participatedAt: firestore_1.FieldValue.serverTimestamp()
-                });
-            }
-            // Update the click to mark conversion
-            if (affiliateClickId) {
-                console.log(`Updating affiliate click ${affiliateClickId}`);
-                await localDb
-                    .collection('affiliateClicks')
-                    .doc(affiliateClickId)
-                    .update({
-                    converted: true,
-                    orderId: orderId,
-                    commissionAmount: commissionAmount
-                });
-            }
-            // Determine attribution method for analytics
-            let attributionMethod = null;
-            if (affiliateClickId) {
-                attributionMethod = 'server';
-            }
-            else if (affiliateCode) {
-                attributionMethod = 'cookie';
-            }
-            else if (discountCode) {
-                attributionMethod = 'discount';
-            }
-            if (attributionMethod) {
-                await orderRef.update({ attributionMethod });
-            }
-            console.log(`Successfully processed affiliate commission for order ${orderId}`);
-            commissionProcessed = true;
-        }
-        // Send final response
-        res.json({
-            success: true,
-            message: commissionProcessed ? 'Order processed with affiliate commission' : 'Order processed (no affiliate)',
-            commission: commissionAmount
-        });
+        const result = await processOrderCompletion(orderId);
+        res.status(result.statusCode).json(result.body);
     }
     catch (error) {
         console.error('Error processing B2C order completion:', error);
@@ -637,143 +350,280 @@ exports.processB2COrderCompletionHttp = (0, https_1.onRequest)({
     }
 });
 /**
- * [V2] Callable function for B2C order completion with affiliate processing
+ * Core order-completion logic shared by the HTTP endpoint and the Stripe
+ * webhook (called directly, no mock req/res). Idempotent: the order is
+ * claimed in a transaction before any side effects (emails, customer stats,
+ * affiliate commission) run.
  */
-exports.processB2COrderCompletion = (0, https_1.onCall)({
-    timeoutSeconds: 60,
-    memory: '256MiB',
-    region: 'us-central1'
-}, async (request) => {
-    // Validate request origin
-    const allowedOrigins = [
-        'https://shop.b8shield.com',
-        app_urls_1.appUrls.B2B_PORTAL,
-        'http://localhost:5173' // For local development
-    ];
-    const origin = request.data.origin || request.rawRequest?.headers?.origin || '';
-    if (!allowedOrigins.includes(origin)) {
-        throw new functions.https.HttpsError('permission-denied', 'Origin not allowed');
-    }
-    const { orderId } = request.data;
-    if (!orderId) {
-        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with an "orderId".');
-    }
+async function processOrderCompletion(orderId) {
     console.log(`Processing B2C order completion for orderId: ${orderId}`);
     const localDb = database_1.db; // Use the correct named database
-    try {
-        // --- Start of Affiliate Conversion Logic ---
-        const orderRef = localDb.collection('orders').doc(orderId);
-        const orderSnap = await orderRef.get();
-        if (!orderSnap.exists) {
-            console.error(`Order ${orderId} not found in b8s-reseller-db.`);
-            return { success: false, error: `Order ${orderId} not found in database` };
+    // Initialize commission amount (will be calculated if there's an affiliate)
+    let commissionAmount = 0;
+    // --- Start of Affiliate Conversion Logic ---
+    const orderRef = localDb.collection('orders').doc(orderId);
+    const orderSnap = await orderRef.get();
+    if (!orderSnap.exists) {
+        console.error(`Order ${orderId} not found in b8s-reseller-db.`);
+        return { statusCode: 404, body: {
+                success: false,
+                error: `Order ${orderId} not found in database`
+            } };
+    }
+    const orderData = orderSnap.data();
+    // IDEMPOTENCY GUARD: this endpoint is reachable from both the storefront
+    // and the Stripe webhook, and either may retry. Claim the order in a
+    // transaction so emails, customer stats and affiliate commission can
+    // only ever be processed once per order.
+    const claim = await localDb.runTransaction(async (tx) => {
+        const snap = await tx.get(orderRef);
+        if (!snap.exists)
+            return 'missing';
+        if (snap.data()?.completionProcessed || snap.data()?.conversionProcessed)
+            return 'already';
+        tx.update(orderRef, {
+            completionProcessed: true,
+            completionProcessedAt: firestore_1.FieldValue.serverTimestamp()
+        });
+        return 'claimed';
+    });
+    if (claim !== 'claimed') {
+        console.log(`Order ${orderId} already processed (idempotency guard), skipping.`);
+        return { statusCode: 200, body: { success: true, message: 'Order already processed', alreadyProcessed: true } };
+    }
+    // DEBUG: Log the actual order data structure to see what items look like
+    console.log('🔍 Order Processing - Full order data:', JSON.stringify(orderData, null, 2));
+    const orderItems = orderData.items;
+    console.log('🔍 Order Processing - Order items:', JSON.stringify(orderItems, null, 2));
+    if (orderItems && orderItems.length > 0) {
+        console.log('🔍 Order Processing - First item details:');
+        console.log('🔍 Order Processing - item.color:', orderItems[0].color);
+        console.log('🔍 Order Processing - item.size:', orderItems[0].size);
+        console.log('🔍 Order Processing - item.name:', orderItems[0].name);
+    }
+    // Handle different affiliate data structures (Stripe vs Mock payments)
+    const affiliateCode = orderData.affiliateCode || orderData.affiliate?.code;
+    const discountCode = orderData.discountCode || orderData.affiliate?.code;
+    const affiliateClickId = orderData.affiliateClickId || orderData.affiliate?.clickId;
+    // --- Update B2C Customer Statistics ---
+    if (orderData.b2cCustomerId && orderData.total) {
+        console.log(`Updating B2C customer stats for customer: ${orderData.b2cCustomerId}`);
+        try {
+            const customerRef = localDb.collection('b2cCustomers').doc(orderData.b2cCustomerId);
+            await customerRef.update({
+                'stats.totalOrders': firestore_1.FieldValue.increment(1),
+                'stats.totalSpent': firestore_1.FieldValue.increment(orderData.total),
+                'stats.lastOrderDate': firestore_1.FieldValue.serverTimestamp(),
+                'updatedAt': firestore_1.FieldValue.serverTimestamp()
+            });
+            console.log(`Successfully updated customer stats for ${orderData.b2cCustomerId}`);
         }
-        const orderData = orderSnap.data();
-        // Handle different affiliate data structures (Stripe vs Mock payments)
-        const affiliateCode = orderData.affiliateCode || orderData.affiliate?.code;
-        console.log(`Processing order ${orderId}. Affiliate code: ${affiliateCode || 'none'}`);
-        if (affiliateCode) {
-            console.log(`Processing conversion for order ${orderId} with affiliate code: ${affiliateCode}`);
-            // Find the affiliate by code
-            const affiliatesRef = localDb.collection('affiliates');
-            const q = affiliatesRef.where('affiliateCode', '==', affiliateCode).where('status', '==', 'active');
-            const affiliateSnapshot = await q.get();
-            if (affiliateSnapshot.empty) {
-                console.error(`No active affiliate found for code: ${affiliateCode}`);
-                return { success: false, error: `No active affiliate found for code: ${affiliateCode}` };
+        catch (customerError) {
+            console.error(`Error updating customer stats:`, customerError);
+            // Don't fail the whole process if customer stats update fails
+        }
+    }
+    // --- Send B2C Order Confirmation Emails ---
+    console.log(`Sending B2C order confirmation emails for order ${orderId}`);
+    try {
+        const customerEmail = orderData.customerInfo?.email;
+        // customerLang removed - V3 functions handle language detection automatically
+        if (customerEmail) {
+            // Send customer confirmation email using orchestrator system
+            console.log(`Sending customer confirmation email to ${customerEmail} using orchestrator system`);
+            try {
+                // Call orchestrator customer email function
+                const { EmailOrchestrator } = require('../email-orchestrator/core/EmailOrchestrator');
+                const orchestrator = new EmailOrchestrator();
+                await orchestrator.sendEmail({
+                    emailType: 'ORDER_CONFIRMATION',
+                    customerInfo: orderData.customerInfo,
+                    orderId: orderId,
+                    source: 'b2c',
+                    language: orderData.customerInfo?.preferredLang || 'sv-SE',
+                    orderData: orderData
+                });
+                console.log(`✅ Orchestrator Customer confirmation email sent to ${customerEmail}`);
             }
-            const affiliateDoc = affiliateSnapshot.docs[0];
-            const affiliate = affiliateDoc.data();
-            const affiliateId = affiliateDoc.id;
-            console.log(`Found affiliate: ${affiliate.name} (ID: ${affiliateId})`);
-            // Calculate commission using unified function
-            const { commission: commissionAmount } = calculateCommission(orderData, affiliate);
-            console.log(`Commission calculation: ${orderData.subtotal} * ${affiliate.commissionRate}% = ${commissionAmount}`);
-            if (commissionAmount > 0) {
-                try {
-                    // Update affiliate stats in a transaction
-                    await localDb.runTransaction(async (transaction) => {
-                        const affiliateRef = localDb.collection('affiliates').doc(affiliateId);
-                        const currentAffiliateDoc = await transaction.get(affiliateRef);
-                        if (!currentAffiliateDoc.exists) {
-                            throw new Error("Affiliate not found during transaction.");
-                        }
-                        const currentStats = currentAffiliateDoc.data().stats || {};
-                        const newStats = {
-                            conversions: (currentStats.conversions || 0) + 1,
-                            totalEarnings: (currentStats.totalEarnings || 0) + commissionAmount,
-                            balance: (currentStats.balance || 0) + commissionAmount,
-                            clicks: currentStats.clicks || 0,
-                        };
-                        console.log(`Updating affiliate stats:`, newStats);
-                        transaction.update(affiliateRef, { stats: newStats });
-                    });
-                    // Update the order with commission information
-                    await orderRef.update({
-                        affiliateCommission: commissionAmount,
-                        affiliateId: affiliateId,
-                        conversionProcessed: true,
-                        conversionProcessedAt: firestore_1.FieldValue.serverTimestamp()
-                    });
-                    console.log(`Successfully updated stats and order for affiliate ${affiliateId}.`);
-                    // Try to mark corresponding click as converted
-                    // Since we don't have clickId in order, find the most recent click by this affiliate
-                    try {
-                        const clicksRef = localDb.collection('affiliateClicks');
-                        const recentClicksQuery = clicksRef
-                            .where('affiliateCode', '==', affiliateCode)
-                            .where('converted', '==', false)
-                            .orderBy('timestamp', 'desc')
-                            .limit(1);
-                        const recentClicksSnapshot = await recentClicksQuery.get();
-                        if (!recentClicksSnapshot.empty) {
-                            const clickDoc = recentClicksSnapshot.docs[0];
-                            await clickDoc.ref.update({
-                                converted: true,
-                                orderId: orderId,
-                                commissionAmount: commissionAmount,
-                                convertedAt: firestore_1.FieldValue.serverTimestamp()
-                            });
-                            console.log(`Click document ${clickDoc.id} marked as converted.`);
-                        }
-                        else {
-                            console.log(`No unconverted clicks found for affiliate code ${affiliateCode}`);
-                        }
-                    }
-                    catch (clickError) {
-                        console.error(`Error updating click record:`, clickError);
-                        // Don't fail the whole process if click update fails
-                    }
-                    return {
-                        success: true,
-                        message: `Processed order ${orderId}`,
-                        affiliateCommission: commissionAmount,
-                        affiliateId: affiliateId
-                    };
-                }
-                catch (error) {
-                    console.error(`Failed to process conversion transaction for order ${orderId}. Error:`, error);
-                    return {
-                        success: false,
-                        error: `Transaction failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-                    };
-                }
+            catch (customerEmailError) {
+                console.error(`❌ Orchestrator Customer email failed for ${customerEmail}:`, customerEmailError);
             }
-            console.log(`Commission amount is 0 for order ${orderId}, skipping affiliate processing`);
-            return { success: true, message: `Order ${orderId} processed, but no commission (amount: ${commissionAmount})` };
+            try {
+                // Send admin notification email using orchestrator system
+                console.log('Sending admin notification email using orchestrator system');
+                const { EmailOrchestrator } = require('../email-orchestrator/core/EmailOrchestrator');
+                const orchestrator = new EmailOrchestrator();
+                await orchestrator.sendEmail({
+                    emailType: 'ORDER_NOTIFICATION_ADMIN',
+                    customerInfo: orderData.customerInfo,
+                    orderId: orderId,
+                    source: 'b2c',
+                    language: 'sv-SE',
+                    orderData: orderData,
+                    adminEmail: true
+                });
+                console.log(`✅ Orchestrator Admin notification email sent for order ${orderData.orderNumber}`);
+            }
+            catch (adminEmailError) {
+                console.error(`❌ Orchestrator Admin email failed for order ${orderId}:`, adminEmailError);
+            }
         }
         else {
-            console.log(`No affiliate code found for order ${orderId}`);
-            return { success: true, message: `Order ${orderId} processed (no affiliate)` };
+            console.warn(`No customer email found for order ${orderId}, skipping customer confirmation`);
         }
-        // --- End of Affiliate Conversion Logic ---
     }
-    catch (error) {
-        console.error(`Error processing order completion for ${orderId}:`, error);
-        return {
-            success: false,
-            error: `Processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    catch (emailError) {
+        console.error(`Error sending B2C order emails for order ${orderId}:`, emailError);
+        // Don't fail the whole process if emails fail - log error and continue
+    }
+    // --- Universal Campaign Revenue Tracking (ALWAYS runs) ---
+    // Track revenue for special campaigns regardless of affiliate attribution
+    console.log('🎯 Processing universal campaign revenue tracking...');
+    await processUniversalCampaignRevenue(orderData, localDb);
+    let commissionProcessed = false;
+    if (!affiliateCode) {
+        console.log('No affiliate code found for order, skipping commission.');
+        commissionProcessed = false;
+    }
+    else {
+        // Get affiliate details
+        const affiliateSnap = await localDb
+            .collection('affiliates')
+            .where('affiliateCode', '==', affiliateCode)
+            .where('status', '==', 'active')
+            .limit(1)
+            .get();
+        if (affiliateSnap.empty) {
+            console.error(`No active affiliate found for code: ${affiliateCode}`);
+            return { statusCode: 200, body: { success: true, message: 'Order processed (invalid affiliate)' } };
+        }
+        const affiliateDoc = affiliateSnap.docs[0];
+        const affiliate = affiliateDoc.data();
+        // FRAUD GUARD: an affiliate earns no commission on their own purchases
+        const customerEmail = (orderData.customerInfo?.email || '').toLowerCase();
+        const affiliateEmail = (affiliate.email || '').toLowerCase();
+        if (customerEmail && affiliateEmail && customerEmail === affiliateEmail) {
+            console.warn(`Self-referral blocked: affiliate ${affiliateCode} purchased with own code (order ${orderId})`);
+            await orderRef.update({ affiliateSelfReferralBlocked: true });
+            return { statusCode: 200, body: { success: true, message: 'Order processed (self-referral, no commission)' } };
+        }
+        // Check for active campaigns that might affect this order
+        console.log('Checking for active campaigns...');
+        const campaignsRef = localDb.collection('campaigns');
+        const activeCampaignsQuery = campaignsRef.where('status', '==', 'active');
+        const activeCampaignsSnap = await activeCampaignsQuery.get();
+        let matchingCampaign = null;
+        let campaignShare = 0;
+        if (!activeCampaignsSnap.empty) {
+            // Import campaign utilities (we'll need to make this available in functions)
+            for (const campaignDoc of activeCampaignsSnap.docs) {
+                const campaign = campaignDoc.data();
+                // Check if this campaign matches the order
+                const isMatch = checkCampaignMatch(orderData, campaign, affiliateDoc.id, affiliateCode);
+                if (isMatch) {
+                    matchingCampaign = { id: campaignDoc.id, ...campaign };
+                    console.log(`Found matching campaign: ${campaign.name?.['sv-SE'] || 'Unknown Campaign'}`);
+                    break;
+                }
+            }
+        }
+        // Calculate commission (standard or campaign-enhanced)
+        let commissionBreakdown;
+        if (matchingCampaign && matchingCampaign.isRevenueShare) {
+            // Use complex commission calculation for revenue share campaigns
+            commissionBreakdown = calculateComplexCommission(orderData, affiliate, matchingCampaign);
+            commissionAmount = commissionBreakdown.affiliateCommission;
+            campaignShare = commissionBreakdown.campaignShare;
+            console.log(`Complex commission calculation for campaign "${matchingCampaign.name?.['sv-SE']}":
+          - Affiliate (${affiliateCode}): ${commissionAmount} SEK
+          - Campaign share: ${campaignShare} SEK
+          - Company share: ${commissionBreakdown.companyShare} SEK`);
+        }
+        else {
+            // Standard commission calculation
+            const result = calculateCommission(orderData, affiliate);
+            commissionAmount = result.commission;
+            console.log(`Standard commission calculation for order ${orderId}: ${orderData.total} * ${affiliate.commissionRate}% = ${commissionAmount}`);
+        }
+        // Update affiliate stats
+        console.log(`Updating affiliate stats for ${affiliateDoc.id}`);
+        await affiliateDoc.ref.update({
+            'stats.conversions': firestore_1.FieldValue.increment(1),
+            'stats.totalEarnings': firestore_1.FieldValue.increment(commissionAmount),
+            'stats.balance': firestore_1.FieldValue.increment(commissionAmount)
+        });
+        // Update the order with commission information (CRITICAL FIX)
+        console.log(`Updating order ${orderId} with commission ${commissionAmount}`);
+        const orderUpdateData = {
+            affiliateCommission: commissionAmount,
+            affiliateId: affiliateDoc.id,
+            conversionProcessed: true,
+            conversionProcessedAt: firestore_1.FieldValue.serverTimestamp()
         };
+        // Add campaign information if applicable
+        if (matchingCampaign) {
+            orderUpdateData.campaignId = matchingCampaign.id;
+            orderUpdateData.campaignName = matchingCampaign.name?.['sv-SE'] || 'Unknown Campaign';
+            if (campaignShare > 0) {
+                orderUpdateData.campaignShare = campaignShare;
+                orderUpdateData.campaignCommissionBreakdown = commissionBreakdown;
+            }
+        }
+        await orderRef.update(orderUpdateData);
+        console.log(`Successfully updated order ${orderId} with commission data`);
+        // Update campaign statistics if applicable
+        if (matchingCampaign && campaignShare > 0) {
+            console.log(`Updating campaign stats for ${matchingCampaign.id}`);
+            const campaignRef = localDb.collection('campaigns').doc(matchingCampaign.id);
+            await campaignRef.update({
+                totalConversions: firestore_1.FieldValue.increment(1),
+                totalRevenue: firestore_1.FieldValue.increment(orderData.total || 0)
+            });
+            // Create campaign participation record for tracking
+            await localDb.collection('campaignParticipants').add({
+                campaignId: matchingCampaign.id,
+                orderId: orderId,
+                affiliateId: affiliateDoc.id,
+                affiliateCode: affiliateCode,
+                campaignShare: campaignShare,
+                orderTotal: orderData.total || 0,
+                participatedAt: firestore_1.FieldValue.serverTimestamp()
+            });
+        }
+        // Update the click to mark conversion
+        if (affiliateClickId) {
+            console.log(`Updating affiliate click ${affiliateClickId}`);
+            await localDb
+                .collection('affiliateClicks')
+                .doc(affiliateClickId)
+                .update({
+                converted: true,
+                orderId: orderId,
+                commissionAmount: commissionAmount
+            });
+        }
+        // Determine attribution method for analytics
+        let attributionMethod = null;
+        if (affiliateClickId) {
+            attributionMethod = 'server';
+        }
+        else if (affiliateCode) {
+            attributionMethod = 'cookie';
+        }
+        else if (discountCode) {
+            attributionMethod = 'discount';
+        }
+        if (attributionMethod) {
+            await orderRef.update({ attributionMethod });
+        }
+        console.log(`Successfully processed affiliate commission for order ${orderId}`);
+        commissionProcessed = true;
     }
-});
+    return { statusCode: 200, body: {
+            success: true,
+            message: commissionProcessed ? 'Order processed with affiliate commission' : 'Order processed (no affiliate)',
+            commission: commissionAmount
+        } };
+}
+exports.processOrderCompletion = processOrderCompletion;
 //# sourceMappingURL=functions.js.map

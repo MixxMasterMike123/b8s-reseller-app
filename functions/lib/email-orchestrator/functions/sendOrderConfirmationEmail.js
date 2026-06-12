@@ -5,6 +5,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendOrderConfirmationEmail = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const EmailOrchestrator_1 = require("../core/EmailOrchestrator");
+const authGuard_1 = require("./authGuard");
 exports.sendOrderConfirmationEmail = (0, https_1.onCall)({
     region: 'us-central1',
     memory: '256MiB',
@@ -12,6 +13,8 @@ exports.sendOrderConfirmationEmail = (0, https_1.onCall)({
     cors: ['https://partner.b8shield.com', 'https://shop.b8shield.com']
 }, async (request) => {
     try {
+        // SECURITY: privileged mailer - admin only
+        await (0, authGuard_1.requireAdmin)(request.auth?.uid);
         console.log('📧 sendOrderConfirmationEmail: Starting unified order confirmation');
         console.log('📧 Request data:', {
             orderNumber: request.data.orderData.orderNumber,

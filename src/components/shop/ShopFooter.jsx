@@ -8,6 +8,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 // 🇸🇪 SE-ONLY LAUNCH: hidden with its usage below. Re-enable for internationalization.
 // import LanguageCurrencySelector from './LanguageCurrencySelector';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
+import DOMPurify from 'dompurify';
 
 // Generic platform icons (brand-neutral logos). A link renders only when the
 // matching URL is set in store.social, so the set adapts per shop.
@@ -73,7 +74,7 @@ const ShopFooter = () => {
             )}
             {store.address && (
               <div className="text-gray-400 text-sm" dangerouslySetInnerHTML={{
-                __html: store.address
+                __html: DOMPurify.sanitize(store.address || '')
               }} />
             )}
           </div>

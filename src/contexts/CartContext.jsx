@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { db } from '../firebase/config';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { calculateCommission, normalizeAffiliateCode } from '../utils/affiliateCalculations';
+import { httpsCallable, getFunctions } from 'firebase/functions';
+import { normalizeAffiliateCode } from '../utils/affiliateCalculations';
 import { getProductImage } from '../utils/productImages';
 
 // Shipping cost constants
@@ -312,18 +311,17 @@ export const CartProvider = ({ children }) => {
     }
 
     try {
-      const affiliatesRef = collection(db, 'affiliates');
-      const affiliateQuery = query(affiliatesRef, where("affiliateCode", "==", normalizedCode), where("status", "==", "active"));
-      const querySnapshot = await getDocs(affiliateQuery);
+      // Validate server-side: anonymous visitors must not read affiliate
+      // docs directly (they contain PII and earnings data)
+      const validate = httpsCallable(getFunctions(), 'validateDiscountCode');
+      const { data: validation } = await validate({ code: normalizedCode });
 
-      if (querySnapshot.empty) {
+      if (!validation?.valid) {
         setCart(prev => ({ ...prev, discountCode: null, discountAmount: 0, discountPercentage: 0, affiliateClickId: null, discountSource: null }));
         return { success: false, message: 'Ogiltig rabattkod.' };
       }
 
-      const affiliateDoc = querySnapshot.docs[0];
-      const affiliateData = affiliateDoc.data();
-      const discountPercentage = affiliateData.checkoutDiscount || 0;
+      const discountPercentage = validation.checkoutDiscount || 0;
       
       const subtotal = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const discountValue = subtotal * (discountPercentage / 100);
@@ -507,14 +505,6 @@ export const CartProvider = ({ children }) => {
     });
   };
 
-  const previewCommission = (affiliateRate = 15) => {
-    const totals = calculateTotals();
-    const mockOrder = { subtotal: totals.subtotal, discountAmount: totals.discountAmount, shipping: totals.shipping };
-    const mockAffiliate = { commissionRate: affiliateRate };
-    const { commission } = calculateCommission(mockOrder, mockAffiliate);
-    return commission;
-  };
-
   const value = {
     cart,
     addToCart,
@@ -532,8 +522,7 @@ export const CartProvider = ({ children }) => {
     isAddedToCartModalVisible,
     showAddedToCartModal,
     hideAddedToCartModal,
-    lastAddedItem,
-    previewCommission
+    lastAddedItem
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

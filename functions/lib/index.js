@@ -2,7 +2,7 @@
 // V2 FUNCTIONS BATCH 4 - Direct imports to avoid circular dependencies
 // EMAIL ORCHESTRATOR SYSTEM - Unified email functions
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.confirmPasswordReset = exports.confirmPasswordResetV2 = exports.scrapeWebsiteMetaV2 = exports.stripeWebhookV2 = exports.createPaymentIntentV2 = exports.createAdminUserV2 = exports.toggleCustomerActiveStatusV2 = exports.deleteB2CCustomerAccountV2 = exports.deleteCustomerAccountV2 = exports.getGeoDataV2 = exports.processB2COrderCompletionV2 = exports.processB2COrderCompletionHttpV2 = exports.processAffiliateConversionV2 = exports.logAffiliateClickHttpV2 = exports.logAffiliateClickV2 = exports.sendAffiliateApplicationEmails = exports.verifyEmailCode = exports.sendCustomEmailVerification = exports.sendEmailVerification = exports.approveAffiliate = exports.sendAffiliateWelcomeEmail = exports.sendLoginCredentialsEmail = exports.sendPasswordResetEmail = exports.sendOrderNotificationAdmin = exports.sendOrderStatusUpdateEmail = exports.sendOrderConfirmationEmail = void 0;
+exports.confirmPasswordReset = exports.confirmPasswordResetV2 = exports.scrapeWebsiteMetaV2 = exports.stripeWebhookV2 = exports.createPaymentIntentV2 = exports.syncAdminClaims = exports.createAdminUserV2 = exports.toggleCustomerActiveStatusV2 = exports.deleteB2CCustomerAccountV2 = exports.deleteCustomerAccountV2 = exports.getGeoDataV2 = exports.reverseAffiliateCommissionOnCancel = exports.processB2COrderCompletionHttpV2 = exports.validateDiscountCode = exports.logAffiliateClickV2 = exports.sendAffiliateApplicationEmails = exports.verifyEmailCode = exports.sendCustomEmailVerification = exports.sendEmailVerification = exports.approveAffiliate = exports.sendAffiliateWelcomeEmail = exports.sendLoginCredentialsEmail = exports.sendPasswordResetEmail = exports.sendOrderNotificationAdmin = exports.sendOrderStatusUpdateEmail = exports.sendOrderConfirmationEmail = void 0;
 // Initialize Firebase Admin SDK
 const app_1 = require("firebase-admin/app");
 (0, app_1.initializeApp)();
@@ -26,10 +26,11 @@ Object.defineProperty(exports, "confirmPasswordReset", { enumerable: true, get: 
 // Import affiliate functions directly (avoiding export * circular imports)
 const logAffiliateClick_1 = require("./affiliate/callable/logAffiliateClick");
 Object.defineProperty(exports, "logAffiliateClickV2", { enumerable: true, get: function () { return logAffiliateClick_1.logAffiliateClickV2; } });
-const logAffiliateClickHttp_1 = require("./affiliate/http/logAffiliateClickHttp");
-Object.defineProperty(exports, "logAffiliateClickHttpV2", { enumerable: true, get: function () { return logAffiliateClickHttp_1.logAffiliateClickHttpV2; } });
-const processAffiliateConversion_1 = require("./affiliate/triggers/processAffiliateConversion");
-Object.defineProperty(exports, "processAffiliateConversionV2", { enumerable: true, get: function () { return processAffiliateConversion_1.processAffiliateConversionV2; } });
+const validateDiscountCode_1 = require("./affiliate/callable/validateDiscountCode");
+Object.defineProperty(exports, "validateDiscountCode", { enumerable: true, get: function () { return validateDiscountCode_1.validateDiscountCode; } });
+// logAffiliateClickHttpV2 removed: unauthenticated CORS-* endpoint allowed
+// anyone to inflate any affiliate's click stats; the SPA uses the callable.
+// processAffiliateConversionV2 removed: deprecated no-op trigger.
 // Debug functions removed - found the real issue
 // LEGACY EMAIL FUNCTIONS DISABLED - ALL EMAIL NOW USES V3 SYSTEM WITH GMAIL SMTP
 // import { 
@@ -56,8 +57,10 @@ Object.defineProperty(exports, "processAffiliateConversionV2", { enumerable: tru
 // All email functionality now handled by Email Orchestrator system
 // Import order processing functions directly with original names
 const functions_3 = require("./order-processing/functions");
-Object.defineProperty(exports, "processB2COrderCompletionHttpV2", { enumerable: true, get: function () { return functions_3.processB2COrderCompletionHttp; } });
-Object.defineProperty(exports, "processB2COrderCompletionV2", { enumerable: true, get: function () { return functions_3.processB2COrderCompletion; } });
+Object.defineProperty(exports, "processB2COrderCompletionHttpV2", { enumerable: true, get: function () { return functions_3.processB2COrderCompletionHttp // single order-completion engine (idempotent)
+    ; } });
+const commissionReversal_1 = require("./order-processing/commissionReversal");
+Object.defineProperty(exports, "reverseAffiliateCommissionOnCancel", { enumerable: true, get: function () { return commissionReversal_1.reverseAffiliateCommissionOnCancel; } });
 // Import geo functions for B2C shop currency detection
 const functions_4 = require("./geo/functions");
 Object.defineProperty(exports, "getGeoDataV2", { enumerable: true, get: function () { return functions_4.getGeoData; } });
@@ -68,6 +71,7 @@ Object.defineProperty(exports, "deleteCustomerAccountV2", { enumerable: true, ge
 Object.defineProperty(exports, "deleteB2CCustomerAccountV2", { enumerable: true, get: function () { return functions_5.deleteB2CCustomerAccount; } });
 Object.defineProperty(exports, "toggleCustomerActiveStatusV2", { enumerable: true, get: function () { return functions_5.toggleCustomerActiveStatus; } });
 Object.defineProperty(exports, "createAdminUserV2", { enumerable: true, get: function () { return functions_5.createAdminUser; } });
+Object.defineProperty(exports, "syncAdminClaims", { enumerable: true, get: function () { return functions_5.syncAdminClaims; } });
 // Import payment functions for Stripe integration
 const createPaymentIntent_1 = require("./payment/createPaymentIntent");
 Object.defineProperty(exports, "createPaymentIntentV2", { enumerable: true, get: function () { return createPaymentIntent_1.createPaymentIntentV2; } });

@@ -13,9 +13,6 @@ import { httpsCallable } from 'firebase/functions';
 // 🚂 WAGON SYSTEM: Single connection point
 import wagonRegistry from './wagons/WagonRegistry.js';
 
-// Development Testing - Admin UID Manager (console testing)
-import './utils/adminUIDManagerTest.js';
-
 // B2C Shop Components
 import CookiebotCMP from './components/shop/CookiebotCMP';
 

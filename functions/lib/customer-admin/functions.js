@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createAdminUser = exports.toggleCustomerActiveStatus = exports.deleteB2CCustomerAccount = exports.deleteCustomerAccount = void 0;
+exports.syncAdminClaims = exports.createAdminUser = exports.toggleCustomerActiveStatus = exports.deleteB2CCustomerAccount = exports.deleteCustomerAccount = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
@@ -442,6 +442,50 @@ exports.createAdminUser = (0, https_1.onRequest)({
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error'
         });
+    }
+});
+/**
+ * Maintenance endpoint: syncs the `role: admin` custom auth claim from the
+ * users collection (named DB) onto Firebase Auth users. Storage rules cannot
+ * read the named Firestore database (cross-service rules only support
+ * (default)), so storage admin checks use this custom claim instead of a
+ * hardcoded UID allowlist. Guarded by ADMIN_MAINTENANCE_SECRET (fail-closed).
+ * Admins must re-login (or wait up to 1h for token refresh) after syncing.
+ */
+exports.syncAdminClaims = (0, https_1.onRequest)({
+    region: 'us-central1',
+    memory: '256MiB',
+    timeoutSeconds: 120
+}, async (req, res) => {
+    if (!isMaintenanceAuthorized(req)) {
+        res.status(403).json({ success: false, error: 'Forbidden' });
+        return;
+    }
+    try {
+        const adminUsers = await database_1.db.collection('users').where('role', '==', 'admin').get();
+        const results = [];
+        for (const docSnap of adminUsers.docs) {
+            const uid = docSnap.id;
+            try {
+                const userRecord = await auth.getUser(uid);
+                const existingClaims = userRecord.customClaims || {};
+                if (existingClaims.role !== 'admin') {
+                    await auth.setCustomUserClaims(uid, { ...existingClaims, role: 'admin' });
+                    results.push({ uid, email: userRecord.email, status: 'claim-set' });
+                }
+                else {
+                    results.push({ uid, email: userRecord.email, status: 'already-set' });
+                }
+            }
+            catch (userError) {
+                results.push({ uid, status: `error: ${userError.message}` });
+            }
+        }
+        res.json({ success: true, adminCount: adminUsers.size, results });
+    }
+    catch (error) {
+        console.error('syncAdminClaims failed:', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 //# sourceMappingURL=functions.js.map

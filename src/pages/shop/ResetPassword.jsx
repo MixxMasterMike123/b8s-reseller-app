@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { httpsCallable, getFunctions } from 'firebase/functions';
-import { auth, db } from '../../firebase/config';
-import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useTranslation } from '../../contexts/TranslationContext';
 import toast from 'react-hot-toast';
 import ShopNavigation from '../../components/shop/ShopNavigation';
@@ -37,61 +35,21 @@ const ResetPassword = () => {
   
   const [currentLang, setCurrentLang] = useState(getInitialLanguage());
 
+  // The reset code is validated SERVER-SIDE when the form is submitted
+  // (confirmPasswordResetV2). The passwordResets collection is not readable
+  // from the client — codes are secrets and must stay server-only.
   useEffect(() => {
-    const validateResetCode = async () => {
-      const code = searchParams.get('code');
-      
-      if (!code) {
-        toast.error(t('reset_password_error_no_code', 'Ogiltig återställningslänk'));
-        navigate('/forgot-password');
-        return;
-      }
+    const code = searchParams.get('code');
 
-      setResetCode(code);
-      
-      try {
-        // Check if reset code exists and is valid in Firestore
-        const resetQuery = query(
-          collection(db, 'passwordResets'),
-          where('resetCode', '==', code),
-          where('used', '==', false)
-        );
-        
-        const resetSnapshot = await getDocs(resetQuery);
-        
-        if (resetSnapshot.empty) {
-          toast.error(t('reset_password_error_invalid_code', 'Ogiltig eller använd återställningslänk'));
-          navigate('/forgot-password');
-          return;
-        }
+    if (!code) {
+      toast.error(t('reset_password_error_no_code', 'Ogiltig återställningslänk'));
+      navigate('/forgot-password');
+      return;
+    }
 
-        const resetDoc = resetSnapshot.docs[0];
-        const resetData = resetDoc.data();
-        
-        // Check if code has expired (1 hour)
-        const now = new Date();
-        const expiresAt = resetData.expiresAt.toDate();
-        
-        if (now > expiresAt) {
-          toast.error(t('reset_password_error_expired', 'Återställningslänken har gått ut. Begär en ny.'));
-          navigate('/forgot-password');
-          return;
-        }
-
-        setEmail(resetData.email);
-        setIsValidCode(true);
-        console.log(`Valid reset code for email: ${resetData.email}`);
-        
-      } catch (error) {
-        console.error('Error validating reset code:', error);
-        toast.error(t('reset_password_error_validation', 'Fel vid validering av återställningslänk'));
-        navigate('/forgot-password');
-      } finally {
-        setValidating(false);
-      }
-    };
-
-    validateResetCode();
+    setResetCode(code);
+    setIsValidCode(true);
+    setValidating(false);
   }, [searchParams, navigate, t]);
 
   const handleSubmit = async (e) => {
@@ -120,8 +78,11 @@ const ResetPassword = () => {
         newPassword
       });
       
-      console.log('Password reset successful:', result.data);
-      
+      console.log('Password reset successful');
+      if (result.data?.email) {
+        setEmail(result.data.email);
+      }
+
       toast.dismiss(toastId);
       toast.success(t('reset_password_success', 'Lösenord återställt! Du kan nu logga in.'), {
         duration: 5000
@@ -271,7 +232,7 @@ const ResetPassword = () => {
               {t('reset_password_title', 'Välj nytt lösenord')}
             </h1>
             <p className="text-gray-600">
-              {t('reset_password_subtitle', 'Ange ditt nya lösenord för {{email}}', { email })}
+              {t('reset_password_subtitle_generic', 'Ange ditt nya lösenord')}
             </p>
           </div>
 

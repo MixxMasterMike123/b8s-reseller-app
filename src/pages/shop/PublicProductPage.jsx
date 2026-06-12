@@ -27,6 +27,10 @@ import { Helmet } from 'react-helmet-async';
 import SmartPrice from '../../components/shop/SmartPrice';
 import AddedToCartModal from '../../components/shop/AddedToCartModal';
 import ProductSocialShare from '../../components/ProductSocialShare';
+import DOMPurify from 'dompurify';
+
+// Sanitize Firestore-authored HTML before rendering to prevent stored XSS
+const sanitize = (html) => DOMPurify.sanitize(html || '');
 
 // Helper function to determine button state based on launch date
 const getButtonState = (product, t) => {
@@ -677,7 +681,7 @@ const PublicProductPage = () => {
                         groupContent?.sizeAndFit ? (
                           <div 
                             className="prose prose-sm text-gray-700"
-                            dangerouslySetInnerHTML={{ __html: getContentValue(groupContent.sizeAndFit) }}
+                            dangerouslySetInnerHTML={{ __html: sanitize(getContentValue(groupContent.sizeAndFit)) }}
                           />
                         ) : (
                           <p className="text-sm text-gray-500">{t('no_group_content', 'No information available')}</p>
@@ -705,7 +709,7 @@ const PublicProductPage = () => {
                         groupContent?.shippingReturns ? (
                           <div 
                             className="prose prose-sm text-gray-700"
-                            dangerouslySetInnerHTML={{ __html: getContentValue(groupContent.shippingReturns) }}
+                            dangerouslySetInnerHTML={{ __html: sanitize(getContentValue(groupContent.shippingReturns)) }}
                           />
                         ) : (
                           <p className="text-sm text-gray-500">{t('no_group_content', 'No information available')}</p>
@@ -733,7 +737,7 @@ const PublicProductPage = () => {
                         groupContent?.howItsMade ? (
                           <div 
                             className="prose prose-sm text-gray-700"
-                            dangerouslySetInnerHTML={{ __html: getContentValue(groupContent.howItsMade) }}
+                            dangerouslySetInnerHTML={{ __html: sanitize(getContentValue(groupContent.howItsMade)) }}
                           />
                         ) : (
                           <p className="text-sm text-gray-500">{t('no_group_content', 'No information available')}</p>
@@ -756,7 +760,7 @@ const PublicProductPage = () => {
                       <div className="pb-4 px-4 -mx-4 text-sm text-gray-600">
                         <div 
                           className="prose prose-sm text-gray-700"
-                          dangerouslySetInnerHTML={{ __html: getContentValue(product.descriptions.b2cMoreInfo) }}
+                          dangerouslySetInnerHTML={{ __html: sanitize(getContentValue(product.descriptions.b2cMoreInfo)) }}
                         />
                       </div>
                     </details>

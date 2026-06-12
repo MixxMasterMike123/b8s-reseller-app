@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendAffiliateWelcomeEmail = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const EmailOrchestrator_1 = require("../core/EmailOrchestrator");
+const authGuard_1 = require("./authGuard");
 exports.sendAffiliateWelcomeEmail = (0, https_1.onCall)({
     region: 'us-central1',
     memory: '256MiB',
@@ -13,6 +14,8 @@ exports.sendAffiliateWelcomeEmail = (0, https_1.onCall)({
     cors: ['https://partner.b8shield.com', 'https://shop.b8shield.com']
 }, async (request) => {
     try {
+        // SECURITY: privileged mailer - admin only
+        await (0, authGuard_1.requireAdmin)(request.auth?.uid);
         console.log('🎉 sendAffiliateWelcomeEmail: Starting affiliate welcome onboarding');
         console.log('🎉 Request data:', {
             affiliateName: request.data.affiliateInfo.name,

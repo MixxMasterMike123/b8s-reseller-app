@@ -12,6 +12,75 @@ const https_1 = require("firebase-functions/v2/https");
 const firebase_functions_1 = require("firebase-functions");
 const stripe_1 = __importDefault(require("stripe"));
 const cors_handler_1 = require("../protection/cors/cors-handler");
+const database_1 = require("../config/database");
+/**
+ * Server-side price computation. NEVER trust client-supplied amounts:
+ * prices come from the products collection, the discount from the affiliate
+ * doc, and shipping from product shipping data (mirrors CartContext logic).
+ * All amounts are SEK, VAT-inclusive.
+ */
+function getShippingRegion(country) {
+    if (country === 'SE')
+        return 'sweden';
+    if (['NO', 'DK', 'FI'].includes(country))
+        return 'nordic';
+    const euCountries = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES'];
+    return euCountries.includes(country) ? 'eu' : 'worldwide';
+}
+async function computeOrderTotalsSek(cartItems, shippingCountry, discountCode) {
+    // Load every product server-side; reject unknown or inactive products
+    const loaded = await Promise.all(cartItems.map(async (item) => {
+        const quantity = Math.floor(Number(item.quantity));
+        if (!item.id || !Number.isFinite(quantity) || quantity < 1 || quantity > 1000) {
+            throw new Error(`Invalid cart item: ${item.id}`);
+        }
+        const snap = await database_1.db.collection('products').doc(item.id).get();
+        if (!snap.exists) {
+            throw new Error(`Unknown product: ${item.id}`);
+        }
+        const product = snap.data();
+        if (product.isActive === false) {
+            throw new Error(`Product not available: ${item.id}`);
+        }
+        const price = product.b2cPrice || product.basePrice || 0;
+        if (!price || price <= 0) {
+            throw new Error(`Product has no valid price: ${item.id}`);
+        }
+        return { id: item.id, quantity, price, product };
+    }));
+    const serverPrices = {};
+    for (const { id, price } of loaded) {
+        serverPrices[id] = price;
+    }
+    const subtotal = loaded.reduce((sum, { price, quantity }) => sum + price * quantity, 0);
+    // Discount from the affiliate doc (not from the client)
+    let discountAmount = 0;
+    let discountPercentage = 0;
+    if (discountCode) {
+        const affSnap = await database_1.db.collection('affiliates')
+            .where('affiliateCode', '==', discountCode.toUpperCase())
+            .where('status', '==', 'active')
+            .limit(1)
+            .get();
+        if (!affSnap.empty) {
+            discountPercentage = affSnap.docs[0].data().checkoutDiscount || 0;
+            // Math.ceil matches the client-side CartContext rounding
+            discountAmount = Math.ceil(subtotal * (discountPercentage / 100));
+        }
+    }
+    // Shipping mirrors CartContext.getShippingCost: base cost from the first
+    // product's shipping table for the region, multiplied by 50g weight tiers
+    const region = getShippingRegion(shippingCountry);
+    let baseShippingCost = loaded[0]?.product?.shipping?.[region]?.cost || 0;
+    if (baseShippingCost === 0) {
+        baseShippingCost = shippingCountry === 'SE' ? 29 : 49;
+    }
+    const totalWeight = loaded.reduce((sum, { product, quantity }) => sum + ((product.weight?.value || 10) * quantity), 0) + 20;
+    const shipping = baseShippingCost * Math.ceil(totalWeight / 50);
+    const total = subtotal - discountAmount + shipping;
+    const vat = total - (total / 1.25);
+    return { subtotal, discountAmount, discountPercentage, shipping, vat, total, serverPrices };
+}
 exports.createPaymentIntentV2 = (0, https_1.onRequest)({
     region: 'us-central1',
     memory: '256MiB',
@@ -44,20 +113,18 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
             apiVersion: '2023-10-16',
         });
         firebase_functions_1.logger.info('💳 Creating Stripe Payment Intent', {
-            data: { ...request.body, customerInfo: { email: request.body.customerInfo?.email } }
+            itemCount: request.body.cartItems?.length || 0,
+            currency: request.body.currency,
+            hasDiscount: !!(request.body.discountInfo?.code || request.body.affiliateInfo?.code)
         });
         // Validate request
         if (!request.body) {
             response.status(400).json({ error: 'Request body is required' });
             return;
         }
-        const { amount, currency = 'sek', cartItems, customerInfo, shippingInfo, discountInfo, affiliateInfo, totals } = request.body;
+        const { amount, currency = 'sek', cartItems, customerInfo, shippingInfo, discountInfo, affiliateInfo } = request.body;
         // Validate required fields
-        if (!amount || amount <= 0) {
-            response.status(400).json({ error: 'Valid amount is required' });
-            return;
-        }
-        if (!cartItems || cartItems.length === 0) {
+        if (!cartItems || cartItems.length === 0 || cartItems.length > 100) {
             response.status(400).json({ error: 'Cart items are required' });
             return;
         }
@@ -65,20 +132,35 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
             response.status(400).json({ error: 'Customer email is required' });
             return;
         }
-        // Convert amount to öre (Swedish cents) if not already
-        const amountInOre = Math.round(amount * 100);
-        firebase_functions_1.logger.info('💰 Payment details', {
-            amountInSEK: amount,
+        if (currency.toLowerCase() !== 'sek') {
+            // Payments are charged in SEK; other currencies are display-only
+            response.status(400).json({ error: 'Unsupported currency' });
+            return;
+        }
+        // 🛡️ SECURITY: compute the amount server-side from the products
+        // collection. The client-sent amount is only logged for drift detection.
+        const discountCode = discountInfo?.code || affiliateInfo?.code;
+        let totals;
+        try {
+            totals = await computeOrderTotalsSek(cartItems, shippingInfo?.country || 'SE', discountCode);
+        }
+        catch (calcError) {
+            firebase_functions_1.logger.error('❌ Server-side price computation failed', { error: calcError.message });
+            response.status(400).json({ error: 'Invalid cart contents' });
+            return;
+        }
+        const amountInOre = Math.round(totals.total * 100);
+        if (typeof amount === 'number' && Math.abs(amount - totals.total) > 1) {
+            firebase_functions_1.logger.warn('⚠️ Client amount differs from server-computed total — charging server total', {
+                clientAmount: amount,
+                serverTotal: totals.total
+            });
+        }
+        firebase_functions_1.logger.info('💰 Payment details (server-computed)', {
+            amountInSEK: totals.total,
             amountInOre,
             currency,
-            itemCount: cartItems.length,
-            customerEmail: customerInfo.email
-        });
-        // DEBUG: Log received data
-        firebase_functions_1.logger.info('🔍 DEBUG: createPaymentIntent received data', {
-            customerInfo,
-            shippingInfo,
-            totals
+            itemCount: cartItems.length
         });
         // Create Payment Intent with simplified configuration for live mode
         let paymentIntent;
@@ -107,16 +189,16 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
                     shippingPostalCode: shippingInfo.postalCode || '',
                     shippingCountry: shippingInfo.country || 'SE',
                     shippingCost: (shippingInfo.cost || 0).toString(),
-                    // Order Totals (complete breakdown)
-                    subtotal: (totals?.subtotal || 0).toString(),
-                    vat: (totals?.vat || 0).toString(),
-                    shipping: (totals?.shipping || shippingInfo.cost || 0).toString(),
-                    discountAmount: (totals?.discountAmount || discountInfo?.amount || 0).toString(),
-                    total: (totals?.total || amount).toString(),
-                    // Discount Information
-                    ...(discountInfo && {
-                        discountCode: discountInfo.code,
-                        discountPercentage: discountInfo.percentage?.toString() || '',
+                    // Order Totals (server-computed breakdown — single source of truth)
+                    subtotal: totals.subtotal.toString(),
+                    vat: totals.vat.toFixed(2),
+                    shipping: totals.shipping.toString(),
+                    discountAmount: totals.discountAmount.toString(),
+                    total: totals.total.toString(),
+                    // Discount Information (server-validated)
+                    ...(discountCode && totals.discountAmount > 0 && {
+                        discountCode: discountCode.toUpperCase(),
+                        discountPercentage: totals.discountPercentage.toString(),
                     }),
                     // Affiliate Information (enhanced)
                     ...(affiliateInfo && {
@@ -126,12 +208,13 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
                     // Cart Items (detailed for recovery)
                     itemCount: cartItems.length.toString(),
                     totalItems: cartItems.reduce((sum, item) => sum + item.quantity, 0).toString(),
-                    // Store complete item details as JSON (within Stripe limits)
+                    // Store complete item details as JSON (within Stripe limits).
+                    // Prices come from the server-side computation, not the client.
                     itemDetails: JSON.stringify(cartItems.map(item => ({
                         id: item.id,
                         sku: item.sku,
-                        name: typeof item.name === 'string' ? item.name : item.name?.['sv-SE'] || item.name?.['en-US'] || 'B8Shield',
-                        price: item.price,
+                        name: typeof item.name === 'string' ? item.name : item.name?.['sv-SE'] || item.name?.['en-US'] || 'Product',
+                        price: totals.serverPrices[item.id] ?? item.price,
                         quantity: item.quantity,
                         color: item.color || '',
                         size: item.size || '',
@@ -140,12 +223,15 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
                     // Legacy compatibility (keep existing fields)
                     itemIds: cartItems.map(item => item.id.substring(0, 8)).join(','),
                     cartSummary: cartItems.map(item => `${item.quantity}x${item.sku}`).join(','),
+                    // B2C customer account linkage (set when the buyer has/creates an account)
+                    ...(request.body.b2cCustomerId && {
+                        b2cCustomerId: request.body.b2cCustomerId,
+                        b2cCustomerAuthId: request.body.b2cCustomerAuthId || ''
+                    }),
                     // System identifiers
                     source: 'b2c_shop',
                     platform: 'b8shield',
-                    version: 'enhanced_v1',
-                    debugTimestamp: Date.now().toString(),
-                    debugTest: 'ENHANCED_METADATA_ACTIVE' // TEMP: Confirm enhanced function
+                    version: 'enhanced_v2' // server-priced metadata
                 },
                 receipt_email: customerInfo.email,
                 description: `B8Shield Order - ${cartItems.length} item${cartItems.length > 1 ? 's' : ''}`,

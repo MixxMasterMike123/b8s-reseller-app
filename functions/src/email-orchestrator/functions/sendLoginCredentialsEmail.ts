@@ -3,6 +3,7 @@
 
 import { onCall } from 'firebase-functions/v2/https';
 import { EmailOrchestrator } from '../core/EmailOrchestrator';
+import { requireAdmin } from './authGuard';
 
 interface LoginCredentialsRequest {
   userInfo: {
@@ -31,6 +32,9 @@ export const sendLoginCredentialsEmail = onCall<LoginCredentialsRequest>(
   },
   async (request) => {
     try {
+      // SECURITY: privileged mailer - admin only
+      await requireAdmin(request.auth?.uid);
+
       console.log('📧 sendLoginCredentialsEmail: Starting unified credentials email');
       console.log('📧 Request data:', {
         userEmail: request.data.userInfo.email,

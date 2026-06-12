@@ -63,6 +63,10 @@ const Checkout = () => {
     country: 'SE'
   });
 
+  // Existing-customer linkage passed into the payment metadata so the
+  // webhook-created order is tied to the account
+  const [customerLinkage, setCustomerLinkage] = useState(null);
+
 
 
   const { subtotal, vat, shipping, total, discountAmount, discountCode, discountPercentage, appliedAffiliate } = calculateTotals();
@@ -115,7 +119,12 @@ const Checkout = () => {
       if (!customerSnapshot.empty) {
         const customerDoc = customerSnapshot.docs[0];
         const customerData = customerDoc.data();
-        
+
+        setCustomerLinkage({
+          b2cCustomerId: customerDoc.id,
+          b2cCustomerAuthId: currentUser.uid
+        });
+
         // Pre-fill contact information
         setContactInfo(prev => ({
           ...prev,
@@ -221,26 +230,15 @@ const Checkout = () => {
 
     try {
       console.log('Creating B2C customer account for:', contactInfo.email);
-      
-      // Check if customer already exists in b2cCustomers collection
-      const existingCustomerQuery = query(
-        collection(db, 'b2cCustomers'),
-        where('email', '==', contactInfo.email)
-      );
-      const existingCustomerSnapshot = await getDocs(existingCustomerQuery);
-      
-      if (!existingCustomerSnapshot.empty) {
-        // Customer already exists - use existing customer
-        const existingCustomer = existingCustomerSnapshot.docs[0];
-        const b2cCustomerId = existingCustomer.id;
-        const b2cCustomerAuthId = existingCustomer.data().firebaseAuthUid;
-        console.log('Using existing B2C customer:', b2cCustomerId);
-        return { b2cCustomerId, b2cCustomerAuthId };
-      } else {
+
+      // Note: no guest-time lookup of existing customers — anonymous visitors
+      // cannot (and should not) read b2cCustomers. If the email already has an
+      // account, createUserWithEmailAndPassword fails and we tell them to log in.
+      {
         // Create new Firebase Auth account
         const userCredential = await createUserWithEmailAndPassword(
-          auth, 
-          contactInfo.email, 
+          auth,
+          contactInfo.email,
           contactInfo.password
         );
         const b2cCustomerAuthId = userCredential.user.uid;
@@ -319,81 +317,45 @@ const Checkout = () => {
       }
     } catch (customerError) {
       console.error('Error creating B2C customer account:', customerError);
-      
-      // Handle the case where email already exists in Firebase Auth
+
       if (customerError.code === 'auth/email-already-in-use') {
-        console.log('Email already exists in Firebase Auth, attempting to link to existing account...');
-        
-        try {
-          // Try to find existing B2C customer record by email
-          const existingCustomerQuery = query(
-            collection(db, 'b2cCustomers'),
-            where('email', '==', contactInfo.email)
-          );
-          const existingCustomerSnapshot = await getDocs(existingCustomerQuery);
-          
-          if (!existingCustomerSnapshot.empty) {
-            // B2C customer record exists - use it and update preferred language
-            const existingCustomer = existingCustomerSnapshot.docs[0];
-            const b2cCustomerId = existingCustomer.id;
-            const b2cCustomerAuthId = existingCustomer.data().firebaseAuthUid;
-            
-            // Update preferred language to reflect current language choice
-            await updateDoc(doc(db, 'b2cCustomers', b2cCustomerId), {
-              preferredLang: currentLanguage,
-              updatedAt: serverTimestamp()
-            });
-            
-            console.log('Linked to existing B2C customer and updated preferred language:', b2cCustomerId, currentLanguage);
-            toast.success(t('checkout_existing_account', 'Länkad till ditt befintliga konto.'), { duration: 5000 });
-            
-            return { b2cCustomerId, b2cCustomerAuthId };
-          } else {
-            // Email exists in Firebase Auth but no B2C customer record - this shouldn't happen but handle it
-            console.log('Email exists in Firebase Auth but no B2C customer record found');
-            toast.error(t('checkout_account_conflict', 'E-postadressen är redan registrerad. Vänligen kontakta support.'), { duration: 5000 });
-            return { b2cCustomerId: null, b2cCustomerAuthId: null };
-          }
-        } catch (linkError) {
-          console.error('Error linking to existing account:', linkError);
-          toast.error(t('checkout_account_error', 'Kunde inte skapa konto, men din beställning behandlas.'), { duration: 5000 });
-          return { b2cCustomerId: null, b2cCustomerAuthId: null };
-        }
+        // The email already has an account; the order still goes through and
+        // appears on their account page via email matching once logged in.
+        toast(t('checkout_account_exists', 'Du har redan ett konto med denna e-post. Logga in för att se din beställning.'), { duration: 6000 });
       } else {
-        // Other errors (not email-already-in-use)
         toast.error(t('checkout_account_error', 'Kunde inte skapa konto, men din beställning behandlas.'), { duration: 5000 });
-        return { b2cCustomerId: null, b2cCustomerAuthId: null };
       }
+      return { b2cCustomerId: null, b2cCustomerAuthId: null };
     }
   };
 
-  // Handle successful Stripe payment
+  // Handle successful Stripe payment.
+  // The order itself is created SERVER-SIDE by the Stripe webhook (order doc
+  // ID = payment intent ID), so the client never writes orders — it just
+  // creates the optional account and navigates to the confirmation page,
+  // which waits for the webhook-created order to appear.
   const handlePaymentSuccess = async (paymentIntent) => {
-    console.log('✅ Payment successful, creating order...', paymentIntent);
-    
+    console.log('✅ Payment successful', paymentIntent.id);
+
     // Set processing state to prevent empty cart page
     setProcessingPayment(true);
-    
+
     try {
-      // Create the order with payment information
-      const orderId = await createOrderFromPayment(paymentIntent);
-      console.log('✅ Order created with ID:', orderId);
-      
-      // Navigate to order confirmation page with the order ID
-      // Clear cart AFTER navigation to prevent empty cart page flash
-      navigate(getCountryAwareUrl(`order-confirmation/${orderId}`));
-      
-      // Clear the cart after navigation
-      setTimeout(() => {
-        clearCart();
-        setProcessingPayment(false);
-      }, 100);
-      
+      // Create B2C customer account if the customer chose a password
+      await createB2CCustomerAccount();
     } catch (error) {
-      console.error('❌ Error creating order after payment:', error);
-      toast.error(t('checkout_payment_success_order_error', 'Betalning genomförd men fel vid orderskapande. Kontakta support.'));
-      setProcessingPayment(false);
+      console.error('❌ Account creation after payment failed (order unaffected):', error);
     }
+
+    navigate(getCountryAwareUrl(`order-confirmation/${paymentIntent.id}`));
+
+    // Clear the cart and saved checkout info after navigation
+    setTimeout(() => {
+      clearCart();
+      localStorage.removeItem('b8s_checkout_customer');
+      localStorage.removeItem('b8s_checkout_shipping');
+      setProcessingPayment(false);
+    }, 100);
   };
 
   // Handle payment errors
@@ -402,193 +364,6 @@ const Checkout = () => {
     toast.error(t('checkout_payment_failed_with_message', 'Betalning misslyckades: {{message}}', { message: error.message }));
   };
 
-  // Create order from successful payment
-  const createOrderFromPayment = async (paymentIntent) => {
-    // IDEMPOTENCY CHECK: Prevent duplicate orders
-    console.log('🔍 Checking for existing order with payment intent:', paymentIntent.id);
-    
-    try {
-      const existingOrderQuery = query(
-        collection(db, 'orders'),
-        where('payment.paymentIntentId', '==', paymentIntent.id)
-      );
-      const existingOrders = await getDocs(existingOrderQuery);
-      
-      if (!existingOrders.empty) {
-        const existingOrder = existingOrders.docs[0];
-        console.log('✅ Order already exists for this payment intent:', existingOrder.id);
-        console.log('🔄 Returning existing order ID instead of creating duplicate');
-        return existingOrder.id;
-      }
-    } catch (error) {
-      console.error('❌ Error checking for existing order:', error);
-      // Continue with order creation if check fails
-    }
-
-    const freshTotals = calculateTotals();
-    const orderNumber = generateOrderNumber();
-
-    // CRITICAL VALIDATION: Prevent zero-value orders (consistency with OrderReturn.jsx)
-    const isValidCustomerInfo = contactInfo.email && contactInfo.email.includes('@');
-    const isValidShippingInfo = shippingInfo.firstName && shippingInfo.lastName && shippingInfo.address && shippingInfo.city;
-    const isValidCart = cart.items && cart.items.length > 0 && freshTotals.total > 0;
-
-    console.log('🔍 Order validation check (Checkout):', {
-      customerValid: isValidCustomerInfo,
-      shippingValid: isValidShippingInfo,
-      cartValid: isValidCart,
-      cartItemCount: cart.items?.length || 0,
-      totalAmount: freshTotals.total,
-      customerEmail: contactInfo.email || 'MISSING',
-      paymentIntentId: paymentIntent.id
-    });
-
-    // PREVENT ZERO-VALUE ORDER CREATION
-    if (!isValidCustomerInfo || !isValidShippingInfo || !isValidCart) {
-      console.error('❌ CRITICAL: Invalid order data detected in Checkout, preventing order creation', {
-        contactInfo: { email: contactInfo.email || 'MISSING' },
-        shippingInfo: { 
-          firstName: shippingInfo.firstName || 'MISSING',
-          lastName: shippingInfo.lastName || 'MISSING',
-          address: shippingInfo.address || 'MISSING'
-        },
-        cart: { itemCount: cart.items?.length || 0, total: freshTotals.total }
-      });
-
-      // Throw error to be caught by handlePaymentSuccess
-      throw new Error(t('checkout_order_info_missing_error', 'Orderinformation saknas. Kontakta support om problemet kvarstår.'));
-    }
-
-    // Create B2C customer account if password provided
-    const { b2cCustomerId, b2cCustomerAuthId } = await createB2CCustomerAccount();
-
-    // Extract cart items from payment intent metadata
-    console.log('🔍 Payment Intent metadata:', paymentIntent.metadata);
-    
-    // Always use current cart items for order creation (includes images)
-    // Metadata only stores minimal data due to Stripe's 500-char limit
-    const cartItems = cart.items.map(item => ({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity,
-      sku: item.sku,
-      color: item.color, // CRITICAL: Include color for emails
-      size: item.size,   // CRITICAL: Include size for emails
-      image: item.image
-    }));
-    
-    // Log metadata summary for validation (optional)
-    try {
-      const { itemCount, totalItems, cartSummary, itemIds } = paymentIntent.metadata;
-      console.log('✅ Metadata summary:', { itemCount, totalItems, cartSummary, itemIds });
-      console.log('✅ Using full cart items for order:', cartItems);
-      
-      // Validate item count matches
-      if (itemCount && parseInt(itemCount) !== cartItems.length) {
-        console.warn('⚠️ Cart item count mismatch between metadata and current cart');
-      }
-    } catch (error) {
-      console.warn('⚠️ Could not validate metadata cart summary (non-critical):', error);
-    }
-    
-    const orderData = {
-      orderNumber,
-      status: 'confirmed', // Stripe payment confirmed
-      source: 'b2c',
-      items: cartItems,
-      customerInfo: {
-        email: contactInfo.email,
-        name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
-        firstName: shippingInfo.firstName,
-        lastName: shippingInfo.lastName,
-        marketingOptIn: contactInfo.marketing,
-        preferredLang: currentLanguage // Store user's language preference for emails
-      },
-      shippingInfo: {
-        address: shippingInfo.address,
-        apartment: shippingInfo.apartment || '',
-        city: shippingInfo.city,
-        postalCode: shippingInfo.postalCode,
-        country: shippingInfo.country
-      },
-      // Flat pricing structure to match OrderConfirmation expectations
-      subtotal: freshTotals.subtotal,
-      shipping: freshTotals.shipping,
-      vat: freshTotals.vat,
-      discountAmount: freshTotals.discountAmount || 0,
-      total: freshTotals.total,
-      payment: {
-        method: 'stripe',
-        paymentIntentId: paymentIntent.id,
-        amount: paymentIntent.amount / 100, // Convert from öre to SEK
-        currency: paymentIntent.currency,
-        status: paymentIntent.status,
-        // Enhanced payment method details from Stripe (only store if defined)
-        ...(paymentIntent.payment_method?.type && {
-          paymentMethodType: paymentIntent.payment_method.type
-        }),
-        ...(paymentIntent.payment_method?.card && {
-          paymentMethodDetails: {
-            brand: paymentIntent.payment_method.card.brand,
-            last4: paymentIntent.payment_method.card.last4,
-            ...(paymentIntent.payment_method.card.wallet?.type && {
-              wallet: paymentIntent.payment_method.card.wallet.type
-            })
-          }
-        }),
-        ...(paymentIntent.payment_method?.klarna && {
-          paymentMethodDetails: { type: 'klarna' }
-        })
-      },
-      affiliate: freshTotals.discountCode ? {
-        code: freshTotals.discountCode,
-        discountPercentage: freshTotals.discountPercentage,
-        clickId: freshTotals.affiliateClickId
-      } : null,
-      // B2C Customer reference (if account created)
-      ...(b2cCustomerId && { 
-        b2cCustomerId: b2cCustomerId,
-        b2cCustomerAuthId: b2cCustomerAuthId,
-        hasAccount: true 
-      }),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    };
-
-    // Add order to database
-    const orderRef = await addDoc(collection(db, 'orders'), orderData);
-    console.log('✅ Order created:', orderRef.id);
-
-    // 2. Call the post-order processing function for affiliate processing
-    try {
-      console.log('Calling post-order processing function for Stripe order...');
-      const timestamp = Date.now();
-      const functionUrl = `https://us-central1-b8shield-reseller-app.cloudfunctions.net/processB2COrderCompletionHttpV2?_=${timestamp}`;
-      
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-        },
-        body: JSON.stringify({ orderId: orderRef.id }),
-      });
-
-      if (!response.ok) {
-        console.error('CRITICAL: Failed to call post-order processing function for Stripe order.', await response.text());
-        // Don't show error to user since payment already succeeded - log for admin review
-      } else {
-        const result = await response.json();
-        console.log('Post-order processing completed successfully for Stripe order:', result);
-      }
-    } catch (error) {
-      console.error('CRITICAL: Failed to call post-order processing function for Stripe order.', error);
-      // Don't show error to user since payment already succeeded - log for admin review
-    }
-
-    return orderRef.id;
-  };
 
   if (cart.items.length === 0 && !processingPayment) {
     return (
@@ -977,6 +752,7 @@ const Checkout = () => {
                       city: shippingInfo.city,
                       postalCode: shippingInfo.postalCode
                     }}
+                    customerLinkage={customerLinkage}
                     onPaymentSuccess={handlePaymentSuccess}
                     onPaymentError={handlePaymentError}
                   />

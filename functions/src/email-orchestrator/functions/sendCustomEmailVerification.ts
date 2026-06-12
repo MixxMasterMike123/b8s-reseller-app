@@ -31,6 +31,12 @@ export const sendCustomEmailVerification = onCall<CustomEmailVerificationRequest
   },
   async (request) => {
     try {
+      // SECURITY: only the just-created account itself may request its own
+      // verification email — otherwise this is an open mailer.
+      if (!request.auth || request.auth.uid !== request.data.firebaseAuthUid) {
+        throw new Error('Authentication required: callers may only request verification for their own account');
+      }
+
       console.log('🔐 sendCustomEmailVerification: Starting custom verification flow');
       console.log('🔐 Request data:', {
         customerEmail: request.data.customerInfo.email,

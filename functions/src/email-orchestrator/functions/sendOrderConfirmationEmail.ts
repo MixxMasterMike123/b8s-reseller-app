@@ -3,6 +3,7 @@
 
 import { onCall } from 'firebase-functions/v2/https';
 import { EmailOrchestrator } from '../core/EmailOrchestrator';
+import { requireAdmin } from './authGuard';
 
 interface OrderConfirmationRequest {
   orderData: {
@@ -45,6 +46,9 @@ export const sendOrderConfirmationEmail = onCall<OrderConfirmationRequest>(
   },
   async (request) => {
     try {
+      // SECURITY: privileged mailer - admin only
+      await requireAdmin(request.auth?.uid);
+
       console.log('📧 sendOrderConfirmationEmail: Starting unified order confirmation');
       console.log('📧 Request data:', {
         orderNumber: request.data.orderData.orderNumber,

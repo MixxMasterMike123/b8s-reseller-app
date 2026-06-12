@@ -219,7 +219,7 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
   );
 };
 
-const StripePaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentError }) => {
+const StripePaymentForm = ({ customerInfo, shippingInfo, customerLinkage, onPaymentSuccess, onPaymentError }) => {
   const { cart, calculateTotals } = useCart();
   const [clientSecret, setClientSecret] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -270,10 +270,14 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPay
               code: totals.discountCode,
               clickId: totals.affiliateClickId
             }
+          }),
+          // Link the order to an existing customer account (set server-side
+          // into the payment metadata; the webhook copies it onto the order)
+          ...(customerLinkage?.b2cCustomerId && {
+            b2cCustomerId: customerLinkage.b2cCustomerId,
+            b2cCustomerAuthId: customerLinkage.b2cCustomerAuthId || ''
           })
         };
-        
-        console.log('🔍 DEBUG: Sending to createPaymentIntentV2:', JSON.stringify(paymentData, null, 2));
 
         // Create payment intent on server via HTTP
         const response = await fetch('https://us-central1-b8shield-reseller-app.cloudfunctions.net/createPaymentIntentV2', {

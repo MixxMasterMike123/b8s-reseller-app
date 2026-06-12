@@ -16,6 +16,7 @@ import {
   ChartBarIcon,
   Cog6ToothIcon
 } from '@heroicons/react/24/outline';
+import DOMPurify from 'dompurify';
 
 const WritersWagonPanel = ({ productData, onContentGenerated, onClose }) => {
   const { currentUser } = useAuth();
@@ -489,7 +490,7 @@ const WritersWagonPanel = ({ productData, onContentGenerated, onClose }) => {
               <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 max-h-64 overflow-y-auto">
                 {previewMode ? (
                   <div className="prose prose-sm" dangerouslySetInnerHTML={{
-                    __html: generatedContent.content.replace(/\n/g, '<br>')
+                    __html: DOMPurify.sanitize(generatedContent.content.replace(/\n/g, '<br>'))
                   }} />
                 ) : (
                   <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono">

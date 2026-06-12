@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { db } from '../../firebase/config';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { CheckCircleIcon, ShoppingBagIcon, TruckIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
@@ -22,39 +22,54 @@ const OrderConfirmation = () => {
   const { getContentValue } = useContentTranslation();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [waitTimedOut, setWaitTimedOut] = useState(false);
 
   // Get order number from navigation state for immediate display while fetching full order
   const orderNumberFromState = location.state?.orderNumber;
 
+  // Orders are created server-side by the Stripe webhook (doc ID = payment
+  // intent ID), usually within a couple of seconds of payment. Listen for the
+  // document instead of a one-shot read so the page works even if we arrive
+  // before the webhook has finished.
   useEffect(() => {
-    const fetchOrder = async () => {
-      if (!orderId) {
-        setLoading(false);
-        toast.error(t('order_confirmation_no_id', 'Ingen order ID hittades.'));
-        navigate(getCountryAwareUrl(''));
-        return;
-      }
-      try {
-        setLoading(true);
-        const docRef = doc(db, 'orders', orderId);
-        const docSnap = await getDoc(docRef);
+    if (!orderId) {
+      setLoading(false);
+      toast.error(t('order_confirmation_no_id', 'Ingen order ID hittades.'));
+      navigate(getCountryAwareUrl(''));
+      return;
+    }
 
-        if (docSnap.exists()) {
-          setOrder({ id: docSnap.id, ...docSnap.data() });
-        } else {
-          console.error("No such order document!");
-          toast.error(t('order_confirmation_not_found', 'Kunde inte hitta din beställning.'));
-          navigate(getCountryAwareUrl(''));
+    setLoading(true);
+    setWaitTimedOut(false);
+
+    const timeout = setTimeout(() => {
+      setWaitTimedOut(true);
+      setLoading(false);
+    }, 90000);
+
+    const unsubscribe = onSnapshot(
+      doc(db, 'orders', orderId),
+      (snap) => {
+        if (snap.exists()) {
+          clearTimeout(timeout);
+          setOrder({ id: snap.id, ...snap.data() });
+          setLoading(false);
         }
-      } catch (error) {
-        console.error("Error fetching order:", error);
+        // If the doc doesn't exist yet, keep listening — the webhook is
+        // probably still creating it.
+      },
+      (error) => {
+        clearTimeout(timeout);
+        console.error('Error fetching order:', error);
         toast.error(t('order_confirmation_fetch_error', 'Ett fel uppstod när din beställning skulle hämtas.'));
-      } finally {
         setLoading(false);
       }
-    };
+    );
 
-    fetchOrder();
+    return () => {
+      clearTimeout(timeout);
+      unsubscribe();
+    };
   }, [orderId, navigate, t]);
 
   const formatPrice = (price) => {
@@ -75,7 +90,7 @@ const OrderConfirmation = () => {
         <ShopNavigation breadcrumb={t('breadcrumb_order_confirmation', 'Orderbekräftelse')} />
         <div className="max-w-2xl mx-auto px-4 py-16 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">{t('order_confirmation_loading', 'Laddar orderbekräftelse...')}</p>
+          <p className="text-gray-600">{t('order_confirmation_preparing', 'Din betalning är genomförd — vi förbereder din orderbekräftelse...')}</p>
         </div>
         <ShopFooter />
       </div>
@@ -88,10 +103,14 @@ const OrderConfirmation = () => {
         <ShopNavigation breadcrumb={t('breadcrumb_order_confirmation', 'Orderbekräftelse')} />
         <div className="max-w-2xl mx-auto px-4 py-16 text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            {t('order_confirmation_not_found_title', 'Order hittades inte')}
+            {waitTimedOut
+              ? t('order_confirmation_delayed_title', 'Din beställning behandlas')
+              : t('order_confirmation_not_found_title', 'Order hittades inte')}
           </h1>
           <p className="text-gray-600 mb-8">
-            {t('order_confirmation_not_found_description', 'Vi kunde inte hitta den begärda ordern.')}
+            {waitTimedOut
+              ? t('order_confirmation_delayed_description', 'Din betalning är genomförd och beställningen registreras. Du får en orderbekräftelse via e-post inom kort.')
+              : t('order_confirmation_not_found_description', 'Vi kunde inte hitta den begärda ordern.')}
           </p>
           <button
             onClick={() => navigate(getCountryAwareUrl(''))}

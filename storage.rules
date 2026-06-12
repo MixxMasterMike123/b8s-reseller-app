@@ -1,30 +1,26 @@
 rules_version = '2';
 
-// Craft rules based on data in your Firestore database
-// allow write: if firestore.get(
-//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
 service firebase.storage {
   match /b/{bucket}/o {
     // Default deny all access
     match /{allPaths=**} {
       allow read, write: if false;
     }
-    
-    // Helper function to check if user is admin
+
+    // Admin check via the `role` custom auth claim, synced from the users
+    // collection by the syncAdminClaims maintenance function. (Storage rules
+    // cannot read the named Firestore database the app uses, and a hardcoded
+    // UID allowlist doesn't generalize to per-customer deploys.)
     function isAdmin() {
-      return request.auth.uid in [
-        '9AudFilG8VeYHcFnKgUtQkByAmn1',  // Your admin ID
-        '9yKlFQEhb4dbSwa206BxXVZWdgs2',  // Admin 2
-        'hCu3TDpe5XZ0adTp5eGLpGxDvL13'   // Admin 3
-      ];
+      return request.auth != null && request.auth.token.role == 'admin';
     }
-    
+
     // User profile images
     match /users/{userId}/profile.jpg {
       allow read: if true;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
-    
+
     // Order attachments
     match /orders/{orderId}/{fileName} {
       allow read: if request.auth != null && (
@@ -36,58 +32,55 @@ service firebase.storage {
         request.resource.metadata.userId == request.auth.uid
       );
     }
-    
+
     // Product images
     match /products/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null && isAdmin();
+      allow write: if isAdmin();
     }
-    
+
     // Marketing materials
     match /marketing-materials/generic/{fileName} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && isAdmin();
+      allow write: if isAdmin();
     }
-    
+
     // Customer-specific marketing materials
     match /marketing-materials/customers/{customerId}/{fileName} {
       allow read: if request.auth != null && (
         isAdmin() ||
         request.auth.uid == customerId
       );
-      allow write: if request.auth != null && isAdmin();
+      allow write: if isAdmin();
     }
-    
-    // CRM documents for customers (The Dining Wagon™)
+
+    // CRM documents for customers
     match /marketing-materials/customers/{customerId}/crm-documents/{fileName} {
       allow read: if request.auth != null && (
         isAdmin() ||
         request.auth.uid == customerId
       );
-      allow write: if request.auth != null && isAdmin();
+      allow write: if isAdmin();
     }
-    
-    // Affiliate invoice storage (admin only upload, affiliates can read their own)
+
+    // Affiliate invoice storage (admin upload, affiliates read their own)
     match /affiliates/{affiliateId}/invoices/{fileName} {
       allow read: if request.auth != null && (
-        // Admin can read all invoices
         isAdmin() ||
-        // Affiliate can read their own invoices
         request.auth.uid == affiliateId
       );
-      allow write: if request.auth != null && isAdmin(); // Only admins can upload invoices
+      allow write: if isAdmin();
     }
-    
-    // Admin-only customer documents (admin document upload system)
+
+    // Admin-only customer documents
     match /admin-documents/customers/{customerId}/{fileName} {
-      allow read: if request.auth != null && isAdmin(); // Only admins can access
-      allow write: if request.auth != null && isAdmin(); // Only admins can upload
+      allow read, write: if isAdmin();
     }
-    
+
     // Page attachments (CMS file upload system)
     match /pages/{pageId}/attachments/{fileName} {
-      allow read: if true; // Anyone can read published page attachments
-      allow write: if request.auth != null && isAdmin(); // Only admins can upload
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }

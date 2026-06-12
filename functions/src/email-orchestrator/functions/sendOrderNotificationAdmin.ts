@@ -3,6 +3,7 @@
 
 import { onCall } from 'firebase-functions/v2/https';
 import { EmailOrchestrator } from '../core/EmailOrchestrator';
+import { requireAdmin } from './authGuard';
 
 interface OrderNotificationAdminRequest {
   orderData: {
@@ -61,6 +62,9 @@ export const sendOrderNotificationAdmin = onCall<OrderNotificationAdminRequest>(
   },
   async (request) => {
     try {
+      // SECURITY: privileged mailer - admin only
+      await requireAdmin(request.auth?.uid);
+
       console.log('📧 sendOrderNotificationAdmin: Starting admin order notification');
       console.log('📧 Request data:', {
         orderNumber: request.data.orderData.orderNumber,

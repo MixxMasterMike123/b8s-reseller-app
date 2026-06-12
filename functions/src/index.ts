@@ -26,8 +26,10 @@ import { confirmPasswordReset } from './email-orchestrator/functions';
 
 // Import affiliate functions directly (avoiding export * circular imports)
 import { logAffiliateClickV2 } from './affiliate/callable/logAffiliateClick';
-import { logAffiliateClickHttpV2 } from './affiliate/http/logAffiliateClickHttp';
-import { processAffiliateConversionV2 } from './affiliate/triggers/processAffiliateConversion';
+import { validateDiscountCode } from './affiliate/callable/validateDiscountCode';
+// logAffiliateClickHttpV2 removed: unauthenticated CORS-* endpoint allowed
+// anyone to inflate any affiliate's click stats; the SPA uses the callable.
+// processAffiliateConversionV2 removed: deprecated no-op trigger.
 
 // Debug functions removed - found the real issue
 
@@ -58,9 +60,9 @@ import { processAffiliateConversionV2 } from './affiliate/triggers/processAffili
 
 // Import order processing functions directly with original names
 import {
-  processB2COrderCompletionHttp, // RE-ENABLED: Critical for affiliate processing
-  processB2COrderCompletion
+  processB2COrderCompletionHttp // single order-completion engine (idempotent)
 } from './order-processing/functions';
+import { reverseAffiliateCommissionOnCancel } from './order-processing/commissionReversal';
 
 // Import geo functions for B2C shop currency detection
 import {
@@ -74,7 +76,8 @@ import {
   deleteCustomerAccount,
   deleteB2CCustomerAccount,
   toggleCustomerActiveStatus,
-  createAdminUser
+  createAdminUser,
+  syncAdminClaims
 } from './customer-admin/functions';
 
 // Import payment functions for Stripe integration
@@ -91,7 +94,7 @@ import {
 } from './website-scraper/functions';
 
 // Re-export affiliate functions individually with V2 names (avoid V1 conflicts)
-export { logAffiliateClickV2, logAffiliateClickHttpV2, processAffiliateConversionV2 };
+export { logAffiliateClickV2, validateDiscountCode };
 
 // OLD EMAIL FUNCTIONS MOVED TO QUARANTINE - NO LONGER EXPORTED
 // All email functionality now handled by Email Orchestrator system
@@ -99,8 +102,8 @@ export { logAffiliateClickV2, logAffiliateClickHttpV2, processAffiliateConversio
 
 // Re-export order processing functions individually with V2 names (avoid V1 conflicts)
 export {
-  processB2COrderCompletionHttp as processB2COrderCompletionHttpV2, // RE-ENABLED: Critical for affiliate processing
-  processB2COrderCompletion as processB2COrderCompletionV2
+  processB2COrderCompletionHttp as processB2COrderCompletionHttpV2,
+  reverseAffiliateCommissionOnCancel
 };
 
 // Re-export geo functions for B2C shop currency detection
@@ -113,7 +116,8 @@ export {
   deleteCustomerAccount as deleteCustomerAccountV2,
   deleteB2CCustomerAccount as deleteB2CCustomerAccountV2,
   toggleCustomerActiveStatus as toggleCustomerActiveStatusV2,
-  createAdminUser as createAdminUserV2
+  createAdminUser as createAdminUserV2,
+  syncAdminClaims
 };
 
 // Re-export payment functions for Stripe integration

@@ -4,16 +4,13 @@ import { Elements, useStripe } from '@stripe/react-stripe-js';
 import { getStripe } from '../../utils/stripeClient';
 import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
-import { db } from '../../firebase/config';
-import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { getCountryAwareUrl } from '../../utils/productUrls';
-import toast from 'react-hot-toast';
 
 const OrderReturnInner = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const stripe = useStripe();
-  const { cart, calculateTotals, clearCart } = useCart();
+  const { clearCart } = useCart();
   const { t } = useTranslation();
   const [status, setStatus] = useState('processing'); // 'processing', 'success', 'error'
   const [errorMessage, setErrorMessage] = useState('');
@@ -45,23 +42,21 @@ const OrderReturnInner = () => {
         console.log('💳 Payment Intent status after return:', paymentIntent.status);
 
         if (paymentIntent.status === 'succeeded') {
-          // Payment was successful, create the order
-          console.log('✅ Klarna payment succeeded, creating order...');
-          
-          const orderId = await createOrderFromPayment(paymentIntent);
-          console.log('✅ Order created with ID:', orderId);
-          
-          // Clear cart, saved checkout info, and redirect to confirmation
+          // Payment succeeded. The order is created SERVER-SIDE by the Stripe
+          // webhook with doc ID = payment intent ID, so we just clean up and
+          // send the customer to the confirmation page (which waits for the
+          // webhook-created order to appear).
+          console.log('✅ Payment succeeded, redirecting to confirmation...');
+
           clearCart();
           localStorage.removeItem('b8s_checkout_customer');
           localStorage.removeItem('b8s_checkout_shipping');
           setStatus('success');
-          
-          // Redirect to order confirmation
+
           setTimeout(() => {
-            navigate(getCountryAwareUrl(`order-confirmation/${orderId}`));
-          }, 2000);
-          
+            navigate(getCountryAwareUrl(`order-confirmation/${paymentIntent.id}`));
+          }, 1500);
+
         } else if (paymentIntent.status === 'processing') {
           console.log('⏳ Payment still processing...');
           setStatus('processing');
@@ -91,186 +86,6 @@ const OrderReturnInner = () => {
 
     handlePaymentReturn();
   }, [stripe, searchParams]);
-
-  const createOrderFromPayment = async (paymentIntent) => {
-    // IDEMPOTENCY CHECK: Prevent duplicate orders
-    console.log('🔍 Checking for existing order with payment intent:', paymentIntent.id);
-    
-    try {
-      const existingOrderQuery = query(
-        collection(db, 'orders'),
-        where('payment.paymentIntentId', '==', paymentIntent.id)
-      );
-      const existingOrders = await getDocs(existingOrderQuery);
-      
-      if (!existingOrders.empty) {
-        const existingOrder = existingOrders.docs[0];
-        console.log('✅ Order already exists for this payment intent:', existingOrder.id);
-        console.log('🔄 Returning existing order ID instead of creating duplicate');
-        return existingOrder.id;
-      }
-    } catch (error) {
-      console.error('❌ Error checking for existing order:', error);
-      // Continue with order creation if check fails
-    }
-
-    const freshTotals = calculateTotals();
-    const orderNumber = generateOrderNumber();
-
-    // Get customer info from localStorage with comprehensive validation
-    let customerInfo = {};
-    let shippingInfo = {};
-    
-    try {
-      customerInfo = JSON.parse(localStorage.getItem('b8s_checkout_customer') || '{}');
-      shippingInfo = JSON.parse(localStorage.getItem('b8s_checkout_shipping') || '{}');
-    } catch (error) {
-      console.error('❌ Failed to parse checkout data from localStorage:', error);
-    }
-
-    // CRITICAL VALIDATION: Prevent zero-value orders
-    const isValidCustomerInfo = customerInfo.email && customerInfo.email.includes('@');
-    const isValidShippingInfo = shippingInfo.firstName && shippingInfo.lastName && shippingInfo.address && shippingInfo.city;
-    const isValidCart = cart.items && cart.items.length > 0 && freshTotals.total > 0;
-
-    console.log('🔍 Order validation check:', {
-      customerValid: isValidCustomerInfo,
-      shippingValid: isValidShippingInfo,
-      cartValid: isValidCart,
-      cartItemCount: cart.items?.length || 0,
-      totalAmount: freshTotals.total,
-      customerEmail: customerInfo.email || 'MISSING',
-      paymentIntentId: paymentIntent.id
-    });
-
-    // PREVENT ZERO-VALUE ORDER CREATION
-    if (!isValidCustomerInfo || !isValidShippingInfo || !isValidCart) {
-      console.error('❌ CRITICAL: Invalid order data detected, preventing order creation', {
-        customerInfo: { email: customerInfo.email || 'MISSING' },
-        shippingInfo: { 
-          firstName: shippingInfo.firstName || 'MISSING',
-          lastName: shippingInfo.lastName || 'MISSING',
-          address: shippingInfo.address || 'MISSING'
-        },
-        cart: { itemCount: cart.items?.length || 0, total: freshTotals.total }
-      });
-
-      // Show user-friendly error message
-      setStatus('error');
-      setErrorMessage(t('order_return_missing_order_info', 'Orderinformation saknas. Ingen betalning har genomförts. Vänligen försök igen från början.'));
-      
-      // Return early to prevent order creation
-      return;
-    }
-
-    // Extract cart items
-    const cartItems = cart.items.map(item => ({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity,
-      sku: item.sku,
-      color: item.color, // CRITICAL: Include color for emails
-      size: item.size,   // CRITICAL: Include size for emails
-      image: item.image
-    }));
-
-    const orderData = {
-      orderNumber,
-      status: 'confirmed',
-      source: 'b2c',
-      items: cartItems,
-      customerInfo: {
-        email: customerInfo.email,
-        name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
-        firstName: shippingInfo.firstName,
-        lastName: shippingInfo.lastName,
-        marketingOptIn: customerInfo.marketing || false,
-        preferredLang: 'sv-SE'
-      },
-      shippingInfo: {
-        address: shippingInfo.address,
-        apartment: shippingInfo.apartment || '',
-        city: shippingInfo.city,
-        postalCode: shippingInfo.postalCode,
-        country: shippingInfo.country
-      },
-      subtotal: freshTotals.subtotal,
-      shipping: freshTotals.shipping,
-      vat: freshTotals.vat,
-      discountAmount: freshTotals.discountAmount || 0,
-      total: freshTotals.total,
-      payment: {
-        method: 'klarna',
-        paymentIntentId: paymentIntent.id,
-        amount: paymentIntent.amount / 100,
-        currency: paymentIntent.currency,
-        status: paymentIntent.status,
-        // Enhanced payment method details from Stripe (only store if defined)
-        ...(paymentIntent.payment_method?.type && {
-          paymentMethodType: paymentIntent.payment_method.type
-        }),
-        ...(paymentIntent.payment_method?.klarna && {
-          paymentMethodDetails: { type: 'klarna' }
-        }),
-        ...(paymentIntent.payment_method?.card && {
-          paymentMethodDetails: {
-            brand: paymentIntent.payment_method.card.brand,
-            last4: paymentIntent.payment_method.card.last4,
-            ...(paymentIntent.payment_method.card.wallet?.type && {
-              wallet: paymentIntent.payment_method.card.wallet.type
-            })
-          }
-        })
-      },
-      affiliate: freshTotals.discountCode ? {
-        code: freshTotals.discountCode,
-        discountPercentage: freshTotals.discountPercentage,
-        clickId: freshTotals.affiliateClickId
-      } : null,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    };
-
-    // Add order to database
-    const orderRef = await addDoc(collection(db, 'orders'), orderData);
-    console.log('✅ Order added to database, V3 trigger will handle email notifications automatically');
-    
-    // 2. Call the post-order processing function for affiliate processing
-    try {
-      console.log('Calling post-order processing function for Klarna order...');
-      const timestamp = Date.now();
-      const functionUrl = `https://us-central1-b8shield-reseller-app.cloudfunctions.net/processB2COrderCompletionHttpV2?_=${timestamp}`;
-      
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-        },
-        body: JSON.stringify({ orderId: orderRef.id }),
-      });
-
-      if (!response.ok) {
-        console.error('CRITICAL: Failed to call post-order processing function for Klarna order.', await response.text());
-        // Don't show error to user since payment already succeeded - log for admin review
-      } else {
-        const result = await response.json();
-        console.log('Post-order processing completed successfully for Klarna order:', result);
-      }
-    } catch (error) {
-      console.error('CRITICAL: Failed to call post-order processing function for Klarna order.', error);
-      // Don't show error to user since payment already succeeded - log for admin review
-    }
-    
-    return orderRef.id;
-  };
-
-  const generateOrderNumber = () => {
-    const timestamp = Date.now().toString().slice(-6);
-    const random = Math.random().toString(36).substr(2, 4).toUpperCase();
-    return `B8S-${timestamp}-${random}`;
-  };
 
   if (status === 'processing') {
     return (

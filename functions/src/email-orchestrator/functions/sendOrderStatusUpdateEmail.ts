@@ -3,6 +3,7 @@
 
 import { onCall } from 'firebase-functions/v2/https';
 import { EmailOrchestrator } from '../core/EmailOrchestrator';
+import { requireAdmin } from './authGuard';
 
 interface OrderStatusUpdateRequest {
   orderData: {
@@ -36,6 +37,9 @@ export const sendOrderStatusUpdateEmail = onCall<OrderStatusUpdateRequest>(
   },
   async (request) => {
     try {
+      // SECURITY: privileged mailer - admin only
+      await requireAdmin(request.auth?.uid);
+
       console.log('📧 sendOrderStatusUpdateEmail: Starting unified status update');
       console.log('📧 Request data:', {
         orderNumber: request.data.orderData.orderNumber,

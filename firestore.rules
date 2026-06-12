@@ -1,187 +1,243 @@
 rules_version = '2';
 
+// Rules for the NAMED database `b8s-reseller-db` (the only database the app
+// uses — client: src/firebase/config.js, functions: functions/src/config/database.ts).
+// firebase.json targets this database explicitly; deploying without that
+// targeting would update the unused (default) database instead.
+//
+// Server-only collections (passwordResets, emailVerifications,
+// campaignParticipants, campaignRevenueTracking) have NO rules on purpose:
+// Cloud Functions use the Admin SDK (bypasses rules) and clients must never
+// touch them — they fall through to the default deny at the bottom.
+
 service cloud.firestore {
   match /databases/{database}/documents {
     // Helper functions for common checks
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     function isAdmin() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
-    
-    function isReseller() {
-      return isAuthenticated() && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'reseller';
-    }
-    
+
     function isActiveUser() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active == true;
     }
-    
+
     function isUserOrAdmin(userId) {
       return request.auth.uid == userId || isAdmin();
     }
 
-    // 🛡️ Rate limiting function to prevent read spam
-    function isNotSpamming() {
-      // Basic time-based check (Firebase doesn't have built-in rate limiting)
-      // This is a simple protection - use Cloud Functions for advanced rate limiting
-      return request.time > resource.data.lastRead + duration.value(1, 's');
-    }
-
-    // Users collection
+    // ============================================================
+    // Users (B2B portal + admin accounts)
+    // ============================================================
     match /users/{userId} {
-      // Users can read their own document, admins can read all user documents
       allow read: if isUserOrAdmin(userId);
-      // Only admins can create users
       allow create: if isAdmin();
-      // Users can update their own profile data except role and isActive fields, admins can update everything
-      allow update: if isUserOrAdmin(userId) && 
+      // Users can update their own profile except role/isActive; admins anything
+      allow update: if isUserOrAdmin(userId) &&
         (!isAdmin() ? (
-          !("role" in request.resource.data) && 
+          !("role" in request.resource.data) &&
           !("isActive" in request.resource.data)
         ) : true);
-      // Only admins can delete users
       allow delete: if isAdmin();
+
+      // Per-customer marketing materials (admin document distribution)
+      match /marketingMaterials/{materialId} {
+        allow read: if isUserOrAdmin(userId);
+        allow write: if isAdmin();
+      }
     }
-    
-    // Products collection - 🛡️ PROTECTED: Prevent unlimited public reads
+
+    // ============================================================
+    // PUBLIC STOREFRONT DATA — anonymous visitors browse the shop
+    // ============================================================
     match /products/{productId} {
-      // 🛡️ IMPORTANT: Only authenticated users can read products (prevents bot scraping)
-      allow read: if isActiveUser();
-      // 🛡️ SECURITY: Only admins can write products. Both client write paths
-      // (AdminProducts.jsx and OrderContext.createDefaultProducts via AdminPage)
-      // run in admin-only contexts, so this does not break legitimate flows.
-      // Previously `isAuthenticated()` — any logged-in user could rewrite prices (revenue theft).
+      allow read: if true;
       allow write: if isAdmin();
     }
-    
-    // Orders collection
-    match /orders/{orderId} {
-      // Users can read their own orders, admins can read all orders
-      // B2C customers can read their orders if they match the b2cCustomerId
-      allow read: if isActiveUser() && (
-        resource.data.userId == request.auth.uid || isAdmin()
-      ) || (
-        isAuthenticated() && 
-        resource.data.source == 'b2c' && 
-        'b2cCustomerId' in resource.data &&
-        exists(/databases/$(database)/documents/b2cCustomers/$(resource.data.b2cCustomerId)) &&
-        get(/databases/$(database)/documents/b2cCustomers/$(resource.data.b2cCustomerId)).data.firebaseAuthUid == request.auth.uid
-      );
-      // Active users can create orders for themselves (B2B).
-      // Guests or B2C users can create orders if the source is 'b2c'. If a userId is included, it must match the authenticated user.
-      allow create: if (isActiveUser() && request.resource.data.userId == request.auth.uid) ||
-                       (request.resource.data.source == 'b2c' && (
-                         !('userId' in request.resource.data) || request.resource.data.userId == request.auth.uid
-                       ));
-      // Users can update their own orders to cancel them, admins can update any order
-      allow update: if isActiveUser() && (
-        (resource.data.userId == request.auth.uid && 
-         request.resource.data.status == 'cancelled' && 
-         resource.data.status in ['pending', 'confirmed']) || 
-        isAdmin()
-      );
-      // Only admins can delete orders
-      allow delete: if isAdmin();
-    }
-    
-    // Order statuses collection
-    match /orderStatuses/{statusId} {
-      // Any active user can read order statuses
-      allow read: if isActiveUser();
-      // Only admins can create/update/delete order statuses
+
+    match /productGroups/{groupId} {
+      allow read: if true;
       allow write: if isAdmin();
     }
-    
-    // Settings collection
-    // 🛡️ The 'app' doc holds non-sensitive store identity (shop name, logo,
-    // support email) that the PUBLIC storefront must render for anonymous
-    // visitors — so it is world-readable. All other settings docs stay gated.
+
+    // CMS pages (legal pages, content pages). Note: drafts are technically
+    // readable; keep secrets out of CMS docs.
+    match /pages/{pageId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // UI translations, one collection per locale
+    match /translations_sv_SE/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /translations_en_GB/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /translations_en_US/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Store identity (shop name, logo, support email) — rendered by the
+    // public storefront for anonymous visitors
     match /settings/app {
       allow read: if true;
       allow write: if isAdmin();
     }
     match /settings/{settingId} {
-      // Any active user can read other settings
       allow read: if isActiveUser();
-      // Only admins can create/update/delete settings
       allow write: if isAdmin();
     }
 
-    // User wagon settings collection
-    match /userWagonSettings/{userId} {
-      // Users can read their own wagon settings, admins can read all
-      allow read: if isActiveUser() && (request.auth.uid == userId || isAdmin());
-      // Only admins can create/update/delete wagon settings
-      allow write: if isAdmin();
-    }
-
-    // 🛡️ Marketing materials - Restrict access to prevent abuse
-    match /marketingMaterials/{materialId} {
-      // Only authenticated active users can access marketing materials
-      allow read: if isActiveUser();
-      // Only admins can write marketing materials
-      allow write: if isAdmin();
-    }
-
-    // 🛡️ Affiliate system - Protect from abuse
-    match /affiliates/{affiliateId} {
-      // Affiliates can read their own data, admins can read all
-      allow read: if isAuthenticated() && (request.auth.uid == affiliateId || isAdmin());
-      // Only admins can write affiliate data
-      allow write: if isAdmin();
-    }
-
-    match /affiliateClicks/{clickId} {
-      // Only admins can read click data (prevents gaming the system)
-      allow read: if isAdmin();
-      // 🛡️ SECURITY: Clicks are written ONLY server-side via the logAffiliateClickV2
-      // cloud function (Admin SDK bypasses these rules). No client path writes here,
-      // so client creates are denied to prevent forged clicks inflating commissions.
-      // Previously `isAuthenticated()` — any logged-in user could fabricate clicks.
-      allow create: if false;
-      // Only admins can update/delete
-      allow update, delete: if isAdmin();
-    }
-
-    // 🛡️ Admin presence - Protect from spam
-    match /adminPresence/{presenceId} {
-      // Only admins can read presence data
-      allow read: if isAdmin();
-      // Only admins can write presence data
-      allow write: if isAdmin();
-    }
-
-    // B2C Customers collection - Consumer accounts from checkout
-    match /b2cCustomers/{customerId} {
-      // B2C customers can read their own data, admins can read all
-      allow read: if isAuthenticated() && (request.auth.uid == resource.data.firebaseAuthUid || isAdmin());
-      // Allow creation during checkout (with proper firebaseAuthUid)
-      allow create: if isAuthenticated() && request.resource.data.firebaseAuthUid == request.auth.uid;
-      // B2C customers can update their own data, admins can update all
-      allow update: if isAuthenticated() && (request.auth.uid == resource.data.firebaseAuthUid || isAdmin());
-      // Only admins can delete B2C customers
+    // ============================================================
+    // Orders
+    // ============================================================
+    match /orders/{orderId} {
+      // Single-doc reads are open: the doc ID is an unguessable capability
+      // (Stripe payment-intent ID or Firestore auto-ID) and guests must be
+      // able to view their confirmation page after paying. Listing is gated.
+      allow get: if true;
+      // B2B users list their own orders; B2C customers list theirs via
+      // account linkage or their verified email; admins list everything.
+      allow list: if isAdmin() ||
+        (isActiveUser() && resource.data.userId == request.auth.uid) ||
+        (isAuthenticated() && resource.data.source == 'b2c' && (
+          resource.data.b2cCustomerAuthId == request.auth.uid ||
+          (resource.data.b2cCustomerId != null &&
+            get(/databases/$(database)/documents/b2cCustomers/$(resource.data.b2cCustomerId)).data.firebaseAuthUid == request.auth.uid) ||
+          resource.data.customerInfo.email == request.auth.token.email
+        ));
+      // B2C orders are created ONLY server-side by the Stripe webhook after
+      // signature-verified payment. Clients may only create B2B orders for
+      // themselves.
+      allow create: if isActiveUser() &&
+        request.resource.data.userId == request.auth.uid &&
+        (!('source' in request.resource.data) || request.resource.data.source != 'b2c');
+      // Users may cancel their own pending/confirmed orders; admins anything
+      allow update: if isAdmin() ||
+        (isActiveUser() &&
+          resource.data.userId == request.auth.uid &&
+          request.resource.data.status == 'cancelled' &&
+          resource.data.status in ['pending', 'confirmed']);
       allow delete: if isAdmin();
     }
 
-    // 🆕 Phase 2: AdminUIDs collection - Parallel admin UID tracking
-    // 🛡️ SAFE: Only admins can access, doesn't affect existing storage rules
-    match /adminUIDs/{adminUID} {
-      // Only existing admins can read admin UID data
-      allow read: if isAdmin();
-      // Only existing admins can write admin UID data  
+    match /orderStatuses/{statusId} {
+      allow read: if isActiveUser();
       allow write: if isAdmin();
     }
 
-    // Default deny rule for any other collections
+    // ============================================================
+    // B2C customer accounts
+    // ============================================================
+    match /b2cCustomers/{customerId} {
+      allow read: if isAuthenticated() && (resource.data.firebaseAuthUid == request.auth.uid || isAdmin());
+      // Created at checkout by the (just-authenticated) customer themselves
+      allow create: if isAuthenticated() && request.resource.data.firebaseAuthUid == request.auth.uid;
+      allow update: if isAuthenticated() && (resource.data.firebaseAuthUid == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // ============================================================
+    // Affiliate system
+    // ============================================================
+    // Affiliate doc ID == the affiliate's Firebase Auth uid. Affiliates read
+    // their own doc (by uid or by their own verified email — the portal and
+    // shop nav query by email). Anonymous discount-code validation goes
+    // through the validateDiscountCode callable, never direct reads.
+    match /affiliates/{affiliateId} {
+      allow read: if isAdmin() ||
+        (isAuthenticated() && (
+          request.auth.uid == affiliateId ||
+          resource.data.email == request.auth.token.email
+        ));
+      allow write: if isAdmin();
+    }
+
+    // Clicks are written ONLY server-side via logAffiliateClickV2 (Admin SDK)
+    match /affiliateClicks/{clickId} {
+      allow read: if isAdmin();
+      allow create: if false;
+      allow update, delete: if isAdmin();
+    }
+
+    // Public application form (anonymous applicants); only admins read/manage
+    match /affiliateApplications/{applicationId} {
+      allow create: if request.resource.data.email is string &&
+        request.resource.data.email.size() < 200;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /affiliatePayouts/{payoutId} {
+      allow read: if isAdmin() ||
+        (isAuthenticated() && resource.data.affiliateId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+
+    // ============================================================
+    // B2B / admin tooling (marketing, CRM wagons, presence)
+    // ============================================================
+    match /marketingMaterials/{materialId} {
+      allow read: if isActiveUser();
+      allow write: if isAdmin();
+    }
+
+    match /userWagonSettings/{userId} {
+      allow read: if isActiveUser() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /campaigns/{campaignId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /adminPresence/{presenceId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /adminUIDs/{adminUID} {
+      allow read, write: if isAdmin();
+    }
+
+    // Dining/ambassador wagon CRM data — admin-only internal tooling
+    match /activities/{docId} {
+      allow read, write: if isAdmin();
+    }
+    match /followUps/{docId} {
+      allow read, write: if isAdmin();
+    }
+    match /deferredActivities/{docId} {
+      allow read, write: if isAdmin();
+    }
+    match /ambassadorActivities/{docId} {
+      allow read, write: if isAdmin();
+    }
+    match /userMentions/{docId} {
+      allow read, write: if isAdmin();
+    }
+    match /customerDocuments/{docId} {
+      allow read, write: if isAdmin();
+    }
+    match /adminCustomerDocuments/{docId} {
+      allow read, write: if isAdmin();
+    }
+    match /appSettings/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Default deny for everything else (incl. server-only collections:
+    // passwordResets, emailVerifications, campaignParticipants,
+    // campaignRevenueTracking)
     match /{document=**} {
       allow read, write: if false;
     }

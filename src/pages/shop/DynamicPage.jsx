@@ -11,6 +11,7 @@ import { DocumentIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { formatFileSize, getFileTypeInfo } from '../../utils/fileUpload';
 import { getLegalSeoTitle, getLegalSeoDescription } from '../../utils/productUrls';
 import { Helmet } from 'react-helmet-async';
+import DOMPurify from 'dompurify';
 
 const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => {
   const { slug: paramSlug } = useParams();
@@ -273,7 +274,7 @@ const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => 
                   '--tw-prose-th-borders': '#d1d5db',
                   '--tw-prose-td-borders': '#e5e7eb',
                 }}
-                dangerouslySetInnerHTML={{ __html: pageContent }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(pageContent || '') }}
               />
             ) : (
               <div className="prose prose-lg max-w-none whitespace-pre-wrap prose-p:text-gray-700 prose-p:mb-4 prose-p:leading-relaxed">

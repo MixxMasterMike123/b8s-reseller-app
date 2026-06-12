@@ -95,8 +95,8 @@ export const stripeWebhookV2 = onRequest(
 
       // Handle payment_intent.succeeded events
       if (event.type === 'payment_intent.succeeded') {
-        const paymentIntent = event.data.object;
-        
+        let paymentIntent = event.data.object;
+
         // Check if this is a B2C order (has our enhanced metadata)
         if (!paymentIntent.metadata?.source || paymentIntent.metadata.source !== 'b2c_shop') {
           logger.info('⏭️ Skipping non-B2C payment intent', { paymentIntentId: paymentIntent.id });
@@ -104,18 +104,22 @@ export const stripeWebhookV2 = onRequest(
           return;
         }
 
-        // Check if order already exists (idempotency)
-        const existingOrders = await db.collection('orders')
-          .where('payment.paymentIntentId', '==', paymentIntent.id)
-          .get();
-        
-        if (!existingOrders.empty) {
-          logger.info('✅ Order already exists for payment intent', { 
-            paymentIntentId: paymentIntent.id,
-            orderId: existingOrders.docs[0].id 
+        // Idempotency: the order doc ID IS the payment intent ID, created
+        // atomically with create() below. A second delivery (Stripe retry or
+        // a concurrent execution) fails with ALREADY_EXISTS instead of racing
+        // the old query-then-add pattern.
+        const orderRef = db.collection('orders').doc(paymentIntent.id);
+
+        // Expand payment_method so card/Klarna details are actually present
+        // (the event payload only carries the payment_method ID as a string)
+        try {
+          paymentIntent = await stripe.paymentIntents.retrieve(paymentIntent.id, {
+            expand: ['payment_method']
+          }) as any;
+        } catch (expandError) {
+          logger.warn('⚠️ Could not expand payment_method, continuing without details', {
+            paymentIntentId: paymentIntent.id
           });
-          response.status(200).json({ received: true, existing: true });
-          return;
         }
 
         // Extract order data from enhanced metadata
@@ -230,19 +234,37 @@ export const stripeWebhookV2 = onRequest(
             clickId: metadata.affiliateClickId || ''
           } : null,
 
+          // ✅ B2C customer account linkage (from metadata, set at payment time)
+          ...(metadata.b2cCustomerId && {
+            b2cCustomerId: metadata.b2cCustomerId,
+            b2cCustomerAuthId: metadata.b2cCustomerAuthId || '',
+            hasAccount: true
+          }),
+
           // ✅ Timestamps using FieldValue for consistency with frontend
           createdAt: new Date(),
           updatedAt: new Date(),
-          
-          // ✅ Webhook tracking flags (help identify recovery orders)
+
+          // ✅ Webhook tracking flags
           webhookProcessed: true,
-          webhookEventId: event.id,
-          recoveredFromStripe: true // Flag to indicate this was recovered from webhook
+          webhookEventId: event.id
         };
 
-        // Create order in Firestore
-        const orderRef = await db.collection('orders').add(orderData);
-        
+        // Create order in Firestore with the deterministic ID; a duplicate
+        // delivery fails here atomically and is treated as success
+        try {
+          await orderRef.create(orderData);
+        } catch (createError: any) {
+          if (createError.code === 6 /* ALREADY_EXISTS */) {
+            logger.info('✅ Order already exists for payment intent', {
+              paymentIntentId: paymentIntent.id
+            });
+            response.status(200).json({ received: true, existing: true });
+            return;
+          }
+          throw createError;
+        }
+
         logger.info('✅ Order created from Stripe webhook', {
           paymentIntentId: paymentIntent.id,
           orderId: orderRef.id,
@@ -257,40 +279,16 @@ export const stripeWebhookV2 = onRequest(
         // to avoid duplicate commission credits. The order data contains the affiliate
         // structure, so the processing function will handle it correctly.
 
-        // Trigger email and affiliate processing via existing HTTP function
-        // This reuses the same logic as the frontend order flow
+        // Trigger emails, customer stats and affiliate commission via the
+        // shared core function (direct call — no mock req/res)
         try {
-          logger.info('📧 Webhook: Calling processB2COrderCompletionHttpV2', {
+          const { processOrderCompletion } = require('../order-processing/functions');
+          const result = await processOrderCompletion(orderRef.id);
+          logger.info('✅ Webhook: Order processing completed', {
             orderId: orderRef.id,
-            orderNumber
+            statusCode: result.statusCode,
+            result: result.body
           });
-
-          // Call the same function the frontend uses for order processing
-          // Using internal function call (not HTTP) for better performance
-          const { processB2COrderCompletionHttp } = require('../order-processing/functions');
-          
-          // Simulate HTTP request object for the function
-          const mockRequest = {
-            body: { orderId: orderRef.id },
-            ip: 'webhook-internal',
-            method: 'POST'
-          };
-          
-          const mockResponse = {
-            status: (code: number) => ({
-              json: (data: any) => {
-                logger.info('📧 Webhook: Email processing result', {
-                  statusCode: code,
-                  result: data
-                });
-              }
-            })
-          };
-
-          await processB2COrderCompletionHttp(mockRequest as any, mockResponse as any);
-          
-          logger.info('✅ Webhook: Order processing completed successfully');
-
         } catch (emailError) {
           logger.error('❌ Webhook: Failed to trigger order processing', {
             error: emailError,

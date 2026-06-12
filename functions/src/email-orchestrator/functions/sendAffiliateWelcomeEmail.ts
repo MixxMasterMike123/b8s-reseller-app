@@ -4,6 +4,7 @@
 
 import { onCall } from 'firebase-functions/v2/https';
 import { EmailOrchestrator } from '../core/EmailOrchestrator';
+import { requireAdmin } from './authGuard';
 
 interface AffiliateWelcomeRequest {
   affiliateInfo: {
@@ -31,6 +32,9 @@ export const sendAffiliateWelcomeEmail = onCall<AffiliateWelcomeRequest>(
   },
   async (request) => {
     try {
+      // SECURITY: privileged mailer - admin only
+      await requireAdmin(request.auth?.uid);
+
       console.log('🎉 sendAffiliateWelcomeEmail: Starting affiliate welcome onboarding');
       console.log('🎉 Request data:', {
         affiliateName: request.data.affiliateInfo.name,
