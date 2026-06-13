@@ -80,8 +80,8 @@ const TrustpilotWidget = ({
   if (!loaded) {
     return (
       <div ref={widgetRef} className="animate-pulse">
-        <div className="h-12 bg-gray-200 rounded mb-2"></div>
-        <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
+        <div className="h-12 bg-gray-200 rounded-sm mb-2"></div>
+        <div className="h-4 bg-gray-200 rounded-sm w-3/4 mx-auto"></div>
       </div>
     );
   }

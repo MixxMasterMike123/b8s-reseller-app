@@ -78,7 +78,7 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
         <div className="space-y-4">
           <div className="space-y-4">
             <div className="flex items-start bg-white rounded-lg p-4 border border-blue-200">
-              <span className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</span>
+              <span className="shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</span>
               <div className="ml-3">
                 <p className="text-sm text-gray-700">
                   {t('training.action_1', 'Ger butiksstället en synlig och central plats i butiken, gärna nära kassan.')}
@@ -87,7 +87,7 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
             </div>
             
             <div className="flex items-start bg-white rounded-lg p-4 border border-blue-200">
-              <span className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</span>
+              <span className="shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</span>
               <div className="ml-3">
                 <p className="text-sm text-gray-700">
                   {t('training.action_2', 'Aktivt säljer och förklarar produkten för kunderna. Gör man inte det är sannolikheten stor att kunderna inte uppmärksammar produkten och därmed inte köper produkten vilket vare sig vi eller ni vinner på.')}
@@ -96,7 +96,7 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
             </div>
             
             <div className="flex items-start bg-white rounded-lg p-4 border border-blue-200">
-              <span className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</span>
+              <span className="shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</span>
               <div className="ml-3">
                 <p className="text-sm text-gray-700">
                   {t('training.action_3', 'För att försäkra säljprocessen ytterligare skickar vi också med ett antal lösa B8Shields. Med fördel kan dessa läggas i en skål vid stället så att kund kan få klämma och känna på produkten.')}
@@ -241,7 +241,7 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
       bgColor: 'bg-yellow-50',
       content: (
         <div className="text-center space-y-6">
-          <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white rounded-lg p-6">
+          <div className="bg-linear-to-r from-yellow-400 to-yellow-600 text-white rounded-lg p-6">
             <TrophyIcon className="h-16 w-16 mx-auto mb-4" />
             <h3 className="text-xl font-bold mb-2">{t('training.certified_seller', 'Certifierad B8Shield specialist')}</h3>
           </div>
@@ -294,7 +294,7 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
         <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] sm:max-h-[95vh] overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="bg-[#459CA8] px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex-shrink-0">
+          <div className="bg-[#459CA8] px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <currentSlideData.icon className="h-6 w-6 text-white mr-3" />
@@ -317,12 +317,12 @@ const TrainingModal = ({ isOpen, onClose, onComplete }) => {
           </div>
 
           {/* Content - Now flexible height */}
-          <div className="px-4 sm:px-6 py-4 sm:py-6 flex-grow overflow-y-auto bg-white">
+          <div className="px-4 sm:px-6 py-4 sm:py-6 grow overflow-y-auto bg-white">
             {currentSlideData.content}
           </div>
 
           {/* Footer */}
-          <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 bg-gray-50 shrink-0">
             <div className="flex flex-col space-y-3">
               {/* Step counter and progress bar */}
               <div className="flex items-center justify-between text-xs text-gray-600 mb-1">

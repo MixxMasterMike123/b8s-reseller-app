@@ -288,7 +288,7 @@ const AffiliateSuccessGuide = () => {
           <div key={section.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <button
               onClick={() => toggleSection(section.id)}
-              className="w-full px-6 py-4 text-left hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+              className="w-full px-6 py-4 text-left hover:bg-gray-50 transition-colors focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-inset"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">

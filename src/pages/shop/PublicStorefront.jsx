@@ -254,7 +254,7 @@ const PublicStorefront = () => {
                 
                 <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
                   {t('hero_title_start', 'Fastna')}
-                  <span className="bg-gradient-to-r from-red-400 to-red-500 bg-clip-text text-transparent"> {t('hero_title_middle', 'aldrig')} </span>
+                  <span className="bg-linear-to-r from-red-400 to-red-500 bg-clip-text text-transparent"> {t('hero_title_middle', 'aldrig')} </span>
                   {t('hero_title_end', 'mer!')}
                 </h1>
                 
@@ -264,7 +264,7 @@ const PublicStorefront = () => {
 
                 <button 
                   onClick={() => document.getElementById('products').scrollIntoView({ behavior: 'smooth' })}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                  className="bg-linear-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
                 >
                   {t('hero_shop_now_button', 'Handla nu')}
                 </button>
@@ -272,7 +272,7 @@ const PublicStorefront = () => {
 
               {/* Right Column: Social Proof */}
               <div className="flex-1 flex justify-end">
-                <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 max-w-md border border-white/20 shadow-xl">
+                <div className="bg-white/90 backdrop-blur-xs rounded-2xl p-6 max-w-md border border-white/20 shadow-xl">
                   <div className="flex items-center justify-center mb-4">
                     <div className="flex text-yellow-400">
                       {[...Array(5)].map((_, i) => (
@@ -313,7 +313,7 @@ const PublicStorefront = () => {
               
               <h1 className="text-3xl font-bold text-white mb-3 drop-shadow-lg">
                 {t('hero_title_start', 'Fastna')}
-                <span className="bg-gradient-to-r from-red-400 to-red-500 bg-clip-text text-transparent"> {t('hero_title_middle', 'aldrig')} </span>
+                <span className="bg-linear-to-r from-red-400 to-red-500 bg-clip-text text-transparent"> {t('hero_title_middle', 'aldrig')} </span>
                 {t('hero_title_end', 'mer!')}
               </h1>
               
@@ -323,7 +323,7 @@ const PublicStorefront = () => {
 
               <button 
                 onClick={() => document.getElementById('products').scrollIntoView({ behavior: 'smooth' })}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-full text-base font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                className="bg-linear-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-full text-base font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
               >
                 {t('hero_shop_now_button', 'Handla nu')}
               </button>
@@ -386,7 +386,7 @@ const PublicStorefront = () => {
                   const productUrl = getProductUrl(productObj);
                   
                   return (
-                    <Link key={index} to={productUrl} className="relative flex-shrink-0 w-4/5 aspect-square bg-gray-900 rounded-lg overflow-hidden group snap-start block">
+                    <Link key={index} to={productUrl} className="relative shrink-0 w-4/5 aspect-square bg-gray-900 rounded-lg overflow-hidden group snap-start block">
                       <img
                         src={image.src}
                         alt={`B8Shield ${t(image.colorKey)} i naturen`}
@@ -454,7 +454,7 @@ const PublicStorefront = () => {
                               {/* Special Edition Badge */}
                               <div className="relative">
                                 <div className="absolute top-4 left-4 z-10">
-                                  <span className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                                  <span className="bg-linear-to-r from-orange-500 to-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
                                     {t('special_edition_badge', 'SPECIAL EDITION')}
                                   </span>
                                 </div>
@@ -493,7 +493,7 @@ const PublicStorefront = () => {
                                   </div>
                                   
                                   {/* CTA Button */}
-                                  <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-center py-3 px-6 rounded-full text-base font-bold hover:from-orange-600 hover:to-red-600 transition-all transform hover:scale-105">
+                                  <div className="bg-linear-to-r from-orange-500 to-red-500 text-white text-center py-3 px-6 rounded-full text-base font-bold hover:from-orange-600 hover:to-red-600 transition-all transform hover:scale-105">
                                     {t('special_edition_cta', 'Se Special Edition')}
                                   </div>
                                 </div>
@@ -653,7 +653,7 @@ const PublicStorefront = () => {
                           {/* Clothing Badge */}
                           <div className="relative">
                             <div className="absolute top-4 left-4 z-10">
-                              <span className="bg-gradient-to-r from-green-500 to-teal-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                              <span className="bg-linear-to-r from-green-500 to-teal-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
                                 {t('clothing_badge', 'KLÄDER')}
                               </span>
                             </div>
@@ -693,7 +693,7 @@ const PublicStorefront = () => {
                               
                               {/* CTA Button */}
                               <div className="pt-2">
-                                <div className="bg-gradient-to-r from-green-500 to-teal-500 text-white text-center py-2 px-4 rounded-full text-sm font-medium hover:from-green-600 hover:to-teal-600 transition-colors">
+                                <div className="bg-linear-to-r from-green-500 to-teal-500 text-white text-center py-2 px-4 rounded-full text-sm font-medium hover:from-green-600 hover:to-teal-600 transition-colors">
                                   {t('clothing_cta', 'Se Produkt')}
                                 </div>
                               </div>
@@ -720,7 +720,7 @@ const PublicStorefront = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center group">
-                <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                <div className="w-16 h-16 bg-linear-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -730,7 +730,7 @@ const PublicStorefront = () => {
               </div>
 
               <div className="text-center group">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                <div className="w-16 h-16 bg-linear-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
@@ -740,7 +740,7 @@ const PublicStorefront = () => {
               </div>
 
               <div className="text-center group">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                <div className="w-16 h-16 bg-linear-to-br from-purple-400 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>

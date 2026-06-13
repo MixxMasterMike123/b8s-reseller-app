@@ -327,7 +327,7 @@ const FollowUpCenter = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Totalt</p>
@@ -337,7 +337,7 @@ const FollowUpCenter = () => {
             </div>
           </div>
           
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Försenade</p>
@@ -347,7 +347,7 @@ const FollowUpCenter = () => {
             </div>
           </div>
           
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Idag</p>
@@ -357,7 +357,7 @@ const FollowUpCenter = () => {
             </div>
           </div>
           
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Denna vecka</p>
@@ -369,7 +369,7 @@ const FollowUpCenter = () => {
         </div>
 
         {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-6 mb-8">
           <div className="flex items-center space-x-4 overflow-x-auto">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Filtrera:</span>
             {[
@@ -417,7 +417,7 @@ const FollowUpCenter = () => {
                       name="contactId"
                       value={newFollowUp.contactId}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                       required
                     >
                       <option value="">Välj gäst...</option>
@@ -435,7 +435,7 @@ const FollowUpCenter = () => {
                       name="type"
                       value={newFollowUp.type}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                     >
                       <option value="call">Telefonsamtal</option>
                       <option value="email">E-post</option>
@@ -453,7 +453,7 @@ const FollowUpCenter = () => {
                     name="subject"
                     value={newFollowUp.subject}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                     placeholder="T.ex. Produktdemo, Kontraktsdiskussion..."
                     required
                   />
@@ -467,7 +467,7 @@ const FollowUpCenter = () => {
                       name="scheduledDate"
                       value={newFollowUp.scheduledDate}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                       required
                     />
                   </div>
@@ -479,7 +479,7 @@ const FollowUpCenter = () => {
                       name="scheduledTime"
                       value={newFollowUp.scheduledTime}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                       required
                     />
                   </div>
@@ -490,7 +490,7 @@ const FollowUpCenter = () => {
                       name="duration"
                       value={newFollowUp.duration}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                     >
                       <option value={15}>15 min</option>
                       <option value={30}>30 min</option>
@@ -509,7 +509,7 @@ const FollowUpCenter = () => {
                       name="priority"
                       value={newFollowUp.priority}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                     >
                       <option value="low">Låg</option>
                       <option value="medium">Medium</option>
@@ -523,7 +523,7 @@ const FollowUpCenter = () => {
                       name="reminderMinutes"
                       value={newFollowUp.reminderMinutes}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                     >
                       <option value={0}>Ingen påminnelse</option>
                       <option value={15}>15 minuter innan</option>
@@ -542,7 +542,7 @@ const FollowUpCenter = () => {
                       name="location"
                       value={newFollowUp.location}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                       placeholder="Kontor, restaurang, kundlokal..."
                     />
                   </div>
@@ -555,7 +555,7 @@ const FollowUpCenter = () => {
                     value={newFollowUp.description}
                     onChange={handleInputChange}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                     placeholder="Agenda, mål, förberedelser..."
                   />
                 </div>
@@ -581,7 +581,7 @@ const FollowUpCenter = () => {
         )}
 
         {/* Follow-ups List */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 dark:border-orange-400"></div>

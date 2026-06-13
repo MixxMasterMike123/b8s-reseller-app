@@ -88,7 +88,7 @@ const TextWithMentions = ({ text, className = "", adminUsers = [] }) => {
            return (
              <span
                key={index}
-               className="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600"
+               className="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded-sm text-xs font-medium bg-gray-100 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600"
              >
                {part}
              </span>
@@ -143,7 +143,7 @@ const InlineActivityEditor = ({ activity, onSave, onCancel, contactName }) => {
           onChange={(e) => setEditData(prev => ({ ...prev, subject: e.target.value }))}
           onKeyDown={handleKeyDown}
           placeholder="Beskriv vad som hände..."
-          className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+          className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-sm focus:outline-hidden focus:ring-1 focus:ring-blue-400"
           autoFocus
         />
       </div>
@@ -158,7 +158,7 @@ const InlineActivityEditor = ({ activity, onSave, onCancel, contactName }) => {
           onKeyDown={handleKeyDown}
           placeholder="Mer information..."
           rows={2}
-          className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+          className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-sm focus:outline-hidden focus:ring-1 focus:ring-blue-400"
         />
       </div>
 
@@ -167,13 +167,13 @@ const InlineActivityEditor = ({ activity, onSave, onCancel, contactName }) => {
           <button
             onClick={handleSave}
             disabled={saving || !editData.subject.trim()}
-            className="px-2 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white text-xs rounded transition-colors"
+            className="px-2 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white text-xs rounded-sm transition-colors"
           >
             {saving ? 'Sparar...' : 'Spara'}
           </button>
           <button
             onClick={onCancel}
-            className="px-2 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 dark:text-gray-300 text-xs rounded transition-colors"
+            className="px-2 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 dark:text-gray-300 text-xs rounded-sm transition-colors"
           >
             Avbryt
           </button>
@@ -457,7 +457,7 @@ const ContactDetail = () => {
     
     const keywordMap = {
       'hett': ['intresserad', 'vill köpa', 'bestämma', 'offert', 'pris', 'priser', 'köpa', 'beställa', 'hot', 'het', 'möjlighet', 'affär'],
-      'ringabak': ['ring tillbaka', 'ringa tillbaka', 'höra av sig', 'kontakta', 'återkomma', 'återkoppla', 'ring', 'ringa', 'hör av', 'kontakt'],
+      'ringabak': ['ring-3 tillbaka', 'ringa tillbaka', 'höra av sig', 'kontakta', 'återkomma', 'återkoppla', 'ring-3', 'ringa', 'hör av', 'kontakt'],
       'problem': ['problem', 'fungerar inte', 'missnöjd', 'fel', 'klagar', 'trasig', 'dålig', 'issue', 'trouble', 'svårt', 'hjälp'],
       'nöjd': ['nöjd', 'bra', 'funkar', 'rekommenderar', 'tack', 'fantastisk', 'perfekt', 'glad', 'bäst', 'toppen', 'excellent'],
       'akut': ['akut', 'bråttom', 'snabbt', 'idag', 'direkt', 'asap', 'nu', 'omgående', 'urgent', 'rush']
@@ -1165,7 +1165,7 @@ const ContactDetail = () => {
         </div>
 
                 {/* Contact Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700 p-8 mb-8">
           {/* 🎯 IMPROVED: Desktop-First Layout - Header on top, buttons below */}
           
           {/* Company Header with Icon */}
@@ -1236,7 +1236,7 @@ const ContactDetail = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                 {/* Status */}
                 <div className="flex items-center">
-                  <ClipboardDocumentListIcon className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
+                  <ClipboardDocumentListIcon className="h-4 w-4 text-blue-500 mr-2 shrink-0" />
                   <div>
                     <div className="text-xs font-medium text-blue-700">Status</div>
                     <div className="text-sm">
@@ -1259,7 +1259,7 @@ const ContactDetail = () => {
 
                 {/* Priority */}
                 <div className="flex items-center">
-                  <StarIcon className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
+                  <StarIcon className="h-4 w-4 text-blue-500 mr-2 shrink-0" />
                   <div>
                     <div className="text-xs font-medium text-blue-700">Prioritet</div>
                     <div className="flex items-center text-sm">
@@ -1277,7 +1277,7 @@ const ContactDetail = () => {
 
                 {/* Source */}
                 <div className="flex items-center">
-                  <UserIcon className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
+                  <UserIcon className="h-4 w-4 text-blue-500 mr-2 shrink-0" />
                   <div>
                     <div className="text-xs font-medium text-blue-700">Källa</div>
                     <div className="text-sm">
@@ -1304,7 +1304,7 @@ const ContactDetail = () => {
             {contact.notes && (
               <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div className="flex items-start">
-                  <DocumentTextIcon className="h-4 w-4 text-gray-500 dark:text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
+                  <DocumentTextIcon className="h-4 w-4 text-gray-500 dark:text-gray-400 mr-2 mt-0.5 shrink-0" />
                   <div className="flex-1">
                     <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Anteckningar</div>
                     <div
@@ -1424,7 +1424,7 @@ const ContactDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           
           {/* Last Conversation */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700 p-6">
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
               <ChatSolid className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />
               Senaste kontakten
@@ -1495,7 +1495,7 @@ const ContactDetail = () => {
                         </div>
                         
                         {/* Date aligned with title */}
-                        <span className="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">
+                        <span className="text-sm text-gray-500 dark:text-gray-400 shrink-0">
                           {lastConversation.createdAt?.toDate?.()?.toLocaleDateString('sv-SE') || lastConversation.date || 'Idag'}
                         </span>
                       </div>
@@ -1540,7 +1540,7 @@ const ContactDetail = () => {
                           {!isDismissed && (
                   <button
                               onClick={() => handleEditActivity(lastConversation)}
-                              className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:bg-blue-900 border border-blue-300 rounded transition-colors"
+                              className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:bg-blue-900 border border-blue-300 rounded-sm transition-colors"
                               title="Redigera aktivitet"
                   >
                               <PencilIcon className="h-3 w-3 mr-1" />
@@ -1552,7 +1552,7 @@ const ContactDetail = () => {
                           {!isDismissed && (
                   <button
                               onClick={() => handleDeleteActivity(lastConversation.id)}
-                              className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-800 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900 dark:bg-red-900 border border-red-300 rounded transition-colors"
+                              className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-800 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900 dark:bg-red-900 border border-red-300 rounded-sm transition-colors"
                               title="Ta bort aktivitet"
                   >
                               <TrashIcon className="h-3 w-3 mr-1" />
@@ -1564,7 +1564,7 @@ const ContactDetail = () => {
                           {isUrgent && !isDismissed && (
                   <button
                               onClick={() => dismissActivity(lastConversation.id)}
-                              className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded transition-colors"
+                              className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-sm transition-colors"
                               title="Markera som löst"
                   >
                               <CheckIcon className="h-3 w-3 mr-1" />
@@ -1597,7 +1597,7 @@ const ContactDetail = () => {
         </div>
 
           {/* Conversation Context */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700 p-6">
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
               <PencilIcon className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
               Vad att prata om
@@ -1636,7 +1636,7 @@ const ContactDetail = () => {
           const recentActivities = allActivities.slice(0, 4); // Show 4 most recent
           
           return allActivities.length > 1 ? (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-8">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700 p-6 mb-8">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                   <ClockIcon className="h-5 w-5 text-gray-600 dark:text-gray-400 mr-2" />
@@ -1677,7 +1677,7 @@ const ContactDetail = () => {
                       id={`activity-${activity.id}`}
                       className={getTimelineStyle(urgencyLevel, isDismissed)}
                     >
-                      <div className="flex-shrink-0 mt-0.5">
+                      <div className="shrink-0 mt-0.5">
                         {getActivityIcon(activity.type)}
                     </div>
                       <div className="flex-1 min-w-0">
@@ -1694,13 +1694,13 @@ const ContactDetail = () => {
                                 {urgencyLevel === 'critical' && (
                                   <>
                                     <ExclamationSolid className="h-3 w-3 text-red-600 dark:text-red-400" />
-                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300">
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300">
                                       AKUT
                                     </span>
                                   </>
                                 )}
                                 {urgencyLevel === 'high' && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300">
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-xs font-medium bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300">
                                     PROBLEM
                                   </span>
                                 )}
@@ -1709,7 +1709,7 @@ const ContactDetail = () => {
                             
                             {/* Dismissed indicator */}
                             {isDismissed && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:text-gray-400">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-xs font-medium bg-gray-100 text-gray-600 dark:text-gray-400">
                                 <CheckIcon className="h-3 w-3 mr-1" />
                                 Löst
                               </span>
@@ -1717,7 +1717,7 @@ const ContactDetail = () => {
                     </div>
                           
                           {/* Date aligned with title */}
-                          <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
+                          <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
                             {activity.createdAt?.toDate?.()?.toLocaleDateString('sv-SE') || activity.date || 'Idag'}
                           </span>
                     </div>
@@ -1764,7 +1764,7 @@ const ContactDetail = () => {
                             {!isDismissed && (
                               <button
                                 onClick={() => handleEditActivity(activity)}
-                                className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:bg-blue-900 border border-blue-300 rounded transition-colors"
+                                className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:bg-blue-900 border border-blue-300 rounded-sm transition-colors"
                                 title="Redigera"
                               >
                                 <PencilIcon className="h-3 w-3" />
@@ -1775,7 +1775,7 @@ const ContactDetail = () => {
                             {!isDismissed && (
                               <button
                                 onClick={() => handleDeleteActivity(activity.id)}
-                                className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-800 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900 dark:bg-red-900 border border-red-300 rounded transition-colors"
+                                className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-800 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900 dark:bg-red-900 border border-red-300 rounded-sm transition-colors"
                                 title="Ta bort"
                               >
                                 <TrashIcon className="h-3 w-3" />
@@ -1786,7 +1786,7 @@ const ContactDetail = () => {
                             {isUrgent && !isDismissed && (
                               <button
                                 onClick={() => dismissActivity(activity.id)}
-                                className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded transition-colors"
+                                className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-sm transition-colors"
                                 title="Markera som löst"
                               >
                                 <CheckIcon className="h-3 w-3 mr-0.5" />
@@ -1828,7 +1828,7 @@ const ContactDetail = () => {
         })()}
 
         {/* Activity Logger Section - "Vad hände?" */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700 p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Vad hände? Registrera kontakt</h3>
           
           {/* Activity Type Selector */}
@@ -1882,7 +1882,7 @@ const ContactDetail = () => {
                 }
               }}
               placeholder="T.ex. 'Intresserad av fler röda', 'Skickade prisförslag @micke', 'Bekräftade leverans'..."
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-orange-500"
             />
             
             {/* @mention dropdown */}
@@ -1928,7 +1928,7 @@ const ContactDetail = () => {
                       <button
                         key={tag}
                         onClick={() => addTag(tag)}
-                        className="inline-flex items-center bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 text-xs font-medium px-2.5 py-0.5 rounded-sm hover:bg-blue-200 transition-colors"
+                        className="inline-flex items-center bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 text-xs font-medium px-2.5 py-0.5 rounded-xs hover:bg-blue-200 transition-colors"
                       >
                         <span className="text-blue-600 dark:text-blue-400 mr-1">+</span>
                         #{tag}
@@ -1948,7 +1948,7 @@ const ContactDetail = () => {
                     {selectedTags.map(tag => (
                       <span
                         key={tag}
-                        className="inline-flex items-center bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-sm"
+                        className="inline-flex items-center bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-xs"
                       >
                         #{tag}
                         <button
@@ -1985,7 +1985,7 @@ const ContactDetail = () => {
                 setTimeout(() => setShowAutocomplete(false), 200);
               }}
               placeholder="Skriv egna taggar... (tryck Enter, komma eller mellanslag för att lägga till)"
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
             />
             
             {/* Autocomplete Dropdown */}
@@ -2021,7 +2021,7 @@ const ContactDetail = () => {
               onChange={(e) => handleActivityChange('description', e.target.value)}
               placeholder="Mer detaljerad beskrivning av vad som diskuterades..."
               rows={3}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-orange-500"
             />
           </div>
 
@@ -2046,7 +2046,7 @@ const ContactDetail = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
               {/* Header */}
-              <div className="bg-gradient-to-r from-orange-600 to-red-600 text-white p-6">
+              <div className="bg-linear-to-r from-orange-600 to-red-600 text-white p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <FolderIcon className="h-8 w-8" />
@@ -2078,7 +2078,7 @@ const ContactDetail = () => {
                       <select
                         value={adminDocCategory}
                         onChange={(e) => setAdminDocCategory(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                       >
                         {adminDocCategories.map(cat => (
                           <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -2094,7 +2094,7 @@ const ContactDetail = () => {
                         value={adminDocNotes}
                         onChange={(e) => setAdminDocNotes(e.target.value)}
                         rows={2}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                         placeholder="Interna anteckningar om dokumentet..."
                       />
                   </div>
@@ -2107,7 +2107,7 @@ const ContactDetail = () => {
                         type="file"
                         onChange={(e) => setAdminDocFile(e.target.files[0])}
                         accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.webp,.svg"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                     />
                       {adminDocFile && (
                         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
@@ -2414,7 +2414,7 @@ const ContactDetail = () => {
                           type="checkbox"
                           checked={editingContactData.sameAsCompanyAddress}
                           onChange={(e) => setEditingContactData({ ...editingContactData, sameAsCompanyAddress: e.target.checked })}
-                          className="rounded border-gray-300 dark:border-gray-600 text-orange-600 dark:text-orange-400 focus:border-orange-500 focus:ring-orange-500"
+                          className="rounded-sm border-gray-300 dark:border-gray-600 text-orange-600 dark:text-orange-400 focus:border-orange-500 focus:ring-orange-500"
                         />
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Samma leveransadress som företagsadress</span>
                       </label>

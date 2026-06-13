@@ -118,7 +118,7 @@ const AffiliateRegistration = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
       <ShopNavigation />
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -384,7 +384,7 @@ const AffiliateRegistration = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full md:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50"
+                    className="w-full md:w-auto bg-linear-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50"
                   >
                     {loading ? t('affiliate_reg_sending', 'Skickar...') : t('affiliate_reg_submit', 'Skicka ansökan')}
                   </button>

@@ -20,7 +20,7 @@ import {
 
 const StatCard = ({ icon, title, value, color }) => (
   <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg flex items-center space-x-4">
-    <div className={`w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center ${color}`}>
+    <div className={`w-12 h-12 rounded-full shrink-0 flex items-center justify-center ${color}`}>
       {icon}
     </div>
     <div>
@@ -142,14 +142,14 @@ const AdminAffiliates = () => {
             <div className="flex items-center gap-3">
               <Link 
                 to="/admin/affiliates/create" 
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-green-500 dark:focus:ring-green-400"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-green-500 dark:focus:ring-green-400"
               >
                 <UsersIcon className="h-5 w-5 mr-2" />
                 Lägg till Affiliate
               </Link>
               <Link 
                 to="/admin/affiliates/analytics" 
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-blue-500 dark:focus:ring-blue-400"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-blue-500 dark:focus:ring-blue-400"
               >
                 <ChartBarIcon className="h-5 w-5 mr-2" />
                 Detaljerad Analytics
@@ -199,7 +199,7 @@ const AdminAffiliates = () => {
                       <p className="text-md font-semibold text-gray-900 dark:text-gray-100">{app.name}</p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">{app.email}</p>
                     </div>
-                    <button onClick={() => navigate(`/admin/affiliates/application/${app.id}`)} className="ml-4 inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-600 dark:bg-yellow-500 hover:bg-yellow-700 dark:hover:bg-yellow-600">
+                    <button onClick={() => navigate(`/admin/affiliates/application/${app.id}`)} className="ml-4 inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-yellow-600 dark:bg-yellow-500 hover:bg-yellow-700 dark:hover:bg-yellow-600">
                       Granska
                     </button>
                   </li>
@@ -251,8 +251,8 @@ const AdminAffiliates = () => {
                         {/* Column 1: Affiliate & Contact */}
                         <td className="px-4 md:px-6 py-4">
                           <div className="flex items-start">
-                            <div className="flex-shrink-0 h-12 w-12 mr-4">
-                              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-800 dark:to-blue-700 flex items-center justify-center">
+                            <div className="shrink-0 h-12 w-12 mr-4">
+                              <div className="h-12 w-12 rounded-full bg-linear-to-br from-blue-100 to-blue-200 dark:from-blue-800 dark:to-blue-700 flex items-center justify-center">
                                 <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
                                   {affiliate.name ? affiliate.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'AF'}
                                 </span>
@@ -283,7 +283,7 @@ const AdminAffiliates = () => {
                           <div className="space-y-2">
                             <div className="bg-blue-50 dark:bg-blue-900 rounded-lg p-2">
                               <div className="text-xs text-blue-600 dark:text-blue-300 font-medium mb-1">Affiliate Kod</div>
-                              <div className="font-mono text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 rounded border border-blue-100 dark:border-blue-700">
+                              <div className="font-mono text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 rounded-sm border border-blue-100 dark:border-blue-700">
                                 {affiliate.affiliateCode}
                               </div>
                             </div>
@@ -355,7 +355,7 @@ const AdminAffiliates = () => {
                           <div className="flex flex-col gap-2">
                             <button
                               onClick={() => navigate(`/admin/affiliates/manage/${affiliate.id}`)}
-                              className="inline-flex items-center px-3 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded transition-colors"
+                              className="inline-flex items-center px-3 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded-sm transition-colors"
                             >
                               <PencilIcon className="h-4 w-4 mr-1" />
                               Hantera
@@ -364,7 +364,7 @@ const AdminAffiliates = () => {
                             {affiliate.stats?.balance > 0 && (
                               <button
                                 onClick={() => navigate(`/admin/affiliates/payout/${affiliate.id}`)}
-                                className="inline-flex items-center px-3 py-2 text-xs font-medium text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900 border border-green-300 dark:border-green-600 rounded transition-colors"
+                                className="inline-flex items-center px-3 py-2 text-xs font-medium text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900 border border-green-300 dark:border-green-600 rounded-sm transition-colors"
                               >
                                 <BanknotesIcon className="h-4 w-4 mr-1" />
                                 Betala
@@ -375,7 +375,7 @@ const AdminAffiliates = () => {
                               href={`${APP_URLS.B2C_SHOP}/${((affiliate.preferredLang || 'sv-SE').split('-')[1] || 'se').toLowerCase()}?ref=${affiliate.affiliateCode}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded transition-colors"
+                              className="inline-flex items-center px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-sm transition-colors"
                             >
                               <EyeIcon className="h-4 w-4 mr-1" />
                               Testa länk

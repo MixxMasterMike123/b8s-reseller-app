@@ -87,7 +87,7 @@ const OrderStatusMenu = ({ currentStatus, onStatusChange, disabled, className = 
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-10 mt-1 w-40 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+        <div className="absolute right-0 z-10 mt-1 w-40 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-hidden">
           <div className="py-1">
             {statusOptions.map((option) => (
               <button

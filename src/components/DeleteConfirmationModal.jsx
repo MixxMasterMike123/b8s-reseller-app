@@ -41,7 +41,7 @@ const DeleteConfirmationModal = ({
           <div className="bg-gray-50 px-4 py-3 sm:px-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
                 </div>
                 <div className="ml-3">
@@ -52,7 +52,7 @@ const DeleteConfirmationModal = ({
               </div>
               <button
                 onClick={handleClose}
-                className="rounded-md bg-gray-50 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="rounded-md bg-gray-50 text-gray-400 hover:text-gray-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 <XMarkIcon className="h-6 w-6" />
               </button>
@@ -101,7 +101,7 @@ const DeleteConfirmationModal = ({
 
               <div className="space-y-2">
                 <label htmlFor="confirmation-input" className="block text-sm font-medium text-gray-700">
-                  Skriv <span className="font-mono bg-gray-100 px-2 py-1 rounded text-gray-800">"{confirmationText}"</span> för att bekräfta:
+                  Skriv <span className="font-mono bg-gray-100 px-2 py-1 rounded-sm text-gray-800">"{confirmationText}"</span> för att bekräfta:
                 </label>
                 <input
                   id="confirmation-input"
@@ -116,7 +116,7 @@ const DeleteConfirmationModal = ({
                       handleConfirm();
                     }
                   }}
-                  className={`block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm ${
+                  className={`block w-full rounded-md border-gray-300 shadow-xs focus:border-red-500 focus:ring-red-500 sm:text-sm ${
                     error ? 'border-red-300' : ''
                   }`}
                   placeholder={`Skriv "${confirmationText}" här...`}
@@ -135,7 +135,7 @@ const DeleteConfirmationModal = ({
               type="button"
               onClick={handleConfirm}
               disabled={loading || inputValue.trim() !== confirmationText}
-              className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed sm:ml-3 sm:w-auto"
+              className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed sm:ml-3 sm:w-auto"
             >
               {loading ? (
                 <>
@@ -153,7 +153,7 @@ const DeleteConfirmationModal = ({
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed sm:mt-0 sm:w-auto"
+              className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed sm:mt-0 sm:w-auto"
             >
               Avbryt
             </button>

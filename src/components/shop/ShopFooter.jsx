@@ -232,13 +232,13 @@ const ShopFooter = () => {
 
               {/* Trust Badges */}
               <div className="flex items-center space-x-2 text-xs text-gray-400">
-                <span className="bg-green-600 text-white px-2 py-1 rounded">
+                <span className="bg-green-600 text-white px-2 py-1 rounded-sm">
                   {t('footer_badge_ssl', '✓ SSL')}
                 </span>
-                <span className="bg-blue-600 text-white px-2 py-1 rounded">
+                <span className="bg-blue-600 text-white px-2 py-1 rounded-sm">
                   {t('footer_badge_gdpr', '✓ GDPR')}
                 </span>
-                <span className="bg-purple-600 text-white px-2 py-1 rounded">
+                <span className="bg-purple-600 text-white px-2 py-1 rounded-sm">
                   {t('footer_badge_returns', '✓ 14 dagar ångerrätt')}
                 </span>
               </div>

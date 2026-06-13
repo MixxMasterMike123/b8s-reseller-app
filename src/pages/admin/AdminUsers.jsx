@@ -249,7 +249,7 @@ const AdminUsers = () => {
                   ? "Sök efter namn, e-post eller företag..." 
                   : "Sök efter namn, e-post eller admin..."
               }
-              className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm focus:border-primary-500 focus:ring-primary-500 pl-10 py-2"
+              className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-xs focus:border-primary-500 focus:ring-primary-500 pl-10 py-2"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -289,8 +289,8 @@ const AdminUsers = () => {
                       {/* Column 1: Company & Contact */}
                       <td className="px-4 md:px-6 py-4">
                         <div className="flex items-start">
-                          <div className="flex-shrink-0 h-12 w-12 mr-4">
-                            <div className="h-12 w-12 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-800 dark:to-blue-700 rounded-full flex items-center justify-center">
+                          <div className="shrink-0 h-12 w-12 mr-4">
+                            <div className="h-12 w-12 bg-linear-to-br from-blue-100 to-blue-200 dark:from-blue-800 dark:to-blue-700 rounded-full flex items-center justify-center">
                               <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
                                 {(user.companyName || user.contactPerson || 'U').charAt(0).toUpperCase()}
                               </span>
@@ -332,7 +332,7 @@ const AdminUsers = () => {
                                 value={user.role}
                                 onChange={(e) => handleRoleChange(user.id, user.role, e.target.value)}
                                 disabled={roleUpdateLoading}
-                                className="text-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded py-1 px-2 min-h-[28px] focus:ring-blue-500 focus:border-blue-500"
+                                className="text-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-sm py-1 px-2 min-h-[28px] focus:ring-blue-500 focus:border-blue-500"
                               >
                                 <option value="user">Kund</option>
                                 <option value="admin">Admin</option>
@@ -355,21 +355,21 @@ const AdminUsers = () => {
                                     ...prev,
                                     [user.id]: e.target.value
                                   }))}
-                                  className="w-16 text-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500"
+                                  className="w-16 text-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-sm px-2 py-1 focus:ring-blue-500 focus:border-blue-500"
                                   disabled={marginalUpdateLoading}
                                 />
                                 <span className="text-xs text-gray-400 dark:text-gray-500">%</span>
                                 <button
                                   onClick={() => handleMarginalChange(user.id, editingMarginals[user.id])}
                                   disabled={marginalUpdateLoading}
-                                  className="min-h-[24px] px-2 py-1 text-xs font-medium text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900 rounded transition-colors"
+                                  className="min-h-[24px] px-2 py-1 text-xs font-medium text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900 rounded-sm transition-colors"
                                 >
                                   ✓
                                 </button>
                                 <button
                                   onClick={() => cancelEditingMarginal(user.id)}
                                   disabled={marginalUpdateLoading}
-                                  className="min-h-[24px] px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-colors"
+                                  className="min-h-[24px] px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900 rounded-sm transition-colors"
                                 >
                                   ✕
                                 </button>
@@ -381,7 +381,7 @@ const AdminUsers = () => {
                                 </span>
                                 <button
                                   onClick={() => startEditingMarginal(user.id, user.marginal || 35)}
-                                  className="min-h-[24px] px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded transition-colors"
+                                  className="min-h-[24px] px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-sm transition-colors"
                                 >
                                   Ändra
                                 </button>
@@ -412,7 +412,7 @@ const AdminUsers = () => {
                         <div className="flex flex-col md:flex-row items-end md:items-center justify-end gap-2">
                           <Link
                             to={`/admin/users/${user.id}/edit`}
-                            className="min-h-[32px] inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded transition-colors"
+                            className="min-h-[32px] inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded-sm transition-colors"
                           >
                             Redigera
                           </Link>
@@ -420,7 +420,7 @@ const AdminUsers = () => {
                           {user.role !== 'admin' && (
                             <Link
                               to={`/admin/customers/${user.id}/marketing`}
-                              className="min-h-[32px] inline-flex items-center px-3 py-1 text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900 border border-purple-300 dark:border-purple-600 rounded transition-colors"
+                              className="min-h-[32px] inline-flex items-center px-3 py-1 text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900 border border-purple-300 dark:border-purple-600 rounded-sm transition-colors"
                               title="Hantera kundspecifikt marknadsföringsmaterial"
                             >
                               Material

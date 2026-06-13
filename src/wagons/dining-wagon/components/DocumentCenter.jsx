@@ -221,7 +221,7 @@ const DocumentCenter = ({ contactId, contactName, isOpen, onClose }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-600 to-red-600 text-white p-6">
+        <div className="bg-linear-to-r from-orange-600 to-red-600 text-white p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <FolderIcon className="h-8 w-8" />
@@ -251,7 +251,7 @@ const DocumentCenter = ({ contactId, contactName, isOpen, onClose }) => {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
               >
                 <option value="">Välj kategori...</option>
                 {documentCategories.map(cat => (
@@ -330,9 +330,9 @@ const DocumentCenter = ({ contactId, contactName, isOpen, onClose }) => {
                           const FileIcon = getFileIcon(document.fileType, document.fileName);
                           
                           return (
-                            <div key={document.id} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-600 hover:shadow-md transition-shadow">
+                            <div key={document.id} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-xs border border-gray-200 dark:border-gray-600 hover:shadow-md transition-shadow">
                               <div className="flex items-start space-x-3">
-                                <FileIcon className="h-8 w-8 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-1" />
+                                <FileIcon className="h-8 w-8 text-blue-600 dark:text-blue-400 shrink-0 mt-1" />
                                 
                                 <div className="flex-1 min-w-0">
                                   <p className="font-medium text-gray-900 dark:text-gray-100 truncate" title={document.fileName}>

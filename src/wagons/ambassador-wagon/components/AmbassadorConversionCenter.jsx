@@ -225,7 +225,7 @@ const AmbassadorConversionCenter = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <ClockIcon className="h-8 w-8 text-orange-500" />
               <div className="ml-4">
@@ -235,7 +235,7 @@ const AmbassadorConversionCenter = () => {
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <CheckCircleSolid className="h-8 w-8 text-green-500" />
               <div className="ml-4">
@@ -245,7 +245,7 @@ const AmbassadorConversionCenter = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <StarSolid className="h-8 w-8 text-yellow-500" />
               <div className="ml-4">
@@ -255,7 +255,7 @@ const AmbassadorConversionCenter = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <CurrencyDollarSolid className="h-8 w-8 text-blue-500" />
               <div className="ml-4">
@@ -267,7 +267,7 @@ const AmbassadorConversionCenter = () => {
         </div>
 
         {/* Search and Filters */}
-        <div className="bg-white rounded-lg shadow mb-6">
+        <div className="bg-white rounded-lg shadow-sm mb-6">
           <div className="p-6 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="relative flex-1 max-w-lg">
@@ -329,7 +329,7 @@ const AmbassadorConversionCenter = () => {
         </div>
 
         {/* Conversion Ready List */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg shadow-sm">
           {filteredContacts.length === 0 ? (
             <div className="text-center py-12">
               <ArrowRightIcon className="mx-auto h-12 w-12 text-gray-400" />
@@ -359,7 +359,7 @@ const AmbassadorConversionCenter = () => {
                             setSelectedContacts([]);
                           }
                         }}
-                        className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                        className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded-sm"
                       />
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -387,12 +387,12 @@ const AmbassadorConversionCenter = () => {
                           type="checkbox"
                           checked={selectedContacts.includes(contact.id)}
                           onChange={() => toggleContactSelection(contact.id)}
-                          className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                          className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded-sm"
                         />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
+                          <div className="shrink-0 h-10 w-10">
                             <div className="h-10 w-10 bg-purple-100 rounded-full flex items-center justify-center">
                               <span className="text-sm font-medium text-purple-600">
                                 {contact.name?.charAt(0)?.toUpperCase() || '?'}
@@ -457,7 +457,7 @@ const AmbassadorConversionCenter = () => {
         {/* Recently Converted */}
         {convertedContacts.length > 0 && (
           <div className="mt-8">
-            <div className="bg-white rounded-lg shadow">
+            <div className="bg-white rounded-lg shadow-sm">
               <div className="px-6 py-4 border-b border-gray-200">
                 <h2 className="text-lg font-medium text-gray-900 flex items-center">
                   <CheckCircleSolid className="h-5 w-5 text-green-500 mr-2" />

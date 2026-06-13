@@ -305,7 +305,7 @@ const ActivityCenter = () => {
 
         {/* Quick Add */}
         {showAdd && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6 border border-gray-100 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-6 mb-6 border border-gray-100 dark:border-gray-700">
             <form onSubmit={handleSaveNew} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
               <div className="md:col-span-3">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kontakt</label>
@@ -361,7 +361,7 @@ const ActivityCenter = () => {
                     <button
                       type="button"
                       onClick={() => setSelectedTags(prev => Array.from(new Set([...prev, ...suggestedTags])))}
-                      className="ml-2 px-2 py-0.5 text-xs rounded bg-blue-100 text-blue-800"
+                      className="ml-2 px-2 py-0.5 text-xs rounded-sm bg-blue-100 text-blue-800"
                     >
                       Lägg till alla
                     </button>
@@ -414,7 +414,7 @@ const ActivityCenter = () => {
         )}
 
         {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-6 border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-4 mb-6 border border-gray-100 dark:border-gray-700">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex items-center gap-2 flex-1">
               <div className="relative flex-1 max-w-md">
@@ -499,7 +499,7 @@ const ActivityCenter = () => {
         </div>
 
         {/* Activity list */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs border border-gray-100 dark:border-gray-700">
           {loading ? (
             <div className="p-8 text-center text-gray-500">Laddar aktiviteter…</div>
           ) : filteredActivities.length === 0 ? (
@@ -522,23 +522,23 @@ const ActivityCenter = () => {
                               <input
                                 value={editBuffer.subject}
                                 onChange={(e) => setEditBuffer(v => ({ ...v, subject: e.target.value }))}
-                                className="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                className="w-full border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                               />
                               <textarea
                                 value={editBuffer.description}
                                 onChange={(e) => setEditBuffer(v => ({ ...v, description: e.target.value }))}
                                 rows={2}
-                                className="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                className="w-full border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                               />
                               <div className="flex gap-2">
-                                <button onClick={() => saveEdit(a.id)} className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded">Spara</button>
-                                <button onClick={cancelEdit} className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">Avbryt</button>
+                                <button onClick={() => saveEdit(a.id)} className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-sm">Spara</button>
+                                <button onClick={cancelEdit} className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-sm">Avbryt</button>
                               </div>
                             </div>
                           ) : (
                             <>
                               <div className="flex items-center gap-2">
-                                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">{a.subject || '(utan rubrik)'}</h3>
+                                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 wrap-break-word">{a.subject || '(utan rubrik)'}</h3>
                                 {dismissed && (
                                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:text-gray-400">
                                     <CheckIcon className="h-3 w-3 mr-1" /> Löst
@@ -546,7 +546,7 @@ const ActivityCenter = () => {
                                 )}
                               </div>
                               {a.description && (
-                                <p className="text-sm text-gray-600 dark:text-gray-400 break-words">{a.description}</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 wrap-break-word">{a.description}</p>
                               )}
                               <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                                 <span className="inline-flex items-center"><UserIcon className="h-3 w-3 mr-1" />{a.createdByName || a.createdBy || 'Okänd'}</span>
@@ -555,7 +555,7 @@ const ActivityCenter = () => {
                                 )}
                                 {created && <span>{created.toLocaleString('sv-SE')}</span>}
                                 {(Array.isArray(a.tags) ? a.tags : []).filter(t => !String(t).startsWith('@')).map((t) => (
-                                  <span key={t} className="inline-flex items-center px-1.5 py-0.5 rounded bg-gray-100 text-gray-700">#{t}</span>
+                                  <span key={t} className="inline-flex items-center px-1.5 py-0.5 rounded-sm bg-gray-100 text-gray-700">#{t}</span>
                                 ))}
                               </div>
                             </>
@@ -566,16 +566,16 @@ const ActivityCenter = () => {
                         {editingId === a.id ? null : (
                           <>
                             {!dismissed && (
-                              <button onClick={() => setEditingId(a.id) || startEdit(a)} title="Redigera" className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900 rounded">
+                              <button onClick={() => setEditingId(a.id) || startEdit(a)} title="Redigera" className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-sm">
                                 <PencilIcon className="h-4 w-4" />
                               </button>
                             )}
                             {!dismissed && (
-                              <button onClick={() => dismissActivity(a.id)} title="Markera som löst" className="p-2 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+                              <button onClick={() => dismissActivity(a.id)} title="Markera som löst" className="p-2 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-sm">
                                 <CheckIcon className="h-4 w-4" />
                               </button>
                             )}
-                            <button onClick={() => removeActivity(a.id)} title="Ta bort" className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900 rounded">
+                            <button onClick={() => removeActivity(a.id)} title="Ta bort" className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900 rounded-sm">
                               <TrashIcon className="h-4 w-4" />
                             </button>
                           </>

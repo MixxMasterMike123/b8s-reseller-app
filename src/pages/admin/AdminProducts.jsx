@@ -924,13 +924,13 @@ function AdminProducts() {
             <div className="flex flex-col sm:flex-row gap-3">
               <Link 
                 to="/admin" 
-                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               >
                 Tillbaka till Admin
               </Link>
               <button 
                 onClick={handleAddNewClick}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               >
                 Lägg till Ny Produkt
               </button>
@@ -956,7 +956,7 @@ function AdminProducts() {
           </div>
         ) : isAddingProduct ? (
           /* Product Form with Tabs */
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg mb-8">
+          <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg mb-8">
             <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
@@ -1053,7 +1053,7 @@ function AdminProducts() {
                         ...formData,
                         name: setContentValue(formData.name, e.target.value)
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                       required
                     />
                   </div>
@@ -1069,7 +1069,7 @@ function AdminProducts() {
                       name="sku"
                       value={formData.sku}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                       placeholder="t.ex. B8S-4-re, B8S-2-tr"
                       required
                     />
@@ -1086,7 +1086,7 @@ function AdminProducts() {
                       name="size"
                       value={formData.size}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                       placeholder="t.ex. Liten, Medium, Stor eller specifika mått"
                     />
                   </div>
@@ -1101,7 +1101,7 @@ function AdminProducts() {
                       name="color"
                       value={formData.color}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                     >
                       <option value="">Välj färg...</option>
                       <option value="Transparent">Transparent</option>
@@ -1125,7 +1125,7 @@ function AdminProducts() {
                         onChange={handleGroupInputChange}
                         onFocus={handleGroupFocus}
                         onBlur={handleGroupBlur}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                         placeholder="t.ex. B8Shield Individual, B8Shield 3-Pack, B8Shield Starter Kit"
                       />
                       
@@ -1160,7 +1160,7 @@ function AdminProducts() {
                       name="basePrice"
                       value={formData.basePrice}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                       min="0"
                       step="0.01"
                       required
@@ -1178,7 +1178,7 @@ function AdminProducts() {
                       name="manufacturingCost"
                       value={formData.manufacturingCost}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                       min="0"
                       step="0.01"
                     />
@@ -1193,7 +1193,7 @@ function AdminProducts() {
                         name="isActive"
                         checked={formData.isActive}
                         onChange={handleInputChange}
-                        className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-500 rounded bg-white dark:bg-gray-600"
+                        className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-500 rounded-sm bg-white dark:bg-gray-600"
                       />
                       <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                         Aktiv
@@ -1221,7 +1221,7 @@ function AdminProducts() {
                               value: parseFloat(e.target.value) || 0
                             }
                           })}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                           min="0"
                           step="0.1"
                           placeholder="0"
@@ -1240,7 +1240,7 @@ function AdminProducts() {
                               unit: e.target.value
                             }
                           })}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                         >
                           <option value="g">gram (g)</option>
                           <option value="kg">kilogram (kg)</option>
@@ -1272,7 +1272,7 @@ function AdminProducts() {
                                 }
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                             min="0"
                             step="0.1"
                             placeholder="0"
@@ -1297,7 +1297,7 @@ function AdminProducts() {
                                 }
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                             min="0"
                             step="0.1"
                             placeholder="0"
@@ -1322,7 +1322,7 @@ function AdminProducts() {
                                 }
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                             min="0"
                             step="0.1"
                             placeholder="0"
@@ -1347,7 +1347,7 @@ function AdminProducts() {
                                 }
                               });
                             }}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                           >
                             <option value="mm">millimeter (mm)</option>
                             <option value="cm">centimeter (cm)</option>
@@ -1379,7 +1379,7 @@ function AdminProducts() {
                                 }
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                             min="0"
                             step="0.01"
                             placeholder="0.00"
@@ -1404,7 +1404,7 @@ function AdminProducts() {
                                 }
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                             min="0"
                             step="0.01"
                             placeholder="0.00"
@@ -1429,7 +1429,7 @@ function AdminProducts() {
                                 }
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                             min="0"
                             step="0.01"
                             placeholder="0.00"
@@ -1454,7 +1454,7 @@ function AdminProducts() {
                                 }
                               }
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                             min="0"
                             step="0.01"
                             placeholder="0.00"
@@ -1481,7 +1481,7 @@ function AdminProducts() {
                                 b2b: e.target.checked
                               }
                             })}
-                            className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-500 rounded bg-white dark:bg-gray-600"
+                            className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-500 rounded-sm bg-white dark:bg-gray-600"
                           />
                           <label htmlFor="b2bAvailable" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                             Tillgänglig för B2B (Återförsäljare)
@@ -1503,7 +1503,7 @@ function AdminProducts() {
                                   b2bMinQuantity: parseInt(e.target.value) || 1
                                 }
                               })}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                               min="1"
                             />
                           </div>
@@ -1523,7 +1523,7 @@ function AdminProducts() {
                                 b2c: e.target.checked
                               }
                             })}
-                            className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-500 rounded bg-white dark:bg-gray-600"
+                            className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-500 rounded-sm bg-white dark:bg-gray-600"
                           />
                           <label htmlFor="b2cAvailable" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                             Tillgänglig för B2C (Konsumenter)
@@ -1545,7 +1545,7 @@ function AdminProducts() {
                                   b2cMaxQuantity: parseInt(e.target.value) || 10
                                 }
                               })}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                               min="1"
                             />
                           </div>
@@ -1574,7 +1574,7 @@ function AdminProducts() {
                         }
                       })}
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                       placeholder={currentLanguage === 'sv-SE' ? 
                         "Tekniska specifikationer, installationsanvisningar, etc." :
                         "Technical specifications, installation instructions, etc."
@@ -1595,7 +1595,7 @@ function AdminProducts() {
                         className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 dark:file:bg-blue-900 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-blue-800"
                       />
                       {b2bImagePreview && (
-                        <div className="flex-shrink-0">
+                        <div className="shrink-0">
                           <img 
                             src={b2bImagePreview} 
                             alt="B2B Produktförhandsvisning" 
@@ -1618,7 +1618,7 @@ function AdminProducts() {
                       type="text"
                       value={formData.eanCode || ''}
                       onChange={(e) => setFormData({ ...formData, eanCode: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                       placeholder="t.ex. 1234567890123"
                     />
                   </div>
@@ -1636,7 +1636,7 @@ function AdminProducts() {
                         className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 dark:file:bg-blue-900 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-blue-800"
                       />
                       {eanPngPreview && (
-                        <div className="flex-shrink-0">
+                        <div className="shrink-0">
                           <img 
                             src={eanPngPreview} 
                             alt="EAN-kod förhandsvisning" 
@@ -1660,7 +1660,7 @@ function AdminProducts() {
                         className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 dark:file:bg-blue-900 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-blue-800"
                       />
                       {eanSvgPreview && (
-                        <div className="flex-shrink-0">
+                        <div className="shrink-0">
                           <img 
                             src={eanSvgPreview} 
                             alt="EAN-kod SVG förhandsvisning" 
@@ -1686,7 +1686,7 @@ function AdminProducts() {
                       name="b2cPrice"
                       value={formData.b2cPrice}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                       min="0"
                       step="0.01"
                       placeholder="Konsumentpris inklusive moms"
@@ -1707,7 +1707,7 @@ function AdminProducts() {
                       name="launchDate"
                       value={formData.launchDate}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                     />
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                       Lämna tomt för omedelbar tillgänglighet. Sätt framtida datum för "Kommer snart"-läge.
@@ -1730,7 +1730,7 @@ function AdminProducts() {
                         }
                       })}
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-xs focus:outline-hidden focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                       placeholder={currentLanguage === 'sv-SE' ? 
                         "Marknadsföringstext, fördelar för konsumenten, användningsområden..." :
                         "Marketing text, consumer benefits, use cases..."
@@ -1795,7 +1795,7 @@ function AdminProducts() {
                         className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-green-50 dark:file:bg-green-900 file:text-green-700 dark:file:text-green-300 hover:file:bg-green-100 dark:hover:file:bg-green-800"
                       />
                       {b2cImagePreview && (
-                        <div className="flex-shrink-0">
+                        <div className="shrink-0">
                           <img 
                             src={b2cImagePreview} 
                             alt="B2C Produktförhandsvisning" 
@@ -1892,7 +1892,7 @@ function AdminProducts() {
                       type="button"
                       onClick={() => handleDeleteProduct(selectedProduct.id)}
                       disabled={loading}
-                      className="px-4 py-2 border border-red-300 dark:border-red-600 text-sm font-medium rounded-md text-red-600 dark:text-red-400 bg-white dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900 hover:text-red-900 dark:hover:text-red-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 border border-red-300 dark:border-red-600 text-sm font-medium rounded-md text-red-600 dark:text-red-400 bg-white dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900 hover:text-red-900 dark:hover:text-red-300 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {loading ? 'Tar bort...' : 'Ta bort produkt'}
                     </button>
@@ -1904,14 +1904,14 @@ function AdminProducts() {
                   <button
                     type="button"
                     onClick={() => setIsAddingProduct(false)}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                   >
                     Avbryt
                   </button>
                   <button
                     type="submit"
                     disabled={loading || uploading}
-                    className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                   {uploading ? (
                     <span className="flex items-center">
@@ -1933,7 +1933,7 @@ function AdminProducts() {
           </div>
         ) : (
           /* Product List */
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Produktlista</h2>
@@ -1982,10 +1982,10 @@ function AdminProducts() {
                               <img 
                                 src={product.imageUrl || product.b2bImageUrl || product.b2cImageUrl} 
                                 alt={getContentValue(product.name)} 
-                                className="w-16 h-16 mr-4 object-cover rounded-md border border-gray-200 dark:border-gray-600 flex-shrink-0"
+                                className="w-16 h-16 mr-4 object-cover rounded-md border border-gray-200 dark:border-gray-600 shrink-0"
                               />
                             ) : (
-                              <div className="w-16 h-16 mr-4 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center border border-gray-200 dark:border-gray-600 flex-shrink-0">
+                              <div className="w-16 h-16 mr-4 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center border border-gray-200 dark:border-gray-600 shrink-0">
                                 <span className="text-xs text-gray-500 dark:text-gray-400">Ingen bild</span>
                               </div>
                             )}
@@ -1994,17 +1994,17 @@ function AdminProducts() {
                               <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">SKU: <span className="font-mono">{product.sku || 'Ej angivet'}</span></div>
                               <div className="flex flex-wrap gap-2 text-xs">
                                 {product.size && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300" style={{fontSize: '10px'}}>
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-sm font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300" style={{fontSize: '10px'}}>
                                     {product.size}
                                   </span>
                                 )}
                                 {product.color && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300" style={{fontSize: '10px'}}>
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-sm font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300" style={{fontSize: '10px'}}>
                                     {product.color}
                                   </span>
                                 )}
                                 {product.group && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300" style={{fontSize: '10px'}}>
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-sm font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300" style={{fontSize: '10px'}}>
                                     {product.group}
                                   </span>
                                 )}
@@ -2098,12 +2098,12 @@ function AdminProducts() {
                             {(product.eanImagePngUrl || product.eanImageSvgUrl) && (
                               <div className="flex gap-1 mt-1">
                                 {product.eanImagePngUrl && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
                                     PNG
                                   </span>
                                 )}
                                 {product.eanImageSvgUrl && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
                                     SVG
                                   </span>
                                 )}
@@ -2112,12 +2112,12 @@ function AdminProducts() {
                             {/* B2B/B2C Availability indicators */}
                             <div className="flex gap-1 mt-2">
                               {product.availability?.b2b && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300">
                                   B2B
                                 </span>
                               )}
                               {product.availability?.b2c && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300">
                                   B2C
                                 </span>
                               )}
@@ -2130,7 +2130,7 @@ function AdminProducts() {
                           <button 
                             onClick={() => handleEditClick(product)} 
                             disabled={loading}
-                            className="min-h-[32px] inline-flex items-center px-4 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="min-h-[32px] inline-flex items-center px-4 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Redigera
                           </button>

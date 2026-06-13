@@ -464,7 +464,7 @@ const AdminB2CCustomerEdit = () => {
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleInputChange}
-                  className={`block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 ${
+                  className={`block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 ${
                     errors.firstName ? 'border-red-300' : ''
                   }`}
                 />
@@ -481,7 +481,7 @@ const AdminB2CCustomerEdit = () => {
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleInputChange}
-                  className={`block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 ${
+                  className={`block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 ${
                     errors.lastName ? 'border-red-300' : ''
                   }`}
                 />
@@ -507,7 +507,7 @@ const AdminB2CCustomerEdit = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className={`block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 ${
+                  className={`block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 ${
                     errors.email ? 'border-red-300' : ''
                   }`}
                 />
@@ -524,7 +524,7 @@ const AdminB2CCustomerEdit = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                 />
               </div>
             </div>
@@ -547,7 +547,7 @@ const AdminB2CCustomerEdit = () => {
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
-                  className={`block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 ${
+                  className={`block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 ${
                     errors.address ? 'border-red-300' : ''
                   }`}
                 />
@@ -564,7 +564,7 @@ const AdminB2CCustomerEdit = () => {
                   name="apartment"
                   value={formData.apartment}
                   onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                 />
               </div>
               
@@ -578,7 +578,7 @@ const AdminB2CCustomerEdit = () => {
                   name="postalCode"
                   value={formData.postalCode}
                   onChange={handleInputChange}
-                  className={`block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 ${
+                  className={`block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 ${
                     errors.postalCode ? 'border-red-300' : ''
                   }`}
                 />
@@ -595,7 +595,7 @@ const AdminB2CCustomerEdit = () => {
                   name="city"
                   value={formData.city}
                   onChange={handleInputChange}
-                  className={`block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 ${
+                  className={`block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 ${
                     errors.city ? 'border-red-300' : ''
                   }`}
                 />
@@ -611,7 +611,7 @@ const AdminB2CCustomerEdit = () => {
                   name="country"
                   value={formData.country}
                   onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                 >
                   <option value="SE">Sverige</option>
                   <option value="NO">Norge</option>
@@ -637,7 +637,7 @@ const AdminB2CCustomerEdit = () => {
                   name="marketingConsent"
                   checked={formData.marketingConsent}
                   onChange={handleInputChange}
-                  className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-600 rounded"
+                  className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-600 rounded-sm"
                 />
                 <label htmlFor="marketingConsent" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
                   Marknadsföring tillåten
@@ -651,7 +651,7 @@ const AdminB2CCustomerEdit = () => {
                   name="emailVerified"
                   checked={formData.emailVerified}
                   onChange={handleInputChange}
-                  className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-600 rounded"
+                  className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-600 rounded-sm"
                 />
                 <label htmlFor="emailVerified" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
                   E-post verifierad
@@ -667,7 +667,7 @@ const AdminB2CCustomerEdit = () => {
                   name="customerSegment"
                   value={formData.customerSegment}
                   onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                 >
                   <option value="new">Ny Kund</option>
                   <option value="repeat">Återkommande Kund</option>
@@ -684,7 +684,7 @@ const AdminB2CCustomerEdit = () => {
                   name="preferredLang"
                   value={formData.preferredLang}
                   onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                 >
                   <option value="sv-SE">Svenska (SE)</option>
                   <option value="en-US">English (US)</option>
@@ -801,25 +801,25 @@ const AdminB2CCustomerEdit = () => {
             Kundstatistik
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-xs">
               <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                 {customerOrders.length}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">Totala ordrar</div>
             </div>
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-xs">
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                 {formatCurrency(customerOrders.reduce((sum, order) => sum + (order.total || 0), 0))}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">Total spenderat</div>
             </div>
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-xs">
               <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                 {formatCurrency(customerOrders.length > 0 ? customerOrders.reduce((sum, order) => sum + (order.total || 0), 0) / customerOrders.length : 0)}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">Genomsnittlig order</div>
             </div>
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-xs">
               <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                 {formatDate(customerOrders.length > 0 ? customerOrders.reduce((latest, order) => {
                   if (!order.createdAt) return latest;

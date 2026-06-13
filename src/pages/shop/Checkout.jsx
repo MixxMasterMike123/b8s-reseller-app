@@ -473,7 +473,7 @@ const Checkout = () => {
 
               {/* Contact Information */}
               {step === 'contact' && (
-                <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+                <div className="bg-white rounded-xl p-4 sm:p-6 shadow-xs border border-gray-200">
                   <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">
                     {t('checkout_contact_info', 'Kontaktinformation')}
                   </h2>
@@ -522,7 +522,7 @@ const Checkout = () => {
                         id="marketing"
                         checked={contactInfo.marketing}
                         onChange={(e) => setContactInfo({...contactInfo, marketing: e.target.checked})}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-0.5 flex-shrink-0"
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-sm mt-0.5 shrink-0"
                       />
                       <label htmlFor="marketing" className="text-sm text-gray-700 leading-relaxed">
                         {t('checkout_marketing_opt_in', 'Skicka mig nyheter och erbjudanden via e-post')}
@@ -540,7 +540,7 @@ const Checkout = () => {
 
               {/* Shipping Information */}
               {step === 'shipping' && (
-                <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+                <div className="bg-white rounded-xl p-4 sm:p-6 shadow-xs border border-gray-200">
                   <div className="flex items-center justify-between mb-4 sm:mb-6">
                     <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
                       {t('checkout_shipping_address', 'Leveransadress')}
@@ -662,7 +662,7 @@ const Checkout = () => {
                   {!currentUser && (
                     <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                       <div className="flex items-start space-x-3">
-                        <div className="flex-shrink-0 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center mt-0.5">
+                        <div className="shrink-0 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center mt-0.5">
                           <LockClosedIcon className="w-3 h-3 text-white" />
                         </div>
                         <div className="flex-1">
@@ -700,7 +700,7 @@ const Checkout = () => {
 
               {/* Payment Information */}
               {step === 'payment' && (
-                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                <div className="bg-white rounded-xl p-6 shadow-xs border border-gray-200">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-semibold text-gray-900">
                       {t('checkout_payment_title', 'Betalning')}
@@ -763,7 +763,7 @@ const Checkout = () => {
 
             {/* Right Column - Order Summary */}
             <div className="lg:sticky lg:top-8 lg:h-fit">
-              <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+              <div className="bg-white rounded-xl p-4 sm:p-6 shadow-xs border border-gray-200">
                 <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">
                   {t('checkout_order_summary', 'Ordersammanfattning')}
                 </h2>
@@ -811,7 +811,7 @@ const Checkout = () => {
                   </div>
                   {discountAmount > 0 && (
                     <div className="flex justify-between text-xs sm:text-sm">
-                      <span className="text-gray-600 text-xs bg-gray-100 px-2 py-1 rounded">
+                      <span className="text-gray-600 text-xs bg-gray-100 px-2 py-1 rounded-sm">
                         {t('checkout_affiliate_discount', 'Affiliate rabatt, {{discountPercentage}}%', { discountPercentage })}
                       </span>
                       <span className="font-medium text-green-600">
@@ -909,7 +909,7 @@ const Checkout = () => {
                   type="email"
                   value={loginCredentials.email}
                   onChange={(e) => setLoginCredentials({...loginCredentials, email: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder={t('checkout_login_email_placeholder', 'din@epost.se')}
                   required
                   disabled={loginLoading}
@@ -924,7 +924,7 @@ const Checkout = () => {
                   type="password"
                   value={loginCredentials.password}
                   onChange={(e) => setLoginCredentials({...loginCredentials, password: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder={t('checkout_login_password_placeholder', 'Ditt lösenord')}
                   required
                   disabled={loginLoading}

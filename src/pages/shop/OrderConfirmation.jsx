@@ -128,7 +128,7 @@ const OrderConfirmation = () => {
   return (
     <>
       <SeoHreflang />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
         <ShopNavigation breadcrumb={t('breadcrumb_order_confirmation', 'Orderbekräftelse')} />
         
         <div className="max-w-4xl mx-auto px-4 py-8">
@@ -161,7 +161,7 @@ const OrderConfirmation = () => {
             <div className="lg:col-span-2 space-y-6">
               
               {/* Customer Information */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <div className="bg-white rounded-xl p-6 shadow-xs border border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
                   {t('order_confirmation_customer_info', 'Kunduppgifter')}
                 </h2>
@@ -204,7 +204,7 @@ const OrderConfirmation = () => {
               </div>
 
               {/* Order Items */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <div className="bg-white rounded-xl p-6 shadow-xs border border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
                   {t('order_confirmation_order_contents', 'Orderinnehåll')}
                 </h2>
@@ -288,7 +288,7 @@ const OrderConfirmation = () => {
               })()}
 
               {/* Next Steps */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <div className="bg-white rounded-xl p-6 shadow-xs border border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
                   {t('order_confirmation_next_steps', 'Nästa steg')}
                 </h2>
@@ -323,7 +323,7 @@ const OrderConfirmation = () => {
 
             {/* Order Summary Sidebar */}
             <div className="lg:sticky lg:top-8 lg:h-fit">
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <div className="bg-white rounded-xl p-6 shadow-xs border border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-900 mb-6">
                   {t('order_confirmation_order_summary', 'Ordersammanfattning')}
                 </h2>

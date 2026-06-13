@@ -70,7 +70,7 @@ const SortableImageItem = ({ id, imageUrl, onRemove, label, className = "" }) =>
       )}
       
       {label && (
-        <div className="absolute bottom-1 left-1 bg-blue-500 text-white text-xs px-1 rounded">
+        <div className="absolute bottom-1 left-1 bg-blue-500 text-white text-xs px-1 rounded-sm">
           {label}
         </div>
       )}

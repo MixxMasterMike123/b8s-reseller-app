@@ -64,7 +64,7 @@ const AddedToCartModal = ({ isVisible, onClose, addedItem, cartCount }) => {
       `}>
         
         {/* Arrow pointing to cart icon */}
-        <div className="absolute -top-2 right-8 w-4 h-4 bg-white border-l border-t border-gray-200 transform rotate-45 shadow-sm"></div>
+        <div className="absolute -top-2 right-8 w-4 h-4 bg-white border-l border-t border-gray-200 transform rotate-45 shadow-xs"></div>
         
         {/* Desktop Nike modal content */}
         <div className="bg-white rounded-lg shadow-2xl border border-gray-100 overflow-hidden">
@@ -106,7 +106,7 @@ const MobileNikeContent = ({ addedItem, onClose, t, getTotalItems, getContentVal
     {/* Nike-style product info */}
     <div className="px-6 py-6">
       <div className="flex space-x-4">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <img
             src={addedItem.image || '/images/B8S_logo.png'}
             alt={getContentValue(addedItem.name) || 'Product'}
@@ -181,7 +181,7 @@ const DesktopNikeContent = ({ addedItem, onClose, t, getTotalItems, getContentVa
     {/* Nike-style product display */}
     <div className="p-6">
       <div className="flex space-x-4">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <img
             src={addedItem.image || '/images/B8S_logo.png'}
             alt={getContentValue(addedItem.name) || 'Product'}

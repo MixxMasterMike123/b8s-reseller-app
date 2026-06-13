@@ -282,7 +282,7 @@ const PublicProductPage = () => {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="relative">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
           <div className="absolute inset-0 animate-ping rounded-full h-16 w-16 border-b-2 border-blue-300 opacity-20"></div>
@@ -293,7 +293,7 @@ const PublicProductPage = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('product_not_found_page_title', 'Produkten hittades inte')}</h1>
           <Link to={getCountryAwareUrl('')} className="bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition-colors">
@@ -352,7 +352,7 @@ const PublicProductPage = () => {
           <div className="w-full">
             <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide">
               {productImages.map((image, index) => (
-                <div key={index} className="w-full flex-shrink-0 snap-center">
+                <div key={index} className="w-full shrink-0 snap-center">
                   <div className="aspect-square bg-gray-50">
                     <img
                       src={image}
@@ -434,7 +434,7 @@ const PublicProductPage = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                     </svg>
                   </button>
-                  <span className="px-4 py-2 text-sm font-medium text-gray-900 min-w-[3rem] text-center">
+                  <span className="px-4 py-2 text-sm font-medium text-gray-900 min-w-12 text-center">
                     {quantity}
                   </span>
                   <button
@@ -591,7 +591,7 @@ const PublicProductPage = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                         </svg>
                       </button>
-                      <span className="px-4 py-2 text-sm font-medium text-gray-900 min-w-[3rem] text-center">
+                      <span className="px-4 py-2 text-sm font-medium text-gray-900 min-w-12 text-center">
                         {quantity}
                       </span>
                       <button

@@ -198,7 +198,7 @@ const SocialMediaShare = ({
                 >
                   <SocialIcon 
                     platform={platform} 
-                    className="h-6 w-6 text-gray-600 dark:text-gray-400 group-hover:text-[var(--hover-color)] transition-colors" 
+                    className="h-6 w-6 text-gray-600 dark:text-gray-400 group-hover:text-(--hover-color) transition-colors" 
                   />
                   <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-center">
                     {social.name}
@@ -228,7 +228,7 @@ const SocialMediaShare = ({
                 >
                   <SocialIcon 
                     platform={platform} 
-                    className="h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-[var(--hover-color)] transition-colors" 
+                    className="h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-(--hover-color) transition-colors" 
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">
                     {social.name}

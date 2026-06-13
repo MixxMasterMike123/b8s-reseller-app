@@ -603,7 +603,7 @@ const AdminOrderDetail = () => {
 
         <div className="mt-8">
           <h2 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Order Items</h2>
-          <div className="shadow-sm overflow-hidden border-b border-gray-200 dark:border-gray-700 sm:rounded-lg">
+          <div className="shadow-xs overflow-hidden border-b border-gray-200 dark:border-gray-700 sm:rounded-lg">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>

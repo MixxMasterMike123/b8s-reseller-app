@@ -210,7 +210,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
           <select
             value={range}
             onChange={(e) => setRange(Number(e.target.value))}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white shadow-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value={7}>{t('analytics_days_7', '7 dagar')}</option>
             <option value={30}>{t('analytics_days_30', '30 dagar')}</option>
@@ -350,7 +350,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
                         <div className="space-y-1">
                           {/* Payment Method */}
                           <div className="text-xs">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded font-medium ${getPaymentMethodBadgeClasses(o.payment)}`}>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-sm font-medium ${getPaymentMethodBadgeClasses(o.payment)}`}>
                               {formatPaymentMethodName(o.payment)}
                             </span>
                           </div>
@@ -377,7 +377,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
                               
                               return (
                                 <div className="text-xs">
-                                  <span className={`inline-flex items-center px-2 py-0.5 rounded font-medium ${categoryStyles[category.color] || categoryStyles.gray}`}>
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-sm font-medium ${categoryStyles[category.color] || categoryStyles.gray}`}>
                                     {referrer.name}
                                   </span>
                                 </div>

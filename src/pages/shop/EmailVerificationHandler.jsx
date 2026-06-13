@@ -94,7 +94,7 @@ const EmailVerificationHandler = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
       <ShopNavigation breadcrumb={t('email_verification_title', 'E-post verifiering')} />
       
       <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -127,7 +127,7 @@ const EmailVerificationHandler = () => {
                 </p>
                 <button
                   onClick={handleLoginRedirect}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                 >
                   {t('email_verification_login_button', 'Logga in nu')}
                 </button>
@@ -157,7 +157,7 @@ const EmailVerificationHandler = () => {
                 )}
                 <button
                   onClick={handleLoginRedirect}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                 >
                   {t('email_verification_back_to_login', 'Tillbaka till inloggning')}
                 </button>

@@ -426,7 +426,7 @@ const CustomerAccount = () => {
                         type="text"
                         value={editForm.firstName || ''}
                         onChange={(e) => setEditForm({...editForm, firstName: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                     <div>
@@ -437,7 +437,7 @@ const CustomerAccount = () => {
                         type="text"
                         value={editForm.lastName || ''}
                         onChange={(e) => setEditForm({...editForm, lastName: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                   </div>
@@ -450,7 +450,7 @@ const CustomerAccount = () => {
                       type="tel"
                       value={editForm.phone || ''}
                       onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
@@ -462,7 +462,7 @@ const CustomerAccount = () => {
                       type="text"
                       value={editForm.address || ''}
                       onChange={(e) => setEditForm({...editForm, address: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
@@ -475,7 +475,7 @@ const CustomerAccount = () => {
                         type="text"
                         value={editForm.apartment || ''}
                         onChange={(e) => setEditForm({...editForm, apartment: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                     <div>
@@ -486,7 +486,7 @@ const CustomerAccount = () => {
                         type="text"
                         value={editForm.postalCode || ''}
                         onChange={(e) => setEditForm({...editForm, postalCode: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                     <div>
@@ -497,7 +497,7 @@ const CustomerAccount = () => {
                         type="text"
                         value={editForm.city || ''}
                         onChange={(e) => setEditForm({...editForm, city: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                   </div>
@@ -508,7 +508,7 @@ const CustomerAccount = () => {
                       id="marketingConsent"
                       checked={editForm.marketingConsent || false}
                       onChange={(e) => setEditForm({...editForm, marketingConsent: e.target.checked})}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-sm"
                     />
                     <label htmlFor="marketingConsent" className="ml-2 block text-sm text-gray-700">
                       {t('customer_account_marketing_consent', 'Jag vill få marknadsföringsmeddelanden')}
@@ -681,7 +681,7 @@ const CustomerAccount = () => {
                           type={showPassword ? 'text' : 'password'}
                           value={passwordForm.newPassword}
                           onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 pr-10"
                         />
                         <button
                           type="button"
@@ -700,7 +700,7 @@ const CustomerAccount = () => {
                         type={showPassword ? 'text' : 'password'}
                         value={passwordForm.confirmPassword}
                         onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                     <button

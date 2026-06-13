@@ -246,7 +246,7 @@ const CampaignCreate = () => {
         </div>
 
         {/* Form Content */}
-        <div className="bg-white shadow rounded-lg">
+        <div className="bg-white shadow-sm rounded-lg">
           {/* Step 1: Basic Information */}
           {currentStep === 1 && (
             <div className="p-6">
@@ -401,12 +401,12 @@ const CampaignCreate = () => {
                     ) : (
                       <div className="p-2">
                         {affiliates.map((affiliate) => (
-                          <label key={affiliate.id} className="flex items-center p-2 hover:bg-gray-50 rounded">
+                          <label key={affiliate.id} className="flex items-center p-2 hover:bg-gray-50 rounded-sm">
                             <input
                               type="checkbox"
                               checked={(formData.affiliateIds || []).includes(affiliate.id)}
                               onChange={() => handleAffiliateSelection(affiliate.id)}
-                              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded-sm"
                             />
                             <div className="ml-3 flex-1">
                               <div className="text-sm font-medium text-gray-900">
@@ -466,12 +466,12 @@ const CampaignCreate = () => {
                     ) : (
                       <div className="p-2">
                         {products.map((product) => (
-                          <label key={product.id} className="flex items-center p-2 hover:bg-gray-50 rounded">
+                          <label key={product.id} className="flex items-center p-2 hover:bg-gray-50 rounded-sm">
                             <input
                               type="checkbox"
                               checked={(formData.productIds || []).includes(product.id)}
                               onChange={() => handleProductSelection(product.id)}
-                              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded-sm"
                             />
                             <div className="ml-3 flex-1">
                               <div className="text-sm font-medium text-gray-900">
@@ -544,7 +544,7 @@ const CampaignCreate = () => {
                       type="checkbox"
                       checked={formData.isLottery}
                       onChange={(e) => handleFieldChange('isLottery', e.target.checked)}
-                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded-sm"
                     />
                     <span className="ml-2 text-sm font-medium text-gray-700">
                       Aktivera lotteri/tävlingssystem
@@ -654,7 +654,7 @@ const CampaignCreate = () => {
                 <button
                   type="button"
                   onClick={nextStep}
-                  className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                  className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
                 >
                   Nästa
                 </button>
@@ -663,7 +663,7 @@ const CampaignCreate = () => {
                   type="button"
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="px-6 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Skapar...' : 'Skapa Kampanj'}
                 </button>

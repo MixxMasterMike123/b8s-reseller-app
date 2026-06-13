@@ -26,7 +26,7 @@ const AffiliateLogin = () => {
         <meta name="twitter:description" content={getAffiliateSeoDescription('login', currentLanguage)} />
         <meta name="twitter:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
       </Helmet>
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
       <ShopNavigation breadcrumb={t('breadcrumb_affiliate_login', 'Affiliate-inloggning')} />
       
       {/* Desktop: Side-by-side layout, Mobile: Stacked */}
@@ -45,7 +45,7 @@ const AffiliateLogin = () => {
           
           {/* Left Column: CTA for becoming an affiliate */}
           <div className="lg:pr-8">
-            <div className="p-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 h-full flex flex-col justify-center">
+            <div className="p-8 bg-linear-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 h-full flex flex-col justify-center">
               <div className="text-center">
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">
                   {t('affiliate_login_not_partner_yet', 'Inte partner än?')}

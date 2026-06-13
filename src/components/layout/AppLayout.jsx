@@ -157,8 +157,8 @@ const AppLayout = ({ children }) => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Desktop Sidebar */}
       <div className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
-        <div className="flex flex-grow flex-col overflow-y-auto border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
-          <div className="flex flex-shrink-0 items-center px-4 py-6">
+        <div className="flex grow flex-col overflow-y-auto border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xs">
+          <div className="flex shrink-0 items-center px-4 py-6">
             <Link to="/admin" className="flex items-center">
               <img
                 src="/images/JPH_logo.webp" 
@@ -169,7 +169,7 @@ const AppLayout = ({ children }) => {
           </div>
           
           {/* Navigation Links */}
-          <div className="mt-5 flex flex-grow flex-col">
+          <div className="mt-5 flex grow flex-col">
             <nav className="flex-1 space-y-1 px-2 pb-4">
               {/* Admin Navigation */}
               {adminNavLinks.map((item) => (
@@ -183,7 +183,7 @@ const AppLayout = ({ children }) => {
                   }`}
                 >
                   <item.icon
-                    className={`mr-3 h-5 w-5 flex-shrink-0 ${
+                    className={`mr-3 h-5 w-5 shrink-0 ${
                       isActive(item.path) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400'
                     }`}
                     aria-hidden="true"
@@ -220,7 +220,7 @@ const AppLayout = ({ children }) => {
                           : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
                       }`}
                     >
-                      <SparklesIcon className="mr-3 h-5 w-5 flex-shrink-0 text-blue-500 dark:text-blue-400" />
+                      <SparklesIcon className="mr-3 h-5 w-5 shrink-0 text-blue-500 dark:text-blue-400" />
                       <div>
                         <div>{item.title}</div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">{item.description}</div>
@@ -236,7 +236,7 @@ const AppLayout = ({ children }) => {
           <div className="border-t border-gray-200 dark:border-gray-700 p-4">
             
             <div className="flex items-center">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
                   {userProfile?.companyName?.charAt(0)?.toUpperCase() || 
                    currentUser?.email?.charAt(0)?.toUpperCase() || 'U'}
@@ -252,7 +252,7 @@ const AppLayout = ({ children }) => {
               </div>
               <button
                 onClick={handleLogout}
-                className="ml-auto flex-shrink-0 bg-white dark:bg-gray-800 p-1 text-gray-400 dark:text-gray-500 rounded-full hover:text-gray-500 dark:hover:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="ml-auto shrink-0 bg-white dark:bg-gray-800 p-1 text-gray-400 dark:text-gray-500 rounded-full hover:text-gray-500 dark:hover:text-gray-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
               >
                 <ArrowRightOnRectangleIcon className="h-6 w-6" aria-hidden="true" />
               </button>
@@ -264,7 +264,7 @@ const AppLayout = ({ children }) => {
       {/* Desktop and Mobile header */}
       <div className="md:pl-64 flex flex-col flex-1">
         {/* Desktop header - hidden on mobile */}
-        <div className="sticky top-0 z-20 hidden md:flex h-16 flex-shrink-0 bg-white dark:bg-gray-800 shadow border-b border-gray-200 dark:border-gray-700">
+        <div className="sticky top-0 z-20 hidden md:flex h-16 shrink-0 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
           <div className="flex flex-1 justify-end px-6">
             <div className="flex items-center space-x-4">
               {/* Admin tools for desktop */}
@@ -279,7 +279,7 @@ const AppLayout = ({ children }) => {
               <LanguageSwitcher />
               
               <div className="flex items-center space-x-3">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
                     {userProfile?.companyName?.charAt(0)?.toUpperCase() || 
                      currentUser?.email?.charAt(0)?.toUpperCase() || 'U'}
@@ -292,7 +292,7 @@ const AppLayout = ({ children }) => {
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="p-1 text-gray-400 hover:text-gray-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                   title={t('nav.logout', 'Logga ut')}
                 >
                   <ArrowRightOnRectangleIcon className="h-5 w-5" aria-hidden="true" />
@@ -303,10 +303,10 @@ const AppLayout = ({ children }) => {
         </div>
         
         {/* Mobile header */}
-        <div className="sticky top-0 z-10 flex h-16 flex-shrink-0 bg-white dark:bg-gray-800 shadow md:hidden">
+        <div className="sticky top-0 z-10 flex h-16 shrink-0 bg-white dark:bg-gray-800 shadow-sm md:hidden">
           <button
             type="button"
-            className="border-r border-gray-200 px-4 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 md:hidden"
+            className="border-r border-gray-200 px-4 text-gray-500 focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-blue-500 md:hidden"
             onClick={() => setIsMobileMenuOpen(true)}
           >
             <span className="sr-only">{t('nav.open_sidebar', 'Open sidebar')}</span>
@@ -336,10 +336,10 @@ const AppLayout = ({ children }) => {
               {/* Language Switcher */}
               <LanguageSwitcher />
               
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <button
                   onClick={handleLogout}
-                  className="relative p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="relative p-1 text-gray-400 hover:text-gray-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                 >
                   <span className="sr-only">{t('nav.logout', 'Logga ut')}</span>
                   <ArrowRightOnRectangleIcon className="h-6 w-6" aria-hidden="true" />
@@ -362,7 +362,7 @@ const AppLayout = ({ children }) => {
               <div className="absolute top-0 right-0 -mr-12 pt-2">
                 <button
                   type="button"
-                  className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                  className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-white"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <span className="sr-only">{t('nav.close_sidebar', 'Close sidebar')}</span>
@@ -370,7 +370,7 @@ const AppLayout = ({ children }) => {
                 </button>
               </div>
               
-              <div className="flex flex-shrink-0 items-center px-4">
+              <div className="flex shrink-0 items-center px-4">
                 <Link to="/admin">
                   <img
                     src="/images/JPH_logo.webp" 
@@ -394,7 +394,7 @@ const AppLayout = ({ children }) => {
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <item.icon
-                        className={`mr-4 h-6 w-6 flex-shrink-0 ${
+                        className={`mr-4 h-6 w-6 shrink-0 ${
                           isActive(item.path) ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
                         }`}
                         aria-hidden="true"
@@ -432,7 +432,7 @@ const AppLayout = ({ children }) => {
                           }`}
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
-                          <SparklesIcon className="mr-4 h-6 w-6 flex-shrink-0 text-blue-500" />
+                          <SparklesIcon className="mr-4 h-6 w-6 shrink-0 text-blue-500" />
                           <div>
                             <div>{item.title}</div>
                             <div className="text-xs text-gray-500">{item.description}</div>
@@ -445,7 +445,7 @@ const AppLayout = ({ children }) => {
               </div>
               <div className="border-t border-gray-200 p-4">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
                       {userProfile?.companyName?.charAt(0)?.toUpperCase() || 
                        currentUser?.email?.charAt(0)?.toUpperCase() || 'U'}
@@ -463,7 +463,7 @@ const AppLayout = ({ children }) => {
               </div>
             </div>
             
-            <div className="w-14 flex-shrink-0" aria-hidden="true">
+            <div className="w-14 shrink-0" aria-hidden="true">
               {/* Dummy element to force sidebar to shrink to fit close icon */}
             </div>
           </div>

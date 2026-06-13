@@ -249,12 +249,12 @@ function AdminCustomerMarketingMaterialEdit() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Current Material Preview */}
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+          <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
             <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Nuvarande Material</h2>
             
             {/* File Preview */}
             <div className="mb-6">
-              <div className="flex items-center justify-center h-48 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-lg overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-600">
+              <div className="flex items-center justify-center h-48 bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-lg overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-600">
                 {material.fileType === 'image' && material.downloadURL ? (
                   <img 
                     src={material.downloadURL}
@@ -304,7 +304,7 @@ function AdminCustomerMarketingMaterialEdit() {
           </div>
 
           {/* Edit Form */}
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+          <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
             <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Redigera Information</h2>
             
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -319,7 +319,7 @@ function AdminCustomerMarketingMaterialEdit() {
                   required
                   value={getContentValue(formData.name)}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: setContentValue(prev.name, e.target.value) }))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder={currentLanguage === 'sv-SE' ? "Materialnamn" : "Material name"}
                 />
               </div>
@@ -331,7 +331,7 @@ function AdminCustomerMarketingMaterialEdit() {
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                 >
                   {categories.map(cat => (
                     <option key={cat.value} value={cat.value}>{cat.label}</option>
@@ -349,7 +349,7 @@ function AdminCustomerMarketingMaterialEdit() {
                   value={getContentValue(formData.description)}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: setContentValue(prev.description, e.target.value) }))}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder={currentLanguage === 'sv-SE' ? "Beskrivning av materialet" : "Description of the material"}
                 />
               </div>
@@ -362,7 +362,7 @@ function AdminCustomerMarketingMaterialEdit() {
                     id="replaceFile"
                     checked={replaceFile}
                     onChange={(e) => setReplaceFile(e.target.checked)}
-                    className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-500 rounded bg-white dark:bg-gray-600"
+                    className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-500 rounded-sm bg-white dark:bg-gray-600"
                   />
                   <label htmlFor="replaceFile" className="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Ersätt fil
@@ -379,7 +379,7 @@ function AdminCustomerMarketingMaterialEdit() {
                       required={replaceFile}
                       onChange={handleFileChange}
                       accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.mp4,.mov,.avi,.webm,.mkv,.pdf,.doc,.docx,.txt,.rtf,.zip,.rar"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                     />
                     {formData.file && (
                       <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">

@@ -314,7 +314,7 @@ const AmbassadorContactForm = () => {
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Information */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center mb-6">
               <UserIcon className="h-6 w-6 text-purple-600 mr-2" />
               <h2 className="text-lg font-medium text-gray-900">Grundläggande Information</h2>
@@ -417,7 +417,7 @@ const AmbassadorContactForm = () => {
           </div>
 
           {/* Social Media Platforms */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center">
                 <ShareIcon className="h-6 w-6 text-purple-600 mr-2" />
@@ -483,7 +483,7 @@ const AmbassadorContactForm = () => {
           </div>
 
           {/* Other Platforms (BlueSky, Threads, etc.) */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center">
                 <ShareIcon className="h-6 w-6 text-purple-600 mr-2" />
@@ -591,7 +591,7 @@ const AmbassadorContactForm = () => {
           </div>
 
           {/* Important Links */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center mb-6">
               <GlobeAltIcon className="h-6 w-6 text-purple-600 mr-2" />
               <h2 className="text-lg font-medium text-gray-900">Viktiga Länkar</h2>
@@ -676,7 +676,7 @@ const AmbassadorContactForm = () => {
           </div>
 
           {/* Status and Priority */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center mb-6">
               <StarIcon className="h-6 w-6 text-purple-600 mr-2" />
               <h2 className="text-lg font-medium text-gray-900">Status & Prioritet</h2>
@@ -733,7 +733,7 @@ const AmbassadorContactForm = () => {
           </div>
 
           {/* Tags */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center mb-6">
               <TagIcon className="h-6 w-6 text-purple-600 mr-2" />
               <h2 className="text-lg font-medium text-gray-900">Taggar</h2>
@@ -776,7 +776,7 @@ const AmbassadorContactForm = () => {
           </div>
 
           {/* Notes */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">Anteckningar</label>
               <textarea

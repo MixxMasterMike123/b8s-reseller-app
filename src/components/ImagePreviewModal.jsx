@@ -39,7 +39,7 @@ const ImagePreviewModal = ({
 
   return (
     <div 
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-100 flex items-center justify-center p-4"
       onClick={handleBackdropClick}
     >
       <div 
@@ -55,7 +55,7 @@ const ImagePreviewModal = ({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+          className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors duration-200 focus:outline-hidden focus:ring-2 focus:ring-white/50"
           aria-label="Stäng förhandsvisning"
         >
           <XMarkIcon className="h-6 w-6" />
@@ -87,7 +87,7 @@ const ImagePreviewModal = ({
 
         {/* Image Info Footer */}
         {!isLoading && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+          <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/70 to-transparent p-4">
             <p className="text-white text-sm font-medium truncate">
               {imageName || 'Bild'}
             </p>

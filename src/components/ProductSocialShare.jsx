@@ -313,7 +313,7 @@ const ProductSocialShare = ({ product, compact = true }) => {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xs border border-gray-200 dark:border-gray-700">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
         {isSwedish ? 'Dela denna produkt' : 'Share this Product'}
       </h3>

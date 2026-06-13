@@ -36,12 +36,12 @@ const ProductMenu = ({ products, selectedProduct, onProductSelect }) => {
     <div className="relative inline-block w-full" ref={menuRef}>
       <button
         type="button"
-        className="w-full px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-md shadow-sm border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex justify-between items-center"
+        className="w-full px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-md shadow-xs border border-gray-300 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex justify-between items-center"
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="truncate">{getCurrentProductLabel()}</span>
         <svg
-          className="w-5 h-5 ml-2 flex-shrink-0"
+          className="w-5 h-5 ml-2 shrink-0"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 20 20"
           fill="currentColor"
@@ -56,7 +56,7 @@ const ProductMenu = ({ products, selectedProduct, onProductSelect }) => {
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 z-10 mt-2 max-h-60 overflow-y-auto origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+        <div className="absolute left-0 right-0 z-10 mt-2 max-h-60 overflow-y-auto origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-hidden">
           <div className="py-1">
             {products && products.length > 0 ? (
               products.map((product) => (
@@ -74,7 +74,7 @@ const ProductMenu = ({ products, selectedProduct, onProductSelect }) => {
                       <img 
                         src={product.b2bImageUrl || product.imageUrl} 
                         alt={product.name} 
-                        className="w-8 h-8 mr-3 object-cover rounded"
+                        className="w-8 h-8 mr-3 object-cover rounded-sm"
                       />
                     )}
                     <div>

@@ -68,7 +68,7 @@ const ForgotPassword = () => {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
         <ShopNavigation breadcrumb={t('breadcrumb_forgot_password', 'Glömt lösenord')} />
         
         <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -113,7 +113,7 @@ const ForgotPassword = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
       <ShopNavigation breadcrumb={t('breadcrumb_forgot_password', 'Glömt lösenord')} />
       
       <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -145,7 +145,7 @@ const ForgotPassword = () => {
                 name="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder={t('forgot_password_email_placeholder', 'din@email.com')}
                 disabled={loading}
                 required
@@ -156,7 +156,7 @@ const ForgotPassword = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
+                className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
               >
                 {loading ? t('forgot_password_loading', 'Skickar återställningslänk...') : t('forgot_password_button', 'Skicka återställningslänk')}
               </button>

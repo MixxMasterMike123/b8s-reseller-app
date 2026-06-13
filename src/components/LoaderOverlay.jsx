@@ -4,7 +4,7 @@ import logo from '../../public/images/B8Shield-Logotype 1.svg';
 const LoaderOverlay = ({ isVisible = true }) => {
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-[#459CA8] to-[#EE7E31] transition-opacity duration-500 ease-out pointer-events-none ${
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-linear-to-br from-[#459CA8] to-[#EE7E31] transition-opacity duration-500 ease-out pointer-events-none ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
     >

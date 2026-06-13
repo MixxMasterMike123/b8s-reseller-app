@@ -230,7 +230,7 @@ KRITISKT FÖR ARMBANDSUR TITEL:
         
         // Jewelry detection
         if (['smycken', 'guld', 'silver'].some(k => category.includes(k)) ||
-            ['ring', 'halsband', 'armband'].some(k => title.includes(k))) {
+            ['ring-3', 'halsband', 'armband'].some(k => title.includes(k))) {
             return 'jewelry';
         }
         

@@ -91,7 +91,7 @@ const CampaignDashboard = () => {
             </div>
             <Link
               to="/admin/campaigns/create"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-purple-600 hover:bg-purple-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
             >
               <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
               Skapa Kampanj
@@ -101,10 +101,10 @@ const CampaignDashboard = () => {
 
         {/* Campaign Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white overflow-hidden shadow-sm rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <ChartBarIcon className="h-6 w-6 text-gray-400" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
@@ -117,10 +117,10 @@ const CampaignDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white overflow-hidden shadow-sm rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
                     <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                   </div>
@@ -135,10 +135,10 @@ const CampaignDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white overflow-hidden shadow-sm rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <TrophyIcon className="h-6 w-6 text-yellow-400" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
@@ -151,10 +151,10 @@ const CampaignDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white overflow-hidden shadow-sm rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
                     <span className="text-xs font-medium text-blue-600">%</span>
                   </div>
@@ -172,12 +172,12 @@ const CampaignDashboard = () => {
 
         {/* Loading State */}
         {loading && (
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded-sm w-1/4 mb-4"></div>
               <div className="space-y-2">
-                <div className="h-4 bg-gray-200 rounded"></div>
-                <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                <div className="h-4 bg-gray-200 rounded-sm"></div>
+                <div className="h-4 bg-gray-200 rounded-sm w-5/6"></div>
               </div>
             </div>
           </div>
@@ -187,7 +187,7 @@ const CampaignDashboard = () => {
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
             <div className="flex">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
@@ -204,7 +204,7 @@ const CampaignDashboard = () => {
 
         {/* All Campaigns - Comprehensive View */}
         {!loading && !error && (
-          <div className="bg-white shadow rounded-lg">
+          <div className="bg-white shadow-sm rounded-lg">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-medium text-gray-900">Alla Kampanjer ({allCampaigns.length})</h2>
@@ -275,7 +275,7 @@ const CampaignDashboard = () => {
                               <p className="text-sm font-medium text-gray-900 truncate">
                                 {safeGetCampaignName(campaign)}
                               </p>
-                              <div className="ml-2 flex-shrink-0">
+                              <div className="ml-2 shrink-0">
                                 {getStatusBadge(campaign.status)}
                               </div>
                             </div>
@@ -296,7 +296,7 @@ const CampaignDashboard = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="ml-4 flex-shrink-0">
+                        <div className="ml-4 shrink-0">
                           <Link
                             to={`/admin/campaigns/${campaign.id}`}
                             className="text-purple-600 hover:text-purple-500 text-sm font-medium"

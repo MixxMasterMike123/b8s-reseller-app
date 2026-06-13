@@ -1,147 +1,203 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-/* Simple modal isolation */
-.modal-open {
-  overflow: hidden;
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans:
+    Figtree, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, sans-serif;
+
+  --color-primary-50: #f0f9ff;
+  --color-primary-100: #e0f2fe;
+  --color-primary-200: #bae6fd;
+  --color-primary-300: #7dd3fc;
+  --color-primary-400: #38bdf8;
+  --color-primary-500: #0ea5e9;
+  --color-primary-600: #0284c7;
+  --color-primary-700: #0369a1;
+  --color-primary-800: #075985;
+  --color-primary-900: #0c4a6e;
 }
 
-/* Ensure modal content is always visible */
-.modal-content-visible {
-  min-height: 0;
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-}
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
 
-/* Safari-specific safe area handling */
-@supports (padding: env(safe-area-inset-top)) {
-  .safari-safe-area {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-  }
-}
-
-/* iOS Safari viewport height fix */
-@supports (-webkit-touch-callout: none) {
-  .ios-safari-vh {
-    height: -webkit-fill-available;
-  }
-}
-
-/* Custom styles below this line */
-body {
-  @apply bg-gray-50;
-  margin: 0;
-  font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
-
-/* Print styles */
-@media print {
-  @page {
-    margin: 2cm;
-    size: A4;
-  }
-
-  /* Hide everything by default */
-  body > * {
-    display: none;
-  }
-
-  /* Only show the main order content */
-  body > #root > div > div.p-4 {
-    display: block !important;
-  }
-
-  /* Basic print styles */
-  body {
-    background: white;
-    font-size: 12pt;
-    color: black;
-  }
-
-  /* Hide non-printable elements */
-  nav, 
-  footer,
-  .print\:hidden,
-  button,
-  .sidebar,
-  .navigation {
-    display: none !important;
-  }
-
-  /* Table styles */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    page-break-inside: avoid;
-  }
-
-  th, td {
-    padding: 8pt;
-    text-align: left;
-    border-bottom: 1pt solid #ddd;
-  }
-
-  /* Force background colors in print */
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* Remove shadows and borders */
-  .shadow,
-  .shadow-md,
-  .shadow-lg {
-    box-shadow: none !important;
-  }
-
-  /* Ensure good contrast */
-  h1, h2, h3, h4, h5, h6 {
-    color: black;
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
   }
 }
 
-/* Activity highlight animation for @mention notifications */
-@keyframes highlight-pulse {
-  0% {
-    background-color: rgba(59, 130, 246, 0.1);
-    transform: scale(1);
-  }
-  50% {
-    background-color: rgba(59, 130, 246, 0.3);
-    transform: scale(1.02);
-  }
-  100% {
-    background-color: rgba(59, 130, 246, 0.1);
-    transform: scale(1);
+@utility scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
   }
 }
-
-/* Nike-style scrollbar hiding for touch scroll */
-@layer utilities {
-  .scrollbar-hide {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-  }
-  
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;  /* Chrome, Safari and Opera */
-  }
-  
+@utility scroll-hint {
   /* Scroll hint animation for mobile tabs */
+  animation: scroll-hint 2s ease-in-out infinite;
+}
+
+@layer utilities {
+  /* Simple modal isolation */
+  .modal-open {
+    overflow: hidden;
+  }
+
+  /* Ensure modal content is always visible */
+  .modal-content-visible {
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  }
+
+  /* Safari-specific safe area handling */
+  @supports (padding: env(safe-area-inset-top)) {
+    .safari-safe-area {
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+  }
+
+  /* iOS Safari viewport height fix */
+  @supports (-webkit-touch-callout: none) {
+    .ios-safari-vh {
+      height: -webkit-fill-available;
+    }
+  }
+
+  /* Custom styles below this line */
+  body {
+    @apply bg-gray-50;
+    margin: 0;
+    font-family:
+      'Figtree',
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      'Roboto',
+      'Oxygen',
+      'Ubuntu',
+      'Cantarell',
+      'Fira Sans',
+      'Droid Sans',
+      'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  code {
+    font-family:
+      source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  }
+
+  /* Print styles */
+  @media print {
+    @page {
+      margin: 2cm;
+      size: A4;
+    }
+
+    /* Hide everything by default */
+    body > * {
+      display: none;
+    }
+
+    /* Only show the main order content */
+    body > #root > div > div.p-4 {
+      display: block !important;
+    }
+
+    /* Basic print styles */
+    body {
+      background: white;
+      font-size: 12pt;
+      color: black;
+    }
+
+    /* Hide non-printable elements */
+    nav,
+    footer,
+    .print\:hidden,
+    button,
+    .sidebar,
+    .navigation {
+      display: none !important;
+    }
+
+    /* Table styles */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      page-break-inside: avoid;
+    }
+
+    th,
+    td {
+      padding: 8pt;
+      text-align: left;
+      border-bottom: 1pt solid #ddd;
+    }
+
+    /* Force background colors in print */
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    /* Remove shadows and borders */
+    .shadow,
+    .shadow-md,
+    .shadow-lg {
+      box-shadow: none !important;
+    }
+
+    /* Ensure good contrast */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      color: black;
+    }
+  }
+
+  /* Activity highlight animation for @mention notifications */
+  @keyframes highlight-pulse {
+    0% {
+      background-color: rgba(59, 130, 246, 0.1);
+      transform: scale(1);
+    }
+    50% {
+      background-color: rgba(59, 130, 246, 0.3);
+      transform: scale(1.02);
+    }
+    100% {
+      background-color: rgba(59, 130, 246, 0.1);
+      transform: scale(1);
+    }
+  }
+
+  /* Nike-style scrollbar hiding for touch scroll */
+}
+@layer utilities {
   @keyframes scroll-hint {
     0%, 100% {
       opacity: 0.3;
@@ -151,10 +207,6 @@ code {
       opacity: 0.8;
       transform: translateX(4px);
     }
-  }
-  
-  .scroll-hint {
-    animation: scroll-hint 2s ease-in-out infinite;
   }
 }
 

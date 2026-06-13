@@ -80,7 +80,7 @@ const WritersWagonTest = () => {
             <p className="text-yellow-800 mb-3">
               För att testa The Writer's Wagon™, lägg till din Claude API-nyckel:
             </p>
-            <div className="bg-yellow-100 rounded p-3 font-mono text-sm">
+            <div className="bg-yellow-100 rounded-sm p-3 font-mono text-sm">
               <p className="mb-2">1. Skapa eller uppdatera <code>.env.local</code> filen:</p>
               <pre className="text-yellow-900">VITE_CLAUDE_API_KEY=your-claude-api-key-here</pre>
               <p className="mt-2">2. Starta om utvecklingsservern: <code>npm run dev</code></p>
@@ -155,7 +155,7 @@ const WritersWagonTest = () => {
                   <div className="text-sm text-gray-600 mb-2">
                     Modell: {result.model}
                   </div>
-                  <div className="bg-gray-50 rounded p-3 text-sm">
+                  <div className="bg-gray-50 rounded-sm p-3 text-sm">
                     <div className="font-medium text-gray-700 mb-1">Förhandsvisning:</div>
                     <p className="text-gray-600">{result.preview}</p>
                   </div>

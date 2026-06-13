@@ -65,7 +65,7 @@ const MentionNotifications = () => {
             return (
               <span
                 key={index}
-                className="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600"
+                className="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded-sm text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600"
               >
                 {part}
               </span>
@@ -106,7 +106,7 @@ const MentionNotifications = () => {
           e.stopPropagation();
           setIsOpen(!isOpen);
         }}
-        className="relative p-2 text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+        className="relative p-2 text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 focus:outline-hidden focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
         title={unreadCount > 0 ? `${unreadCount} nya omnämnanden` : 'Omnämnanden'}
       >
         {unreadCount > 0 ? (
@@ -125,7 +125,7 @@ const MentionNotifications = () => {
 
       {/* Dropdown Menu - Normal dropdown below the bell */}
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 z-[10000] max-h-80 overflow-hidden">
+        <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 z-10000 max-h-80 overflow-hidden">
           {/* Header */}
           <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -170,7 +170,7 @@ const MentionNotifications = () => {
                     className="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         <div className="h-8 w-8 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center">
                           <ChatBubbleLeftRightIcon className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                         </div>
@@ -210,7 +210,7 @@ const MentionNotifications = () => {
                           e.stopPropagation();
                           markAsRead(mention.id);
                         }}
-                        className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-white dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded transition-colors"
+                        className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-white dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded-sm transition-colors"
                         title="Markera som läst"
                       >
                         <CheckIcon className="h-3 w-3 mr-1" />
@@ -223,7 +223,7 @@ const MentionNotifications = () => {
                         e.stopPropagation();
                         deleteMention(mention.id);
                       }}
-                      className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 bg-white dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900 border border-red-300 dark:border-red-600 rounded transition-colors"
+                      className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 bg-white dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900 border border-red-300 dark:border-red-600 rounded-sm transition-colors"
                       title="Ta bort"
                     >
                       <TrashIcon className="h-3 w-3" />
@@ -248,7 +248,7 @@ const MentionNotifications = () => {
       {/* Overlay to close dropdown when clicking outside */}
       {isOpen && (
         <div 
-          className="fixed inset-0 z-[9998]" 
+          className="fixed inset-0 z-9998" 
           onClick={() => setIsOpen(false)}
         />
       )}

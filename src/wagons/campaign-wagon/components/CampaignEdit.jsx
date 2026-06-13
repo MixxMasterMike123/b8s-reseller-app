@@ -301,13 +301,13 @@ const CampaignEdit = () => {
       <AppLayout>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
-            <div className="bg-white shadow rounded-lg p-6">
+            <div className="h-8 bg-gray-200 rounded-sm w-1/3 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded-sm w-1/2 mb-8"></div>
+            <div className="bg-white shadow-sm rounded-lg p-6">
               <div className="space-y-4">
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                <div className="h-4 bg-gray-200 rounded-sm w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded-sm w-1/2"></div>
+                <div className="h-4 bg-gray-200 rounded-sm w-2/3"></div>
               </div>
             </div>
           </div>
@@ -328,7 +328,7 @@ const CampaignEdit = () => {
             </p>
             <Link
               to="/admin/campaigns"
-              className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-xs text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
             >
               <ArrowLeftIcon className="-ml-1 mr-2 h-4 w-4" />
               Tillbaka till Kampanjer
@@ -426,7 +426,7 @@ const CampaignEdit = () => {
         </div>
 
         {/* Form Content - Using same structure as CampaignCreate but with edit functionality */}
-        <div className="bg-white shadow rounded-lg">
+        <div className="bg-white shadow-sm rounded-lg">
           {/* Step 1: Basic Information */}
           {currentStep === 1 && (
             <div className="p-6">
@@ -604,12 +604,12 @@ const CampaignEdit = () => {
                     ) : (
                       <div className="p-2">
                         {affiliates.map((affiliate) => (
-                          <label key={affiliate.id} className="flex items-center p-2 hover:bg-gray-50 rounded">
+                          <label key={affiliate.id} className="flex items-center p-2 hover:bg-gray-50 rounded-sm">
                             <input
                               type="checkbox"
                               checked={(formData.affiliateIds || []).includes(affiliate.id)}
                               onChange={() => handleAffiliateSelection(affiliate.id)}
-                              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded-sm"
                             />
                             <div className="ml-3 flex-1">
                               <div className="text-sm font-medium text-gray-900">
@@ -669,12 +669,12 @@ const CampaignEdit = () => {
                     ) : (
                       <div className="p-2">
                         {products.map((product) => (
-                          <label key={product.id} className="flex items-center p-2 hover:bg-gray-50 rounded">
+                          <label key={product.id} className="flex items-center p-2 hover:bg-gray-50 rounded-sm">
                             <input
                               type="checkbox"
                               checked={(formData.productIds || []).includes(product.id)}
                               onChange={() => handleProductSelection(product.id)}
-                              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded-sm"
                             />
                             <div className="ml-3 flex-1">
                               <div className="text-sm font-medium text-gray-900">
@@ -747,7 +747,7 @@ const CampaignEdit = () => {
                       type="checkbox"
                       checked={formData.isLottery}
                       onChange={(e) => handleFieldChange('isLottery', e.target.checked)}
-                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded-sm"
                     />
                     <span className="ml-2 text-sm font-medium text-gray-700">
                       Aktivera lotteri/tävlingssystem
@@ -881,7 +881,7 @@ const CampaignEdit = () => {
                 <button
                   type="button"
                   onClick={nextStep}
-                  className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                  className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
                 >
                   Nästa
                 </button>
@@ -890,7 +890,7 @@ const CampaignEdit = () => {
                   type="button"
                   onClick={handleUpdate}
                   disabled={saving}
-                  className="px-6 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {saving ? 'Uppdaterar...' : 'Uppdatera Kampanj'}
                 </button>
@@ -916,13 +916,13 @@ const CampaignEdit = () => {
                 <div className="items-center px-4 py-3">
                   <button
                     onClick={handleDelete}
-                    className="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-24 mr-2 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300"
+                    className="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-24 mr-2 hover:bg-red-600 focus:outline-hidden focus:ring-2 focus:ring-red-300"
                   >
                     Ta bort
                   </button>
                   <button
                     onClick={() => setShowDeleteConfirm(false)}
-                    className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-24 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                    className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-24 hover:bg-gray-600 focus:outline-hidden focus:ring-2 focus:ring-gray-300"
                   >
                     Avbryt
                   </button>

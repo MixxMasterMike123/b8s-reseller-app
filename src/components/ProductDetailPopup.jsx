@@ -162,10 +162,10 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60 p-4">
       <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 text-white">
+        <div className="bg-linear-to-r from-blue-600 to-indigo-600 px-6 py-4 text-white">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold">
               {product?.name || `B8Shield ${variantType}`}
@@ -239,7 +239,7 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
                   <ul className="space-y-2">
                     {product.variantFeatures.map((feature, index) => (
                       <li key={index} className="flex items-start text-sm">
-                        <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                        <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 shrink-0"></span>
                         <span className="text-gray-700">{feature}</span>
                       </li>
                     ))}

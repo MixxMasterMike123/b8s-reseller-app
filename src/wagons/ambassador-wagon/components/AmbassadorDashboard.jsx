@@ -298,7 +298,7 @@ const AmbassadorDashboard = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <UserGroupIcon className="h-8 w-8 text-purple-600" />
               <div className="ml-4">
@@ -308,7 +308,7 @@ const AmbassadorDashboard = () => {
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <StarSolid className="h-8 w-8 text-yellow-500" />
               <div className="ml-4">
@@ -318,7 +318,7 @@ const AmbassadorDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <FireSolid className="h-8 w-8 text-orange-500" />
               <div className="ml-4">
@@ -328,7 +328,7 @@ const AmbassadorDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <ChatSolid className="h-8 w-8 text-green-500" />
               <div className="ml-4">
@@ -341,7 +341,7 @@ const AmbassadorDashboard = () => {
 
         {/* Priority Contacts - "Vem ska jag kontakta?" */}
         <div className="mb-8">
-          <div className="bg-white rounded-lg shadow">
+          <div className="bg-white rounded-lg shadow-sm">
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-medium text-gray-900 flex items-center">
                 <ExclamationSolid className="h-5 w-5 text-red-500 mr-2" />
@@ -367,12 +367,12 @@ const AmbassadorDashboard = () => {
                     >
                       <div className="flex items-start">
                         {/* Urgency Indicator */}
-                        <div className="flex-shrink-0 mr-3 mt-1">
+                        <div className="shrink-0 mr-3 mt-1">
                           {getUrgencyIcon(contact.triggerData.urgency)}
                         </div>
                         
                         {/* Avatar */}
-                        <div className="flex-shrink-0 mr-4">
+                        <div className="shrink-0 mr-4">
                           <div className="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
                             <span className="text-sm font-medium text-purple-600">
                               {contact.name.charAt(0).toUpperCase()}
@@ -425,7 +425,7 @@ const AmbassadorDashboard = () => {
                       </div>
                       
                       {/* Action Button */}
-                      <div className="flex-shrink-0 ml-4">
+                      <div className="shrink-0 ml-4">
                         <Link
                           to={`/admin/ambassadors/prospects/${contact.id}`}
                           className={`inline-flex items-center px-4 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white transition-colors ${
@@ -479,14 +479,14 @@ const AmbassadorDashboard = () => {
         </div>
 
         {/* Recent Contacts */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <h2 className="text-lg font-medium text-gray-900">
               Senaste Ambassadörer
             </h2>
             <Link
               to="/admin/ambassadors/prospects"
-              className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-xs text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
             >
               Visa alla
               <ArrowRightIcon className="ml-2 h-4 w-4" />
@@ -501,7 +501,7 @@ const AmbassadorDashboard = () => {
                 <div className="mt-6">
                   <Link
                     to="/admin/ambassadors/prospects/new"
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
+                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
                   >
                     <UserPlusIcon className="h-4 w-4 mr-2" />
                     Lägg till ambassadör
@@ -535,7 +535,7 @@ const AmbassadorDashboard = () => {
                       <tr key={contact.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10">
+                            <div className="shrink-0 h-10 w-10">
                               <div className="h-10 w-10 bg-purple-100 rounded-full flex items-center justify-center">
                                 <span className="text-sm font-medium text-purple-600">
                                   {contact.name.charAt(0).toUpperCase()}

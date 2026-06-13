@@ -338,7 +338,7 @@ const AffiliatePortal = () => {
             {/* Mobile-First: Compact Stats Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
               {/* Clicks Card */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3 lg:p-4">
+              <div className="bg-white rounded-lg shadow-xs border border-gray-100 p-3 lg:p-4">
                 <div className="text-center">
                   <div className="text-xl lg:text-2xl font-bold text-gray-800 mb-1">
                     {liveStats?.clicks ?? affiliateData.stats.clicks}
@@ -350,7 +350,7 @@ const AffiliatePortal = () => {
               </div>
 
               {/* Conversions Card */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3 lg:p-4">
+              <div className="bg-white rounded-lg shadow-xs border border-gray-100 p-3 lg:p-4">
                 <div className="text-center">
                   <div className="text-xl lg:text-2xl font-bold text-gray-800 mb-1">
                     {liveStats?.conversions ?? affiliateData.stats.conversions}
@@ -362,7 +362,7 @@ const AffiliatePortal = () => {
               </div>
 
               {/* Balance Card */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3 lg:p-4">
+              <div className="bg-white rounded-lg shadow-xs border border-gray-100 p-3 lg:p-4">
                 <div className="text-center">
                   <div className="text-lg lg:text-xl font-bold text-green-600 mb-1">
                     <ExactPrice 
@@ -378,7 +378,7 @@ const AffiliatePortal = () => {
               </div>
 
               {/* Total Earnings Card */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3 lg:p-4">
+              <div className="bg-white rounded-lg shadow-xs border border-gray-100 p-3 lg:p-4">
                 <div className="text-center">
                   <div className="text-lg lg:text-xl font-bold text-green-600 mb-1">
                     <ExactPrice 
@@ -395,7 +395,7 @@ const AffiliatePortal = () => {
             </div>
 
             {/* Mobile-Optimized Affiliate Link Section */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 lg:p-6">
+            <div className="bg-white rounded-lg shadow-xs border border-gray-100 p-4 lg:p-6">
               {/* Primary: Affiliate Code Section */}
               <div className="mb-6">
                 <h3 className="text-base lg:text-lg font-semibold text-gray-800 mb-2">
@@ -422,7 +422,7 @@ const AffiliatePortal = () => {
                     </div>
                     <button
                       onClick={() => copyToClipboard(affiliateData?.affiliateCode || '')}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex-shrink-0"
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shrink-0"
                     >
                       {t('affiliate_portal_copy_code', 'Kopiera kod')}
                     </button>
@@ -447,7 +447,7 @@ const AffiliatePortal = () => {
                     </code>
                     <button
                       onClick={() => copyToClipboard(generateLink())}
-                      className="bg-gray-600 text-white px-3 py-2 rounded-md text-xs lg:text-sm hover:bg-gray-700 transition-colors flex-shrink-0"
+                      className="bg-gray-600 text-white px-3 py-2 rounded-md text-xs lg:text-sm hover:bg-gray-700 transition-colors shrink-0"
                     >
                       {t('affiliate_portal_copy_link', 'Kopiera länk')}
                     </button>
@@ -473,14 +473,14 @@ const AffiliatePortal = () => {
               {qrCodeDataUrl && (
                 <div className="border-t pt-4">
                   <div className="flex flex-col sm:flex-row items-center gap-4">
-                    <div className="flex-shrink-0">
+                    <div className="shrink-0">
                       <h4 className="text-sm font-medium text-gray-800 mb-2 text-center sm:text-left">
                         {t('affiliate_portal_qr_code', 'QR-kod för din länk')}
                       </h4>
                       <img 
                         src={qrCodeDataUrl} 
                         alt="Affiliate QR Code" 
-                        className="w-24 h-24 lg:w-32 lg:h-32 border rounded mx-auto sm:mx-0" 
+                        className="w-24 h-24 lg:w-32 lg:h-32 border rounded-sm mx-auto sm:mx-0" 
                       />
                     </div>
                     <div className="flex-1 text-center sm:text-left">
@@ -497,7 +497,7 @@ const AffiliatePortal = () => {
             </div>
 
             {/* Mobile-Optimized Payout Button */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+            <div className="bg-white rounded-lg shadow-xs border border-gray-100 p-4">
               <Link 
                 to={getCountryAwareUrl('affiliates/begar-utbetalning')} 
                 className="block w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium text-center"
@@ -512,7 +512,7 @@ const AffiliatePortal = () => {
         return (
           <div className="space-y-4">
             {/* Mobile-First Profile Form */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 lg:p-6">
+            <div className="bg-white rounded-lg shadow-xs border border-gray-100 p-4 lg:p-6">
               <h2 className="text-base lg:text-lg font-semibold text-gray-800 mb-4">
                 {t('affiliate_profile_title', 'Din Profil')}
               </h2>
@@ -667,7 +667,7 @@ const AffiliatePortal = () => {
         return (
           <div className="space-y-4">
             {/* Mobile-Optimized Success Guide */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+            <div className="bg-white rounded-lg shadow-xs border border-gray-100 p-4">
               <AffiliateSuccessGuide />
             </div>
           </div>
@@ -676,7 +676,7 @@ const AffiliatePortal = () => {
         return (
           <div className="space-y-4">
             {/* Mobile-First Header */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+            <div className="bg-white rounded-lg shadow-xs border border-gray-100 p-4">
               <h2 className="text-base lg:text-lg font-semibold text-gray-800 mb-2">
                 {t('affiliate_portal_marketing_materials', 'Marknadsföringsmaterial')}
               </h2>
@@ -686,7 +686,7 @@ const AffiliatePortal = () => {
             </div>
 
             {/* Mobile-Optimized Marketing Materials */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+            <div className="bg-white rounded-lg shadow-xs border border-gray-100 p-4">
               <AffiliateMarketingMaterials affiliateCode={affiliateData.affiliateCode} />
             </div>
           </div>
@@ -695,7 +695,7 @@ const AffiliatePortal = () => {
         return (
           <div className="space-y-4">
             {/* Mobile-Optimized Analytics */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+            <div className="bg-white rounded-lg shadow-xs border border-gray-100 p-4">
               <AffiliateAnalyticsTab 
                 affiliateCode={affiliateData.affiliateCode}
                 affiliateStats={affiliateData.stats}
@@ -772,7 +772,7 @@ const AffiliatePortal = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <svg className="h-5 w-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
@@ -783,7 +783,7 @@ const AffiliatePortal = () => {
                   </p>
                 </div>
               </div>
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <button
                   onClick={() => {
                     sessionStorage.removeItem('b8s_admin_impersonation');
@@ -812,7 +812,7 @@ const AffiliatePortal = () => {
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
           {/* Left-side Tabs - Mobile: horizontal scroll, Desktop: vertical sidebar */}
           <div className="col-span-12 lg:col-span-3">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+            <div className="bg-white rounded-lg shadow-xs border border-gray-100">
               {/* Mobile: Horizontal scrolling tabs with visual indicators */}
               <div className="lg:hidden">
                 {/* Tab Counter */}
@@ -839,10 +839,10 @@ const AffiliatePortal = () => {
                 {/* Scrollable Tab Container with Visual Indicators */}
                 <div className="relative">
                   {/* Left Fade Gradient */}
-                  <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+                  <div className="absolute left-0 top-0 bottom-0 w-8 bg-linear-to-r from-white to-transparent z-10 pointer-events-none" />
                   
                   {/* Right Fade Gradient */}
-                  <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+                  <div className="absolute right-0 top-0 bottom-0 w-8 bg-linear-to-l from-white to-transparent z-10 pointer-events-none" />
                   
                   {/* Scroll Hint Indicator */}
                   <div className="absolute right-2 top-1/2 transform -translate-y-1/2 z-20 pointer-events-none">
@@ -856,13 +856,13 @@ const AffiliatePortal = () => {
                         <button
                           key={tab.id}
                           onClick={() => setActiveTab(tab.id)}
-                          className={`flex items-center justify-center px-3 py-2.5 text-xs font-medium rounded-lg whitespace-nowrap transition-all duration-200 border flex-shrink-0 ${
+                          className={`flex items-center justify-center px-3 py-2.5 text-xs font-medium rounded-lg whitespace-nowrap transition-all duration-200 border shrink-0 ${
                             activeTab === tab.id 
-                              ? 'bg-blue-100 text-blue-900 border-blue-300 shadow-sm' 
+                              ? 'bg-blue-100 text-blue-900 border-blue-300 shadow-xs' 
                               : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50 hover:text-black'
                           }`}
                         >
-                          <span className="mr-2 flex-shrink-0 text-current">{tab.icon}</span>
+                          <span className="mr-2 shrink-0 text-current">{tab.icon}</span>
                           <span className="font-medium text-current">{tab.name}</span>
                         </button>
                       ))}
@@ -879,8 +879,8 @@ const AffiliatePortal = () => {
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex items-start justify-start px-3 py-3 text-sm font-medium rounded-md w-full text-left transition-colors ${activeTab === tab.id ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
                   >
-                    <span className="mr-3 flex-shrink-0 mt-0.5">{tab.icon}</span>
-                    <span className="break-words leading-tight min-w-0 flex-1">{tab.name}</span>
+                    <span className="mr-3 shrink-0 mt-0.5">{tab.icon}</span>
+                    <span className="wrap-break-word leading-tight min-w-0 flex-1">{tab.name}</span>
                   </button>
                 ))}
               </nav>

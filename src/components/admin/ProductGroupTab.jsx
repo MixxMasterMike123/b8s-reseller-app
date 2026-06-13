@@ -300,7 +300,7 @@ const ProductGroupTab = ({ productGroup, onContentChange, onGroupContentUpdate }
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {productsInGroup.map((product) => (
-              <div key={product.id} className="bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 px-3 py-2 flex items-start gap-2">
+              <div key={product.id} className="bg-white dark:bg-gray-700 rounded-sm border border-gray-200 dark:border-gray-600 px-3 py-2 flex items-start gap-2">
                 <input
                   type="radio"
                   name="defaultProduct"

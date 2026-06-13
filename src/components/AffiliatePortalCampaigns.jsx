@@ -216,10 +216,10 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
     return (
       <div className="space-y-4">
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded-sm w-1/4 mb-4"></div>
           <div className="space-y-2">
-            <div className="h-4 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+            <div className="h-4 bg-gray-200 rounded-sm"></div>
+            <div className="h-4 bg-gray-200 rounded-sm w-5/6"></div>
           </div>
         </div>
       </div>
@@ -253,7 +253,7 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg p-6">
+      <div className="bg-linear-to-r from-purple-500 to-pink-500 text-white rounded-lg p-6">
         <div className="flex items-center">
           <MegaphoneIcon className="h-8 w-8 mr-3" />
           <div>
@@ -272,7 +272,7 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
           const isCopied = copyStatus[campaign.id];
 
           return (
-            <div key={campaign.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div key={campaign.id} className="bg-white rounded-lg shadow-xs border border-gray-200 overflow-hidden">
               {/* Campaign Header */}
               <div className="p-6 border-b border-gray-100">
                 <div className="flex items-start justify-between">
@@ -382,7 +382,7 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
                         <img 
                           src={qrCode} 
                           alt="QR Code" 
-                          className="w-16 h-16 border border-gray-200 rounded"
+                          className="w-16 h-16 border border-gray-200 rounded-sm"
                         />
                       )}
                       <button

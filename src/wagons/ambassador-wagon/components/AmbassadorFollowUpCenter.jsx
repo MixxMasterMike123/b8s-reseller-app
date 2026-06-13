@@ -176,7 +176,7 @@ const AmbassadorFollowUpCenter = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <ExclamationSolid className="h-8 w-8 text-red-500" />
               <div className="ml-4">
@@ -186,7 +186,7 @@ const AmbassadorFollowUpCenter = () => {
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <BellSolid className="h-8 w-8 text-orange-500" />
               <div className="ml-4">
@@ -196,7 +196,7 @@ const AmbassadorFollowUpCenter = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <ClockSolid className="h-8 w-8 text-yellow-500" />
               <div className="ml-4">
@@ -206,7 +206,7 @@ const AmbassadorFollowUpCenter = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <CalendarDaysSolid className="h-8 w-8 text-green-500" />
               <div className="ml-4">
@@ -218,7 +218,7 @@ const AmbassadorFollowUpCenter = () => {
         </div>
 
         {/* Search and Filters */}
-        <div className="bg-white rounded-lg shadow mb-6">
+        <div className="bg-white rounded-lg shadow-sm mb-6">
           <div className="p-6 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="relative flex-1 max-w-lg">
@@ -282,7 +282,7 @@ const AmbassadorFollowUpCenter = () => {
         </div>
 
         {/* Follow-ups List */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg shadow-sm">
           {filteredActivities.length === 0 ? (
             <div className="text-center py-12">
               <ClockIcon className="mx-auto h-12 w-12 text-gray-400" />
@@ -302,7 +302,7 @@ const AmbassadorFollowUpCenter = () => {
                 <div key={activity.id} className="p-6 hover:bg-gray-50">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         {getUrgencyIcon(activity.urgency)}
                       </div>
                       <div className="flex-1 min-w-0">

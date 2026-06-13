@@ -74,7 +74,7 @@ const SocialLinks = ({ socials }) => {
 
 const StatCard = ({ icon, title, value, color }) => (
   <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-lg flex items-start space-x-3">
-    <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center ${color}`}>
+    <div className={`w-10 h-10 rounded-full shrink-0 flex items-center justify-center ${color}`}>
       {React.cloneElement(icon, { className: "h-5 w-5 text-white" })}
     </div>
     <div className="min-w-0 flex-1">
@@ -670,7 +670,7 @@ const AdminAffiliateEdit = () => {
 
                 <button
                   onClick={() => setIsEditing(true)} 
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-blue-600 hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   <PencilIcon className="h-5 w-5 mr-2" />
                   Redigera
@@ -678,7 +678,7 @@ const AdminAffiliateEdit = () => {
                 
                 <button
                   onClick={handleToggleAffiliateStatus}
-                  className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                  className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white focus:outline-hidden focus:ring-2 focus:ring-offset-2 ${
                     data.status === 'active' 
                       ? 'bg-orange-600 hover:bg-orange-700 focus:ring-orange-500' 
                       : data.status === 'suspended'
@@ -691,7 +691,7 @@ const AdminAffiliateEdit = () => {
                 
                 <button
                   onClick={handleDeleteAffiliate}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-red-600 hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
                   Radera
                 </button>
@@ -714,7 +714,7 @@ const AdminAffiliateEdit = () => {
                 </h4>
                 <div className="text-sm text-blue-700">
                   <p><strong>E-post:</strong> {data.email}</p>
-                  <p><strong>Tillfälligt lösenord:</strong> <code className="bg-blue-100 px-2 py-1 rounded font-mono">{credentialsResult.temporaryPassword}</code></p>
+                  <p><strong>Tillfälligt lösenord:</strong> <code className="bg-blue-100 px-2 py-1 rounded-sm font-mono">{credentialsResult.temporaryPassword}</code></p>
                   {credentialsResult.isExistingUser && (
                     <p className="text-xs mt-1 text-blue-600">
                       <strong>Obs:</strong> Ett befintligt Firebase Auth-konto uppdaterades med nytt lösenord.
@@ -794,7 +794,7 @@ const AdminAffiliateEdit = () => {
                           type="text"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                           placeholder="Förnamn Efternamn"
                         />
                       ) : (
@@ -811,7 +811,7 @@ const AdminAffiliateEdit = () => {
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                           placeholder="email@example.com"
                         />
                       ) : (
@@ -830,7 +830,7 @@ const AdminAffiliateEdit = () => {
                           type="tel"
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                           placeholder="+46 70 123 45 67"
                         />
                       ) : (
@@ -882,7 +882,7 @@ const AdminAffiliateEdit = () => {
                             <select
                               value={status} 
                               onChange={(e) => setStatus(e.target.value)}
-                              className="w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                              className="w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                             >
                               <option value="active">Aktiv</option>
                               <option value="suspended">Suspenderad</option>
@@ -909,7 +909,7 @@ const AdminAffiliateEdit = () => {
                                     setCodeValidationError('');
                                   }}
                                   placeholder="t.ex. EMMA, FISHING"
-                                  className={`flex-1 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm ${
+                                  className={`flex-1 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm ${
                                     codeValidationError ? 'border-red-300 dark:border-red-500' : ''
                                   }`}
                                 />
@@ -945,7 +945,7 @@ const AdminAffiliateEdit = () => {
                             Provision
                           </label>
                           {isEditing ? (
-                            <div className="relative rounded-md shadow-sm">
+                            <div className="relative rounded-md shadow-xs">
                               <input
                                 type="number"
                                 value={commissionRate}
@@ -966,7 +966,7 @@ const AdminAffiliateEdit = () => {
                             Rabatt vid checkout
                           </label>
                           {isEditing ? (
-                            <div className="relative rounded-md shadow-sm">
+                            <div className="relative rounded-md shadow-xs">
                               <input
                                 type="number"
                                 value={checkoutDiscount}
@@ -990,7 +990,7 @@ const AdminAffiliateEdit = () => {
                             <select
                               value={preferredLang}
                               onChange={e => setPreferredLang(e.target.value)}
-                              className="w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                              className="w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                             >
                               <option value="sv-SE">{t('lang_swedish', 'Svenska')}</option>
                               <option value="en-GB">{t('lang_english_uk', 'English (UK)')}</option>
@@ -1011,13 +1011,13 @@ const AdminAffiliateEdit = () => {
                           <button
                             type="button"
                             onClick={() => setIsEditing(false)}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                           >
                             Avbryt
                           </button>
                           <button
                             type="submit"
-                            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            className="px-4 py-2 border border-transparent rounded-md shadow-xs text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                           >
                             Spara ändringar
                           </button>
@@ -1048,7 +1048,7 @@ const AdminAffiliateEdit = () => {
                           value={promotionMethod}
                           onChange={(e) => setPromotionMethod(e.target.value)}
                           rows="3"
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                           placeholder="Beskriv hur affiliate planerar att marknadsföra produkterna..."
                         />
                       ) : (
@@ -1065,7 +1065,7 @@ const AdminAffiliateEdit = () => {
                           value={message}
                           onChange={(e) => setMessage(e.target.value)}
                           rows="3"
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                           placeholder="Ytterligare information eller meddelande..."
                         />
                       ) : (
@@ -1087,7 +1087,7 @@ const AdminAffiliateEdit = () => {
                               type="url"
                               value={website}
                               onChange={(e) => setWebsite(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                               placeholder="https://example.com"
                             />
                           </div>
@@ -1100,7 +1100,7 @@ const AdminAffiliateEdit = () => {
                               type="text"
                               value={instagram}
                               onChange={(e) => setInstagram(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                               placeholder="@username"
                             />
                           </div>
@@ -1113,7 +1113,7 @@ const AdminAffiliateEdit = () => {
                               type="text"
                               value={youtube}
                               onChange={(e) => setYoutube(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                               placeholder="Kanalnamn"
                             />
                           </div>
@@ -1126,7 +1126,7 @@ const AdminAffiliateEdit = () => {
                               type="text"
                               value={facebook}
                               onChange={(e) => setFacebook(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                               placeholder="Sidnamn"
                             />
                           </div>
@@ -1139,7 +1139,7 @@ const AdminAffiliateEdit = () => {
                               type="text"
                               value={tiktok}
                               onChange={(e) => setTiktok(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                               placeholder="@username"
                             />
                           </div>
@@ -1176,7 +1176,7 @@ const AdminAffiliateEdit = () => {
                         type="text"
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                         placeholder="Gatunamn 123"
                       />
                     </div>
@@ -1190,7 +1190,7 @@ const AdminAffiliateEdit = () => {
                           type="text"
                           value={postalCode}
                           onChange={(e) => setPostalCode(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                           placeholder="123 45"
                         />
                       </div>
@@ -1203,7 +1203,7 @@ const AdminAffiliateEdit = () => {
                           type="text"
                           value={city}
                           onChange={(e) => setCity(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                           placeholder="Stockholm"
                         />
                       </div>
@@ -1216,7 +1216,7 @@ const AdminAffiliateEdit = () => {
                       <select
                         value={country}
                         onChange={(e) => setCountry(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                       >
                         <option value="SE">Sverige</option>
                         <option value="NO">Norge</option>
@@ -1394,7 +1394,7 @@ const AdminAffiliateEdit = () => {
                 <button
                   type="button"
                   onClick={handleDeny}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-xs text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
                   <XMarkIcon className="h-5 w-5 mr-2" />
                   Neka
@@ -1402,7 +1402,7 @@ const AdminAffiliateEdit = () => {
                 <button
                   type="button"
                   onClick={handleApprove}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-xs text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
                   <CheckIcon className="h-5 w-5 mr-2" />
                   Godkänn

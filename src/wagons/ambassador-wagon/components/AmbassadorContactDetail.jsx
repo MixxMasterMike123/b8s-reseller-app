@@ -391,7 +391,7 @@ const AmbassadorContactDetail = () => {
     
     return (
       <div className="flex space-x-3 p-4 bg-gray-50 rounded-lg">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
             <ShareIcon className="h-4 w-4 text-purple-600" />
           </div>
@@ -404,7 +404,7 @@ const AmbassadorContactDetail = () => {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => startEditingActivity(activity)}
-                className="text-gray-600 hover:text-purple-600 transition-colors p-1 rounded hover:bg-purple-50"
+                className="text-gray-600 hover:text-purple-600 transition-colors p-1 rounded-sm hover:bg-purple-50"
                 title="Redigera aktivitet"
               >
                 <PencilIcon className="h-4 w-4" />
@@ -439,7 +439,7 @@ const AmbassadorContactDetail = () => {
               {activity.tags.map((tag, index) => (
                 <span
                   key={index}
-                  className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-purple-100 text-purple-800"
+                  className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs bg-purple-100 text-purple-800"
                 >
                   #{tag}
                 </span>
@@ -478,7 +478,7 @@ const AmbassadorContactDetail = () => {
         </div>
 
         {/* 🎯 NEW: Full-Width Contact Card (Like DiningWagon) */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8">
+        <div className="bg-white rounded-2xl shadow-xs border border-gray-100 p-8 mb-8">
           {/* Contact Header with Icon */}
           <div className="flex items-start space-x-4 mb-6">
             <div className="bg-purple-100 p-3 rounded-xl">
@@ -650,7 +650,7 @@ const AmbassadorContactDetail = () => {
         {/* Activities and Communication Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Activity Center */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+          <div className="bg-white rounded-2xl shadow-xs border border-gray-100 p-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-medium text-gray-900">DM & Kommunikation</h3>
                 <button
@@ -827,7 +827,7 @@ const AmbassadorContactDetail = () => {
           <div className="space-y-8">
             {/* Professional Information */}
             {(contact.mediaKitUrl || contact.pricelistUrl || contact.notes) && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <div className="bg-white rounded-2xl shadow-xs border border-gray-100 p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Professionell Information</h3>
                 <div className="space-y-4">
                   {contact.mediaKitUrl && (

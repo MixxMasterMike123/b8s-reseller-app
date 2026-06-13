@@ -116,7 +116,7 @@ const ResetPassword = () => {
 
   if (validating) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
         <ShopNavigation breadcrumb={t('breadcrumb_reset_password', 'Återställ lösenord')} />
         
         <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -133,7 +133,7 @@ const ResetPassword = () => {
 
   if (resetCompleted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
         <ShopNavigation breadcrumb={t('breadcrumb_reset_password', 'Återställ lösenord')} />
         
         <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -179,7 +179,7 @@ const ResetPassword = () => {
 
   if (!isValidCode) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
         <ShopNavigation breadcrumb={t('breadcrumb_reset_password', 'Återställ lösenord')} />
         
         <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -215,7 +215,7 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
       <ShopNavigation breadcrumb={t('breadcrumb_reset_password', 'Återställ lösenord')} />
       
       <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -247,7 +247,7 @@ const ResetPassword = () => {
                 name="newPassword"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder={t('reset_password_new_password_placeholder', 'Minst 6 tecken')}
                 disabled={loading}
                 required
@@ -265,7 +265,7 @@ const ResetPassword = () => {
                 name="confirmPassword"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder={t('reset_password_confirm_password_placeholder', 'Upprepa lösenordet')}
                 disabled={loading}
                 required
@@ -277,7 +277,7 @@ const ResetPassword = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
+                className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
               >
                 {loading ? t('reset_password_loading', 'Återställer lösenord...') : t('reset_password_button', 'Återställ lösenord')}
               </button>

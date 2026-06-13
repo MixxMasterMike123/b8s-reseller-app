@@ -247,7 +247,7 @@ const AdminUserCreate = () => {
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Company Information */}
-          <div className="bg-white shadow rounded-lg p-6">
+          <div className="bg-white shadow-sm rounded-lg p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-6">Företagsinformation</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -259,7 +259,7 @@ const AdminUserCreate = () => {
                   name="companyName"
                   value={formData.companyName}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.companyName ? 'border-red-300' : 'border-gray-300'}`}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 ${errors.companyName ? 'border-red-300' : 'border-gray-300'}`}
                   placeholder="ABC Företag AB"
                 />
                 {errors.companyName && <p className="mt-1 text-sm text-red-600">{errors.companyName}</p>}
@@ -274,7 +274,7 @@ const AdminUserCreate = () => {
                   name="contactPerson"
                   value={formData.contactPerson}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.contactPerson ? 'border-red-300' : 'border-gray-300'}`}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 ${errors.contactPerson ? 'border-red-300' : 'border-gray-300'}`}
                   placeholder="Anna Andersson"
                 />
                 {errors.contactPerson && <p className="mt-1 text-sm text-red-600">{errors.contactPerson}</p>}
@@ -289,7 +289,7 @@ const AdminUserCreate = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.email ? 'border-red-300' : 'border-gray-300'}`}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 ${errors.email ? 'border-red-300' : 'border-gray-300'}`}
                   placeholder="anna@foretag.se"
                 />
                 {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
@@ -304,7 +304,7 @@ const AdminUserCreate = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.phone ? 'border-red-300' : 'border-gray-300'}`}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 ${errors.phone ? 'border-red-300' : 'border-gray-300'}`}
                   placeholder="08-123 456 78"
                 />
                 {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
@@ -319,7 +319,7 @@ const AdminUserCreate = () => {
                   name="preferredLang"
                   value={formData.preferredLang}
                   onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="block w-full rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500"
                 >
                   <option value="sv-SE">Svenska</option>
                   <option value="en-GB">English (UK)</option>
@@ -336,7 +336,7 @@ const AdminUserCreate = () => {
                   name="orgNumber"
                   value={formData.orgNumber}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.orgNumber ? 'border-red-300' : 'border-gray-300'}`}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 ${errors.orgNumber ? 'border-red-300' : 'border-gray-300'}`}
                   placeholder="556123-4567"
                 />
                 {errors.orgNumber && <p className="mt-1 text-sm text-red-600">{errors.orgNumber}</p>}
@@ -353,7 +353,7 @@ const AdminUserCreate = () => {
                   onChange={handleInputChange}
                   min="0"
                   max="100"
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.marginal ? 'border-red-300' : 'border-gray-300'}`}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 ${errors.marginal ? 'border-red-300' : 'border-gray-300'}`}
                 />
                 {errors.marginal && <p className="mt-1 text-sm text-red-600">{errors.marginal}</p>}
               </div>
@@ -361,7 +361,7 @@ const AdminUserCreate = () => {
           </div>
 
           {/* Company Address */}
-          <div className="bg-white shadow rounded-lg p-6">
+          <div className="bg-white shadow-sm rounded-lg p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-6">Företagsadress</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="md:col-span-2">
@@ -373,7 +373,7 @@ const AdminUserCreate = () => {
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.address ? 'border-red-300' : 'border-gray-300'}`}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 ${errors.address ? 'border-red-300' : 'border-gray-300'}`}
                   placeholder="Storgatan 123"
                 />
                 {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
@@ -388,7 +388,7 @@ const AdminUserCreate = () => {
                   name="postalCode"
                   value={formData.postalCode}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.postalCode ? 'border-red-300' : 'border-gray-300'}`}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 ${errors.postalCode ? 'border-red-300' : 'border-gray-300'}`}
                   placeholder="12345"
                 />
                 {errors.postalCode && <p className="mt-1 text-sm text-red-600">{errors.postalCode}</p>}
@@ -403,7 +403,7 @@ const AdminUserCreate = () => {
                   name="city"
                   value={formData.city}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.city ? 'border-red-300' : 'border-gray-300'}`}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 ${errors.city ? 'border-red-300' : 'border-gray-300'}`}
                   placeholder="Stockholm"
                 />
                 {errors.city && <p className="mt-1 text-sm text-red-600">{errors.city}</p>}
@@ -417,7 +417,7 @@ const AdminUserCreate = () => {
                   name="country"
                   value={formData.country}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="Sverige">Sverige</option>
                   <option value="Norge">Norge</option>
@@ -429,7 +429,7 @@ const AdminUserCreate = () => {
           </div>
 
           {/* Delivery Address */}
-          <div className="bg-white shadow rounded-lg p-6">
+          <div className="bg-white shadow-sm rounded-lg p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-6">Leveransadress</h3>
             
             <div className="mb-6">
@@ -439,7 +439,7 @@ const AdminUserCreate = () => {
                   name="sameAsCompanyAddress"
                   checked={formData.sameAsCompanyAddress}
                   onChange={handleInputChange}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
                 <span className="ml-2 text-sm text-gray-700">
                   Samma som företagsadress
@@ -458,7 +458,7 @@ const AdminUserCreate = () => {
                     name="deliveryAddress"
                     value={formData.deliveryAddress}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.deliveryAddress ? 'border-red-300' : 'border-gray-300'}`}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 ${errors.deliveryAddress ? 'border-red-300' : 'border-gray-300'}`}
                     placeholder="Leveransgatan 456"
                   />
                   {errors.deliveryAddress && <p className="mt-1 text-sm text-red-600">{errors.deliveryAddress}</p>}
@@ -473,7 +473,7 @@ const AdminUserCreate = () => {
                     name="deliveryPostalCode"
                     value={formData.deliveryPostalCode}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.deliveryPostalCode ? 'border-red-300' : 'border-gray-300'}`}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 ${errors.deliveryPostalCode ? 'border-red-300' : 'border-gray-300'}`}
                     placeholder="54321"
                   />
                   {errors.deliveryPostalCode && <p className="mt-1 text-sm text-red-600">{errors.deliveryPostalCode}</p>}
@@ -488,7 +488,7 @@ const AdminUserCreate = () => {
                     name="deliveryCity"
                     value={formData.deliveryCity}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.deliveryCity ? 'border-red-300' : 'border-gray-300'}`}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 ${errors.deliveryCity ? 'border-red-300' : 'border-gray-300'}`}
                     placeholder="Göteborg"
                   />
                   {errors.deliveryCity && <p className="mt-1 text-sm text-red-600">{errors.deliveryCity}</p>}
@@ -502,7 +502,7 @@ const AdminUserCreate = () => {
                     name="deliveryCountry"
                     value={formData.deliveryCountry}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="Sverige">Sverige</option>
                     <option value="Norge">Norge</option>
@@ -515,7 +515,7 @@ const AdminUserCreate = () => {
           </div>
 
           {/* Admin Documents */}
-          <div className="bg-white shadow rounded-lg p-6">
+          <div className="bg-white shadow-sm rounded-lg p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-6 flex items-center">
               <DocumentArrowUpIcon className="h-6 w-6 text-orange-600 mr-2" />
               Admin-dokument
@@ -537,7 +537,7 @@ const AdminUserCreate = () => {
                   multiple
                   onChange={handleDocumentUpload}
                   accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.webp,.svg"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -550,7 +550,7 @@ const AdminUserCreate = () => {
                   {pendingDocuments.map((doc) => (
                     <div key={doc.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
                       <div className="flex items-center space-x-3">
-                        <div className="flex-shrink-0">
+                        <div className="shrink-0">
                           <DocumentArrowUpIcon className="h-5 w-5 text-gray-400" />
                         </div>
                         <div>
@@ -573,7 +573,7 @@ const AdminUserCreate = () => {
           </div>
 
           {/* Account Settings */}
-          <div className="bg-white shadow rounded-lg p-6">
+          <div className="bg-white shadow-sm rounded-lg p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-6">Kontoinställningar</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -584,7 +584,7 @@ const AdminUserCreate = () => {
                   name="role"
                   value={formData.role}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="user">Användare</option>
                   <option value="admin">Administratör</option>
@@ -598,7 +598,7 @@ const AdminUserCreate = () => {
                     name="active"
                     checked={formData.active}
                     onChange={handleInputChange}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                   <span className="ml-2 text-sm text-gray-700">
                     Aktivera konto direkt
@@ -616,7 +616,7 @@ const AdminUserCreate = () => {
                 value={formData.notes}
                 onChange={handleInputChange}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                 placeholder="Interna anteckningar om kunden..."
               />
             </div>

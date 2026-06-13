@@ -274,7 +274,7 @@ const AmbassadorActivityCenter = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <ChatSolid className="h-8 w-8 text-purple-600" />
               <div className="ml-4">
@@ -284,7 +284,7 @@ const AmbassadorActivityCenter = () => {
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <CalendarDaysIcon className="h-8 w-8 text-green-500" />
               <div className="ml-4">
@@ -294,7 +294,7 @@ const AmbassadorActivityCenter = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <PhoneSolid className="h-8 w-8 text-blue-500" />
               <div className="ml-4">
@@ -304,7 +304,7 @@ const AmbassadorActivityCenter = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <ClipboardDocumentListIcon className="h-8 w-8 text-orange-500" />
               <div className="ml-4">
@@ -316,7 +316,7 @@ const AmbassadorActivityCenter = () => {
         </div>
 
         {/* Search and Filters */}
-        <div className="bg-white rounded-lg shadow mb-6">
+        <div className="bg-white rounded-lg shadow-sm mb-6">
           <div className="p-6 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="relative flex-1 max-w-lg">
@@ -409,7 +409,7 @@ const AmbassadorActivityCenter = () => {
         </div>
 
         {/* Activities List */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg shadow-sm">
           {filteredActivities.length === 0 ? (
             <div className="text-center py-12">
               <ChatBubbleLeftRightIcon className="mx-auto h-12 w-12 text-gray-400" />
@@ -485,7 +485,7 @@ const AmbassadorActivityCenter = () => {
                                 {activity.tags && activity.tags.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mt-2">
                                     {activity.tags.map((tag, index) => (
-                                      <span key={index} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                      <span key={index} className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-gray-100 text-gray-800">
                                         {tag}
                                       </span>
                                     ))}
@@ -504,7 +504,7 @@ const AmbassadorActivityCenter = () => {
                                 <div className="flex items-center space-x-2 justify-end">
                                   <button
                                     onClick={() => startEditingActivity(activity)}
-                                    className="text-gray-600 hover:text-purple-600 transition-colors p-2 rounded hover:bg-purple-50 border border-gray-200"
+                                    className="text-gray-600 hover:text-purple-600 transition-colors p-2 rounded-sm hover:bg-purple-50 border border-gray-200"
                                     title="Redigera aktivitet"
                                   >
                                     <PencilIcon className="h-5 w-5" />

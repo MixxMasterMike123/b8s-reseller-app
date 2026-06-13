@@ -573,7 +573,7 @@ ANTI-HALLUCINATION:
                      category.includes('silver') ||
                      category.includes('diamant') ||
                      category.includes('ädelsten') ||
-                     title.includes('ring') ||
+                     title.includes('ring-3') ||
                      title.includes('halsband') ||
                      title.includes('armband') ||
                      title.includes('brosch') ||
@@ -623,7 +623,7 @@ ENDAST FÖRBÄTTRA:
       'kulturell', 'arkeologisk',
       // Jewelry and precious items
       'smycken', 'guld', 'silver', 'diamant', 'ädelsten',
-      'ring', 'halsband', 'armband', 'brosch', 'örhängen',
+      'ring-3', 'halsband', 'armband', 'brosch', 'örhängen',
       'karat', 'rubin', 'safir', 'smaragd'
     ];
     

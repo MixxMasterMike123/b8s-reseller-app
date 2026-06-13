@@ -101,7 +101,7 @@ const ShoppingCart = () => {
         <meta name="twitter:image" content={`${window.location.origin}/images/B8S_full_logo.svg`} />
       </Helmet>
       <SeoHreflang />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
         <ShopNavigation breadcrumb={t('cart_breadcrumb', 'Varukorg')} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
@@ -113,7 +113,7 @@ const ShoppingCart = () => {
               <p className="text-gray-600 mb-6 sm:mb-8 px-4">{t('cart_empty_description', 'Utforska våra produkter och lägg till något i din varukorg.')}</p>
               <Link
                 to={getCountryAwareUrl('')}
-                className="inline-block bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                className="inline-block bg-linear-to-r from-blue-600 to-indigo-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
               >
                 {t('continue_shopping', 'Fortsätt handla')}
               </Link>
@@ -139,7 +139,7 @@ const ShoppingCart = () => {
                         />
                         
                         {/* Product Details */}
-                        <div className="flex-grow text-center sm:text-left">
+                        <div className="grow text-center sm:text-left">
                           <h3 className="text-lg font-semibold text-gray-900 mb-2">{itemName}</h3>
                           
                           {/* Product Specs - Mobile: Compact, Desktop: Detailed */}
@@ -227,7 +227,7 @@ const ShoppingCart = () => {
                   <select
                     value={cart.shippingCountry}
                     onChange={handleCountryChange}
-                    className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
+                    className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                   >
                     <optgroup label={t('nordic_countries', 'Norden')}>
                       {SHIPPING_COSTS.NORDIC.countries.map(country => (
@@ -251,7 +251,7 @@ const ShoppingCart = () => {
                       value={discountCodeInput}
                       onChange={(e) => setDiscountCodeInput(e.target.value)}
                       placeholder={t('enter_your_code', 'Ange din kod')}
-                      className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
+                      className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                       disabled={!!discountCode}
                     />
                     <button
@@ -339,7 +339,7 @@ const ShoppingCart = () => {
                 {/* Checkout Button */}
                 <button
                   onClick={handleCheckout}
-                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 sm:px-8 py-4 rounded-xl text-base sm:text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                  className="w-full bg-linear-to-r from-blue-600 to-indigo-600 text-white px-6 sm:px-8 py-4 rounded-xl text-base sm:text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
                 >
                   {t('go_to_checkout', 'Gå till kassan')}
                 </button>

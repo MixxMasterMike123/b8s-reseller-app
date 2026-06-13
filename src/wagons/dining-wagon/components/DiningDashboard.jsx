@@ -517,7 +517,7 @@ const DiningDashboard = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="block w-full pl-10 pr-3 py-4 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-lg placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400 focus:border-transparent"
+              className="block w-full pl-10 pr-3 py-4 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-lg placeholder-gray-500 dark:placeholder-gray-400 focus:outline-hidden focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400 focus:border-transparent"
               placeholder="Sök efter företag eller person..."
             />
             
@@ -540,7 +540,7 @@ const DiningDashboard = () => {
           </div>
 
           {/* 🎯 NEW: Customer Statistics */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs border border-gray-100 dark:border-gray-700 p-4 mb-6">
             <div className="flex items-center justify-center space-x-8">
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
@@ -605,7 +605,7 @@ const DiningDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
           {/* Today's Follow-ups */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                 <PhoneSolid className="h-5 w-5 text-orange-600 dark:text-orange-500 mr-2" />
@@ -714,7 +714,7 @@ const DiningDashboard = () => {
                       {!isCritical && (
                         <button
                           onClick={() => handleDeferContact(followUp.id, followUp.urgency)}
-                          className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 py-1 rounded transition-colors"
+                          className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 py-1 rounded-sm transition-colors"
                           title="Hantera senare - aktiviteten återkommer automatiskt vid bättre tillfälle"
                         >
                           Senare
@@ -734,10 +734,10 @@ const DiningDashboard = () => {
                       <h4 className="text-sm font-medium text-gray-700 mb-2">Övriga aktiviteter som behöver uppföljning:</h4>
                       <div className="space-y-1 mb-3">
                         {availableTriggers.slice(3).map(trigger => (
-                          <div key={trigger.id} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                          <div key={trigger.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-sm text-sm">
               <Link
                               to={`/admin/dining/contacts/${trigger.id}`}
-                              className="flex-1 hover:bg-gray-100 rounded p-1 -m-1"
+                              className="flex-1 hover:bg-gray-100 rounded-sm p-1 -m-1"
               >
                               <span className="font-medium">{trigger.name}</span> • {trigger.reason}
               </Link>
@@ -755,7 +755,7 @@ const DiningDashboard = () => {
                               {trigger.urgency !== 'critical' && (
                                 <button
                                   onClick={() => handleDeferContact(trigger.id, trigger.urgency)}
-                                  className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 py-1 rounded transition-colors"
+                                  className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 py-1 rounded-sm transition-colors"
                                   title="Hantera senare - aktiviteten återkommer automatiskt vid bättre tillfälle"
                                 >
                                   Senare
@@ -808,10 +808,10 @@ const DiningDashboard = () => {
                      }
                      
                      return (
-                       <div key={followUp.id} className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
+                       <div key={followUp.id} className="flex items-center justify-between p-3 bg-white rounded-sm border border-gray-200">
                          <Link
                            to={`/admin/dining/contacts/${followUp.id}`}
-                           className="flex-1 hover:bg-gray-50 rounded p-1 -m-1"
+                           className="flex-1 hover:bg-gray-50 rounded-sm p-1 -m-1"
                          >
                            <div className="font-medium text-gray-900">{followUp.name}</div>
                            <div className="text-xs text-gray-500">{followUp.reason}</div>
@@ -821,7 +821,7 @@ const DiningDashboard = () => {
                          </Link>
                          <button
                            onClick={() => handleUndeferContact(followUp.id)}
-                           className="text-xs text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded transition-colors ml-2"
+                           className="text-xs text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded-sm transition-colors ml-2"
                            title="Ta upp aktiviteten nu istället för att vänta"
                          >
                            Ta upp nu
@@ -835,7 +835,7 @@ const DiningDashboard = () => {
           </div>
 
           {/* Recent Conversations */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                 <ChatSolid className="h-5 w-5 text-blue-600 dark:text-blue-500 mr-2" />
@@ -878,7 +878,7 @@ const DiningDashboard = () => {
                           "{conversation.note}"
                         </div>
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 ml-3 flex-shrink-0">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 ml-3 shrink-0">
                         {conversation.when}
                     </div>
                     </div>

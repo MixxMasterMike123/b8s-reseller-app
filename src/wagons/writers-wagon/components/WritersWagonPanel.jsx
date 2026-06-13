@@ -250,9 +250,9 @@ const WritersWagonPanel = ({ productData, onContentGenerated, onClose }) => {
   if (!wagonConnected) {
     return (
       <div className="max-w-4xl mx-auto p-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white rounded-lg shadow-xs border border-gray-200">
           {/* Header */}
-          <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+          <div className="px-6 py-4 border-b border-gray-200 bg-linear-to-r from-blue-50 to-purple-50">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <SparklesIcon className="h-8 w-8 text-blue-600" />
@@ -305,7 +305,7 @@ const WritersWagonPanel = ({ productData, onContentGenerated, onClose }) => {
               <button
                 onClick={connectWagon}
                 disabled={connectionStatus === 'connecting'}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="bg-linear-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 {connectionStatus === 'connecting' ? 'Ansluter...' : '🚂 Anslut Vagn'}
               </button>
@@ -325,12 +325,12 @@ const WritersWagonPanel = ({ productData, onContentGenerated, onClose }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4">
+        <div className="bg-linear-to-r from-blue-600 to-blue-700 text-white px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <SparklesIcon className="h-6 w-6" />
               <h2 className="text-xl font-semibold">The Writer's Wagon™</h2>
-              <span className="bg-blue-500 bg-opacity-50 px-2 py-1 rounded text-sm">
+              <span className="bg-blue-500 bg-opacity-50 px-2 py-1 rounded-sm text-sm">
                 AI-Powered Content Generation
               </span>
             </div>

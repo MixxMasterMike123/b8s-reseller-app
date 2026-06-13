@@ -109,7 +109,7 @@ const ReviewsSection = ({
               onClick={() => setDisplayMode('trustpilot')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 displayMode === 'trustpilot' 
-                  ? 'bg-white text-gray-900 shadow-sm' 
+                  ? 'bg-white text-gray-900 shadow-xs' 
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -119,7 +119,7 @@ const ReviewsSection = ({
               onClick={() => setDisplayMode('manual')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 displayMode === 'manual' 
-                  ? 'bg-white text-gray-900 shadow-sm' 
+                  ? 'bg-white text-gray-900 shadow-xs' 
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -151,12 +151,12 @@ const ReviewsSection = ({
             <div className="text-center text-gray-500">{t('reviews_loading', 'Laddar recensioner...')}</div>
           ) : (
             reviews.map((review) => (
-              <div key={review.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div key={review.id} className="bg-white p-6 rounded-lg shadow-xs border border-gray-200">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center">
                     {renderStars(review.rating)}
                     {review.verified && (
-                      <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                      <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-sm">
                         {t('reviews_verified_purchase', 'Verifierat köp')}
                       </span>
                     )}

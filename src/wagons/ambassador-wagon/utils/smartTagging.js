@@ -19,8 +19,8 @@ const ambassadorKeywordMap = {
   
   // 📞 FOLLOW-UP REQUIRED - Callback promises
   'ringabak': [
-    'ring tillbaka', 'ringa tillbaka', 'höra av sig', 'kontakta', 
-    'återkomma', 'återkoppla', 'ring', 'ringa', 'hör av', 'kontakt',
+    'ring-3 tillbaka', 'ringa tillbaka', 'höra av sig', 'kontakta', 
+    'återkomma', 'återkoppla', 'ring-3', 'ringa', 'hör av', 'kontakt',
     'call back', 'get back', 'follow up', 'uppföljning'
   ],
   

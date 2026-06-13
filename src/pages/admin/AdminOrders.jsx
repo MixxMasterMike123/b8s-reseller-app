@@ -363,7 +363,7 @@ const AdminOrders = () => {
       onClick={() => setActiveTab(tabName)}
       className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
         activeTab === tabName
-          ? 'bg-blue-600 dark:bg-blue-500 text-white shadow'
+          ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-sm'
           : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
       }`}
     >
@@ -404,7 +404,7 @@ const AdminOrders = () => {
             <button
               onClick={handleExportOrders}
               disabled={exportLoading || loading || orders.length === 0}
-              className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+              className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-xs text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
             >
               {exportLoading ? (
                 <>
@@ -421,7 +421,7 @@ const AdminOrders = () => {
             <button
               onClick={handleExportAllVerifications}
               disabled={loading || orders.length === 0 || verificationProgress !== null}
-              className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+              className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-xs text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
               title="Exportera varje order som separat PDF-verifikation för bokföring"
             >
               {verificationProgress ? (
@@ -501,11 +501,11 @@ const AdminOrders = () => {
                       {/* Column 1: Order & Customer */}
                       <td className="px-4 md:px-6 py-4">
                         <div className="flex items-start">
-                          <div className="flex-shrink-0 h-12 w-12 mr-4">
+                          <div className="shrink-0 h-12 w-12 mr-4">
                             <div className={`h-12 w-12 rounded-full flex items-center justify-center ${
                               order.source === 'b2c' 
-                                ? 'bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-800 dark:to-purple-700'
-                                : 'bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-800 dark:to-blue-700'
+                                ? 'bg-linear-to-br from-purple-100 to-purple-200 dark:from-purple-800 dark:to-purple-700'
+                                : 'bg-linear-to-br from-blue-100 to-blue-200 dark:from-blue-800 dark:to-blue-700'
                             }`}>
                               <span className={`text-sm font-medium ${
                                 order.source === 'b2c' ? 'text-purple-800 dark:text-purple-200' : 'text-blue-800 dark:text-blue-200'
@@ -619,7 +619,7 @@ const AdminOrders = () => {
                               
                               return (
                                 <div className="text-xs">
-                                  <span className={`inline-flex items-center px-2 py-0.5 rounded font-medium ${categoryStyles[category.color] || categoryStyles.gray}`}>
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-sm font-medium ${categoryStyles[category.color] || categoryStyles.gray}`}>
                                     {referrer.name}
                                   </span>
                                 </div>
@@ -658,13 +658,13 @@ const AdminOrders = () => {
                           <div className="flex flex-col gap-1 w-full max-w-[120px]">
                             <Link
                               to={`/admin/orders/${order.id}`}
-                              className="min-h-[32px] inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded transition-colors"
+                              className="min-h-[32px] inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded-sm transition-colors"
                             >
                               Hantera
                             </Link>
                             <button
                               onClick={() => handleExportVerification(order)}
-                              className="min-h-[32px] inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded transition-colors"
+                              className="min-h-[32px] inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-sm transition-colors"
                               title="Exportera som verifikation för bokföring"
                             >
                               <PrinterIcon className="h-3.5 w-3.5 mr-1" />

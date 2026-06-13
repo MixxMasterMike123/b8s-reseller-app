@@ -130,7 +130,7 @@ ANTI-HALLUCINATION INSTRUKTIONER:
         
         // Detect jewelry
         const jewelryKeywords = ['smycken', 'guld', 'silver', 'diamant', 'ädelsten'];
-        const titleJewelryKeywords = ['ring', 'halsband', 'armband', 'brosch', 'örhängen'];
+        const titleJewelryKeywords = ['ring-3', 'halsband', 'armband', 'brosch', 'örhängen'];
         
         if (jewelryKeywords.some(keyword => category.includes(keyword)) ||
             titleJewelryKeywords.some(keyword => title.includes(keyword))) {
@@ -176,7 +176,7 @@ GUIDELINES:
 4. EXAMPLES:
    - "SYNTHESIZER, Yamaha DX7..." → ["Yamaha", "DX7"] 
    - "ROLEX Submariner..." → ["Rolex", "Submariner"]
-   - "RING, 18k gold..." → ["18k gold", "ring"]
+   - "RING, 18k gold..." → ["18k gold", "ring-3"]
 
 Return JSON only:
 {

@@ -150,7 +150,7 @@ const AmbassadorContactList = () => {
     return (
       <div className="flex items-center space-x-1">
         {platformList.map(platform => (
-          <span key={platform} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-100 text-purple-700">
+          <span key={platform} className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-xs bg-purple-100 text-purple-700">
             {platform.charAt(0).toUpperCase() + platform.slice(1)}
           </span>
         ))}
@@ -248,7 +248,7 @@ const AmbassadorContactList = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <UserGroupSolid className="h-8 w-8 text-purple-600" />
               <div className="ml-4">
@@ -258,7 +258,7 @@ const AmbassadorContactList = () => {
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <StarSolid className="h-8 w-8 text-yellow-500" />
               <div className="ml-4">
@@ -268,7 +268,7 @@ const AmbassadorContactList = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <ShareIcon className="h-8 w-8 text-orange-500" />
               <div className="ml-4">
@@ -278,7 +278,7 @@ const AmbassadorContactList = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <UserIcon className="h-8 w-8 text-green-500" />
               <div className="ml-4">
@@ -290,7 +290,7 @@ const AmbassadorContactList = () => {
         </div>
 
         {/* Search and Filters */}
-        <div className="bg-white rounded-lg shadow mb-6">
+        <div className="bg-white rounded-lg shadow-sm mb-6">
           <div className="p-6 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="relative flex-1 max-w-lg">
@@ -372,7 +372,7 @@ const AmbassadorContactList = () => {
         </div>
 
         {/* Contact List */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           {filteredContacts.length === 0 ? (
             <div className="text-center py-12">
               <UserGroupIcon className="mx-auto h-12 w-12 text-gray-400" />
@@ -386,7 +386,7 @@ const AmbassadorContactList = () => {
               <div className="mt-6">
                 <Link
                   to="/admin/ambassadors/prospects/new"
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
                   Lägg till ambassadör
@@ -423,7 +423,7 @@ const AmbassadorContactList = () => {
                     <tr key={contact.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
+                          <div className="shrink-0 h-10 w-10">
                             <div className="h-10 w-10 bg-purple-100 rounded-full flex items-center justify-center">
                               <span className="text-sm font-medium text-purple-600">
                                 {contact.name?.charAt(0)?.toUpperCase() || '?'}

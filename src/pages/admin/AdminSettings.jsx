@@ -250,7 +250,7 @@ const AdminSettings = () => {
     <AppLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 shadow-xs">
           <div className="px-6 py-4">
             <div className="flex items-center space-x-3">
               <CogIcon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
@@ -263,7 +263,7 @@ const AdminSettings = () => {
         </div>
 
         {/* Tabs */}
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+        <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg">
           <div className="border-b border-gray-200 dark:border-gray-700">
             <nav className="-mb-px flex space-x-8 px-6">
               <button
@@ -340,12 +340,12 @@ const AdminSettings = () => {
                       const manifest = wagon.manifest;
                       
                       return (
-                        <div key={manifest.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+                        <div key={manifest.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xs">
                           {/* Wagon Header */}
                           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3">
-                                <div className={`w-4 h-4 rounded-full flex-shrink-0 ${
+                                <div className={`w-4 h-4 rounded-full shrink-0 ${
                                   statusInfo.status === 'available' ? 'bg-green-500' :
                                   statusInfo.status === 'partially-enabled' ? 'bg-yellow-500' :
                                   statusInfo.status === 'disabled-manifest' ? 'bg-red-500' :
@@ -409,7 +409,7 @@ const AdminSettings = () => {
                                         !isWagonEnabledForUser(user.id, manifest.id)
                                       )}
                                       disabled={!statusInfo.manifestEnabled || saving}
-                                      className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                                      className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                                         isWagonEnabledForUser(user.id, manifest.id) && statusInfo.manifestEnabled
                                           ? 'bg-blue-600'
                                           : 'bg-gray-200'
@@ -475,7 +475,7 @@ const AdminSettings = () => {
                           value={storeForm[field.key] ?? ''}
                           placeholder={field.placeholder}
                           onChange={(e) => setStoreForm(prev => ({ ...prev, [field.key]: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
                     ))}
@@ -492,7 +492,7 @@ const AdminSettings = () => {
                         value={storeForm.vatRate ?? ''}
                         placeholder={String(STORE.vatRate)}
                         onChange={(e) => setStoreForm(prev => ({ ...prev, vatRate: parseFloat(e.target.value) }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
 
@@ -505,7 +505,7 @@ const AdminSettings = () => {
                         value={storeForm.address ?? ''}
                         placeholder={STORE.address}
                         onChange={(e) => setStoreForm(prev => ({ ...prev, address: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
 
@@ -518,7 +518,7 @@ const AdminSettings = () => {
                         value={storeForm.companyDescription ?? ''}
                         placeholder={STORE.companyDescription}
                         onChange={(e) => setStoreForm(prev => ({ ...prev, companyDescription: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
 
@@ -535,7 +535,7 @@ const AdminSettings = () => {
                           value={storeForm[field.key] ?? ''}
                           placeholder={field.placeholder}
                           onChange={(e) => setStoreForm(prev => ({ ...prev, [field.key]: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
                     ))}
@@ -560,7 +560,7 @@ const AdminSettings = () => {
                               ...prev,
                               social: { ...(prev.social || {}), [key]: e.target.value },
                             }))}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
                       ))}
@@ -571,7 +571,7 @@ const AdminSettings = () => {
                     <button
                       onClick={saveStoreIdentity}
                       disabled={saving}
-                      className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                      className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
                       <CheckIcon className="h-5 w-5 mr-2" />
                       {saving ? 'Sparar…' : 'Spara butiksinställningar'}

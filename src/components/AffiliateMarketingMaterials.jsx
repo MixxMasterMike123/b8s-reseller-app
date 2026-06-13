@@ -256,7 +256,7 @@ const AffiliateMarketingMaterials = ({ affiliateCode }) => {
                       
                       <button
                         onClick={() => handleDownload(material)}
-                        className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition-colors"
+                        className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-sm hover:bg-blue-100 transition-colors"
                       >
                         <ArrowDownTrayIcon className="h-3 w-3 mr-1" />
                         {t('marketing_materials_download', 'Ladda ner')}
