@@ -54,6 +54,15 @@ export function StoreSettingsProvider({ children }) {
     };
   }, []);
 
+  // Per-shop accent token (NORD design system). Tailwind utilities like
+  // bg-accent read var(--color-accent); the inline value on <html> wins
+  // over the static @theme default, so the accent follows shop config.
+  useEffect(() => {
+    if (settings.accent) {
+      document.documentElement.style.setProperty('--color-accent', settings.accent);
+    }
+  }, [settings.accent]);
+
   return (
     <StoreSettingsContext.Provider value={settings}>
       {children}

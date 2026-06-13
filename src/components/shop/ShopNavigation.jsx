@@ -69,7 +69,7 @@ const ShopNavigation = ({ breadcrumb }) => {
   }, []);
 
   return (
-    <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50">
+    <nav className="bg-canvas/85 backdrop-blur-md sticky top-0 z-50 font-body">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link to={getCountryAwareUrl('')} className="flex items-center">
@@ -77,14 +77,14 @@ const ShopNavigation = ({ breadcrumb }) => {
           </Link>
           
           {/* Breadcrumb */}
-          <div className="hidden md:flex items-center space-x-2 text-sm text-gray-500">
-            <Link to={getCountryAwareUrl('')} className="hover:text-blue-600 transition-colors">
+          <div className="hidden md:flex items-center space-x-2 text-sm text-ink-muted">
+            <Link to={getCountryAwareUrl('')} className="hover:text-ink transition-colors">
               {t('nav_home', 'Hem')}
             </Link>
             {breadcrumb && (
               <>
                 <span>/</span>
-                <span className="text-gray-900">{breadcrumb}</span>
+                <span className="text-ink font-medium">{breadcrumb}</span>
               </>
             )}
           </div>
@@ -93,7 +93,7 @@ const ShopNavigation = ({ breadcrumb }) => {
           <div className="flex items-center space-x-4">
             {/* Search Icon - Placeholder for future implementation */}
             <button 
-              className="p-2 text-gray-700 hover:text-blue-600 transition-colors"
+              className="p-2 text-ink/70 hover:text-ink transition-colors"
               title={t('nav_search', 'Sök')}
               onClick={() => {
                 // TODO: Implement search functionality
@@ -109,7 +109,7 @@ const ShopNavigation = ({ breadcrumb }) => {
                 {/* User Account Link */}
                 <Link 
                   to={affiliateData ? getCountryAwareUrl('affiliate-portal') : getCountryAwareUrl('account')}
-                  className="p-2 text-gray-700 hover:text-blue-600 transition-colors"
+                  className="p-2 text-ink/70 hover:text-ink transition-colors"
                   title={affiliateData ? t('nav_affiliate_portal', 'Affiliate Portal') : t('nav_my_account', 'Mitt konto')}
                 >
                   <UserIcon className="h-6 w-6" />
@@ -117,10 +117,10 @@ const ShopNavigation = ({ breadcrumb }) => {
 
                 {/* User Name Display */}
                 <div className="flex items-center space-x-2">
-                  <span className="hidden sm:inline text-sm text-gray-600 max-w-[120px] truncate">
+                  <span className="hidden sm:inline text-sm text-ink-muted max-w-[120px] truncate">
                     {affiliateData ? affiliateData.name : (currentUser.displayName || currentUser.email?.split('@')[0])}
                   </span>
-                  <span className="sm:hidden text-xs text-gray-500 max-w-[60px] truncate">
+                  <span className="sm:hidden text-xs text-ink-muted max-w-[60px] truncate">
                     {affiliateData ? affiliateData.name : (currentUser.displayName || currentUser.email?.split('@')[0])}
                   </span>
                   
@@ -148,7 +148,7 @@ const ShopNavigation = ({ breadcrumb }) => {
                 <button
                   onClick={() => setShowLoginDropdown(!showLoginDropdown)}
                   onMouseEnter={() => setShowLoginDropdown(true)}
-                  className="flex items-center p-2 text-gray-700 hover:text-blue-600 transition-colors"
+                  className="flex items-center p-2 text-ink/70 hover:text-ink transition-colors"
                   title={t('nav_login', 'Logga in')}
                 >
                   <UserIcon className="h-6 w-6" />
@@ -158,13 +158,13 @@ const ShopNavigation = ({ breadcrumb }) => {
                 {/* Login Dropdown Menu */}
                 {showLoginDropdown && (
                   <div 
-                    className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+                    className="absolute right-0 mt-2 w-48 bg-white rounded-el shadow-lift z-50"
                     onMouseLeave={() => setShowLoginDropdown(false)}
                   >
                     <div className="py-2">
                       <Link
                         to="/login"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors"
+                        className="flex items-center px-4 py-2 text-sm text-ink hover:bg-canvas hover:text-accent transition-colors"
                         onClick={() => setShowLoginDropdown(false)}
                       >
                         <UserIcon className="h-4 w-4 mr-3" />
@@ -173,7 +173,7 @@ const ShopNavigation = ({ breadcrumb }) => {
                       
                       <Link
                         to="/affiliate-login"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors"
+                        className="flex items-center px-4 py-2 text-sm text-ink hover:bg-canvas hover:text-accent transition-colors"
                         onClick={() => setShowLoginDropdown(false)}
                       >
                         <div className="h-4 w-4 mr-3 flex items-center justify-center">
@@ -187,14 +187,14 @@ const ShopNavigation = ({ breadcrumb }) => {
                     <div className="border-t border-gray-100 py-2">
                       <Link
                         to="/register"
-                        className="block px-4 py-2 text-xs text-gray-500 hover:text-blue-600 transition-colors"
+                        className="block px-4 py-2 text-xs text-ink-muted hover:text-accent transition-colors"
                         onClick={() => setShowLoginDropdown(false)}
                       >
                         {t('nav_register_customer', 'Skapa kundkonto')}
                       </Link>
                       <Link
                         to={getCountryAwareUrl('affiliate-registration')}
-                        className="block px-4 py-2 text-xs text-gray-500 hover:text-blue-600 transition-colors"
+                        className="block px-4 py-2 text-xs text-ink-muted hover:text-accent transition-colors"
                         onClick={() => setShowLoginDropdown(false)}
                       >
                         {t('nav_register_affiliate', 'Ansök som affiliate')}
@@ -208,12 +208,12 @@ const ShopNavigation = ({ breadcrumb }) => {
             {/* Shopping Cart Icon */}
             <Link 
               to={getCountryAwareUrl('cart')} 
-              className="p-2 text-gray-700 hover:text-blue-600 transition-colors relative"
+              className="flex items-center gap-2 bg-ink text-white rounded-full py-2 pl-3.5 pr-3.5 hover:opacity-90 transition-opacity"
               title={t('nav_cart', 'Varukorg')}
             >
-              <ShoppingBagIcon className="h-6 w-6" />
+              <ShoppingBagIcon className="h-5 w-5" />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                <span className="bg-accent text-white text-xs rounded-full h-5 min-w-5 px-1.5 -mr-1.5 flex items-center justify-center font-bold tabular-nums">
                   {cartItemCount}
                 </span>
               )}

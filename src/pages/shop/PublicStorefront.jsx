@@ -17,10 +17,13 @@ import SeoHreflang from '../../components/shop/SeoHreflang';
 import SmartPrice from '../../components/shop/SmartPrice';
 import { getProductGroupContent } from '../../utils/productGroups';
 import AddedToCartModal from '../../components/shop/AddedToCartModal';
+import NordProductCard from '../../components/shop/NordProductCard';
+import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import { Helmet } from 'react-helmet-async';
 
 const PublicStorefront = () => {
   const { t, currentLanguage } = useTranslation();
+  const store = useStoreSettings();
   const { getContentValue } = useContentTranslation();
   const { 
     addToCart: addToCartContext, 
@@ -208,6 +211,17 @@ const PublicStorefront = () => {
     return t('product_description_fallback', 'B8Shield {{color}} - Vasskydd som förhindrar att dina fiskedrag fastnar', { color: product.colorVariant || '' });
   };
 
+  // NORD hero copy: shop config wins, translation layer is the fallback so
+  // the current B8Shield copy keeps working until a shop overrides it.
+  const heroHeadline = store.heroHeadline ||
+    `${t('hero_title_start', 'Fastna')} ${t('hero_title_middle', 'aldrig')} ${t('hero_title_end', 'mer!')}`;
+  const heroSubtitle = store.heroSubtitle ||
+    t('hero_subtitle', 'B8Shield™ – Vasskydd som förhindrar att dina fiskedrag fastnar i vassen utan att påverka ditt fiske.');
+
+  const bestseller = specialEditionProducts[0] || groupedProducts[0]?.representativeProduct || clothingProducts[0] || null;
+
+  const scrollToProducts = () => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
+
   return (
     <>
       <Helmet>
@@ -226,140 +240,196 @@ const PublicStorefront = () => {
         <script type="application/ld+json">{JSON.stringify(generateShopStructuredData(currentLanguage))}</script>
       </Helmet>
       <SeoHreflang />
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-canvas font-body text-ink">
         <ShopNavigation />
-        
-        {/* Hero Section */}
-        <section className="relative overflow-hidden">
-          {/* Background Image */}
-          <div className="absolute inset-0">
-            <img
-              src="/images/Fil-000-222.jpg"
-              alt="B8Shield fishing background"
-              className="w-full h-full object-cover scale-x-[-1]"
-            />
-            <div className="absolute inset-0 bg-black/25"></div>
-          </div>
-          
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
-            {/* Desktop: Column layout */}
-            <div className="hidden lg:flex items-center justify-between">
-              {/* Left Column: Badge and Title */}
-              <div className="flex-1 text-left">
-                <img
-                  src="/images/badge_of_honor_b8s.svg"
-                  alt={t('hero_innovation_badge_alt', 'Innovation från Sverige märke')}
-                  className="h-16 w-auto mb-6 drop-shadow-lg"
-                />
-                
-                <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
-                  {t('hero_title_start', 'Fastna')}
-                  <span className="bg-linear-to-r from-red-400 to-red-500 bg-clip-text text-transparent"> {t('hero_title_middle', 'aldrig')} </span>
-                  {t('hero_title_end', 'mer!')}
-                </h1>
-                
-                <p className="text-xl text-white/90 mb-6 max-w-lg leading-relaxed drop-shadow-md">
-                  {t('hero_subtitle', 'B8Shield™ – Vasskydd som förhindrar att dina fiskedrag fastnar i vassen utan att påverka ditt fiske.')}
-                </p>
 
-                <button 
-                  onClick={() => document.getElementById('products').scrollIntoView({ behavior: 'smooth' })}
-                  className="bg-linear-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-                >
-                  {t('hero_shop_now_button', 'Handla nu')}
-                </button>
+        {/* ===== Bento hero (NORD, DESIGN.md §4) ===== */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+          <div className="grid lg:grid-cols-[1.55fr_1fr] gap-4">
+            {/* Hero tile — the one dominant element on the screen */}
+            <div className="relative min-h-[440px] lg:min-h-[560px] rounded-tile overflow-hidden bg-ink shadow-tile flex items-end animate-rise">
+              <div className="absolute inset-0">
+                {store.heroImageUrl ? (
+                  <img
+                    src={store.heroImageUrl}
+                    alt=""
+                    className="w-full h-full object-cover scale-x-[-1]"
+                  />
+                ) : (
+                  /* No-photo fallback: accent color field, looks intentional */
+                  <div
+                    className="w-full h-full"
+                    style={{
+                      background:
+                        'radial-gradient(900px 480px at 85% -10%, color-mix(in srgb, var(--color-accent) 70%, #1A1C1E), transparent 65%), ' +
+                        'radial-gradient(700px 500px at -10% 110%, color-mix(in srgb, var(--color-accent) 35%, #1A1C1E), #1A1C1E 70%)',
+                    }}
+                  />
+                )}
+                <div className="absolute inset-0 bg-linear-to-b from-ink/0 via-ink/30 to-ink/75" />
               </div>
 
-              {/* Right Column: Social Proof */}
-              <div className="flex-1 flex justify-end">
-                <div className="bg-white/90 backdrop-blur-xs rounded-2xl p-6 max-w-md border border-white/20 shadow-xl">
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="flex text-yellow-400">
-                      {[...Array(5)].map((_, i) => (
-                        <svg 
-                          key={i} 
-                          className={`w-5 h-5 fill-current ${
-                            i < (heroReview?.rating || 5) ? 'text-yellow-400' : 'text-gray-300'
-                          }`} 
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      ))}
-                    </div>
+              <div className="relative w-full p-7 lg:p-11 text-white">
+                {store.tagline && (
+                  <div className="inline-flex items-center gap-2.5 bg-white/20 backdrop-blur-md text-[13px] font-semibold px-4 py-2 rounded-full mb-5">
+                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                    {store.tagline}
                   </div>
-                  {heroReview?.title && (
-                    <h4 className="text-gray-900 font-semibold text-lg mb-2 text-center">
-                      {heroReview.title}
-                    </h4>
-                  )}
-                  <blockquote className="text-gray-700 italic text-lg">
-                    "{heroReview?.text || t('hero_testimonial_fallback', 'Med B8Shield kunde jag obehindrat fiska på platser som annars hade varit omöjliga, utan att tappa ett enda fiskedrag – otroligt effektivt skydd!')}"
-                  </blockquote>
-                  <cite className="text-sm text-gray-500 mt-2 block">
-                    — {heroReview?.author || t('hero_testimonial_author_fallback', 'Paul W., Sportfiskarna Sverige').split(',')[0]}{heroReview?.location ? `, ${heroReview.location}` : `, ${t('hero_testimonial_author_fallback', 'Paul W., Sportfiskarna Sverige').split(',')[1]?.trim()}`}
-                  </cite>
+                )}
+                <h1 className="font-display font-bold text-4xl sm:text-5xl lg:text-6xl leading-[1.05] tracking-tight max-w-2xl">
+                  {heroHeadline}
+                </h1>
+                <p className="mt-3 text-base lg:text-lg text-white/85 max-w-xl leading-relaxed">
+                  {heroSubtitle}
+                </p>
+                <div className="mt-7 flex items-center gap-6">
+                  <button
+                    onClick={scrollToProducts}
+                    className="bg-white text-ink font-bold text-base lg:text-lg px-8 py-4 rounded-full transition-all duration-300 ease-nord hover:-translate-y-0.5 hover:shadow-lift"
+                  >
+                    {t('hero_shop_now_button', 'Handla nu')}
+                  </button>
+                  <button
+                    onClick={scrollToProducts}
+                    className="text-white/90 font-semibold text-sm border-b-2 border-white/40 pb-0.5 hover:border-white transition-colors"
+                  >
+                    {t('hero_see_products', 'Se sortimentet ↓')}
+                  </button>
                 </div>
               </div>
             </div>
 
-            {/* Mobile: Compact layout without review */}
-            <div className="lg:hidden text-center">
-              <img
-                src="/images/badge_of_honor_b8s.svg"
-                alt={t('hero_innovation_badge_alt', 'Innovation från Sverige märke')}
-                className="h-16 w-auto mx-auto mb-4 drop-shadow-lg"
-              />
-              
-              <h1 className="text-3xl font-bold text-white mb-3 drop-shadow-lg">
-                {t('hero_title_start', 'Fastna')}
-                <span className="bg-linear-to-r from-red-400 to-red-500 bg-clip-text text-transparent"> {t('hero_title_middle', 'aldrig')} </span>
-                {t('hero_title_end', 'mer!')}
-              </h1>
-              
-              <p className="text-base text-white/90 mb-6 max-w-sm mx-auto leading-relaxed drop-shadow-md">
-                {t('hero_subtitle', 'B8Shield™ – Vasskydd som förhindrar att dina fiskedrag fastnar i vassen utan att påverka ditt fiske.')}
-              </p>
+            {/* Supporting tiles */}
+            <div className="flex flex-col gap-4">
+              {/* Bestseller tile */}
+              {bestseller ? (
+                <Link
+                  to={getProductUrl(bestseller)}
+                  className="group block bg-white rounded-tile shadow-tile overflow-hidden transition-all duration-300 ease-nord hover:-translate-y-1 hover:shadow-lift animate-rise"
+                  style={{ animationDelay: '0.1s' }}
+                >
+                  <div className="relative aspect-[16/9] overflow-hidden bg-[#F7F5F2]">
+                    <img
+                      src={getB2cProductImage(bestseller)}
+                      alt={getContentValue(bestseller.name)}
+                      className="w-full h-full object-cover transition-transform duration-700 ease-nord group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-5 flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.13em] text-ink-muted">
+                        {t('hero_bestseller_label', 'Mest älskad')}
+                      </div>
+                      <div className="font-display font-bold text-lg text-ink mt-0.5 truncate">
+                        {getContentValue(bestseller.name)}
+                      </div>
+                    </div>
+                    <SmartPrice sekPrice={bestseller.b2cPrice || bestseller.basePrice} showOriginal={false} />
+                  </div>
+                </Link>
+              ) : (
+                <div className="bg-white rounded-tile shadow-tile overflow-hidden animate-rise" style={{ animationDelay: '0.1s' }}>
+                  <div className="aspect-[16/9] bg-[#F7F5F2] animate-pulse" />
+                  <div className="p-5">
+                    <div className="h-3 w-24 bg-canvas rounded-full animate-pulse" />
+                    <div className="h-5 w-40 bg-canvas rounded-full animate-pulse mt-3" />
+                  </div>
+                </div>
+              )}
 
-              <button 
-                onClick={() => document.getElementById('products').scrollIntoView({ behavior: 'smooth' })}
-                className="bg-linear-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-full text-base font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-              >
-                {t('hero_shop_now_button', 'Handla nu')}
-              </button>
+              {/* Duo minis: social proof + payment trust */}
+              <div className="grid grid-cols-2 gap-4 flex-1">
+                <div className="bg-white rounded-tile shadow-tile p-5 flex flex-col animate-rise" style={{ animationDelay: '0.18s' }}>
+                  <div className="text-accent text-base tracking-[2px]" aria-label={`${heroReview?.rating || 5}/5`}>
+                    ★★★★★
+                  </div>
+                  <p className="text-sm text-ink mt-2.5 leading-snug line-clamp-4 flex-1">
+                    “{heroReview?.text || t('hero_testimonial_fallback', 'Med B8Shield kunde jag obehindrat fiska på platser som annars hade varit omöjliga, utan att tappa ett enda fiskedrag – otroligt effektivt skydd!')}”
+                  </p>
+                  <div className="text-xs text-ink-muted mt-2.5">
+                    — {heroReview?.author || t('hero_testimonial_author_fallback', 'Paul W., Sportfiskarna Sverige').split(',')[0]}
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-tile shadow-tile p-5 flex flex-col animate-rise" style={{ animationDelay: '0.26s' }}>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.13em] text-ink-muted">
+                    {t('payments_tile_label', 'Betala tryggt')}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {['Klarna', 'Kort', 'Apple Pay', 'Google Pay'].map((method) => (
+                      <span key={method} className="bg-canvas text-ink-muted text-xs font-semibold px-3 py-1.5 rounded-full">
+                        {method}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="text-xs text-ink-muted mt-auto pt-3">
+                    🔒 {t('payments_tile_note', 'Säker betalning')}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* B8Shields in Nature Section - Nike-inspired design */}
-        <section className="py-16 bg-black">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Desktop: 4 images in horizontal grid */}
-            <div className="hidden md:grid md:grid-cols-4 gap-4">
+        {/* ===== Gallery band (brand imagery; becomes a config block later) ===== */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+          {/* Desktop: 4-up grid */}
+          <div className="hidden md:grid md:grid-cols-4 gap-4">
+            {[
+              { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent', sku: 'B8S-4-tr' },
+              { src: '/images/b8s_red_nature_new.webp', colorKey: 'color_red', sku: 'B8S-4-re' },
+              { src: '/images/b8s_flour_nature_new.webp', colorKey: 'color_fluorescent', sku: 'B8S-4-fl' },
+              { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter', sku: 'B8S-4-gl' }
+            ].map((image, index) => {
+              const productObj = {
+                name: { 'sv-SE': `B8Shield ${t(image.colorKey)}`, 'en-GB': `B8Shield ${t(image.colorKey)}`, 'en-US': `B8Shield ${t(image.colorKey)}` },
+                size: '4',
+                sku: image.sku
+              };
+              const productUrl = getProductUrl(productObj);
+
+              return (
+                <Link key={index} to={productUrl} className="relative aspect-square rounded-tile shadow-tile overflow-hidden group block">
+                  <img
+                    src={image.src}
+                    alt={`B8Shield ${t(image.colorKey)} i naturen`}
+                    className="w-full h-full object-cover transition-transform duration-700 ease-nord group-hover:scale-105"
+                  />
+                  <div className="absolute bottom-4 left-4">
+                    <span className="bg-white/90 backdrop-blur-sm text-ink text-sm font-semibold px-3.5 py-1.5 rounded-full">
+                      {t(image.colorKey)}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Mobile: horizontal snap scroll */}
+          <div className="md:hidden">
+            <div className="flex overflow-x-auto gap-4 pb-2 snap-x snap-mandatory scrollbar-hide">
               {[
                 { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent', sku: 'B8S-4-tr' },
                 { src: '/images/b8s_red_nature_new.webp', colorKey: 'color_red', sku: 'B8S-4-re' },
                 { src: '/images/b8s_flour_nature_new.webp', colorKey: 'color_fluorescent', sku: 'B8S-4-fl' },
                 { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter', sku: 'B8S-4-gl' }
               ].map((image, index) => {
-                // Create a product object for getProductUrl function
                 const productObj = {
                   name: { 'sv-SE': `B8Shield ${t(image.colorKey)}`, 'en-GB': `B8Shield ${t(image.colorKey)}`, 'en-US': `B8Shield ${t(image.colorKey)}` },
                   size: '4',
                   sku: image.sku
                 };
                 const productUrl = getProductUrl(productObj);
-                
+
                 return (
-                  <Link key={index} to={productUrl} className="relative aspect-square bg-gray-900 rounded-lg overflow-hidden group block">
+                  <Link key={index} to={productUrl} className="relative shrink-0 w-4/5 aspect-square rounded-tile shadow-tile overflow-hidden group snap-start block">
                     <img
                       src={image.src}
                       alt={`B8Shield ${t(image.colorKey)} i naturen`}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-700 ease-nord group-hover:scale-105"
                     />
-                    {/* Color name pill - Nike style */}
                     <div className="absolute bottom-4 left-4">
-                      <span className="bg-white text-black text-sm font-medium px-3 py-1 rounded-full">
+                      <span className="bg-white/90 backdrop-blur-sm text-ink text-sm font-semibold px-3.5 py-1.5 rounded-full">
                         {t(image.colorKey)}
                       </span>
                     </div>
@@ -367,411 +437,194 @@ const PublicStorefront = () => {
                 );
               })}
             </div>
-            
-            {/* Mobile: Horizontal scroll showing 1 and 1/3 images */}
-            <div className="md:hidden">
-              <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory">
-                {[
-                  { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent', sku: 'B8S-4-tr' },
-                  { src: '/images/b8s_red_nature_new.webp', colorKey: 'color_red', sku: 'B8S-4-re' },
-                  { src: '/images/b8s_flour_nature_new.webp', colorKey: 'color_fluorescent', sku: 'B8S-4-fl' },
-                  { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter', sku: 'B8S-4-gl' }
-                ].map((image, index) => {
-                  // Create a product object for getProductUrl function
-                  const productObj = {
-                    name: { 'sv-SE': `B8Shield ${t(image.colorKey)}`, 'en-GB': `B8Shield ${t(image.colorKey)}`, 'en-US': `B8Shield ${t(image.colorKey)}` },
-                    size: '4',
-                    sku: image.sku
-                  };
-                  const productUrl = getProductUrl(productObj);
-                  
-                  return (
-                    <Link key={index} to={productUrl} className="relative shrink-0 w-4/5 aspect-square bg-gray-900 rounded-lg overflow-hidden group snap-start block">
-                      <img
-                        src={image.src}
-                        alt={`B8Shield ${t(image.colorKey)} i naturen`}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                      {/* Color name pill - Nike style */}
-                      <div className="absolute bottom-4 left-4">
-                        <span className="bg-white text-black text-sm font-medium px-3 py-1 rounded-full">
-                          {t(image.colorKey)}
-                        </span>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         </section>
 
-        {/* Products Section */}
-        <section id="products" className="py-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                {t('products_section_title', 'Våra Produkter')}
-              </h2>
-              <p className="text-lg text-gray-600 mx-auto">
-                {t('products_section_subtitle', 'Välj mellan olika färger och storlekar för att passa ditt fiske')}
-              </p>
+        {/* ===== Products ===== */}
+        <section id="products" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
+          <div className="mb-10">
+            <h2 className="font-display font-bold text-3xl lg:text-4xl tracking-tight text-ink">
+              {t('products_section_title', 'Våra Produkter')}
+            </h2>
+            <p className="text-ink-muted mt-2 max-w-2xl">
+              {t('products_section_subtitle', 'Välj mellan olika färger och storlekar för att passa ditt fiske')}
+            </p>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-14 w-14 border-b-2 border-accent" />
             </div>
-
-            {loading ? (
-              <div className="flex justify-center items-center h-64">
-                <div className="relative">
-                  <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
-                  <div className="absolute inset-0 animate-ping rounded-full h-16 w-16 border-b-2 border-blue-300 opacity-20"></div>
+          ) : (
+            <>
+              {/* Special editions */}
+              {specialEditionProducts.length > 0 && (
+                <div className="mb-14">
+                  <div className="mb-6">
+                    <h3 className="font-display font-bold text-2xl tracking-tight text-ink">
+                      {t('special_editions_title', 'Special Editions')}
+                    </h3>
+                    <p className="text-ink-muted text-sm mt-1 max-w-2xl">
+                      {t('special_editions_description', 'Exklusiva B8Shield-produkter framtagna i samarbete med våra partners')}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
+                    {specialEditionProducts.map((product, index) => (
+                      <NordProductCard
+                        key={`special-${product.id}-${index}`}
+                        to={getProductUrl(product)}
+                        image={getB2cProductImage(product)}
+                        tag={t('special_edition_badge', 'SPECIAL EDITION')}
+                        name={getContentValue(product.name) || t('product_name_fallback', 'B8Shield Special Edition')}
+                        description={getB2cProductDescription(product)}
+                        priceSek={product.b2cPrice || product.basePrice}
+                        ctaLabel={t('special_edition_cta', 'Se Special Edition')}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <>
-                {/* Special Edition Products Section */}
-                {specialEditionProducts.length > 0 && (
-                  <div className="mb-12">
-                    <div className="text-center mb-8">
-                      <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-                        {t('special_editions_title', 'Special Editions')}
-                      </h2>
-                      <p className="text-gray-600 max-w-2xl mx-auto">
-                        {t('special_editions_description', 'Exklusiva B8Shield-produkter framtagna i samarbete med våra partners')}
-                      </p>
-                    </div>
-                    
-                    {/* Special Edition Grid - 3 columns for desktop */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                      {specialEditionProducts.map((product, index) => {
-                        const productUrl = getProductUrl(product);
-                        
-                        return (
-                          <Link
-                            key={`special-${product.id}-${index}`}
-                            to={productUrl}
-                            className="group block"
-                          >
-                            <div className="bg-white h-full flex flex-col rounded-lg shadow-lg overflow-hidden border-2 border-orange-200 hover:border-orange-400 transition-colors">
-                              {/* Special Edition Badge */}
-                              <div className="relative">
-                                <div className="absolute top-4 left-4 z-10">
-                                  <span className="bg-linear-to-r from-orange-500 to-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                                    {t('special_edition_badge', 'SPECIAL EDITION')}
-                                  </span>
-                                </div>
-                                
-                                {/* Product Image */}
-                                <div className="relative aspect-square bg-gray-50 overflow-hidden">
-                                  <img
-                                    src={getB2cProductImage(product)}
-                                    alt={getContentValue(product.name)}
-                                    className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
-                                  />
-                                </div>
-                              </div>
+              )}
 
-                              {/* Product Info */}
-                              <div className="flex flex-col flex-1 p-6">
-                                {/* Product Name */}
-                                <h3 className="text-xl font-bold text-gray-900 leading-tight mb-3">
-                                  {getContentValue(product.name) || t('product_name_fallback', 'B8Shield Special Edition')}
-                                </h3>
-                                
-                                {/* Product Description */}
-                                <p className="text-sm text-gray-600 leading-relaxed mb-4 flex-1">
-                                  {getB2cProductDescription(product)}
-                                </p>
-                                
-                                {/* Bottom section with price and CTA */}
-                                <div className="mt-auto space-y-4">
-                                  {/* Price */}
-                                  <div className="text-xl font-bold text-gray-900">
-                                    <SmartPrice 
-                                      sekPrice={product.b2cPrice || product.basePrice} 
-                                      variant="compact"
-                                      showOriginal={false}
-                                    />
-                                  </div>
-                                  
-                                  {/* CTA Button */}
-                                  <div className="bg-linear-to-r from-orange-500 to-red-500 text-white text-center py-3 px-6 rounded-full text-base font-bold hover:from-orange-600 hover:to-red-600 transition-all transform hover:scale-105">
-                                    {t('special_edition_cta', 'Se Special Edition')}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Regular Products Section */}
-                {groupedProducts.length > 0 && (
-                  <div>
-                    <div className="text-center mb-8">
-                      <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-                        {t('regular_products_title', 'Våra Produkter')}
-                      </h2>
-                    </div>
-                  </div>
-                )}
-                
-              </>
-            )}
-            
-            {/* Main Products Grid - Only show if not loading */}
-            {!loading && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+              {/* Regular product groups */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
                 {groupedProducts.map((productGroup, groupIndex) => {
-                  // For ALL product groups: show only ONE card using the representative product
                   const representativeProduct = productGroup.representativeProduct;
                   if (!representativeProduct) {
                     console.warn(`⚠️ No representative product found for group ${productGroup.groupName}`);
                     return null;
                   }
-                  
-                  const productUrl = getProductUrl(representativeProduct);
+
                   const isMultipack = productGroup.isMultipack;
                   const variantCount = productGroup.allProducts.length;
-                  
-                  return (
-                    <Link
-                      key={`${productGroup.groupName}-${groupIndex}`}
-                      to={productUrl}
-                      className="group block"
-                    >
-                      <div className="bg-white h-full flex flex-col">
-                        {/* Product Image */}
-                        <div className="relative aspect-square bg-gray-50 overflow-hidden">
-                          <img
-                            src={getB2cProductImage(representativeProduct)}
-                            alt={`B8Shield ${isMultipack ? '3-pack' : productGroup.groupName}`}
-                            className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
-                          />
-                        </div>
 
-                        {/* Product Info - Flex container for consistent height */}
-                        <div className="flex flex-col flex-1 p-4">
-                          {/* Product Name */}
-                          <h3 className="text-base font-medium text-gray-900 leading-tight mb-2">
-                            {isMultipack 
-                              ? t('product_name_3pack', 'B8Shield 3-pack')
-                              : (() => {
-                                  // 🚨 CRITICAL: Ensure we never render an object - prevent React Error #31
-                                  const productName = getContentValue(representativeProduct.name);
-                                  return typeof productName === 'string' && productName 
-                                    ? productName 
-                                    : t('product_name_fallback', 'B8Shield {{group}}', { group: productGroup.groupName });
-                                })()
-                            }
-                          </h3>
-                          
-                          {/* Product Description - Much smaller font */}
-                          <p className="text-xs text-gray-600 leading-tight mb-2 flex-1">
-                            {isMultipack 
-                              ? t('product_description_3pack', 'Vasskydd 3-pack för olika fiskemiljöer')
-                              : (() => {
-                                  // 🚨 CRITICAL: Ensure we never render an object - prevent React Error #31
-                                  const description = getB2cProductDescription(representativeProduct);
-                                  return typeof description === 'string' ? description : t('product_description_fallback', 'B8Shield vasskydd');
-                                })()
-                            }
-                          </p>
-                          
-                          {/* Bottom section with price, variants, and CTA */}
-                          <div className="mt-auto space-y-2">
-                            {/* Variant Info */}
-                            <p className="text-xs text-gray-500">
-                              {isMultipack 
-                                ? t('product_3pack_info', 'Innehåller alla storlekar (2mm, 4mm, 6mm) • {{count}} färger', { count: variantCount })
-                                : variantCount > 1 
-                                  ? t('product_group_variants', '{{count}} färger och storlekar', { count: variantCount })
-                                  : t('product_single_variant', 'En variant tillgänglig')
-                              }
-                            </p>
-                            
-                            {/* Price - Now with intelligent currency conversion */}
-                            <div className="text-lg font-medium text-gray-900">
-                              <SmartPrice 
-                                sekPrice={representativeProduct.b2cPrice || representativeProduct.basePrice} 
-                                variant="compact"
-                                showOriginal={false}
-                              />
-                            </div>
-                            
-                            {/* CTA Button */}
-                            <div className="pt-2">
-                              <div className="bg-black text-white text-center py-2 px-4 rounded-full text-sm font-medium hover:bg-gray-800 transition-colors">
-                                {t('product_choose_button', 'Välj')}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
+                  const name = isMultipack
+                    ? t('product_name_3pack', 'B8Shield 3-pack')
+                    : (() => {
+                        // 🚨 CRITICAL: Ensure we never render an object - prevent React Error #31
+                        const productName = getContentValue(representativeProduct.name);
+                        return typeof productName === 'string' && productName
+                          ? productName
+                          : t('product_name_fallback', 'B8Shield {{group}}', { group: productGroup.groupName });
+                      })();
+
+                  const description = isMultipack
+                    ? t('product_description_3pack', 'Vasskydd 3-pack för olika fiskemiljöer')
+                    : (() => {
+                        const desc = getB2cProductDescription(representativeProduct);
+                        return typeof desc === 'string' ? desc : t('product_description_fallback', 'B8Shield vasskydd');
+                      })();
+
+                  const meta = isMultipack
+                    ? t('product_3pack_info', 'Innehåller alla storlekar (2mm, 4mm, 6mm) • {{count}} färger', { count: variantCount })
+                    : variantCount > 1
+                      ? t('product_group_variants', '{{count}} färger och storlekar', { count: variantCount })
+                      : t('product_single_variant', 'En variant tillgänglig');
+
+                  return (
+                    <NordProductCard
+                      key={`${productGroup.groupName}-${groupIndex}`}
+                      to={getProductUrl(representativeProduct)}
+                      image={getB2cProductImage(representativeProduct)}
+                      imageAlt={`B8Shield ${isMultipack ? '3-pack' : productGroup.groupName}`}
+                      name={name}
+                      description={description}
+                      meta={meta}
+                      priceSek={representativeProduct.b2cPrice || representativeProduct.basePrice}
+                      ctaLabel={t('product_choose_button', 'Välj')}
+                    />
                   );
                 })}
               </div>
-            )}
 
-            {!loading && groupedProducts.length === 0 && (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                  </svg>
+              {groupedProducts.length === 0 && (
+                <div className="text-center py-16">
+                  <div className="w-16 h-16 bg-white rounded-full shadow-tile flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-ink-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                  </div>
+                  <p className="text-ink-muted text-lg">{t('no_products_available', 'Inga produkter tillgängliga för tillfället.')}</p>
                 </div>
-                <p className="text-gray-500 text-lg">{t('no_products_available', 'Inga produkter tillgängliga för tillfället.')}</p>
-              </div>
-            )}
+              )}
 
-            {/* Clothing Products Section - Below Regular Products */}
-            {!loading && clothingProducts.length > 0 && (
-              <div className="mt-16">
-                <div className="text-center mb-8">
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-                    {t('clothing_section_title', 'Kläder & Accessoarer')}
-                  </h2>
-                  <p className="text-gray-600 max-w-2xl mx-auto">
-                    {t('clothing_section_description', 'Stilfulla kläder och accessoarer för den passionerade fiskaren')}
-                  </p>
-                </div>
-                
-                {/* Clothing Products Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
-                  {clothingProducts.map((product, index) => {
-                    const productUrl = getProductUrl(product);
-                    
-                    return (
-                      <Link
+              {/* Clothing */}
+              {clothingProducts.length > 0 && (
+                <div className="mt-14">
+                  <div className="mb-6">
+                    <h3 className="font-display font-bold text-2xl tracking-tight text-ink">
+                      {t('clothing_section_title', 'Kläder & Accessoarer')}
+                    </h3>
+                    <p className="text-ink-muted text-sm mt-1 max-w-2xl">
+                      {t('clothing_section_description', 'Stilfulla kläder och accessoarer för den passionerade fiskaren')}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
+                    {clothingProducts.map((product, index) => (
+                      <NordProductCard
                         key={`clothing-${product.id}-${index}`}
-                        to={productUrl}
-                        className="group block"
-                      >
-                        <div className="bg-white h-full flex flex-col rounded-lg shadow-lg overflow-hidden border-2 border-green-200 hover:border-green-400 transition-colors">
-                          {/* Clothing Badge */}
-                          <div className="relative">
-                            <div className="absolute top-4 left-4 z-10">
-                              <span className="bg-linear-to-r from-green-500 to-teal-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                                {t('clothing_badge', 'KLÄDER')}
-                              </span>
-                            </div>
-                            
-                            {/* Product Image */}
-                            <div className="relative aspect-square bg-gray-50 overflow-hidden">
-                              <img
-                                src={getB2cProductImage(product)}
-                                alt={getContentValue(product.name)}
-                                className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
-                              />
-                            </div>
-                          </div>
-
-                          {/* Product Info - Match regular product card styling */}
-                          <div className="flex flex-col flex-1 p-4">
-                            {/* Product Name */}
-                            <h3 className="text-base font-medium text-gray-900 leading-tight mb-2">
-                              {getContentValue(product.name) || t('product_name_fallback', 'B8Shield Kläder')}
-                            </h3>
-                            
-                            {/* Product Description */}
-                            <p className="text-xs text-gray-600 leading-tight mb-2 flex-1">
-                              {getB2cProductDescription(product)}
-                            </p>
-                            
-                            {/* Bottom section with price and CTA */}
-                            <div className="mt-auto space-y-2">
-                              {/* Price */}
-                              <div className="text-lg font-medium text-gray-900">
-                                <SmartPrice 
-                                  sekPrice={product.b2cPrice || product.basePrice} 
-                                  variant="compact"
-                                  showOriginal={false}
-                                />
-                              </div>
-                              
-                              {/* CTA Button */}
-                              <div className="pt-2">
-                                <div className="bg-linear-to-r from-green-500 to-teal-500 text-white text-center py-2 px-4 rounded-full text-sm font-medium hover:from-green-600 hover:to-teal-600 transition-colors">
-                                  {t('clothing_cta', 'Se Produkt')}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })}
+                        to={getProductUrl(product)}
+                        image={getB2cProductImage(product)}
+                        tag={t('clothing_badge', 'KLÄDER')}
+                        name={getContentValue(product.name) || t('product_name_fallback', 'B8Shield Kläder')}
+                        description={getB2cProductDescription(product)}
+                        priceSek={product.b2cPrice || product.basePrice}
+                        ctaLabel={t('clothing_cta', 'Se Produkt')}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </>
+          )}
         </section>
 
-        {/* Features Section */}
-        <section className="py-20 bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+        {/* ===== Story band (DESIGN.md §4 — storytelling) ===== */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 lg:pb-20">
+          <div className="bg-white rounded-tile shadow-tile overflow-hidden">
+            <div className="h-1.5 bg-accent" />
+            <div className="p-8 lg:p-12">
+              <h2 className="font-display font-bold text-2xl lg:text-3xl tracking-tight text-ink mb-8 lg:mb-10">
                 {t('features_section_title', 'Varför välja B8Shield™?')}
               </h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="text-center group">
-                <div className="w-16 h-16 bg-linear-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{t('feature_proven_effective_title', 'Bevisat Effektivt')}</h3>
-                <p className="text-gray-600">{t('feature_proven_effective_description', 'Minska förlusten av beten med upp till 90% enligt våra tester')}</p>
-              </div>
-
-              <div className="text-center group">
-                <div className="w-16 h-16 bg-linear-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{t('feature_easy_to_use_title', 'Enkelt att Använda')}</h3>
-                <p className="text-gray-600">{t('feature_easy_to_use_description', 'Fäst enkelt på ditt fiskedrag på några sekunder')}</p>
-              </div>
-
-              <div className="text-center group">
-                <div className="w-16 h-16 bg-linear-to-br from-purple-400 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{t('feature_eco_friendly_title', 'Miljövänligt')}</h3>
-                <p className="text-gray-600">{t('feature_eco_friendly_description', 'Återvinningsbart material som skyddar våra vattenmiljöer')}</p>
+              <div className="grid md:grid-cols-3 gap-8 lg:gap-10">
+                {[
+                  { n: '01', titleKey: 'feature_proven_effective_title', titleDefault: 'Bevisat Effektivt', textKey: 'feature_proven_effective_description', textDefault: 'Minska förlusten av beten med upp till 90% enligt våra tester' },
+                  { n: '02', titleKey: 'feature_easy_to_use_title', titleDefault: 'Enkelt att Använda', textKey: 'feature_easy_to_use_description', textDefault: 'Fäst enkelt på ditt fiskedrag på några sekunder' },
+                  { n: '03', titleKey: 'feature_eco_friendly_title', titleDefault: 'Miljövänligt', textKey: 'feature_eco_friendly_description', textDefault: 'Återvinningsbart material som skyddar våra vattenmiljöer' },
+                ].map((step) => (
+                  <div key={step.n}>
+                    <div className="font-display font-bold text-sm text-accent">{step.n}</div>
+                    <h3 className="font-display font-bold text-xl text-ink mt-2 tracking-tight">
+                      {t(step.titleKey, step.titleDefault)}
+                    </h3>
+                    <p className="text-ink-muted text-[15px] leading-relaxed mt-1.5">
+                      {t(step.textKey, step.textDefault)}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </section>
 
-        {/* Reviews Section */}
-        <section className="py-20 bg-white">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                {t('reviews_section_title', 'Vad våra kunder säger')}
-              </h2>
-              <p className="text-xl text-gray-600">
-                {t('reviews_section_subtitle', 'Äkta recensioner från nöjda sportfiskare')}
-              </p>
-            </div>
-            
-            <ReviewsSection
-              businessId="" // Will be set when Trustpilot profile is ready
-              domain="" // Set per-shop when a live Trustpilot profile is configured (was shop.b8shield.com)
-              showTrustpilot={false} // Start with manual reviews, enable when Trustpilot is set up
-              showManualReviews={true}
-              className="w-full"
-            />
+        {/* ===== Reviews ===== */}
+        <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+          <div className="text-center mb-12">
+            <h2 className="font-display font-bold text-3xl lg:text-4xl tracking-tight text-ink mb-3">
+              {t('reviews_section_title', 'Vad våra kunder säger')}
+            </h2>
+            <p className="text-lg text-ink-muted">
+              {t('reviews_section_subtitle', 'Äkta recensioner från nöjda sportfiskare')}
+            </p>
           </div>
+
+          <ReviewsSection
+            businessId="" // Will be set when Trustpilot profile is ready
+            domain="" // Set per-shop when a live Trustpilot profile is configured (was shop.b8shield.com)
+            showTrustpilot={false} // Start with manual reviews, enable when Trustpilot is set up
+            showManualReviews={true}
+            className="w-full"
+          />
         </section>
 
         {/* Footer */}
@@ -790,4 +643,4 @@ const PublicStorefront = () => {
   );
 };
 
-export default PublicStorefront; 
+export default PublicStorefront;

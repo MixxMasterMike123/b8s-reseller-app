@@ -20,6 +20,41 @@
 }
 
 /*
+  NORD storefront design tokens — see DESIGN.md.
+  --color-accent is the per-shop identity token; StoreSettingsContext
+  overrides it at runtime via an inline CSS variable on <html>.
+*/
+@theme {
+  --color-canvas: #F3F1EC;
+  --color-ink: #1A1C1E;
+  --color-ink-muted: #71757C;
+  --color-ink-faint: #A8ABB0;
+  --color-accent: #0E5E63;
+
+  --font-display: 'Familjen Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Instrument Sans', -apple-system, ui-sans-serif, system-ui, sans-serif;
+
+  --radius-tile: 22px;
+  --radius-el: 14px;
+
+  --shadow-tile: 0 1px 2px #1A1C1E08, 0 8px 24px -12px #1A1C1E1F;
+  --shadow-lift: 0 2px 4px #1A1C1E0A, 0 20px 44px -16px #1A1C1E2E;
+
+  --ease-nord: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --animate-rise: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise { animation: none; }
+}
+
+/*
   The default border color has changed to `currentcolor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still
   looks the same as it did with Tailwind CSS v3.

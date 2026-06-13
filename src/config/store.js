@@ -19,6 +19,16 @@ export const STORE = {
   // Generic placeholder logo. Admins can override via the Store Identity form.
   logoUrl: '/images/logo.svg',
 
+  // NORD design system (see DESIGN.md) — per-shop visual identity.
+  // accent: the single brand color, used ONLY on actions and live signals.
+  // Must pass WCAG AA as a button background with white text.
+  accent: '#0E5E63',
+  // Hero block content. Empty strings fall back to the translation layer
+  // (so the current B8Shield copy keeps working until a shop overrides it).
+  heroImageUrl: '/images/Fil-000-222.jpg',
+  heroHeadline: '',
+  heroSubtitle: '',
+
   // Contact
   supportEmail: 'hello@example.com',
   // HTML allowed (rendered via dangerouslySetInnerHTML in the footer).
