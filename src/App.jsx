@@ -16,21 +16,14 @@ import wagonRegistry from './wagons/WagonRegistry.js';
 // B2C Shop Components
 import CookiebotCMP from './components/shop/CookiebotCMP';
 
-// B2B Reseller Portal Components (existing)
+// Admin console components.
+// The B2B reseller portal was removed (B2B→B2C collapse, 2026-06-13;
+// archived at git tag `b2b-portal-archive`). The non-shop hostname now
+// serves ONLY the admin console: /login + /admin/* + admin wagon routes.
 import PrivateRoute from './components/auth/PrivateRoute';
 import AdminRoute from './components/auth/AdminRoute';
 import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import DashboardPage from './pages/DashboardPage';
-import ProductViewPage from './pages/ProductViewPage';
-import MarketingMaterialsPage from './pages/MarketingMaterialsPage';
-import OrderPage from './pages/OrderPage';
-import OrderHistoryPage from './pages/OrderHistoryPage';
-import OrderDetailPage from './pages/OrderDetailPage';
-import ProfilePage from './pages/ProfilePage';
-import ContactPage from './pages/ContactPage';
-import TrainingStepPage from './pages/TrainingStepPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminUserCreate from './pages/admin/AdminUserCreate';
@@ -107,8 +100,8 @@ const ConditionalTranslationProvider = ({ children, appMode }) => {
     );
   }
   
-  // B2B Reseller Portal - Credential pages should NOT use TranslationProvider (they use credentialTranslations)
-  const credentialRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+  // Admin credential pages should NOT use TranslationProvider (they use credentialTranslations)
+  const credentialRoutes = ['/login', '/forgot-password'];
   const isCredentialPage = credentialRoutes.includes(location.pathname);
   
   if (isCredentialPage) {
@@ -133,10 +126,9 @@ function App() {
   // `shop-b8shield.web.app` trigger shop mode (the .web.app first segment is the
   // whole site ID, which can't be exactly "shop"). `shop.b8shield.com` still matches.
   const isShopSubdomain = subdomain === 'shop' || subdomain.startsWith('shop-');
-  const isResellerSubdomain = subdomain === 'partner' || subdomain === 'reseller' || hostname.includes('b8shield-reseller-app');
-  
-  // Default to reseller for now (existing behavior)
-  const appMode = isShopSubdomain ? 'shop' : 'reseller';
+
+  // Non-shop hostnames serve the admin console (the B2B portal is gone)
+  const appMode = isShopSubdomain ? 'shop' : 'admin';
 
   // 🚂 WAGON SYSTEM: Auto-discover all wagons (ONLY CONNECTION POINT NEEDED!)
   useEffect(() => {
@@ -149,8 +141,8 @@ function App() {
       // Get wagon routes for the current app mode (FIX: await the async function)
       const routes = await wagonRegistry.getRoutes();
       const filteredRoutes = routes.filter(route => {
-        // Add all routes for B2B app (admin and user routes)
-        return appMode === 'reseller';
+        // Wagon routes are admin tooling — only mounted in admin mode
+        return appMode === 'admin';
       });
       
       setWagonRoutes(filteredRoutes);
@@ -230,70 +222,17 @@ function App() {
               <Route path="*" element={<GeoRedirect />} />
             </>
           ) : (
-            // B2B Reseller Portal Routes (existing)
+            // Admin console routes (B2B portal removed — see b2b-portal-archive tag)
             <>
               <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              
+
               {/* Firebase Auth Action Handler - Email Verification */}
               <Route path="/__/auth/action" element={<EmailVerificationHandler />} />
-              
-              <Route path="/" element={
-                <PrivateRoute>
-                  <DashboardPage />
-                </PrivateRoute>
-              } />
-              
-              <Route path="/products" element={
-                <PrivateRoute>
-                  <ProductViewPage />
-                </PrivateRoute>
-              } />
-              
-              <Route path="/marketing" element={
-                <PrivateRoute>
-                  <MarketingMaterialsPage />
-                </PrivateRoute>
-              } />
-              
-              <Route path="/order" element={
-                <PrivateRoute>
-                  <OrderPage />
-                </PrivateRoute>
-              } />
-              
-              <Route path="/orders" element={
-                <PrivateRoute>
-                  <OrderHistoryPage />
-                </PrivateRoute>
-              } />
-              
-              <Route path="/orders/:orderId" element={
-                <PrivateRoute>
-                  <OrderDetailPage />
-                </PrivateRoute>
-              } />
-              
-              <Route path="/profile" element={
-                <PrivateRoute>
-                  <ProfilePage />
-                </PrivateRoute>
-              } />
-              
-              <Route path="/contact" element={
-                <PrivateRoute>
-                  <ContactPage />
-                </PrivateRoute>
-              } />
-              
-              {/* Training Routes */}
-              <Route path="/training/step/:step" element={
-                <PrivateRoute>
-                  <TrainingStepPage />
-                </PrivateRoute>
-              } />
-              
+
+              {/* Root goes straight to the admin console (login-gated) */}
+              <Route path="/" element={<Navigate to="/admin" replace />} />
+
               {/* Admin Routes - Grouped under /admin prefix */}
               <Route path="/admin" element={
                 <AdminRoute>

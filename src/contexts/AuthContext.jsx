@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
-  createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signOut, 
   sendPasswordResetEmail,
@@ -136,81 +135,6 @@ export function AuthProvider({ children }) {
 
     return unsubscribe;
   }, []);
-
-  // Register a new user
-  async function register(email, password, userData) {
-    try {
-      setError('');
-
-      if (isDemoMode) {
-        // Demo mode: mock registration
-        const newUserId = `user-${Date.now()}`;
-        const newUser = {
-          id: newUserId,
-          email,
-          ...userData,
-          role: userData.role || 'user', // Preserve role from registration form
-          active: false,
-          isActive: false,
-          createdAt: new Date().toISOString(),
-        };
-        
-        setDemoUsers([...demoUsers, newUser]);
-        toast.success('Registration successful (Demo Mode)');
-        return { uid: newUserId, email };
-      } else {
-        // Real Firebase registration
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        // Create user profile in both Firestore databases
-        const userProfile = {
-          ...userData,
-          email,
-          role: userData.role || 'user', // Preserve role from registration form
-          active: false, // Require admin activation
-          isActive: false,
-          marginal: 35, // Default margin percentage
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-
-        await setDoc(doc(db, 'users', user.uid), userProfile);
-
-        // CRM auto-import no longer needed - using unified users collection
-
-        // Send B2B application emails (customer confirmation + admin notification)
-        if (userData.role === 'reseller') {
-          try {
-            const sendB2BApplicationEmails = httpsCallable(functions, 'sendB2BApplicationEmails');
-            await sendB2BApplicationEmails({
-              applicantInfo: {
-                name: userData.contactPerson || userData.companyName,
-                email: email,
-                companyName: userData.companyName,
-                contactPerson: userData.contactPerson,
-                phone: userData.phone,
-                orgNumber: userData.orgNumber,
-                vatNumber: userData.vatNumber
-              },
-              applicationId: user.uid,
-              language: userData.preferredLang || 'sv-SE'
-            });
-            console.log('✅ B2B application emails sent successfully');
-          } catch (emailError) {
-            console.error('❌ Failed to send B2B application emails:', emailError);
-            // Don't fail the registration if emails fail
-          }
-        }
-
-        return user;
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
-      setError(error.message);
-      throw error;
-    }
-  }
 
   // Login a user
   async function login(email, password) {
@@ -823,7 +747,6 @@ export function AuthProvider({ children }) {
     isAdmin,
     error,
     isDemoMode,
-    register,
     login,
     logout,
     resetPassword,

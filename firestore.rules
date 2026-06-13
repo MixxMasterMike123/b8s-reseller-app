@@ -117,18 +117,11 @@ service cloud.firestore {
             get(/databases/$(database)/documents/b2cCustomers/$(resource.data.b2cCustomerId)).data.firebaseAuthUid == request.auth.uid) ||
           resource.data.customerInfo.email == request.auth.token.email
         ));
-      // B2C orders are created ONLY server-side by the Stripe webhook after
-      // signature-verified payment. Clients may only create B2B orders for
-      // themselves.
-      allow create: if isActiveUser() &&
-        request.resource.data.userId == request.auth.uid &&
-        (!('source' in request.resource.data) || request.resource.data.source != 'b2c');
-      // Users may cancel their own pending/confirmed orders; admins anything
-      allow update: if isAdmin() ||
-        (isActiveUser() &&
-          resource.data.userId == request.auth.uid &&
-          request.resource.data.status == 'cancelled' &&
-          resource.data.status in ['pending', 'confirmed']);
+      // Orders are created ONLY server-side by the Stripe webhook after
+      // signature-verified payment (B2B portal removed — no client creation
+      // path remains) and updated only by admins.
+      allow create: if false;
+      allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 

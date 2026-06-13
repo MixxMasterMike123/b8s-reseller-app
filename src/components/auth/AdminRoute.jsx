@@ -21,8 +21,10 @@ const AdminRoute = ({ children }) => {
   }
   
   if (userProfile?.role !== 'admin') {
+    // Redirect to /login (NOT "/") — the root now forwards to /admin, so
+    // sending a non-admin there would loop forever.
     toast.error('Du har inte behörighet att komma åt admin-sektionen');
-    return <Navigate to="/" />;
+    return <Navigate to="/login" />;
   }
 
   return children;

@@ -122,186 +122,8 @@ export const OrderProvider = ({ children }) => {
     DEFAULT_MARGINAL: 35 // Default margin percentage
   };
 
-  // Generate an order number with format B8-YYYYMMDD-XXXX (where XXXX is a random number)
-  const generateOrderNumber = useCallback(() => {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const random = Math.floor(1000 + Math.random() * 9000); // Random 4-digit number
-    
-    return `B8-${year}${month}${day}-${random}`;
-  }, []);
-
-  // Create a new order
-  const createOrder = useCallback(async (orderData) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      if (!currentUser) throw new Error('No authenticated user');
-      
-      if (isDemoMode) {
-        // Demo mode: mock order creation
-        const orderNumber = generateOrderNumber();
-        const timestamp = new Date().toISOString();
-        const newOrder = {
-          id: `order-${Date.now()}`,
-          orderNumber,
-          userId: currentUser.uid,
-          companyName: orderData.companyName || 'Demo Company',
-          ...orderData,
-          status: 'pending',
-          createdAt: timestamp,
-          updatedAt: timestamp
-        };
-        
-        setDemoOrders([newOrder, ...demoOrders]);
-        toast.success('Order created successfully (Demo Mode)');
-        
-        return newOrder;
-      } else {
-        // --- AFFILIATE TRACKING ---
-        let affiliateCode = null;
-        console.log('🔍 Checking for affiliate code during order creation...');
-        
-        try {
-          const affiliateInfoStr = localStorage.getItem('b8s_affiliate_ref');
-          console.log('📦 Raw affiliate data from localStorage:', affiliateInfoStr);
-          
-          if (affiliateInfoStr) {
-            const affiliateInfo = JSON.parse(affiliateInfoStr);
-            console.log('🔍 Parsed affiliate info:', affiliateInfo);
-            
-            // Check if the code is still valid (not expired)
-            if (new Date().getTime() < affiliateInfo.expiry) {
-              affiliateCode = affiliateInfo.code;
-              console.log(`✅ Attaching affiliate code ${affiliateCode} to order.`);
-            } else {
-              console.log('🕒 Affiliate code expired, not attaching to order');
-              // Clear expired code
-              localStorage.removeItem('b8s_affiliate_ref');
-            }
-          } else {
-            console.log('❌ No affiliate code found in localStorage');
-          }
-        } catch (e) {
-          console.error("❌ Error reading affiliate code from localStorage", e);
-        }
-        // --- END AFFILIATE TRACKING ---
-
-        // Make sure orderData has an orderNumber
-        const orderToCreate = {
-          ...orderData,
-          orderNumber: orderData.orderNumber || generateOrderNumber(),
-          userId: currentUser.uid,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-          status: 'pending',
-        };
-
-        // Add affiliate code to order if it exists
-        if (affiliateCode) {
-          orderToCreate.affiliateCode = affiliateCode;
-          console.log(`🏷️ Order will be created with affiliate code: ${affiliateCode}`);
-        } else {
-          console.log('🚫 Order will be created without affiliate code');
-        }
-
-        // For Cloud Functions - they expect items array for email notification
-        // Convert our single product to an items array if it doesn't exist or is empty
-        if (!orderToCreate.items || orderToCreate.items.length === 0) {
-          // For B2B orders, create items array from fordelning
-          if (orderToCreate.fordelning && Array.isArray(orderToCreate.fordelning)) {
-            orderToCreate.items = orderToCreate.fordelning.map(item => ({
-              name: "B8 Shield",
-              color: item.color,
-              size: item.size,
-              quantity: item.quantity,
-              price: orderToCreate.prisInfo?.produktPris / orderToCreate.antalForpackningar || 0
-            }));
-          } else {
-            // Fallback for simple orders
-          orderToCreate.items = [{
-            name: "B8 Shield",
-              color: orderToCreate.color || 'Blandade färger',
-              size: orderToCreate.size || 'Blandade storlekar',
-            quantity: orderToCreate.antalForpackningar || 0,
-            price: orderToCreate.prisInfo?.produktPris / (orderToCreate.antalForpackningar || 1) || 0
-          }];
-        }
-        }
-        
-        // Ensure all items have the required fields
-        orderToCreate.items = orderToCreate.items.map(item => ({
-          name: item.name || "B8 Shield",
-          color: item.color || 'Blandade färger',
-          size: item.size || 'Blandade storlekar',
-          quantity: item.quantity || 0,
-          price: item.price || 0
-        }));
-
-        // Save to the named database only
-        const orderRef = await addDoc(collection(db, "orders"), orderToCreate);
-        const savedOrderId = orderRef.id;
-        const savedOrder = {
-          id: savedOrderId,
-          ...orderToCreate
-        };
-        
-        // Get user profile for email
-        let userProfileForEmail;
-        if (orderToCreate.source === 'b2b') {
-          try {
-            const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-            if (userDoc.exists()) {
-              userProfileForEmail = userDoc.data();
-            }
-          } catch (error) {
-            console.error('Error fetching user profile for email:', error);
-          }
-        }
-        
-        // Trigger email notification via HTTP function
-        try {
-          const response = await fetch(functionUrl('sendOrderConfirmationHttp'), {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              orderId: savedOrderId,
-              orderData: savedOrder,
-              userData: userProfileForEmail || {
-                email: currentUser.email,
-                companyName: orderData.companyName || 'Unknown Company',
-                contactPerson: orderData.contactPerson || currentUser.displayName || 'Unknown'
-              }
-            })
-          });
-          
-          if (response.ok) {
-            console.log('Order confirmation emails sent successfully');
-          } else {
-            console.error('Failed to send order confirmation emails:', await response.text());
-          }
-        } catch (emailError) {
-          console.error('Error sending order confirmation emails:', emailError);
-          // Don't fail the order creation if email fails
-        }
-        
-        toast.success('Order created successfully');
-        
-        return savedOrder;
-      }
-    } catch (error) {
-      setError(error.message);
-      toast.error('Failed to create order');
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, [currentUser, demoOrders]);
+  // B2B order creation removed (B2B→B2C collapse). Orders are created
+  // server-side by the Stripe webhook; this context only reads/updates.
 
   // Get an order by ID
   const getOrderById = useCallback(async (orderId) => {
@@ -1095,8 +917,6 @@ export const OrderProvider = ({ children }) => {
     loading,
     error,
     PRODUCT_SETTINGS,
-    generateOrderNumber,
-    createOrder,
     getOrderById,
     getUserOrders,
     getRecentOrders,
@@ -1109,7 +929,7 @@ export const OrderProvider = ({ children }) => {
     createDefaultProducts,
     isDemoMode
   }), [
-    loading, error, createOrder, getOrderById, getUserOrders, getRecentOrders, 
+    loading, error, getOrderById, getUserOrders, getRecentOrders, 
     getAllOrders, updateOrderStatus, getOrderStats, deleteOrder, cancelOrder, 
     updateProductSettings, createDefaultProducts
   ]);
