@@ -282,10 +282,10 @@ const PublicProductPage = () => {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-canvas font-body flex items-center justify-center">
         <div className="relative">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
-          <div className="absolute inset-0 animate-ping rounded-full h-16 w-16 border-b-2 border-blue-300 opacity-20"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-accent"></div>
+          <div className="absolute inset-0 animate-ping rounded-full h-16 w-16 border-b-2 border-accent opacity-20"></div>
         </div>
       </div>
     );
@@ -293,10 +293,10 @@ const PublicProductPage = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-canvas font-body flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('product_not_found_page_title', 'Produkten hittades inte')}</h1>
-          <Link to={getCountryAwareUrl('')} className="bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition-colors">
+          <h1 className="font-display text-2xl font-bold text-ink mb-4">{t('product_not_found_page_title', 'Produkten hittades inte')}</h1>
+          <Link to={getCountryAwareUrl('')} className="bg-accent text-white px-6 py-3 rounded-full hover:opacity-90 transition-opacity">
             {t('back_to_shop', 'Tillbaka till butiken')}
           </Link>
         </div>
@@ -324,7 +324,7 @@ const PublicProductPage = () => {
       </Helmet>
       <SeoHreflang />
       
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-canvas font-body text-ink">
         <ShopNavigation breadcrumb={getContentValue(product?.name)} />
         
         {/* Nike Mobile Layout: Product info ABOVE images */}
@@ -332,13 +332,13 @@ const PublicProductPage = () => {
           <div className="px-4 py-6">
             {/* Nike Mobile: Product info first */}
             <div className="mb-6">
-              <h1 className="text-2xl font-medium text-gray-900 mb-2">
+              <h1 className="font-display text-2xl font-bold tracking-tight text-ink mb-2">
                 {getContentValue(product.name)}
               </h1>
-              <p className="text-base text-gray-600 mb-4">
+              <p className="text-base text-ink-muted mb-4">
                 {getB2cDescription(product) || `B8Shield ${getProductColor(product)} - ${product.size || 'Standard'}`}
               </p>
-              <div className="text-xl font-medium text-gray-900">
+              <div className="font-display">
                 <SmartPrice 
                   sekPrice={product.b2cPrice || product.basePrice} 
                   size="large"
@@ -353,7 +353,7 @@ const PublicProductPage = () => {
             <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide">
               {productImages.map((image, index) => (
                 <div key={index} className="w-full shrink-0 snap-center">
-                  <div className="aspect-square bg-gray-50">
+                  <div className="aspect-square bg-white">
                     <img
                       src={image}
                       alt={`${getContentValue(product.name)} ${index + 1}`}
@@ -375,7 +375,7 @@ const PublicProductPage = () => {
                       container.scrollTo({ left: index * container.offsetWidth, behavior: 'smooth' });
                     }}
                     className={`w-2 h-2 rounded-full transition-colors ${
-                      index === activeImageIndex ? 'bg-gray-900' : 'bg-gray-300'
+                      index === activeImageIndex ? 'bg-ink' : 'bg-ink/20'
                     }`}
                   />
                 ))}
@@ -388,11 +388,11 @@ const PublicProductPage = () => {
             {/* Size/Color Selection */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-base font-medium text-gray-900">
+                <h3 className="text-base font-semibold text-ink">
                   {isMultipack ? t('select_color', 'Välj färg') : t('select_size', 'Välj storlek')}
                 </h3>
                 {!isMultipack && (
-                  <button onClick={() => setSizeGuideModalOpen(true)} className="text-sm text-gray-500 hover:text-gray-700 underline">
+                  <button onClick={() => setSizeGuideModalOpen(true)} className="text-sm text-ink-muted hover:text-ink underline">
                     {t('size_guide_link', 'Storleksguide')}
                   </button>
                 )}
@@ -404,10 +404,10 @@ const PublicProductPage = () => {
                     key={variant.id}
                     to={getProductUrl(variant)}
                     state={{ skipPreferredRedirect: true }}
-                    className={`py-2 px-3 text-center border rounded-lg transition-all ${
+                    className={`py-2 px-3 text-center border rounded-el transition-all ${
                       product.id === variant.id
-                        ? 'border-black bg-black text-white'
-                        : 'border-gray-300 hover:border-gray-400'
+                        ? 'border-ink bg-ink text-white'
+                        : 'border-ink/15 bg-white hover:border-ink/40'
                     }`}
                   >
                     <div className="text-sm font-medium">
@@ -421,25 +421,25 @@ const PublicProductPage = () => {
             {/* Nike Mobile: Quantity Selector */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-gray-700">
+                <label className="text-sm font-semibold text-ink">
                   {t('quantity_label', 'Antal')}
                 </label>
-                <div className="flex items-center border border-gray-300 rounded-lg">
+                <div className="flex items-center border border-ink/15 bg-white rounded-full">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-colors"
+                    className="px-3 py-2 text-ink-muted hover:text-ink transition-colors"
                     disabled={quantity <= 1}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                     </svg>
                   </button>
-                  <span className="px-4 py-2 text-sm font-medium text-gray-900 min-w-12 text-center">
+                  <span className="px-4 py-2 text-sm font-bold text-ink min-w-12 text-center tabular-nums">
                     {quantity}
                   </span>
                   <button
                     onClick={() => setQuantity(quantity + 1)}
-                    className="px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-colors"
+                    className="px-3 py-2 text-ink-muted hover:text-ink transition-colors"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -454,23 +454,23 @@ const PublicProductPage = () => {
               <button
                 onClick={buttonState.disabled ? undefined : handleAddToCart}
                 disabled={buttonState.disabled}
-                className={`w-full py-3 px-6 rounded-full text-base font-medium transition-colors ${
+                className={`w-full py-3 px-6 rounded-full text-base font-bold transition-colors ${
                   buttonState.isComingSoon 
-                    ? 'bg-gray-400 text-white cursor-not-allowed' 
-                    : 'bg-black text-white hover:bg-gray-800'
+                    ? 'bg-ink-faint text-white cursor-not-allowed' 
+                    : 'bg-accent text-white hover:opacity-90'
                 }`}
               >
                 {buttonState.text}
               </button>
               
-              <button className="w-full border border-gray-300 py-3 px-6 rounded-full text-base font-medium hover:border-gray-400 transition-colors">
+              <button className="w-full border border-ink/15 bg-white py-3 px-6 rounded-full text-base font-medium hover:border-ink/40 transition-colors">
                 {t('favorite_button', 'Favorit ♡')}
               </button>
             </div>
 
             {/* Additional product info */}
             <div className="border-t pt-6">
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-ink-muted mb-4">
                 <span className="font-medium">Klarna.</span> {t('klarna_available_at_checkout', 'är tillgängligt i kassan.')}
               </p>
             </div>
@@ -491,10 +491,10 @@ const PublicProductPage = () => {
                         <button
                           key={index}
                           onMouseEnter={() => setActiveImageIndex(index)}
-                          className={`aspect-square bg-gray-50 rounded-md overflow-hidden border-2 transition-all ${
+                          className={`aspect-square bg-white rounded-el overflow-hidden border-2 transition-all ${
                             activeImageIndex === index 
-                              ? 'border-black' 
-                              : 'border-transparent hover:border-gray-300'
+                              ? 'border-ink' 
+                              : 'border-transparent hover:border-ink/30'
                           }`}
                         >
                           <img
@@ -509,7 +509,7 @@ const PublicProductPage = () => {
                   
                   {/* Main Image */}
                   <div className="flex-1">
-                    <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden">
+                    <div className="aspect-square bg-white rounded-tile shadow-tile overflow-hidden">
                       <img
                         src={productImages[activeImageIndex]}
                         alt={getContentValue(product.name)}
@@ -524,20 +524,20 @@ const PublicProductPage = () => {
               <div className="lg:w-1/2 space-y-8">
                 {/* Product Title */}
                 <div>
-                  <h1 className="text-3xl font-medium text-gray-900 mb-2">
+                  <h1 className="font-display text-4xl font-bold tracking-tight text-ink mb-2">
                     {getContentValue(product.name)}
                   </h1>
-                  <p className="text-lg text-gray-600 mb-4">
+                  <p className="text-lg text-ink-muted mb-4">
                     {getB2cDescription(product) || `B8Shield ${getProductColor(product)} - ${product.size || 'Standard'}`}
                   </p>
 
                 {/* Price */}
-                  <div className="text-2xl font-medium text-gray-900 mb-6">
+                  <div className="font-display mb-6">
                     <SmartPrice 
                       sekPrice={product.b2cPrice || product.basePrice} 
                       size="large"
                       showOriginal={false}
-                      className="text-2xl font-medium text-gray-900"
+                      className="font-display"
                     />
                   </div>
                 </div>
@@ -545,11 +545,11 @@ const PublicProductPage = () => {
                 {/* Size/Color Selection */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base font-medium text-gray-900">
+                    <h3 className="text-base font-semibold text-ink">
                       {isMultipack ? t('select_color', 'Välj färg') : t('select_size', 'Välj storlek')}
                     </h3>
                     {!isMultipack && (
-                      <button onClick={() => setSizeGuideModalOpen(true)} className="text-sm text-gray-500 hover:text-gray-700 underline">
+                      <button onClick={() => setSizeGuideModalOpen(true)} className="text-sm text-ink-muted hover:text-ink underline">
                         {t('size_guide_link', 'Storleksguide')}
                       </button>
                     )}
@@ -561,10 +561,10 @@ const PublicProductPage = () => {
                         key={variant.id}
                         to={getProductUrl(variant)}
                         state={{ skipPreferredRedirect: true }}
-                        className={`py-4 px-4 text-center border rounded-md transition-all ${
+                        className={`py-4 px-4 text-center border rounded-el transition-all ${
                           product.id === variant.id
-                            ? 'border-black bg-black text-white'
-                            : 'border-gray-300 hover:border-gray-400'
+                            ? 'border-ink bg-ink text-white'
+                            : 'border-ink/15 bg-white hover:border-ink/40'
                         }`}
                       >
                         <div className="text-sm font-medium">
@@ -578,25 +578,25 @@ const PublicProductPage = () => {
                 {/* Quantity Selector */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-gray-700">
+                    <label className="text-sm font-semibold text-ink">
                       {t('quantity_label', 'Antal')}
                     </label>
-                    <div className="flex items-center border border-gray-300 rounded-lg">
+                    <div className="flex items-center border border-ink/15 bg-white rounded-full">
                       <button
                         onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        className="px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-colors"
+                        className="px-3 py-2 text-ink-muted hover:text-ink transition-colors"
                         disabled={quantity <= 1}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                         </svg>
                       </button>
-                      <span className="px-4 py-2 text-sm font-medium text-gray-900 min-w-12 text-center">
+                      <span className="px-4 py-2 text-sm font-bold text-ink min-w-12 text-center tabular-nums">
                         {quantity}
                       </span>
                       <button
                         onClick={() => setQuantity(quantity + 1)}
-                        className="px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-colors"
+                        className="px-3 py-2 text-ink-muted hover:text-ink transition-colors"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -611,16 +611,16 @@ const PublicProductPage = () => {
                   <button
                     onClick={buttonState.disabled ? undefined : handleAddToCart}
                     disabled={buttonState.disabled}
-                    className={`w-full py-4 px-8 rounded-full text-base font-medium transition-colors ${
+                    className={`w-full py-4 px-8 rounded-full text-base font-bold transition-colors ${
                       buttonState.isComingSoon 
-                        ? 'bg-gray-400 text-white cursor-not-allowed' 
-                        : 'bg-black text-white hover:bg-gray-800'
+                        ? 'bg-ink-faint text-white cursor-not-allowed' 
+                        : 'bg-accent text-white hover:opacity-90'
                     }`}
                   >
                     {buttonState.text}
                   </button>
                   
-                  <button className="w-full border border-gray-300 py-4 px-8 rounded-full text-base font-medium hover:border-gray-400 transition-colors">
+                  <button className="w-full border border-ink/15 bg-white py-4 px-8 rounded-full text-base font-medium hover:border-ink/40 transition-colors">
                     {t('favorite_button', 'Favorit ♡')}
                   </button>
                 </div>
@@ -633,20 +633,20 @@ const PublicProductPage = () => {
 
                 {/* Payment Options */}
                 <div className="border-t pt-6">
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-sm text-ink-muted mb-4">
                     <span className="font-medium">Klarna.</span> {t('klarna_available_at_checkout', 'är tillgängligt i kassan.')}
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-ink-muted">
                     {t('click_and_collect_available', 'Tillgängligt för Click and Collect i kassan')}
                   </p>
                 </div>
 
                 {/* Product Description */}
                 <div className="border-t pt-6">
-                  <h2 className="text-lg font-medium text-gray-900 mb-4">
+                  <h2 className="font-display text-lg font-bold text-ink mb-4">
                     {t('show_product_information', 'Visa produktinformation')}
                   </h2>
-                  <div className="prose prose-sm max-w-none text-gray-600">
+                  <div className="prose prose-sm max-w-none text-ink-muted">
                     <p>
                       {getB2cDescription(product) || 
                        t('product_detailed_description', 'B8Shield {{color}} i storlek {{size}} ger dig det ultimata skyddet för dina fiskedrag. Denna högkvalitativa produkt är utvecklad för att hålla i många år av intensivt fiske, oavsett väderförhållanden. Perfekt för både nybörjare och erfarna fiskare som vill skydda sina värdefulla fiskedrag från skador.', { color: getProductColor(product), size: product.size || 'Standard' })}
@@ -664,27 +664,27 @@ const PublicProductPage = () => {
                 <div className="border-t pt-6 space-y-4">
                   {/* Size and Fit - From Group Content */}
                   <details className="group">
-                    <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 px-4 -mx-4 rounded-lg">
-                      <span className="text-base font-medium text-gray-900">
+                    <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-white px-4 -mx-4 rounded-el transition-colors">
+                      <span className="text-base font-semibold text-ink">
                         {t('size_and_fit_section', 'Storlek och passform')}
                       </span>
-                      <svg className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-ink-faint transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </summary>
-                    <div className="pb-4 px-4 -mx-4 text-sm text-gray-600">
+                    <div className="pb-4 px-4 -mx-4 text-sm text-ink-muted">
                       {groupContentLoading ? (
-                        <p className="text-gray-500 italic">
+                        <p className="text-ink-muted italic">
                           {t('loading_group_content', 'Laddar information...')}
                         </p>
                       ) : (
                         groupContent?.sizeAndFit ? (
                           <div 
-                            className="prose prose-sm text-gray-700"
+                            className="prose prose-sm text-ink-muted"
                             dangerouslySetInnerHTML={{ __html: sanitize(getContentValue(groupContent.sizeAndFit)) }}
                           />
                         ) : (
-                          <p className="text-sm text-gray-500">{t('no_group_content', 'No information available')}</p>
+                          <p className="text-sm text-ink-faint">{t('no_group_content', 'No information available')}</p>
                         )
                       )}
                     </div>
@@ -692,27 +692,27 @@ const PublicProductPage = () => {
 
                   {/* Shipping and Returns - From Group Content */}
                   <details className="group">
-                    <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 px-4 -mx-4 rounded-lg">
-                      <span className="text-base font-medium text-gray-900">
+                    <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-white px-4 -mx-4 rounded-el transition-colors">
+                      <span className="text-base font-semibold text-ink">
                         {t('shipping_returns_section', 'Frakt och returer')}
                       </span>
-                      <svg className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-ink-faint transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </summary>
-                    <div className="pb-4 px-4 -mx-4 text-sm text-gray-600">
+                    <div className="pb-4 px-4 -mx-4 text-sm text-ink-muted">
                       {groupContentLoading ? (
-                        <p className="text-gray-500 italic">
+                        <p className="text-ink-muted italic">
                           {t('loading_group_content', 'Laddar information...')}
                         </p>
                       ) : (
                         groupContent?.shippingReturns ? (
                           <div 
-                            className="prose prose-sm text-gray-700"
+                            className="prose prose-sm text-ink-muted"
                             dangerouslySetInnerHTML={{ __html: sanitize(getContentValue(groupContent.shippingReturns)) }}
                           />
                         ) : (
-                          <p className="text-sm text-gray-500">{t('no_group_content', 'No information available')}</p>
+                          <p className="text-sm text-ink-faint">{t('no_group_content', 'No information available')}</p>
                         )
                       )}
                     </div>
@@ -720,27 +720,27 @@ const PublicProductPage = () => {
 
                   {/* How It's Made - From Group Content */}
                   <details className="group">
-                    <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 px-4 -mx-4 rounded-lg">
-                      <span className="text-base font-medium text-gray-900">
+                    <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-white px-4 -mx-4 rounded-el transition-colors">
+                      <span className="text-base font-semibold text-ink">
                         {t('how_its_made_section', 'Hur den är gjord')}
                       </span>
-                      <svg className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-ink-faint transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </summary>
-                    <div className="pb-4 px-4 -mx-4 text-sm text-gray-600">
+                    <div className="pb-4 px-4 -mx-4 text-sm text-ink-muted">
                       {groupContentLoading ? (
-                        <p className="text-gray-500 italic">
+                        <p className="text-ink-muted italic">
                           {t('loading_group_content', 'Laddar information...')}
                         </p>
                       ) : (
                         groupContent?.howItsMade ? (
                           <div 
-                            className="prose prose-sm text-gray-700"
+                            className="prose prose-sm text-ink-muted"
                             dangerouslySetInnerHTML={{ __html: sanitize(getContentValue(groupContent.howItsMade)) }}
                           />
                         ) : (
-                          <p className="text-sm text-gray-500">{t('no_group_content', 'No information available')}</p>
+                          <p className="text-sm text-ink-faint">{t('no_group_content', 'No information available')}</p>
                         )
                       )}
                     </div>
@@ -749,17 +749,17 @@ const PublicProductPage = () => {
                   {/* More Information - From Product B2C Content */}
                   {product?.descriptions?.b2cMoreInfo && (
                     <details className="group">
-                      <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 px-4 -mx-4 rounded-lg">
-                        <span className="text-base font-medium text-gray-900">
+                      <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-white px-4 -mx-4 rounded-el transition-colors">
+                        <span className="text-base font-semibold text-ink">
                           {t('more_product_information', 'Mer produktinformation')}
                         </span>
-                        <svg className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-ink-faint transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </summary>
-                      <div className="pb-4 px-4 -mx-4 text-sm text-gray-600">
+                      <div className="pb-4 px-4 -mx-4 text-sm text-ink-muted">
                         <div 
-                          className="prose prose-sm text-gray-700"
+                          className="prose prose-sm text-ink-muted"
                           dangerouslySetInnerHTML={{ __html: sanitize(getContentValue(product.descriptions.b2cMoreInfo)) }}
                         />
                       </div>
@@ -786,14 +786,14 @@ const PublicProductPage = () => {
           transition-all duration-300 ease-out
           ${showFixedButton ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}
         `}>
-          <div className="bg-white border-t border-gray-200 px-4 py-4 safe-area-inset-bottom">
+          <div className="bg-white/95 backdrop-blur-md border-t border-ink/10 px-4 py-4 safe-area-inset-bottom">
             <button
               onClick={buttonState.disabled ? undefined : handleAddToCart}
               disabled={buttonState.disabled}
-              className={`w-full py-4 px-8 rounded-lg text-base font-medium transition-colors ${
+              className={`w-full py-4 px-8 rounded-full text-base font-bold transition-colors ${
                 buttonState.isComingSoon 
-                  ? 'bg-gray-400 text-white cursor-not-allowed' 
-                  : 'bg-black text-white hover:bg-gray-800'
+                  ? 'bg-ink-faint text-white cursor-not-allowed' 
+                  : 'bg-accent text-white hover:opacity-90'
               }`}
             >
               {buttonState.text}

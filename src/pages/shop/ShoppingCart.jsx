@@ -101,19 +101,19 @@ const ShoppingCart = () => {
         <meta name="twitter:image" content={`${window.location.origin}/images/B8S_full_logo.svg`} />
       </Helmet>
       <SeoHreflang />
-      <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-canvas font-body text-ink">
         <ShopNavigation breadcrumb={t('cart_breadcrumb', 'Varukorg')} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">{t('your_cart_title', 'Din Varukorg')}</h1>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-ink mb-6 sm:mb-8">{t('your_cart_title', 'Din Varukorg')}</h1>
 
           {cart.items.length === 0 ? (
             <div className="text-center py-8 sm:py-12">
-              <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">{t('cart_is_empty_heading', 'Din varukorg är tom')}</h2>
-              <p className="text-gray-600 mb-6 sm:mb-8 px-4">{t('cart_empty_description', 'Utforska våra produkter och lägg till något i din varukorg.')}</p>
+              <h2 className="font-display text-xl sm:text-2xl font-bold text-ink mb-4">{t('cart_is_empty_heading', 'Din varukorg är tom')}</h2>
+              <p className="text-ink-muted mb-6 sm:mb-8 px-4">{t('cart_empty_description', 'Utforska våra produkter och lägg till något i din varukorg.')}</p>
               <Link
                 to={getCountryAwareUrl('')}
-                className="inline-block bg-linear-to-r from-blue-600 to-indigo-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                className="inline-block bg-accent text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-bold transition-all duration-300 ease-nord shadow-tile hover:shadow-lift hover:-translate-y-0.5"
               >
                 {t('continue_shopping', 'Fortsätt handla')}
               </Link>
@@ -127,7 +127,7 @@ const ShoppingCart = () => {
                   return (
                     <div
                       key={item.id}
-                      className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-200"
+                      className="bg-white rounded-tile p-4 sm:p-6 shadow-tile"
                     >
                       {/* Mobile: Stacked layout, Desktop: Horizontal layout */}
                       <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
@@ -135,27 +135,27 @@ const ShoppingCart = () => {
                         <img
                           src={item.image}
                           alt={itemName}
-                          className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg self-center sm:self-start"
+                          className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-el self-center sm:self-start bg-white"
                         />
                         
                         {/* Product Details */}
                         <div className="grow text-center sm:text-left">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">{itemName}</h3>
+                          <h3 className="font-display text-lg font-bold text-ink mb-2">{itemName}</h3>
                           
                           {/* Product Specs - Mobile: Compact, Desktop: Detailed */}
-                          <div className="space-y-1 text-sm text-gray-600 mb-3">
+                          <div className="space-y-1 text-sm text-ink-muted mb-3">
                             {item.color && (
-                              <p className="inline-block bg-gray-100 px-2 py-1 rounded-full mr-2 mb-1">
+                              <p className="inline-block bg-canvas px-2.5 py-1 rounded-full mr-2 mb-1 text-xs font-semibold">
                                 {translateColor(item.color, t)}
                               </p>
                             )}
                             {item.size && (
-                              <p className="inline-block bg-gray-100 px-2 py-1 rounded-full mr-2 mb-1">
+                              <p className="inline-block bg-canvas px-2.5 py-1 rounded-full mr-2 mb-1 text-xs font-semibold">
                                 {t('size_label', 'Storlek: {{size}}', { size: item.size })}
                               </p>
                             )}
                             {item.sku && (
-                              <p className="text-xs text-gray-500 block sm:hidden">
+                              <p className="text-xs text-ink-faint block sm:hidden">
                                 {item.sku}
                               </p>
                             )}
@@ -167,7 +167,7 @@ const ShoppingCart = () => {
                               sekPrice={item.price} 
                               variant="compact"
                               showOriginal={false}
-                              className="font-bold text-lg sm:text-base text-blue-600"
+                              className="font-display font-bold text-lg sm:text-base"
                             />
                           </div>
                         </div>
@@ -175,19 +175,19 @@ const ShoppingCart = () => {
                         {/* Quantity and Remove - Mobile: Stacked, Desktop: Horizontal */}
                         <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
                           {/* Quantity Selector - Mobile: Large touch targets */}
-                          <div className="flex items-center rounded-xl border-2 border-gray-300 bg-gray-50">
+                          <div className="flex items-center rounded-full border border-ink/15 bg-white">
                             <button
                               onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                              className="w-12 h-12 sm:w-10 sm:h-10 flex items-center justify-center text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors rounded-l-lg"
+                              className="w-12 h-12 sm:w-10 sm:h-10 flex items-center justify-center text-ink-muted hover:text-ink transition-colors rounded-l-full"
                             >
                               <span className="text-xl font-bold">−</span>
                             </button>
-                            <span className="w-16 h-12 sm:w-12 sm:h-10 flex items-center justify-center text-lg font-bold bg-white border-x border-gray-300">
+                            <span className="w-16 h-12 sm:w-12 sm:h-10 flex items-center justify-center text-lg font-bold tabular-nums border-x border-ink/10">
                               {item.quantity}
                             </span>
                             <button
                               onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                              className="w-12 h-12 sm:w-10 sm:h-10 flex items-center justify-center text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors rounded-r-lg"
+                              className="w-12 h-12 sm:w-10 sm:h-10 flex items-center justify-center text-ink-muted hover:text-ink transition-colors rounded-r-full"
                             >
                               <span className="text-xl font-bold">+</span>
                             </button>
@@ -196,7 +196,7 @@ const ShoppingCart = () => {
                           {/* Remove Button - Mobile: Large touch target */}
                           <button
                             onClick={() => handleRemove(item.id)}
-                            className="w-12 h-12 sm:w-8 sm:h-8 flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors"
+                            className="w-12 h-12 sm:w-8 sm:h-8 flex items-center justify-center text-ink-faint hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
                           >
                             <svg 
                               className="w-6 h-6 sm:w-5 sm:h-5" 
@@ -222,12 +222,12 @@ const ShoppingCart = () => {
               {/* Order Summary */}
               <div className="lg:col-span-1 space-y-4 sm:space-y-6">
                 {/* Shipping Country Selection */}
-                <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-200">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">{t('shipping_country', 'Leveransland')}</h3>
+                <div className="bg-white rounded-tile p-4 sm:p-6 shadow-tile">
+                  <h3 className="font-display text-base sm:text-lg font-bold text-ink mb-3 sm:mb-4">{t('shipping_country', 'Leveransland')}</h3>
                   <select
                     value={cart.shippingCountry}
                     onChange={handleCountryChange}
-                    className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
+                    className="w-full px-3 sm:px-4 py-3 border border-ink/15 bg-white rounded-el focus:outline-hidden focus:ring-4 focus:ring-accent/10 focus:border-accent text-sm sm:text-base transition-colors"
                   >
                     <optgroup label={t('nordic_countries', 'Norden')}>
                       {SHIPPING_COSTS.NORDIC.countries.map(country => (
@@ -243,21 +243,21 @@ const ShoppingCart = () => {
                 </div>
 
                 {/* Discount Code Section */}
-                <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-200">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">{t('discount_code', 'Rabattkod')}</h3>
+                <div className="bg-white rounded-tile p-4 sm:p-6 shadow-tile">
+                  <h3 className="font-display text-base sm:text-lg font-bold text-ink mb-3 sm:mb-4">{t('discount_code', 'Rabattkod')}</h3>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       type="text"
                       value={discountCodeInput}
                       onChange={(e) => setDiscountCodeInput(e.target.value)}
                       placeholder={t('enter_your_code', 'Ange din kod')}
-                      className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
+                      className="w-full px-3 sm:px-4 py-3 border border-ink/15 bg-white rounded-el focus:outline-hidden focus:ring-4 focus:ring-accent/10 focus:border-accent text-sm sm:text-base transition-colors"
                       disabled={!!discountCode}
                     />
                     <button
                       onClick={handleApplyDiscount}
                       disabled={!!discountCode}
-                      className="px-4 sm:px-6 py-3 bg-gray-800 text-white font-semibold rounded-xl hover:bg-gray-900 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm sm:text-base whitespace-nowrap"
+                      className="px-4 sm:px-6 py-3 bg-ink text-white font-bold rounded-el hover:opacity-90 disabled:bg-ink-faint disabled:cursor-not-allowed transition-opacity text-sm sm:text-base whitespace-nowrap"
                     >
                       {t('apply_button', 'Applicera')}
                     </button>
@@ -265,11 +265,11 @@ const ShoppingCart = () => {
                 </div>
 
                 {/* Order Summary */}
-                <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-200">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">{t('order_summary', 'Ordersammanfattning')}</h3>
+                <div className="bg-white rounded-tile p-4 sm:p-6 shadow-tile">
+                  <h3 className="font-display text-base sm:text-lg font-bold text-ink mb-3 sm:mb-4">{t('order_summary', 'Ordersammanfattning')}</h3>
                   
                   <div className="space-y-2 sm:space-y-3">
-                    <div className="flex justify-between text-gray-700 text-sm sm:text-base">
+                    <div className="flex justify-between text-ink-muted text-sm sm:text-base">
                       <span>{t('subtotal', 'Delsumma')}</span>
                       <SmartPrice 
                         sekPrice={subtotal} 
@@ -280,7 +280,7 @@ const ShoppingCart = () => {
 
                     {discountAmount > 0 && (
                        <div className="flex justify-between items-center">
-                         <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2 py-1 rounded-full">
+                         <span className="bg-accent/10 text-accent text-xs font-semibold px-2.5 py-1 rounded-full">
                            {t('affiliate_discount_label', 'Affiliate rabatt, {{percentage}}%', { percentage: discountPercentage })}
                          </span>
                          <span className="text-green-600 font-semibold text-sm sm:text-base">
@@ -293,7 +293,7 @@ const ShoppingCart = () => {
                        </div>
                     )}
 
-                    <div className="flex justify-between text-gray-700 text-sm sm:text-base">
+                    <div className="flex justify-between text-ink-muted text-sm sm:text-base">
                       <span>{t('shipping_cost_label', 'Frakt ({{country}})', { country: getCountryName(cart.shippingCountry) })}</span>
                       <SmartPrice 
                         sekPrice={shipping} 
@@ -304,7 +304,7 @@ const ShoppingCart = () => {
                     
                     {/* Shipping tier explanation */}
                     {getTotalItems() > 3 && (
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-xs text-ink-faint mt-1">
                         {(() => {
                           const tierInfo = getShippingTierInfo(cart.shippingCountry);
                           return tierInfo.explanation;
@@ -313,19 +313,19 @@ const ShoppingCart = () => {
                     )}
                   </div>
 
-                  <div className="border-t border-gray-200 my-3 sm:my-4"></div>
+                  <div className="border-t border-ink/10 my-3 sm:my-4"></div>
 
                   <div className="space-y-1">
-                    <div className="flex justify-between font-bold text-gray-900 text-lg sm:text-xl">
+                    <div className="flex justify-between font-display font-bold text-ink text-lg sm:text-xl">
                       <span>{t('total', 'Totalt')}</span>
                       <SmartPrice 
                         sekPrice={total} 
                         variant="large"
                         showOriginal={false}
-                        className="font-bold text-lg sm:text-xl"
+                        className="font-display font-bold text-lg sm:text-xl"
                       />
                     </div>
-                    <div className="flex justify-end text-xs sm:text-sm text-gray-500">
+                    <div className="flex justify-end text-xs sm:text-sm text-ink-faint">
                       <span>
                         {t('vat_included_rate', 'Varav Moms ({{rate}}%) {{amount}} kr', {
                           rate: Math.round(STORE.vatRate * 100),
@@ -339,7 +339,7 @@ const ShoppingCart = () => {
                 {/* Checkout Button */}
                 <button
                   onClick={handleCheckout}
-                  className="w-full bg-linear-to-r from-blue-600 to-indigo-600 text-white px-6 sm:px-8 py-4 rounded-xl text-base sm:text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                  className="w-full bg-accent text-white px-6 sm:px-8 py-4 rounded-full text-base sm:text-lg font-bold transition-all duration-300 ease-nord shadow-tile hover:shadow-lift hover:-translate-y-0.5"
                 >
                   {t('go_to_checkout', 'Gå till kassan')}
                 </button>
@@ -347,7 +347,7 @@ const ShoppingCart = () => {
                 {/* Continue Shopping Link */}
                 <Link
                   to={getCountryAwareUrl('')}
-                  className="block text-center text-gray-600 hover:text-blue-600 transition-colors"
+                  className="block text-center text-ink-muted hover:text-ink underline underline-offset-4 transition-colors"
                 >
                   {t('or_continue_shopping', 'eller fortsätt handla')}
                 </Link>
