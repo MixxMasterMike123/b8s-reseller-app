@@ -8,11 +8,6 @@ export default defineConfig({
     extensions: ['.js', '.jsx', '.json'],
   },
   optimizeDeps: {
-    esbuildOptions: {
-      loader: {
-        '.js': 'jsx',
-      },
-    },
     // Pre-bundle frequently used dependencies
     include: [
       'react',

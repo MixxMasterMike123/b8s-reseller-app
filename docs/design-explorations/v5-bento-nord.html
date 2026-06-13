@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Designsystem v5 · NORD — bento-minimalism, 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:ital,wght@0,400..700;1,400..700&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas: #F3F1EC;
+    --surface: #FFFFFF;
+    --ink: #1A1C1E;
+    --muted: #71757C;
+    --faint: #A8ABB0;
+    --line: #1A1C1E0F;
+    --accent: #0E5E63;                 /* per-shop config token */
+    --accent-ink: #FFFFFF;
+    --accent-soft: color-mix(in srgb, var(--accent) 8%, #FFFFFF);
+    --display: 'Familjen Grotesk', sans-serif;   /* svenskt typsnitt, Familjen STHLM */
+    --body: 'Instrument Sans', -apple-system, sans-serif;
+    --r-tile: 22px;
+    --r-el: 14px;
+    --shadow-1: 0 1px 2px #1A1C1E08, 0 8px 24px -12px #1A1C1E1F;
+    --shadow-2: 0 2px 4px #1A1C1E0A, 0 20px 44px -16px #1A1C1E2E;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  [data-brand="print"] { --accent: #2B50E2; }
+  [data-brand="resto"] { --accent: #B0492B; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  ::selection { background: var(--accent); color: var(--accent-ink); }
+  html { scroll-behavior: smooth; }
+  body { background: var(--canvas); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+  img { display: block; }
+
+  @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  .rise { animation: rise .7s var(--ease) both; }
+  .d1 { animation-delay: .06s; } .d2 { animation-delay: .14s; } .d3 { animation-delay: .22s; } .d4 { animation-delay: .3s; }
+  @media (prefers-reduced-motion: reduce) { .rise { animation: none; } * { transition: none !important; } }
+
+  /* ===== demo chrome ===== */
+  .chrome { position: sticky; top: 0; z-index: 50; background: #1A1C1E; color: #fff; padding: 10px 24px; display: flex; gap: 16px; align-items: center; font-size: 13.5px; }
+  .chrome strong { font-family: var(--display); font-weight: 700; }
+  .chrome .spacer { flex: 1; }
+  .brand-toggle { display: flex; border: 1px solid #ffffff2e; border-radius: 999px; overflow: hidden; }
+  .brand-toggle button { background: none; border: none; color: #fff; font-family: var(--body); font-size: 12.5px; padding: 6px 16px; cursor: pointer; }
+  .brand-toggle button.active { background: #fff; color: var(--ink); font-weight: 600; }
+  .section-label { max-width: 1160px; margin: 72px auto 16px; padding: 0 24px; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); font-weight: 600; }
+
+  /* ===== nav ===== */
+  .shopnav { padding-top: 22px; }
+  .shopnav .wrap { display: flex; align-items: center; gap: 30px; }
+  .logo { font-family: var(--display); font-weight: 700; font-size: 21px; letter-spacing: -0.01em; }
+  .links { display: flex; gap: 4px; }
+  .links a { color: var(--muted); text-decoration: none; font-size: 15px; font-weight: 500; padding: 8px 14px; border-radius: 999px; transition: color .2s, background .2s; }
+  .links a:hover { color: var(--ink); background: #ffffffa8; }
+  .shopnav .spacer { flex: 1; }
+  .cartbtn { display: flex; align-items: center; gap: 9px; background: var(--ink); color: #fff; border: none; font-family: var(--body); font-weight: 600; font-size: 14.5px; padding: 11px 12px 11px 20px; border-radius: 999px; cursor: pointer; transition: transform .25s var(--ease), box-shadow .25s; }
+  .cartbtn:hover { transform: translateY(-1px); box-shadow: var(--shadow-1); }
+  .cartbtn .count { background: var(--accent); color: var(--accent-ink); font-size: 12.5px; font-weight: 700; min-width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 999px; font-variant-numeric: tabular-nums; }
+
+  /* ===== BENTO HERO ===== */
+  .bento { max-width: 1160px; margin: 22px auto 0; padding: 0 24px; display: grid; grid-template-columns: 1.55fr 1fr; gap: 16px; }
+  .tile { border-radius: var(--r-tile); overflow: hidden; background: var(--surface); box-shadow: var(--shadow-1); }
+
+  .tile-hero { position: relative; min-height: 560px; display: flex; align-items: flex-end; background: var(--ink); grid-row: span 2; }
+  .tile-hero .media, .tile-hero .media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .tile-hero .media .ph { position: absolute; inset: 0; background:
+      radial-gradient(900px 480px at 85% -10%, color-mix(in srgb, var(--accent) 70%, #1A1C1E), transparent 65%),
+      radial-gradient(700px 500px at -10% 110%, color-mix(in srgb, var(--accent) 35%, #1A1C1E), #1A1C1E 70%); }
+  .tile-hero .scrim { position: absolute; inset: 0; background: linear-gradient(195deg, #1A1C1E00 38%, #1A1C1E99 75%, #1A1C1ECC 100%); }
+  .tile-hero .content { position: relative; padding: 40px 44px; color: #fff; width: 100%; }
+  .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: #FFFFFF24; backdrop-filter: blur(10px); font-size: 13px; font-weight: 600; padding: 8px 15px; border-radius: 999px; margin-bottom: 18px; }
+  .hero-badge .pulse { width: 7px; height: 7px; border-radius: 50%; background: #5EEAA0; animation: pulse 2.2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+  h1.hero-h { font-family: var(--display); font-weight: 700; font-size: clamp(38px, 4.6vw, 62px); line-height: 1.04; letter-spacing: -0.022em; max-width: 12em; }
+  .hero-sub { margin-top: 12px; font-size: 17.5px; color: #FFFFFFC9; max-width: 28em; }
+  .hero-cta-row { display: flex; align-items: center; gap: 18px; margin-top: 26px; }
+  .btn-hero { font-family: var(--body); background: #fff; color: var(--ink); font-weight: 700; font-size: 16.5px; padding: 16px 32px; border: none; border-radius: 999px; cursor: pointer; transition: transform .25s var(--ease), box-shadow .25s; }
+  .btn-hero:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -10px #00000066; }
+  .hero-alt { color: #FFFFFFD9; font-weight: 600; font-size: 15px; text-decoration: none; border-bottom: 1.5px solid #FFFFFF55; padding-bottom: 2px; cursor: pointer; }
+
+  .tile-deadline { padding: 30px 32px; display: flex; flex-direction: column; gap: 4px; }
+  .k-label { font-size: 12px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .tile-deadline .date { font-family: var(--display); font-weight: 700; font-size: 31px; letter-spacing: -0.015em; margin-top: 6px; }
+  .countdown { display: flex; gap: 8px; margin-top: 16px; }
+  .cd { flex: 1; background: var(--accent-soft); border-radius: var(--r-el); text-align: center; padding: 12px 6px 10px; }
+  .cd b { display: block; font-family: var(--display); font-size: 24px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .cd span { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+  .tile-deadline .meta { margin-top: 14px; font-size: 14px; color: var(--muted); }
+  .tile-deadline .meta b { color: var(--ink); font-weight: 600; }
+
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .tile-mini { padding: 24px 26px; display: flex; flex-direction: column; gap: 8px; }
+  .tile-mini .thumb { width: 52px; height: 52px; border-radius: 14px; object-fit: cover; }
+  .tile-mini .thumb-ph { width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(140deg, color-mix(in srgb, var(--accent) 30%, #fff), var(--accent-soft)); }
+  .tile-mini .t { font-family: var(--display); font-weight: 700; font-size: 17px; line-height: 1.25; }
+  .tile-mini .s { font-size: 13.5px; color: var(--muted); }
+  .tile-mini .stars { color: var(--accent); font-size: 15px; letter-spacing: 2px; }
+  .paychips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .paychips span { font-size: 12px; font-weight: 600; color: var(--muted); background: var(--canvas); padding: 5px 11px; border-radius: 999px; }
+
+  /* ===== PRODUKTER ===== */
+  .prod-head { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+  .prod-head h2 { font-family: var(--display); font-weight: 700; font-size: clamp(28px, 3.2vw, 40px); letter-spacing: -0.02em; }
+  .prod-head p { color: var(--muted); font-size: 15.5px; margin-top: 4px; }
+  .filter { display: flex; gap: 6px; }
+  .filter button { background: none; border: 1px solid var(--line); font-family: var(--body); font-size: 13.5px; font-weight: 600; color: var(--muted); padding: 9px 18px; border-radius: 999px; cursor: pointer; transition: all .2s; }
+  .filter button.on, .filter button:hover { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card { background: var(--surface); border-radius: var(--r-tile); overflow: hidden; box-shadow: var(--shadow-1); display: flex; flex-direction: column; transition: transform .35s var(--ease), box-shadow .35s; }
+  .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-2); }
+  .card-media { aspect-ratio: 4 / 3.4; overflow: hidden; position: relative; background: var(--accent-soft); }
+  .card-media img, .card-media .ph { width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease); }
+  .card-media .ph { background: radial-gradient(420px 300px at 70% 20%, color-mix(in srgb, var(--accent) 26%, #fff), var(--accent-soft) 70%); }
+  .card:hover .card-media img, .card:hover .card-media .ph { transform: scale(1.045); }
+  .card-tag { position: absolute; top: 14px; left: 14px; background: #FFFFFFE6; backdrop-filter: blur(6px); color: var(--ink); font-size: 12px; font-weight: 700; padding: 6px 13px; border-radius: 999px; }
+  .card-body { padding: 20px 22px 22px; flex: 1; display: flex; flex-direction: column; }
+  .card-title { font-family: var(--display); font-weight: 700; font-size: 20.5px; letter-spacing: -0.01em; }
+  .card-desc { color: var(--muted); font-size: 14.5px; margin-top: 4px; flex: 1; }
+  .card-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
+  .price { font-family: var(--display); font-weight: 700; font-size: 21px; font-variant-numeric: tabular-nums; }
+  .price small { font-family: var(--body); font-size: 12.5px; color: var(--muted); font-weight: 500; margin-left: 2px; }
+  .btn-add { background: var(--accent); color: var(--accent-ink); font-family: var(--body); font-weight: 700; font-size: 14.5px; padding: 12px 22px; border: none; border-radius: 999px; cursor: pointer; transition: transform .25s var(--ease), box-shadow .25s, background .2s; }
+  .btn-add:hover { transform: translateY(-1px); box-shadow: 0 10px 22px -8px color-mix(in srgb, var(--accent) 65%, transparent); }
+  .stepper { display: flex; align-items: center; background: var(--accent-soft); border-radius: 999px; animation: rise .35s var(--ease) both; }
+  .stepper button { width: 40px; height: 42px; border: none; background: none; color: var(--accent); font-size: 19px; font-weight: 700; cursor: pointer; }
+  .stepper .q { min-width: 26px; text-align: center; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+  /* ===== STORY ===== */
+  .story { background: var(--surface); border-radius: var(--r-tile); box-shadow: var(--shadow-1); padding: 48px 52px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 36px; position: relative; overflow: hidden; }
+  .story::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 5px; background: var(--accent); }
+  .story .step-n { font-family: var(--display); font-weight: 700; font-size: 15px; color: var(--accent); }
+  .story h3 { font-family: var(--display); font-weight: 700; font-size: 21px; margin-top: 8px; letter-spacing: -0.01em; }
+  .story p { color: var(--muted); font-size: 15px; margin-top: 6px; }
+
+  /* ===== KASSA ===== */
+  .checkout { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; align-items: start; }
+  .co-panel { background: var(--surface); border-radius: var(--r-tile); box-shadow: var(--shadow-1); padding: 36px 40px; }
+  .progress { margin-bottom: 32px; }
+  .progress .bar { height: 4px; background: var(--canvas); border-radius: 99px; overflow: hidden; }
+  .progress .fill { width: 62%; height: 100%; background: var(--accent); border-radius: 99px; transition: width .5s var(--ease); }
+  .progress .labels { display: flex; justify-content: space-between; margin-top: 10px; font-size: 13.5px; font-weight: 600; }
+  .progress .labels span { color: var(--faint); }
+  .progress .labels .done { color: var(--muted); }
+  .progress .labels .now { color: var(--accent); }
+  .co-panel h3 { font-family: var(--display); font-weight: 700; font-size: 24px; letter-spacing: -0.015em; margin-bottom: 4px; }
+  .co-hint { color: var(--muted); font-size: 14.5px; margin-bottom: 8px; }
+  .co-panel label { display: block; font-size: 14px; font-weight: 600; margin: 18px 0 7px; }
+  .co-input { width: 100%; padding: 16px 18px; font-size: 16.5px; font-family: var(--body); border: 1.5px solid var(--line); border-radius: var(--r-el); background: var(--surface); outline: none; transition: border-color .2s, box-shadow .2s; }
+  .co-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+  .co-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .seg { display: flex; background: var(--canvas); border-radius: 999px; padding: 4px; }
+  .seg button { flex: 1; background: none; border: none; font-family: var(--body); font-size: 15px; font-weight: 600; color: var(--muted); padding: 12px; border-radius: 999px; cursor: pointer; transition: all .25s var(--ease); }
+  .seg button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-1); }
+  .btn-continue { width: 100%; margin-top: 30px; background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 17px; font-family: var(--body); padding: 18px; border: none; border-radius: 999px; cursor: pointer; transition: transform .25s var(--ease), box-shadow .25s; }
+  .btn-continue:hover { transform: translateY(-2px); box-shadow: 0 16px 32px -10px color-mix(in srgb, var(--accent) 60%, transparent); }
+  .co-trust { display: flex; gap: 8px 18px; flex-wrap: wrap; justify-content: center; margin-top: 16px; font-size: 13px; color: var(--muted); font-weight: 500; }
+  .co-summary { background: var(--surface); border-radius: var(--r-tile); box-shadow: var(--shadow-1); padding: 30px 32px; position: sticky; top: 64px; }
+  .co-summary h3 { font-family: var(--display); font-weight: 700; font-size: 20px; display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+  .sum-edit { font-family: var(--body); font-size: 13.5px; font-weight: 600; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  .sum-item { display: flex; align-items: center; gap: 14px; padding: 10px 0; }
+  .sum-item .im { width: 46px; height: 46px; border-radius: 12px; background: var(--accent-soft); object-fit: cover; flex: none; }
+  .sum-item .n { font-size: 15px; font-weight: 600; flex: 1; line-height: 1.35; }
+  .sum-item .n small { display: block; color: var(--muted); font-weight: 500; font-size: 13px; }
+  .sum-item .p { font-weight: 700; font-size: 15px; font-variant-numeric: tabular-nums; }
+  .sum-row { display: flex; justify-content: space-between; font-size: 14.5px; color: var(--muted); padding: 5px 0; }
+  .sum-row span:last-child { font-variant-numeric: tabular-nums; }
+  .sum-row.total { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 14px; color: var(--ink); font-weight: 700; font-size: 19px; font-family: var(--display); }
+  .sum-note { margin-top: 14px; font-size: 13.5px; color: var(--muted); background: var(--accent-soft); padding: 12px 14px; border-radius: var(--r-el); line-height: 1.5; }
+
+  /* ===== SÄSONG ===== */
+  .closed { background: var(--ink); color: #fff; border-radius: var(--r-tile); padding: 56px; position: relative; overflow: hidden; }
+  .closed::after { content: ''; position: absolute; right: -120px; top: -120px; width: 380px; height: 380px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--accent) 65%, transparent), transparent 70%); }
+  .closed .k-label { color: #FFFFFF80; }
+  .closed h2 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 3.6vw, 46px); letter-spacing: -0.02em; line-height: 1.06; margin-top: 12px; max-width: 16em; position: relative; }
+  .closed p { margin-top: 14px; font-size: 16.5px; color: #FFFFFFB0; max-width: 32em; position: relative; }
+  .closed-form { display: flex; gap: 10px; margin-top: 26px; max-width: 460px; position: relative; }
+  .closed-form input { flex: 1; padding: 15px 18px; font-size: 16px; font-family: var(--body); border: 1.5px solid #FFFFFF33; background: #FFFFFF12; color: #fff; border-radius: 999px; outline: none; }
+  .closed-form input::placeholder { color: #FFFFFF66; }
+  .closed-form input:focus { border-color: #FFFFFF99; }
+  .closed-form button { background: #fff; color: var(--ink); border: none; font-family: var(--body); font-weight: 700; font-size: 15px; padding: 15px 26px; border-radius: 999px; cursor: pointer; }
+  .closed-caption { margin-top: 14px; font-size: 13.5px; color: var(--faint); }
+
+  /* ===== SPECIMENS ===== */
+  .spec { background: var(--surface); border-radius: var(--r-tile); box-shadow: var(--shadow-1); padding: 38px 44px; margin-bottom: 18px; }
+  .type-row { display: grid; grid-template-columns: 240px 1fr; gap: 24px; align-items: baseline; padding: 16px 0; border-bottom: 1px solid var(--line); }
+  .type-row:last-child { border-bottom: none; }
+  .type-meta { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .swatch { border-radius: var(--r-el); overflow: hidden; border: 1px solid var(--line); }
+  .swatch .chip { height: 72px; }
+  .swatch .label { padding: 9px 13px; font-size: 12.5px; font-weight: 600; }
+  footer { text-align: center; padding: 52px 24px; font-size: 13px; color: var(--faint); }
+
+  @media (max-width: 920px) {
+    body { font-size: 16.5px; }
+    .links { display: none; }
+    .bento { grid-template-columns: 1fr; }
+    .tile-hero { min-height: 480px; grid-row: auto; }
+    .tile-hero .content { padding: 26px; }
+    .duo { grid-template-columns: 1fr 1fr; }
+    .grid { grid-template-columns: 1fr; }
+    .story { grid-template-columns: 1fr; padding: 32px 28px; gap: 24px; }
+    .checkout { grid-template-columns: 1fr; }
+    .co-panel { padding: 26px 22px; }
+    .closed { padding: 36px 26px; }
+    .closed-form { flex-direction: column; }
+    .prod-head { flex-direction: column; align-items: flex-start; gap: 14px; }
+  }
+</style>
+</head>
+<body data-brand="fisk">
+
+<div class="chrome">
+  <strong>v5 · NORD</strong>
+  <span>bento-minimalism · 2026 — en mall, alla branscher</span>
+  <span class="spacer"></span>
+  <div class="brand-toggle">
+    <button class="active" data-pick="fisk">Fiskhandel</button>
+    <button data-pick="print">Tryckeri</button>
+    <button data-pick="resto">Restaurang</button>
+  </div>
+</div>
+
+<nav class="shopnav rise">
+  <div class="wrap">
+    <div class="logo" data-bind="logo">Sillmans Fisk</div>
+    <div class="links"><a href="#">Sortiment</a><a href="#">Vår historia</a><a href="#">Hitta hit</a></div>
+    <span class="spacer"></span>
+    <button class="cartbtn">Varukorg <span class="count">3</span></button>
+  </div>
+</nav>
+
+<!-- BENTO HERO: ett dominant fokus + stödjande moduler -->
+<section class="bento">
+  <div class="tile tile-hero rise d1">
+    <div class="media"><div class="ph" id="heroPh"></div><img id="heroImg" src="" alt=""></div>
+    <div class="scrim"></div>
+    <div class="content">
+      <div class="hero-badge"><span class="pulse"></span><span data-bind="badge">Beställningen är öppen · Jul 2026</span></div>
+      <h1 class="hero-h" data-bind="h1">Julens fisk, beredd vid kusten.</h1>
+      <p class="hero-sub" data-bind="sub">Gravad lax, sill och färdiga julpåsar från Njurunda — beställ nu, hämta färskt veckan före jul.</p>
+      <div class="hero-cta-row">
+        <button class="btn-hero" data-bind="cta">Beställ till jul</button>
+        <span class="hero-alt">Se sortimentet ↓</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tile tile-deadline rise d2">
+    <div class="k-label" data-bind="dlK">Sista beställningsdag</div>
+    <div class="date" data-bind="dlDate">18 december</div>
+    <div class="countdown">
+      <div class="cd"><b data-bind="cd1">5</b><span>dagar</span></div>
+      <div class="cd"><b data-bind="cd2">14</b><span>timmar</span></div>
+      <div class="cd"><b data-bind="cd3">32</b><span>min</span></div>
+    </div>
+    <div class="meta" data-bind="dlMeta">Avhämtning <b>22–23 dec</b> · Njurunda hamn</div>
+  </div>
+
+  <div class="duo">
+    <div class="tile tile-mini rise d3">
+      <img class="thumb" id="miniImg" src="" alt="" style="display:none">
+      <div class="thumb-ph" id="miniPh"></div>
+      <div>
+        <div class="k-label">Mest beställd</div>
+        <div class="t" data-bind="miniT">Gravad lax</div>
+        <div class="s" data-bind="miniS">145 kr · egen beredning</div>
+      </div>
+    </div>
+    <div class="tile tile-mini rise d4">
+      <div class="stars">★★★★★</div>
+      <div>
+        <div class="t" data-bind="trustT">4,9 av 5</div>
+        <div class="s" data-bind="trustS">1 200+ beställningar förra julen</div>
+      </div>
+      <div class="paychips"><span>Swish</span><span>Klarna</span><span>Apple Pay</span><span>Kort</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="section-label">Sortiment</div>
+<section class="wrap">
+  <div class="prod-head">
+    <div>
+      <h2 data-bind="prodH">Allt för julbordet</h2>
+      <p data-bind="prodSub">Beställ senast 18 december — begränsat antal.</p>
+    </div>
+    <div class="filter" data-bind-skip>
+      <button class="on">Alla</button><button data-bind="filt1">Lax</button><button data-bind="filt2">Sill</button><button data-bind="filt3">Paket</button>
+    </div>
+  </div>
+  <div class="grid" id="grid"></div>
+</section>
+
+<div class="section-label" data-bind="storyLabel">Från kusten till julbordet</div>
+<section class="wrap">
+  <div class="story">
+    <div><div class="step-n">01</div><h3 data-bind="st1T">Beredd vid kusten</h3><p data-bind="st1P">Allt görs för hand i vårt eget kök i Njurunda, dagarna innan du hämtar.</p></div>
+    <div><div class="step-n">02</div><h3 data-bind="st2T">Packad färsk</h3><p data-bind="st2P">Din beställning packas kall samma morgon och märks med ditt namn.</p></div>
+    <div><div class="step-n">03</div><h3 data-bind="st3T">Hämtas i hamnen</h3><p data-bind="st3P">Visa SMS:et, hämta påsen, hem till julbordet. Klart.</p></div>
+  </div>
+</section>
+
+<div class="section-label">Kassan — tre steg, alltid synlig summering</div>
+<section class="wrap checkout">
+  <div class="co-panel">
+    <div class="progress">
+      <div class="bar"><div class="fill"></div></div>
+      <div class="labels"><span class="done">Varukorg ✓</span><span class="now">Dina uppgifter</span><span>Betalning</span></div>
+    </div>
+    <h3>Dina uppgifter</h3>
+    <p class="co-hint">Vi använder mobilnumret för att skicka SMS när beställningen är klar.</p>
+    <label data-bind="segLabel">Hur vill du få din beställning?</label>
+    <div class="seg">
+      <button class="on" data-bind="seg1">Hämta i butik</button>
+      <button data-bind="seg2">Leverans</button>
+    </div>
+    <label>Namn</label>
+    <input class="co-input" placeholder="För- och efternamn">
+    <div class="co-row">
+      <div><label>E-post</label><input class="co-input" placeholder="namn@exempel.se"></div>
+      <div><label>Mobilnummer</label><input class="co-input" placeholder="070-123 45 67"></div>
+    </div>
+    <button class="btn-continue">Fortsätt till betalning</button>
+    <div class="co-trust"><span>🔒 Säker betalning</span><span>Swish</span><span>Klarna</span><span>Kort</span><span>Apple Pay</span></div>
+  </div>
+  <aside class="co-summary">
+    <h3>Din beställning <span class="sum-edit">Ändra</span></h3>
+    <div id="sumItems"></div>
+    <div class="sum-row"><span data-bind="shipLabel">Avhämtning</span><span>0 kr</span></div>
+    <div class="sum-row total"><span>Att betala</span><span data-bind="total">785 kr</span></div>
+    <div class="sum-note" data-bind="sumNote">Hämtas 22–23 december i Njurunda hamn. Du får ett SMS när allt är packat och klart.</div>
+  </aside>
+</section>
+
+<div class="section-label">Säsongsläge — designat stängt, inte en död sida</div>
+<section class="wrap">
+  <div class="closed">
+    <div class="k-label">Säsongsstängt · öppnar automatiskt</div>
+    <h2 data-bind="closedH">Vi har stängt för säsongen.</h2>
+    <p data-bind="closedP">Julbeställningen öppnar den 24 november. Lämna din mejladress så säger vi till — julpåsarna tar slut snabbt.</p>
+    <div class="closed-form"><input placeholder="Din e-postadress"><button>Meddela mig</button></div>
+  </div>
+  <p class="closed-caption">Butiken växlar själv mellan öppet/stängt per datum — byggt för verksamheter som säljer i säsonger. Det här har inte Shopify.</p>
+</section>
+
+<div class="section-label">Typografi & färg</div>
+<section class="wrap">
+  <div class="spec">
+    <div class="type-row"><div class="type-meta">Display · Familjen Grotesk 700 (svenskt typsnitt)</div><div style="font-family:var(--display); font-weight:700; font-size:46px; letter-spacing:-0.022em; line-height:1.05;">Julens fisk, beredd vid kusten.</div></div>
+    <div class="type-row"><div class="type-meta">Rubrik · 700 / −1.5%</div><div style="font-family:var(--display); font-weight:700; font-size:26px; letter-spacing:-0.015em;">Superklara produktkort</div></div>
+    <div class="type-row"><div class="type-meta">Brödtext · Instrument Sans 400–600 / 16–17.5 px</div><div style="font-size:17px; max-width:36em;">Hierarkin görs med skala, vikt och tre färgnivåer — bläck, grå, accent — inte med linjer och ramar.</div></div>
+    <div class="type-row"><div class="type-meta">Etikett · 600 / versaler / grå</div><div class="k-label">Sista beställningsdag 18 december</div></div>
+  </div>
+  <div class="spec">
+    <div class="swatches">
+      <div class="swatch"><div class="chip" style="background:#F3F1EC;"></div><div class="label">Canvas — varm</div></div>
+      <div class="swatch"><div class="chip" style="background:#FFFFFF; border-bottom:1px solid var(--line);"></div><div class="label">Modul — vit</div></div>
+      <div class="swatch"><div class="chip" style="background:#1A1C1E;"></div><div class="label">Bläck</div></div>
+      <div class="swatch"><div class="chip" style="background:#0E5E63;"></div><div class="label">Djuphav — fiskhandel</div></div>
+      <div class="swatch"><div class="chip" style="background:#2B50E2;"></div><div class="label">Kobolt — tryckeri</div></div>
+      <div class="swatch"><div class="chip" style="background:#B0492B;"></div><div class="label">Tegel — restaurang</div></div>
+    </div>
+  </div>
+</section>
+
+<footer>v5 · NORD — bento-minimalism: varm canvas, vita moduler, ETT fokus per skärm, accent bara på handlingar och livesignaler. Mikrointeraktioner överallt, inget som skriker.</footer>
+
+<script>
+const LAX = 'https://restaurang-lorudden.myshopify.com/cdn/shop/products/Sillmans-6-Gravad-Lax_1200x.jpg?v=1655194088';
+
+const BRANDS = {
+  fisk: {
+    logo: 'Sillmans Fisk',
+    badge: 'Beställningen är öppen · Jul 2026',
+    h1: 'Julens fisk, beredd vid kusten.',
+    sub: 'Gravad lax, sill och färdiga julpåsar från Njurunda — beställ nu, hämta färskt veckan före jul.',
+    cta: 'Beställ till jul',
+    photo: LAX,
+    dlK: 'Sista beställningsdag', dlDate: '18 december', cd1: '5', cd2: '14', cd3: '32',
+    dlMetaHtml: 'Avhämtning <b>22–23 dec</b> · Njurunda hamn',
+    miniT: 'Gravad lax', miniS: '145 kr · egen beredning', miniImg: LAX,
+    trustT: '4,9 av 5', trustS: '1 200+ beställningar förra julen',
+    prodH: 'Allt för julbordet', prodSub: 'Beställ senast 18 december — begränsat antal.',
+    filt1: 'Lax', filt2: 'Sill', filt3: 'Paket',
+    storyLabel: 'Från kusten till julbordet',
+    st1T: 'Beredd vid kusten', st1P: 'Allt görs för hand i vårt eget kök i Njurunda, dagarna innan du hämtar.',
+    st2T: 'Packad färsk', st2P: 'Din beställning packas kall samma morgon och märks med ditt namn.',
+    st3T: 'Hämtas i hamnen', st3P: 'Visa SMS:et, hämta påsen, hem till julbordet. Klart.',
+    segLabel: 'Hur vill du få din beställning?', seg1: 'Hämta i butik', seg2: 'Leverans', shipLabel: 'Avhämtning',
+    products: [
+      { tag: 'Bästsäljare', name: 'Gravad lax', desc: 'Egen beredning, skivad och klar. Ca 500 g.', price: '145 kr', unit: '/st', img: LAX },
+      { tag: 'Klassiker', name: 'Inlagd sill — trio', desc: 'Senap, lök och skärgård. Tre burkar à 250 g.', price: '129 kr', unit: '' },
+      { tag: 'Färdigt paket', name: 'Julpåsen komplett', desc: 'Lax, sill, räkor och hovmästarsås. Räcker till 6–8.', price: '495 kr', unit: '' },
+    ],
+    cart: [ ['Gravad lax', '× 2', '290 kr', LAX], ['Julpåsen komplett', '× 1', '495 kr', null] ],
+    total: '785 kr',
+    sumNote: 'Hämtas 22–23 december i Njurunda hamn. Du får ett SMS när allt är packat och klart.',
+    closedH: 'Vi har stängt för säsongen.',
+    closedP: 'Julbeställningen öppnar den 24 november. Lämna din mejladress så säger vi till — julpåsarna tar slut snabbt.',
+  },
+  print: {
+    logo: 'Kvarnens Tryckeri',
+    badge: 'Expressproduktion tillgänglig',
+    h1: 'Tryck som syns, klart till fredag.',
+    sub: 'Visitkort, rollups och storformat — ladda upp ditt original eller låt oss formge. Fast pris, tydlig leveransdag.',
+    cta: 'Starta din order',
+    photo: null,
+    dlK: 'Order före 12.00', dlDate: 'Trycks samma dag', cd1: '2', cd2: '41', cd3: '08',
+    dlMetaHtml: 'Leverans <b>2–4 arbetsdagar</b> · hela landet',
+    miniT: 'Visitkort 250 st', miniS: '395 kr · klart på 24 h', miniImg: null,
+    trustT: '4,8 av 5', trustS: '870 företagskunder i år',
+    prodH: 'Mest beställda trycksaker', prodSub: 'Fasta priser. Fri korrektur innan vi trycker.',
+    filt1: 'Visitkort', filt2: 'Mässa', filt3: 'Storformat',
+    storyLabel: 'Från fil till färdigt tryck',
+    st1T: 'Ladda upp', st1P: 'Släpp din PDF eller låt oss sätta originalet åt dig.',
+    st2T: 'Godkänn korrektur', st2P: 'Du får ett korrektur på mejlen — inget trycks utan ditt OK.',
+    st3T: 'Tryckt & levererat', st3P: 'Order före 12.00 trycks samma dag och skickas spårbart.',
+    segLabel: 'Hur vill du få din order?', seg1: 'Hämta hos oss', seg2: 'Skicka till mig', shipLabel: 'Frakt',
+    products: [
+      { tag: 'Snabbast', name: 'Visitkort 250 st', desc: 'Obestruket 350 g, dubbelsidigt tryck.', price: '395 kr', unit: '' },
+      { tag: 'Mässfavorit', name: 'Rollup 85×200', desc: 'Aluminiumkassett och bärväska ingår.', price: '1 295 kr', unit: '' },
+      { tag: 'Storformat', name: 'Foamtavla 70×100', desc: 'Fotokvalitet på 5 mm skiva, kantfräst.', price: '749 kr', unit: '' },
+    ],
+    cart: [ ['Visitkort 250 st', '× 1', '395 kr', null], ['Rollup 85×200', '× 1', '1 295 kr', null] ],
+    total: '1 690 kr',
+    sumNote: 'Korrektur skickas till din mejl innan vi trycker. Inget trycks utan ditt godkännande.',
+    closedH: 'Semesterstängt v. 29–30.',
+    closedP: 'Vi trycker igen måndag 3 augusti. Lägg din order nu så hamnar den först i kön — eller lämna mejlen så påminner vi.',
+  },
+  resto: {
+    logo: 'Restaurang Lörudden',
+    badge: 'Förbeställning öppen · Midsommar',
+    h1: 'Sommarens bord står dukat.',
+    sub: 'Förbeställ midsommartallrikar och grillpaket — hämta vid bryggan, färdigt att duka fram.',
+    cta: 'Förbeställ nu',
+    photo: null,
+    dlK: 'Förbeställ senast', dlDate: '17 juni kl 18', cd1: '3', cd2: '22', cd3: '15',
+    dlMetaHtml: 'Avhämtning <b>midsommarafton</b> · vid bryggan',
+    miniT: 'Midsommartallrik', miniS: '295 kr/pers · säsong', miniImg: null,
+    trustT: '4,9 av 5', trustS: 'Älskad sedan 1987 vid Lörudden',
+    prodH: 'Midsommar vid havet', prodSub: 'Förbeställ senast 17 juni — begränsat antal tallrikar.',
+    filt1: 'Tallrikar', filt2: 'Smörgåsar', filt3: 'För två',
+    storyLabel: 'Från köket till bryggan',
+    st1T: 'Lagas på plats', st1P: 'Allt tillagas i restaurangköket samma dag, av råvaror från trakten.',
+    st2T: 'Packas kallt', st2P: 'Tallrikarna packas i kylväska, redo att ställas direkt på bordet.',
+    st3T: 'Hämtas vid bryggan', st3P: 'Sväng förbi bryggan, visa ditt SMS, glad midsommar.',
+    segLabel: 'Hur vill ni göra?', seg1: 'Hämta vid bryggan', seg2: 'Ät på plats', shipLabel: 'Avhämtning',
+    products: [
+      { tag: 'Säsong', name: 'Midsommartallrik', desc: 'Sill, färskpotatis, västerbottenpaj och jordgubbar.', price: '295 kr', unit: '/pers' },
+      { tag: 'Klassiker', name: 'Räkmacka klassisk', desc: 'Handskalade räkor på surdeg, citron och dill.', price: '165 kr', unit: '' },
+      { tag: 'För två', name: 'Grillkväll för två', desc: 'Marinerat kött, sommarsallad och brylépaj.', price: '590 kr', unit: '' },
+    ],
+    cart: [ ['Midsommartallrik', '× 2', '590 kr', null], ['Grillkväll för två', '× 1', '590 kr', null] ],
+    total: '1 180 kr',
+    sumNote: 'Hämtas på midsommarafton vid bryggan. Säg till i kassan om ni vill ha kalla drycker till.',
+    closedH: 'Köket vilar till våren.',
+    closedP: 'Vi öppnar igen inför midsommar. Lämna din mejl så får du veta exakt när förbeställningen öppnar.',
+  },
+};
+
+function renderProducts(b) {
+  document.getElementById('grid').innerHTML = b.products.map(p => `
+    <article class="card rise">
+      <div class="card-media">
+        ${p.img ? `<img src="${p.img}" alt="">` : `<div class="ph"></div>`}
+        <div class="card-tag">${p.tag}</div>
+      </div>
+      <div class="card-body">
+        <h3 class="card-title">${p.name}</h3>
+        <p class="card-desc">${p.desc}</p>
+        <div class="card-foot">
+          <span class="price">${p.price}<small>${p.unit}</small></span>
+          <span class="addwrap"><button class="btn-add">Lägg till</button></span>
+        </div>
+      </div>
+    </article>`).join('');
+}
+
+function renderSummary(b) {
+  document.getElementById('sumItems').innerHTML = b.cart.map(([n, q, p, im]) => `
+    <div class="sum-item">
+      ${im ? `<img class="im" src="${im}" alt="">` : `<div class="im"></div>`}
+      <div class="n">${n}<small>${q}</small></div>
+      <div class="p">${p}</div>
+    </div>`).join('');
+}
+
+function applyBrand(key) {
+  const b = BRANDS[key];
+  document.body.dataset.brand = key;
+  document.querySelectorAll('[data-bind]').forEach(el => {
+    const v = b[el.dataset.bind];
+    if (v != null) el.textContent = v;
+  });
+  document.querySelector('[data-bind="dlMeta"]').innerHTML = b.dlMetaHtml;
+  const heroImg = document.getElementById('heroImg');
+  heroImg.style.display = b.photo ? 'block' : 'none';
+  if (b.photo) heroImg.src = b.photo;
+  const miniImg = document.getElementById('miniImg'), miniPh = document.getElementById('miniPh');
+  miniImg.style.display = b.miniImg ? 'block' : 'none';
+  miniPh.style.display = b.miniImg ? 'none' : 'block';
+  if (b.miniImg) miniImg.src = b.miniImg;
+  renderProducts(b); renderSummary(b);
+}
+
+document.querySelectorAll('[data-pick]').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('[data-pick]').forEach(x => x.classList.toggle('active', x === btn));
+  applyBrand(btn.dataset.pick);
+}));
+
+// ett tryck → stegare (mjuk morph)
+document.getElementById('grid').addEventListener('click', e => {
+  const wrap = e.target.closest('.addwrap');
+  if (!wrap) return;
+  if (e.target.classList.contains('btn-add')) {
+    wrap.innerHTML = `<span class="stepper"><button data-d="-1">−</button><span class="q">1</span><button data-d="1">+</button></span>`;
+  } else if (e.target.dataset.d) {
+    const q = wrap.querySelector('.q');
+    const n = parseInt(q.textContent) + parseInt(e.target.dataset.d);
+    if (n < 1) wrap.innerHTML = `<button class="btn-add">Lägg till</button>`;
+    else q.textContent = n;
+  }
+});
+
+document.querySelectorAll('.seg').forEach(seg => seg.addEventListener('click', e => {
+  if (e.target.tagName !== 'BUTTON') return;
+  seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === e.target));
+}));
+
+applyBrand('fisk');
+</script>
+</body>
+</html>
