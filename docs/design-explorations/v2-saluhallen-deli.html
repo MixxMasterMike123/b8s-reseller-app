@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sillmans Fisk — Designsystem v2 · Saluhallen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAF6EF;          /* warm cream */
+    --surface: #FFFFFF;     /* porcelain white */
+    --ink: #23201B;         /* warm espresso ink */
+    --muted: #8A7E6F;       /* oat */
+    --accent: #1F4D3A;      /* deli green (brand token, per shop) */
+    --accent-soft: #1F4D3A12;
+    --season: #9E2B25;      /* berry — jul seasonal token */
+    --brass: #B08D4F;       /* hairline details */
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --display: 'Instrument Serif', Georgia, serif;
+    --body: 'General Sans', -apple-system, sans-serif;
+  }
+  [data-season="midsommar"] { --season: #5B8A3C; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 19px; line-height: 1.6; }
+
+  .chrome { position: sticky; top: 0; z-index: 50; background: var(--accent); color: var(--bg); padding: 10px 24px; display: flex; gap: 16px; align-items: center; font-size: 14px; }
+  .chrome strong { font-family: var(--display); font-size: 18px; font-weight: 400; }
+  .chrome .spacer { flex: 1; }
+  .season-toggle { display: flex; border: 1px solid #ffffff40; border-radius: 999px; overflow: hidden; }
+  .season-toggle button { background: none; border: none; color: var(--bg); font-family: var(--body); font-size: 13px; padding: 6px 16px; cursor: pointer; }
+  .season-toggle button.active { background: var(--bg); color: var(--accent); font-weight: 600; }
+  .section-label { max-width: 1140px; margin: 64px auto 12px; padding: 0 24px; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+
+  /* ===== HERO — split: serif panel + photography ===== */
+  .hero { max-width: 1140px; margin: 24px auto 0; background: var(--surface); border-radius: var(--radius-md); overflow: hidden; display: grid; grid-template-columns: 1.05fr 1fr; min-height: 560px; box-shadow: 0 1px 2px #23201B0A, 0 8px 40px -20px #23201B26; }
+  .hero-panel { padding: 72px 64px; display: flex; flex-direction: column; justify-content: center; }
+  .season-chip { display: inline-flex; align-items: center; gap: 10px; align-self: flex-start; background: var(--season); color: #FAF6EF; font-size: 14px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 7px 16px; border-radius: 999px; margin-bottom: 28px; }
+  .season-chip::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #FAF6EF; }
+  h1.hero-headline { font-family: var(--display); font-size: clamp(46px, 5.6vw, 68px); font-weight: 400; line-height: 1.06; letter-spacing: -0.01em; }
+  h1.hero-headline em { font-style: italic; color: var(--accent); }
+  .hero-sub { margin-top: 22px; font-size: 20px; color: var(--muted); max-width: 24em; }
+  .hero-dates { margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--brass); display: flex; gap: 36px; font-size: 16px; }
+  .hero-dates b { display: block; font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; margin-bottom: 2px; }
+  .hero-dates span { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .hero-cta-row { margin-top: 36px; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  .btn-primary { background: var(--accent); color: #FAF6EF; font-family: var(--body); font-weight: 600; font-size: 18px; padding: 17px 38px; border: none; border-radius: 999px; cursor: pointer; transition: transform .15s ease-out, box-shadow .15s ease-out; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 28px -12px var(--accent); }
+  .btn-quiet { background: none; border: none; font-size: 17px; font-weight: 600; color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 5px; text-decoration-color: var(--brass); }
+  .hero-photo { position: relative; background: #E8E0D2; }
+  .hero-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .hero-photo .credit { position: absolute; bottom: 14px; right: 16px; background: #23201BB3; color: #FAF6EF; font-size: 12px; padding: 4px 12px; border-radius: 999px; backdrop-filter: blur(4px); }
+  @media (max-width: 880px) { .hero { grid-template-columns: 1fr; } .hero-photo { min-height: 300px; order: -1; } .hero-panel { padding: 40px 28px; } }
+
+  /* ===== ORDER COUNTER ===== */
+  .counter { max-width: 1140px; margin: 0 auto; padding: 0 0; }
+  .counter-head { display: flex; align-items: baseline; justify-content: space-between; padding: 0 8px 14px; }
+  .counter-head h2 { font-family: var(--display); font-size: 38px; font-weight: 400; }
+  .counter-head h2 em { font-style: italic; color: var(--accent); }
+  .counter-head span { font-size: 15px; color: var(--muted); }
+  .order-row { display: grid; grid-template-columns: 110px 1fr auto auto; gap: 28px; align-items: center; background: var(--surface); border-radius: var(--radius-md); padding: 14px 28px 14px 14px; margin-bottom: 12px; box-shadow: 0 1px 2px #23201B08, 0 4px 24px -16px #23201B1F; }
+  .order-row img { width: 110px; height: 110px; border-radius: var(--radius-sm); object-fit: cover; background: #EFE9DD; }
+  .order-name { font-family: var(--display); font-size: 27px; font-weight: 400; }
+  .order-desc { font-size: 16px; color: var(--muted); margin-top: 2px; }
+  .order-price { font-size: 19px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .order-price small { display: block; font-size: 13px; color: var(--muted); font-weight: 500; text-align: right; }
+  .stepper { display: flex; align-items: center; background: var(--bg); border-radius: 999px; }
+  .stepper button { width: 50px; height: 50px; background: none; border: none; font-size: 26px; cursor: pointer; color: var(--accent); font-family: var(--body); border-radius: 50%; }
+  .stepper button:hover { background: var(--accent-soft); }
+  .stepper .qty { width: 38px; text-align: center; font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .summary-bar { position: sticky; bottom: 16px; max-width: 1140px; margin: 24px auto; background: var(--accent); color: #FAF6EF; border-radius: 999px; padding: 14px 16px 14px 32px; display: flex; align-items: center; gap: 24px; box-shadow: 0 16px 48px -16px #1F4D3A99; }
+  .summary-bar .total { font-size: 21px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .summary-bar .hint { color: #FAF6EFB3; font-size: 15px; flex: 1; }
+  .summary-bar .btn-go { background: #FAF6EF; color: var(--accent); font-weight: 700; font-size: 17px; font-family: var(--body); padding: 13px 30px; border: none; border-radius: 999px; cursor: pointer; }
+
+  /* ===== CLOSED SEASON ===== */
+  .closed { max-width: 1140px; margin: 24px auto; background: var(--accent); color: #FAF6EF; border-radius: var(--radius-md); padding: 100px 64px; text-align: center; position: relative; overflow: hidden; }
+  .closed .kicker { font-size: 14px; letter-spacing: 0.18em; text-transform: uppercase; color: #FAF6EF99; font-weight: 600; }
+  .closed h2 { font-family: var(--display); font-weight: 400; font-size: clamp(44px, 6vw, 72px); line-height: 1.1; margin: 22px auto 10px; max-width: 14em; }
+  .closed h2 em { font-style: italic; color: #E9C886; }
+  .closed .sub { color: #FAF6EFB3; font-size: 18px; }
+  .closed form { margin: 44px auto 0; display: flex; max-width: 460px; background: #FAF6EF; border-radius: 999px; padding: 5px; }
+  .closed input { flex: 1; padding: 12px 22px; font-size: 17px; font-family: var(--body); border: none; background: transparent; color: var(--ink); outline: none; }
+  .closed button { padding: 12px 26px; font-size: 16px; font-weight: 700; font-family: var(--body); background: var(--accent); color: #FAF6EF; border: none; border-radius: 999px; cursor: pointer; }
+  .closed .hairline { width: 72px; height: 1px; background: var(--brass); margin: 30px auto 0; }
+  .closed .place { margin-top: 26px; font-size: 14px; color: #FAF6EF80; }
+
+  /* ===== SPECIMENS ===== */
+  .spec { max-width: 1140px; margin: 0 auto 24px; background: var(--surface); border-radius: var(--radius-md); padding: 48px 56px; box-shadow: 0 1px 2px #23201B08; }
+  .type-row { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: baseline; padding: 18px 0; border-bottom: 1px solid #23201B0D; }
+  .type-row:last-child { border-bottom: none; }
+  .type-meta { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+  .swatch { border-radius: var(--radius-sm); overflow: hidden; border: 1px solid #23201B12; }
+  .swatch .chip { height: 84px; }
+  .swatch .label { padding: 10px 14px; background: var(--surface); font-size: 13px; font-weight: 600; }
+  .components { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  .btn-secondary { background: none; border: 1.5px solid var(--accent); color: var(--accent); font-weight: 600; font-size: 17px; font-family: var(--body); padding: 14px 32px; border-radius: 999px; cursor: pointer; }
+  .btn-secondary:hover { background: var(--accent-soft); }
+  .input-demo { padding: 15px 22px; font-size: 17px; font-family: var(--body); border: 1.5px solid #23201B26; border-radius: var(--radius-sm); background: var(--surface); min-width: 260px; }
+  .input-demo:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .alert { padding: 14px 22px; border-radius: var(--radius-sm); font-size: 16px; border: 1px solid; }
+  .alert.ok { background: #1F4D3A0F; border-color: #1F4D3A3D; color: #1F4D3A; }
+  .alert.warn { background: #B08D4F1A; border-color: #B08D4F66; color: #7A5E2B; }
+  .alert.err { background: #9E2B250F; border-color: #9E2B2542; color: #9E2B25; }
+  footer { text-align: center; padding: 48px; font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body data-season="jul">
+
+<div class="chrome">
+  <strong>Saluhallen</strong>&nbsp;· designsystem v2 — premium deli
+  <div class="spacer"></div>
+  <span>Säsongston (config-token):</span>
+  <div class="season-toggle">
+    <button class="active" onclick="setSeason('jul', this)">Jul</button>
+    <button onclick="setSeason('midsommar', this)">Midsommar</button>
+  </div>
+</div>
+
+<div class="section-label">1 · Startsidan = disken (säsong öppen) — med Sillmans riktiga foton</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-panel">
+    <div class="season-chip">Julluckan är öppen</div>
+    <h1 class="hero-headline">Julens delikatesser, <em>från vår disk</em> till ert bord.</h1>
+    <p class="hero-sub">Gravad lax, inlagd sill och räkor ur eget kök vid Bottenhavet. Beställ på två minuter — vi packar, ni hämtar.</p>
+    <div class="hero-dates">
+      <div><b>Beställ senast</b><span>20 december</span></div>
+      <div><b>Hämtas i Lörudden</b><span>22–23 december</span></div>
+    </div>
+    <div class="hero-cta-row">
+      <button class="btn-primary">Beställ till jul</button>
+      <button class="btn-quiet">Se hela disken ↓</button>
+    </div>
+  </div>
+  <div class="hero-photo">
+    <img src="https://restaurang-lorudden.myshopify.com/cdn/shop/products/Sillmans-6-Gravad-Lax_1200x.jpg?v=1655194088" alt="Gravad lax">
+    <div class="credit">Foto: Sillmans egna produktbilder</div>
+  </div>
+</div>
+
+<!-- ORDER COUNTER -->
+<div class="counter">
+  <div class="counter-head" style="margin-top:48px">
+    <h2>Veckans <em>disk</em></h2>
+    <span>priser inkl. moms · hämtas i Lörudden</span>
+  </div>
+
+  <div class="order-row">
+    <img src="https://restaurang-lorudden.myshopify.com/cdn/shop/products/Sillmans-6-Gravad-Lax_360x.jpg?v=1655194088" alt="">
+    <div>
+      <div class="order-name">Gravad lax</div>
+      <div class="order-desc">Egen gravning med dillstjälk &amp; vitpeppar — skivas på plats</div>
+    </div>
+    <div class="order-price">389 kr<small>per kg</small></div>
+    <div class="stepper"><button>−</button><span class="qty">1</span><button>+</button></div>
+  </div>
+
+  <div class="order-row">
+    <img src="https://restaurang-lorudden.myshopify.com/cdn/shop/products/Sillmans-6-Kallrokt-Lax_360x.jpg?v=1655194537" alt="">
+    <div>
+      <div class="order-name">Kallrökt lax</div>
+      <div class="order-desc">Rökt över al, tunt skivad</div>
+    </div>
+    <div class="order-price">419 kr<small>per kg</small></div>
+    <div class="stepper"><button>−</button><span class="qty">2</span><button>+</button></div>
+  </div>
+
+  <div class="order-row">
+    <img src="https://restaurang-lorudden.myshopify.com/cdn/shop/products/Sillmans-6-Pepparlax_360x.jpg?v=1655194708" alt="">
+    <div>
+      <div class="order-name">Julpåsen <span style="font-size:13px;color:var(--season);vertical-align:middle;font-family:var(--body);font-weight:700;letter-spacing:.06em"> MEST KÖPT</span></div>
+      <div class="order-desc">Allt till julbordet för 4–6 personer, färdigpackat</div>
+    </div>
+    <div class="order-price">895 kr<small>per påse</small></div>
+    <div class="stepper"><button>−</button><span class="qty">0</span><button>+</button></div>
+  </div>
+
+  <div class="summary-bar">
+    <span class="total">1 227 kr</span>
+    <span class="hint">3 varor · hämtas i Lörudden 22–23 dec</span>
+    <button class="btn-go">Till kassan →</button>
+  </div>
+</div>
+
+<div class="section-label">2 · Stängd säsong — disken vilar (49 veckor om året)</div>
+
+<div class="closed">
+  <div class="kicker">Sillmans Fisk · Lörudden</div>
+  <h2>Disken vilar.<br>Vi öppnar igen <em>1 december</em>.</h2>
+  <p class="sub">Julens beställningar öppnar om 171 dagar.</p>
+  <form onsubmit="return false">
+    <input type="email" placeholder="din e-postadress">
+    <button>Meddela mig</button>
+  </form>
+  <div class="hairline"></div>
+  <div class="place">Lörudden 173, Njurunda · vid Bottenhavet sedan tre generationer</div>
+</div>
+
+<div class="section-label">3 · Typografi — Instrument Serif · General Sans (fria licenser)</div>
+<div class="spec">
+  <div class="type-row"><div class="type-meta">Display · Instrument Serif<br>46–68px, kursiv accent</div><div style="font-family:var(--display);font-size:52px;line-height:1.08">Julens delikatesser, <em style="color:var(--accent)">från vår disk</em></div></div>
+  <div class="type-row"><div class="type-meta">Rubrik · Instrument Serif<br>27–38px</div><div style="font-family:var(--display);font-size:30px">Gravad lax ur eget kök</div></div>
+  <div class="type-row"><div class="type-meta">Brödtext · General Sans 400<br>19px / 1.6 — basstorlek</div><div>Beställ på två minuter och hämta vid kajen. Stor text och stora knappar är en designprincip — inte en eftergift.</div></div>
+  <div class="type-row"><div class="type-meta">Pris &amp; datum · General Sans 600<br>tabular-nums</div><div style="font-weight:600;font-size:19px;font-variant-numeric:tabular-nums">389 kr/kg · hämtas 22–23 dec · order 1042</div></div>
+</div>
+
+<div class="section-label">4 · Färgsystem — varumärkesgrönt per butik, säsongston som token</div>
+<div class="spec">
+  <div class="swatches">
+    <div class="swatch"><div class="chip" style="background:#FAF6EF"></div><div class="label">#FAF6EF · grädde</div></div>
+    <div class="swatch"><div class="chip" style="background:#FFFFFF;border-bottom:1px solid #eee"></div><div class="label">#FFFFFF · porslin</div></div>
+    <div class="swatch"><div class="chip" style="background:#23201B"></div><div class="label">#23201B · espressobläck</div></div>
+    <div class="swatch"><div class="chip" style="background:#8A7E6F"></div><div class="label">#8A7E6F · havre</div></div>
+    <div class="swatch"><div class="chip" style="background:#1F4D3A"></div><div class="label">#1F4D3A · diskgrön (varumärke)</div></div>
+    <div class="swatch"><div class="chip" style="background:#9E2B25"></div><div class="label">#9E2B25 · vinterbär (jul)</div></div>
+    <div class="swatch"><div class="chip" style="background:#5B8A3C"></div><div class="label">#5B8A3C · dill (midsommar)</div></div>
+    <div class="swatch"><div class="chip" style="background:#B08D4F"></div><div class="label">#B08D4F · mässing (detaljer)</div></div>
+  </div>
+</div>
+
+<div class="section-label">5 · Komponenter</div>
+<div class="spec">
+  <div class="components" style="margin-bottom:28px">
+    <button class="btn-primary">Beställ till jul</button>
+    <button class="btn-secondary">Se hämtningsinfo</button>
+    <button class="btn-quiet">Ändra beställning</button>
+    <input class="input-demo" placeholder="ditt namn">
+    <div class="stepper" style="background:var(--bg)"><button>−</button><span class="qty">3</span><button>+</button></div>
+  </div>
+  <div class="components">
+    <div class="alert ok">✓ Din beställning är mottagen — hämtas 22 dec kl 10–16</div>
+    <div class="alert warn">Julpåsen är nästan slutsåld</div>
+    <div class="alert err">Beställningen kunde inte genomföras</div>
+  </div>
+</div>
+
+<footer>Saluhallen · designsystem v2 för säsongshandel · genererad av /design-consultation</footer>
+
+<script>
+function setSeason(s, btn) {
+  document.body.dataset.season = s;
+  document.querySelectorAll('.season-toggle button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const headline = document.querySelector('.hero-headline');
+  const chip = document.querySelector('.season-chip');
+  const cta = document.querySelector('.hero-cta-row .btn-primary');
+  const dates = document.querySelectorAll('.hero-dates span');
+  if (s === 'midsommar') {
+    headline.innerHTML = 'Midsommarens delikatesser, <em>från vår disk</em> till ert bord.';
+    chip.lastChild.textContent = '';
+    chip.childNodes[0].textContent = '';
+    chip.innerHTML = 'Midsommarluckan är öppen';
+    cta.textContent = 'Beställ till midsommar';
+    dates[0].textContent = '17 juni';
+    dates[1].textContent = '18–19 juni';
+  } else {
+    headline.innerHTML = 'Julens delikatesser, <em>från vår disk</em> till ert bord.';
+    chip.innerHTML = 'Julluckan är öppen';
+    cta.textContent = 'Beställ till jul';
+    dates[0].textContent = '20 december';
+    dates[1].textContent = '22–23 december';
+  }
+}
+</script>
+</body>
+</html>

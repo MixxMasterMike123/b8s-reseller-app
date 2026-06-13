@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Designsystem v3 · SLICK — en mall, alla branscher</title>
+<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F6F6F4;
+    --surface: #FFFFFF;
+    --ink: #15171A;
+    --muted: #6B7075;
+    --line: #15171A14;
+    --accent: #135B73;        /* per-shop config token */
+    --accent-ink: #FFFFFF;
+    --accent-soft: #135B7310;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --display: 'Cabinet Grotesk', sans-serif;
+    --body: 'Satoshi', -apple-system, sans-serif;
+    --shadow: 0 1px 2px #15171A0A, 0 12px 32px -16px #15171A24;
+  }
+  [data-brand="print"] { --accent: #E8540C; --accent-soft: #E8540C10; }
+  [data-brand="resto"] { --accent: #7A1E2D; --accent-soft: #7A1E2D10; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 18px; line-height: 1.6; }
+
+  .chrome { position: sticky; top: 0; z-index: 50; background: var(--ink); color: #fff; padding: 10px 24px; display: flex; gap: 16px; align-items: center; font-size: 14px; }
+  .chrome strong { font-family: var(--display); font-weight: 800; letter-spacing: -0.01em; }
+  .chrome .spacer { flex: 1; }
+  .brand-toggle { display: flex; border: 1px solid #ffffff33; border-radius: 999px; overflow: hidden; }
+  .brand-toggle button { background: none; border: none; color: #fff; font-family: var(--body); font-size: 13px; padding: 7px 18px; cursor: pointer; }
+  .brand-toggle button.active { background: #fff; color: var(--ink); font-weight: 700; }
+  .section-label { max-width: 1180px; margin: 64px auto 16px; padding: 0 24px; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+
+  .shopnav { max-width: 1180px; margin: 28px auto 0; padding: 0 24px; display: flex; align-items: center; gap: 28px; }
+  .shopnav .logo { font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: -0.02em; }
+  .shopnav .links { display: flex; gap: 22px; font-weight: 500; font-size: 16px; color: var(--muted); }
+  .shopnav .spacer { flex: 1; }
+  .cartpill { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); padding: 9px 18px; border-radius: 999px; font-weight: 700; font-size: 15px; box-shadow: var(--shadow); }
+  .cartpill .dot { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: flex; align-items: center; justify-content: center; font-size: 12px; }
+
+  /* ===== HERO ===== */
+  .hero { max-width: 1180px; margin: 20px auto 0; padding: 0 24px; }
+  .hero-card { position: relative; border-radius: 24px; overflow: hidden; min-height: 520px; background: var(--ink); display: flex; align-items: flex-end; box-shadow: var(--shadow); }
+  .hero-media { position: absolute; inset: 0; }
+  .hero-media img { width: 100%; height: 100%; object-fit: cover; opacity: 0.88; }
+  .hero-media .ph { width: 100%; height: 100%; background:
+      radial-gradient(1200px 500px at 80% 0%, color-mix(in srgb, var(--accent) 55%, transparent), transparent 60%),
+      linear-gradient(160deg, #1d2126 0%, #15171A 60%); }
+  .hero-scrim { position: absolute; inset: 0; background: linear-gradient(180deg, #15171A00 30%, #15171AB8 78%, #15171AE6 100%); }
+  .hero-content { position: relative; padding: 56px; color: #fff; width: 100%; display: grid; grid-template-columns: 1.4fr auto; gap: 40px; align-items: end; }
+  .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: #FFFFFF1F; backdrop-filter: blur(8px); border: 1px solid #FFFFFF2E; color: #fff; font-size: 14px; font-weight: 700; padding: 8px 16px; border-radius: 999px; margin-bottom: 22px; }
+  .hero-badge .pulse { width: 8px; height: 8px; border-radius: 50%; background: #4ADE80; }
+  h1.hero-h { font-family: var(--display); font-weight: 800; font-size: clamp(44px, 5.6vw, 72px); line-height: 1.02; letter-spacing: -0.025em; max-width: 13em; }
+  .hero-sub { margin-top: 16px; font-size: 19px; color: #FFFFFFCC; max-width: 30em; }
+  .hero-actions { display: flex; flex-direction: column; gap: 12px; align-items: flex-end; }
+  .btn-hero { background: var(--accent); color: var(--accent-ink); font-family: var(--body); font-weight: 700; font-size: 19px; padding: 18px 42px; border: none; border-radius: 999px; cursor: pointer; white-space: nowrap; transition: transform .15s, box-shadow .2s; box-shadow: 0 12px 32px -10px color-mix(in srgb, var(--accent) 70%, transparent); }
+  .btn-hero:hover { transform: translateY(-2px); }
+  .hero-note { font-size: 14px; color: #FFFFFF99; }
+  @media (max-width: 820px) { .hero-content { grid-template-columns: 1fr; padding: 28px; } .hero-actions { align-items: flex-start; } }
+
+  /* ===== PRODUCT CARDS ===== */
+  .grid { max-width: 1180px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column; transition: transform .18s ease-out, box-shadow .18s ease-out; }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 2px 4px #15171A0A, 0 24px 48px -20px #15171A33; }
+  .card-media { aspect-ratio: 4/3; background: #ECECEA; position: relative; }
+  .card-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card-media .ph { width: 100%; height: 100%; display:flex; align-items:center; justify-content:center; color: var(--muted); font-size: 14px; font-weight: 600; background: linear-gradient(150deg, var(--accent-soft), #ECECEA); }
+  .card-tag { position: absolute; top: 14px; left: 14px; background: var(--ink); color: #fff; font-size: 12.5px; font-weight: 700; letter-spacing: .04em; padding: 6px 14px; border-radius: 999px; }
+  .card-body { padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .card-title { font-family: var(--display); font-weight: 700; font-size: 23px; letter-spacing: -0.01em; }
+  .card-desc { color: var(--muted); font-size: 15.5px; flex: 1; }
+  .card-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
+  .price { font-weight: 800; font-size: 22px; font-variant-numeric: tabular-nums; }
+  .price small { font-size: 13px; color: var(--muted); font-weight: 600; margin-left: 2px; }
+  .btn-add { background: var(--ink); color: #fff; font-weight: 700; font-size: 15.5px; font-family: var(--body); padding: 12px 22px; border: none; border-radius: 999px; cursor: pointer; transition: background .15s; }
+  .btn-add:hover { background: var(--accent); }
+  .btn-added { display: flex; align-items: center; background: var(--accent-soft); border-radius: 999px; }
+  .btn-added button { width: 42px; height: 42px; border: none; background: none; color: var(--accent); font-size: 20px; font-weight: 700; cursor: pointer; }
+  .btn-added .q { min-width: 26px; text-align: center; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+  /* ===== CHECKOUT ===== */
+  .checkout { max-width: 1180px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 900px) { .checkout { grid-template-columns: 1fr; } }
+  .co-panel { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 36px 40px; }
+  .steps { display: flex; gap: 8px; margin-bottom: 30px; }
+  .step { flex: 1; display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 700; color: var(--muted); }
+  .step .n { width: 30px; height: 30px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .step.active { color: var(--ink); }
+  .step.active .n { background: var(--accent); color: var(--accent-ink); }
+  .step.done .n { background: var(--ink); color: #fff; }
+  .co-panel label { display: block; font-size: 14.5px; font-weight: 700; margin: 18px 0 7px; }
+  .co-input { width: 100%; padding: 16px 18px; font-size: 17px; font-family: var(--body); border: 1.5px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); outline: none; transition: border-color .15s, box-shadow .15s; }
+  .co-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+  .co-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .btn-continue { width: 100%; margin-top: 28px; background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 19px; font-family: var(--body); padding: 18px; border: none; border-radius: 999px; cursor: pointer; }
+  .co-trust { display: flex; gap: 18px; justify-content: center; margin-top: 16px; font-size: 13.5px; color: var(--muted); }
+  .co-summary { background: var(--ink); color: #fff; border-radius: var(--radius); padding: 30px 32px; position: sticky; top: 70px; }
+  .co-summary h3 { font-family: var(--display); font-weight: 700; font-size: 21px; margin-bottom: 18px; }
+  .sum-row { display: flex; justify-content: space-between; font-size: 16px; padding: 7px 0; color: #FFFFFFC7; }
+  .sum-row span:last-child { font-variant-numeric: tabular-nums; }
+  .sum-row.total { border-top: 1px solid #FFFFFF26; margin-top: 12px; padding-top: 16px; color: #fff; font-weight: 800; font-size: 20px; }
+  .sum-edit { font-size: 14px; color: #FFFFFF80; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+  /* ===== SPECIMENS ===== */
+  .spec { max-width: 1180px; margin: 0 auto 24px; padding: 40px 48px; background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .type-row { display: grid; grid-template-columns: 230px 1fr; gap: 24px; align-items: baseline; padding: 16px 0; border-bottom: 1px solid var(--line); }
+  .type-row:last-child { border-bottom: none; }
+  .type-meta { font-size: 13px; color: var(--muted); font-weight: 700; }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+  .swatch { border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--line); }
+  .swatch .chip { height: 80px; }
+  .swatch .label { padding: 10px 14px; font-size: 13px; font-weight: 700; }
+  footer { text-align: center; padding: 48px; font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body data-brand="fisk">
+
+<div class="chrome">
+  <strong>SLICK</strong>&nbsp;· designsystem v3 — en mall, alla branscher
+  <div class="spacer"></div>
+  <span>Demobutik (accent + innehåll = config):</span>
+  <div class="brand-toggle">
+    <button class="active" onclick="setBrand('fisk', this)">Fiskhandel</button>
+    <button onclick="setBrand('print', this)">Tryckeri</button>
+    <button onclick="setBrand('resto', this)">Restaurang</button>
+  </div>
+</div>
+
+<div class="section-label">1 · Hero — djärv men klassisk, foto eller ren färgyta</div>
+
+<div class="shopnav">
+  <div class="logo" id="logo">Sillmans Fisk</div>
+  <div class="links"><span>Sortiment</span><span>Hämtning</span><span>Om oss</span></div>
+  <div class="spacer"></div>
+  <div class="cartpill"><span class="dot">3</span> 1 227 kr</div>
+</div>
+
+<div class="hero">
+  <div class="hero-card">
+    <div class="hero-media" id="heroMedia">
+      <img src="https://restaurang-lorudden.myshopify.com/cdn/shop/products/Sillmans-6-Gravad-Lax_1200x.jpg?v=1655194088" alt="">
+    </div>
+    <div class="hero-scrim"></div>
+    <div class="hero-content">
+      <div>
+        <div class="hero-badge"><span class="pulse"></span><span id="badge">Julbeställningen är öppen — hämtas 22–23 dec</span></div>
+        <h1 class="hero-h" id="heroH">Julens fisk.<br>Beställd på två minuter.</h1>
+        <p class="hero-sub" id="heroSub">Gravad lax, sill och räkor ur eget kök vid Bottenhavet. Vi packar — ni hämtar i Lörudden.</p>
+      </div>
+      <div class="hero-actions">
+        <button class="btn-hero" id="heroCta">Beställ nu</button>
+        <span class="hero-note">Kort · Klarna · Apple Pay</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-label">2 · Produktkort — superklara: bild, namn, pris, ett klick</div>
+
+<div class="grid" id="grid">
+  <div class="card">
+    <div class="card-media"><img src="https://restaurang-lorudden.myshopify.com/cdn/shop/products/Sillmans-6-Gravad-Lax_720x.jpg?v=1655194088" alt=""><span class="card-tag">MEST KÖPT</span></div>
+    <div class="card-body">
+      <div class="card-title">Gravad lax</div>
+      <div class="card-desc">Egen gravning med dill &amp; vitpeppar, skivas på plats.</div>
+      <div class="card-foot">
+        <span class="price">389 kr<small>/kg</small></span>
+        <div class="btn-added"><button>−</button><span class="q">1</span><button>+</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-media"><img src="https://restaurang-lorudden.myshopify.com/cdn/shop/products/Sillmans-6-Kallrokt-Lax_720x.jpg?v=1655194537" alt=""></div>
+    <div class="card-body">
+      <div class="card-title">Kallrökt lax</div>
+      <div class="card-desc">Rökt över al, tunt skivad.</div>
+      <div class="card-foot">
+        <span class="price">419 kr<small>/kg</small></span>
+        <button class="btn-add">Lägg till</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-media"><img src="https://restaurang-lorudden.myshopify.com/cdn/shop/products/Sillmans-6-Inkokt-lax_720x.jpg?v=1655194355" alt=""></div>
+    <div class="card-body">
+      <div class="card-title">Inkokt lax</div>
+      <div class="card-desc">Klassikern till julbordet, bit om ca 1 kg.</div>
+      <div class="card-foot">
+        <span class="price">365 kr<small>/kg</small></span>
+        <button class="btn-add">Lägg till</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-label">3 · Kassan — tre tydliga steg, summering alltid synlig</div>
+
+<div class="checkout">
+  <div class="co-panel">
+    <div class="steps">
+      <div class="step done"><span class="n">✓</span> Kontakt</div>
+      <div class="step active"><span class="n">2</span> Leverans</div>
+      <div class="step"><span class="n">3</span> Betalning</div>
+    </div>
+    <label>Namn</label>
+    <input class="co-input" value="Anna Andersson">
+    <div class="co-row">
+      <div><label>Telefon</label><input class="co-input" placeholder="070-123 45 67"></div>
+      <div><label>Postnummer</label><input class="co-input" placeholder="862 96"></div>
+    </div>
+    <label>Hämtning</label>
+    <input class="co-input" value="Lörudden — onsdag 22 dec, kl 10–16" readonly style="background:var(--accent-soft);border-color:transparent;font-weight:700">
+    <button class="btn-continue">Fortsätt till betalning →</button>
+    <div class="co-trust"><span>🔒 Säker betalning</span><span>Klarna</span><span>Kort</span><span>Apple Pay</span></div>
+  </div>
+  <div class="co-summary">
+    <h3>Din beställning</h3>
+    <div class="sum-row"><span>Gravad lax × 1 kg</span><span>389 kr</span></div>
+    <div class="sum-row"><span>Kallrökt lax × 2 kg</span><span>838 kr</span></div>
+    <div class="sum-row"><span>Hämtning Lörudden</span><span>0 kr</span></div>
+    <div class="sum-row total"><span>Totalt</span><span>1 227 kr</span></div>
+    <div style="margin-top:14px"><span class="sum-edit">Ändra beställning</span></div>
+  </div>
+</div>
+
+<div class="section-label">4 · Typografi &amp; färg — neutral stomme, accent per butik</div>
+<div class="spec">
+  <div class="type-row"><div class="type-meta">Display · Cabinet Grotesk 800<br>44–72px</div><div style="font-family:var(--display);font-weight:800;font-size:46px;letter-spacing:-0.02em;line-height:1.05">Beställd på två minuter.</div></div>
+  <div class="type-row"><div class="type-meta">Kort-titel · Cabinet Grotesk 700</div><div style="font-family:var(--display);font-weight:700;font-size:24px">Gravad lax</div></div>
+  <div class="type-row"><div class="type-meta">Brödtext · Satoshi 400 · 18px</div><div>Stommen är neutral — svart, vitt, grått. Varje butiks accentfärg, logotyp och foton gör mallen till deras.</div></div>
+  <div class="type-row"><div class="type-meta">Pris · Satoshi 800 tabular</div><div style="font-weight:800;font-size:22px;font-variant-numeric:tabular-nums">389 kr <span style="color:var(--muted);font-size:15px;font-weight:600">/kg · inkl. moms</span></div></div>
+</div>
+<div class="spec">
+  <div class="swatches">
+    <div class="swatch"><div class="chip" style="background:#F6F6F4"></div><div class="label">#F6F6F4 · ljusgrå bas</div></div>
+    <div class="swatch"><div class="chip" style="background:#FFFFFF;border-bottom:1px solid #eee"></div><div class="label">#FFFFFF · kortyta</div></div>
+    <div class="swatch"><div class="chip" style="background:#15171A"></div><div class="label">#15171A · bläck</div></div>
+    <div class="swatch"><div class="chip" style="background:#6B7075"></div><div class="label">#6B7075 · dämpad</div></div>
+    <div class="swatch"><div class="chip" style="background:#135B73"></div><div class="label">#135B73 · accent: fiskhandel</div></div>
+    <div class="swatch"><div class="chip" style="background:#E8540C"></div><div class="label">#E8540C · accent: tryckeri</div></div>
+    <div class="swatch"><div class="chip" style="background:#7A1E2D"></div><div class="label">#7A1E2D · accent: restaurang</div></div>
+  </div>
+</div>
+
+<footer>SLICK · designsystem v3 — neutral stomme + accent-token + butikens foton = varje kunds egen butik</footer>
+
+<script>
+const brands = {
+  fisk: {
+    logo: 'Sillmans Fisk',
+    badge: 'Julbeställningen är öppen — hämtas 22–23 dec',
+    h: 'Julens fisk.<br>Beställd på två minuter.',
+    sub: 'Gravad lax, sill och räkor ur eget kök vid Bottenhavet. Vi packar — ni hämtar i Lörudden.',
+    cta: 'Beställ nu',
+    photo: true
+  },
+  print: {
+    logo: 'PrintHuset',
+    badge: 'Leverans inom 3 arbetsdagar',
+    h: 'Tryck som syns.<br>Beställt på två minuter.',
+    sub: 'Visitkort, affischer och foamboard — ladda upp din design, vi trycker i Sundsvall.',
+    cta: 'Ladda upp & beställ',
+    photo: false
+  },
+  resto: {
+    logo: 'Bistro Norr',
+    badge: 'Catering — boka senast 3 dagar innan',
+    h: 'Festen levererad.<br>Beställd på två minuter.',
+    sub: 'Catering och färdiga menyer från vårt kök till ert sällskap, 8–80 gäster.',
+    cta: 'Beställ catering',
+    photo: false
+  }
+};
+function setBrand(b, btn) {
+  document.body.dataset.brand = b;
+  document.querySelectorAll('.brand-toggle button').forEach(x => x.classList.remove('active'));
+  btn.classList.add('active');
+  const d = brands[b];
+  document.getElementById('logo').textContent = d.logo;
+  document.getElementById('badge').textContent = d.badge;
+  document.getElementById('heroH').innerHTML = d.h;
+  document.getElementById('heroSub').textContent = d.sub;
+  document.getElementById('heroCta').textContent = d.cta;
+  document.getElementById('heroMedia').innerHTML = d.photo
+    ? '<img src="https://restaurang-lorudden.myshopify.com/cdn/shop/products/Sillmans-6-Gravad-Lax_1200x.jpg?v=1655194088" alt="">'
+    : '<div class="ph"></div>';
+  // product card media: photos for fisk, accent placeholders otherwise
+  document.querySelectorAll('.card-media').forEach((m) => {
+    if (b === 'fisk') return; // keep as-is on first load
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sillmans Fisk — Designsystem · Skärgårdsposten</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F4F1E8;          /* chalk paper */
+    --surface: #FDFBF4;     /* porcelain sheet */
+    --ink: #1A2421;         /* spruce ink */
+    --muted: #6C7570;       /* lichen */
+    --accent: #8C2F1B;      /* falu red (Christmas) */
+    --accent-soft: #8C2F1B14;
+    --night: #1B3A52;       /* baltic night (closed state) */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --display: 'Fraunces', Georgia, serif;
+    --body: 'Satoshi', -apple-system, sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+  [data-season="midsommar"] {
+    --accent: #2E6B3D;      /* birch/dill green */
+    --accent-soft: #2E6B3D14;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 19px; line-height: 1.6; }
+
+  /* ===== preview chrome ===== */
+  .chrome { position: sticky; top: 0; z-index: 50; background: var(--ink); color: var(--bg); padding: 10px 24px; display: flex; gap: 16px; align-items: center; font-size: 14px; }
+  .chrome strong { font-family: var(--display); font-weight: 600; }
+  .chrome .spacer { flex: 1; }
+  .season-toggle { display: flex; border: 1px solid #ffffff40; border-radius: 999px; overflow: hidden; }
+  .season-toggle button { background: none; border: none; color: var(--bg); font-family: var(--body); font-size: 13px; padding: 6px 16px; cursor: pointer; }
+  .season-toggle button.active { background: var(--bg); color: var(--ink); font-weight: 700; }
+  .section-label { max-width: 1100px; margin: 64px auto 12px; padding: 0 24px; font-family: var(--mono); font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+
+  /* ===== HERO POSTER ===== */
+  .poster { max-width: 1100px; margin: 24px auto 0; background: var(--surface); border: 1px solid #1A242114; border-radius: var(--radius-md); overflow: hidden; position: relative; }
+  .poster-inner { display: grid; grid-template-columns: 64px 1fr; min-height: 540px; }
+  .season-spine { border-right: 1px solid #1A242114; display: flex; align-items: center; justify-content: center; }
+  .season-spine span { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--mono); font-size: 14px; letter-spacing: 0.3em; color: var(--accent); font-weight: 600; }
+  .poster-main { padding: 72px 64px 56px; display: flex; flex-direction: column; justify-content: center; position: relative; }
+  .poster-kicker { font-family: var(--mono); font-size: 14px; color: var(--muted); letter-spacing: 0.08em; margin-bottom: 20px; }
+  .poster-kicker b { color: var(--accent); font-weight: 600; }
+  h1.poster-headline { font-family: var(--display); font-size: clamp(48px, 7vw, 84px); font-weight: 600; line-height: 1.02; letter-spacing: -0.02em; max-width: 9em; }
+  .poster-sub { margin-top: 24px; font-size: 21px; color: var(--muted); max-width: 26em; }
+  .poster-cta-row { margin-top: 40px; display: flex; gap: 20px; align-items: center; }
+  .btn-primary { background: var(--accent); color: #FDFBF4; font-family: var(--body); font-weight: 700; font-size: 19px; padding: 18px 40px; border: none; border-radius: var(--radius-sm); cursor: pointer; transition: transform .15s ease-out, box-shadow .15s ease-out; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px -8px var(--accent); }
+  .poster-meta { font-family: var(--mono); font-size: 14px; color: var(--muted); }
+  .herring { position: absolute; right: 56px; bottom: 48px; width: 220px; opacity: 0.92; color: var(--accent); }
+  @media (max-width: 800px) { .herring { display:none } .poster-main { padding: 48px 28px; } }
+
+  /* ===== ORDER COUNTER ===== */
+  .counter { max-width: 1100px; margin: 16px auto 0; }
+  .counter-head { display: flex; align-items: baseline; justify-content: space-between; padding: 0 8px 12px; }
+  .counter-head h2 { font-family: var(--display); font-size: 32px; font-weight: 600; }
+  .counter-head span { font-family: var(--mono); font-size: 14px; color: var(--muted); }
+  .order-row { display: grid; grid-template-columns: 88px 1fr auto auto; gap: 24px; align-items: center; background: var(--surface); border: 1px solid #1A242114; border-radius: var(--radius-md); padding: 16px 24px 16px 16px; margin-bottom: 10px; }
+  .order-row img, .thumb { width: 88px; height: 88px; border-radius: var(--radius-sm); object-fit: cover; background: #E9E4D6; }
+  .thumb { display:flex; align-items:center; justify-content:center; color: var(--accent); }
+  .thumb svg { width: 54px; }
+  .order-name { font-family: var(--display); font-size: 24px; font-weight: 500; }
+  .order-desc { font-size: 16px; color: var(--muted); margin-top: 2px; }
+  .order-price { font-family: var(--mono); font-size: 18px; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .stepper { display: flex; align-items: center; border: 1.5px solid var(--ink); border-radius: 999px; overflow: hidden; }
+  .stepper button { width: 48px; height: 48px; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); font-family: var(--body); }
+  .stepper button:hover { background: var(--accent-soft); }
+  .stepper .qty { width: 40px; text-align: center; font-family: var(--mono); font-size: 18px; font-weight: 600; }
+  .summary-bar { position: sticky; bottom: 16px; max-width: 1100px; margin: 24px auto; background: var(--ink); color: var(--bg); border-radius: var(--radius-md); padding: 18px 28px; display: flex; align-items: center; gap: 24px; box-shadow: 0 12px 40px -16px #1A242199; }
+  .summary-bar .total { font-family: var(--mono); font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .summary-bar .hint { color: #F4F1E899; font-size: 15px; flex: 1; }
+  .summary-bar .btn-primary { padding: 12px 28px; font-size: 17px; }
+
+  /* ===== CLOSED SEASON / ALMANAC ===== */
+  .closed { max-width: 1100px; margin: 24px auto; background: var(--night); color: #F4F1E8; border-radius: var(--radius-md); padding: 96px 64px; text-align: center; position: relative; overflow: hidden; }
+  .closed .kicker { font-family: var(--mono); font-size: 14px; letter-spacing: 0.2em; text-transform: uppercase; color: #F4F1E899; }
+  .closed .date { font-family: var(--display); font-size: clamp(90px, 14vw, 170px); font-weight: 600; line-height: 1; margin: 24px 0 8px; }
+  .closed .sun { font-family: var(--mono); font-size: 15px; color: #F4F1E880; margin-top: 28px; }
+  .closed form { margin: 40px auto 0; display: flex; max-width: 440px; gap: 0; }
+  .closed input { flex: 1; padding: 15px 20px; font-size: 17px; font-family: var(--body); border: 1.5px solid #F4F1E84D; background: transparent; color: #F4F1E8; border-radius: var(--radius-sm) 0 0 var(--radius-sm); outline: none; }
+  .closed input::placeholder { color: #F4F1E866; }
+  .closed button { padding: 15px 26px; font-size: 17px; font-weight: 700; font-family: var(--body); background: #F4F1E8; color: var(--night); border: none; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; cursor: pointer; }
+  .closed .drift { position: absolute; top: 44px; left: -260px; width: 200px; opacity: .16; color: #F4F1E8; animation: drift 90s linear infinite; }
+  @keyframes drift { from { transform: translateX(0) } to { transform: translateX(calc(100vw + 300px)) } }
+
+  /* ===== SPECIMENS ===== */
+  .spec { max-width: 1100px; margin: 0 auto 24px; background: var(--surface); border: 1px solid #1A242114; border-radius: var(--radius-md); padding: 48px 56px; }
+  .type-row { display: grid; grid-template-columns: 200px 1fr; gap: 24px; align-items: baseline; padding: 18px 0; border-bottom: 1px solid #1A24210F; }
+  .type-row:last-child { border-bottom: none; }
+  .type-meta { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+  .swatch { border-radius: var(--radius-sm); overflow: hidden; border: 1px solid #1A242114; }
+  .swatch .chip { height: 84px; }
+  .swatch .label { padding: 10px 14px; background: var(--surface); font-family: var(--mono); font-size: 13px; }
+  .components { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  .btn-secondary { background: none; border: 1.5px solid var(--ink); color: var(--ink); font-weight: 700; font-size: 17px; font-family: var(--body); padding: 14px 30px; border-radius: var(--radius-sm); cursor: pointer; }
+  .btn-secondary:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .btn-ghost { background: none; border: none; color: var(--accent); font-weight: 700; font-size: 17px; font-family: var(--body); cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+  .input-demo { padding: 14px 18px; font-size: 17px; font-family: var(--body); border: 1.5px solid #1A242133; border-radius: var(--radius-sm); background: var(--surface); min-width: 260px; }
+  .input-demo:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .alert { padding: 14px 20px; border-radius: var(--radius-sm); font-size: 16px; border: 1px solid; }
+  .alert.ok { background: #2E6B3D14; border-color: #2E6B3D44; color: #245430; }
+  .alert.warn { background: #B8860B14; border-color: #B8860B44; color: #7A5A08; }
+  .alert.err { background: #8C2F1B14; border-color: #8C2F1B44; color: #8C2F1B; }
+  footer { text-align: center; padding: 48px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body data-season="jul">
+
+<div class="chrome">
+  <strong>Skärgårdsposten</strong> · designsystem-förhandsvisning
+  <div class="spacer"></div>
+  <span>Säsongston (config-token):</span>
+  <div class="season-toggle">
+    <button class="active" onclick="setSeason('jul', this)">Jul · falu röd</button>
+    <button onclick="setSeason('midsommar', this)">Midsommar · björkgrön</button>
+  </div>
+</div>
+
+<div class="section-label">1 · Startsidan = beställningsdisken (säsong öppen)</div>
+
+<!-- HERO POSTER -->
+<div class="poster">
+  <div class="poster-inner">
+    <div class="season-spine"><span>JUL 2026 · LÖRUDDEN</span></div>
+    <div class="poster-main">
+      <div class="poster-kicker"><b>Luckan är öppen</b> &nbsp;·&nbsp; beställ senast 20 dec &nbsp;·&nbsp; hämtas 22–23 dec</div>
+      <h1 class="poster-headline">Julens fisk är&nbsp;klar.</h1>
+      <p class="poster-sub">Gravad lax, inlagd sill och räkor från vårt eget kök vid Bottenhavet — beställ på två minuter, hämta i Lörudden.</p>
+      <div class="poster-cta-row">
+        <button class="btn-primary">Beställ julfisk</button>
+        <span class="poster-meta">Betala säkert med kort eller Klarna</span>
+      </div>
+      <svg class="herring" viewBox="0 0 200 90" fill="none" aria-hidden="true">
+        <path d="M14 45 C 50 8, 120 8, 158 38 L 186 18 L 178 45 L 186 72 L 158 52 C 120 82, 50 82, 14 45 Z" fill="currentColor" opacity="0.9"/>
+        <circle cx="40" cy="40" r="4" fill="#F4F1E8"/>
+        <path d="M60 28 C 70 38, 70 52, 60 62 M84 24 C 96 36, 96 54, 84 66 M108 24 C 120 36, 120 54, 108 66" stroke="#F4F1E8" stroke-width="3" fill="none" opacity="0.7"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER COUNTER -->
+<div class="counter">
+  <div class="counter-head" style="margin-top:40px">
+    <h2>Beställningslista</h2>
+    <span>priser inkl. moms · hämtas i Lörudden</span>
+  </div>
+
+  <div class="order-row">
+    <div class="thumb"><svg viewBox="0 0 200 90" fill="none"><path d="M14 45 C 50 8, 120 8, 158 38 L 186 18 L 178 45 L 186 72 L 158 52 C 120 82, 50 82, 14 45 Z" fill="currentColor"/></svg></div>
+    <div>
+      <div class="order-name">Gravad lax</div>
+      <div class="order-desc">Egen gravning, dillstjälk &amp; vitpeppar · skivas på plats</div>
+    </div>
+    <div class="order-price">389 kr/kg</div>
+    <div class="stepper"><button>−</button><span class="qty">1</span><button>+</button></div>
+  </div>
+
+  <div class="order-row">
+    <div class="thumb"><svg viewBox="0 0 200 90" fill="none"><path d="M14 45 C 50 8, 120 8, 158 38 L 186 18 L 178 45 L 186 72 L 158 52 C 120 82, 50 82, 14 45 Z" fill="currentColor"/></svg></div>
+    <div>
+      <div class="order-name">Inlagd sill — tre smaker</div>
+      <div class="order-desc">Senap, lök &amp; klassisk ättika · burk om 500 g</div>
+    </div>
+    <div class="order-price">129 kr/st</div>
+    <div class="stepper"><button>−</button><span class="qty">2</span><button>+</button></div>
+  </div>
+
+  <div class="order-row">
+    <div class="thumb"><svg viewBox="0 0 200 90" fill="none"><path d="M14 45 C 50 8, 120 8, 158 38 L 186 18 L 178 45 L 186 72 L 158 52 C 120 82, 50 82, 14 45 Z" fill="currentColor"/></svg></div>
+    <div>
+      <div class="order-name">Julpåsen <span style="font-family:var(--mono);font-size:13px;color:var(--accent);vertical-align:middle;letter-spacing:.08em">· MEST KÖPT</span></div>
+      <div class="order-desc">Allt till julbordet för 4–6 personer, färdigpackat</div>
+    </div>
+    <div class="order-price">895 kr</div>
+    <div class="stepper"><button>−</button><span class="qty">0</span><button>+</button></div>
+  </div>
+
+  <div class="summary-bar">
+    <span class="total">647 kr</span>
+    <span class="hint">2 varor · hämtas i Lörudden 22–23 dec</span>
+    <button class="btn-primary">Till kassan →</button>
+  </div>
+</div>
+
+<div class="section-label">2 · Stängd säsong — almanacks-affischen (49 veckor om året)</div>
+
+<!-- CLOSED SEASON -->
+<div class="closed">
+  <svg class="drift" viewBox="0 0 200 90" fill="none" aria-hidden="true"><path d="M14 45 C 50 8, 120 8, 158 38 L 186 18 L 178 45 L 186 72 L 158 52 C 120 82, 50 82, 14 45 Z" fill="currentColor"/></svg>
+  <div class="kicker">Sillmans Fisk · Lörudden</div>
+  <div class="date">1 dec</div>
+  <div style="font-family:var(--display);font-size:28px;font-weight:500">öppnar julluckan</div>
+  <div class="sun">Luckan öppnar om 171 dagar · Solen gick upp 04:12 över Bottenhavet</div>
+  <form onsubmit="return false">
+    <input type="email" placeholder="din e-postadress">
+    <button>Få ett brev när luckan öppnar</button>
+  </form>
+</div>
+
+<div class="section-label">3 · Typografi — Fraunces · Satoshi · IBM Plex Mono (alla fria licenser)</div>
+<div class="spec">
+  <div class="type-row"><div class="type-meta">Display · Fraunces 600<br>48–84px</div><div style="font-family:var(--display);font-size:54px;font-weight:600;line-height:1.05">Julens fisk är klar.</div></div>
+  <div class="type-row"><div class="type-meta">Rubrik · Fraunces 500<br>24–32px</div><div style="font-family:var(--display);font-size:28px;font-weight:500">Gravad lax från eget kök</div></div>
+  <div class="type-row"><div class="type-meta">Brödtext · Satoshi 400<br>19px / 1.6 — basstorlek</div><div>Beställ på två minuter och hämta vid kajen i Lörudden. Stor text och stora knappar är en designprincip, inte en eftergift.</div></div>
+  <div class="type-row"><div class="type-meta">Pris &amp; datum · Plex Mono<br>tabular-nums</div><div style="font-family:var(--mono);font-size:19px">389 kr/kg · hämtas 22–23 dec · order nr 1042</div></div>
+</div>
+
+<div class="section-label">4 · Färgsystem — accenten är config-token per butik &amp; säsong</div>
+<div class="spec">
+  <div class="swatches">
+    <div class="swatch"><div class="chip" style="background:#F4F1E8"></div><div class="label">#F4F1E8 · kritpapper</div></div>
+    <div class="swatch"><div class="chip" style="background:#FDFBF4"></div><div class="label">#FDFBF4 · porslin</div></div>
+    <div class="swatch"><div class="chip" style="background:#1A2421"></div><div class="label">#1A2421 · granbläck</div></div>
+    <div class="swatch"><div class="chip" style="background:#6C7570"></div><div class="label">#6C7570 · lav</div></div>
+    <div class="swatch"><div class="chip" style="background:#8C2F1B"></div><div class="label">#8C2F1B · falu röd (jul)</div></div>
+    <div class="swatch"><div class="chip" style="background:#2E6B3D"></div><div class="label">#2E6B3D · björk (midsommar)</div></div>
+    <div class="swatch"><div class="chip" style="background:#1B3A52"></div><div class="label">#1B3A52 · baltisk natt</div></div>
+    <div class="swatch"><div class="chip" style="background:#0057D8"></div><div class="label">#0057D8 · kobolt (alt. butik)</div></div>
+  </div>
+</div>
+
+<div class="section-label">5 · Komponenter</div>
+<div class="spec">
+  <div class="components" style="margin-bottom:28px">
+    <button class="btn-primary">Beställ julfisk</button>
+    <button class="btn-secondary">Se hämtningsinfo</button>
+    <button class="btn-ghost">Ändra beställning</button>
+    <input class="input-demo" placeholder="ditt namn">
+    <div class="stepper"><button>−</button><span class="qty">3</span><button>+</button></div>
+  </div>
+  <div class="components">
+    <div class="alert ok">✓ Din beställning är mottagen — hämtas 22 dec kl 10–16</div>
+    <div class="alert warn">Julpåsen är nästan slutsåld</div>
+    <div class="alert err">Beställningen kunde inte genomföras</div>
+  </div>
+</div>
+
+<footer>Skärgårdsposten · designsystem för säsongshandel · genererad av /design-consultation</footer>
+
+<script>
+function setSeason(s, btn) {
+  document.body.dataset.season = s;
+  document.querySelectorAll('.season-toggle button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const headline = document.querySelector('.poster-headline');
+  const kicker = document.querySelector('.poster-kicker');
+  const spine = document.querySelector('.season-spine span');
+  const cta = document.querySelector('.poster-cta-row .btn-primary');
+  if (s === 'midsommar') {
+    headline.innerHTML = 'Midsommarens fisk är&nbsp;här.';
+    kicker.innerHTML = '<b>Luckan är öppen</b> &nbsp;·&nbsp; beställ senast 17 juni &nbsp;·&nbsp; hämtas 18–19 juni';
+    spine.textContent = 'MIDSOMMAR 2026 · LÖRUDDEN';
+    cta.textContent = 'Beställ midsommarfisk';
+  } else {
+    headline.innerHTML = 'Julens fisk är&nbsp;klar.';
+    kicker.innerHTML = '<b>Luckan är öppen</b> &nbsp;·&nbsp; beställ senast 20 dec &nbsp;·&nbsp; hämtas 22–23 dec';
+    spine.textContent = 'JUL 2026 · LÖRUDDEN';
+    cta.textContent = 'Beställ julfisk';
+  }
+}
+</script>
+</body>
+</html>
