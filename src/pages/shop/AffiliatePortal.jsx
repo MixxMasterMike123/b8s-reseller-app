@@ -44,40 +44,6 @@ const AffiliatePortal = () => {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
   const [generatingQR, setGeneratingQR] = useState(false);
 
-  // Product Groups for Link Generation
-  const productGroups = [
-    {
-      id: 'transparent',
-      name: 'B8Shield Transparent',
-      description: t('affiliate_product_transparent_desc', 'Diskret vasskydd för klart vatten'),
-      path: '/product/transparent'
-    },
-    {
-      id: 'rod',
-      name: t('affiliate_product_red_name', 'B8Shield Röd'),
-      description: t('affiliate_product_red_desc', 'Vasskydd för mörkt vatten'),
-      path: '/product/rod'
-    },
-    {
-      id: 'fluorescerande',
-      name: 'B8Shield Fluorescerande',
-      description: t('affiliate_product_fluorescent_desc', 'Vasskydd för djupt vatten'),
-      path: '/product/fluorescerande'
-    },
-    {
-      id: 'glitter',
-      name: 'B8Shield Glitter',
-      description: t('affiliate_product_glitter_desc', 'Vasskydd för extra synlighet'),
-      path: '/product/glitter'
-    },
-    {
-      id: '3pack',
-      name: 'B8Shield 3-pack',
-      description: 'Komplett startpaket med alla storlekar',
-      path: '/product/3pack'
-    }
-  ];
-
   // Generate affiliate link based on selection
   const generateLink = (productPath = '') => {
     return generateAffiliateLink(affiliateData?.affiliateCode, affiliateData?.preferredLang, productPath);
@@ -681,7 +647,7 @@ const AffiliatePortal = () => {
                 {t('affiliate_portal_marketing_materials', 'Marknadsföringsmaterial')}
               </h2>
               <p className="text-sm text-gray-600 leading-relaxed">
-                {t('affiliate_portal_materials_description', 'Ladda ner bilder, banners och annonser för att marknadsföra B8Shield effektivt.')}
+                {t('affiliate_portal_materials_description', 'Ladda ner bilder, banners och annonser för att marknadsföra butiken effektivt.')}
               </p>
             </div>
 

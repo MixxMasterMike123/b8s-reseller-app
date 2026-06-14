@@ -5,6 +5,7 @@ import CustomerLogin from './CustomerLogin';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
 import { getCountryAwareUrl, getAffiliateSeoTitle, getAffiliateSeoDescription } from '../../utils/productUrls';
+import { STORE } from '../../config/store';
 import { Helmet } from 'react-helmet-async';
 
 const AffiliateLogin = () => {
@@ -19,12 +20,12 @@ const AffiliateLogin = () => {
         <meta property="og:type" content="website" />
         <meta property="og:title" content={getAffiliateSeoTitle('login', currentLanguage)} />
         <meta property="og:description" content={getAffiliateSeoDescription('login', currentLanguage)} />
-        <meta property="og:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
+        {STORE.logoUrl && <meta property="og:image" content={STORE.logoUrl} />}
         <meta property="og:url" content={window.location.href} />
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content={getAffiliateSeoTitle('login', currentLanguage)} />
         <meta name="twitter:description" content={getAffiliateSeoDescription('login', currentLanguage)} />
-        <meta name="twitter:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
+        {STORE.logoUrl && <meta name="twitter:image" content={STORE.logoUrl} />}
       </Helmet>
     <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
       <ShopNavigation breadcrumb={t('breadcrumb_affiliate_login', 'Affiliate-inloggning')} />
@@ -74,7 +75,7 @@ const AffiliateLogin = () => {
                   to={getCountryAwareUrl('affiliate-registration')} 
                   className="inline-block bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-lg"
                 >
-                  {t('affiliate_login_become_affiliate', 'Bli en B8Shield affiliate')}
+                  {t('affiliate_login_become_affiliate', 'Bli affiliate')}
                 </Link>
               </div>
             </div>

@@ -1,5 +1,5 @@
 /**
- * Payment Methods Component for B8Shield B2C Shop
+ * Payment Methods Component for the B2C Shop
  * Integrates Stripe, Apple Pay, Google Pay, Klarna, and Swish
  * Works with existing SmartPrice currency system
  */
@@ -8,6 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useLanguageCurrency } from '../../contexts/LanguageCurrencyContext';
+import { STORE } from '../../config/store';
 import SmartPrice from './SmartPrice';
 import { 
   CreditCardIcon, 
@@ -49,7 +50,7 @@ const PaymentMethods = ({
         country: countryDetected || 'SE',
         currency: currency.toLowerCase(),
         total: {
-          label: 'B8Shield Order',
+          label: `${STORE.shopName} Order`,
           amount: Math.round(total * 100), // Convert to cents
         },
         requestPayerName: true,
@@ -197,7 +198,7 @@ const PaymentMethods = ({
         country: countryDetected || 'SE',
         currency: currency.toLowerCase(),
         total: {
-          label: 'B8Shield Order',
+          label: `${STORE.shopName} Order`,
           amount: Math.round(total * 100),
         },
         requestPayerName: true,

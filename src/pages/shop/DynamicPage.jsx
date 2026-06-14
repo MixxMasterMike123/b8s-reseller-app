@@ -108,7 +108,7 @@ const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => 
   useEffect(() => {
     if (page && page.title) {
       const title = getContentValue(page.title) || 'Untitled Page';
-      document.title = `${title} - B8Shield`;
+      document.title = title;
     }
   }, [page, getContentValue]);
 
@@ -222,12 +222,12 @@ const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => 
         <meta property="og:type" content="website" />
         <meta property="og:title" content={metaTitle || getLegalSeoTitle(getPageTypeFromSlug(slug))} />
         <meta property="og:description" content={metaDescription || getLegalSeoDescription(getPageTypeFromSlug(slug))} />
-        <meta property="og:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
+        
         <meta property="og:url" content={window.location.href} />
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content={metaTitle || getLegalSeoTitle(getPageTypeFromSlug(slug))} />
         <meta name="twitter:description" content={metaDescription || getLegalSeoDescription(getPageTypeFromSlug(slug))} />
-        <meta name="twitter:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
+        
       </Helmet>
       <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
         <ShopNavigation />

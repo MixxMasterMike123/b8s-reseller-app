@@ -4,6 +4,7 @@ import { CheckIcon } from '@heroicons/react/24/solid';
 import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
+import { STORE } from '../../config/store';
 import SmartPrice from './SmartPrice';
 
 const AddedToCartModal = ({ isVisible, onClose, addedItem, cartCount }) => {
@@ -108,7 +109,7 @@ const MobileNikeContent = ({ addedItem, onClose, t, getTotalItems, getContentVal
       <div className="flex space-x-4">
         <div className="shrink-0">
           <img
-            src={addedItem.image || '/images/B8S_logo.png'}
+            src={addedItem.image || STORE.logoUrl}
             alt={getContentValue(addedItem.name) || 'Product'}
             className="w-20 h-20 object-cover rounded-lg"
           />
@@ -183,7 +184,7 @@ const DesktopNikeContent = ({ addedItem, onClose, t, getTotalItems, getContentVa
       <div className="flex space-x-4">
         <div className="shrink-0">
           <img
-            src={addedItem.image || '/images/B8S_logo.png'}
+            src={addedItem.image || STORE.logoUrl}
             alt={getContentValue(addedItem.name) || 'Product'}
             className="w-20 h-20 object-cover rounded-lg"
           />

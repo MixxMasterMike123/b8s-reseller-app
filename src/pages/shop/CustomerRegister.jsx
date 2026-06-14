@@ -177,7 +177,7 @@ const CustomerRegister = () => {
       await addDoc(collection(db, 'b2cCustomers'), customerData);
 
       toast.dismiss(toastId);
-      toast.success(t('customer_register_success', 'Konto skapat! Välkommen till B8Shield!'), {
+      toast.success(t('customer_register_success', 'Konto skapat! Välkommen!'), {
         duration: 5000
       });
 

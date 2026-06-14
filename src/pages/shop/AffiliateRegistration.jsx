@@ -127,10 +127,10 @@ const AffiliateRegistration = () => {
           {!submitted ? (
             <>
               <h1 className="text-4xl font-bold text-gray-900 mb-4 text-center">
-                {t('affiliate_reg_title', 'Bli en B8Shield Partner')}
+                {t('affiliate_reg_title', 'Bli partner')}
               </h1>
               <p className="text-lg text-gray-600 mb-8 text-center max-w-2xl mx-auto">
-                {t('affiliate_reg_subtitle', 'Älskar du våra produkter? Gå med i vårt affiliate-program och tjäna provision genom att marknadsföra B8Shield till din publik.')}
+                {t('affiliate_reg_subtitle', 'Älskar du våra produkter? Gå med i vårt affiliate-program och tjäna provision genom att marknadsföra butiken till din publik.')}
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-6">
