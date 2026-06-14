@@ -61,11 +61,16 @@ Mechanism reuses what exists: Firestore rules get `isPlatform()` + `belongsToSho
 
 ## Phased plan (each phase: build → verify → commit+push → STOP for go before any deploy/migration)
 
-### Phase 0 — Shop resolution + `shopId` context (no data change yet)
-- Add `shops/{shopId}` collection + seed ONE shop doc ("b8shield") absorbing current `settings/app`.
-- Add a `ShopContext` that resolves the current shopId (from subdomain→`shops.domains`, fallback to the single default). The whole app reads `shopId` from context.
-- `shopConfig` seam switches from `settings/app` → `shops/{shopId}` (one-file change, by design).
+### Phase 0 — Shop resolution + `shopId` context (no data change yet) — PATH-PREFIX
+- Add a default shopId constant (the existing store; internal id can stay `b8shield` since it's never user-visible — meteorpr is the brand, shopId is a data key).
+- Add `ShopContext` that resolves the current shopId from the **first path segment** (`/{shopId}/{countryCode}/...`), with a fallback to the default shopId when the path has no valid shop prefix (so existing `/se/...` URLs keep working during transition). The whole app reads `shopId` from context.
+- **Router:** add `/:shopId/:countryCode/...` route forms. Keep the legacy `/:countryCode/...` forms working (redirect to default-shop-prefixed, or treat segment[0] as country when it matches se/gb/us) so nothing 404s mid-migration.
+- **URL helpers (productUrls.js):** the 3 helpers prepend the resolved shopId and read country from `segments[1]`. 70 call sites unchanged.
+- `shopConfig` seam switches `settings/app` → `shops/{shopId}` (shopConfig.js:18, one line) + thread shopId through StoreSettingsContext.
+- Seed ONE `shops/{shopId}` doc absorbing current `settings/app.storeIdentity`. **Seeding existing data = STOP-and-surface (Mikael runs/approves).** Until seeded, ShopContext falls back to `settings/app` so the live site is unaffected.
 - **No scoping enforced yet** — everything still works single-shop. Reversible, safe.
+
+**Phase 0 verification (must pass before commit):** every shop page loads under both `/{shopId}/se/...` and legacy `/se/...`; product/cart/checkout/affiliate links all resolve with the shopId prefix; admin console unaffected; build green; a read-only verifier confirms no link drops the shopId and no helper still reads country from `[0]`.
 
 ### Phase 1 — Stamp `shopId` on writes (backfill-safe)
 - Every create path writes `shopId` (products, orders incl. the Stripe webhook, customers, affiliates, pages, etc.).
@@ -101,9 +106,18 @@ Mechanism reuses what exists: Firestore rules get `isPlatform()` + `belongsToSho
 
 ---
 
-## Open questions for Mikael (before Phase 0)
+## Open questions for Mikael — ANSWERED (2026-06-14)
 
-1. **Shop identity routing:** how does a visitor's URL map to a shop? Options: (a) subdomain per shop (`sillmans.b8shield.com`), (b) path prefix, (c) custom domains stored in `shops.domains`. Affects Phase 0 resolution.
-2. **First real second shop:** is Sillmans the first tenant to provision after b8shield, or build the machinery first and provision later?
-3. **Scope of v1 Super Admin:** all 4 features in the first cut, or ship List + Kill-switch first (highest value: see shops + enforce payment), then Provision + Impersonate?
-4. **Billing:** is `paidUntil`/Stripe-subscription auto-disable in scope now, or just the manual kill switch for v1?
+1. **Shop identity routing → PATH PREFIX.** `shop-meteorpr.web.app/{shopId}/{countryCode}/...` (e.g. `/sillmans/se/product/...`). shopId is a new path segment inserted BEFORE the existing country code. No DNS/wildcard work needed. (See "Routing implications" below — this is the highest-bug-risk part.)
+2. **First real second shop → BUILD MACHINERY FIRST.** Complete Phases 0–4 with only the default shop, fully verified end-to-end, THEN provision real shops (Sillmans) via the Super Admin Provision flow. No real second-shop data enters before the rules gate (Phase 3) lands.
+3. **Super Admin v1 → ALL 4 FEATURES** in the first cut: List, Kill-switch, Provision, Impersonate.
+4. **Billing → MANUAL KILL SWITCH ONLY.** v1 = `shops/{shopId}.status: 'active'|'disabled'` toggle in Super Admin. `paidUntil` may exist as a stored field but nothing auto-disables. Defer Stripe-subscription automation.
+
+## Routing implications (path-prefix decision — audited 2026-06-14)
+
+Confirmed against the code:
+- **Shop vs admin** split (App.jsx:121-132) keys off the *hostname subdomain* (`shop`/`shop-*` → shop, else admin). UNCHANGED by path-prefix; shopId lives in the path, not the host.
+- **Current shop routes** (App.jsx:181-220) are `/:countryCode/...` (countryCode ∈ se/gb/us, validated by `CountryRouteValidator` + `isValidCountryCode`). Path-prefix inserts `/:shopId` BEFORE `:countryCode` → `/:shopId/:countryCode/...`.
+- **THE BUG RISK — URL helpers read `segments[0]` as country.** `src/utils/productUrls.js` has 3 helpers — `getCountryAwareUrl`, `getProductUrl`, `generateAffiliateLink` — that derive the country code from `window.location.pathname.split('/').filter(Boolean)[0]`. ~70 call sites depend on these. Inserting shopId at `[0]` shifts country to `[1]`; if not fixed in lockstep, EVERY internal link breaks. **Resolution: a `ShopContext` resolves shopId once from the path; the 3 helpers prepend shopId + read country from `[1]`. The 70 call sites stay unchanged.**
+- **Config seam confirmed one-line:** `src/config/shopConfig.js:18` — `shopConfigRef` already takes (ignores) a `shopId` arg and returns `doc(db,'settings','app')`. Phase 0 changes it to `doc(db,'shops',shopId)` and threads shopId from `StoreSettingsContext` (which today calls `loadShopConfig()` with no arg). 4 call sites total, all behind the seam.
+- **Impersonation pattern to reuse:** URL params `admin_access`/`admin_code` created in AdminAffiliateEdit.jsx:595-605, read + yellow "Admin-läge" banner rendered in AffiliatePortal.jsx:116-164/735-766. Super-Admin→shop impersonation reuses this shape.
