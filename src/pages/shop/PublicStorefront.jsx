@@ -128,15 +128,17 @@ const PublicStorefront = () => {
     // 🚨 CRITICAL: Always use getContentValue() for multilingual content to prevent React Error #31
     if (product.descriptions?.b2c) return getContentValue(product.descriptions.b2c);
     if (product.description) return getContentValue(product.description);
-    return t('product_description_fallback', '', { color: product.colorVariant || '' });
+    return ''; // neutral — no shared-translation fallback (would leak brand copy)
   };
 
-  // NORD hero copy: shop config wins, translation layer is the fallback so
-  // a shop's saved copy wins; the translation layer is the neutral fallback.
-  const heroHeadline = store.heroHeadline ||
-    `${t('hero_title_start', 'Fastna')} ${t('hero_title_middle', 'aldrig')} ${t('hero_title_end', 'mer!')}`;
-  const heroSubtitle = store.heroSubtitle ||
-    t('hero_subtitle', 'Välkommen till vår butik.');
+  // MULTI-TENANT: shop-specific COPY comes from THIS shop's config, with a
+  // NEUTRAL hardcoded default — NOT the shared t() translation layer. The
+  // global translations are per-platform, so reading hero/section copy from
+  // t() would leak one shop's saved copy (e.g. b8shield's) onto every other
+  // shop. So: store.<field> || neutral. (Global UI labels — buttons, nav —
+  // still use t().)
+  const heroHeadline = store.heroHeadline || store.shopName || 'Välkommen';
+  const heroSubtitle = store.heroSubtitle || store.tagline || '';
 
   const bestseller = products[0] || null;
 
@@ -407,11 +409,11 @@ const PublicStorefront = () => {
         <section id="products" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
           <div className="mb-10">
             <h2 className="font-display font-bold text-3xl lg:text-4xl tracking-tight text-ink">
-              {t('products_section_title', 'Våra Produkter')}
+              {store.productsTitle || 'Våra produkter'}
             </h2>
-            {t('products_section_subtitle', '') && (
+            {store.productsSubtitle && (
               <p className="text-ink-muted mt-2 max-w-2xl">
-                {t('products_section_subtitle', '')}
+                {store.productsSubtitle}
               </p>
             )}
           </div>
@@ -431,10 +433,10 @@ const PublicStorefront = () => {
                   const productName = getContentValue(product.name);
                   const name = typeof productName === 'string' && productName
                     ? productName
-                    : t('product_name_fallback', '{{group}}', { group: product.group || '' });
+                    : (product.group || 'Produkt'); // neutral fallback, no shared t()
 
                   const descRaw = getB2cProductDescription(product);
-                  const description = typeof descRaw === 'string' ? descRaw : t('product_description_fallback', '');
+                  const description = typeof descRaw === 'string' ? descRaw : '';
 
                   return (
                     <NordProductCard
@@ -474,7 +476,8 @@ const PublicStorefront = () => {
             { n: '03', title: t('feature_step3_title', 'Trygg betalning'), text: t('feature_step3_text', 'Betala säkert med dina favoritbetalsätt.') },
           ];
           const steps = storySteps || fallbackSteps;
-          const title = store.storyTitle || t('features_section_title', '');
+          // Shop-specific heading from config; neutral default (no shared t()).
+          const title = store.storyTitle || '';
 
           return (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 lg:pb-20">
@@ -509,11 +512,11 @@ const PublicStorefront = () => {
         <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
           <div className="text-center mb-12">
             <h2 className="font-display font-bold text-3xl lg:text-4xl tracking-tight text-ink mb-3">
-              {t('reviews_section_title', 'Vad våra kunder säger')}
+              {store.reviewsTitle || 'Vad våra kunder säger'}
             </h2>
-            {t('reviews_section_subtitle', '') && (
+            {store.reviewsSubtitle && (
               <p className="text-lg text-ink-muted">
-                {t('reviews_section_subtitle', '')}
+                {store.reviewsSubtitle}
               </p>
             )}
           </div>
