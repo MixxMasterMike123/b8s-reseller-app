@@ -115,11 +115,10 @@ const AdminDashboard = () => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        
-        // Fetch B2B users stats
-        const usersRef = collection(db, 'users');
-        const usersSnap = await getDocs(usersRef);
-        
+
+        // (B2B users stat removed 2026-06-15 — reseller function retired; no
+        // longer read the global `users` collection here.)
+
         // Fetch B2C customers stats (scoped to the active shop)
         const b2cCustomersRef = collection(db, 'b2cCustomers');
         const b2cCustomersSnap = await getDocs(
@@ -179,7 +178,6 @@ const AdminDashboard = () => {
         ).length;
 
         setStats({
-          totalUsers: usersSnap.size,
           totalRevenue: Math.round(totalRevenue),
           b2cCustomers: b2cCustomersSnap.size,
           totalOrders: ordersSnap.size,
@@ -328,35 +326,7 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* B2B Users */}
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="shrink-0 bg-purple-500 rounded-md p-3">
-                  <svg className="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    {/* B2B resellers live in `users`, which is excluded from
-                        tenancy (no shopId) — so this count is platform-wide, not
-                        shop-specific. Labelled "alla butiker" to make that clear,
-                        especially under operator impersonation. */}
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">B2B Kunder <span className="text-xs font-normal text-gray-400">(alla butiker)</span></dt>
-                    <dd className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.totalUsers}</dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-            <div className="bg-gray-50 dark:bg-gray-700 px-5 py-3">
-              <div className="text-sm">
-                <Link to="/admin/users" className="font-medium text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">
-                  Hantera kunder
-                </Link>
-              </div>
-            </div>
-          </div>
+          {/* B2B Kunder card removed (2026-06-15) — reseller function retired. */}
 
           {/* Affiliate Revenue */}
           <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg">

@@ -17,7 +17,11 @@ const AdminUsers = () => {
   const [editingMarginals, setEditingMarginals] = useState({});
   
   // 🆕 ADD: Tab state for separating B2B customers from Admin users
-  const [activeTab, setActiveTab] = useState('customers');
+  // B2B reseller function retired (2026-06-15) — this page now manages ADMIN
+  // users only. The B2B-customer ("Kunder") tab is hidden (the 372 legacy
+  // reseller records stay untouched in `users`; see memory b2b-removal). Default
+  // to the admins tab; the customers tab button is no longer rendered.
+  const [activeTab, setActiveTab] = useState('admins');
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -175,19 +179,11 @@ const AdminUsers = () => {
           </div>
         </div>
 
-        {/* 🆕 ADD: Tab Navigation */}
+        {/* Tab navigation — B2B reseller function retired (2026-06-15); the
+            "Kunder" (B2B customer) tab is no longer rendered. Admin-user
+            management remains. */}
         <div className="border-b border-gray-200 dark:border-gray-700">
           <nav className="px-4 sm:px-6 -mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab('customers')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-                activeTab === 'customers'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-              }`}
-            >
-              Kunder ({users.filter(u => u.role !== 'admin').length})
-            </button>
             <button
               onClick={() => setActiveTab('admins')}
               className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${

@@ -88,10 +88,13 @@ const AppLayout = ({ children }) => {
       description: t('nav.admin_dashboard_desc', 'Översikt och statistik'),
     },
     {
-      name: t('nav.admin_customers', 'B2B Kunder och Admins'),
+      // B2B reseller function retired (2026-06-15) — this entry now manages
+      // platform administrators only (the B2B-customer tab is hidden in
+      // AdminUsers). B2C customers have their own entry below.
+      name: t('nav.admin_admins', 'Administratörer'),
       path: '/admin/users',
       icon: UsersIcon,
-      description: t('nav.admin_customers_desc', 'Hantera B2B-kunder och administratörer'),
+      description: t('nav.admin_admins_desc', 'Hantera administratörer'),
     },
     {
       name: t('nav.admin_b2c_customers', 'B2C Kunder'),
