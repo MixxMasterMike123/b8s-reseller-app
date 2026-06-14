@@ -6,9 +6,10 @@ import {
   deleteDoc, 
   getDocs, 
   getDoc,
-  query, 
+  query,
+  where,
   orderBy,
-  serverTimestamp 
+  serverTimestamp
 } from 'firebase/firestore';
 import { 
   ref, 
@@ -18,6 +19,7 @@ import {
 } from 'firebase/storage';
 import { db, storage } from '../firebase/config';
 import { withShopId } from '../config/withShopId';
+import { DEFAULT_SHOP_ID } from '../config/tenancy';
 
 // File type detection and validation
 export const getFileType = (fileName) => {
@@ -120,10 +122,11 @@ export const uploadGenericMaterial = async (file, materialData, shopId) => {
   }
 };
 
-export const getGenericMaterials = async () => {
+export const getGenericMaterials = async (shopId) => {
   try {
     const q = query(
-      collection(db, 'marketingMaterials'), 
+      collection(db, 'marketingMaterials'),
+      where('shopId', '==', shopId || DEFAULT_SHOP_ID),
       orderBy('createdAt', 'desc')
     );
     const querySnapshot = await getDocs(q);

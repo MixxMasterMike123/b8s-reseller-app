@@ -59,7 +59,7 @@ function AdminMarketingMaterials() {
   const loadMaterials = async () => {
     try {
       setLoading(true);
-      const materialsData = await getGenericMaterials();
+      const materialsData = await getGenericMaterials(shopId);
       setMaterials(materialsData);
     } catch (error) {
       console.error('Error loading materials:', error);

@@ -243,10 +243,11 @@ export const OrderProvider = ({ children }) => {
         try {
           const ordersQuery = query(
             collection(db, "orders"),
+            where("shopId", "==", shopId),
             where("userId", "==", currentUser.uid),
             orderBy("createdAt", "desc")
           );
-          
+
           const querySnapshot = await getDocs(ordersQuery);
           
           querySnapshot.forEach((doc) => {
@@ -269,7 +270,7 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [currentUser, demoOrders]);
+  }, [currentUser, demoOrders, shopId]);
 
   // Get recent orders
   const getRecentOrders = useCallback(async (limitCount = 5) => {
@@ -295,9 +296,10 @@ export const OrderProvider = ({ children }) => {
         let ordersQuery;
         
         if (isAdmin) {
-          // Admin can see all orders
+          // Admin can see all orders for THIS shop
           ordersQuery = query(
             collection(db, "orders"),
+            where("shopId", "==", shopId),
             orderBy("createdAt", "desc"),
             limit(limitCount)
           );
@@ -305,6 +307,7 @@ export const OrderProvider = ({ children }) => {
           // Regular users only see their own orders
           ordersQuery = query(
             collection(db, "orders"),
+            where("shopId", "==", shopId),
             where("userId", "==", currentUser.uid),
             orderBy("createdAt", "desc"),
             limit(limitCount)
@@ -329,7 +332,7 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [currentUser, isAdmin, demoOrders]);
+  }, [currentUser, isAdmin, demoOrders, shopId]);
 
   // Get all orders (admin only)
   const getAllOrders = useCallback(async () => {
@@ -363,6 +366,7 @@ export const OrderProvider = ({ children }) => {
           console.log('getAllOrders: Fetching from named database (b8s-reseller-db)');
           const namedDbOrdersQuery = query(
             collection(db, "orders"),
+            where("shopId", "==", shopId),
             orderBy("createdAt", "desc")
           );
           
@@ -391,7 +395,7 @@ export const OrderProvider = ({ children }) => {
       console.log('getAllOrders: Setting loading to false');
       setLoading(false);
     }
-  }, [currentUser, isAdmin, demoOrders]);
+  }, [currentUser, isAdmin, demoOrders, shopId]);
 
   // Update order status (admin only)
   const updateOrderStatus = useCallback(async (orderId, newStatus, additionalData = {}) => {
@@ -635,8 +639,8 @@ export const OrderProvider = ({ children }) => {
           completedOrders
         };
       } else {
-        // Real Firebase order stats
-        const ordersSnapshot = await getDocs(collection(db, "orders"));
+        // Real Firebase order stats (scoped to this shop)
+        const ordersSnapshot = await getDocs(query(collection(db, "orders"), where("shopId", "==", shopId)));
         
         let totalOrders = 0;
         let newOrders = 0;
@@ -669,7 +673,7 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [currentUser, isAdmin, demoOrders, isDemoMode]);
+  }, [currentUser, isAdmin, demoOrders, isDemoMode, shopId]);
 
   // Delete order (admin only)
   const deleteOrder = useCallback(async (orderId) => {

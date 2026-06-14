@@ -119,9 +119,10 @@ export const isValidAffiliateCodeFormat = (code) => {
  * @param {string} excludeAffiliateId - Optional affiliate ID to exclude from uniqueness check
  * @returns {object} - Validation result with isValid, error, and normalized code
  */
-export const validateCustomAffiliateCode = async (code, excludeAffiliateId = null) => {
+export const validateCustomAffiliateCode = async (code, excludeAffiliateId = null, shopId = undefined) => {
   const { collection, query, where, getDocs } = await import('firebase/firestore');
   const { db } = await import('../firebase/config');
+  const { DEFAULT_SHOP_ID } = await import('../config/tenancy');
 
   if (!code || typeof code !== 'string') {
     return { isValid: false, error: 'Affiliate code is required' };
@@ -153,7 +154,7 @@ export const validateCustomAffiliateCode = async (code, excludeAffiliateId = nul
   // Uniqueness check
   try {
     const affiliatesRef = collection(db, 'affiliates');
-    const affiliateQuery = query(affiliatesRef, where('affiliateCode', '==', normalizedCode));
+    const affiliateQuery = query(affiliatesRef, where('shopId', '==', shopId || DEFAULT_SHOP_ID), where('affiliateCode', '==', normalizedCode));
     const querySnapshot = await getDocs(affiliateQuery);
     
     if (!querySnapshot.empty) {

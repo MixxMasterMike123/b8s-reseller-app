@@ -31,7 +31,7 @@ export const useAmbassadorContacts = () => {
     // 🎯 NEW: Use same affiliates collection as Affiliate Admin
     const contactsRef = collection(db, 'affiliates');
     // 🎯 NEW: Show ALL affiliates (both regular affiliates and ambassadors) like Dining Wagon shows all B2B customers
-    const q = query(contactsRef, orderBy('updatedAt', 'desc'));
+    const q = query(contactsRef, where('shopId', '==', shopId), orderBy('updatedAt', 'desc'));
     
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {
@@ -110,7 +110,7 @@ export const useAmbassadorContacts = () => {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [shopId]);
 
   // Create new ambassador contact
   const addContact = useCallback(async (contactData) => {

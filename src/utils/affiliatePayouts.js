@@ -1,5 +1,6 @@
 import { db } from '../firebase/config';
 import { withShopId } from '../config/withShopId';
+import { DEFAULT_SHOP_ID } from '../config/tenancy';
 import { 
   collection, 
   addDoc, 
@@ -65,7 +66,7 @@ export const uploadInvoicePDF = async (file, affiliateId, invoiceNumber) => {
 export const processAffiliatePayout = async (affiliateId, payoutData, shopId) => {
   try {
     const verifyBalance = async () => {
-      const ordersQuery = query(collection(db, 'orders'), where('affiliateId', '==', affiliateId));
+      const ordersQuery = query(collection(db, 'orders'), where('shopId', '==', shopId || DEFAULT_SHOP_ID), where('affiliateId', '==', affiliateId));
       const ordersSnapshot = await getDocs(ordersQuery);
       let totalRecalc = 0;
       ordersSnapshot.forEach(doc => {
@@ -153,12 +154,13 @@ export const processAffiliatePayout = async (affiliateId, payoutData, shopId) =>
 /**
  * Get payout history for an affiliate
  */
-export const getAffiliatePayoutHistory = async (affiliateId) => {
+export const getAffiliatePayoutHistory = async (affiliateId, shopId) => {
   try {
     // Use a simpler query that doesn't require a composite index
     // We'll filter by affiliateId and sort in memory if needed
     const payoutsQuery = query(
       collection(db, 'affiliatePayouts'),
+      where('shopId', '==', shopId || DEFAULT_SHOP_ID),
       where('affiliateId', '==', affiliateId)
     );
     
@@ -185,10 +187,11 @@ export const getAffiliatePayoutHistory = async (affiliateId) => {
 /**
  * Get all payouts (admin view)
  */
-export const getAllPayouts = async () => {
+export const getAllPayouts = async (shopId) => {
   try {
     const payoutsQuery = query(
       collection(db, 'affiliatePayouts'),
+      where('shopId', '==', shopId || DEFAULT_SHOP_ID),
       orderBy('payoutDate', 'desc')
     );
     

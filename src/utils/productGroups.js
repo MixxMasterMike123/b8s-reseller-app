@@ -11,6 +11,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { withShopId } from '../config/withShopId';
+import { DEFAULT_SHOP_ID } from '../config/tenancy';
 
 // Product Groups collection for B2C shared content
 const PRODUCT_GROUPS_COLLECTION = 'productGroups';
@@ -172,9 +173,9 @@ export const saveProductGroupContent = async (groupId, groupData, currentUserUid
 /**
  * Get all product groups for admin management
  */
-export const getAllProductGroups = async () => {
+export const getAllProductGroups = async (shopId) => {
   try {
-    const q = query(collection(db, PRODUCT_GROUPS_COLLECTION));
+    const q = query(collection(db, PRODUCT_GROUPS_COLLECTION), where('shopId', '==', shopId || DEFAULT_SHOP_ID));
     const querySnapshot = await getDocs(q);
     
     const groups = [];
@@ -195,12 +196,13 @@ export const getAllProductGroups = async () => {
 /**
  * Get products that belong to a specific group
  */
-export const getProductsInGroup = async (groupId) => {
+export const getProductsInGroup = async (groupId, shopId) => {
   if (!groupId) return [];
-  
+
   try {
     const q = query(
       collection(db, 'products'),
+      where('shopId', '==', shopId || DEFAULT_SHOP_ID),
       where('group', '==', groupId),
       where('isActive', '==', true)
     );

@@ -1,9 +1,10 @@
 import { db } from '../firebase/config';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { DEFAULT_SHOP_ID } from '../config/tenancy';
 
 // Generate Google Shopping Product Feed XML
-export const generateProductFeed = async () => {
-  const products = await getDocs(collection(db, 'products'));
+export const generateProductFeed = async (shopId) => {
+  const products = await getDocs(query(collection(db, 'products'), where('shopId', '==', shopId || DEFAULT_SHOP_ID)));
   
   const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">

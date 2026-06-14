@@ -11,6 +11,7 @@ import {
 import { httpsCallable, getFunctions } from 'firebase/functions';
 import { auth, db } from '../firebase/config';
 import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { useShopId } from './ShopContext';
 import toast from 'react-hot-toast';
 
 const SimpleAuthContext = createContext();
@@ -20,6 +21,7 @@ export function useSimpleAuth() {
 }
 
 export function SimpleAuthContextProvider({ children }) {
+  const shopId = useShopId();
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -34,6 +36,7 @@ export function SimpleAuthContextProvider({ children }) {
       // Find the B2C customer document
       const customersQuery = query(
         collection(db, 'b2cCustomers'),
+        where('shopId', '==', shopId),
         where('firebaseAuthUid', '==', user.uid)
       );
       

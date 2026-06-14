@@ -227,7 +227,7 @@ const AdminAffiliateEdit = () => {
     console.log('🔍 Fetching payout history for affiliate ID:', affiliateId);
     
     try {
-      const payouts = await getAffiliatePayoutHistory(affiliateId);
+      const payouts = await getAffiliatePayoutHistory(affiliateId, shopId);
       console.log('📊 Payout history results:', payouts);
       setPayoutHistory(payouts);
       
@@ -393,7 +393,7 @@ const AdminAffiliateEdit = () => {
     try {
       // Validate custom affiliate code if provided
       if (customAffiliateCode.trim()) {
-        const validationResult = await validateCustomAffiliateCode(customAffiliateCode, id);
+        const validationResult = await validateCustomAffiliateCode(customAffiliateCode, id, shopId);
         if (!validationResult.isValid) {
           setCodeValidationError(validationResult.error);
           toast.error(`Kunde inte spara: ${validationResult.error}`, { id: toastId });
