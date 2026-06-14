@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { collection, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { ref, deleteObject } from 'firebase/storage';
+import { uploadImageToStorage } from '../../utils/imageUpload';
 import { db, storage, auth } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
@@ -399,79 +400,9 @@ function AdminProducts() {
     setTimeout(() => setShowGroupSuggestions(false), 200);
   };
 
-  // Upload image to Firebase Storage
-  // Enhanced image upload with compression to reduce bandwidth costs
-  const uploadImageToStorage = async (file, productId, imageType) => {
-    try {
-      const timestamp = Date.now();
-      
-      // Compress image to reduce bandwidth costs by 60-80%
-      const compressedFile = await compressImageForUpload(file, imageType);
-      
-      const fileName = `${imageType}_${timestamp}_${compressedFile.name || file.name}`;
-      const storageRef = ref(storage, `products/${productId}/${fileName}`);
-      
-      console.log(`📤 Uploading compressed ${imageType} to Firebase Storage...`);
-      console.log(`🗜️ Size reduction: ${file.size} → ${compressedFile.size} bytes (${((1 - compressedFile.size/file.size) * 100).toFixed(1)}% smaller)`);
-      
-      const snapshot = await uploadBytes(storageRef, compressedFile);
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      
-      console.log(`✅ ${imageType} uploaded successfully`);
-      return downloadURL;
-    } catch (error) {
-      console.error(`❌ Error uploading ${imageType}:`, error);
-      throw error;
-    }
-  };
-
-  // Image compression utility to reduce Firebase hosting costs
-  const compressImageForUpload = (file, imageType) => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      
-      img.onload = () => {
-        // Different compression levels based on image type
-        const compressionSettings = {
-          'b2b': { maxWidth: 800, maxHeight: 800, quality: 0.85 },
-          'b2c': { maxWidth: 1000, maxHeight: 1000, quality: 0.9 },
-          'ean_png': { maxWidth: 400, maxHeight: 400, quality: 0.95 },
-          'ean_svg': { maxWidth: 400, maxHeight: 400, quality: 0.95 },
-          'default': { maxWidth: 800, maxHeight: 800, quality: 0.85 }
-        };
-        
-        const settings = compressionSettings[imageType] || compressionSettings.default;
-        
-        // Calculate new dimensions maintaining aspect ratio
-        let { width, height } = img;
-        if (width > settings.maxWidth || height > settings.maxHeight) {
-          const aspectRatio = width / height;
-          if (width > height) {
-            width = settings.maxWidth;
-            height = width / aspectRatio;
-          } else {
-            height = settings.maxHeight;
-            width = height * aspectRatio;
-          }
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        // High-quality scaling
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        // Convert to WebP for better compression (50% smaller than JPEG)
-        canvas.toBlob(resolve, 'image/webp', settings.quality);
-      };
-      
-      img.src = URL.createObjectURL(file);
-    });
-  };
+  // Image upload + compression moved to src/utils/imageUpload.js (shared with
+  // the storefront branding UI). uploadImageToStorage now takes a path PREFIX,
+  // so pass `products/${productId}` to preserve the original storage layout.
 
   const handleB2bImageChange = (e) => {
     const file = e.target.files[0];
@@ -655,25 +586,25 @@ function AdminProducts() {
       // Upload images to Firebase Storage if new files are selected
       if (b2bImageFile) {
         console.log('📤 Uploading B2B image...');
-        const b2bImageUrl = await uploadImageToStorage(b2bImageFile, productId, 'b2b');
+        const b2bImageUrl = await uploadImageToStorage(b2bImageFile, `products/${productId}`, 'b2b');
         finalProductData.b2bImageUrl = b2bImageUrl;
       }
       
       if (eanPngFile) {
         console.log('📤 Uploading EAN PNG image...');
-        const eanPngUrl = await uploadImageToStorage(eanPngFile, productId, 'ean_png');
+        const eanPngUrl = await uploadImageToStorage(eanPngFile, `products/${productId}`, 'ean_png');
         finalProductData.eanImagePngUrl = eanPngUrl;
       }
       
       if (eanSvgFile) {
         console.log('📤 Uploading EAN SVG image...');
-        const eanSvgUrl = await uploadImageToStorage(eanSvgFile, productId, 'ean_svg');
+        const eanSvgUrl = await uploadImageToStorage(eanSvgFile, `products/${productId}`, 'ean_svg');
         finalProductData.eanImageSvgUrl = eanSvgUrl;
       }
       
       if (b2cImageFile) {
         console.log('📤 Uploading B2C image...');
-        const b2cImageUrl = await uploadImageToStorage(b2cImageFile, productId, 'b2c_main');
+        const b2cImageUrl = await uploadImageToStorage(b2cImageFile, `products/${productId}`, 'b2c_main');
         finalProductData.b2cImageUrl = b2cImageUrl;
       }
       
@@ -687,7 +618,7 @@ function AdminProducts() {
         
         for (let i = 0; i < b2cGalleryFiles.length; i++) {
           const file = b2cGalleryFiles[i];
-          const galleryUrl = await uploadImageToStorage(file, productId, `b2c_gallery_${Date.now()}_${i}`);
+          const galleryUrl = await uploadImageToStorage(file, `products/${productId}`, `b2c_gallery_${Date.now()}_${i}`);
           updatedGallery.push(galleryUrl);
         }
       }
