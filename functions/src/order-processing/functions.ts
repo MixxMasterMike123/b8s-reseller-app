@@ -2,6 +2,7 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { RATE_LIMITS } from '../config/rate-limits';
 import { commerceConfig } from '../config/app-urls';
+import { DEFAULT_SHOP_ID } from '../config/tenancy';
 // V3 Email System - imports handled dynamically in functions
 import { db } from '../config/database';
 
@@ -19,6 +20,7 @@ declare global {
 interface OrderData {
   orderNumber: string;
   userId?: string;
+  shopId?: string;
   status: string;
   total?: number;
   subtotal?: number;
@@ -229,6 +231,7 @@ async function processUniversalCampaignRevenue(orderData: any, db: any) {
           
           // Create detailed tracking record
           await db.collection('campaignRevenueTracking').add({
+            shopId: orderData.shopId || DEFAULT_SHOP_ID, // tenant = order's tenant
             campaignId: campaignId,
             orderId: orderData.id || 'unknown',
             productId: item.id,
@@ -727,6 +730,7 @@ export async function processOrderCompletion(
         
         // Create campaign participation record for tracking
         await localDb.collection('campaignParticipants').add({
+          shopId: orderData.shopId || DEFAULT_SHOP_ID, // tenant = order's tenant
           campaignId: matchingCampaign.id,
           orderId: orderId,
           affiliateId: affiliateDoc.id,

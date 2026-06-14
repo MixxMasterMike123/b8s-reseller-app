@@ -9,6 +9,7 @@ const app_urls_1 = require("../../config/app-urls");
 const firestore_1 = require("firebase-admin/firestore");
 const auth_1 = require("firebase-admin/auth");
 const EmailOrchestrator_1 = require("../core/EmailOrchestrator");
+const tenancy_1 = require("../../config/tenancy");
 // Initialize Firebase services
 const db = (0, firestore_1.getFirestore)('b8s-reseller-db');
 const auth = (0, auth_1.getAuth)();
@@ -92,6 +93,9 @@ exports.approveAffiliate = (0, https_1.onCall)({
         console.log('📝 Creating affiliate record...');
         const affiliateData = {
             id: authUser.uid,
+            // Inherit the tenant from the application the affiliate is approved
+            // from; falls back to the default shop.
+            shopId: appData.shopId || tenancy_1.DEFAULT_SHOP_ID,
             affiliateCode,
             name: appData.name,
             email: appData.email,

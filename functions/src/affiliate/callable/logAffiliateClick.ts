@@ -2,6 +2,7 @@ import { onCall } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getApp } from 'firebase-admin/app';
 import { AffiliateClickData, AffiliateClickResponse } from '../types';
+import { DEFAULT_SHOP_ID } from '../../config/tenancy';
 
 /**
  * Log affiliate link click (Callable version)
@@ -36,10 +37,15 @@ export const logAffiliateClickV2 = onCall<AffiliateClickData>(
 
       const affiliateDoc = affiliateSnapshot.docs[0];
 
+      // Tenant of the click = tenant of the affiliate being clicked (more
+      // trustworthy than client input). Falls back to the default shop.
+      const shopId = affiliateDoc.data()?.shopId || DEFAULT_SHOP_ID;
+
       // Create click record
       const clickRef = await db.collection('affiliateClicks').add({
         affiliateCode: affiliateCode,
         affiliateId: affiliateDoc.id,
+        shopId,
         campaignCode: campaignCode || null, // Store campaign code if provided
         timestamp: Timestamp.now(),
         ipAddress: request.rawRequest?.ip || 'unknown',

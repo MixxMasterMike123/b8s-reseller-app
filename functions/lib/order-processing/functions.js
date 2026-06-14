@@ -5,6 +5,7 @@ const https_1 = require("firebase-functions/v2/https");
 const firestore_1 = require("firebase-admin/firestore");
 const rate_limits_1 = require("../config/rate-limits");
 const app_urls_1 = require("../config/app-urls");
+const tenancy_1 = require("../config/tenancy");
 // V3 Email System - imports handled dynamically in functions
 const database_1 = require("../config/database");
 /**
@@ -153,6 +154,7 @@ async function processUniversalCampaignRevenue(orderData, db) {
                     });
                     // Create detailed tracking record
                     await db.collection('campaignRevenueTracking').add({
+                        shopId: orderData.shopId || tenancy_1.DEFAULT_SHOP_ID,
                         campaignId: campaignId,
                         orderId: orderData.id || 'unknown',
                         productId: item.id,
@@ -582,6 +584,7 @@ async function processOrderCompletion(orderId) {
             });
             // Create campaign participation record for tracking
             await localDb.collection('campaignParticipants').add({
+                shopId: orderData.shopId || tenancy_1.DEFAULT_SHOP_ID,
                 campaignId: matchingCampaign.id,
                 orderId: orderId,
                 affiliateId: affiliateDoc.id,

@@ -7,6 +7,7 @@ import { appUrls } from '../../config/app-urls';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { EmailOrchestrator } from '../core/EmailOrchestrator';
+import { DEFAULT_SHOP_ID } from '../../config/tenancy';
 
 // Initialize Firebase services
 const db = getFirestore('b8s-reseller-db');
@@ -130,6 +131,9 @@ export const approveAffiliate = onCall<AffiliateApprovalRequest>(
       console.log('📝 Creating affiliate record...');
       const affiliateData = {
         id: authUser.uid,
+        // Inherit the tenant from the application the affiliate is approved
+        // from; falls back to the default shop.
+        shopId: appData.shopId || DEFAULT_SHOP_ID,
         affiliateCode,
         name: appData.name,
         email: appData.email,

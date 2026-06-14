@@ -4,6 +4,7 @@ exports.logAffiliateClickV2 = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const firestore_1 = require("firebase-admin/firestore");
 const app_1 = require("firebase-admin/app");
+const tenancy_1 = require("../../config/tenancy");
 /**
  * Log affiliate link click (Callable version)
  * Called when a user clicks an affiliate link
@@ -29,10 +30,14 @@ exports.logAffiliateClickV2 = (0, https_1.onCall)({
             throw new Error(`No active affiliate found for code: ${affiliateCode}`);
         }
         const affiliateDoc = affiliateSnapshot.docs[0];
+        // Tenant of the click = tenant of the affiliate being clicked (more
+        // trustworthy than client input). Falls back to the default shop.
+        const shopId = affiliateDoc.data()?.shopId || tenancy_1.DEFAULT_SHOP_ID;
         // Create click record
         const clickRef = await db.collection('affiliateClicks').add({
             affiliateCode: affiliateCode,
             affiliateId: affiliateDoc.id,
+            shopId,
             campaignCode: campaignCode || null,
             timestamp: firestore_1.Timestamp.now(),
             ipAddress: request.rawRequest?.ip || 'unknown',
