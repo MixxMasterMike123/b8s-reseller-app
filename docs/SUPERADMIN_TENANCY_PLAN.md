@@ -115,6 +115,8 @@ Phase 0 (this step):
 - All `doc-by-id` reads (`.doc(id).get()`) everywhere: can't add where; Phase 3 rules enforce.
 **Server reads SCOPED in Batch 4:** createPaymentIntent affiliate-discount validation (shopId from request), order-processing active-campaign reads ×2 (shopId from the order being processed).
 
+**PHASE 2 DONE + DEPLOYED + LIVE-VERIFIED (2026-06-14).** All ~68 in-scope collection-queries scoped by shopId across shop pages, admin pages, utils/hooks/contexts, and server functions; ~35 composite indexes deployed + built; hosting (both targets) + functions deployed; live bundle hash verified at origin (index-CZQteH6Q.js), storefront + admin return 200, scoped queries return real data (2 products / 57 orders / 6 pages). Also fixed a pre-existing latent bug: orders.createdAt + affiliateClicks.timestamp fieldOverrides were ASC-only (disabled auto DESC index) → added DESCENDING so admin orderBy-desc queries work. NEXT = Phase 3 (security rules — the hard isolation gate), then Phase 4 (Super Admin UI).
+
 ### Phase 3 — Security rules rewrite (the safety net)
 - `firestore.rules` + `storage.rules`: add `isPlatform()` and shop-scoping so an admin can only read/write docs where `resource.data.shopId == their shopId`; platform bypasses. This is what makes scoping *enforced*, not just *filtered*. Heavy review + a rules test pass before deploy.
 
