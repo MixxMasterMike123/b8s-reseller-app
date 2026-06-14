@@ -79,7 +79,7 @@ const ProductGroupTab = ({ productGroup, onContentChange, onGroupContentUpdate }
     if (!productGroup) return;
     
     try {
-      const products = await getProductsInGroup(productGroup);
+      const products = await getProductsInGroup(productGroup, shopId);
       
       // Sort products by name for consistent display
       const sortedProducts = [...products].sort((a, b) => {

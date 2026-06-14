@@ -328,7 +328,7 @@ export const deleteCustomerMaterial = async (customerId, materialId) => {
 // Auto-populate from products
 export const populateFromProducts = async (shopId) => {
   try {
-    const productsSnapshot = await getDocs(collection(db, 'products'));
+    const productsSnapshot = await getDocs(query(collection(db, 'products'), where('shopId', '==', shopId || DEFAULT_SHOP_ID)));
     const materialsToAdd = [];
     
     productsSnapshot.forEach((doc) => {
