@@ -39,6 +39,13 @@ service firebase.storage {
       allow write: if isAdmin();
     }
 
+    // Storefront branding (logo + hero + gallery images), set via the admin
+    // Butik page. Public read so anonymous shoppers see them; admin-only write.
+    match /branding/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Marketing materials
     match /marketing-materials/generic/{fileName} {
       allow read: if request.auth != null;
