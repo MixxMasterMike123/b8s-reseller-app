@@ -375,7 +375,7 @@ const Checkout = () => {
             {t('checkout_empty_cart_description', 'Lägg till produkter i din varukorg för att fortsätta till kassan.')}
           </p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate(getCountryAwareUrl(''))}
             className="bg-accent text-white px-6 py-3 rounded-full font-bold hover:opacity-90 transition-opacity"
           >
             {t('checkout_continue_shopping', 'Fortsätt handla')}
@@ -428,7 +428,7 @@ const Checkout = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <button
-                  onClick={() => navigate('/cart')}
+                  onClick={() => navigate(getCountryAwareUrl('cart'))}
                   className="flex items-center text-ink-muted hover:text-ink font-medium transition-colors"
                 >
                   <ChevronLeftIcon className="h-5 w-5 mr-1" />

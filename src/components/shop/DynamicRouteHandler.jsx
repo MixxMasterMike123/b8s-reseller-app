@@ -16,14 +16,15 @@ const DynamicRouteHandler = ({ children }) => {
 
   useEffect(() => {
     const checkForCmsPage = async () => {
-      // Countryless URLs: the CMS slug is the path itself (no country prefix).
+      // Path-prefix grammar: /{shopId}/{slug...} — the CMS slug is everything
+      // AFTER the shopId (first) segment.
       const pathSegments = (location.pathname || '/').split('/').filter(Boolean);
-      if (pathSegments.length < 1) {
+      if (pathSegments.length < 2) {
         setLoading(false);
         return;
       }
 
-      const slugPath = pathSegments.join('/');
+      const slugPath = pathSegments.slice(1).join('/');
 
       // Skip if it's a known (non-CMS) route
       const knownRoutes = [

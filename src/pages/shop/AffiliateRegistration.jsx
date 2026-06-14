@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { getCountryAwareUrl } from '../../utils/productUrls';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useShopId } from '../../contexts/ShopContext';
 import { withShopId } from '../../config/withShopId';
@@ -407,7 +408,7 @@ const AffiliateRegistration = () => {
               <p className="text-gray-600 mb-8">
                 {t('affiliate_reg_thank_you_description', 'Vi har tagit emot din ansökan och kommer att granska den inom 3-5 arbetsdagar. Du kommer att få ett e-postmeddelande från oss när vi har ett beslut.')}
               </p>
-              <Link to="/" className="text-blue-600 hover:underline">
+              <Link to={getCountryAwareUrl("")} className="text-blue-600 hover:underline">
                 {t('affiliate_reg_back_to_shop', '← Tillbaka till butiken')}
               </Link>
             </div>

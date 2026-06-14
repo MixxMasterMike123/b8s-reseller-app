@@ -1,6 +1,14 @@
 // Product URL utilities for clean, SEO-friendly URLs
 import { APP_URLS } from '../config/urls';
 import { STORE } from '../config/store';
+import { resolveShopId } from '../config/tenancy';
+
+// Current shop prefix for storefront links, derived from the URL (path-prefix
+// multi-tenant grammar: /{shopId}/...). Single source = config/tenancy.
+const currentShopPrefix = () => {
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
+  return `/${resolveShopId(pathname)}`;
+};
 
 // Helper to safely get content from multilingual fields without using hooks
 const safeGetContent = (field) => {
@@ -62,19 +70,20 @@ export const getSkuFromSlug = (slug) => {
 };
 
 
-// Generate full product URL using the new dynamic slug.
-// Storefront URLs are countryless (Swedish-only; i18n deferred). The old
-// `/se/...` grammar is gone — old links are redirected at the router (see App.jsx).
+// Generate full product URL (shop-prefixed: /{shopId}/product/:slug).
+// Storefront is Swedish-only (i18n deferred). Multi-tenant path-prefix grammar.
 export const getProductUrl = (product) => {
   const slug = getVariantProductSlug(product);
-  return `/product/${slug}`;
+  return `${currentShopPrefix()}/product/${slug}`;
 };
 
-// Generate a storefront URL for B2C shop links (countryless).
+// Generate a shop-prefixed storefront URL for B2C links.
+// getCountryAwareUrl('cart') -> /{shopId}/cart ; getCountryAwareUrl('') -> /{shopId}
 export const getCountryAwareUrl = (path) => {
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-  if (!cleanPath || cleanPath === '') return '/';
-  return `/${cleanPath}`;
+  const prefix = currentShopPrefix();
+  if (!cleanPath || cleanPath === '') return prefix;
+  return `${prefix}/${cleanPath}`;
 };
 
 
@@ -118,11 +127,13 @@ export const getProductSeoDescription = (product) => {
  * @returns {string} The complete affiliate link
  */
 export const generateAffiliateLink = (affiliateCode, preferredLang, productPath = '') => {
-  // Countryless storefront URLs (i18n deferred). preferredLang kept in the
-  // signature for call-site compatibility but no longer maps to a path segment.
+  // Shop-prefixed absolute link (multi-tenant path-prefix grammar). Uses the
+  // current shop context; per-affiliate shop linkage (when an affiliate's shop
+  // differs from the viewing context) is a later refinement.
   const baseUrl = APP_URLS.B2C_SHOP;
+  const shopPrefix = currentShopPrefix();
   const path = productPath ? `/${productPath}` : '';
-  return `${baseUrl}${path}?ref=${affiliateCode}`;
+  return `${baseUrl}${shopPrefix}${path}?ref=${affiliateCode}`;
 };
 
 /**

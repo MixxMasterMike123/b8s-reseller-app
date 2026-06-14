@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { getCountryAwareUrl } from '../../utils/productUrls';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useShopId } from '../../contexts/ShopContext';
@@ -185,7 +186,7 @@ const CustomerRegister = () => {
       });
 
       // Redirect to account page after successful registration
-      navigate('/account');
+      navigate(getCountryAwareUrl("account"));
       
     } catch (error) {
       toast.dismiss(toastId);
@@ -378,11 +379,11 @@ const CustomerRegister = () => {
                 />
                 <label htmlFor="termsConsent" className="ml-2 block text-sm text-gray-700">
                   {t('customer_register_terms_consent', 'Jag godkänner')}{' '}
-                  <Link to="/legal/anvandarvillkor" className="text-blue-600 hover:text-blue-800">
+                  <Link to={getCountryAwareUrl('legal/anvandarvillkor')} className="text-blue-600 hover:text-blue-800">
                     {t('customer_register_terms_link', 'användarvillkor')}
                   </Link>
                   {' '}och{' '}
-                  <Link to="/legal/integritetspolicy" className="text-blue-600 hover:text-blue-800">
+                  <Link to={getCountryAwareUrl('legal/integritetspolicy')} className="text-blue-600 hover:text-blue-800">
                     {t('customer_register_privacy_link', 'integritetspolicy')}
                   </Link>
                   <span className="text-red-500">*</span>
@@ -414,7 +415,7 @@ const CustomerRegister = () => {
               </Link>
             </p>
             <Link 
-              to="/" 
+              to={getCountryAwareUrl("")} 
               className="block text-sm font-medium text-blue-600 hover:text-blue-500"
             >
               &larr; {t('customer_register_back_to_shop', 'Tillbaka till butiken')}

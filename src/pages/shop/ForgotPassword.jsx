@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { getCountryAwareUrl } from '../../utils/productUrls';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import toast from 'react-hot-toast';
@@ -177,7 +178,7 @@ const ForgotPassword = () => {
               </Link>
             </p>
             <Link 
-              to="/" 
+              to={getCountryAwareUrl("")} 
               className="block text-sm font-medium text-blue-600 hover:text-blue-500"
             >
               &larr; {t('forgot_password_back_to_shop', 'Tillbaka till butiken')}

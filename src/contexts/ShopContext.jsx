@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { resolveShopId, DEFAULT_SHOP_ID } from '../config/tenancy';
 
 /**
@@ -10,11 +11,11 @@ import { resolveShopId, DEFAULT_SHOP_ID } from '../config/tenancy';
  * place — config/tenancy.js resolveShopId — so this provider never parses paths
  * itself; it just exposes the resolved value.
  *
- * Phase 0: resolveShopId always returns DEFAULT_SHOP_ID (single shop, no URL
- * prefix yet). When Phase 0b introduces the `/{shopId}/{countryCode}/...`
- * grammar, only resolveShopId changes and this provider re-resolves on
- * navigation. Resolution is synchronous (from the path), so there is no loading
- * state and no render flash.
+ * Phase 0b: path-prefix grammar — segment[0] of the URL is the shopId
+ * (resolveShopId in config/tenancy.js). This provider re-resolves on every
+ * navigation (useLocation), so client-side route changes between shops update
+ * the tenant. Resolution is synchronous (from the path) — no loading flash.
+ * Must be rendered INSIDE the Router.
  */
 const ShopContext = createContext(DEFAULT_SHOP_ID);
 
@@ -23,14 +24,11 @@ export function useShopId() {
 }
 
 export function ShopProvider({ children }) {
-  // Resolve from the current path. Phase 0 this is constant (the default shop);
-  // Phase 0b will make it path-derived, at which point this should re-run on
-  // route changes (a useLocation dependency added then). Kept dependency-free
-  // now because the value cannot change without a full reload today.
-  const shopId = useMemo(() => {
-    const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
-    return resolveShopId(pathname);
-  }, []);
+  const location = useLocation();
+  const shopId = useMemo(
+    () => resolveShopId(location.pathname),
+    [location.pathname]
+  );
 
   return (
     <ShopContext.Provider value={shopId}>

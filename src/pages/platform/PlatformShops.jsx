@@ -76,10 +76,8 @@ const PlatformShops = () => {
   };
 
   const openStorefront = (shop) => {
-    // P4: storefront base today is single-shop; per-shop URLs land in Phase 0b.
-    // For now open the shop storefront root (the default shop). When Phase 0b
-    // adds path/subdomain per shop, this becomes shop-specific.
-    window.open(`${APP_URLS.B2C_SHOP}/se`, '_blank', 'noopener');
+    // Path-prefix multi-tenant grammar: each shop's storefront is /{shopId}.
+    window.open(`${APP_URLS.B2C_SHOP}/${shop.id}`, '_blank', 'noopener');
   };
 
   return (

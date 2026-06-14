@@ -60,8 +60,9 @@ import CustomerRegister from './pages/shop/CustomerRegister';
 import ForgotPassword from './pages/shop/ForgotPassword';
 import ResetPassword from './pages/shop/ResetPassword';
 import EmailVerificationHandler from './pages/shop/EmailVerificationHandler';
-import LegacyCountryRedirect from './components/shop/LegacyCountryRedirect';
+import ShopGate from './components/shop/ShopGate';
 import DynamicRouteHandler from './components/shop/DynamicRouteHandler';
+import { DEFAULT_SHOP_ID } from './config/tenancy';
 
 // Legal & Compliance Pages (now handled by CMS)
 import ShippingInfo from './pages/shop/ShippingInfo';
@@ -167,10 +168,10 @@ function App() {
   console.log('App Mode:', appMode, 'Hostname:', hostname, 'Subdomain:', subdomain);
 
   const content = (
-    <Router>
+    <>
       <ScrollToTop />
       {appMode === 'shop' && <CookiebotCMP />}
-      <AffiliateTracker /> 
+      <AffiliateTracker />
       <ConditionalTranslationProvider appMode={appMode}>
         <div className="min-h-screen bg-gray-50">
           <Toaster 
@@ -200,47 +201,47 @@ function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </>
           ) : appMode === 'shop' ? (
-            // B2C Shop Routes — countryless (Swedish-only; i18n deferred).
-            // The old /{countryCode}/... grammar was removed; legacy links are
-            // redirected by LegacyCountryRedirect so old emails/affiliate links
-            // keep working.
+            // B2C Shop Routes — PATH-PREFIX multi-tenant grammar:
+            // /{shopId}, /{shopId}/product/:slug, /{shopId}/cart, etc.
+            // Bare / redirects to the default shop. Swedish-only (i18n deferred);
+            // legacy /se/... links are redirected by LegacyCountryRedirect.
             <>
-              {/* Home storefront */}
-              <Route path="/" element={<PublicStorefront />} />
+              {/* Bare root → default shop's storefront */}
+              <Route path="/" element={<Navigate to={`/${DEFAULT_SHOP_ID}`} replace />} />
 
-              {/* Credential pages */}
+              {/* Credential pages — shop-global, no shop prefix */}
               <Route path="/login" element={<CustomerLogin />} />
               <Route path="/register" element={<CustomerRegister />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/affiliate-login" element={<AffiliateLogin />} />
-
-              {/* Firebase Auth Action Handler - Email Verification */}
               <Route path="/__/auth/action" element={<EmailVerificationHandler />} />
 
-              {/* Storefront pages (countryless) */}
-              <Route path="/product/:slug" element={<PublicProductPage />} />
-              <Route path="/cart" element={<ShoppingCart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/order-return" element={<OrderReturn />} />
-              <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
-              <Route path="/account" element={<CustomerAccount />} />
-              <Route path="/affiliate-registration" element={<AffiliateRegistration />} />
-              <Route path="/affiliate-portal" element={<AffiliatePortal />} />
+              {/* Per-shop storefront (shopId = first path segment). ShopGate
+                  validates the shop (redirects legacy /se & unknown shops,
+                  shows "unavailable" for disabled shops) before rendering. */}
+              <Route path="/:shopId" element={<ShopGate><PublicStorefront /></ShopGate>} />
+              <Route path="/:shopId/product/:slug" element={<ShopGate><PublicProductPage /></ShopGate>} />
+              <Route path="/:shopId/cart" element={<ShopGate><ShoppingCart /></ShopGate>} />
+              <Route path="/:shopId/checkout" element={<ShopGate><Checkout /></ShopGate>} />
+              <Route path="/:shopId/order-return" element={<ShopGate><OrderReturn /></ShopGate>} />
+              <Route path="/:shopId/order-confirmation/:orderId" element={<ShopGate><OrderConfirmation /></ShopGate>} />
+              <Route path="/:shopId/account" element={<ShopGate><CustomerAccount /></ShopGate>} />
+              <Route path="/:shopId/affiliate-registration" element={<ShopGate><AffiliateRegistration /></ShopGate>} />
+              <Route path="/:shopId/affiliate-portal" element={<ShopGate><AffiliatePortal /></ShopGate>} />
 
-              {/* Catch-all for any unmatched path. LegacyCountryRedirect first
-                  checks for a leading 2-letter country code (old /se/... links)
-                  and redirects to the countryless path; otherwise it renders the
-                  CMS handler (which looks up the path as a published page slug,
-                  falling back to home). Single handler = no route-precedence
-                  loops between legacy redirects and CMS slugs. */}
-              <Route path="*" element={
-                <LegacyCountryRedirect>
+              {/* Per-shop CMS pages: /{shopId}/{slug} — DynamicRouteHandler reads
+                  the slug after the shopId. Falls back to the shop home. */}
+              <Route path="/:shopId/*" element={
+                <ShopGate>
                   <DynamicRouteHandler>
                     <Navigate to="/" replace />
                   </DynamicRouteHandler>
-                </LegacyCountryRedirect>
+                </ShopGate>
               } />
+
+              {/* Catch-all → default shop */}
+              <Route path="*" element={<Navigate to={`/${DEFAULT_SHOP_ID}`} replace />} />
             </>
           ) : (
             // Admin console routes (B2B portal removed — see b2b-portal-archive tag)
@@ -433,23 +434,25 @@ function App() {
         </Routes>
         </div>
       </ConditionalTranslationProvider>
-    </Router>
+    </>
   );
 
   return (
-    <ShopProvider>
-      <StoreSettingsProvider>
-        <AuthProvider>
-          <SimpleAuthContextProvider>
-            <OrderProvider>
-              <CartProvider>
-                {content}
-              </CartProvider>
-            </OrderProvider>
-          </SimpleAuthContextProvider>
-        </AuthProvider>
-      </StoreSettingsProvider>
-    </ShopProvider>
+    <Router>
+      <ShopProvider>
+        <StoreSettingsProvider>
+          <AuthProvider>
+            <SimpleAuthContextProvider>
+              <OrderProvider>
+                <CartProvider>
+                  {content}
+                </CartProvider>
+              </OrderProvider>
+            </SimpleAuthContextProvider>
+          </AuthProvider>
+        </StoreSettingsProvider>
+      </ShopProvider>
+    </Router>
   );
 }
 

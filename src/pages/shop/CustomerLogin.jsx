@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { getCountryAwareUrl } from '../../utils/productUrls';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import toast from 'react-hot-toast';
@@ -121,7 +122,7 @@ const CustomerLogin = ({ onLoginSuccess, hideLanguageSwitcher = false, hideNavig
         </form>
          <div className="text-center">
             <Link 
-              to="/" 
+              to={getCountryAwareUrl("")} 
               className="font-medium text-blue-600 hover:text-blue-500"
             >
               &larr; {t('customer_login_back_to_shop', 'Tillbaka till butiken')}

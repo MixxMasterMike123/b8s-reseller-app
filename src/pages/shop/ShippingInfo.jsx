@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { getCountryAwareUrl } from '../../utils/productUrls';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import { useTranslation } from '../../contexts/TranslationContext';
 
@@ -318,7 +319,7 @@ const ShippingInfo = () => {
 
           <div className="mt-8 pt-8 border-t border-gray-200">
             <Link 
-              to="/" 
+              to={getCountryAwareUrl("")} 
               className="inline-flex items-center text-blue-600 hover:text-blue-800"
             >
               ← Tillbaka till butiken

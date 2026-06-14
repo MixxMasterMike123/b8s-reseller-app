@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { getCountryAwareUrl } from '../../utils/productUrls';
 import { useShopId } from '../../contexts/ShopContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
@@ -241,7 +242,7 @@ const CustomerAccount = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/');
+      navigate(getCountryAwareUrl(''));
     } catch (error) {
       console.error('Error logging out:', error);
       toast.error(t('customer_account_error_logout', 'Kunde inte logga ut'));
@@ -311,7 +312,7 @@ const CustomerAccount = () => {
               {t('customer_account_error_not_found_desc', 'Vi kunde inte hitta ditt kundkonto. Kontakta support för hjälp.')}
             </p>
             <Link 
-              to="/" 
+              to={getCountryAwareUrl("")} 
               className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
             >
               {t('customer_account_back_to_shop', 'Tillbaka till butiken')}
@@ -609,7 +610,7 @@ const CustomerAccount = () => {
                     {t('customer_account_no_orders_desc', 'Du har inte gjort några beställningar ännu.')}
                   </p>
                   <Link
-                    to="/"
+                    to={getCountryAwareUrl("")}
                     className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
                   >
                     {t('customer_account_start_shopping', 'Börja handla')}
