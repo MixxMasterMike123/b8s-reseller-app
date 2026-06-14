@@ -84,6 +84,8 @@ export function AuthProvider({ children }) {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  // Platform super-admin (manages ALL shops). Distinct from a shop admin.
+  const [isPlatform, setIsPlatform] = useState(false);
   const [error, setError] = useState('');
   const [demoUsers, setDemoUsers] = useState(DEMO_USERS);
 
@@ -113,6 +115,7 @@ export function AuthProvider({ children }) {
               const data = userDoc.data();
               setUserData(data);
               setIsAdmin(data.role === 'admin');
+              setIsPlatform(data.platform === true);
 
               // Store preferred language for TranslationContext
               if (data.preferredLang) {
@@ -127,8 +130,9 @@ export function AuthProvider({ children }) {
         } else {
           setUserData(null);
           setIsAdmin(false);
+          setIsPlatform(false);
         }
-        
+
         setLoading(false);
       });
     }
@@ -158,7 +162,8 @@ export function AuthProvider({ children }) {
         setCurrentUser(mockUser);
         setUserData(user);
         setIsAdmin(user.role === 'admin');
-        
+        setIsPlatform(user.platform === true);
+
         toast.success('Login successful (Demo Mode)');
         return mockUser;
       } else {
@@ -191,6 +196,7 @@ export function AuthProvider({ children }) {
         setCurrentUser(null);
         setUserData(null);
         setIsAdmin(false);
+        setIsPlatform(false);
         toast.success('Logout successful (Demo Mode)');
         return true;
       } else {
@@ -745,6 +751,7 @@ export function AuthProvider({ children }) {
     userProfile: userData, // Alias for backward compatibility
     loading,
     isAdmin,
+    isPlatform,
     error,
     isDemoMode,
     login,
