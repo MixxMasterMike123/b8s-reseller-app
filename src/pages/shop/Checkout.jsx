@@ -408,12 +408,12 @@ const Checkout = () => {
         <meta property="og:type" content="website" />
         <meta property="og:title" content={getCheckoutSeoTitle()} />
         <meta property="og:description" content={getCheckoutSeoDescription()} />
-        <meta property="og:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
+        {store.logoUrl && <meta property="og:image" content={store.logoUrl} />}
         <meta property="og:url" content={window.location.href} />
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content={getCheckoutSeoTitle()} />
         <meta name="twitter:description" content={getCheckoutSeoDescription()} />
-        <meta name="twitter:image" content="https://shop.b8shield.com/images/B8S_full_logo.svg" />
+        {store.logoUrl && <meta name="twitter:image" content={store.logoUrl} />}
       </Helmet>
       <SeoHreflang />
       <div className="min-h-screen bg-canvas font-body text-ink">

@@ -24,7 +24,7 @@ const ShippingInfo = () => {
                 📦 Snabb och säker leverans
               </h2>
               <p className="text-green-800">
-                Vi levererar dina B8Shield-produkter snabbt och säkert till hela Sverige och Europa. 
+                Vi levererar din beställning snabbt och säkert. 
                 Fri frakt inom Sverige på beställningar över 500 kr!
               </p>
             </div>

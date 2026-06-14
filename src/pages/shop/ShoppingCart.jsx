@@ -93,12 +93,12 @@ const ShoppingCart = () => {
         <meta property="og:type" content="website" />
         <meta property="og:title" content={getCartSeoTitle()} />
         <meta property="og:description" content={getCartSeoDescription()} />
-        <meta property="og:image" content={`${window.location.origin}/images/B8S_full_logo.svg`} />
+        {STORE.logoUrl && <meta property="og:image" content={STORE.logoUrl.startsWith("http") ? STORE.logoUrl : `${window.location.origin}${STORE.logoUrl}`} />}
         <meta property="og:url" content={window.location.href} />
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content={getCartSeoTitle()} />
         <meta name="twitter:description" content={getCartSeoDescription()} />
-        <meta name="twitter:image" content={`${window.location.origin}/images/B8S_full_logo.svg`} />
+        {STORE.logoUrl && <meta name="twitter:image" content={STORE.logoUrl.startsWith("http") ? STORE.logoUrl : `${window.location.origin}${STORE.logoUrl}`} />}
       </Helmet>
       <SeoHreflang />
       <div className="min-h-screen bg-canvas font-body text-ink">

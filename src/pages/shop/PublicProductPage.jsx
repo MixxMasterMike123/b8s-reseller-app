@@ -314,12 +314,12 @@ const PublicProductPage = () => {
         <meta property="og:type" content="product" />
         <meta property="og:title" content={getProductSeoTitle(product)} />
         <meta property="og:description" content={getProductSeoDescription(product)} />
-        <meta property="og:image" content={productImages[0] || 'https://shop.b8shield.com/images/b8s_top.webp'} />
+        {productImages[0] && <meta property="og:image" content={productImages[0]} />}
         <meta property="og:url" content={window.location.href} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={getProductSeoTitle(product)} />
         <meta name="twitter:description" content={getProductSeoDescription(product)} />
-        <meta name="twitter:image" content={productImages[0] || 'https://shop.b8shield.com/images/b8s_top.webp'} />
+        {productImages[0] && <meta name="twitter:image" content={productImages[0]} />}
         <script type="application/ld+json">{JSON.stringify(generateProductSchema(product))}</script>
       </Helmet>
       <SeoHreflang />
@@ -336,7 +336,7 @@ const PublicProductPage = () => {
                 {getContentValue(product.name)}
               </h1>
               <p className="text-base text-ink-muted mb-4">
-                {getB2cDescription(product) || `B8Shield ${getProductColor(product)} - ${product.size || 'Standard'}`}
+                {getB2cDescription(product) || `${getContentValue(product.name)}${product.size ? ` - ${product.size}` : ''}`}
               </p>
               <div className="font-display">
                 <SmartPrice 
@@ -528,7 +528,7 @@ const PublicProductPage = () => {
                     {getContentValue(product.name)}
                   </h1>
                   <p className="text-lg text-ink-muted mb-4">
-                    {getB2cDescription(product) || `B8Shield ${getProductColor(product)} - ${product.size || 'Standard'}`}
+                    {getB2cDescription(product) || `${getContentValue(product.name)}${product.size ? ` - ${product.size}` : ''}`}
                   </p>
 
                 {/* Price */}
@@ -649,7 +649,7 @@ const PublicProductPage = () => {
                   <div className="prose prose-sm max-w-none text-ink-muted">
                     <p>
                       {getB2cDescription(product) || 
-                       t('product_detailed_description', 'B8Shield {{color}} i storlek {{size}} ger dig det ultimata skyddet för dina fiskedrag. Denna högkvalitativa produkt är utvecklad för att hålla i många år av intensivt fiske, oavsett väderförhållanden. Perfekt för både nybörjare och erfarna fiskare som vill skydda sina värdefulla fiskedrag från skador.', { color: getProductColor(product), size: product.size || 'Standard' })}
+                       t('product_detailed_description', '', { color: getProductColor(product), size: product.size || 'Standard' })}
                     </p>
                     
                     <ul className="mt-4 space-y-2">

@@ -34,8 +34,6 @@ const PublicStorefront = () => {
   } = useCart();
   const [products, setProducts] = useState([]);
   const [groupedProducts, setGroupedProducts] = useState([]);
-  const [specialEditionProducts, setSpecialEditionProducts] = useState([]);
-  const [clothingProducts, setClothingProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [heroReview, setHeroReview] = useState(null);
 
@@ -99,26 +97,12 @@ const PublicStorefront = () => {
         return safeNameA.localeCompare(safeNameB, currentLanguage || 'en');
       });
       setProducts(productList);
-      
-      // Separate products by category
-      const specialEditions = productList.filter(product => 
-        product.group === 'B8Shield-special-edition'
-      );
-      const clothingItems = productList.filter(product => 
-        product.group === 'Clothing'
-      );
-      const regularProducts = productList.filter(product => 
-        product.group !== 'B8Shield-special-edition' && product.group !== 'Clothing'
-      );
-      
-      // Group regular products dynamically by their group field and load representative products
-      const grouped = await groupProductsByGroup(regularProducts);
+
+      // Generic template: ALL products render as normal groups (no special
+      // sections). Group every product by its group field.
+      const grouped = await groupProductsByGroup(productList);
       setGroupedProducts(grouped);
-      
-      // Set special categories separately
-      setSpecialEditionProducts(specialEditions);
-      setClothingProducts(clothingItems);
-      
+
     } catch (error) {
       console.error('Error loading products:', error);
       // Product loading error - handled by showing empty state
@@ -208,24 +192,24 @@ const PublicStorefront = () => {
     // 🚨 CRITICAL: Always use getContentValue() for multilingual content to prevent React Error #31
     if (product.descriptions?.b2c) return getContentValue(product.descriptions.b2c);
     if (product.description) return getContentValue(product.description);
-    return t('product_description_fallback', 'B8Shield {{color}} - Vasskydd som förhindrar att dina fiskedrag fastnar', { color: product.colorVariant || '' });
+    return t('product_description_fallback', '', { color: product.colorVariant || '' });
   };
 
   // NORD hero copy: shop config wins, translation layer is the fallback so
-  // the current B8Shield copy keeps working until a shop overrides it.
+  // a shop's saved copy wins; the translation layer is the neutral fallback.
   const heroHeadline = store.heroHeadline ||
     `${t('hero_title_start', 'Fastna')} ${t('hero_title_middle', 'aldrig')} ${t('hero_title_end', 'mer!')}`;
   const heroSubtitle = store.heroSubtitle ||
-    t('hero_subtitle', 'B8Shield™ – Vasskydd som förhindrar att dina fiskedrag fastnar i vassen utan att påverka ditt fiske.');
+    t('hero_subtitle', 'Välkommen till vår butik.');
 
-  const bestseller = specialEditionProducts[0] || groupedProducts[0]?.representativeProduct || clothingProducts[0] || null;
+  const bestseller = groupedProducts[0]?.representativeProduct || null;
 
   // Hero CTA labels: shop config wins, translation fallback keeps current copy.
   const heroCtaLabel = store.heroCtaLabel || t('hero_shop_now_button', 'Handla nu');
   const heroSecondaryLabel = store.heroSecondaryLabel || t('hero_see_products', 'Se sortimentet ↓');
 
   // Homepage block visibility (config-driven; default visible so unconfigured
-  // shops — i.e. B8Shield today — render exactly as before). Every toggle the
+  // shops render all blocks by default). Every toggle the
   // admin Butik page exposes MUST be honored here.
   const blocks = store.blocks || {};
   const showGallery = blocks.gallery !== false;
@@ -236,7 +220,7 @@ const PublicStorefront = () => {
   // otherwise the hero tile spans full width (no empty grid cell).
   const showSupporting = showBestseller || showTrust;
 
-  // Config-driven story steps; fall back to the hardcoded B8Shield band when
+  // Config-driven story steps; fall back to the generic default band when
   // a shop hasn't set its own story.
   const storySteps = Array.isArray(store.story) && store.story.length > 0
     ? store.story.slice(0, 3).map((s, i) => ({
@@ -246,7 +230,7 @@ const PublicStorefront = () => {
       }))
     : null;
 
-  // Config-driven gallery items; fall back to the hardcoded B8Shield grid.
+  // Config-driven gallery items; the band is hidden until a shop adds images.
   const galleryItems = Array.isArray(store.gallery) && store.gallery.length > 0
     ? store.gallery.slice(0, 4).filter((g) => g && g.imageUrl)
     : null;
@@ -262,12 +246,12 @@ const PublicStorefront = () => {
         <meta property="og:type" content="website" />
         <meta property="og:title" content={getShopSeoTitle(currentLanguage)} />
         <meta property="og:description" content={getShopSeoDescription(currentLanguage)} />
-        <meta property="og:image" content="https://shop.b8shield.com/images/b8s_top.webp" />
+        {(store.heroImageUrl || store.logoUrl) && <meta property="og:image" content={store.heroImageUrl || store.logoUrl} />}
         <meta property="og:url" content={window.location.href} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={getShopSeoTitle(currentLanguage)} />
         <meta name="twitter:description" content={getShopSeoDescription(currentLanguage)} />
-        <meta name="twitter:image" content="https://shop.b8shield.com/images/b8s_top.webp" />
+        {(store.heroImageUrl || store.logoUrl) && <meta name="twitter:image" content={store.heroImageUrl || store.logoUrl} />}
         <script type="application/ld+json">{JSON.stringify(generateShopStructuredData(currentLanguage))}</script>
       </Helmet>
       <SeoHreflang />
@@ -369,20 +353,22 @@ const PublicStorefront = () => {
                 </div>
               ))}
 
-              {/* Duo minis: social proof + payment trust (toggle: blocks.trust) */}
+              {/* Duo minis: social proof (only if a REAL review exists) + payment trust (toggle: blocks.trust) */}
               {showTrust && (
-              <div className="grid grid-cols-2 gap-4 flex-1">
+              <div className={`grid gap-4 flex-1 ${heroReview ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                {heroReview && (
                 <div className="bg-white rounded-tile shadow-tile p-5 flex flex-col animate-rise" style={{ animationDelay: '0.18s' }}>
-                  <div className="text-accent text-base tracking-[2px]" aria-label={`${heroReview?.rating || 5}/5`}>
+                  <div className="text-accent text-base tracking-[2px]" aria-label={`${heroReview.rating || 5}/5`}>
                     ★★★★★
                   </div>
                   <p className="text-sm text-ink mt-2.5 leading-snug line-clamp-4 flex-1">
-                    “{heroReview?.text || t('hero_testimonial_fallback', 'Med B8Shield kunde jag obehindrat fiska på platser som annars hade varit omöjliga, utan att tappa ett enda fiskedrag – otroligt effektivt skydd!')}”
+                    “{heroReview.text}”
                   </p>
                   <div className="text-xs text-ink-muted mt-2.5">
-                    — {heroReview?.author || t('hero_testimonial_author_fallback', 'Paul W., Sportfiskarna Sverige').split(',')[0]}
+                    — {heroReview.author}
                   </div>
                 </div>
+                )}
 
                 <div className="bg-white rounded-tile shadow-tile p-5 flex flex-col animate-rise" style={{ animationDelay: '0.26s' }}>
                   <div className="text-[11px] font-semibold uppercase tracking-[0.13em] text-ink-muted">
@@ -406,33 +392,16 @@ const PublicStorefront = () => {
           </div>
         </section>
 
-        {/* ===== Gallery band (config-driven, falls back to B8Shield imagery) ===== */}
-        {showGallery && (() => {
-          // Normalize config items and the hardcoded fallback to one shape:
-          // { key, src, label, to }.
-          const fallback = [
-            { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent', sku: 'B8S-4-tr' },
-            { src: '/images/b8s_red_nature_new.webp', colorKey: 'color_red', sku: 'B8S-4-re' },
-            { src: '/images/b8s_flour_nature_new.webp', colorKey: 'color_fluorescent', sku: 'B8S-4-fl' },
-            { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter', sku: 'B8S-4-gl' },
-          ].map((image, index) => {
-            const productObj = {
-              name: { 'sv-SE': `B8Shield ${t(image.colorKey)}`, 'en-GB': `B8Shield ${t(image.colorKey)}`, 'en-US': `B8Shield ${t(image.colorKey)}` },
-              size: '4',
-              sku: image.sku,
-            };
-            return { key: `fb-${index}`, src: image.src, label: t(image.colorKey), to: getProductUrl(productObj) };
-          });
-
-          const items = galleryItems
-            ? galleryItems.map((g, index) => ({
-                key: `cfg-${index}`,
-                src: g.imageUrl,
-                label: g.label || '',
-                // Optional SKU link; if absent the tile is non-navigating.
-                to: g.linkSku ? getProductUrl({ name: { 'sv-SE': g.label || '' }, sku: g.linkSku }) : null,
-              }))
-            : fallback;
+        {/* ===== Gallery band (config-driven; hidden until a shop adds images) ===== */}
+        {showGallery && galleryItems && (() => {
+          // Map the shop's configured gallery to one tile shape: { key, src, label, to }.
+          const items = galleryItems.map((g, index) => ({
+            key: `cfg-${index}`,
+            src: g.imageUrl,
+            label: g.label || '',
+            // Optional SKU link; if absent the tile is non-navigating.
+            to: g.linkSku ? getProductUrl({ name: { 'sv-SE': g.label || '' }, sku: g.linkSku }) : null,
+          }));
 
           const Tile = ({ item, extraClass }) => {
             const inner = (
@@ -483,9 +452,11 @@ const PublicStorefront = () => {
             <h2 className="font-display font-bold text-3xl lg:text-4xl tracking-tight text-ink">
               {t('products_section_title', 'Våra Produkter')}
             </h2>
-            <p className="text-ink-muted mt-2 max-w-2xl">
-              {t('products_section_subtitle', 'Välj mellan olika färger och storlekar för att passa ditt fiske')}
-            </p>
+            {t('products_section_subtitle', '') && (
+              <p className="text-ink-muted mt-2 max-w-2xl">
+                {t('products_section_subtitle', '')}
+              </p>
+            )}
           </div>
 
           {loading ? (
@@ -494,35 +465,7 @@ const PublicStorefront = () => {
             </div>
           ) : (
             <>
-              {/* Special editions */}
-              {specialEditionProducts.length > 0 && (
-                <div className="mb-14">
-                  <div className="mb-6">
-                    <h3 className="font-display font-bold text-2xl tracking-tight text-ink">
-                      {t('special_editions_title', 'Special Editions')}
-                    </h3>
-                    <p className="text-ink-muted text-sm mt-1 max-w-2xl">
-                      {t('special_editions_description', 'Exklusiva B8Shield-produkter framtagna i samarbete med våra partners')}
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
-                    {specialEditionProducts.map((product, index) => (
-                      <NordProductCard
-                        key={`special-${product.id}-${index}`}
-                        to={getProductUrl(product)}
-                        image={getB2cProductImage(product)}
-                        tag={t('special_edition_badge', 'SPECIAL EDITION')}
-                        name={getContentValue(product.name) || t('product_name_fallback', 'B8Shield Special Edition')}
-                        description={getB2cProductDescription(product)}
-                        priceSek={product.b2cPrice || product.basePrice}
-                        ctaLabel={t('special_edition_cta', 'Se Special Edition')}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Regular product groups */}
+              {/* All product groups */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
                 {groupedProducts.map((productGroup, groupIndex) => {
                   const representativeProduct = productGroup.representativeProduct;
@@ -535,20 +478,20 @@ const PublicStorefront = () => {
                   const variantCount = productGroup.allProducts.length;
 
                   const name = isMultipack
-                    ? t('product_name_3pack', 'B8Shield 3-pack')
+                    ? t('product_name_3pack', '3-pack')
                     : (() => {
                         // 🚨 CRITICAL: Ensure we never render an object - prevent React Error #31
                         const productName = getContentValue(representativeProduct.name);
                         return typeof productName === 'string' && productName
                           ? productName
-                          : t('product_name_fallback', 'B8Shield {{group}}', { group: productGroup.groupName });
+                          : t('product_name_fallback', '{{group}}', { group: productGroup.groupName });
                       })();
 
                   const description = isMultipack
-                    ? t('product_description_3pack', 'Vasskydd 3-pack för olika fiskemiljöer')
+                    ? t('product_description_3pack', '')
                     : (() => {
                         const desc = getB2cProductDescription(representativeProduct);
-                        return typeof desc === 'string' ? desc : t('product_description_fallback', 'B8Shield vasskydd');
+                        return typeof desc === 'string' ? desc : t('product_description_fallback', '');
                       })();
 
                   const meta = isMultipack
@@ -562,7 +505,7 @@ const PublicStorefront = () => {
                       key={`${productGroup.groupName}-${groupIndex}`}
                       to={getProductUrl(representativeProduct)}
                       image={getB2cProductImage(representativeProduct)}
-                      imageAlt={`B8Shield ${isMultipack ? '3-pack' : productGroup.groupName}`}
+                      imageAlt={isMultipack ? '3-pack' : productGroup.groupName}
                       name={name}
                       description={description}
                       meta={meta}
@@ -583,57 +526,31 @@ const PublicStorefront = () => {
                   <p className="text-ink-muted text-lg">{t('no_products_available', 'Inga produkter tillgängliga för tillfället.')}</p>
                 </div>
               )}
-
-              {/* Clothing */}
-              {clothingProducts.length > 0 && (
-                <div className="mt-14">
-                  <div className="mb-6">
-                    <h3 className="font-display font-bold text-2xl tracking-tight text-ink">
-                      {t('clothing_section_title', 'Kläder & Accessoarer')}
-                    </h3>
-                    <p className="text-ink-muted text-sm mt-1 max-w-2xl">
-                      {t('clothing_section_description', 'Stilfulla kläder och accessoarer för den passionerade fiskaren')}
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
-                    {clothingProducts.map((product, index) => (
-                      <NordProductCard
-                        key={`clothing-${product.id}-${index}`}
-                        to={getProductUrl(product)}
-                        image={getB2cProductImage(product)}
-                        tag={t('clothing_badge', 'KLÄDER')}
-                        name={getContentValue(product.name) || t('product_name_fallback', 'B8Shield Kläder')}
-                        description={getB2cProductDescription(product)}
-                        priceSek={product.b2cPrice || product.basePrice}
-                        ctaLabel={t('clothing_cta', 'Se Produkt')}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
             </>
           )}
         </section>
 
-        {/* ===== Story band (config-driven, falls back to B8Shield features) ===== */}
+        {/* ===== Story band (config-driven, falls back to generic steps) ===== */}
         {showStory && (() => {
-          // Config steps win; otherwise the original hardcoded B8Shield band.
+          // Config steps win; otherwise the generic default band.
           const fallbackSteps = [
-            { n: '01', title: t('feature_proven_effective_title', 'Bevisat Effektivt'), text: t('feature_proven_effective_description', 'Minska förlusten av beten med upp till 90% enligt våra tester') },
-            { n: '02', title: t('feature_easy_to_use_title', 'Enkelt att Använda'), text: t('feature_easy_to_use_description', 'Fäst enkelt på ditt fiskedrag på några sekunder') },
-            { n: '03', title: t('feature_eco_friendly_title', 'Miljövänligt'), text: t('feature_eco_friendly_description', 'Återvinningsbart material som skyddar våra vattenmiljöer') },
+            { n: '01', title: t('feature_step1_title', 'Kvalitet'), text: t('feature_step1_text', 'Noggrant utvalda produkter du kan lita på.') },
+            { n: '02', title: t('feature_step2_title', 'Snabb leverans'), text: t('feature_step2_text', 'Skickas snabbt så du får din beställning i tid.') },
+            { n: '03', title: t('feature_step3_title', 'Trygg betalning'), text: t('feature_step3_text', 'Betala säkert med dina favoritbetalsätt.') },
           ];
           const steps = storySteps || fallbackSteps;
-          const title = store.storyTitle || t('features_section_title', 'Varför välja B8Shield™?');
+          const title = store.storyTitle || t('features_section_title', '');
 
           return (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 lg:pb-20">
               <div className="bg-white rounded-tile shadow-tile overflow-hidden">
                 <div className="h-1.5 bg-accent" />
                 <div className="p-8 lg:p-12">
-                  <h2 className="font-display font-bold text-2xl lg:text-3xl tracking-tight text-ink mb-8 lg:mb-10">
-                    {title}
-                  </h2>
+                  {title && (
+                    <h2 className="font-display font-bold text-2xl lg:text-3xl tracking-tight text-ink mb-8 lg:mb-10">
+                      {title}
+                    </h2>
+                  )}
                   <div className="grid md:grid-cols-3 gap-8 lg:gap-10">
                     {steps.map((step) => (
                       <div key={step.n}>
@@ -659,9 +576,11 @@ const PublicStorefront = () => {
             <h2 className="font-display font-bold text-3xl lg:text-4xl tracking-tight text-ink mb-3">
               {t('reviews_section_title', 'Vad våra kunder säger')}
             </h2>
-            <p className="text-lg text-ink-muted">
-              {t('reviews_section_subtitle', 'Äkta recensioner från nöjda sportfiskare')}
-            </p>
+            {t('reviews_section_subtitle', '') && (
+              <p className="text-lg text-ink-muted">
+                {t('reviews_section_subtitle', '')}
+              </p>
+            )}
           </div>
 
           <ReviewsSection
