@@ -31,6 +31,8 @@ const BRANDING_KEYS = [
   'heroSubtitle',
   'heroCtaLabel',
   'heroSecondaryLabel',
+  'introTitle',
+  'introBody',
   'storyTitle',
   'story',
   'gallery',
@@ -355,6 +357,34 @@ const AdminStorefront = () => {
                     className="w-full px-4 py-3 border border-ink/15 bg-white rounded-el text-base focus:outline-hidden focus:ring-4 focus:ring-accent/10 focus:border-accent transition-colors"
                   />
                 </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Tile: Intro / about */}
+          <section className="bg-white rounded-tile shadow-tile p-6 sm:p-7">
+            <h2 className="font-display text-xl font-bold text-ink mb-1">Introtext</h2>
+            <p className="text-ink-muted text-sm mb-5">Valfri text mellan hero och produkter. Lämna tomt för att dölja.</p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-ink mb-2">Rubrik</label>
+                <input
+                  type="text"
+                  value={form.introTitle ?? ''}
+                  placeholder="t.ex. Om oss"
+                  onChange={(e) => setField('introTitle', e.target.value)}
+                  className="w-full px-4 py-3 border border-ink/15 bg-white rounded-el text-base focus:outline-hidden focus:ring-4 focus:ring-accent/10 focus:border-accent transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-ink mb-2">Text</label>
+                <textarea
+                  rows={4}
+                  value={form.introBody ?? ''}
+                  placeholder="Berätta kort om din butik…"
+                  onChange={(e) => setField('introBody', e.target.value)}
+                  className="w-full px-4 py-3 border border-ink/15 bg-white rounded-el text-base focus:outline-hidden focus:ring-4 focus:ring-accent/10 focus:border-accent transition-colors"
+                />
               </div>
             </div>
           </section>

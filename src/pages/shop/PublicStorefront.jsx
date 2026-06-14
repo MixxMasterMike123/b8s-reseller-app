@@ -204,6 +204,11 @@ const PublicStorefront = () => {
 
   const bestseller = groupedProducts[0]?.representativeProduct || null;
 
+  // Optional intro/about block (admin-editable). Hidden unless the shop sets it.
+  const introTitle = (store.introTitle || '').trim();
+  const introBody = (store.introBody || '').trim();
+  const showIntro = !!(introTitle || introBody);
+
   // Hero CTA labels: shop config wins, translation fallback keeps current copy.
   const heroCtaLabel = store.heroCtaLabel || t('hero_shop_now_button', 'Handla nu');
   const heroSecondaryLabel = store.heroSecondaryLabel || t('hero_see_products', 'Se sortimentet ↓');
@@ -445,6 +450,22 @@ const PublicStorefront = () => {
             </section>
           );
         })()}
+
+        {/* ===== Intro / about block (admin-editable; hidden when empty) ===== */}
+        {showIntro && (
+          <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 lg:pt-20 text-center">
+            {introTitle && (
+              <h2 className="font-display font-bold text-3xl lg:text-4xl tracking-tight text-ink">
+                {introTitle}
+              </h2>
+            )}
+            {introBody && (
+              <p className="text-ink-muted text-lg leading-relaxed mt-4 whitespace-pre-line">
+                {introBody}
+              </p>
+            )}
+          </section>
+        )}
 
         {/* ===== Products ===== */}
         <section id="products" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
