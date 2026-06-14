@@ -26,10 +26,19 @@ export const COUNTRY_PREFIXES = ['se', 'gb', 'us'];
 // First-segment values that are NOT shopIds — app surfaces / credential routes
 // that can appear at the root before a shop prefix is applied. Treated as "no
 // shop → default" so they never get mistaken for a tenant id.
+//
+// 'admin' is reserved here (architecture: reserve admin/platform/api/www from
+// tenant registration). It matters for resolution: the shop-admin surface lives
+// at /admin/* (no shop prefix), so without this, resolveShopId('/admin/products')
+// would return the literal 'admin' as the shopId and every admin query would
+// scope to a non-existent shop. Reserving it makes the admin surface resolve to
+// DEFAULT_SHOP_ID — the shop it manages — which is also the baseline an operator
+// reverts to when ending impersonation (P4.3). 'platform' is reserved for the
+// same reason (its surface is a separate host, but defensive).
 const NON_SHOP_FIRST_SEGMENTS = new Set([
   ...COUNTRY_PREFIXES,
   'login', 'register', 'forgot-password', 'reset-password',
-  'affiliate-login', '__', 'account',
+  'affiliate-login', '__', 'account', 'admin', 'platform',
 ]);
 
 /**

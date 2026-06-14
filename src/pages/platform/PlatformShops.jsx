@@ -8,6 +8,7 @@ import { db } from '../../firebase/config';
 import { APP_URLS } from '../../config/urls';
 import PlatformLayout from '../../components/platform/PlatformLayout';
 import ProvisionShopModal from '../../components/platform/ProvisionShopModal';
+import ImpersonateShopModal from '../../components/platform/ImpersonateShopModal';
 import toast from 'react-hot-toast';
 import {
   BuildingStorefrontIcon,
@@ -20,6 +21,7 @@ const PlatformShops = () => {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
   const [showProvision, setShowProvision] = useState(false);
+  const [impersonateShop, setImpersonateShop] = useState(null);
 
   const loadShops = useCallback(async () => {
     try {
@@ -149,9 +151,19 @@ const PlatformShops = () => {
                             Butik
                           </button>
                           <button
-                            disabled
-                            title="Kommer i nästa steg (säker impersonering)"
-                            className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium bg-white/5 text-gray-600 cursor-not-allowed"
+                            onClick={() => setImpersonateShop(shop)}
+                            disabled={disabled}
+                            title={
+                              disabled
+                                ? 'Butiken är inaktiverad — aktivera först'
+                                : 'Öppna butikens admin som plattformsadmin (loggas)'
+                            }
+                            className={
+                              'inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium ' +
+                              (disabled
+                                ? 'bg-white/5 text-gray-600 cursor-not-allowed'
+                                : 'bg-white/5 text-gray-200 hover:bg-amber-500/15 hover:text-amber-300')
+                            }
                           >
                             Admin
                           </button>
@@ -186,6 +198,13 @@ const PlatformShops = () => {
         <ProvisionShopModal
           onClose={() => setShowProvision(false)}
           onCreated={loadShops}
+        />
+      )}
+
+      {impersonateShop && (
+        <ImpersonateShopModal
+          shop={impersonateShop}
+          onClose={() => setImpersonateShop(null)}
         />
       )}
     </PlatformLayout>

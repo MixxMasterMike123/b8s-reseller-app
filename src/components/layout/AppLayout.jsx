@@ -5,6 +5,7 @@ import MentionNotifications from '../../wagons/dining-wagon/components/MentionNo
 import LanguageSwitcher from '../LanguageSwitcher';
 import DarkModeToggle from '../DarkModeToggle';
 import { useTranslation } from '../../contexts/TranslationContext';
+import ImpersonationBanner from '../auth/ImpersonationBanner';
 
 // 🚂 WAGON SYSTEM: Import wagon registry for menu items
 import wagonRegistry from '../../wagons/WagonRegistry.js';
@@ -162,6 +163,9 @@ const AppLayout = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* P4.3: non-dismissible operator-impersonation banner (only renders when
+          a session is active). Sits above the whole admin shell. */}
+      <ImpersonationBanner />
       {/* Desktop Sidebar */}
       <div className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
         <div className="flex grow flex-col overflow-y-auto border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xs">

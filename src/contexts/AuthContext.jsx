@@ -22,6 +22,7 @@ import { auth, db, isDemoMode, functions } from '../firebase/config';
 import toast from 'react-hot-toast';
 import { onNewB2BCustomer } from '../wagons/dining-wagon/utils/customerStatusAutomation';
 import { addAdminUID, removeAdminUID } from '../utils/adminUIDManager';
+import { clearImpersonation } from '../config/impersonation';
 
 const AuthContext = createContext();
 
@@ -190,7 +191,12 @@ export function AuthProvider({ children }) {
   async function logout() {
     try {
       setError('');
-      
+
+      // P4.3: never let an operator-impersonation session outlive the operator's
+      // login in this tab. Clearing on logout stops a stale impersonated shopId
+      // from being honored if a different admin logs into the same tab.
+      clearImpersonation();
+
       if (isDemoMode) {
         // Demo mode: mock logout
         setCurrentUser(null);

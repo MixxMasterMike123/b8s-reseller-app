@@ -24,6 +24,7 @@ import CookiebotCMP from './components/shop/CookiebotCMP';
 import PrivateRoute from './components/auth/PrivateRoute';
 import AdminRoute from './components/auth/AdminRoute';
 import PlatformRoute from './components/auth/PlatformRoute';
+import ImpersonationIntake from './components/auth/ImpersonationIntake';
 import PlatformShops from './pages/platform/PlatformShops';
 import LoginPage from './pages/LoginPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -171,6 +172,8 @@ function App() {
     <>
       <ScrollToTop />
       {appMode === 'shop' && <CookiebotCMP />}
+      {/* P4.3: consume ?impersonate=&audit= on the admin host (platform-gated). */}
+      {appMode === 'admin' && <ImpersonationIntake />}
       <AffiliateTracker />
       <ConditionalTranslationProvider appMode={appMode}>
         <div className="min-h-screen bg-gray-50">
@@ -439,7 +442,10 @@ function App() {
 
   return (
     <Router>
-      <ShopProvider>
+      {/* P4.3: only the admin surface honors an operator impersonation session
+          (it overrides the path-resolved shopId so shop admin renders the
+          target tenant). Storefront/platform never impersonate. */}
+      <ShopProvider impersonationEnabled={appMode === 'admin'}>
         <StoreSettingsProvider>
           <AuthProvider>
             <SimpleAuthContextProvider>

@@ -146,6 +146,23 @@ service cloud.firestore {
     }
 
     // ============================================================
+    // impersonationAudit — accountability trail for operator "Open Shop Admin"
+    // (P4.3). One doc per impersonation session: who (actorUid), which shop,
+    // reason, start, expiry, and an end stamp. PLATFORM ONLY — only the
+    // operator surface writes/reads these. create requires actorUid == caller
+    // (no spoofing another operator); update is for stamping endedAt; never
+    // deletable (an audit trail you can erase is not an audit trail).
+    // ============================================================
+    match /impersonationAudit/{auditId} {
+      allow read: if isPlatform();
+      allow create: if isPlatform()
+        && request.resource.data.actorUid == request.auth.uid;
+      allow update: if isPlatform()
+        && resource.data.actorUid == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // ============================================================
     // Orders (shop-scoped)
     // ============================================================
     match /orders/{orderId} {
