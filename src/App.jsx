@@ -33,6 +33,7 @@ import AdminB2CCustomerEdit from './pages/admin/AdminB2CCustomerEdit';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminOrderDetail from './pages/admin/AdminOrderDetail';
 import AdminProducts from './pages/admin/AdminProducts';
+import AdminStorefront from './pages/admin/AdminStorefront';
 import AdminMarketingMaterials from './pages/admin/AdminMarketingMaterials';
 import AdminMarketingMaterialEdit from './pages/admin/AdminMarketingMaterialEdit';
 // Google Shopping admin removed — Google Merchant feature cut (POD shops don't need it).
@@ -287,7 +288,13 @@ function App() {
                   <AdminProducts />
                 </AdminRoute>
               } />
-              
+
+              <Route path="/admin/storefront" element={
+                <AdminRoute>
+                  <AdminStorefront />
+                </AdminRoute>
+              } />
+
               <Route path="/admin/marketing" element={
                 <AdminRoute>
                   <AdminMarketingMaterials />
