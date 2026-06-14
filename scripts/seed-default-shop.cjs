@@ -23,8 +23,13 @@
  * login) OR a serviceAccountKey.json — same as the other admin scripts here.
  */
 
-const admin = require('firebase-admin');
-const { getFirestore } = require('firebase-admin/firestore');
+// firebase-admin is installed in functions/node_modules (not the repo root),
+// so resolve it from there regardless of where this script is run from.
+const path = require('path');
+const { createRequire } = require('module');
+const functionsRequire = createRequire(path.join(__dirname, '..', 'functions', 'package.json'));
+const admin = functionsRequire('firebase-admin');
+const { getFirestore } = functionsRequire('firebase-admin/firestore');
 
 // Keep in sync with src/config/tenancy.js DEFAULT_SHOP_ID.
 const DEFAULT_SHOP_ID = 'b8shield';
