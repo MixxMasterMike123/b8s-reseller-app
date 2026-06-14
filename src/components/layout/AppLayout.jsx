@@ -22,7 +22,8 @@ import {
   MegaphoneIcon,
   SparklesIcon,
   CpuChipIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  BuildingStorefrontIcon
 } from '@heroicons/react/24/outline';
 
 const AppLayout = ({ children }) => {
@@ -108,6 +109,12 @@ const AppLayout = ({ children }) => {
       path: '/admin/products',
       icon: CubeIcon,
       description: t('nav.admin_products_desc', 'Hantera produkter'),
+    },
+    {
+      name: t('nav.admin_storefront', 'Butik'),
+      path: '/admin/storefront',
+      icon: BuildingStorefrontIcon,
+      description: t('nav.admin_storefront_desc', 'Utseende och innehåll för din webbutik'),
     },
     {
       name: t('nav.admin_marketing', 'Marknadsföring'),
