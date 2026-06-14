@@ -603,7 +603,7 @@ const AdminAffiliateEdit = () => {
     });
 
     // Open affiliate portal in new tab with admin parameters
-    const affiliatePortalUrl = `${APP_URLS.B2C_SHOP}/se/affiliate-portal?${adminParams.toString()}`;
+    const affiliatePortalUrl = `${APP_URLS.B2C_SHOP}/affiliate-portal?${adminParams.toString()}`;
     window.open(affiliatePortalUrl, '_blank');
     
     toast.success(`Öppnar ${data.name}s affiliate-portal i ny flik`);

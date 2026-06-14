@@ -30,45 +30,19 @@ const getInitialLanguage = () => {
     }
     
     // For B2C shop, check if we already have a country in the URL path
-    if (typeof window !== 'undefined' && window.location.hostname === 'shop.b8shield.com') {
-      const pathname = window.location.pathname;
-      // Ensure pathname is a string before calling split
-      const segments = (pathname && typeof pathname === 'string') 
-        ? pathname.split('/').filter(Boolean) 
-        : [];
-      const countryCode = segments[0];
-      
-      // If we have a country code in URL, map it to language immediately
-      if (countryCode && countryCode.length === 2) {
-        const countryLanguageMap = {
-          'se': 'sv-SE',
-          'gb': 'en-GB', 
-          'us': 'en-US',
-          // For unsupported countries, use English as fallback
-        };
-        
-        const mappedLanguage = countryLanguageMap[countryCode.toLowerCase()];
-        if (mappedLanguage) {
-          console.log(`🌍 B2C: Country ${countryCode} → ${mappedLanguage} (from URL path)`);
-          return mappedLanguage;
-        } else {
-          console.log(`🌍 B2C: Unsupported country ${countryCode} → en-GB (fallback)`);
-          return 'en-GB';
-        }
-      }
-      
-      // Check localStorage for previously detected language (to handle page refreshes)
+    // Storefront is Swedish-only (i18n deferred; the /{countryCode} URL prefix
+    // was removed). Default to sv-SE; honor a saved preference if one exists.
+    const isShopHost = typeof window !== 'undefined' &&
+      (window.location.hostname.split('.')[0] === 'shop' ||
+       window.location.hostname.split('.')[0].startsWith('shop-'));
+    if (isShopHost) {
       const savedLang = localStorage.getItem('b8shield-language');
       if (savedLang && AVAILABLE_LANGUAGES.some(lang => lang.code === savedLang)) {
-        console.log(`🌍 B2C: Using saved language: ${savedLang} (from localStorage)`);
         return savedLang;
       }
-      
-      // Only return null if we truly have no information (initial page load without country)
-      console.log(`🌍 B2C: No country in URL, waiting for geo-detection...`);
-      return null; // Will wait for LanguageCurrencyContext to set the language
+      return 'sv-SE';
     }
-    
+
     // Check localStorage for B2B
     const savedLang = localStorage.getItem('b8shield-language');
     console.log(`🌍 MAIN APP: Checking localStorage 'b8shield-language':`, savedLang);

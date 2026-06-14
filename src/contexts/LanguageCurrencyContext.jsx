@@ -338,59 +338,17 @@ export const LanguageCurrencyProvider = ({ children }) => {
   // Initial detection on mount
   useEffect(() => {
     const initialize = async () => {
-      // Only run on B2C shop domain
-      if (typeof window !== 'undefined' && window.location.hostname === 'shop.b8shield.com') {
-        console.log('🛒 Initializing enhanced language/currency for international e-commerce...');
-        
-        // Try to get country from URL params first, then fallback to path parsing
-        const countryFromParams = urlCountryCode;
-        const countryFromPath = getCountryFromPath();
-        const detectedCountry = countryFromParams || countryFromPath;
-        
-        if (detectedCountry && !isInitialized) {
-          console.log(`🌍 LanguageCurrency: Country detected: ${detectedCountry} (from ${countryFromParams ? 'params' : 'path'})`);
-          
-          // **FAST PATH FOR SUPPORTED COUNTRIES** ⚡
-          const countryConfig = getCountryConfig(detectedCountry.toLowerCase());
-          if (countryConfig && countryConfig.isSupported) {
-            console.log(`⚡ FAST PATH: Supported country ${detectedCountry} → direct initialization`);
-            const language = countryConfig.language;
-            const currency = countryConfig.currency;
-            
-            console.log(`🎯 Direct load: ${language} + ${currency} (supported)`);
-            updateLanguageAndCurrency(language, currency, 'supported-country-fast', detectedCountry.toUpperCase());
-            
-            // Force a small delay to ensure React state updates are processed
-            await new Promise(resolve => setTimeout(resolve, 10));
-            
-            setIsInitialized(true);
-            setIsLoading(false);
-            console.log(`⚡ FAST PATH COMPLETE: ${language} + ${currency} → Ready for price conversion`);
-            return; // Skip all complex logic
-          }
-          
-          // **COMPLEX PATH FOR UNSUPPORTED COUNTRIES** 🔄
-          console.log(`🔄 COMPLEX PATH: Unsupported country ${detectedCountry} → using complex logic`);
-          await initializeFromUrlCountry(detectedCountry);
-        } else if (!detectedCountry && !isInitialized) {
-          console.log('🌍 LanguageCurrency: No URL country, waiting for geo-redirect...');
-          // Don't set defaults immediately - wait for potential redirect
-          // Just set loading state
-          setIsLoading(true);
-          return; // Exit early, don't set defaults
-        }
-      } else {
-        // B2B portal - set Swedish immediately
-        console.log('🏠 B2B portal detected - using Swedish');
-        updateLanguageAndCurrency('sv-SE', 'SEK', 'b2b-portal', 'SE');
+      // Storefront is Swedish-only (i18n deferred; /{countryCode} URL prefix
+      // removed). Always initialize sv-SE / SEK — no geo-detection, no waiting.
+      if (!isInitialized) {
+        updateLanguageAndCurrency('sv-SE', 'SEK', 'default-swedish', 'SE');
         setIsInitialized(true);
       }
-      
       setIsLoading(false);
     };
-    
+
     initialize();
-  }, [urlCountryCode, isInitialized]); // Allow re-runs when URL changes
+  }, [isInitialized]);
 
   // Re-detect when URL country changes (only when URL params change)
   useEffect(() => {

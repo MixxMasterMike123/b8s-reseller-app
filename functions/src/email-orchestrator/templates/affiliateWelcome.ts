@@ -23,10 +23,9 @@ export interface AffiliateWelcomeData {
 export function generateAffiliateWelcomeTemplate(data: AffiliateWelcomeData): { subject: string; html: string } {
   const { affiliateInfo, credentials, wasExistingAuthUser, language } = data;
   
-  // Generate URLs with proper language segments
-  const languageSegment = language === 'sv-SE' ? 'se' : language === 'en-GB' ? 'uk' : 'us';
-  const portalUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/${languageSegment}/affiliate-portal`;
-  const referralUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/${languageSegment}/?ref=${affiliateInfo.affiliateCode}`;
+  // Countryless storefront URLs (i18n deferred).
+  const portalUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/affiliate-portal`;
+  const referralUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/?ref=${affiliateInfo.affiliateCode}`;
   const supportUrl = `${EMAIL_CONFIG.URLS.B2B_PORTAL}/contact`;
 
   // Generate login instructions based on user type

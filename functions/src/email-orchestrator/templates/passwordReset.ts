@@ -1,6 +1,6 @@
 // Password Reset Email Template
 // Extracted from V3 passwordReset template - DESIGN PRESERVED + MOBILE OPTIMIZED
-import { EMAIL_CONFIG, getLanguageSegment } from '../core/config';
+import { EMAIL_CONFIG } from '../core/config';
 
 export interface PasswordResetData {
   email: string;
@@ -13,18 +13,17 @@ export interface PasswordResetData {
 export function generatePasswordResetTemplate(data: PasswordResetData, lang: string = 'sv-SE') {
   const { email, resetCode, userAgent, timestamp, userType } = data;
   
-  // Generate appropriate URLs based on user type
-  const segment = getLanguageSegment(lang);
+  // Countryless storefront URLs (i18n deferred).
   let resetUrl: string;
   let loginUrl: string;
-  
+
   if (userType === 'AFFILIATE' || userType === 'B2B') {
-    resetUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/reset-password?code=${resetCode}`;
-    loginUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/affiliate-login`;
+    resetUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/reset-password?code=${resetCode}`;
+    loginUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/affiliate-login`;
   } else {
     // B2C customers
-    resetUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/reset-password?code=${resetCode}`;
-    loginUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/customer-login`;
+    resetUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/reset-password?code=${resetCode}`;
+    loginUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/login`;
   }
 
   const templates = {

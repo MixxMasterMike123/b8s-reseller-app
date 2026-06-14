@@ -36,7 +36,7 @@ export declare const EMAIL_CONFIG: {
         readonly SUPPORTED: readonly ["sv-SE", "en-GB", "en-US"];
     };
 };
-export declare function getLanguageSegment(lang: string): string;
+export declare function getLanguageSegment(_lang?: string): string;
 export declare function formatPrice(amount: number): string;
-export declare function getSupportUrl(lang: string): string;
-export declare function getOrderTrackingUrl(orderId: string, lang: string): string;
+export declare function getSupportUrl(_lang?: string): string;
+export declare function getOrderTrackingUrl(orderId: string, _lang?: string): string;

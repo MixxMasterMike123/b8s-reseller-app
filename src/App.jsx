@@ -60,8 +60,7 @@ import CustomerRegister from './pages/shop/CustomerRegister';
 import ForgotPassword from './pages/shop/ForgotPassword';
 import ResetPassword from './pages/shop/ResetPassword';
 import EmailVerificationHandler from './pages/shop/EmailVerificationHandler';
-import GeoRedirect from './components/shop/GeoRedirect';
-import CountryRouteValidator from './components/shop/CountryRouteValidator';
+import LegacyCountryRedirect from './components/shop/LegacyCountryRedirect';
 import DynamicRouteHandler from './components/shop/DynamicRouteHandler';
 
 // Legal & Compliance Pages (now handled by CMS)
@@ -201,48 +200,47 @@ function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </>
           ) : appMode === 'shop' ? (
-            // B2C Shop Routes - Universal Country Support for International E-commerce
+            // B2C Shop Routes — countryless (Swedish-only; i18n deferred).
+            // The old /{countryCode}/... grammar was removed; legacy links are
+            // redirected by LegacyCountryRedirect so old emails/affiliate links
+            // keep working.
             <>
-              {/* Root redirect - geo-detection will handle initial redirect */}
-              <Route path="/" element={<GeoRedirect />} />
-              
-              {/* Credential pages - country-neutral for simplicity */}
+              {/* Home storefront */}
+              <Route path="/" element={<PublicStorefront />} />
+
+              {/* Credential pages */}
               <Route path="/login" element={<CustomerLogin />} />
               <Route path="/register" element={<CustomerRegister />} />
-                              <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/affiliate-login" element={<AffiliateLogin />} />
-              
+
               {/* Firebase Auth Action Handler - Email Verification */}
               <Route path="/__/auth/action" element={<EmailVerificationHandler />} />
-              
-              {/* Universal Country Routes - Supports any country code */}
-              <Route path="/:countryCode" element={<CountryRouteValidator><PublicStorefront /></CountryRouteValidator>} />
-              <Route path="/:countryCode/product/:slug" element={<CountryRouteValidator><PublicProductPage /></CountryRouteValidator>} />
-              <Route path="/:countryCode/cart" element={<CountryRouteValidator><ShoppingCart /></CountryRouteValidator>} />
-              <Route path="/:countryCode/checkout" element={<CountryRouteValidator><Checkout /></CountryRouteValidator>} />
-              <Route path="/:countryCode/order-return" element={<CountryRouteValidator><OrderReturn /></CountryRouteValidator>} />
-              <Route path="/:countryCode/order-confirmation/:orderId" element={<CountryRouteValidator><OrderConfirmation /></CountryRouteValidator>} />
-              <Route path="/:countryCode/account" element={<CountryRouteValidator><CustomerAccount /></CountryRouteValidator>} />
+
+              {/* Storefront pages (countryless) */}
+              <Route path="/product/:slug" element={<PublicProductPage />} />
+              <Route path="/cart" element={<ShoppingCart />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/order-return" element={<OrderReturn />} />
+              <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
               <Route path="/account" element={<CustomerAccount />} />
-              {/* Legal pages now handled by CMS via DynamicRouteHandler */}
-              <Route path="/:countryCode/affiliate-registration" element={<CountryRouteValidator><AffiliateRegistration /></CountryRouteValidator>} />
-              <Route path="/:countryCode/affiliate-login" element={<CountryRouteValidator><AffiliateLogin /></CountryRouteValidator>} />
-              <Route path="/:countryCode/affiliate-portal" element={<CountryRouteValidator><AffiliatePortal /></CountryRouteValidator>} />
-              <Route path="/:countryCode/forgot-password" element={<CountryRouteValidator><ForgotPassword /></CountryRouteValidator>} />
-              <Route path="/:countryCode/reset-password" element={<CountryRouteValidator><ResetPassword /></CountryRouteValidator>} />
-              
-              {/* Dynamic CMS Pages - Must be before catch-all */}
-              <Route path="/:countryCode/*" element={
-                <CountryRouteValidator>
+              <Route path="/affiliate-registration" element={<AffiliateRegistration />} />
+              <Route path="/affiliate-portal" element={<AffiliatePortal />} />
+
+              {/* Catch-all for any unmatched path. LegacyCountryRedirect first
+                  checks for a leading 2-letter country code (old /se/... links)
+                  and redirects to the countryless path; otherwise it renders the
+                  CMS handler (which looks up the path as a published page slug,
+                  falling back to home). Single handler = no route-precedence
+                  loops between legacy redirects and CMS slugs. */}
+              <Route path="*" element={
+                <LegacyCountryRedirect>
                   <DynamicRouteHandler>
                     <Navigate to="/" replace />
                   </DynamicRouteHandler>
-                </CountryRouteValidator>
+                </LegacyCountryRedirect>
               } />
-              
-              {/* Catch-all redirect to geo-detection */}
-              <Route path="*" element={<GeoRedirect />} />
             </>
           ) : (
             // Admin console routes (B2B portal removed — see b2b-portal-archive tag)

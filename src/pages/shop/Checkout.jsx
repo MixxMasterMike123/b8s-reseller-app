@@ -960,7 +960,7 @@ const Checkout = () => {
                   type="button"
                   onClick={() => {
                     setShowLoginModal(false);
-                    navigate(getCountryAwareUrl('/customer-forgot-password'));
+                    navigate(getCountryAwareUrl('/forgot-password'));
                   }}
                   className="text-accent hover:opacity-80 underline"
                 >

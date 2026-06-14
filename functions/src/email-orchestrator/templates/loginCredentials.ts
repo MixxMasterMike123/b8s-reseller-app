@@ -1,6 +1,6 @@
 // Login Credentials Email Template
 // Extracted from V3 welcomeCredentials.ts and affiliateCredentials.ts - DESIGN PRESERVED + MOBILE OPTIMIZED
-import { EMAIL_CONFIG, getLanguageSegment } from '../core/config';
+import { EMAIL_CONFIG } from '../core/config';
 
 export interface LoginCredentialsData {
   userInfo: {
@@ -21,16 +21,15 @@ export interface LoginCredentialsData {
 export function generateLoginCredentialsTemplate(data: LoginCredentialsData, lang: string = 'sv-SE') {
   const { userInfo, credentials, accountType, wasExistingAuthUser } = data;
   
-  // Generate appropriate URLs based on account type
-  const segment = getLanguageSegment(lang);
+  // Countryless storefront URLs (i18n deferred).
   let loginUrl: string;
   let portalName: string;
   let referralUrl: string | null = null;
-  
+
   if (accountType === 'AFFILIATE') {
-    loginUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/affiliate-login`;
+    loginUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/affiliate-login`;
     portalName = 'Affiliate-portalen';
-    referralUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/?ref=${credentials.affiliateCode}`;
+    referralUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/?ref=${credentials.affiliateCode}`;
   } else {
     // B2B users
     loginUrl = `${EMAIL_CONFIG.URLS.B2B_PORTAL}`;
@@ -147,7 +146,7 @@ export function generateLoginCredentialsTemplate(data: LoginCredentialsData, lan
 
     ${wasExistingAuthUser ? `
     <div style="text-align: center; margin: 15px 0;">
-      <a href="${EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/reset-password" style="display: inline-block; background-color: transparent; color: #459CA8; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-size: 14px; border: 2px solid #459CA8;">Återställ lösenord</a>
+      <a href="${EMAIL_CONFIG.URLS.B2C_SHOP}/reset-password" style="display: inline-block; background-color: transparent; color: #459CA8; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-size: 14px; border: 2px solid #459CA8;">Återställ lösenord</a>
     </div>
     ` : ''}
 

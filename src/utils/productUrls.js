@@ -62,38 +62,19 @@ export const getSkuFromSlug = (slug) => {
 };
 
 
-// Generate full product URL using the new dynamic slug
+// Generate full product URL using the new dynamic slug.
+// Storefront URLs are countryless (Swedish-only; i18n deferred). The old
+// `/se/...` grammar is gone — old links are redirected at the router (see App.jsx).
 export const getProductUrl = (product) => {
   const slug = getVariantProductSlug(product);
-  
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : '/se';
-  const segments = pathname?.split('/')?.filter(Boolean) || [];
-  const countryCode = segments[0] || 'se';
-  
-  return `/${countryCode}/product/${slug}`;
+  return `/product/${slug}`;
 };
 
-// Generate country-aware URL for B2C shop links
+// Generate a storefront URL for B2C shop links (countryless).
 export const getCountryAwareUrl = (path) => {
-  // Get current country from URL path
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : '/se';
-  const segments = pathname?.split('/')?.filter(Boolean) || [];
-  const countryCode = segments[0] || 'se';
-  
-  // Validate country code
-  const validCountries = ['se', 'gb', 'us'];
-  const currentCountry = validCountries.includes(countryCode) ? countryCode : 'se';
-  
-  // Clean the input path
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-  
-  // For empty paths, return country root
-  if (!cleanPath || cleanPath === '') {
-    return `/${currentCountry}`;
-  }
-  
-  // Return country-prefixed URL
-  return `/${currentCountry}/${cleanPath}`;
+  if (!cleanPath || cleanPath === '') return '/';
+  return `/${cleanPath}`;
 };
 
 
@@ -137,13 +118,11 @@ export const getProductSeoDescription = (product) => {
  * @returns {string} The complete affiliate link
  */
 export const generateAffiliateLink = (affiliateCode, preferredLang, productPath = '') => {
-  const urlLang = (preferredLang?.split('-')[1] || 'se').toLowerCase();
-
+  // Countryless storefront URLs (i18n deferred). preferredLang kept in the
+  // signature for call-site compatibility but no longer maps to a path segment.
   const baseUrl = APP_URLS.B2C_SHOP;
-  const langPath = `/${urlLang}`;
   const path = productPath ? `/${productPath}` : '';
-  
-  return `${baseUrl}${langPath}${path}?ref=${affiliateCode}`;
+  return `${baseUrl}${path}?ref=${affiliateCode}`;
 };
 
 /**
@@ -212,7 +191,6 @@ export const getLegalSeoDescription = (pageType = 'privacy') => {
 export const generateShopStructuredData = (language = 'sv-SE') => {
   // Structured data must reflect the actual serving domain.
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : APP_URLS.B2C_SHOP;
-  const langCode = (language?.split('-')[1] || 'se').toLowerCase();
 
   // Social profiles from store config (empty values are hidden).
   const sameAs = Object.values(STORE.social || {}).filter(Boolean);
@@ -221,7 +199,7 @@ export const generateShopStructuredData = (language = 'sv-SE') => {
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": STORE.shopName,
-    "url": `${baseUrl}/${langCode}`,
+    "url": baseUrl,
     "logo": STORE.logoUrl?.startsWith('http') ? STORE.logoUrl : `${baseUrl}${STORE.logoUrl}`,
     "description": getShopSeoDescription(language),
     // NOTE: STORE has no structured postal-address or phone fields, so the

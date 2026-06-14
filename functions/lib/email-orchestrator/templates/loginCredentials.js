@@ -6,15 +6,14 @@ exports.generateLoginCredentialsTemplate = void 0;
 const config_1 = require("../core/config");
 function generateLoginCredentialsTemplate(data, lang = 'sv-SE') {
     const { userInfo, credentials, accountType, wasExistingAuthUser } = data;
-    // Generate appropriate URLs based on account type
-    const segment = (0, config_1.getLanguageSegment)(lang);
+    // Countryless storefront URLs (i18n deferred).
     let loginUrl;
     let portalName;
     let referralUrl = null;
     if (accountType === 'AFFILIATE') {
-        loginUrl = `${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/affiliate-login`;
+        loginUrl = `${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/affiliate-login`;
         portalName = 'Affiliate-portalen';
-        referralUrl = `${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/?ref=${credentials.affiliateCode}`;
+        referralUrl = `${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/?ref=${credentials.affiliateCode}`;
     }
     else {
         // B2B users
@@ -130,7 +129,7 @@ function generateLoginCredentialsTemplate(data, lang = 'sv-SE') {
 
     ${wasExistingAuthUser ? `
     <div style="text-align: center; margin: 15px 0;">
-      <a href="${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/reset-password" style="display: inline-block; background-color: transparent; color: #459CA8; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-size: 14px; border: 2px solid #459CA8;">Återställ lösenord</a>
+      <a href="${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/reset-password" style="display: inline-block; background-color: transparent; color: #459CA8; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-size: 14px; border: 2px solid #459CA8;">Återställ lösenord</a>
     </div>
     ` : ''}
 

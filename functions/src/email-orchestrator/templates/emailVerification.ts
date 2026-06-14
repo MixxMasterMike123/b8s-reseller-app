@@ -22,10 +22,9 @@ export interface EmailVerificationData {
 export function generateEmailVerificationTemplate(data: EmailVerificationData): { subject: string; html: string } {
   const { customerInfo, verificationCode, language, source } = data;
   
-  // Generate verification URL
-  const languageSegment = language === 'sv-SE' ? 'se' : language === 'en-GB' ? 'uk' : 'us';
-  const verificationUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/${languageSegment}/verify-email?oobCode=${verificationCode}`;
-  const shopUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/${languageSegment}`;
+  // Countryless storefront URLs (i18n deferred).
+  const verificationUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/verify-email?oobCode=${verificationCode}`;
+  const shopUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}`;
   const supportUrl = `${EMAIL_CONFIG.URLS.B2B_PORTAL}/contact`;
 
   // Get customer name

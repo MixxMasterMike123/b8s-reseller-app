@@ -378,11 +378,11 @@ const CustomerRegister = () => {
                 />
                 <label htmlFor="termsConsent" className="ml-2 block text-sm text-gray-700">
                   {t('customer_register_terms_consent', 'Jag godkänner')}{' '}
-                  <Link to="/se/legal/anvandarvillkor" className="text-blue-600 hover:text-blue-800">
+                  <Link to="/legal/anvandarvillkor" className="text-blue-600 hover:text-blue-800">
                     {t('customer_register_terms_link', 'användarvillkor')}
                   </Link>
                   {' '}och{' '}
-                  <Link to="/se/legal/integritetspolicy" className="text-blue-600 hover:text-blue-800">
+                  <Link to="/legal/integritetspolicy" className="text-blue-600 hover:text-blue-800">
                     {t('customer_register_privacy_link', 'integritetspolicy')}
                   </Link>
                   <span className="text-red-500">*</span>

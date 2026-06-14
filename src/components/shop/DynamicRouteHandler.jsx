@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useLocation, Navigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import DynamicPage from '../../pages/shop/DynamicPage';
@@ -9,7 +9,6 @@ import DynamicPage from '../../pages/shop/DynamicPage';
  * Checks if the path matches a CMS page slug, otherwise renders children
  */
 const DynamicRouteHandler = ({ children }) => {
-  const { countryCode } = useParams();
   const location = useLocation();
   const [isCmsPage, setIsCmsPage] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -17,45 +16,45 @@ const DynamicRouteHandler = ({ children }) => {
 
   useEffect(() => {
     const checkForCmsPage = async () => {
-      // Extract the path after country code
+      // Countryless URLs: the CMS slug is the path itself (no country prefix).
       const pathSegments = (location.pathname || '/').split('/').filter(Boolean);
-      if (pathSegments.length < 2) {
+      if (pathSegments.length < 1) {
         setLoading(false);
         return;
       }
 
-      // Remove country code from path segments
-      const pathAfterCountry = pathSegments.slice(1).join('/');
-      
-      // Skip if it's a known route
+      const slugPath = pathSegments.join('/');
+
+      // Skip if it's a known (non-CMS) route
       const knownRoutes = [
-        'product', 'cart', 'checkout', 'order-confirmation', 'account',
+        'product', 'cart', 'checkout', 'order-confirmation', 'order-return', 'account',
         'privacy', 'terms', 'returns', 'cookies', 'shipping',
-        'affiliate-registration', 'affiliate-login', 'affiliate-portal'
+        'affiliate-registration', 'affiliate-login', 'affiliate-portal',
+        'login', 'register', 'forgot-password', 'reset-password'
       ];
 
-      if (knownRoutes.some(route => pathAfterCountry.startsWith(route))) {
+      if (knownRoutes.some(route => slugPath.startsWith(route))) {
         setLoading(false);
         return;
       }
 
       // Check if this path matches a CMS page slug
       try {
-        console.log('🔍 DynamicRouteHandler: Checking for CMS page with slug:', pathAfterCountry);
-        
+        console.log('🔍 DynamicRouteHandler: Checking for CMS page with slug:', slugPath);
+
         const pagesRef = collection(db, 'pages');
         const q = query(
           pagesRef,
-          where('slug', '==', pathAfterCountry),
+          where('slug', '==', slugPath),
           where('status', '==', 'published')
         );
         
         const querySnapshot = await getDocs(q);
         
         if (!querySnapshot.empty) {
-          console.log('🔍 DynamicRouteHandler: Found CMS page with slug:', pathAfterCountry);
+          console.log('🔍 DynamicRouteHandler: Found CMS page with slug:', slugPath);
           setIsCmsPage(true);
-          setCmsSlug(pathAfterCountry);
+          setCmsSlug(slugPath);
         } else {
           console.log('🔍 DynamicRouteHandler: No CMS page found, rendering children');
         }

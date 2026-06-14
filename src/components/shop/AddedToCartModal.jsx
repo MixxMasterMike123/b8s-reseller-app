@@ -145,9 +145,7 @@ const MobileNikeContent = ({ addedItem, onClose, t, getTotalItems, getContentVal
       <button
         onClick={() => {
           onClose();
-          const segments = window.location.pathname?.split('/')?.filter(Boolean) || [];
-          const countryCode = segments[0] || 'se';
-          window.location.href = `/${countryCode}/cart`;
+          window.location.href = `/cart`;
         }}
         className="w-full bg-black text-white rounded-full py-4 text-base font-medium hover:bg-gray-800 transition-colors"
       >
@@ -220,9 +218,7 @@ const DesktopNikeContent = ({ addedItem, onClose, t, getTotalItems, getContentVa
       <button
         onClick={() => {
           onClose();
-          const segments = window.location.pathname?.split('/')?.filter(Boolean) || [];
-          const countryCode = segments[0] || 'se';
-          window.location.href = `/${countryCode}/cart`;
+          window.location.href = `/cart`;
         }}
         className="w-full border-2 border-gray-200 text-gray-900 rounded-full py-3 text-sm font-medium hover:border-gray-300 transition-colors"
       >
@@ -232,9 +228,7 @@ const DesktopNikeContent = ({ addedItem, onClose, t, getTotalItems, getContentVa
       <button
         onClick={() => {
           onClose();
-          const segments = window.location.pathname?.split('/')?.filter(Boolean) || [];
-          const countryCode = segments[0] || 'se';
-          window.location.href = `/${countryCode}/checkout`;
+          window.location.href = `/checkout`;
         }}
         className="w-full bg-black text-white rounded-full py-3 text-sm font-medium hover:bg-gray-800 transition-colors"
       >

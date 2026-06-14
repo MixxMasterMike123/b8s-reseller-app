@@ -61,10 +61,16 @@ export const EMAIL_CONFIG = {
   },
 } as const;
 
-// Helper function to get language segment for URLs
-export function getLanguageSegment(lang: string): string {
-  if (lang.startsWith('en')) return lang === 'en-GB' ? 'gb' : 'us';
-  return 'se';
+// Storefront URLs are countryless now (Swedish-only; the /{countryCode} prefix
+// was removed). `lang` is kept in these signatures for call-site compatibility
+// but no longer maps to a URL segment.
+
+// Deprecated: returns '' so any remaining `/${getLanguageSegment(lang)}/...`
+// callers produce a countryless `//...` — but prefer building URLs without it.
+// Kept to avoid breaking template imports; safe to delete once all templates
+// drop it. (See the templates that still import it: passwordReset, loginCredentials.)
+export function getLanguageSegment(_lang?: string): string {
+  return '';
 }
 
 // Helper function to format prices (V3 compatible)
@@ -73,13 +79,11 @@ export function formatPrice(amount: number): string {
 }
 
 // Helper function to get support URL
-export function getSupportUrl(lang: string): string {
-  const segment = getLanguageSegment(lang);
-  return `${EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/contact`;
+export function getSupportUrl(_lang?: string): string {
+  return `${EMAIL_CONFIG.URLS.B2C_SHOP}/contact`;
 }
 
 // Helper function to get order tracking URL
-export function getOrderTrackingUrl(orderId: string, lang: string): string {
-  const segment = getLanguageSegment(lang);
-  return `${EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/order-confirmation/${orderId}`;
+export function getOrderTrackingUrl(orderId: string, _lang?: string): string {
+  return `${EMAIL_CONFIG.URLS.B2C_SHOP}/order-confirmation/${orderId}`;
 }

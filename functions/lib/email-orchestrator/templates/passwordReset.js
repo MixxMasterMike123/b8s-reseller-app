@@ -6,18 +6,17 @@ exports.generatePasswordResetTemplate = void 0;
 const config_1 = require("../core/config");
 function generatePasswordResetTemplate(data, lang = 'sv-SE') {
     const { email, resetCode, userAgent, timestamp, userType } = data;
-    // Generate appropriate URLs based on user type
-    const segment = (0, config_1.getLanguageSegment)(lang);
+    // Countryless storefront URLs (i18n deferred).
     let resetUrl;
     let loginUrl;
     if (userType === 'AFFILIATE' || userType === 'B2B') {
-        resetUrl = `${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/reset-password?code=${resetCode}`;
-        loginUrl = `${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/affiliate-login`;
+        resetUrl = `${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/reset-password?code=${resetCode}`;
+        loginUrl = `${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/affiliate-login`;
     }
     else {
         // B2C customers
-        resetUrl = `${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/reset-password?code=${resetCode}`;
-        loginUrl = `${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/${segment}/customer-login`;
+        resetUrl = `${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/reset-password?code=${resetCode}`;
+        loginUrl = `${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/login`;
     }
     const templates = {
         'sv-SE': {
