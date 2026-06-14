@@ -83,9 +83,15 @@ Phase 0 (this step):
 
 **Phase 0 verification (must pass before commit):** every shop page loads under both `/{shopId}/se/...` and legacy `/se/...`; product/cart/checkout/affiliate links all resolve with the shopId prefix; admin console unaffected; build green; a read-only verifier confirms no link drops the shopId and no helper still reads country from `[0]`.
 
-### Phase 1 — Stamp `shopId` on writes (backfill-safe)
-- Every create path writes `shopId` (products, orders incl. the Stripe webhook, customers, affiliates, pages, etc.).
-- One-time **backfill migration script** stamps `shopId='b8shield'` on all existing docs. ← destructive-adjacent: STOP, present script, Mikael runs or approves.
+### Phase 1 — Stamp `shopId` on writes (backfill-safe) — scoped + sequenced 2026-06-14
+**Scope (Mikael 2026-06-14): CORE COMMERCE ONLY.** Stamp shopId on: orders, b2cCustomers, products, productGroups, affiliates, affiliateApplications, affiliateClicks, campaigns, pages, marketingMaterials, payouts, campaign revenue/participant tracking. **DEFER** the dining/ambassador wagon CRM collections (followUps, activities, userMentions, customerDocuments, ambassadorActivities, deferredActivities, …) to a dedicated later slice — admin tooling, lower leak-risk, some write into `users`, need their own tenancy audit.
+
+**Sequence (Mikael 2026-06-14): ORDER CHAIN FIRST.** Each slice build+verify(read-only verifier)+commit+push.
+- **Slice 1a — order shopId chain + central helper.** The order is created server-side by the Stripe webhook from PaymentIntent metadata. Chain: client checkout sends `shopId` in the createPaymentIntent request body → `createPaymentIntentV2` writes `shopId` into `metadata` (server-trusted) → `stripeWebhookV2` stamps `order.shopId` from metadata (fallback DEFAULT_SHOP_ID for safety). Add `withShopId(data, shopId)` client helper (one place to stamp). Highest stakes, isolated.
+- **Slice 1b — client create sites:** products (AdminProducts), productGroups, b2cCustomers (Checkout + CustomerRegister), affiliates (AdminAffiliateCreate), affiliateApplications (AffiliateRegistration), campaigns (useCampaigns), pages (AdminPageEdit), marketingMaterials, payouts. Each uses useShopId()/withShopId.
+- **Slice 1c — remaining functions:** logAffiliateClick (affiliateClicks), approveAffiliate (affiliates from application — carry shopId from the application doc), order-processing campaign tracking (campaignRevenueTracking/Participants — carry shopId from the order).
+- **Slice 1d — backfill script (STOP-and-surface):** one-time, stamps `shopId=DEFAULT_SHOP_ID` on all existing untagged docs in the in-scope collections. Dry-run default, idempotent, per-field reversible. Mikael runs.
+- **Manual import/credit scripts** (import-affiliates-from-csv, credit-kajjan, setup-firestore, direct-upload): note they need shopId before any future multi-shop run; not auto-edited now (single-shop, run rarely).
 
 ### Phase 2 — Scope all reads by `shopId`
 - Add `where('shopId','==',shopId)` to the ~60–75 query sites (client + functions). Mechanical but broad; done in batches by area (shop pages → admin pages → functions), each batch built+verified.

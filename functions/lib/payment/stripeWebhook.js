@@ -14,6 +14,7 @@ const firebase_functions_1 = require("firebase-functions");
 const stripe_1 = __importDefault(require("stripe"));
 const app_urls_1 = require("../config/app-urls");
 const firestore_1 = require("firebase-admin/firestore");
+const tenancy_1 = require("../config/tenancy");
 // CORS not needed for webhooks - server-to-server communication
 // Initialize Firestore with named database
 const db = (0, firestore_1.getFirestore)('b8s-reseller-db');
@@ -145,6 +146,10 @@ exports.stripeWebhookV2 = (0, https_1.onRequest)({
                 orderNumber,
                 status: 'confirmed',
                 source: 'b2c',
+                // Tenant id — multi-tenant scoping key. Carried from the storefront
+                // through the PaymentIntent metadata; falls back to the default shop
+                // so an order can never be created untagged. (Phase 1.)
+                shopId: metadata.shopId || tenancy_1.DEFAULT_SHOP_ID,
                 // Customer information from metadata
                 customerInfo: {
                     email: metadata.customerEmail,

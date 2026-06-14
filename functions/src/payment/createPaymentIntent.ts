@@ -9,6 +9,7 @@ import Stripe from 'stripe';
 import { commerceConfig } from '../config/app-urls';
 import { corsHandler } from '../protection/cors/cors-handler';
 import { db } from '../config/database';
+import { DEFAULT_SHOP_ID } from '../config/tenancy';
 
 /**
  * Server-side price computation. NEVER trust client-supplied amounts:
@@ -94,6 +95,7 @@ interface CreatePaymentIntentRequest {
   currency: string; // Should be 'sek'
   b2cCustomerId?: string; // Existing/just-created customer doc id for order linkage
   b2cCustomerAuthId?: string; // Firebase Auth uid for order linkage
+  shopId?: string; // Tenant id — written into metadata; webhook stamps it on the order
   cartItems: Array<{
     id: string;
     name: string | { 'sv-SE'?: string; 'en-GB'?: string; 'en-US'?: string; [key: string]: string | undefined };
@@ -199,8 +201,15 @@ export const createPaymentIntentV2 = onRequest(
         customerInfo,
         shippingInfo,
         discountInfo,
-        affiliateInfo
+        affiliateInfo,
+        shopId
       }: CreatePaymentIntentRequest = request.body;
+
+      // Tenant id for the order. Phase 0/1 is single-shop, so this normalizes
+      // to the default; the field is carried through metadata → webhook → order
+      // so the plumbing is correct before multi-shop exists. (When multiple
+      // shops are live, validate this against the shops collection here.)
+      const resolvedShopId = shopId || DEFAULT_SHOP_ID;
 
       // Validate required fields
       if (!cartItems || cartItems.length === 0 || cartItems.length > 100) {
@@ -330,6 +339,7 @@ export const createPaymentIntentV2 = onRequest(
             // System identifiers
             source: 'b2c_shop',
             platform: 'b8shield',
+            shopId: resolvedShopId, // tenant id — webhook stamps it on the order
             version: 'enhanced_v2' // server-priced metadata
           },
           receipt_email: customerInfo.email,

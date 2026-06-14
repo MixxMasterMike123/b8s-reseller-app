@@ -9,6 +9,7 @@ import { logger } from 'firebase-functions';
 import Stripe from 'stripe';
 import { commerceConfig } from '../config/app-urls';
 import { getFirestore } from 'firebase-admin/firestore';
+import { DEFAULT_SHOP_ID } from '../config/tenancy';
 // CORS not needed for webhooks - server-to-server communication
 
 // Initialize Firestore with named database
@@ -171,6 +172,11 @@ export const stripeWebhookV2 = onRequest(
           orderNumber,
           status: 'confirmed',
           source: 'b2c', // ✅ Match frontend (not 'b2c_webhook')
+
+          // Tenant id — multi-tenant scoping key. Carried from the storefront
+          // through the PaymentIntent metadata; falls back to the default shop
+          // so an order can never be created untagged. (Phase 1.)
+          shopId: metadata.shopId || DEFAULT_SHOP_ID,
           
           // Customer information from metadata
           customerInfo: {

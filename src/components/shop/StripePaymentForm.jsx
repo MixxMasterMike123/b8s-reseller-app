@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { getStripe, STRIPE_CONFIG } from '../../utils/stripeClient';
 import { useCart } from '../../contexts/CartContext';
+import { useShopId } from '../../contexts/ShopContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { getCountryAwareUrl } from '../../utils/productUrls';
 import { functionUrl } from '../../config/urls';
@@ -222,6 +223,7 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
 
 const StripePaymentForm = ({ customerInfo, shippingInfo, customerLinkage, onPaymentSuccess, onPaymentError }) => {
   const { cart, calculateTotals } = useCart();
+  const shopId = useShopId();
   const [clientSecret, setClientSecret] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -243,6 +245,9 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, customerLinkage, onPaym
         const paymentData = {
           amount: totals.total, // Amount in SEK
           currency: 'sek',
+          // Tenant id — server writes it into the PaymentIntent metadata and
+          // the webhook stamps it onto the order (see multi-tenant Phase 1).
+          shopId,
           cartItems: cart.items,
           customerInfo,
           shippingInfo: {
@@ -317,7 +322,7 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, customerLinkage, onPaym
     if (cart.items.length > 0 && customerInfo?.email) {
       initializePayment();
     }
-  }, [cart.items, customerInfo, shippingInfo]);
+  }, [cart.items, customerInfo, shippingInfo, shopId]);
 
   if (isLoading) {
     return (

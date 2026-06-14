@@ -14,6 +14,7 @@ const stripe_1 = __importDefault(require("stripe"));
 const app_urls_1 = require("../config/app-urls");
 const cors_handler_1 = require("../protection/cors/cors-handler");
 const database_1 = require("../config/database");
+const tenancy_1 = require("../config/tenancy");
 /**
  * Server-side price computation. NEVER trust client-supplied amounts:
  * prices come from the products collection, the discount from the affiliate
@@ -123,7 +124,12 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
             response.status(400).json({ error: 'Request body is required' });
             return;
         }
-        const { amount, currency = app_urls_1.commerceConfig.currency.toLowerCase(), cartItems, customerInfo, shippingInfo, discountInfo, affiliateInfo } = request.body;
+        const { amount, currency = app_urls_1.commerceConfig.currency.toLowerCase(), cartItems, customerInfo, shippingInfo, discountInfo, affiliateInfo, shopId } = request.body;
+        // Tenant id for the order. Phase 0/1 is single-shop, so this normalizes
+        // to the default; the field is carried through metadata → webhook → order
+        // so the plumbing is correct before multi-shop exists. (When multiple
+        // shops are live, validate this against the shops collection here.)
+        const resolvedShopId = shopId || tenancy_1.DEFAULT_SHOP_ID;
         // Validate required fields
         if (!cartItems || cartItems.length === 0 || cartItems.length > 100) {
             response.status(400).json({ error: 'Cart items are required' });
@@ -232,6 +238,7 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
                     // System identifiers
                     source: 'b2c_shop',
                     platform: 'b8shield',
+                    shopId: resolvedShopId,
                     version: 'enhanced_v2' // server-priced metadata
                 },
                 receipt_email: customerInfo.email,
