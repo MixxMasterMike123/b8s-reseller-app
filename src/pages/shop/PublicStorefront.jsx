@@ -225,10 +225,16 @@ const PublicStorefront = () => {
   const heroSecondaryLabel = store.heroSecondaryLabel || t('hero_see_products', 'Se sortimentet ↓');
 
   // Homepage block visibility (config-driven; default visible so unconfigured
-  // shops — i.e. B8Shield today — render exactly as before).
+  // shops — i.e. B8Shield today — render exactly as before). Every toggle the
+  // admin Butik page exposes MUST be honored here.
   const blocks = store.blocks || {};
   const showGallery = blocks.gallery !== false;
   const showStory = blocks.story !== false;
+  const showBestseller = blocks.bestseller !== false;
+  const showTrust = blocks.trust !== false;
+  // Right ("supporting") hero column only renders if it has any content;
+  // otherwise the hero tile spans full width (no empty grid cell).
+  const showSupporting = showBestseller || showTrust;
 
   // Config-driven story steps; fall back to the hardcoded B8Shield band when
   // a shop hasn't set its own story.
@@ -270,7 +276,7 @@ const PublicStorefront = () => {
 
         {/* ===== Bento hero (NORD, DESIGN.md §4) ===== */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          <div className="grid lg:grid-cols-[1.55fr_1fr] gap-4">
+          <div className={`grid gap-4 ${showSupporting ? 'lg:grid-cols-[1.55fr_1fr]' : 'lg:grid-cols-1'}`}>
             {/* Hero tile — the one dominant element on the screen */}
             <div className="relative min-h-[440px] lg:min-h-[560px] rounded-tile overflow-hidden bg-ink shadow-tile flex items-end animate-rise">
               <div className="absolute inset-0">
@@ -324,10 +330,11 @@ const PublicStorefront = () => {
               </div>
             </div>
 
-            {/* Supporting tiles */}
+            {/* Supporting tiles — only when bestseller and/or trust is on */}
+            {showSupporting && (
             <div className="flex flex-col gap-4">
-              {/* Bestseller tile */}
-              {bestseller ? (
+              {/* Bestseller tile (toggle: blocks.bestseller) */}
+              {showBestseller && (bestseller ? (
                 <Link
                   to={getProductUrl(bestseller)}
                   className="group block bg-white rounded-tile shadow-tile overflow-hidden transition-all duration-300 ease-nord hover:-translate-y-1 hover:shadow-lift animate-rise"
@@ -360,9 +367,10 @@ const PublicStorefront = () => {
                     <div className="h-5 w-40 bg-canvas rounded-full animate-pulse mt-3" />
                   </div>
                 </div>
-              )}
+              ))}
 
-              {/* Duo minis: social proof + payment trust */}
+              {/* Duo minis: social proof + payment trust (toggle: blocks.trust) */}
+              {showTrust && (
               <div className="grid grid-cols-2 gap-4 flex-1">
                 <div className="bg-white rounded-tile shadow-tile p-5 flex flex-col animate-rise" style={{ animationDelay: '0.18s' }}>
                   <div className="text-accent text-base tracking-[2px]" aria-label={`${heroReview?.rating || 5}/5`}>
@@ -392,7 +400,9 @@ const PublicStorefront = () => {
                   </div>
                 </div>
               </div>
+              )}
             </div>
+            )}
           </div>
         </section>
 
