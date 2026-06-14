@@ -339,7 +339,11 @@ const AdminDashboard = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">B2B Kunder</dt>
+                    {/* B2B resellers live in `users`, which is excluded from
+                        tenancy (no shopId) — so this count is platform-wide, not
+                        shop-specific. Labelled "alla butiker" to make that clear,
+                        especially under operator impersonation. */}
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">B2B Kunder <span className="text-xs font-normal text-gray-400">(alla butiker)</span></dt>
                     <dd className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.totalUsers}</dd>
                   </dl>
                 </div>
