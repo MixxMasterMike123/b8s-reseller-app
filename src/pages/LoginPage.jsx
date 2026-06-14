@@ -8,7 +8,12 @@ const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || '/admin';
+  // Default post-login destination is surface-aware: on the platform operator
+  // host, '/' renders the platform console; elsewhere it's the admin console.
+  const sub = (typeof window !== 'undefined' ? window.location.hostname : '').split('.')[0];
+  const isPlatformHost = sub === 'platform' || sub.startsWith('platform-');
+  const defaultDest = isPlatformHost ? '/' : '/admin';
+  const from = location.state?.from?.pathname || defaultDest;
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

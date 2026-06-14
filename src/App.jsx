@@ -23,6 +23,8 @@ import CookiebotCMP from './components/shop/CookiebotCMP';
 // serves ONLY the admin console: /login + /admin/* + admin wagon routes.
 import PrivateRoute from './components/auth/PrivateRoute';
 import AdminRoute from './components/auth/AdminRoute';
+import PlatformRoute from './components/auth/PlatformRoute';
+import PlatformShops from './pages/platform/PlatformShops';
 import LoginPage from './pages/LoginPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -129,8 +131,13 @@ function App() {
   // whole site ID, which can't be exactly "shop"). `shop.b8shield.com` still matches.
   const isShopSubdomain = subdomain === 'shop' || subdomain.startsWith('shop-');
 
-  // Non-shop hostnames serve the admin console (the B2B portal is gone)
-  const appMode = isShopSubdomain ? 'shop' : 'admin';
+  // Platform operator console — its own subdomain (platform.* / platform-*),
+  // a separate, siloed surface from shop admin. (See docs/PLATFORM_ARCHITECTURE.md)
+  const isPlatformSubdomain = subdomain === 'platform' || subdomain.startsWith('platform-');
+
+  // Three siloed surfaces: 'platform' (operator), 'shop' (storefront), 'admin'
+  // (shop admin — the default for any non-shop, non-platform host).
+  const appMode = isPlatformSubdomain ? 'platform' : (isShopSubdomain ? 'shop' : 'admin');
 
   // 🚂 WAGON SYSTEM: Auto-discover all wagons (ONLY CONNECTION POINT NEEDED!)
   useEffect(() => {
@@ -179,7 +186,21 @@ function App() {
           />
           
           <Routes>
-          {appMode === 'shop' ? (
+          {appMode === 'platform' ? (
+            // Platform operator console — its own siloed surface. Distinct
+            // PlatformLayout (NOT the shop-admin shell). Gated to platform users.
+            <>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/__/auth/action" element={<EmailVerificationHandler />} />
+              <Route path="/" element={
+                <PlatformRoute><PlatformShops /></PlatformRoute>
+              } />
+              <Route path="/shops" element={
+                <PlatformRoute><PlatformShops /></PlatformRoute>
+              } />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </>
+          ) : appMode === 'shop' ? (
             // B2C Shop Routes - Universal Country Support for International E-commerce
             <>
               {/* Root redirect - geo-detection will handle initial redirect */}
