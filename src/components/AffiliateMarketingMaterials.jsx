@@ -5,9 +5,11 @@ import { ArrowDownTrayIcon, MagnifyingGlassIcon, PhotoIcon, DocumentIcon, FilmIc
 import { useImagePreview } from '../hooks/useImagePreview';
 import ImagePreviewModal from './ImagePreviewModal';
 import { useTranslation } from '../contexts/TranslationContext';
+import { useShopId } from '../contexts/ShopContext';
 
 const AffiliateMarketingMaterials = ({ affiliateCode }) => {
   const { t } = useTranslation();
+  const shopId = useShopId();
   const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -21,14 +23,14 @@ const AffiliateMarketingMaterials = ({ affiliateCode }) => {
 
   useEffect(() => {
     fetchMarketingMaterials();
-  }, []);
+  }, [shopId]);
 
   const fetchMarketingMaterials = async () => {
     try {
       setLoading(true);
       
       // Fetch general marketing materials (available to all affiliates)
-      const generalQuery = collection(db, 'marketingMaterials');
+      const generalQuery = query(collection(db, 'marketingMaterials'), where('shopId', '==', shopId));
       const generalSnapshot = await getDocs(generalQuery);
       const generalMaterials = generalSnapshot.docs.map(doc => ({
         id: doc.id,

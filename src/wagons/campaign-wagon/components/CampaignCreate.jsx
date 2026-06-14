@@ -8,16 +8,18 @@ import {
   CalendarIcon,
   CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
-import { 
-  collection, 
-  query, 
-  orderBy, 
-  getDocs 
+import {
+  collection,
+  query,
+  orderBy,
+  where,
+  getDocs
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import AppLayout from '../../../components/layout/AppLayout';
 import ContentLanguageIndicator from '../../../components/ContentLanguageIndicator';
 import { useContentTranslation } from '../../../hooks/useContentTranslation';
+import { useShopId } from '../../../contexts/ShopContext';
 import { useCampaigns } from '../hooks/useCampaigns';
 import { CAMPAIGN_TYPES, getDefaultCampaign } from '../utils/campaignUtils';
 import toast from 'react-hot-toast';
@@ -25,6 +27,7 @@ import toast from 'react-hot-toast';
 const CampaignCreate = () => {
   const navigate = useNavigate();
   const { getContentValue, setContentValue } = useContentTranslation();
+  const shopId = useShopId();
   const { addCampaign } = useCampaigns();
   
   // Form data state
@@ -47,7 +50,7 @@ const CampaignCreate = () => {
 
   const fetchAffiliates = async () => {
     try {
-      const affiliatesQuery = query(collection(db, 'affiliates'), orderBy('createdAt', 'desc'));
+      const affiliatesQuery = query(collection(db, 'affiliates'), where('shopId', '==', shopId), orderBy('createdAt', 'desc'));
       const affiliatesSnapshot = await getDocs(affiliatesQuery);
       const affiliatesData = affiliatesSnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
@@ -64,7 +67,7 @@ const CampaignCreate = () => {
 
   const fetchProducts = async () => {
     try {
-      const productsQuery = query(collection(db, 'products'), orderBy('name', 'asc'));
+      const productsQuery = query(collection(db, 'products'), where('shopId', '==', shopId), orderBy('name', 'asc'));
       const productsSnapshot = await getDocs(productsQuery);
       const productsData = productsSnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))

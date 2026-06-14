@@ -6,8 +6,10 @@ import toast from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
+import { useShopId } from '../../contexts/ShopContext';
 
 const AdminB2CCustomers = () => {
+  const shopId = useShopId();
   const [customers, setCustomers] = useState([]);
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +30,7 @@ const AdminB2CCustomers = () => {
         
         const customersQuery = query(
           collection(db, 'b2cCustomers'),
+          where('shopId', '==', shopId),
           orderBy('createdAt', 'desc')
         );
         
@@ -80,7 +83,7 @@ const AdminB2CCustomers = () => {
     };
 
     fetchB2CCustomersAndCalculateStats();
-  }, []);
+  }, [shopId]);
 
   // Calculate real-time customer statistics from orders (both account and guest orders)
   const calculateCustomerRealStats = async (customer) => {
@@ -90,6 +93,7 @@ const AdminB2CCustomers = () => {
       // Query 1: Orders with b2cCustomerId (account orders)
       const ordersWithAccountQuery = query(
         collection(db, 'orders'),
+        where('shopId', '==', shopId),
         where('b2cCustomerId', '==', customer.id)
       );
       
@@ -105,6 +109,7 @@ const AdminB2CCustomers = () => {
       if (customer.email) {
         const ordersWithEmailQuery = query(
           collection(db, 'orders'),
+          where('shopId', '==', shopId),
           where('source', '==', 'b2c'),
           where('customerInfo.email', '==', customer.email)
         );

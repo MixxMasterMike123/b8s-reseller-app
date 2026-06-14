@@ -7,6 +7,7 @@ import { getAffiliatePayoutHistory, formatCurrency as formatPayoutCurrency, form
 import { validateCustomAffiliateCode, generateSimpleAffiliateCode } from '../../utils/affiliateCalculations';
 import toast from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
+import { useShopId } from '../../contexts/ShopContext';
 import { APP_URLS } from '../../config/urls';
 import { 
   ArrowLeftIcon, 
@@ -96,6 +97,7 @@ const DetailItem = ({ label, children, icon }) => (
 
 const AdminAffiliateEdit = () => {
   const { id } = useParams();
+  const shopId = useShopId();
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -164,7 +166,7 @@ const AdminAffiliateEdit = () => {
       // Get recent orders with this affiliate code (for detailed list display)
       // Query 1: Orders with top-level affiliateCode (Mock payments)
       const ordersRef = collection(db, 'orders');
-      const q1 = query(ordersRef, where('affiliateCode', '==', affiliateCode));
+      const q1 = query(ordersRef, where('shopId', '==', shopId), where('affiliateCode', '==', affiliateCode));
       const orderSnap1 = await getDocs(q1);
       const orders1 = orderSnap1.docs.map(doc => ({
         id: doc.id,
@@ -172,7 +174,7 @@ const AdminAffiliateEdit = () => {
       }));
 
       // Query 2: Orders with affiliate.code structure (Stripe payments)
-      const q2 = query(ordersRef, where('affiliate.code', '==', affiliateCode));
+      const q2 = query(ordersRef, where('shopId', '==', shopId), where('affiliate.code', '==', affiliateCode));
       const orderSnap2 = await getDocs(q2);
       const orders2 = orderSnap2.docs.map(doc => ({
         id: doc.id,
@@ -187,7 +189,7 @@ const AdminAffiliateEdit = () => {
 
       // Get click data for unique clicks calculation
       const clicksRef = collection(db, 'affiliateClicks');
-      const clicksQuery = query(clicksRef, where('affiliateCode', '==', affiliateCode));
+      const clicksQuery = query(clicksRef, where('shopId', '==', shopId), where('affiliateCode', '==', affiliateCode));
       const clicksSnap = await getDocs(clicksQuery);
       const clicks = clicksSnap.docs.map(doc => doc.data());
 
@@ -235,7 +237,7 @@ const AdminAffiliateEdit = () => {
         console.log('🔍 Checking all payouts in database...');
         
         // Debug: Get all payouts to see what's available
-        const allPayoutsQuery = query(collection(db, 'affiliatePayouts'));
+        const allPayoutsQuery = query(collection(db, 'affiliatePayouts'), where('shopId', '==', shopId));
         const allPayoutsSnap = await getDocs(allPayoutsQuery);
         const allPayouts = allPayoutsSnap.docs.map(doc => ({
           id: doc.id,

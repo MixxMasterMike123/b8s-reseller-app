@@ -4,9 +4,11 @@ import { db } from '../firebase/config';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { generateProductImage } from '../utils/productImages';
 import { useTranslation } from '../contexts/TranslationContext';
+import { useShopId } from '../contexts/ShopContext';
 
 const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
   const { t } = useTranslation();
+  const shopId = useShopId();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -22,7 +24,7 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
     if (isOpen && variantType) {
       fetchProductData();
     }
-  }, [isOpen, variantType]);
+  }, [isOpen, variantType, shopId]);
 
   const fetchProductData = async () => {
     try {
@@ -30,7 +32,7 @@ const ProductDetailPopup = ({ isOpen, onClose, variantType }) => {
       console.log(`🔍 Searching for product variant: ${variantType}`);
 
       // Get all products from the database
-      const querySnapshot = await getDocs(collection(db, 'products'));
+      const querySnapshot = await getDocs(query(collection(db, 'products'), where('shopId', '==', shopId)));
       const products = [];
       
       querySnapshot.forEach((doc) => {

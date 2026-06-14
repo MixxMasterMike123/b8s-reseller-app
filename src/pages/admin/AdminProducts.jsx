@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { collection, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, query, where } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { uploadImageToStorage } from '../../utils/imageUpload';
 import { db, storage, auth } from '../../firebase/config';
@@ -117,7 +117,7 @@ function AdminProducts() {
       setLoading(true);
       console.log('📊 Fetching products from named database (b8s-reseller-db)...');
       
-      const querySnapshot = await getDocs(collection(db, 'products'));
+      const querySnapshot = await getDocs(query(collection(db, 'products'), where('shopId', '==', shopId)));
       const productsData = [];
       const groupsSet = new Set();
       
@@ -164,7 +164,7 @@ function AdminProducts() {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [shopId]);
 
   // Reset form state when navigating back to products page
   useEffect(() => {

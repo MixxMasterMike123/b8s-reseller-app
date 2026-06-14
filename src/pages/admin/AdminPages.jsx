@@ -12,12 +12,14 @@ import {
 import { collection, query, orderBy, onSnapshot, deleteDoc, doc, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
+import { useShopId } from '../../contexts/ShopContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import AppLayout from '../../components/layout/AppLayout';
 import { toast } from 'react-hot-toast';
 
 const AdminPages = () => {
   const { currentUser } = useAuth();
+  const shopId = useShopId();
   const { getContentValue } = useContentTranslation();
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,8 +35,8 @@ const AdminPages = () => {
 
     console.log('AdminPages - user available, setting up Firestore query');
     try {
-      // Temporarily use simple collection query without orderBy to test
-      const pagesQuery = collection(db, 'pages');
+      // Scope to this shop's pages.
+      const pagesQuery = query(collection(db, 'pages'), where('shopId', '==', shopId));
 
       console.log('AdminPages - setting up onSnapshot listener');
       const unsubscribe = onSnapshot(pagesQuery, (snapshot) => {
@@ -52,7 +54,7 @@ const AdminPages = () => {
         
                  // If it's an index error, try without orderBy
          if (error.code === 'failed-precondition' || error.message.includes('index')) {
-          const fallbackQuery = collection(db, 'pages');
+          const fallbackQuery = query(collection(db, 'pages'), where('shopId', '==', shopId));
           
           const fallbackUnsubscribe = onSnapshot(fallbackQuery, (snapshot) => {
             const pagesData = snapshot.docs.map(doc => ({
@@ -85,7 +87,7 @@ const AdminPages = () => {
       console.error('Error setting up pages query:', error);
       setLoading(false);
     }
-  }, [currentUser]);
+  }, [currentUser, shopId]);
 
   const handleDelete = async (pageId, pageTitle) => {
     if (!window.confirm(`Är du säker på att du vill ta bort sidan "${getContentValue(pageTitle)}"?`)) {

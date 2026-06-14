@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
 import { APP_URLS } from '../../config/urls';
+import { useShopId } from '../../contexts/ShopContext';
 import { 
   UsersIcon, 
   CheckCircleIcon, 
@@ -31,6 +32,7 @@ const StatCard = ({ icon, title, value, color }) => (
 );
 
 const AdminAffiliates = () => {
+  const shopId = useShopId();
   const [applications, setApplications] = useState([]);
   const [affiliates, setAffiliates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,19 +49,19 @@ const AdminAffiliates = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [shopId]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
       // Fetch pending applications
-      const appQuery = query(collection(db, 'affiliateApplications'), where("status", "==", "pending"));
+      const appQuery = query(collection(db, 'affiliateApplications'), where('shopId', '==', shopId), where("status", "==", "pending"));
       const appSnapshot = await getDocs(appQuery);
       const apps = appSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setApplications(apps);
 
       // Fetch all affiliates (including inactive)
-      const affiliateQuery = query(collection(db, 'affiliates'), orderBy('createdAt', 'desc'));
+      const affiliateQuery = query(collection(db, 'affiliates'), where('shopId', '==', shopId), orderBy('createdAt', 'desc'));
       const affiliateSnapshot = await getDocs(affiliateQuery);
       const affiliateList = affiliateSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setAffiliates(affiliateList);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
+import { useShopId } from '../../contexts/ShopContext';
 import { db } from '../../firebase/config';
 import { collection, getDocs, query, orderBy, limit, where, getDoc, doc } from 'firebase/firestore';
 import { 
@@ -17,6 +18,7 @@ import { calculateCommission } from '../../utils/affiliateCalculations';
 import toast from 'react-hot-toast';
 
 const AdminAffiliateAnalytics = () => {
+  const shopId = useShopId();
   const [affiliates, setAffiliates] = useState([]);
   const [clicks, setClicks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,13 +29,13 @@ const AdminAffiliateAnalytics = () => {
 
   useEffect(() => {
     fetchAnalyticsData();
-  }, [timeRange]);
+  }, [timeRange, shopId]);
 
   const fetchAnalyticsData = async () => {
     setLoading(true);
     try {
       // Fetch affiliates with their real stats
-      const affiliatesQuery = query(collection(db, 'affiliates'), orderBy('createdAt', 'desc'));
+      const affiliatesQuery = query(collection(db, 'affiliates'), where('shopId', '==', shopId), orderBy('createdAt', 'desc'));
       const affiliatesSnapshot = await getDocs(affiliatesQuery);
       const affiliatesData = affiliatesSnapshot.docs.map(doc => ({
         id: doc.id,
@@ -43,6 +45,7 @@ const AdminAffiliateAnalytics = () => {
       // Fetch clicks for traffic source analysis
       const clicksQuery = query(
         collection(db, 'affiliateClicks'),
+        where('shopId', '==', shopId),
         orderBy('timestamp', 'desc'),
         limit(1000)
       );
@@ -199,6 +202,7 @@ const AdminAffiliateAnalytics = () => {
       // Fetch orders for this affiliate
       const ordersQuery = query(
         collection(db, 'orders'),
+        where('shopId', '==', shopId),
         where('affiliateId', '==', affiliateId)
       );
       const ordersSnapshot = await getDocs(ordersQuery);

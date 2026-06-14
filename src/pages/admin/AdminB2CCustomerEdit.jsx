@@ -6,6 +6,7 @@ import { db, functions } from '../../firebase/config';
 import { httpsCallable } from 'firebase/functions';
 import { toast } from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
+import { useShopId } from '../../contexts/ShopContext';
 import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
@@ -24,6 +25,7 @@ import {
 
 const AdminB2CCustomerEdit = () => {
   const { customerId } = useParams();
+  const shopId = useShopId();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   
@@ -122,6 +124,7 @@ const AdminB2CCustomerEdit = () => {
       // Query 1: Orders with b2cCustomerId (account orders)
       const ordersWithAccountQuery = query(
         collection(db, 'orders'),
+        where('shopId', '==', shopId),
         where('b2cCustomerId', '==', customerId)
       );
       
@@ -137,6 +140,7 @@ const AdminB2CCustomerEdit = () => {
       if (customerEmail) {
         const ordersWithEmailQuery = query(
           collection(db, 'orders'),
+          where('shopId', '==', shopId),
           where('source', '==', 'b2c'),
           where('customerInfo.email', '==', customerEmail)
         );
