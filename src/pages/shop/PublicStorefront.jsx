@@ -15,7 +15,6 @@ import ReviewsSection from '../../components/ReviewsSection';
 import { getAllReviews } from '../../utils/trustpilotAPI';
 import SeoHreflang from '../../components/shop/SeoHreflang';
 import SmartPrice from '../../components/shop/SmartPrice';
-import { getProductGroupContent } from '../../utils/productGroups';
 import AddedToCartModal from '../../components/shop/AddedToCartModal';
 import NordProductCard from '../../components/shop/NordProductCard';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
@@ -35,7 +34,6 @@ const PublicStorefront = () => {
     getTotalItems 
   } = useCart();
   const [products, setProducts] = useState([]);
-  const [groupedProducts, setGroupedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [heroReview, setHeroReview] = useState(null);
 
@@ -101,77 +99,12 @@ const PublicStorefront = () => {
       });
       setProducts(productList);
 
-      // Generic template: ALL products render as normal groups (no special
-      // sections). Group every product by its group field.
-      const grouped = await groupProductsByGroup(productList);
-      setGroupedProducts(grouped);
-
     } catch (error) {
       console.error('Error loading products:', error);
       // Product loading error - handled by showing empty state
     } finally {
       setLoading(false);
     }
-  };
-
-  // Dynamically group products by their group field and load representative products
-  const groupProductsByGroup = async (products) => {
-    const grouped = {};
-    
-    // First, group all products by their group field
-    products.forEach(product => {
-      const groupKey = product.group || 'default';
-      if (!grouped[groupKey]) {
-        grouped[groupKey] = {
-          groupName: groupKey,
-          allProducts: [],
-          representativeProduct: null,
-          isMultipack: false
-        };
-      }
-      grouped[groupKey].allProducts.push(product);
-    });
-
-    // For each group, determine the representative product
-    const groupPromises = Object.keys(grouped).map(async (groupKey) => {
-      const group = grouped[groupKey];
-      
-      // Mark multipack groups
-      if (groupKey.toLowerCase().includes('3pack') || groupKey.toLowerCase().includes('pack')) {
-        group.isMultipack = true;
-      }
-
-      try {
-        // Load group content to get defaultProductId
-        const groupContent = await getProductGroupContent(groupKey);
-        
-        if (groupContent && groupContent.defaultProductId) {
-          // Use the admin-selected default product
-          const defaultProduct = group.allProducts.find(p => p.id === groupContent.defaultProductId);
-          if (defaultProduct) {
-            group.representativeProduct = defaultProduct;
-            console.log(`✅ Using admin-selected default for group ${groupKey}:`, defaultProduct.id);
-          } else {
-            console.warn(`⚠️ Admin-selected default product ${groupContent.defaultProductId} not found in group ${groupKey}, using first product`);
-            group.representativeProduct = group.allProducts[0];
-          }
-        } else {
-          // No default set, use first product in group
-          group.representativeProduct = group.allProducts[0];
-          console.log(`🔄 No default set for group ${groupKey}, using first product:`, group.allProducts[0]?.id);
-        }
-      } catch (error) {
-        console.warn(`⚠️ Failed to load group content for ${groupKey}, using first product:`, error);
-        group.representativeProduct = group.allProducts[0];
-      }
-
-      return group;
-    });
-
-    // Wait for all group content to load
-    await Promise.all(groupPromises);
-
-    return Object.values(grouped);
   };
 
   const addToCart = (product) => {
@@ -205,7 +138,7 @@ const PublicStorefront = () => {
   const heroSubtitle = store.heroSubtitle ||
     t('hero_subtitle', 'Välkommen till vår butik.');
 
-  const bestseller = groupedProducts[0]?.representativeProduct || null;
+  const bestseller = products[0] || null;
 
   // Optional intro/about block (admin-editable). Hidden unless the shop sets it.
   const introTitle = (store.introTitle || '').trim();
@@ -489,58 +422,36 @@ const PublicStorefront = () => {
             </div>
           ) : (
             <>
-              {/* All product groups */}
+              {/* One card per product (generic template). Variant selection
+                  (sizes/colors of the same item) happens on the product page,
+                  not by hiding cards. */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
-                {groupedProducts.map((productGroup, groupIndex) => {
-                  const representativeProduct = productGroup.representativeProduct;
-                  if (!representativeProduct) {
-                    console.warn(`⚠️ No representative product found for group ${productGroup.groupName}`);
-                    return null;
-                  }
+                {products.map((product) => {
+                  // 🚨 CRITICAL: never render an object — prevent React Error #31
+                  const productName = getContentValue(product.name);
+                  const name = typeof productName === 'string' && productName
+                    ? productName
+                    : t('product_name_fallback', '{{group}}', { group: product.group || '' });
 
-                  const isMultipack = productGroup.isMultipack;
-                  const variantCount = productGroup.allProducts.length;
-
-                  const name = isMultipack
-                    ? t('product_name_3pack', '3-pack')
-                    : (() => {
-                        // 🚨 CRITICAL: Ensure we never render an object - prevent React Error #31
-                        const productName = getContentValue(representativeProduct.name);
-                        return typeof productName === 'string' && productName
-                          ? productName
-                          : t('product_name_fallback', '{{group}}', { group: productGroup.groupName });
-                      })();
-
-                  const description = isMultipack
-                    ? t('product_description_3pack', '')
-                    : (() => {
-                        const desc = getB2cProductDescription(representativeProduct);
-                        return typeof desc === 'string' ? desc : t('product_description_fallback', '');
-                      })();
-
-                  const meta = isMultipack
-                    ? t('product_3pack_info', 'Innehåller alla storlekar (2mm, 4mm, 6mm) • {{count}} färger', { count: variantCount })
-                    : variantCount > 1
-                      ? t('product_group_variants', '{{count}} färger och storlekar', { count: variantCount })
-                      : t('product_single_variant', 'En variant tillgänglig');
+                  const descRaw = getB2cProductDescription(product);
+                  const description = typeof descRaw === 'string' ? descRaw : t('product_description_fallback', '');
 
                   return (
                     <NordProductCard
-                      key={`${productGroup.groupName}-${groupIndex}`}
-                      to={getProductUrl(representativeProduct)}
-                      image={getB2cProductImage(representativeProduct)}
-                      imageAlt={isMultipack ? '3-pack' : productGroup.groupName}
+                      key={product.id}
+                      to={getProductUrl(product)}
+                      image={getB2cProductImage(product)}
+                      imageAlt={name}
                       name={name}
                       description={description}
-                      meta={meta}
-                      priceSek={representativeProduct.b2cPrice || representativeProduct.basePrice}
+                      priceSek={product.b2cPrice || product.basePrice}
                       ctaLabel={t('product_choose_button', 'Välj')}
                     />
                   );
                 })}
               </div>
 
-              {groupedProducts.length === 0 && (
+              {products.length === 0 && (
                 <div className="text-center py-16">
                   <div className="w-16 h-16 bg-white rounded-full shadow-tile flex items-center justify-center mx-auto mb-4">
                     <svg className="w-8 h-8 text-ink-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
