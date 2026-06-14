@@ -1,0 +1,165 @@
+// ProvisionShopModal — Slice P4.4. Creates a new shops/{shopId} tenant.
+// Platform-only (Phase 3 rules: shops create requires isPlatform). v1 creates
+// the shop ENTITY only (id + name + accent + default features + active status);
+// assigning/creating an owner user is P4.6 (users management).
+//
+// shopId is the tenant key AND a future URL segment (Phase 0b path-prefix /
+// subdomain), so it's validated url-safe: lowercase, a-z 0-9 and hyphens,
+// 3-30 chars, must be unique.
+import React, { useState } from 'react';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../firebase/config';
+import toast from 'react-hot-toast';
+import { XMarkIcon } from '@heroicons/react/24/outline';
+
+const SHOP_ID_RE = /^[a-z0-9-]{3,30}$/;
+
+// Default add-ons for a new shop (manual toggles; plans come later).
+const DEFAULT_FEATURES = { affiliate: true, campaigns: true, dining: false, ambassador: false };
+
+const slugifyId = (s) =>
+  (s || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[åäæ]/g, 'a')
+    .replace(/[ö ø]/g, 'o')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 30);
+
+const ProvisionShopModal = ({ onClose, onCreated }) => {
+  const [name, setName] = useState('');
+  const [shopId, setShopId] = useState('');
+  const [shopIdTouched, setShopIdTouched] = useState(false);
+  const [accent, setAccent] = useState('#0E5E63');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  // Auto-derive shopId from name until the operator edits it directly.
+  const onNameChange = (v) => {
+    setName(v);
+    if (!shopIdTouched) setShopId(slugifyId(v));
+  };
+
+  const create = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    const id = shopId.trim();
+    if (!name.trim()) return setError('Ange ett butiksnamn.');
+    if (!SHOP_ID_RE.test(id)) {
+      return setError('Butiks-ID: 3–30 tecken, endast a–z, 0–9 och bindestreck.');
+    }
+
+    try {
+      setSaving(true);
+      // Uniqueness check (rules also prevent overwrite via create, but check for a clear message).
+      const existing = await getDoc(doc(db, 'shops', id));
+      if (existing.exists()) {
+        setSaving(false);
+        return setError(`Butiks-ID "${id}" finns redan. Välj ett annat.`);
+      }
+
+      await setDoc(doc(db, 'shops', id), {
+        name: name.trim(),
+        storeIdentity: {
+          shopName: name.trim(),
+          accent,
+        },
+        status: 'active',
+        features: DEFAULT_FEATURES,
+        ownerUid: null, // owner assignment is a later slice (P4.6)
+        createdAt: serverTimestamp(),
+        provisionedVia: 'platform',
+      });
+
+      toast.success(`Butik "${name.trim()}" skapad`);
+      onCreated?.();
+      onClose?.();
+    } catch (err) {
+      console.error('Provision failed:', err);
+      setError('Kunde inte skapa butiken (behörighet?). Försök igen.');
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div
+        className="w-full max-w-md rounded-2xl bg-gray-900 border border-white/10 p-6 text-gray-100"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-lg font-bold">Ny butik</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-300">
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form onSubmit={create} className="space-y-4">
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">Butiksnamn</label>
+            <input
+              autoFocus
+              value={name}
+              onChange={(e) => onNameChange(e.target.value)}
+              placeholder="t.ex. Sillmans Fisk"
+              className="w-full rounded-lg bg-gray-800 border border-white/10 px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-indigo-400 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">Butiks-ID (URL-nyckel)</label>
+            <input
+              value={shopId}
+              onChange={(e) => { setShopIdTouched(true); setShopId(e.target.value); }}
+              placeholder="sillmans"
+              className="w-full rounded-lg bg-gray-800 border border-white/10 px-3 py-2 text-sm text-white placeholder-gray-600 font-mono focus:border-indigo-400 focus:outline-none"
+            />
+            <p className="mt-1 text-xs text-gray-600">a–z, 0–9, bindestreck. Kan inte ändras senare.</p>
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">Accentfärg</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={accent}
+                onChange={(e) => setAccent(e.target.value)}
+                className="h-9 w-12 rounded bg-gray-800 border border-white/10"
+              />
+              <span className="font-mono text-sm text-gray-400">{accent}</span>
+            </div>
+          </div>
+
+          {error && <p className="text-sm text-red-400">{error}</p>}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg px-4 py-2 text-sm text-gray-400 hover:text-gray-200"
+            >
+              Avbryt
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+            >
+              {saving ? 'Skapar…' : 'Skapa butik'}
+            </button>
+          </div>
+        </form>
+
+        <p className="mt-4 text-xs text-gray-600">
+          Ägare/användare läggs till i ett senare steg. Branding och funktioner kan justeras efteråt.
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default ProvisionShopModal;

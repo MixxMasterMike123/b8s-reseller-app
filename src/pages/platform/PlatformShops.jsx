@@ -7,16 +7,19 @@ import { collection, getDocs, doc, updateDoc, query, where, getCountFromServer }
 import { db } from '../../firebase/config';
 import { APP_URLS } from '../../config/urls';
 import PlatformLayout from '../../components/platform/PlatformLayout';
+import ProvisionShopModal from '../../components/platform/ProvisionShopModal';
 import toast from 'react-hot-toast';
 import {
   BuildingStorefrontIcon,
   ArrowTopRightOnSquareIcon,
+  PlusIcon,
 } from '@heroicons/react/24/outline';
 
 const PlatformShops = () => {
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
+  const [showProvision, setShowProvision] = useState(false);
 
   const loadShops = useCallback(async () => {
     try {
@@ -82,8 +85,19 @@ const PlatformShops = () => {
   return (
     <PlatformLayout>
       <div className="px-6 lg:px-10 py-8 max-w-6xl">
-        <h1 className="text-2xl font-bold text-white">Butiker</h1>
-        <p className="text-gray-400 mt-1 mb-8">Alla butiker på plattformen.</p>
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Butiker</h1>
+            <p className="text-gray-400 mt-1">Alla butiker på plattformen.</p>
+          </div>
+          <button
+            onClick={() => setShowProvision(true)}
+            className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500"
+          >
+            <PlusIcon className="h-4 w-4" />
+            Ny butik
+          </button>
+        </div>
 
         {loading ? (
           <div className="py-16 text-center text-gray-500">Laddar…</div>
@@ -166,9 +180,16 @@ const PlatformShops = () => {
         )}
 
         <p className="mt-6 text-xs text-gray-600">
-          Nästa steg: säker "Öppna Shop Admin" (impersonering), provisionera butik, tillägg/add-ons, fakturering.
+          Nästa steg: säker "Öppna Shop Admin" (impersonering), tillägg/add-ons, fakturering.
         </p>
       </div>
+
+      {showProvision && (
+        <ProvisionShopModal
+          onClose={() => setShowProvision(false)}
+          onCreated={loadShops}
+        />
+      )}
     </PlatformLayout>
   );
 };
