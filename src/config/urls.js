@@ -12,15 +12,21 @@ const FIREBASE_PROJECT_ID = env.VITE_FIREBASE_PROJECT_ID || 'b8shield-reseller-a
 const FUNCTIONS_REGION = env.VITE_FUNCTIONS_REGION || 'us-central1';
 
 export const APP_URLS = {
-  // Primary domains
-  B2B_PORTAL: env.VITE_PORTAL_URL || 'https://partner.b8shield.com',
-  B2C_SHOP: env.VITE_SHOP_URL || 'https://shop.b8shield.com',
+  // Primary domains (meteorpr platform). Env-overridable per deploy.
+  // NOTE: FIREBASE_PROJECT_ID stays 'b8shield-reseller-app' — it's the
+  // immutable project id the Functions URL derives from; renaming it breaks
+  // the API. Only the human-facing hosting domains change to meteorpr.
+  ADMIN_URL: env.VITE_PORTAL_URL || 'https://meteorpr.web.app',
+  B2C_SHOP: env.VITE_SHOP_URL || 'https://shop-meteorpr.web.app',
 
-  // Legacy domain (keep for backward compatibility)
-  B2B_LEGACY: `https://${FIREBASE_PROJECT_ID}.web.app`,
+  // Back-compat alias (some callers still read B2B_PORTAL).
+  get B2B_PORTAL() { return this.ADMIN_URL; },
+
+  // Default project hosting URL (admin site).
+  B2B_LEGACY: 'https://meteorpr.web.app',
 
   // Asset URLs
-  LOGO_URL: env.VITE_EMAIL_LOGO_URL || `${env.VITE_PORTAL_URL || 'https://partner.b8shield.com'}/images/B8S_logo.png`,
+  LOGO_URL: env.VITE_EMAIL_LOGO_URL || `${env.VITE_PORTAL_URL || 'https://meteorpr.web.app'}/images/logo.svg`,
 
   // API endpoints (derived from project + region)
   FIREBASE_FUNCTIONS_BASE: `https://${FUNCTIONS_REGION}-${FIREBASE_PROJECT_ID}.cloudfunctions.net`,
@@ -39,19 +45,19 @@ export const getCurrentDomain = () => {
   if (typeof window !== 'undefined') {
     return window.location.origin;
   }
-  return APP_URLS.B2B_PORTAL; // Default for server-side
+  return APP_URLS.ADMIN_URL; // Default for server-side
 };
 
-// Helper function to get appropriate portal URL based on current domain
+// Helper function to get appropriate admin/portal URL based on current domain
 export const getPortalUrl = () => {
   const currentDomain = getCurrentDomain();
 
-  // If we're on the *.web.app domain, return that URL
-  if (currentDomain.includes(`${FIREBASE_PROJECT_ID}.web.app`)) {
-    return APP_URLS.B2B_LEGACY;
+  // On a *.web.app host (incl. the legacy project default), use the live origin.
+  if (currentDomain.includes('.web.app')) {
+    return currentDomain;
   }
 
-  return APP_URLS.B2B_PORTAL;
+  return APP_URLS.ADMIN_URL;
 };
 
 export default APP_URLS;

@@ -6,13 +6,10 @@
     "b8shield-reseller-app": {
       "hosting": {
         "admin": [
-          "b8shield-reseller-app"
+          "meteorpr"
         ],
         "shop": [
-          "shop-b8shield"
-        ],
-        "partner": [
-          "partner.b8shield.com"
+          "shop-meteorpr"
         ]
       }
     }
