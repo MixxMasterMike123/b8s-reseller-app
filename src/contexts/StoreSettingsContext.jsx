@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase/config';
 import { STORE } from '../config/store';
+import { loadShopConfig } from '../config/shopConfig';
 
 /**
  * StoreSettingsContext — provides per-shop store identity to the app.
@@ -28,10 +27,10 @@ export function StoreSettingsProvider({ children }) {
 
     const loadStoreSettings = async () => {
       try {
-        const snap = await getDoc(doc(db, 'settings', 'app'));
-        if (cancelled || !snap.exists()) return;
+        // Read via the shopConfig seam (settings/app today, shops/{shopId} later).
+        const saved = await loadShopConfig();
+        if (cancelled) return;
 
-        const saved = snap.data()?.storeIdentity;
         if (saved && typeof saved === 'object') {
           // Override defaults only with non-empty saved values.
           const merged = { ...STORE };
@@ -44,7 +43,7 @@ export function StoreSettingsProvider({ children }) {
         }
       } catch (error) {
         // Degrade gracefully to defaults — store must always render.
-        console.warn('StoreSettings: using defaults (could not load settings/app):', error?.message);
+        console.warn('StoreSettings: using defaults (could not load shop config):', error?.message);
       }
     };
 

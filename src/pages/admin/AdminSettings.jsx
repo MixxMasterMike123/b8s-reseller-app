@@ -7,6 +7,7 @@ import AppLayout from '../../components/layout/AppLayout';
 import toast from 'react-hot-toast';
 import wagonRegistry from '../../wagons/WagonRegistry.js';
 import { STORE } from '../../config/store';
+import { saveShopConfig } from '../../config/shopConfig';
 
 // Icons
 import { 
@@ -39,15 +40,12 @@ const AdminSettings = () => {
     ) });
   }, [appSettings]);
 
-  // Save store identity to settings/app
+  // Save store identity via the shopConfig seam (settings/app today,
+  // shops/{shopId} later — see src/config/shopConfig.js).
   const saveStoreIdentity = useCallback(async () => {
     try {
       setSaving(true);
-      await setDoc(
-        doc(db, 'settings', 'app'),
-        { storeIdentity: storeForm, updatedAt: new Date().toISOString() },
-        { merge: true }
-      );
+      await saveShopConfig(storeForm);
       setAppSettings(prev => ({ ...prev, storeIdentity: storeForm }));
       toast.success('Butiksinställningar sparade. Ladda om butiken för att se ändringarna.');
     } catch (error) {
