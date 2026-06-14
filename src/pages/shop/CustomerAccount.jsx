@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useShopId } from '../../contexts/ShopContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
@@ -28,6 +29,7 @@ import {
 const CustomerAccount = () => {
   const { currentUser, logout } = useSimpleAuth();
   const { t } = useTranslation();
+  const shopId = useShopId();
   const { getContentValue } = useContentTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -50,14 +52,14 @@ const CustomerAccount = () => {
       loadCustomerData();
       loadOrders();
     }
-  }, [currentUser]);
+  }, [currentUser, shopId]);
 
   const loadCustomerData = async () => {
     try {
       const customersRef = collection(db, 'b2cCustomers');
-      const customerQuery = query(customersRef, where('firebaseAuthUid', '==', currentUser.uid));
+      const customerQuery = query(customersRef, where('shopId', '==', shopId), where('firebaseAuthUid', '==', currentUser.uid));
       const customerSnapshot = await getDocs(customerQuery);
-      
+
       if (!customerSnapshot.empty) {
         const customerDoc = customerSnapshot.docs[0];
         const data = { id: customerDoc.id, ...customerDoc.data() };
@@ -78,9 +80,9 @@ const CustomerAccount = () => {
     try {
       // First get the B2C customer ID and email
       const customersRef = collection(db, 'b2cCustomers');
-      const customerQuery = query(customersRef, where('firebaseAuthUid', '==', currentUser.uid));
+      const customerQuery = query(customersRef, where('shopId', '==', shopId), where('firebaseAuthUid', '==', currentUser.uid));
       const customerSnapshot = await getDocs(customerQuery);
-      
+
       if (customerSnapshot.empty) {
         console.log('No B2C customer found for user:', currentUser.uid);
         setOrders([]);
@@ -99,6 +101,7 @@ const CustomerAccount = () => {
       // Query 1: Orders with b2cCustomerId (account orders)
       const ordersWithAccountQuery = query(
         collection(db, 'orders'),
+        where('shopId', '==', shopId),
         where('source', '==', 'b2c'),
         where('b2cCustomerId', '==', customerId)
       );
@@ -115,6 +118,7 @@ const CustomerAccount = () => {
       if (customerEmail) {
         const ordersWithEmailQuery = query(
           collection(db, 'orders'),
+          where('shopId', '==', shopId),
           where('source', '==', 'b2c'),
           where('customerInfo.email', '==', customerEmail)
         );

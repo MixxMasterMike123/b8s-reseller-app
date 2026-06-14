@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useShopId } from '../../contexts/ShopContext';
 import { useLanguageCurrency } from '../../contexts/LanguageCurrencyContext';
 import SmartPrice, { ExactPrice } from '../../components/shop/SmartPrice';
 import {
@@ -14,6 +15,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData }) => {
   const { t } = useTranslation();
+  const shopId = useShopId();
   const { selectLanguage } = useLanguageCurrency();
   const [range, setRange] = useState(30); // days
   const [loading, setLoading] = useState(true);
@@ -77,6 +79,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
       // Fetch clicks for chart only (not for totals)
       const clicksQuery = query(
         collection(db, 'affiliateClicks'),
+        where('shopId', '==', shopId),
         where('affiliateCode', '==', affiliateCode),
         where('timestamp', '>=', startDate),
         orderBy('timestamp', 'desc'),
@@ -89,6 +92,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
       // Query 1: Orders with top-level affiliateCode (Mock payments)
       const ordersQuery1 = query(
         collection(db, 'orders'),
+        where('shopId', '==', shopId),
         where('affiliateCode', '==', affiliateCode),
         orderBy('createdAt', 'desc'),
         limit(500)
@@ -99,6 +103,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
       // Query 2: Orders with affiliate.code structure (Stripe payments)
       const ordersQuery2 = query(
         collection(db, 'orders'),
+        where('shopId', '==', shopId),
         where('affiliate.code', '==', affiliateCode),
         orderBy('createdAt', 'desc'),
         limit(500)
@@ -143,7 +148,7 @@ const AffiliateAnalyticsTab = ({ affiliateCode, affiliateStats, affiliateData })
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [range]);
+  }, [range, shopId, affiliateCode]);
 
   // Aggregate daily counts for chart only
   const chartData = useMemo(() => {

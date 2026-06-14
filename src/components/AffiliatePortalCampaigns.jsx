@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/24/solid';
 import { useContentTranslation } from '../hooks/useContentTranslation';
 import { useTranslation } from '../contexts/TranslationContext';
+import { useShopId } from '../contexts/ShopContext';
 import { useCampaigns } from '../wagons/campaign-wagon/hooks/useCampaigns';
 import { generateAffiliateLink, getCountryAwareUrl } from '../utils/productUrls';
 import { CAMPAIGN_STATUS } from '../wagons/campaign-wagon/utils/campaignUtils';
@@ -24,6 +25,7 @@ import QRCode from 'qrcode';
 
 const AffiliatePortalCampaigns = ({ affiliateData }) => {
   const { t } = useTranslation();
+  const shopId = useShopId();
   const { getContentValue } = useContentTranslation();
   const { campaigns, loading, error } = useCampaigns();
   
@@ -64,6 +66,7 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
       const ordersRef = collection(db, 'orders');
       const campaignOrdersQuery = query(
         ordersRef,
+        where('shopId', '==', shopId),
         where('campaignId', '==', campaignId),
         where('affiliateId', '==', affiliateData.id)
       );

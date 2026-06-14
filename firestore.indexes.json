@@ -316,6 +316,15 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "shopId", "order": "ASCENDING" },
+        { "fieldPath": "campaignId", "order": "ASCENDING" },
+        { "fieldPath": "affiliateId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "shopId", "order": "ASCENDING" },
         { "fieldPath": "b2cCustomerId", "order": "ASCENDING" }
       ]
     },
@@ -326,6 +335,15 @@
         { "fieldPath": "shopId", "order": "ASCENDING" },
         { "fieldPath": "source", "order": "ASCENDING" },
         { "fieldPath": "customerInfo.email", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "shopId", "order": "ASCENDING" },
+        { "fieldPath": "source", "order": "ASCENDING" },
+        { "fieldPath": "b2cCustomerId", "order": "ASCENDING" }
       ]
     },
     {

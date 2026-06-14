@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useShopId } from '../../contexts/ShopContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { 
   HomeIcon,
@@ -28,6 +29,7 @@ import QRCode from 'qrcode';
 const AffiliatePortal = () => {
   const { currentUser, loading: authLoading } = useSimpleAuth();
   const { t } = useTranslation();
+  const shopId = useShopId();
   const { getContentValue } = useContentTranslation();
   const navigate = useNavigate();
   const [affiliateData, setAffiliateData] = useState(null);
@@ -110,7 +112,7 @@ const AffiliatePortal = () => {
 
   useEffect(() => {
     fetchAffiliateData();
-  }, [currentUser]);
+  }, [currentUser, shopId]);
 
   // Separate effect for admin impersonation - runs immediately on mount
   useEffect(() => {
@@ -178,10 +180,10 @@ const AffiliatePortal = () => {
       let affiliateQuery;
       if (isAdminView && targetAffiliateCode) {
         // Admin impersonation: find by affiliate code
-        affiliateQuery = query(affiliatesRef, where('affiliateCode', '==', targetAffiliateCode));
+        affiliateQuery = query(affiliatesRef, where('shopId', '==', shopId), where('affiliateCode', '==', targetAffiliateCode));
       } else {
         // Normal user: find by email
-        affiliateQuery = query(affiliatesRef, where('email', '==', currentUser.email), where('status', '==', 'active'));
+        affiliateQuery = query(affiliatesRef, where('shopId', '==', shopId), where('email', '==', currentUser.email), where('status', '==', 'active'));
       }
       
       const querySnapshot = await getDocs(affiliateQuery);

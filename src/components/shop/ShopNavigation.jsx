@@ -17,11 +17,13 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { getCountryAwareUrl } from '../../utils/productUrls';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
+import { useShopId } from '../../contexts/ShopContext';
 
 const ShopNavigation = ({ breadcrumb }) => {
   const { cart } = useCart();
   const { t } = useTranslation();
   const store = useStoreSettings();
+  const shopId = useShopId();
   const navigate = useNavigate();
   const { currentUser, logout } = useSimpleAuth();
   const [affiliateData, setAffiliateData] = useState(null);
@@ -38,7 +40,7 @@ const ShopNavigation = ({ breadcrumb }) => {
       }
       try {
         const affiliatesRef = collection(db, 'affiliates');
-            const affiliateQuery = query(affiliatesRef, where('email', '==', currentUser.email), where('status', '==', 'active'));
+            const affiliateQuery = query(affiliatesRef, where('shopId', '==', shopId), where('email', '==', currentUser.email), where('status', '==', 'active'));
     const querySnapshot = await getDocs(affiliateQuery);
         if (!querySnapshot.empty) {
           setAffiliateData(querySnapshot.docs[0].data());
@@ -50,7 +52,7 @@ const ShopNavigation = ({ breadcrumb }) => {
       }
     };
     fetchAffiliateData();
-  }, [currentUser]);
+  }, [currentUser, shopId]);
 
   const handleAffiliateLogout = async () => {
     await logout();

@@ -8,6 +8,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 // 🇸🇪 SE-ONLY LAUNCH: hidden with its usage below. Re-enable for internationalization.
 // import LanguageCurrencySelector from './LanguageCurrencySelector';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
+import { useShopId } from '../../contexts/ShopContext';
 import DOMPurify from 'dompurify';
 
 // Generic platform icons (brand-neutral logos). A link renders only when the
@@ -26,6 +27,7 @@ const ShopFooter = () => {
   const { t } = useTranslation();
   const { currentUser } = useSimpleAuth();
   const store = useStoreSettings();
+  const shopId = useShopId();
   const [isActiveAffiliate, setIsActiveAffiliate] = useState(false);
   const [affiliateCheckLoading, setAffiliateCheckLoading] = useState(false);
   const currentYear = new Date().getFullYear();
@@ -42,8 +44,9 @@ const ShopFooter = () => {
         setAffiliateCheckLoading(true);
         const affiliatesRef = collection(db, 'affiliates');
         const affiliateQuery = query(
-          affiliatesRef, 
-          where('email', '==', currentUser.email), 
+          affiliatesRef,
+          where('shopId', '==', shopId),
+          where('email', '==', currentUser.email),
           where('status', '==', 'active')
         );
         const querySnapshot = await getDocs(affiliateQuery);
@@ -57,7 +60,7 @@ const ShopFooter = () => {
     };
 
     checkAffiliateStatus();
-  }, [currentUser]);
+  }, [currentUser, shopId]);
 
   return (
     <footer className="bg-ink text-white font-body">
