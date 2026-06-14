@@ -14,6 +14,7 @@ import {
 import { generateProductSchema } from '../../utils/productFeed';
 import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useShopId } from '../../contexts/ShopContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { getProductGroupContent } from '../../utils/productGroups';
 import { translateColor } from '../../utils/colorTranslations';
@@ -69,6 +70,7 @@ const PublicProductPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const shopId = useShopId();
   const { getContentValue } = useContentTranslation();
   
   const [product, setProduct] = useState(null);
@@ -114,7 +116,7 @@ const PublicProductPage = () => {
     if (slug) {
       loadProductAndVariants();
     }
-  }, [slug]);
+  }, [slug, shopId]);
 
   // Nike mobile UX: Scroll detection for fixed button
   useEffect(() => {
@@ -161,7 +163,7 @@ const PublicProductPage = () => {
       }
       
       const productsRef = collection(db, 'products');
-      const productQuery = query(productsRef, where('sku', '==', sku), where('isActive', '==', true), where('availability.b2c', '==', true));
+      const productQuery = query(productsRef, where('shopId', '==', shopId), where('sku', '==', sku), where('isActive', '==', true), where('availability.b2c', '==', true));
       const querySnapshot = await getDocs(productQuery);
 
       if (querySnapshot.empty) {
@@ -183,6 +185,7 @@ const PublicProductPage = () => {
       if (productGroup) {
         const variantsQuery = query(
           collection(db, 'products'),
+          where('shopId', '==', shopId),
           where('isActive', '==', true),
           where('availability.b2c', '==', true),
           where('group', '==', productGroup)

@@ -116,7 +116,7 @@ const Checkout = () => {
     try {
       setLoadingProfile(true);
       const customersRef = collection(db, 'b2cCustomers');
-      const customerQuery = query(customersRef, where('firebaseAuthUid', '==', currentUser.uid));
+      const customerQuery = query(customersRef, where('shopId', '==', shopId), where('firebaseAuthUid', '==', currentUser.uid));
       const customerSnapshot = await getDocs(customerQuery);
       
       if (!customerSnapshot.empty) {

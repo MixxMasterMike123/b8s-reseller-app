@@ -101,9 +101,12 @@ Phase 0 (this step):
 
 **⛔ BEFORE PHASE 2 (Mikael must run, in order):** (1) scripts/seed-default-shop.cjs --commit; (2) scripts/backfill-shopid.cjs dry → --commit → dry-again-confirm-0. Phase 2 adds `where('shopId','==',shopId)` to reads; if the backfill hasn't run, those filters would HIDE all pre-Phase-1 data. So scoping reads is gated on the backfill being done + verified.
 
-### Phase 2 — Scope all reads by `shopId`
-- Add `where('shopId','==',shopId)` to the ~60–75 query sites (client + functions). Mechanical but broad; done in batches by area (shop pages → admin pages → functions), each batch built+verified.
-- Requires Firestore composite indexes (shopId + existing filters) — generated + deployed.
+### Phase 2 — Scope all reads by `shopId` — DECISIONS 2026-06-14
+**Precondition MET:** seed + backfill run & verified (all 815 docs tagged, dry-run shows 0 remaining). **Auth:** Mikael granted Claude to run DB index deploys + scoped app deploys (scope each app deploy + verify live; destructive ops still STOP-and-surface).
+**Scoping depth (Mikael): scope ALL collection-queries** — add `where('shopId','==',shopId)` to every `getDocs(query(...))` / `collection().where().get()` of an in-scope collection (listing AND unique-key lookups). **SKIP** true doc-by-id (`getDoc(doc(db,c,id))`/`.doc(id).get()`) and `__name__ in batch` reads — those are covered by Phase 3 rules (can't add a where to a doc ref; `in` on `__name__` + extra equality is constrained).
+**~68 read sites** mapped (forensic audit 2026-06-14). shopId source: `useShopId()` in client React; server functions derive from request/related doc or DEFAULT_SHOP_ID.
+**Index ordering (critical):** a `where('shopId')`+`orderBy/where` query needs a composite index live BEFORE it runs or it throws. Sequence per batch: write scoped queries → add indexes to firestore.indexes.json → deploy indexes (`firebase deploy --only firestore:indexes`) + wait for build → then the scoped code deploy. ~25 composite indexes needed (shopId prepended to existing compound queries).
+**Batches by area:** shop pages → admin pages → utils/hooks/contexts → functions. Build+verify+commit+push each.
 
 ### Phase 3 — Security rules rewrite (the safety net)
 - `firestore.rules` + `storage.rules`: add `isPlatform()` and shop-scoping so an admin can only read/write docs where `resource.data.shopId == their shopId`; platform bypasses. This is what makes scoping *enforced*, not just *filtered*. Heavy review + a rules test pass before deploy.

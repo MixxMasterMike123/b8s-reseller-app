@@ -4,6 +4,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useShopId } from '../../contexts/ShopContext';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
 import { toast } from 'react-hot-toast';
@@ -52,6 +53,7 @@ const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => 
   const slug = getSlugFromPath();
   const { getContentValue } = useContentTranslation();
   const { t } = useTranslation();
+  const shopId = useShopId();
   const [page, setPage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -70,6 +72,7 @@ const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => 
         const pagesRef = collection(db, 'pages');
         const q = query(
           pagesRef,
+          where('shopId', '==', shopId),
           where('slug', '==', slug),
           where('status', '==', 'published')
         );
@@ -102,7 +105,7 @@ const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => 
     };
 
     fetchPage();
-  }, [slug, isCmsPage]);
+  }, [slug, isCmsPage, shopId]);
 
   // Update document title for SEO (must be before early returns)
   useEffect(() => {

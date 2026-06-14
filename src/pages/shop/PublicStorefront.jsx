@@ -19,11 +19,13 @@ import { getProductGroupContent } from '../../utils/productGroups';
 import AddedToCartModal from '../../components/shop/AddedToCartModal';
 import NordProductCard from '../../components/shop/NordProductCard';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
+import { useShopId } from '../../contexts/ShopContext';
 import { Helmet } from 'react-helmet-async';
 
 const PublicStorefront = () => {
   const { t, currentLanguage } = useTranslation();
   const store = useStoreSettings();
+  const shopId = useShopId();
   const { getContentValue } = useContentTranslation();
   const { 
     addToCart: addToCartContext, 
@@ -40,7 +42,7 @@ const PublicStorefront = () => {
   useEffect(() => {
     loadProducts();
     loadHeroReview();
-  }, [currentLanguage]); // Reload when language changes
+  }, [currentLanguage, shopId]); // Reload when language or shop changes
 
   const loadHeroReview = async () => {
     try {
@@ -63,6 +65,7 @@ const PublicStorefront = () => {
       setLoading(true);
       const productsQuery = query(
         collection(db, 'products'),
+        where('shopId', '==', shopId),
         where('isActive', '==', true),
         where('availability.b2c', '==', true) // Only show B2C available products
       );
