@@ -63,9 +63,22 @@ Storage (claim-based): `isPlatform()` = `token.platform==true`; `isAdminOfShop(s
 
 ---
 
-## Open questions for Mikael (before any code)
+## Decisions (Mikael, 2026-06-14) — ALL as recommended
 
-1. **Platform tier mechanism:** (a) change Mikael's `role` from 'admin'→'platform' (cleaner model, but must update every `role=='admin'` rule to also accept platform, and deploy role+rules together), OR (b) keep `role:'admin'` and add a separate `platform: true` field/claim (smaller rules diff, both checked). Recommend (b) — least disruption, fewest moving parts, no window where Mikael lacks access.
-2. **shopId for the admin:** set Mikael's `users` doc `shopId='b8shield'` too (so if platform flag were ever removed he'd still be the b8shield admin)? Recommend yes (belt-and-suspenders).
-3. **Rules test harness:** OK to add `@firebase/rules-unit-testing` as a dev dependency + a test script, and run it against the emulator before deploying? (Strongly recommended for a rules rewrite — it's the difference between "compiles" and "proven".) 
-4. **Deploy grouping:** rules-only deploy first (firestore+storage rules), verify, separately from any code? (Rules deploy is independent of hosting/functions.) Recommend rules-only, isolated, so a rules problem is easy to bisect/rollback.
+1. **Platform tier = `platform:true` flag**, KEEP `role:'admin'`. `isAdmin()` (role=='admin') rules stay untouched; add `isPlatform()` = platform flag/claim true. No access gap.
+2. **Set admin `shopId='b8shield'`** on the user doc too (belt-and-suspenders).
+3. **Rules unit-test harness:** YES — add `@firebase/rules-unit-testing`, prove against the emulator before any deploy.
+4. **Rules-only isolated deploy** (after the claim re-sync), separate from code.
+
+## MANDATORY bidirectional check (Mikael 2026-06-14): "admin vs store AND store vs admin"
+Every collection must be audited from BOTH sides, and the rules test matrix must prove BOTH for each actor:
+- **No lockout (access still works):** anonymous shopper reads storefront; customer reads own orders/account; affiliate reads own data; shop-admin reads/writes OWN shop; platform reads/writes ALL. Every field admin can SAVE today must still save.
+- **No leak (cross access denied):** shop-admin CANNOT read/write another shop's data; storefront/customer/affiliate cannot reach cross-shop or admin-only data; anonymous cannot read private collections.
+For each collection below, verify the "store→admin" direction (does the shop still work?) AND the "admin→store" direction (is admin scoped + not leaking?). A pass requires GREEN on both, not just "leak denied".
+
+## Build order (this phase)
+- (a) Script to set `users/{mikael}.platform=true` + `shopId='b8shield'` (Mikael runs — STOP).
+- (b) Extend `syncAdminClaims` to stamp `{role, shopId, platform}` into the custom claim; deploy fn; re-sync; Mikael re-logs-in.
+- (c) Write new firestore.rules + storage.rules (platform-exempt; admin scoped by shopId; public reads open; owner reads unchanged).
+- (d) Add rules unit-test suite; run on emulator — must pass (legit access OK, cross-shop leak DENIED).
+- (e) STOP — show diff + test results, get explicit go, then rules-only deploy + live-verify.

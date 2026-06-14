@@ -11,8 +11,19 @@ service firebase.storage {
     // collection by the syncAdminClaims maintenance function. (Storage rules
     // cannot read the named Firestore database the app uses, and a hardcoded
     // UID allowlist doesn't generalize to per-customer deploys.)
+    //
+    // MULTI-TENANT (Phase 3): the claim now also carries `shopId` and
+    // `platform` (set by syncAdminClaims). Storage paths are not yet
+    // shopId-partitioned, so per-shop write-scoping in storage is deferred to
+    // the path restructuring (Phase 0b). Today: any admin (role claim) writes,
+    // platform included — matching current single-shop behavior. isPlatform()
+    // is exposed now so it's ready when storage paths gain a shop prefix.
     function isAdmin() {
       return request.auth != null && request.auth.token.role == 'admin';
+    }
+
+    function isPlatform() {
+      return request.auth != null && request.auth.token.platform == true;
     }
 
     // User profile images

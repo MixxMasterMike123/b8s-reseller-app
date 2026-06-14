@@ -468,10 +468,23 @@ exports.syncAdminClaims = (0, https_1.onRequest)({
         for (const docSnap of adminUsers.docs) {
             const uid = docSnap.id;
             try {
+                const userData = docSnap.data() || {};
+                // Multi-tenant claims: shopId scopes a shop-admin; platform bypasses
+                // scoping (super-admin). Storage rules can't read the named DB, so
+                // these must live in the token. Firestore rules can read the doc but
+                // also honor the claim. (Phase 3.)
+                const desired = {
+                    role: 'admin',
+                    shopId: userData.shopId || null,
+                    platform: userData.platform === true,
+                };
                 const userRecord = await auth.getUser(uid);
                 const existingClaims = userRecord.customClaims || {};
-                if (existingClaims.role !== 'admin') {
-                    await auth.setCustomUserClaims(uid, { ...existingClaims, role: 'admin' });
+                const upToDate = existingClaims.role === desired.role &&
+                    existingClaims.shopId === desired.shopId &&
+                    existingClaims.platform === desired.platform;
+                if (!upToDate) {
+                    await auth.setCustomUserClaims(uid, { ...existingClaims, ...desired });
                     results.push({ uid, email: userRecord.email, status: 'claim-set' });
                 }
                 else {

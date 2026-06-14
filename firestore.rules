@@ -5,6 +5,12 @@ rules_version = '2';
 // firebase.json targets this database explicitly; deploying without that
 // targeting would update the unused (default) database instead.
 //
+// MULTI-TENANT (Phase 3): shop-scoped collections carry a `shopId`. A shop
+// admin (role=='admin') may only touch docs for THEIR shop (users/{uid}.shopId).
+// A platform super-admin (users/{uid}.platform==true) bypasses shop-scoping and
+// manages all shops. Public storefront reads stay open (anonymous shoppers have
+// no shop identity). Owner-scoped reads (customer/affiliate) are unchanged.
+//
 // Server-only collections (passwordResets, emailVerifications,
 // campaignParticipants, campaignRevenueTracking) have NO rules on purpose:
 // Cloud Functions use the Admin SDK (bypasses rules) and clients must never
@@ -12,38 +18,60 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions for common checks
+    // ---------- identity helpers ----------
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    function isAdmin() {
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function userExists() {
       return isAuthenticated() &&
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    // role=='admin' (shop admin OR platform — platform users also keep role admin)
+    function isAdmin() {
+      return userExists() && userDoc().role == 'admin';
+    }
+
+    // platform super-admin: bypasses shop-scoping, manages all shops
+    function isPlatform() {
+      return userExists() && userDoc().platform == true;
     }
 
     function isActiveUser() {
-      return isAuthenticated() &&
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active == true;
+      return userExists() && userDoc().active == true;
     }
 
     function isUserOrAdmin(userId) {
       return request.auth.uid == userId || isAdmin();
     }
 
+    // ---------- tenant-scoping helpers ----------
+    // True if the caller may administer the given shop: platform (any shop) OR
+    // a shop admin whose own shopId matches. Used on shop-scoped collections.
+    function isAdminOfShop(shopId) {
+      return isPlatform() ||
+        (isAdmin() && userDoc().shopId == shopId);
+    }
+
     // ============================================================
-    // Users (B2B portal + admin accounts)
+    // Users (B2B portal + admin accounts) — NOT shop-scoped
     // ============================================================
     match /users/{userId} {
       allow read: if isUserOrAdmin(userId);
       allow create: if isAdmin();
-      // Users can update their own profile except role/isActive; admins anything
+      // Users update their own profile except role/isActive/platform/shopId
+      // (privilege + tenant fields are admin-only); admins update anything.
       allow update: if isUserOrAdmin(userId) &&
         (!isAdmin() ? (
           !("role" in request.resource.data) &&
-          !("isActive" in request.resource.data)
+          !("isActive" in request.resource.data) &&
+          !("platform" in request.resource.data) &&
+          !("shopId" in request.resource.data)
         ) : true);
       allow delete: if isAdmin();
 
@@ -55,26 +83,32 @@ service cloud.firestore {
     }
 
     // ============================================================
-    // PUBLIC STOREFRONT DATA — anonymous visitors browse the shop
+    // PUBLIC STOREFRONT DATA — anonymous visitors browse the shop.
+    // Read stays open (shoppers have no shop identity; per-shop filtering is
+    // done by the query's where('shopId') — Phase 2). Writes are shop-scoped
+    // to the admin's shop (create stamps shopId; update guards the existing one).
     // ============================================================
     match /products/{productId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create: if isAdminOfShop(request.resource.data.shopId);
+      allow update, delete: if isAdminOfShop(resource.data.shopId);
     }
 
     match /productGroups/{groupId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create: if isAdminOfShop(request.resource.data.shopId);
+      allow update, delete: if isAdminOfShop(resource.data.shopId);
     }
 
     // CMS pages (legal pages, content pages). Note: drafts are technically
     // readable; keep secrets out of CMS docs.
     match /pages/{pageId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create: if isAdminOfShop(request.resource.data.shopId);
+      allow update, delete: if isAdminOfShop(resource.data.shopId);
     }
 
-    // UI translations, one collection per locale
+    // UI translations, one collection per locale — global (not shop-scoped)
     match /translations_sv_SE/{docId} {
       allow read: if true;
       allow write: if isAdmin();
@@ -88,8 +122,8 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Store identity (shop name, logo, support email) — rendered by the
-    // public storefront for anonymous visitors
+    // Store identity (legacy global config). The per-shop config lives in
+    // shops/{shopId} now; settings/app remains readable for the fallback seam.
     match /settings/app {
       allow read: if true;
       allow write: if isAdmin();
@@ -100,16 +134,28 @@ service cloud.firestore {
     }
 
     // ============================================================
-    // Orders
+    // shops/{shopId} — the tenant docs. Public read of identity/status (the
+    // storefront reads its shop config + active/disabled). Only platform
+    // provisions/kills shops; a shop admin may update their OWN shop's config.
+    // ============================================================
+    match /shops/{shopId} {
+      allow read: if true;
+      allow create, delete: if isPlatform();
+      allow update: if isPlatform() ||
+        (isAdmin() && userDoc().shopId == shopId);
+    }
+
+    // ============================================================
+    // Orders (shop-scoped)
     // ============================================================
     match /orders/{orderId} {
-      // Single-doc reads are open: the doc ID is an unguessable capability
-      // (Stripe payment-intent ID or Firestore auto-ID) and guests must be
-      // able to view their confirmation page after paying. Listing is gated.
+      // Single-doc reads stay open: the doc ID is an unguessable capability
+      // (Stripe payment-intent ID or Firestore auto-ID) and guests must view
+      // their confirmation page after paying. Listing is gated.
       allow get: if true;
-      // B2B users list their own orders; B2C customers list theirs via
-      // account linkage or their verified email; admins list everything.
-      allow list: if isAdmin() ||
+      // B2B users list their own; B2C customers list theirs via account
+      // linkage or verified email; admins list only THEIR shop; platform all.
+      allow list: if (isAdmin() && (isPlatform() || resource.data.shopId == userDoc().shopId)) ||
         (isActiveUser() && resource.data.userId == request.auth.uid) ||
         (isAuthenticated() && resource.data.source == 'b2c' && (
           resource.data.b2cCustomerAuthId == request.auth.uid ||
@@ -117,12 +163,9 @@ service cloud.firestore {
             get(/databases/$(database)/documents/b2cCustomers/$(resource.data.b2cCustomerId)).data.firebaseAuthUid == request.auth.uid) ||
           resource.data.customerInfo.email == request.auth.token.email
         ));
-      // Orders are created ONLY server-side by the Stripe webhook after
-      // signature-verified payment (B2B portal removed — no client creation
-      // path remains) and updated only by admins.
+      // Orders are created ONLY server-side by the Stripe webhook (Admin SDK).
       allow create: if false;
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow update, delete: if isAdminOfShop(resource.data.shopId);
     }
 
     match /orderStatuses/{statusId} {
@@ -131,67 +174,85 @@ service cloud.firestore {
     }
 
     // ============================================================
-    // B2C customer accounts
+    // B2C customer accounts (shop-scoped; owner reads own)
     // ============================================================
     match /b2cCustomers/{customerId} {
-      allow read: if isAuthenticated() && (resource.data.firebaseAuthUid == request.auth.uid || isAdmin());
-      // Created at checkout by the (just-authenticated) customer themselves
+      allow read: if isAuthenticated() && (
+        resource.data.firebaseAuthUid == request.auth.uid ||
+        isAdminOfShop(resource.data.shopId)
+      );
+      // Created at checkout by the (just-authenticated) customer themselves.
       allow create: if isAuthenticated() && request.resource.data.firebaseAuthUid == request.auth.uid;
-      allow update: if isAuthenticated() && (resource.data.firebaseAuthUid == request.auth.uid || isAdmin());
-      allow delete: if isAdmin();
+      allow update: if isAuthenticated() && (
+        resource.data.firebaseAuthUid == request.auth.uid ||
+        isAdminOfShop(resource.data.shopId)
+      );
+      allow delete: if isAdminOfShop(resource.data.shopId);
     }
 
     // ============================================================
-    // Affiliate system
+    // Affiliate system (shop-scoped; affiliates read own)
     // ============================================================
     // Affiliate doc ID == the affiliate's Firebase Auth uid. Affiliates read
-    // their own doc (by uid or by their own verified email — the portal and
-    // shop nav query by email). Anonymous discount-code validation goes
-    // through the validateDiscountCode callable, never direct reads.
+    // their own doc (by uid or by their own verified email). Anonymous
+    // discount-code validation goes through the validateDiscountCode callable.
     match /affiliates/{affiliateId} {
-      allow read: if isAdmin() ||
+      allow read: if isAdminOfShop(resource.data.shopId) ||
         (isAuthenticated() && (
           request.auth.uid == affiliateId ||
           resource.data.email == request.auth.token.email
         ));
-      allow write: if isAdmin();
+      // create stamps shopId (guard the incoming one); update/delete guard the
+      // stored shopId (no incoming data on delete).
+      allow create: if isAdminOfShop(request.resource.data.shopId);
+      allow update, delete: if isAdminOfShop(resource.data.shopId);
     }
 
     // Clicks are written ONLY server-side via logAffiliateClickV2 (Admin SDK)
     match /affiliateClicks/{clickId} {
-      allow read: if isAdmin();
+      allow read: if isAdminOfShop(resource.data.shopId);
       allow create: if false;
-      allow update, delete: if isAdmin();
+      allow update, delete: if isAdminOfShop(resource.data.shopId);
     }
 
-    // Public application form (anonymous applicants); only admins read/manage
+    // Public application form (anonymous applicants); admins of the shop manage.
     match /affiliateApplications/{applicationId} {
       allow create: if request.resource.data.email is string &&
         request.resource.data.email.size() < 200;
-      allow read, update, delete: if isAdmin();
+      allow read, update, delete: if isAdminOfShop(resource.data.shopId);
     }
 
     match /affiliatePayouts/{payoutId} {
-      allow read: if isAdmin() ||
+      allow read: if isAdminOfShop(resource.data.shopId) ||
         (isAuthenticated() && resource.data.affiliateId == request.auth.uid);
-      allow write: if isAdmin();
+      allow create: if isAdminOfShop(request.resource.data.shopId);
+      allow update, delete: if isAdminOfShop(resource.data.shopId);
     }
 
     // ============================================================
-    // B2B / admin tooling (marketing, CRM wagons, presence)
+    // Marketing materials (shop-scoped top-level collection)
     // ============================================================
     match /marketingMaterials/{materialId} {
-      allow read: if isActiveUser();
-      allow write: if isAdmin();
+      allow read: if isActiveUser() || isAdmin();
+      allow create: if isAdminOfShop(request.resource.data.shopId);
+      allow update, delete: if isAdminOfShop(resource.data.shopId);
     }
 
+    // ============================================================
+    // Campaigns (shop-scoped)
+    // ============================================================
+    match /campaigns/{campaignId} {
+      allow read: if isAdminOfShop(resource.data.shopId);
+      allow create: if isAdminOfShop(request.resource.data.shopId);
+      allow update, delete: if isAdminOfShop(resource.data.shopId);
+    }
+
+    // ============================================================
+    // B2B / admin tooling — NOT shop-scoped (platform/global admin surface)
+    // ============================================================
     match /userWagonSettings/{userId} {
       allow read: if isActiveUser() && (request.auth.uid == userId || isAdmin());
       allow write: if isAdmin();
-    }
-
-    match /campaigns/{campaignId} {
-      allow read, write: if isAdmin();
     }
 
     match /adminPresence/{presenceId} {
@@ -203,6 +264,7 @@ service cloud.firestore {
     }
 
     // Dining/ambassador wagon CRM data — admin-only internal tooling
+    // (deferred from shop-scoping; admin-gated)
     match /activities/{docId} {
       allow read, write: if isAdmin();
     }
