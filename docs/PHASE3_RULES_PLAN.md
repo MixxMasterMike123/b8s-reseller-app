@@ -1,6 +1,14 @@
 # Phase 3 — Security Rules (the hard tenant-isolation gate)
 
-**Status:** PLAN, no rules deployed. Awaiting Mikael's review + explicit go.
+**Status:** ✅ DONE — DEPLOYED + LIVE-VERIFIED 2026-06-14.
+- Step 1: admin doc set platform:true + shopId='b8shield' (verified).
+- Step 2: syncAdminClaims deployed; claim {role,shopId,platform} stamped (function returned claim-set); Mikael re-logged-in.
+- Step 3: firestore.rules + storage.rules deployed (rules-only). Emulator suite 28/0; LIVE anonymous check 8/0 (storefront reads OK; orders/clicks/customers/affiliates list DENIED). Tenant isolation now ENFORCED.
+- Rollback if needed: redeploy previous rules (git has them).
+Remaining manual confirm: Mikael eyeballs admin console (platform = full access). NEXT = Phase 4 (Super Admin UI).
+
+---
+**Original plan below (kept for reference).** No rules deployed → now superseded by DONE status above.
 **Goal:** Make tenant isolation *enforced* (not just filtered by Phase 2 queries). After this, an admin can only read/write data for their own shop; a `platform` super-admin bypasses scoping; public storefront reads stay open.
 **Why highest-stakes:** a rules bug = either a cross-shop data leak OR a lockout of the live site. So: platform-exempt-first design (can't lock out the sole admin), staged, rules-test before deploy, explicit go.
 
