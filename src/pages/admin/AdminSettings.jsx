@@ -1,13 +1,13 @@
 // AdminSettings.jsx - Admin Settings with per-user wagon management
 import React, { useState, useEffect, useCallback } from 'react';
-import { collection, getDocs, doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import AppLayout from '../../components/layout/AppLayout';
 import toast from 'react-hot-toast';
 import wagonRegistry from '../../wagons/WagonRegistry.js';
 import { STORE } from '../../config/store';
-import { saveShopConfig } from '../../config/shopConfig';
+import { loadShopConfig, saveShopConfig } from '../../config/shopConfig';
 
 // Icons
 import { 
@@ -27,26 +27,35 @@ const AdminSettings = () => {
   const [users, setUsers] = useState([]);
   const [availableWagons, setAvailableWagons] = useState([]);
   const [userWagonSettings, setUserWagonSettings] = useState({});
-  const [appSettings, setAppSettings] = useState({});
   const [storeForm, setStoreForm] = useState(STORE);
   const [activeTab, setActiveTab] = useState('wagons');
 
-  // Seed the store-identity form from saved settings/app (falling back to STORE
-  // defaults for any empty field) whenever appSettings loads.
+  // Seed the store-identity form from the shopConfig SEAM (not the raw
+  // settings/app doc) so it follows the tenant doc shops/{shopId} once the
+  // seed has run, falling back to settings/app + STORE defaults otherwise.
   useEffect(() => {
-    const saved = appSettings?.storeIdentity || {};
-    setStoreForm({ ...STORE, ...Object.fromEntries(
-      Object.entries(saved).filter(([, v]) => v !== undefined && v !== null && v !== '')
-    ) });
-  }, [appSettings]);
+    let cancelled = false;
+    (async () => {
+      let saved = {};
+      try {
+        saved = (await loadShopConfig()) || {};
+      } catch (e) {
+        console.warn('AdminSettings: could not load shop config, using defaults:', e?.message);
+      }
+      if (cancelled) return;
+      setStoreForm({ ...STORE, ...Object.fromEntries(
+        Object.entries(saved).filter(([, v]) => v !== undefined && v !== null && v !== '')
+      ) });
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
-  // Save store identity via the shopConfig seam (settings/app today,
-  // shops/{shopId} later — see src/config/shopConfig.js).
+  // Save store identity via the shopConfig seam (shops/{shopId}, falling back
+  // to settings/app until the seed runs — see src/config/shopConfig.js).
   const saveStoreIdentity = useCallback(async () => {
     try {
       setSaving(true);
       await saveShopConfig(storeForm);
-      setAppSettings(prev => ({ ...prev, storeIdentity: storeForm }));
       toast.success('Butiksinställningar sparade. Ladda om butiken för att se ändringarna.');
     } catch (error) {
       console.error('Error saving store identity:', error);
@@ -64,8 +73,7 @@ const AdminSettings = () => {
         await Promise.all([
           loadUsers(),
           loadWagons(), // Now async
-          loadUserWagonSettings(),
-          loadAppSettings()
+          loadUserWagonSettings()
         ]);
       } catch (error) {
         console.error('Error loading settings data:', error);
@@ -125,18 +133,6 @@ const AdminSettings = () => {
     }
   };
 
-  // Load app settings
-  const loadAppSettings = async () => {
-    try {
-      const settingsDoc = await getDoc(doc(db, 'settings', 'app'));
-      if (settingsDoc.exists()) {
-        setAppSettings(settingsDoc.data());
-      }
-    } catch (error) {
-      console.error('Error loading app settings:', error);
-      throw error;
-    }
-  };
 
   // Toggle wagon for user
   const toggleWagonForUser = useCallback(async (userId, wagonId, enabled) => {

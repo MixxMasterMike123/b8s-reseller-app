@@ -10,27 +10,56 @@
 
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { DEFAULT_SHOP_ID } from './tenancy';
 
-// Resolve the Firestore doc ref holding this shop's identity/config.
-// Single-tenant today → always settings/app. The shopId argument is accepted
-// now (callers can start passing it) but currently ignored; when multi-tenant
-// lands, this returns doc(db, 'shops', shopId) and nothing else moves.
-const shopConfigRef = (/* shopId */) => doc(db, 'settings', 'app');
+// Multi-tenant config lives at shops/{shopId}. During the migration the seed
+// (settings/app.storeIdentity → shops/{shopId}) may not have run yet, so this
+// seam transparently FALLS BACK to the legacy settings/app doc: reads prefer
+// shops/{shopId} but use settings/app if the shop doc doesn't exist yet, and
+// writes target shops/{shopId} only once it exists, else settings/app. This
+// keeps the live site identical before AND after the seed — no flag day.
+const tenantRef = (shopId) => doc(db, 'shops', shopId || DEFAULT_SHOP_ID);
+const legacyRef = () => doc(db, 'settings', 'app');
 
-// Read the saved storeIdentity object (or {} if missing). Never throws on a
-// missing doc; callers decide how to merge with their static defaults. A
-// genuine error (rules/offline) still rejects so callers can degrade.
-export const loadShopConfig = async (shopId) => {
-  const snap = await getDoc(shopConfigRef(shopId));
-  if (!snap.exists()) return {};
-  return snap.data()?.storeIdentity || {};
+// Per-shopId probe cache. Stores the EXISTING tenant snapshot (truthy) or
+// `false` when the seed hasn't run — NOT a boolean. Caching the same value we
+// return keeps the type consistent across the first and subsequent calls, so
+// loadShopConfig can safely treat the result as a snapshot when truthy.
+const tenantProbe = new Map();
+const probeTenantDoc = async (shopId) => {
+  const key = shopId || DEFAULT_SHOP_ID;
+  if (tenantProbe.has(key)) return tenantProbe.get(key);
+  const snap = await getDoc(tenantRef(key));
+  // The snapshot doubles as both "exists" (truthy) and the data source, so
+  // loadShopConfig avoids a second read. `false` means seed-not-run.
+  const result = snap.exists() ? snap : false;
+  tenantProbe.set(key, result);
+  return result;
 };
 
-// Merge-write a partial storeIdentity patch. Mirrors the prior AdminSettings
-// write exactly: setDoc(..., { storeIdentity, updatedAt }, { merge: true }).
+// Read the saved storeIdentity object (or {} if missing). Prefers the tenant
+// doc; falls back to settings/app while the seed hasn't run. Never throws on a
+// missing doc; a genuine error (rules/offline) still rejects so callers degrade.
+export const loadShopConfig = async (shopId) => {
+  const probed = await probeTenantDoc(shopId);
+  if (probed) {
+    // probed is the existing tenant snapshot — reuse it, no second read.
+    return probed.data()?.storeIdentity || {};
+  }
+  // Seed not run yet → read the legacy doc.
+  const legacy = await getDoc(legacyRef());
+  if (!legacy.exists()) return {};
+  return legacy.data()?.storeIdentity || {};
+};
+
+// Merge-write a partial storeIdentity patch. Targets the tenant doc once it
+// exists, else the legacy doc — mirroring the prior write shape exactly:
+// setDoc(..., { storeIdentity, updatedAt }, { merge: true }).
 export const saveShopConfig = async (patch, shopId) => {
+  const exists = await probeTenantDoc(shopId);
+  const ref = exists ? tenantRef(shopId) : legacyRef();
   await setDoc(
-    shopConfigRef(shopId),
+    ref,
     { storeIdentity: patch, updatedAt: new Date().toISOString() },
     { merge: true }
   );

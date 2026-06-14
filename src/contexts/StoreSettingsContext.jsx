@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { STORE } from '../config/store';
 import { loadShopConfig } from '../config/shopConfig';
+import { useShopId } from './ShopContext';
 
 /**
  * StoreSettingsContext — provides per-shop store identity to the app.
@@ -21,14 +22,17 @@ export function useStoreSettings() {
 export function StoreSettingsProvider({ children }) {
   // Seed with the static defaults so first paint is correct.
   const [settings, setSettings] = useState(STORE);
+  // Current tenant — drives which shop's config we load.
+  const shopId = useShopId();
 
   useEffect(() => {
     let cancelled = false;
 
     const loadStoreSettings = async () => {
       try {
-        // Read via the shopConfig seam (settings/app today, shops/{shopId} later).
-        const saved = await loadShopConfig();
+        // Read via the shopConfig seam for THIS shop (shops/{shopId}, falling
+        // back to settings/app until the seed runs — see config/shopConfig.js).
+        const saved = await loadShopConfig(shopId);
         if (cancelled) return;
 
         if (saved && typeof saved === 'object') {
@@ -51,7 +55,7 @@ export function StoreSettingsProvider({ children }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [shopId]);
 
   // Per-shop accent token (NORD design system). Tailwind utilities like
   // bg-accent read var(--color-accent); the inline value on <html> wins

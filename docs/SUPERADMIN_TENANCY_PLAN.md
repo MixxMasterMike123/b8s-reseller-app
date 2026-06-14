@@ -61,7 +61,18 @@ Mechanism reuses what exists: Firestore rules get `isPlatform()` + `belongsToSho
 
 ## Phased plan (each phase: build → verify → commit+push → STOP for go before any deploy/migration)
 
-### Phase 0 — Shop resolution + `shopId` context (no data change yet) — PATH-PREFIX
+### Phase 0 — `shopId` data + context plumbing (NO URL-grammar change) — sequenced 2026-06-14
+**Decision (2026-06-14):** the path-prefix URL-grammar rewrite is the highest 404-risk change and only pays off when shop #2 needs a distinct URL — which "build machinery first" defers. So Phase 0 ships ONLY the data/context plumbing that Phases 1–4 depend on; the `/:shopId/:countryCode` router + `productUrls.js` prefix shift move to a later step (Phase 0b), landing right before provisioning shop #2.
+
+Phase 0 (this step):
+- `src/config/tenancy.js`: `DEFAULT_SHOP_ID` + a single `resolveShopId(pathname)` — the ONE source of truth for path grammar (returns default today; later it parses the `/:shopId/...` prefix). No duplicated parsing anywhere else.
+- `ShopContext` provides `shopId` (default for now) to the app.
+- `shopConfig.js`: `shopConfigRef(shopId)` → `doc(db,'shops',shopId)`, with a SAFE FALLBACK to `settings/app` until the seed exists — the live site is unaffected before the seed runs.
+- Thread `shopId` from `StoreSettingsContext` into `loadShopConfig(shopId)`.
+- Seed script (STOP-and-surface — prepped, Mikael runs): copy `settings/app.storeIdentity` → `shops/{DEFAULT_SHOP_ID}`.
+- **No router/URL/link change. No scoping. Fully reversible.**
+
+### Phase 0b (LATER, before shop #2) — path-prefix URL grammar
 - Add a default shopId constant (the existing store; internal id can stay `b8shield` since it's never user-visible — meteorpr is the brand, shopId is a data key).
 - Add `ShopContext` that resolves the current shopId from the **first path segment** (`/{shopId}/{countryCode}/...`), with a fallback to the default shopId when the path has no valid shop prefix (so existing `/se/...` URLs keep working during transition). The whole app reads `shopId` from context.
 - **Router:** add `/:shopId/:countryCode/...` route forms. Keep the legacy `/:countryCode/...` forms working (redirect to default-shop-prefixed, or treat segment[0] as country when it matches se/gb/us) so nothing 404s mid-migration.

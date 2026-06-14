@@ -7,6 +7,7 @@ import { CartProvider } from './contexts/CartContext';
 import { TranslationProvider, useTranslation } from './contexts/TranslationContext';
 import { LanguageCurrencyProvider } from './contexts/LanguageCurrencyContext';
 import { StoreSettingsProvider } from './contexts/StoreSettingsContext';
+import { ShopProvider } from './contexts/ShopContext';
 import { functions } from './firebase/config';
 import { httpsCallable } from 'firebase/functions';
 
@@ -417,17 +418,19 @@ function App() {
   );
 
   return (
-    <StoreSettingsProvider>
-      <AuthProvider>
-        <SimpleAuthContextProvider>
-          <OrderProvider>
-            <CartProvider>
-              {content}
-            </CartProvider>
-          </OrderProvider>
-        </SimpleAuthContextProvider>
-      </AuthProvider>
-    </StoreSettingsProvider>
+    <ShopProvider>
+      <StoreSettingsProvider>
+        <AuthProvider>
+          <SimpleAuthContextProvider>
+            <OrderProvider>
+              <CartProvider>
+                {content}
+              </CartProvider>
+            </OrderProvider>
+          </SimpleAuthContextProvider>
+        </AuthProvider>
+      </StoreSettingsProvider>
+    </ShopProvider>
   );
 }
 
