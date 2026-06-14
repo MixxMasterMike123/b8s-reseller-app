@@ -93,6 +93,14 @@ Phase 0 (this step):
 - **Slice 1d — backfill script (STOP-and-surface):** one-time, stamps `shopId=DEFAULT_SHOP_ID` on all existing untagged docs in the in-scope collections. Dry-run default, idempotent, per-field reversible. Mikael runs.
 - **Manual import/credit scripts** (import-affiliates-from-csv, credit-kajjan, setup-firestore, direct-upload): note they need shopId before any future multi-shop run; not auto-edited now (single-shop, run rarely).
 
+**PROGRESS — Phase 1 DONE (2026-06-14), committed on salvage/cleanup-and-security, build-green (client + functions tsc), adversarially verified each slice, NOT deployed, backfill NOT run:**
+- Slice 1a (015ef28): order shopId chain — StripePaymentForm sends shopId → createPaymentIntent writes it to PaymentIntent metadata → stripeWebhook stamps order.shopId (unconditional DEFAULT_SHOP_ID fallback). + src/config/withShopId.js, functions/src/config/tenancy.ts.
+- Slice 1b (3137fd1): all client creates stamped via withShopId — products (incl. OrderContext seed), b2cCustomers, affiliates (incl. ambassador wagon→affiliates), affiliateApplications, campaigns, pages (create+overwrite-update), productGroups, marketingMaterials, affiliatePayouts. Verifier caught 3 misses (OrderContext seed, ambassador addContact, populateFromProducts arg) — fixed.
+- Slice 1c (8d334e4): server creates — logAffiliateClick (affiliateClicks), approveAffiliate (affiliates from application), order-processing (campaignRevenueTracking + campaignParticipants), each deriving shopId from a trusted related doc.
+- Slice 1d (81ce50f): scripts/backfill-shopid.cjs — STOP-and-surface. Dry-run default, idempotent, merge-only, batched, 13 in-scope collections.
+
+**⛔ BEFORE PHASE 2 (Mikael must run, in order):** (1) scripts/seed-default-shop.cjs --commit; (2) scripts/backfill-shopid.cjs dry → --commit → dry-again-confirm-0. Phase 2 adds `where('shopId','==',shopId)` to reads; if the backfill hasn't run, those filters would HIDE all pre-Phase-1 data. So scoping reads is gated on the backfill being done + verified.
+
 ### Phase 2 — Scope all reads by `shopId`
 - Add `where('shopId','==',shopId)` to the ~60–75 query sites (client + functions). Mechanical but broad; done in batches by area (shop pages → admin pages → functions), each batch built+verified.
 - Requires Firestore composite indexes (shopId + existing filters) — generated + deployed.
