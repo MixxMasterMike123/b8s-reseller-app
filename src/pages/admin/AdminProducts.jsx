@@ -17,6 +17,8 @@ import ContentLanguageIndicator from '../../components/ContentLanguageIndicator'
 import ProductGroupTab from '../../components/admin/ProductGroupTab';
 import SortableImageGallery from '../../components/admin/SortableImageGallery';
 import { saveProductGroupContent } from '../../utils/productGroups';
+import { useShopId } from '../../contexts/ShopContext';
+import { withShopId } from '../../config/withShopId';
 
 // Maximum size for image files (5MB)
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
@@ -28,6 +30,7 @@ function AdminProducts() {
   const { isAdmin, user } = useAuth();
   const { currentLanguage, getContentValue, setContentValue } = useContentTranslation();
   const { t } = useTranslation();
+  const shopId = useShopId();
   const location = useLocation();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -643,7 +646,7 @@ function AdminProducts() {
         
         // Create product in named database
         try {
-          const namedDbRef = await addDoc(collection(db, 'products'), finalProductData);
+          const namedDbRef = await addDoc(collection(db, 'products'), withShopId(finalProductData, shopId));
           console.log("Product added to named DB with ID:", namedDbRef.id);
           toast.success('Produkt tillagd framgångsrikt');
         } catch (error) {
@@ -678,10 +681,10 @@ function AdminProducts() {
             await updateDoc(docRef, finalProductData);
             console.log("Updated product in named DB");
           } else {
-            await setDoc(docRef, {
+            await setDoc(docRef, withShopId({
               ...finalProductData,
               createdAt: serverTimestamp()
-            });
+            }, shopId));
             console.log("Created product in named DB with specific ID");
           }
           
@@ -712,7 +715,7 @@ function AdminProducts() {
           }
           
           if (userUid) {
-            await saveProductGroupContent(formData.group, groupContent, userUid);
+            await saveProductGroupContent(formData.group, groupContent, userUid, shopId);
             console.log('✅ Group content saved successfully');
             toast.success('Gruppinnehåll sparat');
           } else {

@@ -10,6 +10,7 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { withShopId } from '../config/withShopId';
 
 // Product Groups collection for B2C shared content
 const PRODUCT_GROUPS_COLLECTION = 'productGroups';
@@ -108,7 +109,7 @@ export const getProductGroupContent = async (groupId) => {
  * Create or update product group content
  * PERFORMANCE OPTIMIZATION: Clears cache when content is updated
  */
-export const saveProductGroupContent = async (groupId, groupData, currentUserUid) => {
+export const saveProductGroupContent = async (groupId, groupData, currentUserUid, shopId) => {
   if (!groupId) throw new Error('Group ID is required');
   
   console.log('🔍 saveProductGroupContent called with:', {
@@ -141,11 +142,11 @@ export const saveProductGroupContent = async (groupId, groupData, currentUserUid
       console.log('✅ Document updated successfully');
     } else {
       // Create new
-      const finalData = {
+      const finalData = withShopId({
         ...dataToSave,
         groupId,
         createdAt: now
-      };
+      }, shopId);
       console.log('📝 Creating new document with:', finalData);
       await setDoc(docRef, finalData);
       console.log('✅ Document created successfully');

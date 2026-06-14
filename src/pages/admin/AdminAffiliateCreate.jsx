@@ -18,10 +18,13 @@ import {
   ReceiptPercentIcon
 } from '@heroicons/react/24/outline';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useShopId } from '../../contexts/ShopContext';
+import { withShopId } from '../../config/withShopId';
 
 const AdminAffiliateCreate = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const shopId = useShopId();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -84,7 +87,7 @@ const AdminAffiliateCreate = () => {
       };
 
       // Save to Firestore and get the real document ID
-      const docRef = await addDoc(collection(db, 'affiliates'), {
+      const docRef = await addDoc(collection(db, 'affiliates'), withShopId({
         affiliateCode,
         name: formData.name,
         email: formData.email,
@@ -108,8 +111,8 @@ const AdminAffiliateCreate = () => {
         },
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
-      });
-      
+      }, shopId));
+
       const realId = docRef.id;
       
       // Update the document with its own ID field

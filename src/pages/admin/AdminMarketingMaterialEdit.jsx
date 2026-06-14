@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useShopId } from '../../contexts/ShopContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import AppLayout from '../../components/layout/AppLayout';
@@ -20,6 +21,7 @@ function AdminMarketingMaterialEdit() {
   const { materialId } = useParams();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const shopId = useShopId();
   const { currentLanguage } = useTranslation();
   const { getContentValue, setContentValue } = useContentTranslation();
   const [material, setMaterial] = useState(null);
@@ -124,7 +126,7 @@ function AdminMarketingMaterialEdit() {
           name: formData.name,
           description: formData.description,
           category: formData.category
-        });
+        }, shopId);
         toast.success('Material ersatt framgångsrikt');
       } else {
         // Update metadata only

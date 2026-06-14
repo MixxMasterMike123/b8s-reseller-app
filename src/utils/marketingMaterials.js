@@ -17,6 +17,7 @@ import {
   deleteObject 
 } from 'firebase/storage';
 import { db, storage } from '../firebase/config';
+import { withShopId } from '../config/withShopId';
 
 // File type detection and validation
 export const getFileType = (fileName) => {
@@ -79,7 +80,7 @@ export const isValidFileType = (fileName) => {
 };
 
 // Generic Marketing Materials Functions
-export const uploadGenericMaterial = async (file, materialData) => {
+export const uploadGenericMaterial = async (file, materialData, shopId) => {
   try {
     if (!isValidFileType(file.name)) {
       throw new Error('Filtypen stöds inte');
@@ -105,7 +106,7 @@ export const uploadGenericMaterial = async (file, materialData) => {
       updatedAt: serverTimestamp()
     };
 
-    const docRef = await addDoc(collection(db, 'marketingMaterials'), materialDoc);
+    const docRef = await addDoc(collection(db, 'marketingMaterials'), withShopId(materialDoc, shopId));
     
     return {
       id: docRef.id,
@@ -322,7 +323,7 @@ export const deleteCustomerMaterial = async (customerId, materialId) => {
 };
 
 // Auto-populate from products
-export const populateFromProducts = async () => {
+export const populateFromProducts = async (shopId) => {
   try {
     const productsSnapshot = await getDocs(collection(db, 'products'));
     const materialsToAdd = [];
@@ -351,8 +352,8 @@ export const populateFromProducts = async () => {
     });
     
     // Add all materials to Firestore
-    const promises = materialsToAdd.map(material => 
-      addDoc(collection(db, 'marketingMaterials'), material)
+    const promises = materialsToAdd.map(material =>
+      addDoc(collection(db, 'marketingMaterials'), withShopId(material, shopId))
     );
     
     await Promise.all(promises);

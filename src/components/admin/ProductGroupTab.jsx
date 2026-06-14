@@ -11,11 +11,13 @@ import {
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import ContentLanguageIndicator from '../ContentLanguageIndicator';
 import { useAuth } from '../../contexts/AuthContext';
+import { useShopId } from '../../contexts/ShopContext';
 
 const ProductGroupTab = ({ productGroup, onContentChange, onGroupContentUpdate }) => {
   const { t } = useTranslation();
   const { currentLanguage, getContentValue, setContentValue } = useContentTranslation();
   const { user } = useAuth();
+  const shopId = useShopId();
   const [loading, setLoading] = useState(false);
   const [groupContent, setGroupContent] = useState(getDefaultGroupContent());
   const [productsInGroup, setProductsInGroup] = useState([]);
@@ -126,7 +128,7 @@ const ProductGroupTab = ({ productGroup, onContentChange, onGroupContentUpdate }
 
     // Immediate persistence for default product selection
     if (productGroup && user?.uid) {
-      saveProductGroupContent(productGroup, updatedContent, user.uid)
+      saveProductGroupContent(productGroup, updatedContent, user.uid, shopId)
         .then(() => console.log('✅ defaultProductId saved'))
         .catch((err) => console.error('❌ Failed to save defaultProductId', err));
     }

@@ -19,6 +19,8 @@ import { db, isDemoMode } from '../firebase/config';
 import { functionUrl } from '../config/urls';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useAuth } from './AuthContext';
+import { useShopId } from './ShopContext';
+import { withShopId } from '../config/withShopId';
 import toast from 'react-hot-toast';
 import { onOrderCompleted } from '../wagons/dining-wagon/utils/customerStatusAutomation';
 
@@ -111,6 +113,7 @@ const DEMO_ORDERS = [
 // Provider component
 export const OrderProvider = ({ children }) => {
   const { currentUser, isAdmin } = useAuth();
+  const shopId = useShopId();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [demoOrders, setDemoOrders] = useState(DEMO_ORDERS);
@@ -889,7 +892,7 @@ export const OrderProvider = ({ children }) => {
       // Add products to named database only
       for (const product of products) {
         try {
-          await addDoc(collection(db, "products"), product);
+          await addDoc(collection(db, "products"), withShopId(product, shopId));
         } catch (error) {
           console.error("Error adding product to named DB:", error);
         }
@@ -911,7 +914,7 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [currentUser, isAdmin]);
+  }, [currentUser, isAdmin, shopId]);
 
   const value = useMemo(() => ({
     loading,

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useShopId } from '../../contexts/ShopContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import AppLayout from '../../components/layout/AppLayout';
@@ -19,6 +20,7 @@ import FileIcon from '../../components/FileIcon';
 
 function AdminMarketingMaterials() {
   const { isAdmin } = useAuth();
+  const shopId = useShopId();
   const { t, currentLanguage } = useTranslation();
   const { getContentValue, setContentValue } = useContentTranslation();
   const navigate = useNavigate();
@@ -94,7 +96,7 @@ function AdminMarketingMaterials() {
         name: formData.name,
         description: formData.description,
         category: formData.category
-      });
+      }, shopId);
       toast.success('Material uppladdat');
 
       // Reset form and reload
@@ -136,7 +138,7 @@ function AdminMarketingMaterials() {
 
     try {
       setPopulating(true);
-      const count = await populateFromProducts();
+      const count = await populateFromProducts(shopId);
       toast.success(`${count} material tillagda från produkter`);
       await loadMaterials();
     } catch (error) {

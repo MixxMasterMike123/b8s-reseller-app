@@ -1,4 +1,5 @@
 import { db } from '../firebase/config';
+import { withShopId } from '../config/withShopId';
 import { 
   collection, 
   addDoc, 
@@ -61,7 +62,7 @@ export const uploadInvoicePDF = async (file, affiliateId, invoiceNumber) => {
 /**
  * Process affiliate payout
  */
-export const processAffiliatePayout = async (affiliateId, payoutData) => {
+export const processAffiliatePayout = async (affiliateId, payoutData, shopId) => {
   try {
     const verifyBalance = async () => {
       const ordersQuery = query(collection(db, 'orders'), where('affiliateId', '==', affiliateId));
@@ -118,7 +119,7 @@ export const processAffiliatePayout = async (affiliateId, payoutData) => {
       // Add payout record to collection
       const payoutRef = collection(db, 'affiliatePayouts');
       const newPayoutRef = doc(payoutRef);
-      transaction.set(newPayoutRef, payoutRecord);
+      transaction.set(newPayoutRef, withShopId(payoutRecord, shopId));
 
       // Update affiliate stats
       const updatedStats = {

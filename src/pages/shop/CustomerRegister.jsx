@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useShopId } from '../../contexts/ShopContext';
+import { withShopId } from '../../config/withShopId';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { sendEmailVerification } from 'firebase/auth';
 import { httpsCallable, getFunctions } from 'firebase/functions';
@@ -16,6 +18,7 @@ import ShopCredentialLanguageSwitcher from '../../components/shop/ShopCredential
 
 const CustomerRegister = () => {
   const { t, currentLanguage } = useTranslation();
+  const shopId = useShopId();
   const { register } = useSimpleAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -174,7 +177,7 @@ const CustomerRegister = () => {
         source: 'registration'
       };
       
-      await addDoc(collection(db, 'b2cCustomers'), customerData);
+      await addDoc(collection(db, 'b2cCustomers'), withShopId(customerData, shopId));
 
       toast.dismiss(toastId);
       toast.success(t('customer_register_success', 'Konto skapat! Välkommen!'), {

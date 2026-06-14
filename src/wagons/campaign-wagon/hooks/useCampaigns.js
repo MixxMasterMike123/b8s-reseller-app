@@ -15,6 +15,8 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useShopId } from '../../../contexts/ShopContext';
+import { withShopId } from '../../../config/withShopId';
 import { useContentTranslation } from '../../../hooks/useContentTranslation';
 import toast from 'react-hot-toast';
 import { getDefaultCampaign, generateCampaignCode } from '../utils/campaignUtils';
@@ -25,6 +27,7 @@ export const useCampaigns = () => {
   const [error, setError] = useState(null);
   const [hasInitialized, setHasInitialized] = useState(false);
   const { user } = useAuth();
+  const shopId = useShopId();
   const { setContentValue } = useContentTranslation();
 
   // Real-time campaigns subscription
@@ -122,7 +125,7 @@ export const useCampaigns = () => {
         updatedAt: serverTimestamp()
       };
 
-      const docRef = await addDoc(collection(db, 'campaigns'), newCampaign);
+      const docRef = await addDoc(collection(db, 'campaigns'), withShopId(newCampaign, shopId));
       console.log('🚂 Campaign added with ID:', docRef.id);
       
       toast.success('Kampanj skapad framgångsrikt!');
@@ -133,7 +136,7 @@ export const useCampaigns = () => {
       setError(error.message);
       return null;
     }
-  }, [user?.uid]);
+  }, [user?.uid, shopId]);
 
   // Update existing campaign
   const updateCampaign = useCallback(async (campaignId, updates) => {

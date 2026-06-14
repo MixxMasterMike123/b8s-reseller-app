@@ -12,6 +12,8 @@ import {
 import { doc, getDoc, setDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
+import { useShopId } from '../../contexts/ShopContext';
+import { withShopId } from '../../config/withShopId';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import ContentLanguageIndicator from '../../components/ContentLanguageIndicator';
 import AppLayout from '../../components/layout/AppLayout';
@@ -48,6 +50,7 @@ const AdminPageEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const shopId = useShopId();
   const { getContentValue, setContentValue } = useContentTranslation();
   
 
@@ -176,15 +179,17 @@ const AdminPageEdit = () => {
 
       if (isNewPage) {
         // For new pages, use addDoc to generate a unique ID
-        const docRef = await addDoc(collection(db, 'pages'), pageData);
+        const docRef = await addDoc(collection(db, 'pages'), withShopId(pageData, shopId));
         const pageId = docRef.id;
-        
+
         toast.success('Sidan har skapats');
         setHasBeenSaved(true); // Mark as saved after first save
         navigate(`/admin/pages/${pageId}`);
       } else {
-        // For existing pages, use setDoc with the existing ID
-        await setDoc(doc(db, 'pages', id), pageData);
+        // For existing pages, use setDoc with the existing ID. This is a FULL
+        // overwrite (not merge), so we must re-stamp shopId or it would be
+        // stripped from an already-tagged doc.
+        await setDoc(doc(db, 'pages', id), withShopId(pageData, shopId));
         
         toast.success('Sidan har uppdaterats');
         setFormData(prev => ({ ...prev, status: newStatus }));

@@ -12,6 +12,8 @@ import {
   onSnapshot 
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
+import { useShopId } from '../../../contexts/ShopContext';
+import { withShopId } from '../../../config/withShopId';
 import toast from 'react-hot-toast';
 
 export const useAmbassadorContacts = () => {
@@ -19,6 +21,7 @@ export const useAmbassadorContacts = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const shopId = useShopId();
 
   // Real-time ambassador contact subscription
   useEffect(() => {
@@ -182,8 +185,8 @@ export const useAmbassadorContacts = () => {
         active: false,              // 🔥 New ambassadors are inactive prospects by default 
       };
       
-      const docRef = await addDoc(collection(db, 'affiliates'), ambassadorContact);
-      
+      const docRef = await addDoc(collection(db, 'affiliates'), withShopId(ambassadorContact, shopId));
+
       toast.success(`👑 Ny ambassadör tillagd: ${contactData.name}`);
       return docRef.id;
     } catch (error) {
@@ -193,7 +196,7 @@ export const useAmbassadorContacts = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [shopId]);
 
   // Update existing ambassador contact
   const updateContact = useCallback(async (contactId, updates) => {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useShopId } from '../../contexts/ShopContext';
 import AppLayout from '../../components/layout/AppLayout';
 import { db } from '../../firebase/config';
 import { doc, getDoc } from 'firebase/firestore';
@@ -24,7 +25,8 @@ const AdminAffiliatePayout = () => {
   const { affiliateId } = useParams();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  
+  const shopId = useShopId();
+
   const [affiliate, setAffiliate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -136,7 +138,7 @@ const AdminAffiliatePayout = () => {
         processedBy: currentUser.uid
       };
       
-      const result = await processAffiliatePayout(affiliateId, payoutData);
+      const result = await processAffiliatePayout(affiliateId, payoutData, shopId);
       
       toast.success(`Betalning på ${formatCurrency(payoutData.payoutAmount)} har behandlats!`);
       navigate('/admin/affiliates');

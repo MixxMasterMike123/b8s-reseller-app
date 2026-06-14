@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useShopId } from '../../contexts/ShopContext';
+import { withShopId } from '../../config/withShopId';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
 import toast from 'react-hot-toast';
@@ -10,6 +12,7 @@ import { httpsCallable, getFunctions } from 'firebase/functions';
 
 const AffiliateRegistration = () => {
   const { t, currentLanguage } = useTranslation();
+  const shopId = useShopId();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -58,11 +61,11 @@ const AffiliateRegistration = () => {
     
     try {
       // 1. Create application document in Firestore
-      const applicationDoc = await addDoc(collection(db, 'affiliateApplications'), {
+      const applicationDoc = await addDoc(collection(db, 'affiliateApplications'), withShopId({
         ...formData,
         status: 'pending',
         createdAt: serverTimestamp(),
-      });
+      }, shopId));
       
       console.log('✅ Affiliate application created:', applicationDoc.id);
       

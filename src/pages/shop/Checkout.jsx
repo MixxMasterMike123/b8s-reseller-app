@@ -25,10 +25,13 @@ import {
 } from '@heroicons/react/24/outline';
 import StripePaymentForm from '../../components/shop/StripePaymentForm';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
+import { useShopId } from '../../contexts/ShopContext';
+import { withShopId } from '../../config/withShopId';
 
 const Checkout = () => {
   const { cart, calculateTotals, clearCart, updateShippingCountry } = useCart();
   const store = useStoreSettings();
+  const shopId = useShopId();
   const { currentUser, login } = useSimpleAuth();
   const { t, currentLanguage } = useTranslation();
   const { getContentValue } = useContentTranslation();
@@ -299,7 +302,7 @@ const Checkout = () => {
           source: 'b2c_checkout'
         };
         
-        const customerDocRef = await addDoc(collection(db, 'b2cCustomers'), customerData);
+        const customerDocRef = await addDoc(collection(db, 'b2cCustomers'), withShopId(customerData, shopId));
         const b2cCustomerId = customerDocRef.id;
         console.log('Created B2C customer document:', b2cCustomerId);
         
