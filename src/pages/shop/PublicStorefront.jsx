@@ -220,6 +220,31 @@ const PublicStorefront = () => {
 
   const bestseller = specialEditionProducts[0] || groupedProducts[0]?.representativeProduct || clothingProducts[0] || null;
 
+  // Hero CTA labels: shop config wins, translation fallback keeps current copy.
+  const heroCtaLabel = store.heroCtaLabel || t('hero_shop_now_button', 'Handla nu');
+  const heroSecondaryLabel = store.heroSecondaryLabel || t('hero_see_products', 'Se sortimentet ↓');
+
+  // Homepage block visibility (config-driven; default visible so unconfigured
+  // shops — i.e. B8Shield today — render exactly as before).
+  const blocks = store.blocks || {};
+  const showGallery = blocks.gallery !== false;
+  const showStory = blocks.story !== false;
+
+  // Config-driven story steps; fall back to the hardcoded B8Shield band when
+  // a shop hasn't set its own story.
+  const storySteps = Array.isArray(store.story) && store.story.length > 0
+    ? store.story.slice(0, 3).map((s, i) => ({
+        n: String(i + 1).padStart(2, '0'),
+        title: s.title || '',
+        text: s.text || '',
+      }))
+    : null;
+
+  // Config-driven gallery items; fall back to the hardcoded B8Shield grid.
+  const galleryItems = Array.isArray(store.gallery) && store.gallery.length > 0
+    ? store.gallery.slice(0, 4).filter((g) => g && g.imageUrl)
+    : null;
+
   const scrollToProducts = () => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
 
   return (
@@ -287,13 +312,13 @@ const PublicStorefront = () => {
                     onClick={scrollToProducts}
                     className="bg-white text-ink font-bold text-base lg:text-lg px-8 py-4 rounded-full transition-all duration-300 ease-nord hover:-translate-y-0.5 hover:shadow-lift"
                   >
-                    {t('hero_shop_now_button', 'Handla nu')}
+                    {heroCtaLabel}
                   </button>
                   <button
                     onClick={scrollToProducts}
                     className="text-white/90 font-semibold text-sm border-b-2 border-white/40 pb-0.5 hover:border-white transition-colors"
                   >
-                    {t('hero_see_products', 'Se sortimentet ↓')}
+                    {heroSecondaryLabel}
                   </button>
                 </div>
               </div>
@@ -371,74 +396,76 @@ const PublicStorefront = () => {
           </div>
         </section>
 
-        {/* ===== Gallery band (brand imagery; becomes a config block later) ===== */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          {/* Desktop: 4-up grid */}
-          <div className="hidden md:grid md:grid-cols-4 gap-4">
-            {[
-              { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent', sku: 'B8S-4-tr' },
-              { src: '/images/b8s_red_nature_new.webp', colorKey: 'color_red', sku: 'B8S-4-re' },
-              { src: '/images/b8s_flour_nature_new.webp', colorKey: 'color_fluorescent', sku: 'B8S-4-fl' },
-              { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter', sku: 'B8S-4-gl' }
-            ].map((image, index) => {
-              const productObj = {
-                name: { 'sv-SE': `B8Shield ${t(image.colorKey)}`, 'en-GB': `B8Shield ${t(image.colorKey)}`, 'en-US': `B8Shield ${t(image.colorKey)}` },
-                size: '4',
-                sku: image.sku
-              };
-              const productUrl = getProductUrl(productObj);
+        {/* ===== Gallery band (config-driven, falls back to B8Shield imagery) ===== */}
+        {showGallery && (() => {
+          // Normalize config items and the hardcoded fallback to one shape:
+          // { key, src, label, to }.
+          const fallback = [
+            { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent', sku: 'B8S-4-tr' },
+            { src: '/images/b8s_red_nature_new.webp', colorKey: 'color_red', sku: 'B8S-4-re' },
+            { src: '/images/b8s_flour_nature_new.webp', colorKey: 'color_fluorescent', sku: 'B8S-4-fl' },
+            { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter', sku: 'B8S-4-gl' },
+          ].map((image, index) => {
+            const productObj = {
+              name: { 'sv-SE': `B8Shield ${t(image.colorKey)}`, 'en-GB': `B8Shield ${t(image.colorKey)}`, 'en-US': `B8Shield ${t(image.colorKey)}` },
+              size: '4',
+              sku: image.sku,
+            };
+            return { key: `fb-${index}`, src: image.src, label: t(image.colorKey), to: getProductUrl(productObj) };
+          });
 
-              return (
-                <Link key={index} to={productUrl} className="relative aspect-square rounded-tile shadow-tile overflow-hidden group block">
-                  <img
-                    src={image.src}
-                    alt={`B8Shield ${t(image.colorKey)} i naturen`}
-                    className="w-full h-full object-cover transition-transform duration-700 ease-nord group-hover:scale-105"
-                  />
+          const items = galleryItems
+            ? galleryItems.map((g, index) => ({
+                key: `cfg-${index}`,
+                src: g.imageUrl,
+                label: g.label || '',
+                // Optional SKU link; if absent the tile is non-navigating.
+                to: g.linkSku ? getProductUrl({ name: { 'sv-SE': g.label || '' }, sku: g.linkSku }) : null,
+              }))
+            : fallback;
+
+          const Tile = ({ item, extraClass }) => {
+            const inner = (
+              <>
+                <img
+                  src={item.src}
+                  alt={item.label}
+                  className="w-full h-full object-cover transition-transform duration-700 ease-nord group-hover:scale-105"
+                />
+                {item.label && (
                   <div className="absolute bottom-4 left-4">
                     <span className="bg-white/90 backdrop-blur-sm text-ink text-sm font-semibold px-3.5 py-1.5 rounded-full">
-                      {t(image.colorKey)}
+                      {item.label}
                     </span>
                   </div>
-                </Link>
-              );
-            })}
-          </div>
+                )}
+              </>
+            );
+            const cls = `relative rounded-tile shadow-tile overflow-hidden group block ${extraClass}`;
+            return item.to
+              ? <Link to={item.to} className={cls}>{inner}</Link>
+              : <div className={cls}>{inner}</div>;
+          };
 
-          {/* Mobile: horizontal snap scroll */}
-          <div className="md:hidden">
-            <div className="flex overflow-x-auto gap-4 pb-2 snap-x snap-mandatory scrollbar-hide">
-              {[
-                { src: '/images/b8s_transp_nature.webp', colorKey: 'color_transparent', sku: 'B8S-4-tr' },
-                { src: '/images/b8s_red_nature_new.webp', colorKey: 'color_red', sku: 'B8S-4-re' },
-                { src: '/images/b8s_flour_nature_new.webp', colorKey: 'color_fluorescent', sku: 'B8S-4-fl' },
-                { src: '/images/b8s_glitter_nature.webp', colorKey: 'color_glitter', sku: 'B8S-4-gl' }
-              ].map((image, index) => {
-                const productObj = {
-                  name: { 'sv-SE': `B8Shield ${t(image.colorKey)}`, 'en-GB': `B8Shield ${t(image.colorKey)}`, 'en-US': `B8Shield ${t(image.colorKey)}` },
-                  size: '4',
-                  sku: image.sku
-                };
-                const productUrl = getProductUrl(productObj);
-
-                return (
-                  <Link key={index} to={productUrl} className="relative shrink-0 w-4/5 aspect-square rounded-tile shadow-tile overflow-hidden group snap-start block">
-                    <img
-                      src={image.src}
-                      alt={`B8Shield ${t(image.colorKey)} i naturen`}
-                      className="w-full h-full object-cover transition-transform duration-700 ease-nord group-hover:scale-105"
-                    />
-                    <div className="absolute bottom-4 left-4">
-                      <span className="bg-white/90 backdrop-blur-sm text-ink text-sm font-semibold px-3.5 py-1.5 rounded-full">
-                        {t(image.colorKey)}
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </section>
+          return (
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+              {/* Desktop: 4-up grid */}
+              <div className="hidden md:grid md:grid-cols-4 gap-4">
+                {items.map((item) => (
+                  <Tile key={item.key} item={item} extraClass="aspect-square" />
+                ))}
+              </div>
+              {/* Mobile: horizontal snap scroll */}
+              <div className="md:hidden">
+                <div className="flex overflow-x-auto gap-4 pb-2 snap-x snap-mandatory scrollbar-hide">
+                  {items.map((item) => (
+                    <Tile key={item.key} item={item} extraClass="shrink-0 w-4/5 aspect-square snap-start" />
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+        })()}
 
         {/* ===== Products ===== */}
         <section id="products" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
@@ -578,34 +605,43 @@ const PublicStorefront = () => {
           )}
         </section>
 
-        {/* ===== Story band (DESIGN.md §4 — storytelling) ===== */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 lg:pb-20">
-          <div className="bg-white rounded-tile shadow-tile overflow-hidden">
-            <div className="h-1.5 bg-accent" />
-            <div className="p-8 lg:p-12">
-              <h2 className="font-display font-bold text-2xl lg:text-3xl tracking-tight text-ink mb-8 lg:mb-10">
-                {t('features_section_title', 'Varför välja B8Shield™?')}
-              </h2>
-              <div className="grid md:grid-cols-3 gap-8 lg:gap-10">
-                {[
-                  { n: '01', titleKey: 'feature_proven_effective_title', titleDefault: 'Bevisat Effektivt', textKey: 'feature_proven_effective_description', textDefault: 'Minska förlusten av beten med upp till 90% enligt våra tester' },
-                  { n: '02', titleKey: 'feature_easy_to_use_title', titleDefault: 'Enkelt att Använda', textKey: 'feature_easy_to_use_description', textDefault: 'Fäst enkelt på ditt fiskedrag på några sekunder' },
-                  { n: '03', titleKey: 'feature_eco_friendly_title', titleDefault: 'Miljövänligt', textKey: 'feature_eco_friendly_description', textDefault: 'Återvinningsbart material som skyddar våra vattenmiljöer' },
-                ].map((step) => (
-                  <div key={step.n}>
-                    <div className="font-display font-bold text-sm text-accent">{step.n}</div>
-                    <h3 className="font-display font-bold text-xl text-ink mt-2 tracking-tight">
-                      {t(step.titleKey, step.titleDefault)}
-                    </h3>
-                    <p className="text-ink-muted text-[15px] leading-relaxed mt-1.5">
-                      {t(step.textKey, step.textDefault)}
-                    </p>
+        {/* ===== Story band (config-driven, falls back to B8Shield features) ===== */}
+        {showStory && (() => {
+          // Config steps win; otherwise the original hardcoded B8Shield band.
+          const fallbackSteps = [
+            { n: '01', title: t('feature_proven_effective_title', 'Bevisat Effektivt'), text: t('feature_proven_effective_description', 'Minska förlusten av beten med upp till 90% enligt våra tester') },
+            { n: '02', title: t('feature_easy_to_use_title', 'Enkelt att Använda'), text: t('feature_easy_to_use_description', 'Fäst enkelt på ditt fiskedrag på några sekunder') },
+            { n: '03', title: t('feature_eco_friendly_title', 'Miljövänligt'), text: t('feature_eco_friendly_description', 'Återvinningsbart material som skyddar våra vattenmiljöer') },
+          ];
+          const steps = storySteps || fallbackSteps;
+          const title = store.storyTitle || t('features_section_title', 'Varför välja B8Shield™?');
+
+          return (
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 lg:pb-20">
+              <div className="bg-white rounded-tile shadow-tile overflow-hidden">
+                <div className="h-1.5 bg-accent" />
+                <div className="p-8 lg:p-12">
+                  <h2 className="font-display font-bold text-2xl lg:text-3xl tracking-tight text-ink mb-8 lg:mb-10">
+                    {title}
+                  </h2>
+                  <div className="grid md:grid-cols-3 gap-8 lg:gap-10">
+                    {steps.map((step) => (
+                      <div key={step.n}>
+                        <div className="font-display font-bold text-sm text-accent">{step.n}</div>
+                        <h3 className="font-display font-bold text-xl text-ink mt-2 tracking-tight">
+                          {step.title}
+                        </h3>
+                        <p className="text-ink-muted text-[15px] leading-relaxed mt-1.5">
+                          {step.text}
+                        </p>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
-            </div>
-          </div>
-        </section>
+            </section>
+          );
+        })()}
 
         {/* ===== Reviews ===== */}
         <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">

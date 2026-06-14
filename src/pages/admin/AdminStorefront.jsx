@@ -18,6 +18,7 @@ import {
   ArrowUpTrayIcon,
   CheckIcon,
   ArrowTopRightOnSquareIcon,
+  PlusIcon,
 } from '@heroicons/react/24/outline';
 
 // Only the keys this page owns. We load the full config but save a merge of
@@ -30,6 +31,10 @@ const BRANDING_KEYS = [
   'heroSubtitle',
   'heroCtaLabel',
   'heroSecondaryLabel',
+  'storyTitle',
+  'story',
+  'gallery',
+  'blocks',
 ];
 
 const pickBranding = (cfg) =>
@@ -42,6 +47,7 @@ const AdminStorefront = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState({ logo: false, hero: false });
+  const [galleryUploading, setGalleryUploading] = useState(-1);
   const [form, setForm] = useState(pickBranding(STORE));
 
   useEffect(() => {
@@ -92,6 +98,67 @@ const AdminStorefront = () => {
       toast.error('Uppladdning misslyckades.');
     } finally {
       setUploading((u) => ({ ...u, [kind]: false }));
+    }
+  };
+
+  // ----- Block visibility toggles -----
+  const blocks = form.blocks || {};
+  const toggleBlock = (key) =>
+    setForm((prev) => ({
+      ...prev,
+      blocks: { ...(prev.blocks || {}), [key]: (prev.blocks?.[key] ?? true) === false ? true : false },
+    }));
+  const blockOn = (key) => (blocks[key] ?? true) !== false;
+
+  // ----- Story steps (array of { title, text }, max 3) -----
+  const story = Array.isArray(form.story) ? form.story : [];
+  const setStoryStep = (i, field, value) =>
+    setForm((prev) => {
+      const next = [...(Array.isArray(prev.story) ? prev.story : [])];
+      next[i] = { ...next[i], [field]: value };
+      return { ...prev, story: next };
+    });
+  const addStoryStep = () =>
+    setForm((prev) => {
+      const cur = Array.isArray(prev.story) ? prev.story : [];
+      if (cur.length >= 3) return prev;
+      return { ...prev, story: [...cur, { title: '', text: '' }] };
+    });
+  const removeStoryStep = (i) =>
+    setForm((prev) => ({ ...prev, story: (prev.story || []).filter((_, idx) => idx !== i) }));
+
+  // ----- Gallery items (array of { imageUrl, label, linkSku }, max 4) -----
+  const gallery = Array.isArray(form.gallery) ? form.gallery : [];
+  const setGalleryItem = (i, field, value) =>
+    setForm((prev) => {
+      const next = [...(Array.isArray(prev.gallery) ? prev.gallery : [])];
+      next[i] = { ...next[i], [field]: value };
+      return { ...prev, gallery: next };
+    });
+  const addGalleryItem = () =>
+    setForm((prev) => {
+      const cur = Array.isArray(prev.gallery) ? prev.gallery : [];
+      if (cur.length >= 4) return prev;
+      return { ...prev, gallery: [...cur, { imageUrl: '', label: '', linkSku: '' }] };
+    });
+  const removeGalleryItem = (i) =>
+    setForm((prev) => ({ ...prev, gallery: (prev.gallery || []).filter((_, idx) => idx !== i) }));
+  const handleGalleryUpload = async (i, file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Välj en bildfil.');
+      return;
+    }
+    try {
+      setGalleryUploading(i);
+      const url = await uploadStoreImage(file, 'hero');
+      setGalleryItem(i, 'imageUrl', url);
+      toast.success('Bild uppladdad. Glöm inte att spara.');
+    } catch (error) {
+      console.error('Error uploading gallery image:', error);
+      toast.error('Uppladdning misslyckades.');
+    } finally {
+      setGalleryUploading(-1);
     }
   };
 
@@ -290,6 +357,163 @@ const AdminStorefront = () => {
                 </div>
               </div>
             </div>
+          </section>
+
+          {/* Tile: Homepage blocks */}
+          <section className="bg-white rounded-tile shadow-tile p-6 sm:p-7">
+            <h2 className="font-display text-xl font-bold text-ink mb-1">Startsidans block</h2>
+            <p className="text-ink-muted text-sm mb-5">Slå av block du inte vill visa på startsidan.</p>
+            <div className="divide-y divide-ink/10">
+              {[
+                { key: 'gallery', label: 'Galleri', desc: 'Bildrad under hero-sektionen' },
+                { key: 'story', label: 'Berättelse', desc: 'Tre steg som berättar om din butik' },
+                { key: 'bestseller', label: 'Bästsäljare', desc: 'Utvald produkt i hero-rutnätet' },
+                { key: 'trust', label: 'Trygghet', desc: 'Omdöme + betalsätt i hero-rutnätet' },
+              ].map((b) => (
+                <div key={b.key} className="flex items-center justify-between py-3.5">
+                  <div>
+                    <div className="font-semibold text-ink">{b.label}</div>
+                    <div className="text-sm text-ink-muted">{b.desc}</div>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={blockOn(b.key)}
+                    onClick={() => toggleBlock(b.key)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      blockOn(b.key) ? 'bg-accent' : 'bg-ink/15'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        blockOn(b.key) ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Tile: Story */}
+          <section className="bg-white rounded-tile shadow-tile p-6 sm:p-7">
+            <h2 className="font-display text-xl font-bold text-ink mb-1">Berättelse</h2>
+            <p className="text-ink-muted text-sm mb-5">Upp till tre steg. Lämna tomt för att använda standardtexten.</p>
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-ink mb-2">Rubrik</label>
+              <input
+                type="text"
+                value={form.storyTitle ?? ''}
+                placeholder="t.ex. Från kusten till ditt bord"
+                onChange={(e) => setField('storyTitle', e.target.value)}
+                className="w-full px-4 py-3 border border-ink/15 bg-white rounded-el text-base focus:outline-hidden focus:ring-4 focus:ring-accent/10 focus:border-accent transition-colors"
+              />
+            </div>
+            <div className="space-y-4">
+              {story.map((step, i) => (
+                <div key={i} className="rounded-el bg-canvas p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-display font-bold text-sm text-accent">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeStoryStep(i)}
+                      className="text-sm text-ink-muted hover:text-red-600 transition-colors"
+                    >
+                      Ta bort
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={step?.title ?? ''}
+                    placeholder="Steg-rubrik"
+                    onChange={(e) => setStoryStep(i, 'title', e.target.value)}
+                    className="w-full px-3 py-2.5 mb-2 border border-ink/15 bg-white rounded-el text-base focus:outline-hidden focus:ring-4 focus:ring-accent/10 focus:border-accent transition-colors"
+                  />
+                  <textarea
+                    rows={2}
+                    value={step?.text ?? ''}
+                    placeholder="Steg-text"
+                    onChange={(e) => setStoryStep(i, 'text', e.target.value)}
+                    className="w-full px-3 py-2.5 border border-ink/15 bg-white rounded-el text-base focus:outline-hidden focus:ring-4 focus:ring-accent/10 focus:border-accent transition-colors"
+                  />
+                </div>
+              ))}
+            </div>
+            {story.length < 3 && (
+              <button
+                type="button"
+                onClick={addStoryStep}
+                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-accent hover:opacity-80 transition-opacity"
+              >
+                <PlusIcon className="h-4 w-4" /> Lägg till steg
+              </button>
+            )}
+          </section>
+
+          {/* Tile: Gallery */}
+          <section className="bg-white rounded-tile shadow-tile p-6 sm:p-7">
+            <h2 className="font-display text-xl font-bold text-ink mb-1">Galleri</h2>
+            <p className="text-ink-muted text-sm mb-5">Upp till fyra bilder. Lämna tomt för att använda standardgalleriet.</p>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {gallery.map((item, i) => (
+                <div key={i} className="rounded-el bg-canvas p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="h-16 w-16 shrink-0 rounded-el bg-white flex items-center justify-center overflow-hidden">
+                      {item?.imageUrl ? (
+                        <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <PhotoIcon className="h-5 w-5 text-ink-faint" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <label className="inline-flex items-center gap-2 bg-ink text-white text-xs font-semibold px-3 py-2 rounded-full cursor-pointer hover:opacity-90 transition-opacity">
+                        <ArrowUpTrayIcon className="h-3.5 w-3.5" />
+                        {galleryUploading === i ? 'Laddar…' : 'Ladda upp'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={galleryUploading === i}
+                          onChange={(e) => handleGalleryUpload(i, e.target.files?.[0])}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => removeGalleryItem(i)}
+                        className="ml-3 text-sm text-ink-muted hover:text-red-600 transition-colors"
+                      >
+                        Ta bort
+                      </button>
+                    </div>
+                  </div>
+                  <input
+                    type="text"
+                    value={item?.label ?? ''}
+                    placeholder="Etikett (valfri)"
+                    onChange={(e) => setGalleryItem(i, 'label', e.target.value)}
+                    className="w-full px-3 py-2.5 mt-3 border border-ink/15 bg-white rounded-el text-base focus:outline-hidden focus:ring-4 focus:ring-accent/10 focus:border-accent transition-colors"
+                  />
+                  <input
+                    type="text"
+                    value={item?.linkSku ?? ''}
+                    placeholder="Länka till produkt-SKU (valfri)"
+                    onChange={(e) => setGalleryItem(i, 'linkSku', e.target.value)}
+                    className="w-full px-3 py-2.5 mt-2 border border-ink/15 bg-white rounded-el text-base focus:outline-hidden focus:ring-4 focus:ring-accent/10 focus:border-accent transition-colors"
+                  />
+                </div>
+              ))}
+            </div>
+            {gallery.length < 4 && (
+              <button
+                type="button"
+                onClick={addGalleryItem}
+                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-accent hover:opacity-80 transition-opacity"
+              >
+                <PlusIcon className="h-4 w-4" /> Lägg till bild
+              </button>
+            )}
           </section>
 
           {/* Save bar */}
