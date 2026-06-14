@@ -108,6 +108,13 @@ Phase 0 (this step):
 **Index ordering (critical):** a `where('shopId')`+`orderBy/where` query needs a composite index live BEFORE it runs or it throws. Sequence per batch: write scoped queries → add indexes to firestore.indexes.json → deploy indexes (`firebase deploy --only firestore:indexes`) + wait for build → then the scoped code deploy. ~25 composite indexes needed (shopId prepended to existing compound queries).
 **Batches by area:** shop pages → admin pages → utils/hooks/contexts → functions. Build+verify+commit+push each.
 
+**Server reads intentionally LEFT UNSCOPED (Batch 4 decision 2026-06-14)** — these rely on Phase 3 rules + key-uniqueness, NOT query scoping, because shopId isn't in context or scoping would be wrong:
+- `logAffiliateClick` affiliate + campaign lookups (by code): the public click callable doesn't receive shopId; the affiliate's own shopId is derived AFTER lookup to stamp the click. Multi-shop code-collision is a Phase 0b concern (would need the client to send shopId).
+- `verifyEmailCode` b2cCustomers lookup (by firebaseAuthUid, globally unique): no shopId in the verification context.
+- `customer-admin` delete-account order queries (deleteCustomerAccount by userId; deleteB2CCustomerAccount by b2cCustomerId/email): destructive cleanups keyed by customer identity — scoping a DELETE risks orphaning a customer's data in another shop, so deliberately delete by owner-key only.
+- All `doc-by-id` reads (`.doc(id).get()`) everywhere: can't add where; Phase 3 rules enforce.
+**Server reads SCOPED in Batch 4:** createPaymentIntent affiliate-discount validation (shopId from request), order-processing active-campaign reads ×2 (shopId from the order being processed).
+
 ### Phase 3 — Security rules rewrite (the safety net)
 - `firestore.rules` + `storage.rules`: add `isPlatform()` and shop-scoping so an admin can only read/write docs where `resource.data.shopId == their shopId`; platform bypasses. This is what makes scoping *enforced*, not just *filtered*. Heavy review + a rules test pass before deploy.
 

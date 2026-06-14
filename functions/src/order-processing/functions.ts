@@ -196,9 +196,12 @@ async function processUniversalCampaignRevenue(orderData: any, db: any) {
     
     console.log(`📊 Found ${specialEditionItems.length} special edition products`);
     
-    // Get active revenue share campaigns
+    // Get active revenue share campaigns for THIS order's shop
     const campaignsRef = db.collection('campaigns');
-    const campaignsQuery = campaignsRef.where('status', '==', 'active').where('isRevenueShare', '==', true);
+    const campaignsQuery = campaignsRef
+      .where('shopId', '==', orderData.shopId || DEFAULT_SHOP_ID)
+      .where('status', '==', 'active')
+      .where('isRevenueShare', '==', true);
     const campaignsSnap = await campaignsQuery.get();
     
     if (campaignsSnap.empty) {
@@ -643,10 +646,12 @@ export async function processOrderCompletion(
         return { statusCode: 200, body: { success: true, message: 'Order processed (self-referral, no commission)' } };
       }
 
-      // Check for active campaigns that might affect this order
+      // Check for active campaigns (scoped to this order's shop)
       console.log('Checking for active campaigns...');
       const campaignsRef = localDb.collection('campaigns');
-      const activeCampaignsQuery = campaignsRef.where('status', '==', 'active');
+      const activeCampaignsQuery = campaignsRef
+        .where('shopId', '==', orderData.shopId || DEFAULT_SHOP_ID)
+        .where('status', '==', 'active');
       const activeCampaignsSnap = await activeCampaignsQuery.get();
       
       let matchingCampaign: any = null;

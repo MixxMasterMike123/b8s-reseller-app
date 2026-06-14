@@ -29,7 +29,7 @@ function getShippingRegion(country) {
     const euCountries = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES'];
     return euCountries.includes(country) ? 'eu' : 'worldwide';
 }
-async function computeOrderTotalsSek(cartItems, shippingCountry, discountCode) {
+async function computeOrderTotalsSek(cartItems, shippingCountry, discountCode, shopId) {
     // Load every product server-side; reject unknown or inactive products
     const loaded = await Promise.all(cartItems.map(async (item) => {
         const quantity = Math.floor(Number(item.quantity));
@@ -60,6 +60,7 @@ async function computeOrderTotalsSek(cartItems, shippingCountry, discountCode) {
     let discountPercentage = 0;
     if (discountCode) {
         const affSnap = await database_1.db.collection('affiliates')
+            .where('shopId', '==', shopId)
             .where('affiliateCode', '==', discountCode.toUpperCase())
             .where('status', '==', 'active')
             .limit(1)
@@ -149,7 +150,7 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
         const discountCode = discountInfo?.code || affiliateInfo?.code;
         let totals;
         try {
-            totals = await computeOrderTotalsSek(cartItems, shippingInfo?.country || 'SE', discountCode);
+            totals = await computeOrderTotalsSek(cartItems, shippingInfo?.country || 'SE', discountCode, resolvedShopId);
         }
         catch (calcError) {
             firebase_functions_1.logger.error('❌ Server-side price computation failed', { error: calcError.message });

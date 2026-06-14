@@ -27,7 +27,8 @@ function getShippingRegion(country: string): string {
 async function computeOrderTotalsSek(
   cartItems: Array<{ id: string; quantity: number }>,
   shippingCountry: string,
-  discountCode?: string
+  discountCode: string | undefined,
+  shopId: string
 ): Promise<{ subtotal: number; discountAmount: number; discountPercentage: number; shipping: number; vat: number; total: number; serverPrices: Record<string, number> }> {
   // Load every product server-side; reject unknown or inactive products
   const loaded = await Promise.all(cartItems.map(async (item) => {
@@ -62,6 +63,7 @@ async function computeOrderTotalsSek(
   let discountPercentage = 0;
   if (discountCode) {
     const affSnap = await db.collection('affiliates')
+      .where('shopId', '==', shopId)
       .where('affiliateCode', '==', discountCode.toUpperCase())
       .where('status', '==', 'active')
       .limit(1)
@@ -236,7 +238,8 @@ export const createPaymentIntentV2 = onRequest(
         totals = await computeOrderTotalsSek(
           cartItems,
           shippingInfo?.country || 'SE',
-          discountCode
+          discountCode,
+          resolvedShopId
         );
       } catch (calcError: any) {
         logger.error('❌ Server-side price computation failed', { error: calcError.message });
