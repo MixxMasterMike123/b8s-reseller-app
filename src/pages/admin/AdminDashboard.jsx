@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useShopId } from '../../contexts/ShopContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import AppLayout from '../../components/layout/AppLayout';
 import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
@@ -22,6 +23,10 @@ import AdminPresenceIndicator from '../../components/AdminPresenceIndicator';
 
 const AdminDashboard = () => {
   const { currentUser } = useAuth();
+  // Tenant scope: the dashboard stats MUST be scoped to the active shop, exactly
+  // like every list page (Phase 2). Honors operator impersonation (admin-mode
+  // ShopProvider override) — i.e. impersonating Sillmans shows Sillmans' numbers.
+  const shopId = useShopId();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -115,15 +120,21 @@ const AdminDashboard = () => {
         const usersRef = collection(db, 'users');
         const usersSnap = await getDocs(usersRef);
         
-        // Fetch B2C customers stats
+        // Fetch B2C customers stats (scoped to the active shop)
         const b2cCustomersRef = collection(db, 'b2cCustomers');
-        const b2cCustomersSnap = await getDocs(b2cCustomersRef);
-        
-        // Fetch orders stats with detailed breakdown
+        const b2cCustomersSnap = await getDocs(
+          query(b2cCustomersRef, where('shopId', '==', shopId))
+        );
+
+        // Fetch orders stats with detailed breakdown (scoped to the active shop).
+        // The recent-orders query (shopId + orderBy createdAt desc) is backed by
+        // the existing [shopId ASC, createdAt DESC] composite index (Phase 2).
         const ordersRef = collection(db, 'orders');
-        const ordersSnap = await getDocs(ordersRef);
+        const ordersSnap = await getDocs(
+          query(ordersRef, where('shopId', '==', shopId))
+        );
         const recentOrdersSnap = await getDocs(
-          query(ordersRef, orderBy('createdAt', 'desc'), limit(5))
+          query(ordersRef, where('shopId', '==', shopId), orderBy('createdAt', 'desc'), limit(5))
         );
         
         // Calculate order statistics and revenue
@@ -155,10 +166,18 @@ const AdminDashboard = () => {
           }
         });
         
-        // Fetch affiliate stats
+        // Fetch affiliate stats (scoped to the active shop). Scope by shopId only
+        // (single-field, index-free) and count active ones client-side — avoids a
+        // [shopId, status] composite index that doesn't exist, consistent with the
+        // client-side order tallying above.
         const affiliatesRef = collection(db, 'affiliates');
-        const affiliatesSnap = await getDocs(query(affiliatesRef, where('status', '==', 'active')));
-        
+        const affiliatesSnap = await getDocs(
+          query(affiliatesRef, where('shopId', '==', shopId))
+        );
+        const activeAffiliatesCount = affiliatesSnap.docs.filter(
+          (d) => d.data().status === 'active'
+        ).length;
+
         setStats({
           totalUsers: usersSnap.size,
           totalRevenue: Math.round(totalRevenue),
@@ -168,7 +187,7 @@ const AdminDashboard = () => {
           processingOrders,
           completedOrders,
           affiliateRevenue: Math.round(affiliateRevenue),
-          activeAffiliates: affiliatesSnap.size,
+          activeAffiliates: activeAffiliatesCount,
           recentOrders: recentOrdersSnap.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
@@ -183,7 +202,7 @@ const AdminDashboard = () => {
     };
 
     fetchStats();
-  }, []);
+  }, [shopId]);
 
   if (loading) {
     return (
