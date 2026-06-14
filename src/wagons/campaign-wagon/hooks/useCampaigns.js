@@ -36,7 +36,7 @@ export const useCampaigns = () => {
     setLoading(true);
     
     const campaignsRef = collection(db, 'campaigns');
-    const q = query(campaignsRef, orderBy('createdAt', 'desc'));
+    const q = query(campaignsRef, where('shopId', '==', shopId), orderBy('createdAt', 'desc'));
     
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {
@@ -89,7 +89,7 @@ export const useCampaigns = () => {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [shopId]);
 
   // Add new campaign
   const addCampaign = useCallback(async (campaignData) => {
@@ -107,6 +107,7 @@ export const useCampaigns = () => {
       // Check if code already exists
       const existingQuery = query(
         collection(db, 'campaigns'),
+        where('shopId', '==', shopId),
         where('code', '==', campaignCode)
       );
       const existingSnapshot = await getDocs(existingQuery);
