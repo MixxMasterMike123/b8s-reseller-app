@@ -99,7 +99,7 @@ export default function DataTable({
                           }
                         : undefined
                     }
-                    className={`border-b border-admin-border-soft ${
+                    className={`group border-b border-admin-border-soft ${
                       onRowClick ? 'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-admin-primary)]' : ''
                     } ${isSelected ? 'bg-admin-surface-2' : 'hover:bg-admin-surface-2'} transition-colors`}
                   >

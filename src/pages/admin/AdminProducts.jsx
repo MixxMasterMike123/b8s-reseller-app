@@ -12,6 +12,8 @@ import toast from 'react-hot-toast';
 import ProductMenu from '../../components/ProductMenu';
 import AppLayout from '../../components/layout/AppLayout';
 import ProductForm from '../../components/admin/ProductForm';
+import { Page, DataTable, StatusPill, Button } from '../../components/admin/ui';
+import { TrashIcon } from '@heroicons/react/24/outline';
 
 // Read a product name that may be a legacy per-locale object or a plain string.
 const productName = (name) => {
@@ -99,10 +101,10 @@ const AdminProducts = () => {
   if (!isAdmin) {
     return (
       <AppLayout>
-        <div className="p-6">
-          <p>Du har inte behörighet att komma åt denna sida.</p>
-          <Link to="/" className="text-blue-600 hover:underline">Tillbaka till Dashboard</Link>
-        </div>
+        <Page title="Produkter">
+          <p className="text-[13px] text-admin-text">Du har inte behörighet att komma åt denna sida.</p>
+          <Link to="/" className="text-[13px] text-admin-text underline">Tillbaka till Dashboard</Link>
+        </Page>
       </AppLayout>
     );
   }
@@ -112,42 +114,100 @@ const AdminProducts = () => {
     setEditing(null);
   };
 
-  return (
-    <AppLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Produkthantering</h1>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Hantera produkter i butiken</p>
-            </div>
-            {!editing && (
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link
-                  to="/admin"
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-                >
-                  Tillbaka till Admin
-                </Link>
-                <button
-                  onClick={() => setEditing({ product: null })}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600"
-                >
-                  Lägg till ny produkt
-                </button>
+  const formatSek = (n) =>
+    new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK', minimumFractionDigits: 2 }).format(n || 0);
+
+  const productPrice = (p) => p.b2cPrice || p.basePrice || 0;
+  const productImg = (p) => p.imageUrl || p.b2cImageUrl;
+
+  // Shopify Products IndexTable columns. NO inventory column — we don't track
+  // stock (honesty rule: render only real data).
+  const columns = [
+    {
+      key: 'product',
+      header: 'Produkt',
+      render: (p) => {
+        const img = productImg(p);
+        return (
+          <div className="flex items-center gap-3">
+            {img ? (
+              <img src={img} alt="" className="h-9 w-9 shrink-0 rounded-[6px] border border-admin-border object-cover" />
+            ) : (
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-[6px] border border-admin-border bg-admin-surface-2 text-[10px] text-admin-text-faint">
+                —
               </div>
             )}
+            <span className="min-w-0">
+              <span className="block truncate font-medium text-admin-text group-hover:underline">
+                {productName(p.name) || 'Namnlös'}
+              </span>
+              {p.sku && <span className="block truncate text-[12px] text-admin-text-faint">{p.sku}</span>}
+            </span>
           </div>
-        </div>
+        );
+      },
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (p) =>
+        p.isActive ? (
+          <StatusPill tone="success">Aktiv</StatusPill>
+        ) : (
+          <StatusPill tone="neutral">Utkast</StatusPill>
+        ),
+    },
+    {
+      key: 'category',
+      header: 'Kategori',
+      render: (p) => <span className="text-admin-text-muted">{p.category || p.group || '—'}</span>,
+    },
+    {
+      key: 'variants',
+      header: 'Varianter',
+      align: 'right',
+      render: (p) => (
+        <span className="tabular-nums text-admin-text-muted">
+          {Array.isArray(p.variants) && p.variants.length > 0 ? p.variants.length : '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'price',
+      header: 'Pris',
+      align: 'right',
+      render: (p) => <span className="font-medium tabular-nums text-admin-text">{formatSek(productPrice(p))}</span>,
+    },
+    {
+      // Trailing delete action; stop row click so it doesn't open the editor.
+      key: 'actions',
+      header: '',
+      align: 'right',
+      className: 'w-12',
+      render: (p) => (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDeleteProduct(p.id);
+          }}
+          title="Ta bort produkt"
+          aria-label="Ta bort produkt"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-admin-el)] text-admin-text-faint hover:bg-admin-surface-2 hover:text-admin-critical-dot"
+        >
+          <TrashIcon className="h-4 w-4" />
+        </button>
+      ),
+    },
+  ];
 
-        {error && (
-          <div className="mb-6 bg-red-50 dark:bg-red-900 border-l-4 border-red-400 dark:border-red-600 p-4">
-            <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
-          </div>
-        )}
+  const rows = filteredProduct ? [filteredProduct] : products;
 
-        {editing ? (
+  // ── Form view: keep ProductForm host untouched (slice 1e redesigns it). ──
+  if (editing) {
+    return (
+      <AppLayout>
+        <Page title={editing.product ? 'Redigera produkt' : 'Ny produkt'} back={{ to: '/admin/products', label: 'Produkter' }}>
           <ProductForm
             product={editing.product}
             shopId={shopId}
@@ -156,108 +216,45 @@ const AdminProducts = () => {
             onSaved={onSaved}
             onCancel={() => setEditing(null)}
           />
-        ) : loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
-          </div>
-        ) : (
-          /* Product List */
-          <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Produktlista</h2>
-                <div className="w-full sm:w-64">
-                  <ProductMenu
-                    products={products}
-                    selectedProduct={filteredProduct}
-                    onProductSelect={(p) => setFilteredProduct(p)}
-                  />
-                </div>
-              </div>
-            </div>
+        </Page>
+      </AppLayout>
+    );
+  }
 
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Produkt &amp; detaljer</th>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pris &amp; status</th>
-                    <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Åtgärder</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {products.length === 0 ? (
-                    <tr>
-                      <td colSpan="3" className="px-4 md:px-6 py-8 text-center text-gray-500 dark:text-gray-400">Inga produkter hittades</td>
-                    </tr>
-                  ) : (
-                    (filteredProduct ? [filteredProduct] : products).map((product) => {
-                      const price = product.b2cPrice || product.basePrice || 0;
-                      const img = product.imageUrl || product.b2cImageUrl;
-                      return (
-                        <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                          {/* Product & details */}
-                          <td className="px-4 md:px-6 py-4">
-                            <div className="flex items-start">
-                              {img ? (
-                                <img src={img} alt={productName(product.name)} className="w-16 h-16 mr-4 object-cover rounded-md border border-gray-200 dark:border-gray-600 shrink-0" />
-                              ) : (
-                                <div className="w-16 h-16 mr-4 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center border border-gray-200 dark:border-gray-600 shrink-0">
-                                  <span className="text-xs text-gray-500 dark:text-gray-400">Ingen bild</span>
-                                </div>
-                              )}
-                              <div className="min-w-0 flex-1">
-                                <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">{productName(product.name) || 'Namnlös'}</div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">SKU: <span className="font-mono">{product.sku || 'Ej angivet'}</span></div>
-                                <div className="flex flex-wrap gap-2 text-xs">
-                                  {(product.category || product.group) && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-sm font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300" style={{ fontSize: '10px' }}>{product.category || product.group}</span>
-                                  )}
-                                  {Array.isArray(product.variants) && product.variants.length > 0 && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-sm font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300" style={{ fontSize: '10px' }}>{product.variants.length} varianter</span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* Price & status */}
-                          <td className="px-4 md:px-6 py-4">
-                            <div className="text-sm">
-                              <div className="font-medium text-gray-900 dark:text-gray-100 mb-2">{price.toFixed(2)} SEK</div>
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${product.isActive ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'}`}>
-                                {product.isActive ? 'Aktiv' : 'Inaktiv'}
-                              </span>
-                            </div>
-                          </td>
-
-                          {/* Actions */}
-                          <td className="px-4 md:px-6 py-4 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={() => setEditing({ product: { ...product, documentId: product.id } })}
-                                className="min-h-[32px] inline-flex items-center px-4 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded-sm transition-colors"
-                              >
-                                Redigera
-                              </button>
-                              <button
-                                onClick={() => handleDeleteProduct(product.id)}
-                                className="min-h-[32px] inline-flex items-center px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900 border border-red-300 dark:border-red-600 rounded-sm transition-colors"
-                              >
-                                Ta bort
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
+  return (
+    <AppLayout>
+      <Page
+        title="Produkter"
+        actions={
+          <Button variant="primary" onClick={() => setEditing({ product: null })}>
+            Lägg till produkt
+          </Button>
+        }
+      >
+        {error && (
+          <div className="mb-3 rounded-[var(--radius-admin)] border border-admin-critical-dot/30 bg-admin-critical-bg px-4 py-3 text-[13px] text-admin-critical-text">
+            {error}
           </div>
         )}
-      </div>
+
+        <DataTable
+          columns={columns}
+          rows={rows}
+          rowKey={(p) => p.id}
+          loading={loading}
+          onRowClick={(p) => setEditing({ product: { ...p, documentId: p.id } })}
+          empty="Inga produkter hittades."
+          toolbar={
+            <div className="w-full sm:max-w-xs">
+              <ProductMenu
+                products={products}
+                selectedProduct={filteredProduct}
+                onProductSelect={(p) => setFilteredProduct(p)}
+              />
+            </div>
+          }
+        />
+      </Page>
     </AppLayout>
   );
 };
