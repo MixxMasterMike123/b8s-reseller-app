@@ -19,7 +19,6 @@ import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import { useShopId } from '../../contexts/ShopContext';
 import { getProductUrl, slugify } from '../../utils/productUrls';
-import { getAllProductGroups } from '../../utils/productGroups';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
 import NordProductCard from '../../components/shop/NordProductCard';
@@ -35,7 +34,6 @@ const CollectionPage = ({ mode }) => {
   const { getContentValue } = useContentTranslation();
 
   const [products, setProducts] = useState([]);
-  const [productGroups, setProductGroups] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,10 +49,6 @@ const CollectionPage = ({ mode }) => {
         ));
         if (cancelled) return;
         setProducts(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-        try {
-          const groups = await getAllProductGroups(shopId);
-          if (!cancelled) setProductGroups(Array.isArray(groups) ? groups : []);
-        } catch { if (!cancelled) setProductGroups([]); }
       } catch (err) {
         console.error('Error loading collection:', err);
         if (!cancelled) setProducts([]);
@@ -87,24 +81,10 @@ const CollectionPage = ({ mode }) => {
     return productTags(first).find((tg) => slugify(tg) === slug) || slug;
   })();
 
-  // For TAG pages, collapse same-group products to one rep card (front-page
-  // behaviour). GROUP pages show every member.
-  const cards = (() => {
-    if (mode === 'group') return matched;
-    const groupDefaults = {};
-    productGroups.forEach((g) => { if (g.defaultProductId) groupDefaults[g.id] = g.defaultProductId; });
-    const seen = new Set();
-    const out = [];
-    for (const p of matched) {
-      const grp = (p.group || '').trim();
-      if (!grp) { out.push(p); continue; }
-      if (seen.has(grp)) continue;
-      seen.add(grp);
-      const def = groupDefaults[grp];
-      out.push((def && matched.find((x) => x.id === def && (x.group || '').trim() === grp)) || p);
-    }
-    return out;
-  })();
+  // A collection page (category OR group) lists EVERY matching product — the
+  // user has already drilled into the category/group, so show all of it. (Group-
+  // collapse happens only on the front page, not here.)
+  const cards = matched;
 
   return (
     <>
