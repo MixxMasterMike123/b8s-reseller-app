@@ -314,7 +314,7 @@ function AdminCustomerMarketingMaterialEdit() {
                           Vald fil: {formData.file.name} ({formatFileSize(formData.file.size)})
                         </p>
                       )}
-                      <p className="mt-1 text-[12px] text-admin-warning-text">
+                      <p className="mt-1 text-[12px] text-admin-caution-text">
                         ⚠️ Varning: Detta kommer att ta bort den gamla filen permanent
                       </p>
                     </div>

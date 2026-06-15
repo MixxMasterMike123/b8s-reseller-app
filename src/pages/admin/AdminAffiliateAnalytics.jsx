@@ -5,7 +5,7 @@ import { db } from '../../firebase/config';
 import { collection, getDocs, query, orderBy, limit, where, getDoc, doc } from 'firebase/firestore';
 import { calculateCommission } from '../../utils/affiliateCalculations';
 import toast from 'react-hot-toast';
-import { Page, MetricsBar, DataTable, Card, CardSection, StatusPill, Button } from '../../components/admin/ui';
+import { Page, MetricsBar, DataTable, Card, CardSection, Button } from '../../components/admin/ui';
 
 const AdminAffiliateAnalytics = () => {
   const shopId = useShopId();

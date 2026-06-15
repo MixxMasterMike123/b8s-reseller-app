@@ -21,7 +21,6 @@ import {
 } from '../../utils/adminDocuments';
 import {
   PaperAirplaneIcon,
-  CheckCircleIcon,
   ClockIcon,
   KeyIcon,
   ExclamationTriangleIcon,
@@ -595,896 +594,677 @@ const AdminUserEdit = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-7xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                Redigera Kund
-              </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {user.companyName || user.email}
-              </p>
-            </div>
-            <div className="flex items-center space-x-3">
-              {/* Customer Marketing Materials Link - only for customers */}
-              {user.role !== 'admin' && (
-                <Link
-                  to={`/admin/customers/${user.id}/marketing`}
-                  className="inline-flex items-center px-4 py-2 border border-purple-300 dark:border-purple-600 text-sm font-medium rounded-md text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900 hover:bg-purple-100 dark:hover:bg-purple-800"
-                  title="Hantera kundspecifikt marknadsföringsmaterial"
-                >
-                  <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                  </svg>
-                  Marknadsföringsmaterial
-                </Link>
-              )}
-              
-              {/* Customer Activation Button/Status */}
-              {user.credentialsSent ? (
-                <div className="flex items-center px-3 py-2 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg">
-                  <CheckCircleIcon className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
-                  <div>
-                    <div className="text-sm font-medium text-green-800 dark:text-green-300">
-                      Inloggningsuppgifter skickade
-                    </div>
-                    <div className="text-xs text-green-600 dark:text-green-400">
-                      {user.credentialsSentAt && new Date(user.credentialsSentAt.seconds * 1000).toLocaleDateString('sv-SE')}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={handleSendActivation}
-                  disabled={sendingActivation}
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {sendingActivation ? (
-                    <>
-                      <ClockIcon className="h-4 w-4 mr-2 animate-spin" />
-                      Skickar...
-                    </>
-                  ) : (
-                    <>
-                      <PaperAirplaneIcon className="h-4 w-4 mr-2" />
-                      Skicka inloggningsuppgifter
-                    </>
-                  )}
-                </button>
-              )}
-              
-              {/* Delete Customer Button */}
-              <button
-                onClick={handleDeleteCustomer}
-                disabled={deletingCustomer}
-                className="inline-flex items-center px-4 py-2 bg-red-600 dark:bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-700 dark:hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {deletingCustomer ? (
-                  <>
-                    <ClockIcon className="h-4 w-4 mr-2 animate-spin" />
-                    Tar bort...
-                  </>
-                ) : (
-                  <>
-                    <TrashIcon className="h-4 w-4 mr-2" />
-                    Ta bort kund
-                  </>
-                )}
-              </button>
-              
-              <Link
-                to="/admin/users"
-                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-              >
-                Tillbaka till Kundlista
-              </Link>
-            </div>
-          </div>
-          
-          {/* Activation Result Display */}
-          {activationResult && (
-            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg">
-              <div className="flex items-start">
-                <KeyIcon className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2 mt-0.5" />
-                <div>
-                                     <h4 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">
-                     {activationResult.isExistingUser ? 
-                       'Befintligt konto uppdaterat och inloggningsuppgifter skickade!' :
-                       'Nytt konto skapat och inloggningsuppgifter skickade!'
-                     }
-                   </h4>
-                   <div className="text-sm text-blue-700 dark:text-blue-300">
-                     <p><strong>E-post:</strong> {user.email}</p>
-                     <p><strong>Tillfälligt lösenord:</strong> <code className="bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded-sm font-mono">{activationResult.temporaryPassword}</code></p>
-                     {activationResult.isExistingUser && (
-                       <p className="text-xs mt-1 text-blue-600 dark:text-blue-400">
-                         <strong>Obs:</strong> Ett befintligt Firebase Auth-konto uppdaterades med nytt lösenord.
-                       </p>
-                     )}
-                     <p className="text-xs mt-2 text-blue-600 dark:text-blue-400">
-                       Kunden kommer att få instruktioner om att ändra lösenordet vid första inloggningen.
-                     </p>
-                   </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Company Information */}
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Företagsinformation</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <Page
+        title="Redigera kund"
+        subtitle={user.companyName || user.email}
+        back={{ to: '/admin/users', label: 'Kundlista' }}
+        actions={headerActions}
+      >
+        {/* Activation Result Display */}
+        {activationResult && (
+          <Card className="mb-5 border-admin-info-dot/40 bg-admin-info-bg/40 px-4 py-4">
+            <div className="flex items-start gap-2">
+              <KeyIcon className="mt-0.5 h-5 w-5 shrink-0 text-admin-info-text" />
               <div>
-                <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Företagsnamn *
-                </label>
-                <input
-                  type="text"
-                  id="companyName"
-                  name="companyName"
-                  value={formData.companyName}
-                  onChange={handleInputChange}
-                  className={`block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 ${
-                    errors.companyName ? 'border-red-300' : ''
-                  }`}
-                  placeholder="Företagets namn"
-                />
-                {errors.companyName && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.companyName}</p>}
-              </div>
-              
-              <div>
-                <label htmlFor="orgNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Organisationsnummer
-                </label>
-                <input
-                  type="text"
-                  id="orgNumber"
-                  name="orgNumber"
-                  value={formData.orgNumber}
-                  onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  placeholder="556123-4567"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Contact Information */}
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Kontaktinformation</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="contactPerson" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Kontaktperson *
-                </label>
-                <input
-                  type="text"
-                  id="contactPerson"
-                  name="contactPerson"
-                  value={formData.contactPerson}
-                  onChange={handleInputChange}
-                  className={`block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 ${
-                    errors.contactPerson ? 'border-red-300' : ''
-                  }`}
-                  placeholder="Förnamn Efternamn"
-                />
-                {errors.contactPerson && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.contactPerson}</p>}
-              </div>
-              
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  E-post *
-                </label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    disabled={!emailEditEnabled}
-                    className={`block w-full rounded-md shadow-xs pr-10 transition-all duration-200 ${
-                      errors.email ? 'border-red-300' : ''
-                    } ${
-                      !emailEditEnabled 
-                        ? 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed' 
-                        : 'bg-white dark:bg-gray-600 border-blue-300 dark:border-blue-400 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-300 focus:ring-blue-500 dark:focus:ring-blue-300 cursor-text'
-                    }`}
-                    placeholder="exempel@företag.se"
-                    required
-                  />
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                    <button
-                      type="button"
-                      onClick={() => setEmailEditEnabled(!emailEditEnabled)}
-                      className={`p-1.5 rounded-md transition-all duration-200 ${
-                        emailEditEnabled 
-                          ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900 hover:bg-blue-100 dark:hover:bg-blue-800 border border-blue-200 dark:border-blue-700' 
-                          : 'text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-600 hover:bg-gray-100 dark:hover:bg-gray-500 border border-gray-200 dark:border-gray-600'
-                      }`}
-                      title={emailEditEnabled ? "Lås e-postfältet" : "Lås upp e-postfältet för redigering"}
-                    >
-                      <KeyIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-                {emailEditEnabled && (
-                  <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-900 border border-amber-200 dark:border-amber-700 rounded-md">
-                    <p className="text-xs text-amber-700 dark:text-amber-300 flex items-center">
-                      <ExclamationTriangleIcon className="h-4 w-4 mr-1 text-amber-600 dark:text-amber-400" />
-                      Ändring av e-post påverkar kundens inloggningsuppgifter
+                <h4 className="mb-2 text-[13px] font-semibold text-admin-text">
+                  {activationResult.isExistingUser
+                    ? 'Befintligt konto uppdaterat och inloggningsuppgifter skickade!'
+                    : 'Nytt konto skapat och inloggningsuppgifter skickade!'}
+                </h4>
+                <div className="space-y-1 text-[13px] text-admin-text-muted">
+                  <p><strong className="text-admin-text">E-post:</strong> {user.email}</p>
+                  <p>
+                    <strong className="text-admin-text">Tillfälligt lösenord:</strong>{' '}
+                    <code className="rounded-sm bg-admin-surface-2 px-2 py-1 font-mono text-admin-text">{activationResult.temporaryPassword}</code>
+                  </p>
+                  {activationResult.isExistingUser && (
+                    <p className="text-[12px]">
+                      <strong className="text-admin-text">Obs:</strong> Ett befintligt Firebase Auth-konto uppdaterades med nytt lösenord.
                     </p>
+                  )}
+                  <p className="text-[12px]">
+                    Kunden kommer att få instruktioner om att ändra lösenordet vid första inloggningen.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <RightRail
+            main={
+              <>
+                {/* Company Information */}
+                <CardSection title="Företagsinformation" bodyClassName="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label htmlFor="companyName" className={labelCls}>Företagsnamn *</label>
+                    <input
+                      type="text"
+                      id="companyName"
+                      name="companyName"
+                      value={formData.companyName}
+                      onChange={handleInputChange}
+                      className={`${inputCls}${errors.companyName ? ' border-admin-critical-dot' : ''}`}
+                      placeholder="Företagets namn"
+                    />
+                    {errors.companyName && <p className={errorCls}>{errors.companyName}</p>}
                   </div>
-                )}
-                {errors.email && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.email}</p>
-                )}
-              </div>
-              
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Telefon
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  placeholder="08-123 456 78"
-                />
-              </div>
 
-              <div>
-                <label htmlFor="preferredLang" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Föredraget språk</label>
-                <select
-                  id="preferredLang"
-                  name="preferredLang"
-                  value={formData.preferredLang}
-                  onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                >
-                  <option value="sv-SE">Svenska</option>
-                  <option value="en-GB">English (UK)</option>
-                  <option value="en-US">English (US)</option>
-                </select>
-              </div>
-            </div>
-          </div>
+                  <div>
+                    <label htmlFor="orgNumber" className={labelCls}>Organisationsnummer</label>
+                    <input
+                      type="text"
+                      id="orgNumber"
+                      name="orgNumber"
+                      value={formData.orgNumber}
+                      onChange={handleInputChange}
+                      className={inputCls}
+                      placeholder="556123-4567"
+                    />
+                  </div>
+                </CardSection>
 
-          {/* Company Address Information */}
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Företagsadress</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Gatuadress
-                </label>
-                <input
-                  type="text"
-                  id="address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  placeholder="Gatuadress 123"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Postnummer
-                </label>
-                <input
-                  type="text"
-                  id="postalCode"
-                  name="postalCode"
-                  value={formData.postalCode}
-                  onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  placeholder="123 45"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="city" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Stad
-                </label>
-                <input
-                  type="text"
-                  id="city"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  placeholder="Stockholm"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="country" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Land
-                </label>
-                <select
-                  id="country"
-                  name="country"
-                  value={formData.country}
-                  onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                >
-                  <option value="Sverige">Sverige</option>
-                  <option value="Norge">Norge</option>
-                  <option value="Danmark">Danmark</option>
-                  <option value="Finland">Finland</option>
-                </select>
-              </div>
-            </div>
-          </div>
+                {/* Contact Information */}
+                <CardSection title="Kontaktinformation" bodyClassName="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label htmlFor="contactPerson" className={labelCls}>Kontaktperson *</label>
+                    <input
+                      type="text"
+                      id="contactPerson"
+                      name="contactPerson"
+                      value={formData.contactPerson}
+                      onChange={handleInputChange}
+                      className={`${inputCls}${errors.contactPerson ? ' border-admin-critical-dot' : ''}`}
+                      placeholder="Förnamn Efternamn"
+                    />
+                    {errors.contactPerson && <p className={errorCls}>{errors.contactPerson}</p>}
+                  </div>
 
-          {/* Delivery Address Information */}
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Leveransadress</h3>
-            
-            <div className="mb-4">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="sameAsCompanyAddress"
-                  checked={formData.sameAsCompanyAddress}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 rounded-sm"
-                />
-                <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                  Samma som företagsadress
-                </span>
-              </label>
-            </div>
-            
-            {!formData.sameAsCompanyAddress && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <label htmlFor="deliveryAddress" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Leveransadress
-                  </label>
-                  <input
-                    type="text"
-                    id="deliveryAddress"
-                    name="deliveryAddress"
-                    value={formData.deliveryAddress}
-                    onChange={handleInputChange}
-                    className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                    placeholder="Leveransadress 123"
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="deliveryPostalCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Postnummer
-                  </label>
-                  <input
-                    type="text"
-                    id="deliveryPostalCode"
-                    name="deliveryPostalCode"
-                    value={formData.deliveryPostalCode}
-                    onChange={handleInputChange}
-                    className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                    placeholder="123 45"
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="deliveryCity" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Stad
-                  </label>
-                  <input
-                    type="text"
-                    id="deliveryCity"
-                    name="deliveryCity"
-                    value={formData.deliveryCity}
-                    onChange={handleInputChange}
-                    className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                    placeholder="Stockholm"
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="deliveryCountry" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Land
-                  </label>
-                  <select
-                    id="deliveryCountry"
-                    name="deliveryCountry"
-                    value={formData.deliveryCountry}
-                    onChange={handleInputChange}
-                    className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  >
-                    <option value="Sverige">Sverige</option>
-                    <option value="Norge">Norge</option>
-                    <option value="Danmark">Danmark</option>
-                    <option value="Finland">Finland</option>
-                  </select>
-                </div>
-              </div>
-            )}
-          </div>
+                  <div>
+                    <label htmlFor="email" className={labelCls}>E-post *</label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        disabled={!emailEditEnabled}
+                        className={`${inputCls} pr-10${errors.email ? ' border-admin-critical-dot' : ''}${!emailEditEnabled ? ' cursor-not-allowed bg-admin-surface-2 text-admin-text-muted' : ' cursor-text'}`}
+                        placeholder="exempel@företag.se"
+                        required
+                      />
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-2">
+                        <button
+                          type="button"
+                          onClick={() => setEmailEditEnabled(!emailEditEnabled)}
+                          className={`rounded-[var(--radius-admin-el)] border p-1.5 transition-colors ${
+                            emailEditEnabled
+                              ? 'border-admin-info-dot/40 bg-admin-info-bg text-admin-info-text'
+                              : 'border-admin-border bg-admin-surface-2 text-admin-text-muted hover:text-admin-text'
+                          }`}
+                          title={emailEditEnabled ? 'Lås e-postfältet' : 'Lås upp e-postfältet för redigering'}
+                        >
+                          <KeyIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    {emailEditEnabled && (
+                      <div className="mt-2 rounded-[var(--radius-admin-el)] border border-admin-caution-dot/40 bg-admin-caution-bg px-2 py-2">
+                        <p className="flex items-center gap-1 text-[12px] text-admin-caution-text">
+                          <ExclamationTriangleIcon className="h-4 w-4 shrink-0" />
+                          Ändring av e-post påverkar kundens inloggningsuppgifter
+                        </p>
+                      </div>
+                    )}
+                    {errors.email && <p className={errorCls}>{errors.email}</p>}
+                  </div>
 
-          {/* Admin Only Section */}
-          {isAdmin && (
-            <div className="bg-blue-50 dark:bg-blue-900 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                <span className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-300 text-xs font-medium px-2.5 py-0.5 rounded-sm mr-2">
-                  ADMIN
-                </span>
-                Administratörsinställningar
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label htmlFor="marginal" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Marginal %
+                  <div>
+                    <label htmlFor="phone" className={labelCls}>Telefon</label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className={inputCls}
+                      placeholder="08-123 456 78"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="preferredLang" className={labelCls}>Föredraget språk</label>
+                    <select
+                      id="preferredLang"
+                      name="preferredLang"
+                      value={formData.preferredLang}
+                      onChange={handleInputChange}
+                      className={inputCls}
+                    >
+                      <option value="sv-SE">Svenska</option>
+                      <option value="en-GB">English (UK)</option>
+                      <option value="en-US">English (US)</option>
+                    </select>
+                  </div>
+                </CardSection>
+
+                {/* Company Address Information */}
+                <CardSection title="Företagsadress" bodyClassName="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="md:col-span-2">
+                    <label htmlFor="address" className={labelCls}>Gatuadress</label>
+                    <input
+                      type="text"
+                      id="address"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      className={inputCls}
+                      placeholder="Gatuadress 123"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="postalCode" className={labelCls}>Postnummer</label>
+                    <input
+                      type="text"
+                      id="postalCode"
+                      name="postalCode"
+                      value={formData.postalCode}
+                      onChange={handleInputChange}
+                      className={inputCls}
+                      placeholder="123 45"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="city" className={labelCls}>Stad</label>
+                    <input
+                      type="text"
+                      id="city"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      className={inputCls}
+                      placeholder="Stockholm"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="country" className={labelCls}>Land</label>
+                    <select
+                      id="country"
+                      name="country"
+                      value={formData.country}
+                      onChange={handleInputChange}
+                      className={inputCls}
+                    >
+                      <option value="Sverige">Sverige</option>
+                      <option value="Norge">Norge</option>
+                      <option value="Danmark">Danmark</option>
+                      <option value="Finland">Finland</option>
+                    </select>
+                  </div>
+                </CardSection>
+
+                {/* Delivery Address Information */}
+                <CardSection title="Leveransadress" bodyClassName="space-y-4">
+                  <label className="flex items-center gap-2 text-[13px] text-admin-text">
+                    <input
+                      type="checkbox"
+                      name="sameAsCompanyAddress"
+                      checked={formData.sameAsCompanyAddress}
+                      onChange={handleInputChange}
+                      className={checkboxCls}
+                    />
+                    Samma som företagsadress
                   </label>
-                  <input
-                    type="number"
-                    id="marginal"
-                    name="marginal"
-                    min="0"
-                    max="100"
-                    step="0.5"
-                    value={formData.marginal}
+
+                  {!formData.sameAsCompanyAddress && (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <div className="md:col-span-2">
+                        <label htmlFor="deliveryAddress" className={labelCls}>Leveransadress</label>
+                        <input
+                          type="text"
+                          id="deliveryAddress"
+                          name="deliveryAddress"
+                          value={formData.deliveryAddress}
+                          onChange={handleInputChange}
+                          className={inputCls}
+                          placeholder="Leveransadress 123"
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="deliveryPostalCode" className={labelCls}>Postnummer</label>
+                        <input
+                          type="text"
+                          id="deliveryPostalCode"
+                          name="deliveryPostalCode"
+                          value={formData.deliveryPostalCode}
+                          onChange={handleInputChange}
+                          className={inputCls}
+                          placeholder="123 45"
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="deliveryCity" className={labelCls}>Stad</label>
+                        <input
+                          type="text"
+                          id="deliveryCity"
+                          name="deliveryCity"
+                          value={formData.deliveryCity}
+                          onChange={handleInputChange}
+                          className={inputCls}
+                          placeholder="Stockholm"
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="deliveryCountry" className={labelCls}>Land</label>
+                        <select
+                          id="deliveryCountry"
+                          name="deliveryCountry"
+                          value={formData.deliveryCountry}
+                          onChange={handleInputChange}
+                          className={inputCls}
+                        >
+                          <option value="Sverige">Sverige</option>
+                          <option value="Norge">Norge</option>
+                          <option value="Danmark">Danmark</option>
+                          <option value="Finland">Finland</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </CardSection>
+
+                {/* Notes */}
+                <CardSection title="Anteckningar">
+                  <textarea
+                    id="notes"
+                    name="notes"
+                    rows={4}
+                    value={formData.notes}
                     onChange={handleInputChange}
-                    className={`block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 ${
-                      errors.marginal ? 'border-red-300' : ''
-                    }`}
+                    className={inputCls}
+                    placeholder="Interna anteckningar om kunden..."
                   />
-                  {errors.marginal && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.marginal}</p>}
+                </CardSection>
+
+                {/* Save bar */}
+                <div className="flex justify-end gap-2">
+                  <Button as={Link} to="/admin/users" variant="secondary">Avbryt</Button>
+                  <Button type="submit" variant="primary" disabled={saving}>
+                    {saving ? (
+                      <>
+                        <span className="h-4 w-4 animate-spin rounded-full border-b-2 border-current" />
+                        Sparar…
+                      </>
+                    ) : (
+                      'Spara ändringar'
+                    )}
+                  </Button>
                 </div>
-                
-                <div>
-                  <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Roll
-                  </label>
-                  <select
-                    id="role"
-                    name="role"
-                    value={formData.role}
-                    onChange={handleInputChange}
-                    className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  >
-                    <option value="user">Kund</option>
-                    <option value="admin">Administratör</option>
-                  </select>
-                </div>
-                
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="active"
-                    name="active"
-                    checked={formData.active}
-                    onChange={handleInputChange}
-                    className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 rounded-sm"
-                  />
-                  <label htmlFor="active" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+              </>
+            }
+            rail={
+              isAdmin && (
+                <CardSection title="Administratörsinställningar" bodyClassName="space-y-4">
+                  <div>
+                    <label htmlFor="marginal" className={labelCls}>Marginal %</label>
+                    <input
+                      type="number"
+                      id="marginal"
+                      name="marginal"
+                      min="0"
+                      max="100"
+                      step="0.5"
+                      value={formData.marginal}
+                      onChange={handleInputChange}
+                      className={`${inputCls}${errors.marginal ? ' border-admin-critical-dot' : ''}`}
+                    />
+                    {errors.marginal && <p className={errorCls}>{errors.marginal}</p>}
+                  </div>
+
+                  <div>
+                    <label htmlFor="role" className={labelCls}>Roll</label>
+                    <select
+                      id="role"
+                      name="role"
+                      value={formData.role}
+                      onChange={handleInputChange}
+                      className={inputCls}
+                    >
+                      <option value="user">Kund</option>
+                      <option value="admin">Administratör</option>
+                    </select>
+                  </div>
+
+                  <label className="flex items-center gap-2 text-[13px] text-admin-text">
+                    <input
+                      type="checkbox"
+                      id="active"
+                      name="active"
+                      checked={formData.active}
+                      onChange={handleInputChange}
+                      className={checkboxCls}
+                    />
                     Aktiv kund
                   </label>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Notes */}
-          <div>
-            <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Anteckningar
-            </label>
-            <textarea
-              id="notes"
-              name="notes"
-              rows={4}
-              value={formData.notes}
-              onChange={handleInputChange}
-              className="block w-full rounded-md border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-              placeholder="Interna anteckningar om kunden..."
-            />
-          </div>
-
-          {/* Form Actions */}
-          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <Link
-              to="/admin/users"
-              className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-            >
-              Avbryt
-            </Link>
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saving ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Sparar...
-                </>
-              ) : (
-                'Spara Ändringar'
-              )}
-            </button>
-          </div>
+                </CardSection>
+              )
+            }
+          />
         </form>
 
         {/* Customer Marketing Materials - Outside form to prevent interference */}
         {isAdmin && (
-          <div className="max-w-7xl mx-auto mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-            <div className="bg-purple-50 dark:bg-purple-900 rounded-lg p-6 border border-purple-200 dark:border-purple-700">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
-                  <span className="bg-purple-100 dark:bg-purple-800 text-purple-800 dark:text-purple-300 text-xs font-medium px-2.5 py-0.5 rounded-sm mr-2">
-                    MARKNADSFÖRING
-                  </span>
-                  Kundspecifikt Material ({customerMaterials.length})
-                </h3>
-                <button
-                  onClick={() => {
-                    setShowUploadForm(true);
-                    setMaterialFormData({ name: '', description: '', category: 'kundspecifikt', file: null });
-                  }}
-                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 dark:bg-purple-500 hover:bg-purple-700 dark:hover:bg-purple-600"
-                >
-                  Ladda upp Material
-                </button>
-              </div>
-
-              {/* Upload Form */}
-              {showUploadForm && (
-                <div className="mb-6 bg-white dark:bg-gray-700 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
-                  <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">Ladda upp Nytt Material</h4>
-                  <form onSubmit={handleMaterialSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Namn *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={materialFormData.name}
-                          onChange={(e) => setMaterialFormData(prev => ({ ...prev, name: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white rounded-md focus:outline-hidden focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
-                          placeholder="Materialnamn"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Kategori
-                        </label>
-                        <select
-                          value={materialFormData.category}
-                          onChange={(e) => setMaterialFormData(prev => ({ ...prev, category: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white rounded-md focus:outline-hidden focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
-                        >
-                          {categories.map(cat => (
-                            <option key={cat.value} value={cat.value}>{cat.label}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    
+          <CardSection
+            className="mt-6"
+            title={`Kundspecifikt material (${customerMaterials.length})`}
+            actions={
+              <Button
+                onClick={() => {
+                  setShowUploadForm(true);
+                  setMaterialFormData({ name: '', description: '', category: 'kundspecifikt', file: null });
+                }}
+                variant="primary"
+                size="sm"
+              >
+                Ladda upp material
+              </Button>
+            }
+            bodyClassName="space-y-6"
+          >
+            {/* Upload Form */}
+            {showUploadForm && (
+              <div className="rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface-2 p-4">
+                <h4 className="mb-3 text-[13px] font-semibold text-admin-text">Ladda upp nytt material</h4>
+                <form onSubmit={handleMaterialSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Beskrivning
-                      </label>
-                      <textarea
-                        value={materialFormData.description}
-                        onChange={(e) => setMaterialFormData(prev => ({ ...prev, description: e.target.value }))}
-                        rows={2}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white rounded-md focus:outline-hidden focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
-                        placeholder="Beskrivning av materialet"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Fil * (Bilder, Videos, PDF, Word-dokument)
-                      </label>
+                      <label className={labelCls}>Namn *</label>
                       <input
-                        type="file"
+                        type="text"
                         required
-                        onChange={handleMaterialFileChange}
-                        accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.mp4,.mov,.avi,.webm,.mkv,.pdf,.doc,.docx,.txt,.rtf,.zip,.rar"
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white rounded-md focus:outline-hidden focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+                        value={materialFormData.name}
+                        onChange={(e) => setMaterialFormData(prev => ({ ...prev, name: e.target.value }))}
+                        className={inputCls}
+                        placeholder="Materialnamn"
                       />
-                      {materialFormData.file && (
-                        <p className="mt-1 text-sm text-gray-600">
-                          Vald fil: {materialFormData.file.name} ({formatFileSize(materialFormData.file.size)})
-                        </p>
-                      )}
                     </div>
-
-                    <div className="flex gap-3">
-                      <button
-                        type="submit"
-                        disabled={uploading}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
+                    <div>
+                      <label className={labelCls}>Kategori</label>
+                      <select
+                        value={materialFormData.category}
+                        onChange={(e) => setMaterialFormData(prev => ({ ...prev, category: e.target.value }))}
+                        className={inputCls}
                       >
-                        {uploading ? 'Laddar upp...' : 'Ladda upp'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowUploadForm(false)}
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                      >
-                        Avbryt
-                      </button>
+                        {categories.map(cat => (
+                          <option key={cat.value} value={cat.value}>{cat.label}</option>
+                        ))}
+                      </select>
                     </div>
-                  </form>
-                </div>
-              )}
+                  </div>
 
-              {/* Materials List */}
-              {materialsLoading ? (
-                <div className="flex justify-center items-center h-32">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 dark:border-purple-400"></div>
-                </div>
-              ) : customerMaterials.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <span className="text-4xl block mb-2">📂</span>
-                  <p>Inget kundspecifikt material uppladdat ännu</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {customerMaterials.map((material) => (
-                    <div key={material.id} className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center">
-                          <FileIcon iconName={getFileIcon(material.fileType)} className="w-5 h-5 mr-2 text-gray-600 dark:text-gray-400" />
-                          <span className="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-800 text-purple-600 dark:text-purple-300 rounded-full">
-                            {getCategoryLabel(material.category)}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => handleMaterialDelete(material.id)}
-                          className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
-                          title="Ta bort"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
+                  <div>
+                    <label className={labelCls}>Beskrivning</label>
+                    <textarea
+                      value={materialFormData.description}
+                      onChange={(e) => setMaterialFormData(prev => ({ ...prev, description: e.target.value }))}
+                      rows={2}
+                      className={inputCls}
+                      placeholder="Beskrivning av materialet"
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Fil * (Bilder, Videos, PDF, Word-dokument)</label>
+                    <input
+                      type="file"
+                      required
+                      onChange={handleMaterialFileChange}
+                      accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.mp4,.mov,.avi,.webm,.mkv,.pdf,.doc,.docx,.txt,.rtf,.zip,.rar"
+                      className="block w-full text-[13px] text-admin-text-muted file:mr-4 file:rounded-[var(--radius-admin-el)] file:border-0 file:bg-admin-surface-2 file:px-4 file:py-2 file:text-[13px] file:font-medium file:text-admin-text"
+                    />
+                    {materialFormData.file && (
+                      <p className={helpCls}>
+                        Vald fil: {materialFormData.file.name} ({formatFileSize(materialFormData.file.size)})
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={uploading} variant="primary">
+                      {uploading ? 'Laddar upp…' : 'Ladda upp'}
+                    </Button>
+                    <Button type="button" onClick={() => setShowUploadForm(false)} variant="secondary">
+                      Avbryt
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Materials List */}
+            {materialsLoading ? (
+              <div className="flex h-32 items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-admin-text-muted border-r-transparent" />
+              </div>
+            ) : customerMaterials.length === 0 ? (
+              <div className="py-8 text-center text-[13px] text-admin-text-muted">
+                <span className="mb-2 block text-4xl">📂</span>
+                <p>Inget kundspecifikt material uppladdat ännu</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {customerMaterials.map((material) => (
+                  <div key={material.id} className="rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FileIcon iconName={getFileIcon(material.fileType)} className="h-5 w-5 text-admin-text-muted" />
+                        <StatusPill tone="info" marker="none">{getCategoryLabel(material.category)}</StatusPill>
                       </div>
-
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2 text-sm line-clamp-2">{getContentValue(material.name)}</h4>
-                      
-                      {material.description && (
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">{getContentValue(material.description)}</p>
-                      )}
-
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                        <p className="truncate">{material.fileName}</p>
-                        {material.fileSize && <p>{formatFileSize(material.fileSize)}</p>}
-                      </div>
-
                       <button
-                        onClick={() => handleMaterialDownload(material)}
-                        className="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent text-xs font-medium rounded-md text-white bg-purple-600 dark:bg-purple-500 hover:bg-purple-700 dark:hover:bg-purple-600"
+                        onClick={() => handleMaterialDelete(material.id)}
+                        className="p-1 text-admin-text-muted hover:text-admin-critical-text"
+                        title="Ta bort"
                       >
-                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Ladda ner
+                        <TrashIcon className="h-4 w-4" />
                       </button>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+
+                    <h4 className="mb-2 line-clamp-2 text-[13px] font-medium text-admin-text">{getContentValue(material.name)}</h4>
+
+                    {material.description && (
+                      <p className="mb-3 line-clamp-2 text-[12px] text-admin-text-muted">{getContentValue(material.description)}</p>
+                    )}
+
+                    <div className="mb-3 text-[12px] text-admin-text-faint">
+                      <p className="truncate">{material.fileName}</p>
+                      {material.fileSize && <p>{formatFileSize(material.fileSize)}</p>}
+                    </div>
+
+                    <Button onClick={() => handleMaterialDownload(material)} variant="secondary" size="sm" className="w-full">
+                      Ladda ner
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardSection>
         )}
 
         {/* Admin Documents - Admin Only, NOT visible to customers */}
         {isAdmin && (
-          <div className="max-w-7xl mx-auto mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-            <div className="bg-orange-50 dark:bg-orange-900 rounded-lg p-6 border border-orange-200 dark:border-orange-700">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
-                  <span className="bg-orange-100 dark:bg-orange-800 text-orange-800 dark:text-orange-300 text-xs font-medium px-2.5 py-0.5 rounded-sm mr-2">
-                    ADMIN ENDAST
-                  </span>
-                  Admin-dokument ({adminDocuments.length})
-                </h3>
-                <button
-                  onClick={() => {
-                    setShowAdminUploadForm(true);
-                    setAdminDocFormData({ title: '', description: '', notes: '', category: 'dokument', file: null });
-                  }}
-                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 dark:bg-orange-500 hover:bg-orange-700 dark:hover:bg-orange-600"
-                >
-                  Ladda upp Admin-dokument
-                </button>
-              </div>
-
-              <div className="mb-4 p-3 bg-orange-100 dark:bg-orange-900 border border-orange-200 dark:border-orange-700 rounded-md">
-                <p className="text-sm text-orange-800 dark:text-orange-300">
-                  <strong>⚠️ Viktigt:</strong> Dessa dokument är ENDAST synliga för administratörer och kommer aldrig visas för kunden.
-                </p>
-              </div>
-
-              {/* Admin Upload Form */}
-              {showAdminUploadForm && (
-                <div className="mb-6 bg-white dark:bg-gray-700 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
-                  <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">Ladda upp Nytt Admin-dokument</h4>
-                  <form onSubmit={handleAdminDocSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Titel *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={adminDocFormData.title}
-                          onChange={(e) => setAdminDocFormData(prev => ({ ...prev, title: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white rounded-md focus:outline-hidden focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
-                          placeholder="Dokumenttitel"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Kategori
-                        </label>
-                        <select
-                          value={adminDocFormData.category}
-                          onChange={(e) => setAdminDocFormData(prev => ({ ...prev, category: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white rounded-md focus:outline-hidden focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
-                        >
-                          <option value="dokument">Dokument</option>
-                          <option value="kontrakt">Kontrakt</option>
-                          <option value="korrespondens">Korrespondens</option>
-                          <option value="finansiellt">Finansiellt</option>
-                          <option value="juridiskt">Juridiskt</option>
-                          <option value="övrigt">Övrigt</option>
-                        </select>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Beskrivning
-                      </label>
-                      <textarea
-                        value={adminDocFormData.description}
-                        onChange={(e) => setAdminDocFormData(prev => ({ ...prev, description: e.target.value }))}
-                        rows={2}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white rounded-md focus:outline-hidden focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
-                        placeholder="Beskrivning av dokumentet"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Interna anteckningar
-                      </label>
-                      <textarea
-                        value={adminDocFormData.notes}
-                        onChange={(e) => setAdminDocFormData(prev => ({ ...prev, notes: e.target.value }))}
-                        rows={2}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white rounded-md focus:outline-hidden focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
-                        placeholder="Interna anteckningar (endast synliga för admins)"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Fil * (PDF, Word, bilder, etc.)
-                      </label>
-                      <input
-                        type="file"
-                        required
-                        onChange={handleAdminDocFileChange}
-                        accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.mp4,.mov,.avi,.webm,.mkv,.pdf,.doc,.docx,.txt,.rtf,.zip,.rar"
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white rounded-md focus:outline-hidden focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
-                      />
-                      {adminDocFormData.file && (
-                        <p className="mt-1 text-sm text-gray-600">
-                          Vald fil: {adminDocFormData.file.name} ({formatAdminFileSize(adminDocFormData.file.size)})
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex gap-3">
-                      <button
-                        type="submit"
-                        disabled={adminUploading}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 disabled:opacity-50"
-                      >
-                        {adminUploading ? 'Laddar upp...' : 'Ladda upp'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowAdminUploadForm(false)}
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                      >
-                        Avbryt
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              )}
-
-              {/* Admin Documents List */}
-              {adminDocsLoading ? (
-                <div className="flex justify-center items-center h-32">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 dark:border-orange-400"></div>
-                </div>
-              ) : adminDocuments.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <span className="text-4xl block mb-2">🔒</span>
-                  <p>Inga admin-dokument uppladdade ännu</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {adminDocuments.map((document) => (
-                    <div key={document.id} className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center">
-                          <span className="text-xl mr-2">🔒</span>
-                          <span className="text-xs px-2 py-1 bg-orange-100 dark:bg-orange-800 text-orange-600 dark:text-orange-300 rounded-full">
-                            {document.category}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => handleAdminDocDelete(document.id)}
-                          className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
-                          title="Ta bort"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2 text-sm line-clamp-2">{document.title}</h4>
-                      
-                      {document.description && (
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">{document.description}</p>
-                      )}
-
-                      {document.notes && (
-                        <p className="text-xs text-orange-600 dark:text-orange-400 mb-3 line-clamp-1 font-medium">
-                          Anteckning: {document.notes}
-                        </p>
-                      )}
-
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                        <p className="truncate">{document.fileName}</p>
-                        {document.fileSize && <p>{formatAdminFileSize(document.fileSize)}</p>}
-                        {document.uploadedAt && (
-                          <p>Uppladdat: {new Date(document.uploadedAt.seconds * 1000).toLocaleDateString('sv-SE')}</p>
-                        )}
-                      </div>
-
-                      <button
-                        onClick={() => handleAdminDocDownload(document)}
-                        className="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent text-xs font-medium rounded-md text-white bg-orange-600 dark:bg-orange-500 hover:bg-orange-700 dark:hover:bg-orange-600"
-                      >
-                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Ladda ner
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+          <CardSection
+            className="mt-6"
+            title={`Admin-dokument (${adminDocuments.length})`}
+            actions={
+              <Button
+                onClick={() => {
+                  setShowAdminUploadForm(true);
+                  setAdminDocFormData({ title: '', description: '', notes: '', category: 'dokument', file: null });
+                }}
+                variant="primary"
+                size="sm"
+              >
+                Ladda upp admin-dokument
+              </Button>
+            }
+            bodyClassName="space-y-6"
+          >
+            <div className="rounded-[var(--radius-admin-el)] border border-admin-caution-dot/40 bg-admin-caution-bg px-3 py-3">
+              <p className="text-[13px] text-admin-caution-text">
+                <strong>⚠️ Viktigt:</strong> Dessa dokument är ENDAST synliga för administratörer och kommer aldrig visas för kunden.
+              </p>
             </div>
-          </div>
+
+            {/* Admin Upload Form */}
+            {showAdminUploadForm && (
+              <div className="rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface-2 p-4">
+                <h4 className="mb-3 text-[13px] font-semibold text-admin-text">Ladda upp nytt admin-dokument</h4>
+                <form onSubmit={handleAdminDocSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                      <label className={labelCls}>Titel *</label>
+                      <input
+                        type="text"
+                        required
+                        value={adminDocFormData.title}
+                        onChange={(e) => setAdminDocFormData(prev => ({ ...prev, title: e.target.value }))}
+                        className={inputCls}
+                        placeholder="Dokumenttitel"
+                      />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Kategori</label>
+                      <select
+                        value={adminDocFormData.category}
+                        onChange={(e) => setAdminDocFormData(prev => ({ ...prev, category: e.target.value }))}
+                        className={inputCls}
+                      >
+                        <option value="dokument">Dokument</option>
+                        <option value="kontrakt">Kontrakt</option>
+                        <option value="korrespondens">Korrespondens</option>
+                        <option value="finansiellt">Finansiellt</option>
+                        <option value="juridiskt">Juridiskt</option>
+                        <option value="övrigt">Övrigt</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Beskrivning</label>
+                    <textarea
+                      value={adminDocFormData.description}
+                      onChange={(e) => setAdminDocFormData(prev => ({ ...prev, description: e.target.value }))}
+                      rows={2}
+                      className={inputCls}
+                      placeholder="Beskrivning av dokumentet"
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Interna anteckningar</label>
+                    <textarea
+                      value={adminDocFormData.notes}
+                      onChange={(e) => setAdminDocFormData(prev => ({ ...prev, notes: e.target.value }))}
+                      rows={2}
+                      className={inputCls}
+                      placeholder="Interna anteckningar (endast synliga för admins)"
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Fil * (PDF, Word, bilder, etc.)</label>
+                    <input
+                      type="file"
+                      required
+                      onChange={handleAdminDocFileChange}
+                      accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.mp4,.mov,.avi,.webm,.mkv,.pdf,.doc,.docx,.txt,.rtf,.zip,.rar"
+                      className="block w-full text-[13px] text-admin-text-muted file:mr-4 file:rounded-[var(--radius-admin-el)] file:border-0 file:bg-admin-surface-2 file:px-4 file:py-2 file:text-[13px] file:font-medium file:text-admin-text"
+                    />
+                    {adminDocFormData.file && (
+                      <p className={helpCls}>
+                        Vald fil: {adminDocFormData.file.name} ({formatAdminFileSize(adminDocFormData.file.size)})
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={adminUploading} variant="primary">
+                      {adminUploading ? 'Laddar upp…' : 'Ladda upp'}
+                    </Button>
+                    <Button type="button" onClick={() => setShowAdminUploadForm(false)} variant="secondary">
+                      Avbryt
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Admin Documents List */}
+            {adminDocsLoading ? (
+              <div className="flex h-32 items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-admin-text-muted border-r-transparent" />
+              </div>
+            ) : adminDocuments.length === 0 ? (
+              <div className="py-8 text-center text-[13px] text-admin-text-muted">
+                <span className="mb-2 block text-4xl">🔒</span>
+                <p>Inga admin-dokument uppladdade ännu</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {adminDocuments.map((document) => (
+                  <div key={document.id} className="rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">🔒</span>
+                        <StatusPill tone="warning" marker="none">{document.category}</StatusPill>
+                      </div>
+                      <button
+                        onClick={() => handleAdminDocDelete(document.id)}
+                        className="p-1 text-admin-text-muted hover:text-admin-critical-text"
+                        title="Ta bort"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    <h4 className="mb-2 line-clamp-2 text-[13px] font-medium text-admin-text">{document.title}</h4>
+
+                    {document.description && (
+                      <p className="mb-2 line-clamp-2 text-[12px] text-admin-text-muted">{document.description}</p>
+                    )}
+
+                    {document.notes && (
+                      <p className="mb-3 line-clamp-1 text-[12px] font-medium text-admin-caution-text">
+                        Anteckning: {document.notes}
+                      </p>
+                    )}
+
+                    <div className="mb-3 text-[12px] text-admin-text-faint">
+                      <p className="truncate">{document.fileName}</p>
+                      {document.fileSize && <p>{formatAdminFileSize(document.fileSize)}</p>}
+                      {document.uploadedAt && (
+                        <p>Uppladdat: {new Date(document.uploadedAt.seconds * 1000).toLocaleDateString('sv-SE')}</p>
+                      )}
+                    </div>
+
+                    <Button onClick={() => handleAdminDocDownload(document)} variant="secondary" size="sm" className="w-full">
+                      Ladda ner
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardSection>
         )}
-      </div>
+      </Page>
     </AppLayout>
   );
 };
