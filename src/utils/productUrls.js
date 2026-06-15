@@ -106,13 +106,15 @@ export const getProductSeoDescription = (product) => {
   if (!product) return STORE.tagline || STORE.shopName;
   
   const name = safeGetContent(product.name);
-  // Prioritize B2B description (more detailed), then B2C, then legacy description
-  const b2bDesc = safeGetContent(product.descriptions?.b2b);
+  // B2C-only platform: prefer the consumer description. The legacy B2B field is
+  // kept only as a last-resort fallback for old products that still carry it
+  // (no new product writes descriptions.b2b — the reseller function is retired).
   const b2cDesc = safeGetContent(product.descriptions?.b2c);
   const fallbackDesc = safeGetContent(product.description);
+  const legacyB2bDesc = safeGetContent(product.descriptions?.b2b);
   const defaultDesc = `${name} – ${STORE.shopName}`;
-  
-  const description = b2bDesc || b2cDesc || fallbackDesc || defaultDesc;
+
+  const description = b2cDesc || fallbackDesc || legacyB2bDesc || defaultDesc;
   
   // Truncate to a reasonable length for meta descriptions (160 chars is optimal)
   return description.length > 160 ? description.substring(0, 157) + '...' : description;
