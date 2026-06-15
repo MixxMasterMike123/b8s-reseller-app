@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { 
-  ArrowLeftIcon,
+import {
   EyeIcon,
-  CheckIcon,
   DocumentDuplicateIcon,
-  GlobeAltIcon,
   Cog6ToothIcon,
   PaperClipIcon
 } from '@heroicons/react/24/outline';
@@ -23,6 +20,7 @@ import { toast } from 'react-hot-toast';
 import FileUpload from '../../components/admin/FileUpload';
 import FileManager from '../../components/admin/FileManager';
 import { uploadFile, deleteFile } from '../../utils/fileUpload';
+import { Page, Card, CardSection, RightRail, Button, StatusPill } from '../../components/admin/ui';
 
 // ReactQuill configuration
 const quillModules = {
@@ -52,9 +50,9 @@ const AdminPageEdit = () => {
   const { currentUser } = useAuth();
   const shopId = useShopId();
   const { getContentValue, setContentValue } = useContentTranslation();
-  
 
-  
+
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('content');
@@ -143,7 +141,7 @@ const AdminPageEdit = () => {
   // Auto-generate slug from Swedish title when title changes (only for new pages)
   const handleTitleChange = (e) => {
     const newTitle = setContentValue(formData.title, e.target.value);
-    
+
     setFormData({
       ...formData,
       title: newTitle,
@@ -190,7 +188,7 @@ const AdminPageEdit = () => {
         // overwrite (not merge), so we must re-stamp shopId or it would be
         // stripped from an already-tagged doc.
         await setDoc(doc(db, 'pages', id), withShopId(pageData, shopId));
-        
+
         toast.success('Sidan har uppdaterats');
         setFormData(prev => ({ ...prev, status: newStatus }));
       }
@@ -219,12 +217,12 @@ const AdminPageEdit = () => {
 
     setUploadingFiles(true);
     try {
-      const uploadPromises = selectedFiles.map(file => 
+      const uploadPromises = selectedFiles.map(file =>
         uploadFile(file, isNewPage ? 'temp' : id, currentUser.uid)
       );
 
       const uploadedFiles = await Promise.all(uploadPromises);
-      
+
       setFormData(prev => ({
         ...prev,
         attachments: [...(prev.attachments || []), ...uploadedFiles]
@@ -262,7 +260,7 @@ const AdminPageEdit = () => {
   const handleToggleFileVisibility = (fileId) => {
     setFormData(prev => ({
       ...prev,
-      attachments: prev.attachments.map(f => 
+      attachments: prev.attachments.map(f =>
         f.id === fileId ? { ...f, isPublic: !f.isPublic } : f
       )
     }));
@@ -271,7 +269,7 @@ const AdminPageEdit = () => {
   const handleUpdateFileDisplayName = (fileId, newName) => {
     setFormData(prev => ({
       ...prev,
-      attachments: prev.attachments.map(f => 
+      attachments: prev.attachments.map(f =>
         f.id === fileId ? { ...f, displayName: newName } : f
       )
     }));
@@ -283,210 +281,218 @@ const AdminPageEdit = () => {
     { id: 'seo', name: 'SEO', icon: Cog6ToothIcon }
   ];
 
+  const labelCls = 'block text-[13px] font-medium text-admin-text mb-1';
+  const inputCls =
+    'w-full rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-3 py-1.5 text-[13px] text-admin-text placeholder:text-admin-text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-admin-primary)]';
+  const helpCls = 'mt-1 text-[12px] text-admin-text-muted';
+
+  const headerActions = (
+    <>
+      {!isNewPage && formData.status === 'published' && (
+        <Button as="a" href={`/${formData.slug}`} target="_blank" rel="noopener noreferrer" variant="secondary">
+          <EyeIcon className="h-4 w-4" />
+          Visa sida
+        </Button>
+      )}
+      <Button variant="secondary" onClick={handleSaveDraft} disabled={saving}>
+        Spara utkast
+      </Button>
+      <Button variant="primary" onClick={handlePublish} disabled={saving}>
+        {formData.status === 'published' ? 'Uppdatera' : 'Publicera'}
+      </Button>
+    </>
+  );
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <Page title="Sida" back={{ to: '/admin/pages', label: 'Tillbaka till sidor' }}>
+          <Card className="px-6 py-12 text-center">
+            <div className="inline-block h-7 w-7 animate-spin rounded-full border-2 border-solid border-admin-text-muted border-r-transparent" />
+            <p className="mt-3 text-[13px] text-admin-text-muted">Laddar sida…</p>
+          </Card>
+        </Page>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
+      <Page
+        title={isNewPage ? 'Ny sida' : getContentValue(formData.title) || 'Redigera sida'}
+        subtitle={!isNewPage ? `Slug: /${formData.slug}` : undefined}
+        titleAdornment={
+          !isNewPage ? (
+            <StatusPill tone={formData.status === 'published' ? 'success' : 'neutral'}>
+              {formData.status === 'published' ? 'Publicerad' : 'Utkast'}
+            </StatusPill>
+          ) : undefined
+        }
+        back={{ to: '/admin/pages', label: 'Tillbaka till sidor' }}
+        actions={headerActions}
+      >
+        {/* Tabs */}
+        <div className="mb-5 border-b border-admin-border">
+          <nav className="-mb-px flex gap-6">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 border-b-2 px-1 py-2 text-[13px] font-medium ${
+                    activeTab === tab.id
+                      ? 'border-[var(--color-admin-primary)] text-admin-text'
+                      : 'border-transparent text-admin-text-muted hover:border-admin-border hover:text-admin-text'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {tab.name}
+                </button>
+              );
+            })}
+          </nav>
         </div>
-      ) : (
-        <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center space-x-4">
-          <Link
-            to="/admin/pages"
-            className="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-          >
-            <ArrowLeftIcon className="h-4 w-4 mr-1" />
-            Tillbaka till sidor
-          </Link>
-        </div>
-        <div className="flex items-center space-x-3 mt-4 sm:mt-0">
-          {!isNewPage && formData.status === 'published' && (
-            <a
-              href={`/${formData.slug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-xs text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-            >
-              <EyeIcon className="h-4 w-4 mr-2" />
-              Visa sida
-            </a>
-          )}
-          <button
-            onClick={handleSaveDraft}
-            disabled={saving}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-xs text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
-          >
-            Spara utkast
-          </button>
-          <button
-            onClick={handlePublish}
-            disabled={saving}
-            className="inline-flex items-center px-4 py-2 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50"
-          >
-            <CheckIcon className="h-4 w-4 mr-2" />
-            {formData.status === 'published' ? 'Uppdatera' : 'Publicera'}
-          </button>
-        </div>
-      </div>
 
-      {/* Page Title */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          {isNewPage ? 'Ny sida' : getContentValue(formData.title) || 'Redigera sida'}
-        </h1>
-        {!isNewPage && (
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Slug: /{formData.slug} • Status: {formData.status === 'published' ? 'Publicerad' : 'Utkast'}
-          </p>
-        )}
-      </div>
-
-      {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-700">
-        <nav className="-mb-px flex space-x-8">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
-                  activeTab === tab.id
-                    ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-                }`}
-              >
-                <Icon className="h-4 w-4 mr-2" />
-                {tab.name}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* Tab Content */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg">
         {activeTab === 'content' && (
-          <div className="p-6 space-y-6">
-            {/* Title */}
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Titel *
-              </label>
-              <ContentLanguageIndicator 
-                contentField={formData.title}
-                label="Titel"
-                currentValue={getContentValue(formData.title)}
-              />
-              <input
-                type="text"
-                id="title"
-                value={getContentValue(formData.title)}
-                onChange={handleTitleChange}
-                className="block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-xs py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
-                placeholder="Sidans titel..."
-                required
-              />
-            </div>
+          <RightRail
+            main={
+              <>
+                <CardSection title="Innehåll" bodyClassName="space-y-4">
+                  {/* Title */}
+                  <div>
+                    <label htmlFor="title" className={labelCls}>
+                      Titel *
+                    </label>
+                    <ContentLanguageIndicator
+                      contentField={formData.title}
+                      label="Titel"
+                      currentValue={getContentValue(formData.title)}
+                    />
+                    <input
+                      type="text"
+                      id="title"
+                      value={getContentValue(formData.title)}
+                      onChange={handleTitleChange}
+                      className={inputCls}
+                      placeholder="Sidans titel..."
+                      required
+                    />
+                  </div>
 
-            {/* Slug */}
-            <div>
-              <label htmlFor="slug" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Slug *
-              </label>
-              <div className="flex">
-                <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm">
-                  /
-                </span>
-                <input
-                  type="text"
-                  id="slug"
-                  value={formData.slug}
-                  onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                  className="flex-1 block w-full border border-gray-300 dark:border-gray-600 rounded-r-md shadow-xs py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
-                  placeholder="sida-slug"
-                />
-              </div>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                {isNewPage && !hasBeenSaved ? (
-                  <>
-                    URL-vänlig version av sidtiteln. <span className="font-medium text-blue-600 dark:text-blue-400">Genereras automatiskt från svenska titeln.</span> Endast små bokstäver, siffror och bindestreck.
-                  </>
-                ) : (
-                  <>
-                    URL-vänlig version av sidtiteln. <span className="font-medium text-gray-600 dark:text-gray-400">Manuell redigering möjlig.</span> Endast små bokstäver, siffror och bindestreck.
-                  </>
-                )}
-              </p>
-            </div>
+                  {/* Slug */}
+                  <div>
+                    <label htmlFor="slug" className={labelCls}>
+                      Slug *
+                    </label>
+                    <div className="flex">
+                      <span className="inline-flex items-center rounded-l-[var(--radius-admin-el)] border border-r-0 border-admin-border bg-admin-surface-2 px-3 text-[13px] text-admin-text-muted">
+                        /
+                      </span>
+                      <input
+                        type="text"
+                        id="slug"
+                        value={formData.slug}
+                        onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
+                        className="w-full flex-1 rounded-r-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-3 py-1.5 text-[13px] text-admin-text placeholder:text-admin-text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-admin-primary)]"
+                        placeholder="sida-slug"
+                      />
+                    </div>
+                    <p className={helpCls}>
+                      {isNewPage && !hasBeenSaved ? (
+                        <>
+                          URL-vänlig version av sidtiteln. <span className="font-medium text-admin-text">Genereras automatiskt från svenska titeln.</span> Endast små bokstäver, siffror och bindestreck.
+                        </>
+                      ) : (
+                        <>
+                          URL-vänlig version av sidtiteln. <span className="font-medium text-admin-text">Manuell redigering möjlig.</span> Endast små bokstäver, siffror och bindestreck.
+                        </>
+                      )}
+                    </p>
+                  </div>
 
-            {/* Content */}
-            <div>
-              <label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Innehåll
-              </label>
-              <ContentLanguageIndicator 
-                contentField={formData.content}
-                label="Innehåll"
-                currentValue={getContentValue(formData.content)}
-              />
-              <div className="border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden bg-white dark:bg-gray-700">
-                <div className="quill-dark-mode">
-                  <ReactQuill
-                    theme="snow"
-                    value={getContentValue(formData.content)}
-                    onChange={(value) => setFormData({
-                      ...formData,
-                      content: setContentValue(formData.content, value)
-                    })}
-                    modules={quillModules}
-                    formats={quillFormats}
-                    placeholder="Sidans innehåll..."
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+                  {/* Content */}
+                  <div>
+                    <label htmlFor="content" className={labelCls}>
+                      Innehåll
+                    </label>
+                    <ContentLanguageIndicator
+                      contentField={formData.content}
+                      label="Innehåll"
+                      currentValue={getContentValue(formData.content)}
+                    />
+                    <div className="overflow-hidden rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface">
+                      <div className="quill-dark-mode">
+                        <ReactQuill
+                          theme="snow"
+                          value={getContentValue(formData.content)}
+                          onChange={(value) => setFormData({
+                            ...formData,
+                            content: setContentValue(formData.content, value)
+                          })}
+                          modules={quillModules}
+                          formats={quillFormats}
+                          placeholder="Sidans innehåll..."
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </CardSection>
+              </>
+            }
+            rail={
+              <>
+                <CardSection title="Status" bodyClassName="space-y-3">
+                  <div className="flex items-center justify-between gap-3 text-[13px]">
+                    <span className="text-admin-text-muted">Publiceringsstatus</span>
+                    <StatusPill tone={formData.status === 'published' ? 'success' : 'neutral'}>
+                      {formData.status === 'published' ? 'Publicerad' : 'Utkast'}
+                    </StatusPill>
+                  </div>
+                  <div className="flex flex-col gap-2 pt-1">
+                    <Button variant="secondary" onClick={handleSaveDraft} disabled={saving} className="w-full">
+                      Spara utkast
+                    </Button>
+                    <Button variant="primary" onClick={handlePublish} disabled={saving} className="w-full">
+                      {formData.status === 'published' ? 'Uppdatera' : 'Publicera'}
+                    </Button>
+                  </div>
+                  {saving && <p className={helpCls}>Sparar sida…</p>}
+                </CardSection>
+              </>
+            }
+          />
         )}
 
         {activeTab === 'attachments' && (
-          <div className="p-6 space-y-6">
+          <div className="space-y-5">
             {/* File Upload Section */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Ladda upp bilagor</h3>
+            <CardSection title="Ladda upp bilagor" bodyClassName="space-y-4">
               <FileUpload
                 onFileSelect={handleFileSelect}
                 onFileRemove={handleFileRemove}
                 selectedFiles={selectedFiles}
                 disabled={uploadingFiles}
               />
-              
+
               {selectedFiles.length > 0 && (
-                <div className="mt-4 flex justify-end">
-                  <button
-                    onClick={handleUploadFiles}
-                    disabled={uploadingFiles}
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50"
-                  >
+                <div className="flex justify-end">
+                  <Button variant="primary" onClick={handleUploadFiles} disabled={uploadingFiles}>
                     {uploadingFiles ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        <span className="h-4 w-4 animate-spin rounded-full border-b-2 border-current" />
                         Laddar upp...
                       </>
                     ) : (
                       `Ladda upp ${selectedFiles.length} filer`
                     )}
-                  </button>
+                  </Button>
                 </div>
               )}
-            </div>
+            </CardSection>
 
             {/* File Management Section */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Hantera bilagor</h3>
+            <CardSection title="Hantera bilagor">
               <FileManager
                 files={formData.attachments || []}
                 onDeleteFile={handleDeleteFile}
@@ -494,102 +500,97 @@ const AdminPageEdit = () => {
                 onUpdateDisplayName={handleUpdateFileDisplayName}
                 disabled={uploadingFiles}
               />
-            </div>
+            </CardSection>
 
             {/* Help Section */}
-            <div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-md p-4">
-              <h4 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">Tips för bilagor:</h4>
-              <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+            <Card className="bg-admin-info-bg p-4">
+              <h4 className="mb-2 text-[13px] font-semibold text-admin-info-text">Tips för bilagor:</h4>
+              <ul className="space-y-1 text-[13px] text-admin-info-text">
                 <li>• Endast publika filer visas för besökare på sidan</li>
                 <li>• Du kan redigera filnamnet för att göra det mer beskrivande</li>
                 <li>• Största filstorlek: 10MB per fil</li>
                 <li>• Tillåtna filtyper: PDF, DOC, DOCX, XLS, XLSX, TXT, ZIP</li>
                 <li>• Filer sparas automatiskt när du sparar sidan</li>
               </ul>
-            </div>
+            </Card>
           </div>
         )}
 
         {activeTab === 'seo' && (
-          <div className="p-6 space-y-6">
-            {/* Meta Title */}
-            <div>
-              <label htmlFor="metaTitle" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                SEO Titel
-              </label>
-              <ContentLanguageIndicator 
-                contentField={formData.metaTitle}
-                label="SEO Titel"
-                currentValue={getContentValue(formData.metaTitle)}
-              />
-              <input
-                type="text"
-                id="metaTitle"
-                value={getContentValue(formData.metaTitle)}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  metaTitle: setContentValue(formData.metaTitle, e.target.value)
-                })}
-                className="block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-xs py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
-                placeholder="SEO-optimerad titel för sökmotorer..."
-                maxLength="60"
-              />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {getContentValue(formData.metaTitle).length}/60 tecken
-              </p>
-            </div>
+          <RightRail
+            main={
+              <CardSection title="SEO" bodyClassName="space-y-4">
+                {/* Meta Title */}
+                <div>
+                  <label htmlFor="metaTitle" className={labelCls}>
+                    SEO Titel
+                  </label>
+                  <ContentLanguageIndicator
+                    contentField={formData.metaTitle}
+                    label="SEO Titel"
+                    currentValue={getContentValue(formData.metaTitle)}
+                  />
+                  <input
+                    type="text"
+                    id="metaTitle"
+                    value={getContentValue(formData.metaTitle)}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      metaTitle: setContentValue(formData.metaTitle, e.target.value)
+                    })}
+                    className={inputCls}
+                    placeholder="SEO-optimerad titel för sökmotorer..."
+                    maxLength="60"
+                  />
+                  <p className={helpCls}>
+                    {getContentValue(formData.metaTitle).length}/60 tecken
+                  </p>
+                </div>
 
-            {/* Meta Description */}
-            <div>
-              <label htmlFor="metaDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                SEO Beskrivning
-              </label>
-              <ContentLanguageIndicator 
-                contentField={formData.metaDescription}
-                label="SEO Beskrivning"
-                currentValue={getContentValue(formData.metaDescription)}
-              />
-              <textarea
-                id="metaDescription"
-                rows="3"
-                value={getContentValue(formData.metaDescription)}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  metaDescription: setContentValue(formData.metaDescription, e.target.value)
-                })}
-                className="block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-xs py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
-                placeholder="Kort beskrivning av sidan för sökmotorer..."
-                maxLength="160"
-              />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {getContentValue(formData.metaDescription).length}/160 tecken
-              </p>
-            </div>
-
-            {/* SEO Tips */}
-            <div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-md p-4">
-              <h4 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">SEO Tips:</h4>
-              <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                <li>• Använd relevanta nyckelord i titel och beskrivning</li>
-                <li>• Håll titeln under 60 tecken och beskrivningen under 160 tecken</li>
-                <li>• Gör titeln och beskrivningen unika för varje sida</li>
-                <li>• Skriv för människor, inte bara sökmotorer</li>
-              </ul>
-            </div>
-          </div>
+                {/* Meta Description */}
+                <div>
+                  <label htmlFor="metaDescription" className={labelCls}>
+                    SEO Beskrivning
+                  </label>
+                  <ContentLanguageIndicator
+                    contentField={formData.metaDescription}
+                    label="SEO Beskrivning"
+                    currentValue={getContentValue(formData.metaDescription)}
+                  />
+                  <textarea
+                    id="metaDescription"
+                    rows="3"
+                    value={getContentValue(formData.metaDescription)}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      metaDescription: setContentValue(formData.metaDescription, e.target.value)
+                    })}
+                    className={inputCls}
+                    placeholder="Kort beskrivning av sidan för sökmotorer..."
+                    maxLength="160"
+                  />
+                  <p className={helpCls}>
+                    {getContentValue(formData.metaDescription).length}/160 tecken
+                  </p>
+                </div>
+              </CardSection>
+            }
+            rail={
+              <Card className="bg-admin-info-bg p-4">
+                <h4 className="mb-2 text-[13px] font-semibold text-admin-info-text">SEO Tips:</h4>
+                <ul className="space-y-1 text-[13px] text-admin-info-text">
+                  <li>• Använd relevanta nyckelord i titel och beskrivning</li>
+                  <li>• Håll titeln under 60 tecken och beskrivningen under 160 tecken</li>
+                  <li>• Gör titeln och beskrivningen unika för varje sida</li>
+                  <li>• Skriv för människor, inte bara sökmotorer</li>
+                </ul>
+              </Card>
+            }
+          />
         )}
-      </div>
-
-      {/* Save reminder */}
-      {saving && (
-        <div className="fixed bottom-4 right-4 bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-md shadow-lg">
-          Sparar sida...
-        </div>
-      )}
-    </div>
-      )}
+      </Page>
     </AppLayout>
   );
 };
 
-export default AdminPageEdit; 
+export default AdminPageEdit;

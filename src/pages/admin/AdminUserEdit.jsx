@@ -29,6 +29,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../firebase/config';
+import { Page, Card, CardSection, RightRail, Button, StatusPill } from '../../components/admin/ui';
 
 const AdminUserEdit = () => {
   const { userId } = useParams();
@@ -507,10 +508,12 @@ const AdminUserEdit = () => {
   if (loading) {
     return (
       <AppLayout>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
-          <span className="ml-3 text-blue-600 dark:text-blue-400">Laddar kunddata...</span>
-        </div>
+        <Page title="Redigera kund" back={{ to: '/admin/users', label: 'Kundlista' }}>
+          <Card className="px-6 py-12 text-center">
+            <div className="inline-block h-7 w-7 animate-spin rounded-full border-2 border-solid border-admin-text-muted border-r-transparent" />
+            <p className="mt-3 text-[13px] text-admin-text-muted">Laddar kunddata…</p>
+          </Card>
+        </Page>
       </AppLayout>
     );
   }
@@ -518,15 +521,77 @@ const AdminUserEdit = () => {
   if (!user) {
     return (
       <AppLayout>
-        <div className="text-center py-12">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Kund hittades inte</h2>
-          <Link to="/admin/users" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mt-4 inline-block">
-            Tillbaka till kundlista
-          </Link>
-        </div>
+        <Page title="Redigera kund" back={{ to: '/admin/users', label: 'Kundlista' }}>
+          <Card className="px-6 py-12 text-center">
+            <h2 className="text-base font-semibold text-admin-text">Kund hittades inte</h2>
+            <div className="mt-4">
+              <Button as={Link} to="/admin/users" variant="secondary">Tillbaka till kundlista</Button>
+            </div>
+          </Card>
+        </Page>
       </AppLayout>
     );
   }
+
+  const labelCls = 'block text-[13px] font-medium text-admin-text mb-1';
+  const inputCls =
+    'w-full rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-3 py-1.5 text-[13px] text-admin-text placeholder:text-admin-text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-admin-primary)]';
+  const checkboxCls = 'h-4 w-4 rounded-[4px] border-admin-border text-[var(--color-admin-primary)] focus:ring-[var(--color-admin-primary)]';
+  const errorCls = 'mt-1 text-[12px] text-admin-critical-text';
+  const helpCls = 'mt-1 text-[12px] text-admin-text-muted';
+
+  const headerActions = (
+    <>
+      {/* Customer Marketing Materials Link - only for customers */}
+      {user.role !== 'admin' && (
+        <Button
+          as={Link}
+          to={`/admin/customers/${user.id}/marketing`}
+          variant="secondary"
+          title="Hantera kundspecifikt marknadsföringsmaterial"
+        >
+          Marknadsföringsmaterial
+        </Button>
+      )}
+
+      {/* Customer Activation Button/Status */}
+      {user.credentialsSent ? (
+        <StatusPill tone="success">
+          Inloggningsuppgifter skickade
+          {user.credentialsSentAt ? ` · ${new Date(user.credentialsSentAt.seconds * 1000).toLocaleDateString('sv-SE')}` : ''}
+        </StatusPill>
+      ) : (
+        <Button onClick={handleSendActivation} disabled={sendingActivation} variant="primary">
+          {sendingActivation ? (
+            <>
+              <ClockIcon className="h-4 w-4 animate-spin" />
+              Skickar…
+            </>
+          ) : (
+            <>
+              <PaperAirplaneIcon className="h-4 w-4" />
+              Skicka inloggningsuppgifter
+            </>
+          )}
+        </Button>
+      )}
+
+      {/* Delete Customer Button */}
+      <Button onClick={handleDeleteCustomer} disabled={deletingCustomer} variant="destructive">
+        {deletingCustomer ? (
+          <>
+            <ClockIcon className="h-4 w-4 animate-spin" />
+            Tar bort…
+          </>
+        ) : (
+          <>
+            <TrashIcon className="h-4 w-4" />
+            Ta bort kund
+          </>
+        )}
+      </Button>
+    </>
+  );
 
   return (
     <AppLayout>

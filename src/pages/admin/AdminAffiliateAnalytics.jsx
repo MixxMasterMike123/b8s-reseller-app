@@ -1,21 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
 import { useShopId } from '../../contexts/ShopContext';
 import { db } from '../../firebase/config';
 import { collection, getDocs, query, orderBy, limit, where, getDoc, doc } from 'firebase/firestore';
-import { 
-  ChartBarIcon, 
-  ArrowTrendingUpIcon, 
-  CurrencyDollarIcon, 
-  UserGroupIcon,
-  GlobeAltIcon,
-  DevicePhoneMobileIcon,
-  ComputerDesktopIcon,
-  ArrowLeftIcon
-} from '@heroicons/react/24/outline';
 import { calculateCommission } from '../../utils/affiliateCalculations';
 import toast from 'react-hot-toast';
+import { Page, MetricsBar, DataTable, Card, CardSection, StatusPill, Button } from '../../components/admin/ui';
 
 const AdminAffiliateAnalytics = () => {
   const shopId = useShopId();
@@ -170,7 +160,7 @@ const AdminAffiliateAnalytics = () => {
   };
 
   const getSourceIcon = (source) => {
-    const iconClass = "w-6 h-6";
+    const iconClass = "w-4 h-4";
     switch (source) {
       case 'instagram':
         return <svg className={iconClass} fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>;
@@ -282,365 +272,295 @@ const AdminAffiliateAnalytics = () => {
   if (loading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
-          <span className="ml-3 text-lg text-gray-600 dark:text-gray-400">Laddar analytics...</span>
-        </div>
+        <Page title="Affiliate Analytics" back={{ to: '/admin/affiliates', label: 'Affiliates' }}>
+          <Card className="px-6 py-12 text-center">
+            <div className="inline-block h-7 w-7 animate-spin rounded-full border-2 border-solid border-admin-text-muted border-r-transparent" />
+            <p className="mt-3 text-[13px] text-admin-text-muted">Laddar analytics…</p>
+          </Card>
+        </Page>
       </AppLayout>
     );
   }
 
+  const timeRangeSelect = (
+    <div className="flex items-center gap-2">
+      <label htmlFor="timeRange" className="text-[13px] text-admin-text-muted">Tidsperiod</label>
+      <select
+        id="timeRange"
+        value={timeRange}
+        onChange={(e) => setTimeRange(e.target.value)}
+        className="rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-3 py-1.5 text-[13px] text-admin-text focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-admin-primary)]"
+      >
+        <option value="7">7 dagar</option>
+        <option value="30">30 dagar</option>
+        <option value="90">90 dagar</option>
+        <option value="365">1 år</option>
+      </select>
+    </div>
+  );
+
+  const metrics = [
+    { key: 'clicks', label: 'Totala Klick', value: analytics.totalClicks.toLocaleString('sv-SE') },
+    { key: 'conversions', label: `Konverteringar · ${analytics.overallConversionRate.toFixed(1)}% rate`, value: analytics.totalConversions },
+    { key: 'revenue', label: 'Total Provision', value: formatCurrency(analytics.totalRevenue) },
+    { key: 'balance', label: 'Obetald Provision', value: formatCurrency(analytics.totalBalance) },
+    { key: 'affiliates', label: 'Aktiva Affiliates', value: analytics.activeAffiliates },
+  ];
+
+  const conversionRateTone = (rate) =>
+    rate > 5 ? 'text-admin-success-text' : rate > 2 ? 'text-admin-caution-text' : 'text-admin-critical-text';
+
+  const tableColumns = [
+    {
+      key: 'affiliate',
+      header: 'Affiliate',
+      render: (a) => (
+        <div>
+          <div className="font-medium text-admin-text">{a.name}</div>
+          <div className="text-[12px] text-admin-text-muted">{a.affiliateCode}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'source',
+      header: 'Trafikkälla',
+      render: (a) => (
+        <span className="inline-flex items-center gap-1.5 rounded-[var(--radius-admin-el)] bg-admin-neutral-bg px-2 py-0.5 text-[12px] font-medium text-admin-neutral-text">
+          {getSourceIcon(a.trafficSource)} {getSourceLabel(a.trafficSource)}
+        </span>
+      ),
+    },
+    { key: 'clicks', header: 'Klick', align: 'right', render: (a) => <span className="tabular-nums">{a.recentClicks}</span> },
+    { key: 'conversions', header: 'Konverteringar', align: 'right', render: (a) => <span className="tabular-nums">{a.recentConversions}</span> },
+    {
+      key: 'rate',
+      header: 'Konv.grad',
+      align: 'right',
+      render: (a) => (
+        <span className={`font-medium tabular-nums ${conversionRateTone(a.conversionRate)}`}>{a.conversionRate.toFixed(1)}%</span>
+      ),
+    },
+    {
+      key: 'revenue',
+      header: 'Total Provision',
+      align: 'right',
+      render: (a) => <span className="font-medium text-admin-success-text tabular-nums">{formatCurrency(a.recentRevenue)}</span>,
+    },
+    {
+      key: 'balance',
+      header: 'Obetalt',
+      align: 'right',
+      render: (a) => <span className="font-medium text-admin-info-text tabular-nums">{formatCurrency(a.currentBalance)}</span>,
+    },
+    {
+      key: 'verify',
+      header: 'Verifiera',
+      align: 'right',
+      render: (a) => (
+        <Button variant="plain" size="sm" onClick={() => verifyEarnings(a.id)} disabled={verifying}>
+          {verifying ? 'Verifying…' : 'Verify'}
+        </Button>
+      ),
+    },
+  ];
+
   return (
     <AppLayout>
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <Link 
-                to="/admin/affiliates" 
-                className="mr-4 p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <ArrowLeftIcon className="h-6 w-6" />
-              </Link>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Affiliate Analytics</h1>
-                <p className="text-gray-600 dark:text-gray-400">Detaljerad prestandaanalys för dina affiliates</p>
-              </div>
-            </div>
-            
-            {/* Time Range Selector */}
-            <div className="flex items-center space-x-4">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tidsperiod:</label>
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-              >
-                <option value="7">7 dagar</option>
-                <option value="30">30 dagar</option>
-                <option value="90">90 dagar</option>
-                <option value="365">1 år</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
+      <Page
+        title="Affiliate Analytics"
+        subtitle="Detaljerad prestandaanalys för dina affiliates"
+        back={{ to: '/admin/affiliates', label: 'Affiliates' }}
+        actions={timeRangeSelect}
+        className="space-y-5"
+      >
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-          {/* Total Clicks */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5">
-            <div className="text-center">
-              <div className="flex justify-center mb-3">
-                <ChartBarIcon className="h-7 w-7 text-blue-600" />
-              </div>
-              <p className="text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">Totala Klick</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 leading-none">{analytics.totalClicks.toLocaleString('sv-SE')}</p>
-            </div>
-          </div>
+        <MetricsBar metrics={metrics} />
 
-          {/* Conversions */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5">
-            <div className="text-center">
-              <div className="flex justify-center mb-3">
-                <ArrowTrendingUpIcon className="h-7 w-7 text-green-600" />
-              </div>
-              <p className="text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">Konverteringar</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 leading-none mb-1">{analytics.totalConversions}</p>
-              <p className="text-xs font-medium text-green-600">{analytics.overallConversionRate.toFixed(1)}% rate</p>
-            </div>
-          </div>
-
-          {/* Total Commission */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5">
-            <div className="text-center">
-              <div className="flex justify-center mb-3">
-                <CurrencyDollarIcon className="h-7 w-7 text-yellow-600" />
-              </div>
-              <p className="text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">Total Provision</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 leading-none">{formatCurrency(analytics.totalRevenue)}</p>
-            </div>
-          </div>
-
-          {/* Unpaid Commission */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5">
-            <div className="text-center">
-              <div className="flex justify-center mb-3">
-                <CurrencyDollarIcon className="h-7 w-7 text-green-600" />
-              </div>
-              <p className="text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">Obetald<br/>Provision</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 leading-none">{formatCurrency(analytics.totalBalance)}</p>
-            </div>
-          </div>
-
-          {/* Active Affiliates */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5">
-            <div className="text-center">
-              <div className="flex justify-center mb-3">
-                <UserGroupIcon className="h-7 w-7 text-purple-600" />
-              </div>
-              <p className="text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">Aktiva Affiliates</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 leading-none">{analytics.activeAffiliates}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           {/* Traffic Sources */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Trafikkällor</h2>
-            <div className="space-y-4">
-              {Object.entries(analytics.trafficSources).map(([source, data]) => (
-                <div key={source} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <div className="flex items-center">
-                    <div className="mr-3 text-gray-600">{getSourceIcon(source)}</div>
-                    <div>
-                      <p className="font-semibold text-gray-900 dark:text-gray-100">{getSourceLabel(source)}</p>
-                      <p className="text-sm text-gray-600">{data.affiliates} affiliates</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-gray-900 dark:text-gray-100">{data.clicks} klick</p>
-                    <p className="text-sm text-gray-600">{data.conversions} konv.</p>
-                    <p className="text-sm font-medium text-green-600">{formatCurrency(data.revenue)}</p>
+          <CardSection title="Trafikkällor" bodyClassName="space-y-2.5">
+            {Object.entries(analytics.trafficSources).map(([source, data]) => (
+              <div key={source} className="flex items-center justify-between rounded-[var(--radius-admin-el)] border border-admin-border-soft bg-admin-surface-2 p-3">
+                <div className="flex items-center gap-3">
+                  <div className="text-admin-text-muted">{getSourceIcon(source)}</div>
+                  <div>
+                    <p className="text-[13px] font-medium text-admin-text">{getSourceLabel(source)}</p>
+                    <p className="text-[12px] text-admin-text-muted">{data.affiliates} affiliates</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="text-right">
+                  <p className="text-[13px] font-medium text-admin-text tabular-nums">{data.clicks} klick</p>
+                  <p className="text-[12px] text-admin-text-muted tabular-nums">{data.conversions} konv.</p>
+                  <p className="text-[12px] font-medium text-admin-success-text tabular-nums">{formatCurrency(data.revenue)}</p>
+                </div>
+              </div>
+            ))}
+          </CardSection>
 
           {/* Top Performers */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Topprestanda</h2>
+          <CardSection
+            title="Topprestanda"
+            actions={
               <select
                 value={selectedMetric}
                 onChange={(e) => setSelectedMetric(e.target.value)}
-                className="text-sm border border-gray-300 rounded-md px-3 py-1"
+                className="rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2.5 py-1 text-[12px] text-admin-text focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-admin-primary)]"
               >
                 <option value="revenue">Provision</option>
                 <option value="conversions">Konverteringar</option>
                 <option value="clicks">Klick</option>
                 <option value="rate">Konverteringsgrad</option>
               </select>
-            </div>
-            
-            <div className="space-y-3">
-              {analytics.topPerformers.slice(0, 5).map((affiliate, index) => (
-                <div key={affiliate.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <div className="flex items-center">
-                    <div className="shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                      {index + 1}
-                    </div>
-                    <div className="ml-3">
-                      <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{affiliate.name}</p>
-                      <div className="flex items-center text-xs text-gray-600">
-                        <div className="mr-1">{getSourceIcon(affiliate.trafficSource)}</div>
-                        <span>{getSourceLabel(affiliate.trafficSource)}</span>
-                      </div>
-                    </div>
+            }
+            bodyClassName="space-y-2"
+          >
+            {analytics.topPerformers.slice(0, 5).map((affiliate, index) => (
+              <div key={affiliate.id} className="flex items-center justify-between rounded-[var(--radius-admin-el)] border border-admin-border-soft bg-admin-surface-2 p-2.5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-admin-primary)] text-[12px] font-semibold text-white dark:text-admin-bg">
+                    {index + 1}
                   </div>
-                  <div className="text-right">
-                    {selectedMetric === 'revenue' && (
-                      <p className="font-bold text-green-600">{formatCurrency(affiliate.recentRevenue)}</p>
-                    )}
-                    {selectedMetric === 'conversions' && (
-                      <p className="font-bold text-blue-600">{affiliate.recentConversions}</p>
-                    )}
-                    {selectedMetric === 'clicks' && (
-                      <p className="font-bold text-purple-600">{affiliate.recentClicks}</p>
-                    )}
-                    {selectedMetric === 'rate' && (
-                      <p className="font-bold text-orange-600">{affiliate.conversionRate.toFixed(1)}%</p>
-                    )}
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {affiliate.recentClicks} klick → {affiliate.recentConversions} konv.
-                    </p>
+                  <div>
+                    <p className="text-[13px] font-medium text-admin-text">{affiliate.name}</p>
+                    <div className="flex items-center gap-1 text-[12px] text-admin-text-muted">
+                      <div>{getSourceIcon(affiliate.trafficSource)}</div>
+                      <span>{getSourceLabel(affiliate.trafficSource)}</span>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="text-right">
+                  {selectedMetric === 'revenue' && (
+                    <p className="text-[13px] font-semibold text-admin-success-text tabular-nums">{formatCurrency(affiliate.recentRevenue)}</p>
+                  )}
+                  {selectedMetric === 'conversions' && (
+                    <p className="text-[13px] font-semibold text-admin-info-text tabular-nums">{affiliate.recentConversions}</p>
+                  )}
+                  {selectedMetric === 'clicks' && (
+                    <p className="text-[13px] font-semibold text-admin-text tabular-nums">{affiliate.recentClicks}</p>
+                  )}
+                  {selectedMetric === 'rate' && (
+                    <p className="text-[13px] font-semibold text-admin-caution-text tabular-nums">{affiliate.conversionRate.toFixed(1)}%</p>
+                  )}
+                  <p className="text-[12px] text-admin-text-faint tabular-nums">
+                    {affiliate.recentClicks} klick → {affiliate.recentConversions} konv.
+                  </p>
+                </div>
+              </div>
+            ))}
+          </CardSection>
         </div>
 
         {/* Detailed Performance Table */}
-        <div className="mt-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Detaljerad Prestanda</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Affiliate
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Trafikkälla
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Klick
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Konverteringar
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Konv.grad
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Total Provision
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Obetalt
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Verifiera
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {analytics.topPerformers.map((affiliate) => (
-                  <tr key={affiliate.id} className="hover:bg-gray-50 dark:hover:bg-gray-600">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{affiliate.name}</div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">{affiliate.affiliateCode}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        {getSourceIcon(affiliate.trafficSource)} {getSourceLabel(affiliate.trafficSource)}
+        <div className="space-y-3">
+          <h3 className="text-[14px] font-semibold text-admin-text">Detaljerad Prestanda</h3>
+          <DataTable
+            columns={tableColumns}
+            rows={analytics.topPerformers}
+            rowKey={(a) => a.id}
+            empty="Inga affiliates att visa."
+          />
+
+          {/* Earnings verification panels (per affiliate, shown after Verify) */}
+          {analytics.topPerformers
+            .filter((affiliate) => verificationResults[affiliate.id])
+            .map((affiliate) => {
+              const vr = verificationResults[affiliate.id];
+              return (
+                <Card key={affiliate.id} className="p-4">
+                  <h4 className="mb-3 text-[14px] font-semibold text-admin-text">
+                    Earnings Verification Results · {affiliate.name} ({affiliate.affiliateCode})
+                  </h4>
+                  <div className="grid grid-cols-1 gap-4 text-[13px] md:grid-cols-3">
+                    <div>
+                      <p className="font-medium text-admin-text-muted">Current Stored:</p>
+                      <p className="text-[16px] font-semibold text-admin-text tabular-nums">
+                        {vr.currentStored?.toFixed(2)} SEK
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-admin-text-muted">Old Method (Total × Rate):</p>
+                      <p className="text-[16px] font-semibold text-admin-info-text tabular-nums">
+                        {vr.oldMethodTotal?.toFixed(2)} SEK
+                      </p>
+                      <p className="text-[12px] text-admin-text-faint tabular-nums">
+                        Diff: {vr.oldVsStoredDiff > 0 ? '+' : ''}
+                        {vr.oldVsStoredDiff?.toFixed(2)} SEK
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-admin-text-muted">New Method (Correct Order):</p>
+                      <p className="text-[16px] font-semibold text-admin-success-text tabular-nums">
+                        {vr.newMethodTotal?.toFixed(2)} SEK
+                      </p>
+                      <p className="text-[12px] text-admin-text-faint">
+                        Total → -Shipping → -Discount → -VAT → Commission
+                      </p>
+                      <p className="text-[12px] text-admin-text-faint tabular-nums">
+                        Diff: {vr.newVsStoredDiff > 0 ? '+' : ''}
+                        {vr.newVsStoredDiff?.toFixed(2)} SEK
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 border-t border-admin-border-soft pt-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[13px] text-admin-text-muted">
+                        Orders analyzed: {vr.orderCount}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                      {affiliate.recentClicks}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                      {affiliate.recentConversions}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`text-sm font-medium ${
-                        affiliate.conversionRate > 5 ? 'text-green-600' :
-                        affiliate.conversionRate > 2 ? 'text-yellow-600' : 'text-red-600'
-                      }`}>
-                        {affiliate.conversionRate.toFixed(1)}%
+                      <span className="text-[13px] font-medium text-admin-text">
+                        New vs Old Method:
+                        <span className={`ml-1 ${vr.newVsOldDiff >= 0 ? 'text-admin-success-text' : 'text-admin-critical-text'}`}>
+                          {vr.newVsOldDiff > 0 ? '+' : ''}
+                          {vr.newVsOldDiff?.toFixed(2)} SEK
+                        </span>
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
-                      {formatCurrency(affiliate.recentRevenue)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
-                      {formatCurrency(affiliate.currentBalance)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <button 
-                        onClick={() => verifyEarnings(affiliate.id)} 
-                        disabled={verifying}
-                        className="text-sm text-blue-600 hover:text-blue-900"
-                      >
-                        {verifying ? 'Verifying...' : 'Verify'}
-                      </button>
-                      {verificationResults[affiliate.id] && (
-                        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                          <h4 className="font-semibold text-blue-900 mb-2">Earnings Verification Results</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                            <div>
-                              <p className="font-medium text-gray-700">Current Stored:</p>
-                              <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                                {verificationResults[affiliate.id].currentStored?.toFixed(2)} SEK
-                              </p>
-                            </div>
-                            <div>
-                              <p className="font-medium text-gray-700">Old Method (Total × Rate):</p>
-                              <p className="text-lg font-bold text-blue-600">
-                                {verificationResults[affiliate.id].oldMethodTotal?.toFixed(2)} SEK
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Diff: {verificationResults[affiliate.id].oldVsStoredDiff > 0 ? '+' : ''}
-                                {verificationResults[affiliate.id].oldVsStoredDiff?.toFixed(2)} SEK
-                              </p>
-                            </div>
-                            <div>
-                              <p className="font-medium text-gray-700">New Method (Correct Order):</p>
-                              <p className="text-lg font-bold text-green-600">
-                                {verificationResults[affiliate.id].newMethodTotal?.toFixed(2)} SEK
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Total → -Shipping → -Discount → -VAT → Commission
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Diff: {verificationResults[affiliate.id].newVsStoredDiff > 0 ? '+' : ''}
-                                {verificationResults[affiliate.id].newVsStoredDiff?.toFixed(2)} SEK
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <div className="mt-3 pt-3 border-t border-blue-200">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-gray-600">
-                                Orders analyzed: {verificationResults[affiliate.id].orderCount}
-                              </span>
-                              <span className="text-sm font-medium">
-                                New vs Old Method: 
-                                <span className={`ml-1 ${verificationResults[affiliate.id].newVsOldDiff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                  {verificationResults[affiliate.id].newVsOldDiff > 0 ? '+' : ''}
-                                  {verificationResults[affiliate.id].newVsOldDiff?.toFixed(2)} SEK
-                                </span>
-                              </span>
-                            </div>
-                            
-                            {verificationResults[affiliate.id].orderDetails && verificationResults[affiliate.id].orderDetails.length > 0 && (
-                              <details className="mt-3">
-                                <summary className="cursor-pointer text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
-                                  Show Order Details (first 10)
-                                </summary>
-                                <div className="mt-2 max-h-60 overflow-y-auto">
-                                  <table className="w-full text-xs">
-                                    <thead>
-                                      <tr className="bg-gray-50 dark:bg-gray-700">
-                                        <th className="px-2 py-1 text-left">Order</th>
-                                        <th className="px-2 py-1 text-right">Total</th>
-                                        <th className="px-2 py-1 text-right">Shipping</th>
-                                        <th className="px-2 py-1 text-right">Discount</th>
-                                        <th className="px-2 py-1 text-right">Old Comm.</th>
-                                        <th className="px-2 py-1 text-right">New Comm.</th>
-                                        <th className="px-2 py-1 text-right">Diff</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {verificationResults[affiliate.id].orderDetails.map((order, idx) => (
-                                        <tr key={idx} className="border-t">
-                                          <td className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400">
-                                            {order.orderNumber || order.orderId?.slice(-6)}
-                                          </td>
-                                          <td className="px-2 py-1 text-right">{order.total?.toFixed(0)}</td>
-                                          <td className="px-2 py-1 text-right">{order.shipping?.toFixed(0)}</td>
-                                          <td className="px-2 py-1 text-right">{order.discountAmount?.toFixed(0)}</td>
-                                          <td className="px-2 py-1 text-right">{order.oldCommission?.toFixed(2)}</td>
-                                          <td className="px-2 py-1 text-right">{order.newCommission?.toFixed(2)}</td>
-                                          <td className={`px-2 py-1 text-right ${order.difference >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                            {order.difference > 0 ? '+' : ''}{order.difference?.toFixed(2)}
-                                          </td>
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </details>
-                            )}
-                          </div>
+                    </div>
+
+                    {vr.orderDetails && vr.orderDetails.length > 0 && (
+                      <details className="mt-3">
+                        <summary className="cursor-pointer text-[13px] text-admin-text-muted hover:text-admin-text">
+                          Show Order Details (first 10)
+                        </summary>
+                        <div className="mt-2 max-h-60 overflow-y-auto">
+                          <table className="w-full text-[12px]">
+                            <thead>
+                              <tr className="border-b border-admin-border-soft text-admin-text-muted">
+                                <th className="px-2 py-1 text-left font-medium">Order</th>
+                                <th className="px-2 py-1 text-right font-medium">Total</th>
+                                <th className="px-2 py-1 text-right font-medium">Shipping</th>
+                                <th className="px-2 py-1 text-right font-medium">Discount</th>
+                                <th className="px-2 py-1 text-right font-medium">Old Comm.</th>
+                                <th className="px-2 py-1 text-right font-medium">New Comm.</th>
+                                <th className="px-2 py-1 text-right font-medium">Diff</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {vr.orderDetails.map((order, idx) => (
+                                <tr key={idx} className="border-b border-admin-border-soft text-admin-text">
+                                  <td className="px-2 py-1 text-admin-text-muted">
+                                    {order.orderNumber || order.orderId?.slice(-6)}
+                                  </td>
+                                  <td className="px-2 py-1 text-right tabular-nums">{order.total?.toFixed(0)}</td>
+                                  <td className="px-2 py-1 text-right tabular-nums">{order.shipping?.toFixed(0)}</td>
+                                  <td className="px-2 py-1 text-right tabular-nums">{order.discountAmount?.toFixed(0)}</td>
+                                  <td className="px-2 py-1 text-right tabular-nums">{order.oldCommission?.toFixed(2)}</td>
+                                  <td className="px-2 py-1 text-right tabular-nums">{order.newCommission?.toFixed(2)}</td>
+                                  <td className={`px-2 py-1 text-right tabular-nums ${order.difference >= 0 ? 'text-admin-success-text' : 'text-admin-critical-text'}`}>
+                                    {order.difference > 0 ? '+' : ''}{order.difference?.toFixed(2)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      </details>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
         </div>
-      </div>
+      </Page>
     </AppLayout>
   );
 };

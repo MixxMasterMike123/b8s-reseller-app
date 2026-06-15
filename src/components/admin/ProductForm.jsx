@@ -373,10 +373,10 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
       <RightRail
         main={
           <>
-            {/* Title + SKU + Description */}
-            <CardSection title="Produkt" bodyClassName="space-y-4">
+            {/* Title + SKU + Description — Shopify groups title/description at the very top */}
+            <CardSection bodyClassName="space-y-4">
               <div>
-                <label className={labelCls}>Produktnamn</label>
+                <label className={labelCls}>Titel</label>
                 <input name="name" value={formData.name} onChange={handleInput} placeholder="t.ex. Gravad Lax" className={inputCls} />
               </div>
               <div>
@@ -445,6 +445,38 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
               </div>
             </CardSection>
 
+            {/* Category — Shopify places this in the main column under Media.
+                Same autocomplete + state as before (moved out of the rail). */}
+            <CardSection title="Kategori" bodyClassName="space-y-2">
+              <div className="relative">
+                <input
+                  value={categoryInput}
+                  onChange={onCategoryChange}
+                  onFocus={() => {
+                    if (availableCategories.length && !categoryInput.trim()) {
+                      setFilteredCategories(availableCategories);
+                      setShowCategorySuggestions(true);
+                    }
+                  }}
+                  onBlur={() => setTimeout(() => setShowCategorySuggestions(false), 200)}
+                  placeholder="Välj en produktkategori"
+                  className={inputCls}
+                />
+                {showCategorySuggestions && filteredCategories.length > 0 && (
+                  <ul className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface shadow-[var(--shadow-admin)]">
+                    {filteredCategories.map((g) => (
+                      <li key={g}>
+                        <button type="button" onMouseDown={() => pickCategory(g)} className="block w-full px-3 py-2 text-left text-[13px] text-admin-text hover:bg-admin-surface-2">
+                          {g}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className={helpCls}>Driver toppmenyn + /kategori-sidor.</p>
+              </div>
+            </CardSection>
+
             {/* Price */}
             <CardSection title="Pris" bodyClassName="space-y-3">
               <div className="max-w-xs">
@@ -457,51 +489,14 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
               </div>
             </CardSection>
 
-            {/* Variants */}
-            <CardSection
-              title="Varianter"
-              actions={
-                <label className="flex items-center gap-2 text-[13px] text-admin-text-muted">
-                  <input type="checkbox" checked={formData.hasVariants} onChange={(e) => toggleHasVariants(e.target.checked)} className={checkboxCls} />
-                  Storlek/färg
-                </label>
-              }
-              bodyClassName="space-y-3"
-            >
-              {formData.hasVariants ? (
-                <>
-                  {formData.variants.map((v, idx) => (
-                    <div key={idx} className="grid grid-cols-12 items-end gap-3 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface-2 p-3">
-                      <div className="col-span-12 sm:col-span-4">
-                        <label className={labelCls}>Variant (etikett)</label>
-                        <input value={v.label} onChange={(e) => updateVariant(idx, { label: e.target.value })} placeholder="t.ex. Small / Röd" className={inputCls} />
-                      </div>
-                      <div className="col-span-6 sm:col-span-3">
-                        <label className={labelCls}>SKU</label>
-                        <input value={v.sku} onChange={(e) => updateVariant(idx, { sku: e.target.value })} placeholder="t.ex. LAX-S" className={inputCls} />
-                      </div>
-                      <div className="col-span-6 sm:col-span-3">
-                        <label className={labelCls}>Pris (SEK)</label>
-                        <input type="number" min="0" step="0.01" value={v.price} onChange={(e) => updateVariant(idx, { price: parseFloat(e.target.value) || 0 })} className={inputCls} />
-                      </div>
-                      <div className="col-span-12 flex sm:col-span-2">
-                        <Button type="button" variant="plain" onClick={() => removeVariant(idx)} className="w-full text-admin-critical-dot">
-                          Ta bort
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                  <Button type="button" variant="plain" onClick={addVariant}>+ Lägg till variant</Button>
-                  <p className={helpCls}>
-                    Varje variant behöver minst ett SKU. Pris per variant (tomt = produktens pris). Den första bilden/galleriet delas av alla varianter.
-                  </p>
-                </>
-              ) : (
-                <p className="text-[13px] text-admin-text-muted">Den här produkten har inga varianter. Slå på för att lägga till storlek/färg.</p>
-              )}
+            {/* Inventory — POD: stock is not tracked. Mirrors Shopify's
+                "Inventory not tracked" card visually; no field is persisted. */}
+            <CardSection title="Lager" bodyClassName="space-y-1">
+              <p className="text-[13px] text-admin-text-muted">Lager spåras inte</p>
+              <p className={helpCls}>Försäljningen är obegränsad (print-on-demand) — inget lagersaldo dras.</p>
             </CardSection>
 
-            {/* Shipping + Weight */}
+            {/* Shipping + Weight — Shopify orders Shipping before Variants */}
             <CardSection title="Frakt" bodyClassName="space-y-4">
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 {[
@@ -552,6 +547,50 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
               <p className={helpCls}>Vikt påverkar frakten i kassan; viktbaserade nivåer beräknas automatiskt.</p>
             </CardSection>
 
+            {/* Variants */}
+            <CardSection
+              title="Varianter"
+              actions={
+                <label className="flex items-center gap-2 text-[13px] text-admin-text-muted">
+                  <input type="checkbox" checked={formData.hasVariants} onChange={(e) => toggleHasVariants(e.target.checked)} className={checkboxCls} />
+                  Storlek/färg
+                </label>
+              }
+              bodyClassName="space-y-3"
+            >
+              {formData.hasVariants ? (
+                <>
+                  {formData.variants.map((v, idx) => (
+                    <div key={idx} className="grid grid-cols-12 items-end gap-3 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface-2 p-3">
+                      <div className="col-span-12 sm:col-span-4">
+                        <label className={labelCls}>Variant (etikett)</label>
+                        <input value={v.label} onChange={(e) => updateVariant(idx, { label: e.target.value })} placeholder="t.ex. Small / Röd" className={inputCls} />
+                      </div>
+                      <div className="col-span-6 sm:col-span-3">
+                        <label className={labelCls}>SKU</label>
+                        <input value={v.sku} onChange={(e) => updateVariant(idx, { sku: e.target.value })} placeholder="t.ex. LAX-S" className={inputCls} />
+                      </div>
+                      <div className="col-span-6 sm:col-span-3">
+                        <label className={labelCls}>Pris (SEK)</label>
+                        <input type="number" min="0" step="0.01" value={v.price} onChange={(e) => updateVariant(idx, { price: parseFloat(e.target.value) || 0 })} className={inputCls} />
+                      </div>
+                      <div className="col-span-12 flex sm:col-span-2">
+                        <Button type="button" variant="plain" onClick={() => removeVariant(idx)} className="w-full text-admin-critical-dot">
+                          Ta bort
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  <Button type="button" variant="plain" onClick={addVariant}>+ Lägg till variant</Button>
+                  <p className={helpCls}>
+                    Varje variant behöver minst ett SKU. Pris per variant (tomt = produktens pris). Den första bilden/galleriet delas av alla varianter.
+                  </p>
+                </>
+              ) : (
+                <p className="text-[13px] text-admin-text-muted">Den här produkten har inga varianter. Slå på för att lägga till storlek/färg.</p>
+              )}
+            </CardSection>
+
             {/* Save bar */}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="secondary" onClick={onCancel} disabled={saving}>Avbryt</Button>
@@ -580,37 +619,8 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
               <p className={helpCls}>Avmarkera för att dölja produkten i webbshoppen utan att inaktivera den.</p>
             </CardSection>
 
-            {/* Organization — category + tags */}
+            {/* Organization — tags (category lives in the main column, Shopify-style) */}
             <CardSection title="Organisation" bodyClassName="space-y-4">
-              <div className="relative">
-                <label className={labelCls}>Kategori</label>
-                <input
-                  value={categoryInput}
-                  onChange={onCategoryChange}
-                  onFocus={() => {
-                    if (availableCategories.length && !categoryInput.trim()) {
-                      setFilteredCategories(availableCategories);
-                      setShowCategorySuggestions(true);
-                    }
-                  }}
-                  onBlur={() => setTimeout(() => setShowCategorySuggestions(false), 200)}
-                  placeholder="t.ex. Laxfiskar"
-                  className={inputCls}
-                />
-                {showCategorySuggestions && filteredCategories.length > 0 && (
-                  <ul className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface shadow-[var(--shadow-admin)]">
-                    {filteredCategories.map((g) => (
-                      <li key={g}>
-                        <button type="button" onMouseDown={() => pickCategory(g)} className="block w-full px-3 py-2 text-left text-[13px] text-admin-text hover:bg-admin-surface-2">
-                          {g}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <p className={helpCls}>Driver toppmenyn + /kategori-sidor.</p>
-              </div>
-
               <div className="relative">
                 <label className={labelCls}>Taggar</label>
                 <div className="flex flex-wrap items-center gap-1.5 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2 py-1.5">
