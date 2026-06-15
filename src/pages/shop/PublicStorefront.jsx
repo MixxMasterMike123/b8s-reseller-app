@@ -4,6 +4,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getProductImage } from '../../utils/productImages';
 import { getProductUrl, getShopSeoTitle, getShopSeoDescription, generateShopStructuredData } from '../../utils/productUrls';
+import { getAllProductGroups } from '../../utils/productGroups';
 import { translateColor } from '../../utils/colorTranslations';
 // Toast notifications removed - using AddedToCartModal for user feedback
 import { useCart } from '../../contexts/CartContext';
@@ -34,12 +35,18 @@ const PublicStorefront = () => {
     getTotalItems 
   } = useCart();
   const [products, setProducts] = useState([]);
+  const [productGroups, setProductGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [heroReview, setHeroReview] = useState(null);
+  // Active tag filter (single-tag). null = show all. Driven by the top-nav
+  // tag links (ShopNavigation) and the in-section chips.
+  const [activeTag, setActiveTag] = useState(null);
 
   useEffect(() => {
     loadProducts();
+    loadProductGroups();
     loadHeroReview();
+    setActiveTag(null); // reset the filter when the shop changes
   }, [currentLanguage, shopId]); // Reload when language or shop changes
 
   const loadHeroReview = async () => {
@@ -55,6 +62,19 @@ const PublicStorefront = () => {
       }
     } catch (err) {
       console.error('Error loading hero review:', err);
+    }
+  };
+
+  // Load the shop's product groups so the front page can collapse size/colour
+  // variants into a single card and pick each group's representative product
+  // (defaultProductId). Non-fatal: on failure we just don't collapse.
+  const loadProductGroups = async () => {
+    try {
+      const groups = await getAllProductGroups(shopId);
+      setProductGroups(Array.isArray(groups) ? groups : []);
+    } catch (err) {
+      console.error('Error loading product groups:', err);
+      setProductGroups([]);
     }
   };
 
@@ -180,6 +200,57 @@ const PublicStorefront = () => {
 
   const scrollToProducts = () => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
 
+  // ===== Tag + group/featured derivation (all client-side; products are
+  // already fully loaded into state). =====
+  const productTags = (p) => (Array.isArray(p.tags) ? p.tags : []);
+
+  // The shop's tag set for the top-nav links + chips. 'featured' is a reserved
+  // internal tag (it drives the featured grid) — not shown as a browse filter.
+  const allTags = Array.from(
+    new Set(products.flatMap(productTags))
+  ).filter((t) => t && t.toLowerCase() !== 'featured').sort();
+
+  // Featured grid: products tagged 'featured', newest first, capped at 4. The
+  // products query has no createdAt order, so sort here (desc) when present.
+  const featuredProducts = products
+    .filter((p) => productTags(p).some((t) => t.toLowerCase() === 'featured'))
+    .sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    })
+    .slice(0, 4);
+
+  // Apply the active tag filter to the products that feed the main grid.
+  const filteredProducts = activeTag
+    ? products.filter((p) => productTags(p).includes(activeTag))
+    : products;
+
+  // Collapse same-group products into ONE representative card; ungrouped
+  // products each get their own card. Representative = the group's
+  // defaultProductId if present in the (filtered) set, else the first.
+  // NOTE: a productGroups doc id IS the group NAME string (saveProductGroupContent
+  // writes doc(db,'productGroups', groupName)), so g.id keys the same space as a
+  // product's `group` field — the lookup below is correct.
+  const groupDefaults = {}; // groupName -> defaultProductId
+  productGroups.forEach((g) => { if (g.defaultProductId) groupDefaults[g.id] = g.defaultProductId; });
+
+  const displayCards = (() => {
+    const seenGroups = new Set();
+    const cards = [];
+    for (const p of filteredProducts) {
+      const group = (p.group || '').trim();
+      if (!group) { cards.push(p); continue; } // standalone product
+      if (seenGroups.has(group)) continue;     // group already represented
+      seenGroups.add(group);
+      // Prefer the configured default product for this group, if it's in the set.
+      const def = groupDefaults[group];
+      const rep = (def && filteredProducts.find((x) => x.id === def && (x.group || '').trim() === group)) || p;
+      cards.push(rep);
+    }
+    return cards;
+  })();
+
   return (
     <>
       <Helmet>
@@ -199,7 +270,15 @@ const PublicStorefront = () => {
       </Helmet>
       <SeoHreflang />
       <div className="min-h-screen bg-canvas font-body text-ink">
-        <ShopNavigation />
+        <ShopNavigation
+          tags={allTags}
+          activeTag={activeTag}
+          onSelectTag={(tag) => {
+            setActiveTag(tag);
+            // Jump to the grid so the filter result is visible.
+            setTimeout(() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' }), 0);
+          }}
+        />
 
         {/* ===== Bento hero (NORD, DESIGN.md §4) ===== */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
@@ -405,9 +484,37 @@ const PublicStorefront = () => {
           </section>
         )}
 
+        {/* ===== Featured ===== */}
+        {!loading && featuredProducts.length > 0 && (
+          <section id="featured" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 lg:pt-20">
+            <h2 className="font-display font-bold text-2xl lg:text-3xl tracking-tight text-ink mb-6">
+              {store.featuredTitle || 'Utvalt'}
+            </h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
+              {featuredProducts.map((product) => {
+                const pn = getContentValue(product.name);
+                const name = typeof pn === 'string' && pn ? pn : (product.group || 'Produkt');
+                const descRaw = getB2cProductDescription(product);
+                return (
+                  <NordProductCard
+                    key={`featured-${product.id}`}
+                    to={getProductUrl(product)}
+                    image={getB2cProductImage(product)}
+                    imageAlt={name}
+                    name={name}
+                    description={typeof descRaw === 'string' ? descRaw : ''}
+                    priceSek={product.b2cPrice || product.basePrice}
+                    ctaLabel={t('product_choose_button', 'Välj')}
+                  />
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {/* ===== Products ===== */}
         <section id="products" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
-          <div className="mb-10">
+          <div className="mb-6">
             <h2 className="font-display font-bold text-3xl lg:text-4xl tracking-tight text-ink">
               {store.productsTitle || 'Våra produkter'}
             </h2>
@@ -418,17 +525,38 @@ const PublicStorefront = () => {
             )}
           </div>
 
+          {/* Tag filter chips (mirror the top-nav tag links). 'Alla' clears. */}
+          {!loading && allTags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-8">
+              <button
+                onClick={() => setActiveTag(null)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${!activeTag ? 'bg-accent text-white' : 'bg-white text-ink-muted shadow-tile hover:text-ink'}`}
+              >
+                {t('filter_all', 'Alla')}
+              </button>
+              {allTags.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => setActiveTag(tag)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${activeTag === tag ? 'bg-accent text-white' : 'bg-white text-ink-muted shadow-tile hover:text-ink'}`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          )}
+
           {loading ? (
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-14 w-14 border-b-2 border-accent" />
             </div>
           ) : (
             <>
-              {/* One card per product (generic template). Variant selection
-                  (sizes/colors of the same item) happens on the product page,
-                  not by hiding cards. */}
+              {/* Group cards: same-group products collapse to one card (the
+                  group's representative); ungrouped products show their own.
+                  Variant (size/colour) selection happens on the product page. */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
-                {products.map((product) => {
+                {displayCards.map((product) => {
                   // 🚨 CRITICAL: never render an object — prevent React Error #31
                   const productName = getContentValue(product.name);
                   const name = typeof productName === 'string' && productName

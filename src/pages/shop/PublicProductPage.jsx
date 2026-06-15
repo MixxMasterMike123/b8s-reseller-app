@@ -309,6 +309,16 @@ const PublicProductPage = () => {
 
   const isMultipack = product?.group?.includes('multipack') || product?.group?.includes('3-pack');
 
+  // Only show the variant picker ("Välj.." + Storleksguide + buttons) when there
+  // is a REAL choice to make: a multipack (colour choice) OR variants that carry
+  // an actual size (not empty / not the placeholder "Standard"). A single product
+  // with no size set should show no picker at all (fixes the "8× Standard" bug).
+  const hasRealSizes = variants.some((v) => {
+    const s = (v.size || '').trim();
+    return s && s.toLowerCase() !== 'standard';
+  });
+  const showVariantPicker = isMultipack || hasRealSizes;
+
   return (
     <>
       <Helmet>
@@ -388,7 +398,8 @@ const PublicProductPage = () => {
 
           {/* Nike Mobile: Product details below images */}
           <div className="px-4 py-6 space-y-4">
-            {/* Size/Color Selection */}
+            {/* Size/Color Selection — only when there's a real variant choice */}
+            {showVariantPicker && (
             <div>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-base font-semibold text-ink">
@@ -400,7 +411,7 @@ const PublicProductPage = () => {
                   </button>
                 )}
               </div>
-              
+
               <div className="grid grid-cols-2 gap-2">
                 {variants.map((variant) => (
                   <Link
@@ -420,7 +431,8 @@ const PublicProductPage = () => {
                 ))}
               </div>
             </div>
-                
+            )}
+
             {/* Nike Mobile: Quantity Selector */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -545,7 +557,8 @@ const PublicProductPage = () => {
                   </div>
                 </div>
 
-                {/* Size/Color Selection */}
+                {/* Size/Color Selection — only when there's a real variant choice */}
+                {showVariantPicker && (
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-base font-semibold text-ink">
@@ -557,7 +570,7 @@ const PublicProductPage = () => {
                       </button>
                     )}
                   </div>
-                  
+
                   <div className="grid grid-cols-3 gap-2">
                     {variants.map((variant) => (
                       <Link
@@ -577,7 +590,8 @@ const PublicProductPage = () => {
                     ))}
                   </div>
                 </div>
-                    
+                )}
+
                 {/* Quantity Selector */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">

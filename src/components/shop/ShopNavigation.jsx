@@ -19,7 +19,9 @@ import { getCountryAwareUrl } from '../../utils/productUrls';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import { useShopId } from '../../contexts/ShopContext';
 
-const ShopNavigation = ({ breadcrumb }) => {
+// tags / activeTag / onSelectTag are optional — only the storefront home passes
+// them, to render tag links that filter the product grid. Other pages omit them.
+const ShopNavigation = ({ breadcrumb, tags = [], activeTag = null, onSelectTag }) => {
   const { cart } = useCart();
   const { t } = useTranslation();
   const store = useStoreSettings();
@@ -78,18 +80,39 @@ const ShopNavigation = ({ breadcrumb }) => {
             <img src={store.logoUrl} alt={store.shopName} className="h-8 w-auto" />
           </Link>
           
-          {/* Breadcrumb */}
-          <div className="hidden md:flex items-center space-x-2 text-sm text-ink-muted">
-            <Link to={getCountryAwareUrl('')} className="hover:text-ink transition-colors">
-              {t('nav_home', 'Hem')}
-            </Link>
-            {breadcrumb && (
-              <>
-                <span>/</span>
-                <span className="text-ink font-medium">{breadcrumb}</span>
-              </>
-            )}
-          </div>
+          {/* Center: tag links (storefront home) OR breadcrumb. Tag links
+              filter the product grid via onSelectTag (single tag). */}
+          {tags.length > 0 && onSelectTag ? (
+            <div className="hidden md:flex items-center gap-1 text-sm overflow-x-auto">
+              <button
+                onClick={() => onSelectTag(null)}
+                className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-colors ${!activeTag ? 'text-accent' : 'text-ink-muted hover:text-ink'}`}
+              >
+                {t('nav_all', 'Alla')}
+              </button>
+              {tags.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => onSelectTag(tag)}
+                  className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-colors ${activeTag === tag ? 'text-accent' : 'text-ink-muted hover:text-ink'}`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="hidden md:flex items-center space-x-2 text-sm text-ink-muted">
+              <Link to={getCountryAwareUrl('')} className="hover:text-ink transition-colors">
+                {t('nav_home', 'Hem')}
+              </Link>
+              {breadcrumb && (
+                <>
+                  <span>/</span>
+                  <span className="text-ink font-medium">{breadcrumb}</span>
+                </>
+              )}
+            </div>
+          )}
           
           {/* Right side icons */}
           <div className="flex items-center space-x-4">

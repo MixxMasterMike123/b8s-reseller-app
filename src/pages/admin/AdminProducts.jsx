@@ -30,6 +30,7 @@ const AdminProducts = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [availableGroups, setAvailableGroups] = useState([]);
+  const [availableTags, setAvailableTags] = useState([]);
 
   // Form state: null = list view; { product: null } = create; { product } = edit.
   const [editing, setEditing] = useState(null);
@@ -43,14 +44,17 @@ const AdminProducts = () => {
       const snap = await getDocs(query(collection(db, 'products'), where('shopId', '==', shopId)));
       const data = [];
       const groups = new Set();
+      const tags = new Set();
       snap.forEach((d) => {
         const p = { ...d.data(), id: d.id };
         data.push(p);
         if (p.group && p.group.trim()) groups.add(p.group.trim());
+        if (Array.isArray(p.tags)) p.tags.forEach((t) => t && t.trim() && tags.add(t.trim()));
       });
       data.sort((a, b) => productName(a.name).localeCompare(productName(b.name)));
       setProducts(data);
       setAvailableGroups(Array.from(groups).sort());
+      setAvailableTags(Array.from(tags).sort());
     } catch (err) {
       console.error('Error fetching products:', err);
       setError('Kunde inte ladda produkter');
@@ -147,6 +151,7 @@ const AdminProducts = () => {
             shopId={shopId}
             userUid={user?.uid || auth.currentUser?.uid || null}
             availableGroups={availableGroups}
+            availableTags={availableTags}
             onSaved={onSaved}
             onCancel={() => setEditing(null)}
           />

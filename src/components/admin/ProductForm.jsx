@@ -54,6 +54,7 @@ const emptyForm = () => ({
   size: '',
   color: '',
   group: '',
+  tags: [],
   price: 0,
   isActive: true,
   imageUrl: '',
@@ -85,6 +86,7 @@ const formFromProduct = (p) => ({
   size: p.size || '',
   color: p.color || '',
   group: p.group || '',
+  tags: Array.isArray(p.tags) ? p.tags : [],
   // Single price sourced from the consumer price (b2cPrice || basePrice).
   price: p.b2cPrice || p.basePrice || 0,
   isActive: p.isActive ?? true,
@@ -117,10 +119,11 @@ const formFromProduct = (p) => ({
  * @param {object|null} product   the product being edited, or null to create
  * @param {string} shopId         the active shop (tenancy)
  * @param {string[]} availableGroups  existing group names (autocomplete)
+ * @param {string[]} availableTags    existing tag names across the shop (autocomplete)
  * @param {() => void} onSaved     called after a successful save (parent reloads + closes)
  * @param {() => void} onCancel    close without saving
  */
-const ProductForm = ({ product, shopId, userUid = null, availableGroups = [], onSaved, onCancel }) => {
+const ProductForm = ({ product, shopId, userUid = null, availableGroups = [], availableTags = [], onSaved, onCancel }) => {
   const [formData, setFormData] = useState(() => (product ? formFromProduct(product) : emptyForm()));
   const [saving, setSaving] = useState(false);
 
@@ -143,6 +146,23 @@ const ProductForm = ({ product, shopId, userUid = null, availableGroups = [], on
   const [groupInput, setGroupInput] = useState(product?.group || '');
   const [showGroupSuggestions, setShowGroupSuggestions] = useState(false);
   const [filteredGroups, setFilteredGroups] = useState([]);
+
+  // Tags: a chip input with autocomplete. tags = filtering labels (cross-cutting,
+  // many products), distinct from `group` (size/colour variants of ONE product).
+  const [tagInput, setTagInput] = useState('');
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
+
+  const addTag = (raw) => {
+    const tag = (raw ?? tagInput).trim();
+    if (!tag) return;
+    if (!formData.tags.includes(tag)) setField('tags', [...formData.tags, tag]);
+    setTagInput('');
+    setShowTagSuggestions(false);
+  };
+  const removeTag = (tag) => setField('tags', formData.tags.filter((t) => t !== tag));
+  // Suggestions = shop tags not already on this product, matching the input.
+  const tagSuggestions = availableTags
+    .filter((t) => !formData.tags.includes(t) && (!tagInput.trim() || t.toLowerCase().includes(tagInput.toLowerCase())));
 
   // Revoke object URLs on unmount to avoid leaks.
   useEffect(() => {
@@ -258,6 +278,7 @@ const ProductForm = ({ product, shopId, userUid = null, availableGroups = [], on
         size: formData.size,
         color: formData.color,
         group: formData.group,
+        tags: formData.tags,
         b2cPrice: price,
         basePrice: price,               // keep in sync for the `b2cPrice || basePrice` fallback
         isActive: formData.isActive,
@@ -386,7 +407,53 @@ const ProductForm = ({ product, shopId, userUid = null, availableGroups = [], on
                 ))}
               </ul>
             )}
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Skriv för att se befintliga grupper eller skapa en ny.</p>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Storlekar/varianter av SAMMA produkt (visas som en kortgrupp).</p>
+          </div>
+
+          {/* Tags — cross-cutting filtering labels (top-menu filters on the
+              storefront). Distinct from Produktgrupp. */}
+          <div className="relative sm:col-span-2">
+            <label className={labelCls}>Taggar</label>
+            <div className="flex flex-wrap items-center gap-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-2">
+              {formData.tags.map((tag) => (
+                <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-blue-100 dark:bg-blue-900 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:text-blue-200">
+                  {tag}
+                  <button type="button" onClick={() => removeTag(tag)} className="text-blue-600 dark:text-blue-300 hover:text-blue-900" aria-label={`Ta bort ${tag}`}>×</button>
+                </span>
+              ))}
+              <input
+                value={tagInput}
+                onChange={(e) => { setTagInput(e.target.value); setShowTagSuggestions(true); }}
+                onFocus={() => setShowTagSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowTagSuggestions(false), 200)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(); }
+                  else if (e.key === 'Backspace' && !tagInput && formData.tags.length) {
+                    removeTag(formData.tags[formData.tags.length - 1]);
+                  }
+                }}
+                placeholder={formData.tags.length ? '' : 't.ex. Lax, Erbjudande, featured'}
+                className="flex-1 min-w-[8rem] bg-transparent text-sm text-gray-900 dark:text-gray-100 focus:outline-none"
+              />
+            </div>
+            {showTagSuggestions && tagSuggestions.length > 0 && (
+              <ul className="absolute z-10 mt-1 w-full max-h-48 overflow-auto rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-lg">
+                {tagSuggestions.map((tg) => (
+                  <li key={tg}>
+                    <button
+                      type="button"
+                      onMouseDown={() => addTag(tg)}
+                      className="block w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                    >
+                      {tg}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Enter eller komma för att lägga till. Taggen <span className="font-mono">featured</span> visar produkten i utvalt-rutan.
+            </p>
           </div>
 
           <div>
