@@ -27,10 +27,10 @@ export default function KpiStrip({ metrics = [], className = '' }) {
         const value = m.value === null || m.value === undefined ? PLACEHOLDER : m.value;
         return (
           <Card key={m.key || m.label || i} className="px-4 py-3">
-            <div className="text-xs font-medium text-admin-text-faint">{m.label}</div>
-            <div className="mt-1 text-2xl font-semibold text-admin-text tabular-nums">{value}</div>
+            <div className="text-[13px] font-medium text-admin-text-muted">{m.label}</div>
+            <div className="mt-1 text-[22px] font-semibold leading-7 text-admin-text tabular-nums">{value}</div>
             {m.sublabel && (
-              <div className="mt-0.5 text-xs text-admin-text-muted">{m.sublabel}</div>
+              <div className="mt-0.5 text-[12px] text-admin-text-muted">{m.sublabel}</div>
             )}
           </Card>
         );

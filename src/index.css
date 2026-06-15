@@ -57,26 +57,36 @@
   the storefront is the brand. These auto-generate Tailwind utilities
   (e.g. --color-admin-bg → bg-admin-bg, --color-admin-text → text-admin-text).
 
-  --color-admin-primary is the ONLY token that carries the per-shop accent.
-  StoreSettingsContext sets it on <html> at runtime from storeIdentity.accent
-  (same mechanism as --color-accent); it falls back to this @theme default.
-  Per design discipline, the accent appears only on primary buttons / active
-  nav / links / focus rings — never as a background wash.
+  VALUES MATCH SHOPIFY POLARIS EXACTLY (researched from polaris.shopify.com /
+  @shopify/polaris-tokens, 2026-06-15). Decision (Mikael): FULL Shopify — the
+  admin uses Polaris's neutral grayscale + near-black (#303030) primary; NO
+  per-shop accent in the admin (every shop's admin looks identical). So
+  --color-admin-primary is the constant Polaris brand fill, NOT the shop accent,
+  and StoreSettingsContext no longer overrides it.
 */
 @theme {
-  --color-admin-bg: #F1F1F1;          /* app canvas (cool light gray) */
-  --color-admin-surface: #FFFFFF;     /* cards / tables */
-  --color-admin-surface-2: #FAFAFB;   /* table header / subtle fill */
-  --color-admin-border: #E3E3E3;      /* hairline borders */
-  --color-admin-text: #1A1A1A;        /* primary text */
-  --color-admin-text-muted: #616161;  /* secondary text */
-  --color-admin-text-faint: #8A8A8A;  /* labels / meta */
-  --color-admin-primary: #0E5E63;     /* per-shop accent (runtime override on <html>) */
+  --color-admin-bg: #f1f1f1;          /* Polaris --p-color-bg (canvas) */
+  --color-admin-surface: #ffffff;     /* --p-color-bg-surface (cards/tables) */
+  --color-admin-surface-2: #f7f7f7;   /* --p-color-bg-surface-secondary (subtle fill) */
+  --color-admin-surface-3: #f1f1f1;   /* --p-color-bg-fill-secondary (hover gray) */
+  --color-admin-border: #e3e3e3;      /* --p-color-border (hairline) */
+  --color-admin-border-soft: #ebebeb; /* --p-color-border-secondary (row divider) */
+  --color-admin-text: #303030;        /* --p-color-text (primary) */
+  --color-admin-text-muted: #616161;  /* --p-color-text-secondary */
+  --color-admin-text-faint: #8a8a8a;  /* --p-color-icon-secondary (faint labels) */
+  --color-admin-primary: #303030;     /* --p-color-bg-fill-brand (near-black primary) */
+  --color-admin-primary-hover: #1a1a1a;
 
-  --radius-admin: 10px;               /* cards (calmer than the NORD 22px tile) */
-  --radius-admin-el: 8px;             /* inputs / pills */
+  /* Polaris border-radius scale: cards/buttons/badges = border-radius-200 = 8px,
+     small inputs = border-radius-100 = 4px. */
+  --radius-admin: 8px;
+  --radius-admin-el: 6px;
 
-  --shadow-admin: 0 1px 0 #0000000D, 0 1px 3px -1px #0000001A; /* flat */
+  /* Polaris admin body type: 13px / 20px line-height. */
+  --text-admin-body: 13px;
+  --leading-admin-body: 20px;
+
+  --shadow-admin: 0 1px 0 #0000000D, 0 1px 2px -1px #0000001A; /* flat */
 }
 
 /*
@@ -90,18 +100,22 @@
   @layer base — a bare top-level `.dark {}` rule gets tree-shaken from the
   generated CSS, silently disabling admin dark mode. @layer base is preserved.
 
-  --color-admin-primary is intentionally NOT overridden here — the per-shop
-  accent stays the shop accent in both light and dark.
+  In dark mode --color-admin-primary lightens so the near-black primary stays
+  visible on dark surfaces.
 */
 @layer base {
   .dark {
     --color-admin-bg: #0F1115;
     --color-admin-surface: #181B20;
     --color-admin-surface-2: #1F2329;
+    --color-admin-surface-3: #242A31;
     --color-admin-border: #2C313A;
+    --color-admin-border-soft: #262B33;
     --color-admin-text: #F2F3F5;
     --color-admin-text-muted: #A4ABB6;
     --color-admin-text-faint: #6F7783;
+    --color-admin-primary: #E3E3E3;
+    --color-admin-primary-hover: #ffffff;
     --shadow-admin: 0 1px 0 #00000040, 0 1px 3px -1px #00000066;
   }
 }

@@ -50,11 +50,12 @@ export default function DataTable({
   return (
     <Card className={`overflow-hidden ${className}`}>
       <div className="overflow-x-auto">
-        <table className="min-w-full text-sm">
+        <table className="min-w-full text-[13px] leading-5">
           <thead>
-            <tr className="border-b border-admin-border bg-admin-surface-2 text-left">
+            {/* Polaris IndexTable header: 12px / medium / #616161, NOT uppercase. */}
+            <tr className="border-b border-admin-border bg-admin-surface text-left">
               {selection && (
-                <th className="w-10 px-3 py-2.5">
+                <th className="w-10 pl-3 pr-1.5 py-2">
                   <input
                     type="checkbox"
                     aria-label="Markera alla"
@@ -67,10 +68,12 @@ export default function DataTable({
                   />
                 </th>
               )}
-              {columns.map((col) => (
+              {columns.map((col, ci) => (
                 <th
                   key={col.key}
-                  className={`px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-admin-text-faint ${alignClass(
+                  className={`px-1.5 py-2 text-[12px] font-medium text-admin-text-muted ${
+                    ci === 0 && !selection ? 'pl-3' : ''
+                  } ${ci === columns.length - 1 ? 'pr-3' : ''} ${alignClass(
                     col.align
                   )} ${col.width || ''} ${col.className || ''}`}
                 >
@@ -79,7 +82,7 @@ export default function DataTable({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-admin-border">
+          <tbody className="divide-y divide-admin-border-soft">
             {loading ? (
               <SkeletonRows columns={columns} hasSelection={!!selection} />
             ) : rows.length === 0 ? (
@@ -123,7 +126,7 @@ export default function DataTable({
                     } transition-colors`}
                   >
                     {selection && (
-                      <td className="w-10 px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                      <td className="w-10 pl-3 pr-1.5 py-2.5" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           aria-label="Markera rad"
@@ -133,10 +136,12 @@ export default function DataTable({
                         />
                       </td>
                     )}
-                    {columns.map((col) => (
+                    {columns.map((col, ci) => (
                       <td
                         key={col.key}
-                        className={`px-3 py-3 text-admin-text align-middle ${alignClass(col.align)} ${
+                        className={`px-1.5 py-2.5 text-admin-text align-middle ${
+                          ci === 0 && !selection ? 'pl-3' : ''
+                        } ${ci === columns.length - 1 ? 'pr-3' : ''} ${alignClass(col.align)} ${
                           col.className || ''
                         }`}
                       >

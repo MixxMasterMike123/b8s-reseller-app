@@ -10,7 +10,7 @@ import React from 'react';
 
 const CONTROL =
   'w-full rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface ' +
-  'px-3 py-2 text-sm text-admin-text placeholder:text-admin-text-faint ' +
+  'px-3 py-1.5 text-[13px] text-admin-text placeholder:text-admin-text-faint ' +
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-admin-primary)] ' +
   'disabled:opacity-60 disabled:cursor-not-allowed';
 
@@ -18,7 +18,7 @@ export function Field({ label, htmlFor, help, error, required, className = '', c
   return (
     <div className={className}>
       {label && (
-        <label htmlFor={htmlFor} className="mb-1 block text-sm font-medium text-admin-text">
+        <label htmlFor={htmlFor} className="mb-1 block text-[13px] font-medium text-admin-text">
           {label}
           {required && <span className="ml-0.5 text-red-600">*</span>}
         </label>

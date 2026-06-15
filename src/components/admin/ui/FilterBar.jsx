@@ -18,7 +18,7 @@ export function SegmentedTabs({ options = [], value, onChange, ariaLabel, classN
     <div
       role="radiogroup"
       aria-label={ariaLabel}
-      className={`inline-flex items-center rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface p-0.5 ${className}`}
+      className={`inline-flex items-center rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface-2 p-0.5 ${className}`}
     >
       {options.map((opt) => {
         const active = opt.value === value;
@@ -29,9 +29,9 @@ export function SegmentedTabs({ options = [], value, onChange, ariaLabel, classN
             role="radio"
             aria-checked={active}
             onClick={() => onChange?.(opt.value)}
-            className={`inline-flex items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`inline-flex items-center gap-1.5 rounded-[5px] px-3 py-1 text-[13px] font-medium transition-colors ${
               active
-                ? 'bg-admin-surface-2 text-admin-text shadow-[var(--shadow-admin)]'
+                ? 'bg-admin-surface text-admin-text shadow-[var(--shadow-admin)]'
                 : 'text-admin-text-muted hover:text-admin-text'
             }`}
           >
@@ -72,7 +72,7 @@ export function SearchInput({ value, onChange, placeholder = 'Sök…', classNam
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface py-2 pl-9 pr-3 text-sm text-admin-text placeholder:text-admin-text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-admin-primary)]"
+        className="w-full rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface py-1.5 pl-9 pr-3 text-[13px] text-admin-text placeholder:text-admin-text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-admin-primary)]"
       />
     </div>
   );

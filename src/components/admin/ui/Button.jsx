@@ -1,12 +1,15 @@
 import React from 'react';
 
 /**
- * Button — Admin Neutral button primitive.
+ * Button — Admin Neutral button primitive (Shopify Polaris metrics).
  *
- * Variants follow Shopify's admin grammar:
- *   - primary     filled with the per-shop accent (--color-admin-primary). The
- *                 ONLY place the accent appears as a fill (design discipline).
- *   - secondary   neutral surface + hairline border (the default action button)
+ * Polaris: medium button = 28px min-height, 6px/12px padding, 13px / medium
+ * (550→font-semibold-ish), 8px radius. Primary = near-black #303030 fill
+ * (--color-admin-primary) with white text (NO per-shop accent — full-Shopify
+ * decision). Secondary = white surface + #e3e3e3 border.
+ *
+ *   - primary     near-black fill (the main action)
+ *   - secondary   neutral surface + hairline border (default action)
  *   - plain       text-only, for low-emphasis / inline actions
  *   - destructive red, for delete/cancel
  *
@@ -16,25 +19,26 @@ import React from 'react';
 
 const BASE =
   'inline-flex items-center justify-center gap-1.5 font-medium rounded-[var(--radius-admin-el)] ' +
-  'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ' +
-  'focus-visible:ring-offset-[var(--color-admin-bg)] focus-visible:ring-[var(--color-admin-primary)] ' +
-  'disabled:opacity-50 disabled:cursor-not-allowed';
+  'text-[13px] leading-5 transition-colors focus:outline-none focus-visible:ring-2 ' +
+  'focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--color-admin-bg)] ' +
+  'focus-visible:ring-[var(--color-admin-primary)] disabled:opacity-50 disabled:cursor-not-allowed';
 
+// Heights match Polaris: micro 24, medium 28, large 32px.
 const SIZES = {
-  sm: 'px-2.5 py-1 text-xs',
-  md: 'px-3.5 py-2 text-sm',
-  lg: 'px-4 py-2.5 text-sm',
+  sm: 'min-h-[24px] px-2 py-1',
+  md: 'min-h-[28px] px-3 py-1.5',
+  lg: 'min-h-[32px] px-3 py-1.5',
 };
 
 const VARIANTS = {
   primary:
-    'text-white bg-[var(--color-admin-primary)] hover:brightness-110 active:brightness-95 shadow-[var(--shadow-admin)]',
+    'text-white bg-[var(--color-admin-primary)] hover:bg-[var(--color-admin-primary-hover)] dark:text-admin-bg',
   secondary:
     'text-admin-text bg-admin-surface border border-admin-border hover:bg-admin-surface-2 shadow-[var(--shadow-admin)]',
   plain:
     'text-admin-text-muted hover:text-admin-text hover:bg-admin-surface-2',
   destructive:
-    'text-white bg-red-600 hover:bg-red-700 active:bg-red-800 shadow-[var(--shadow-admin)]',
+    'text-white bg-[#d72c0d] hover:bg-[#b81d00] active:bg-[#a01a00]',
 };
 
 export default function Button({

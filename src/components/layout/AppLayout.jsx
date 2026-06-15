@@ -165,148 +165,148 @@ const AppLayout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-admin-bg text-admin-text [font-size:13px] [line-height:20px]">
       {/* P4.3: non-dismissible operator-impersonation banner (only renders when
           a session is active). Sits above the whole admin shell. */}
       <ImpersonationBanner />
-      {/* Desktop Sidebar */}
-      <div className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
-        <div className="flex grow flex-col overflow-y-auto border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xs">
-          <div className="flex shrink-0 items-center px-4 py-6">
+      {/* Desktop Sidebar — Admin Neutral: calm light surface, flat, single-line
+          nav items (descriptions dropped for the Shopify minimalist feel),
+          accent only on the active item. */}
+      <div className="hidden md:fixed md:inset-y-0 md:flex md:w-60 md:flex-col">
+        <div className="flex grow flex-col overflow-y-auto border-r border-admin-border bg-admin-surface">
+          <div className="flex shrink-0 items-center px-5 py-5">
             <Link to="/admin" className="flex items-center">
               <img
-                src="/images/JPH_logo.webp" 
+                src="/images/JPH_logo.webp"
                 alt="JPH Innovation AB Logo"
-                className="h-10 w-auto"
+                className="h-8 w-auto"
               />
             </Link>
           </div>
-          
-          {/* Navigation Links */}
-          <div className="mt-5 flex grow flex-col">
-            <nav className="flex-1 space-y-1 px-2 pb-4">
+
+          {/* Navigation Links — Polaris metrics: 40px item height, 20px icons,
+              8px icon→label gap, 13px medium label, active = subtle gray fill. */}
+          <div className="flex grow flex-col">
+            <nav className="flex-1 space-y-0.5 px-3 pb-4 text-[13px]">
               {/* Admin Navigation */}
-              {adminNavLinks.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.path}
-                  className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                    isActive(item.path)
-                      ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-200'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
-                  }`}
-                >
-                  <item.icon
-                    className={`mr-3 h-5 w-5 shrink-0 ${
-                      isActive(item.path) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400'
+              {adminNavLinks.map((item) => {
+                const active = isActive(item.path);
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.path}
+                    title={item.description}
+                    className={`group flex h-10 items-center gap-2 rounded-[var(--radius-admin-el)] px-3 font-medium transition-colors ${
+                      active
+                        ? 'bg-admin-surface-2 text-admin-text'
+                        : 'text-admin-text-muted hover:bg-admin-surface-2 hover:text-admin-text'
                     }`}
-                    aria-hidden="true"
-                  />
-                  <div>
-                    <div>{item.name}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{item.description}</div>
-                  </div>
-                </Link>
-              ))}
+                  >
+                    <item.icon
+                      className={`h-5 w-5 shrink-0 ${
+                        active ? 'text-admin-text' : 'text-admin-text-muted group-hover:text-admin-text'
+                      }`}
+                      aria-hidden="true"
+                    />
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
 
               {/* 🚂 WAGON SYSTEM: Auto-generated wagon menu items */}
               {wagonMenuItems.length > 0 && (
                 <>
-                  <div className="relative my-4">
-                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                      <div className="w-full border-t border-gray-300 dark:border-gray-600" />
-                    </div>
-                    <div className="relative flex justify-center">
-                      <span className="bg-white dark:bg-gray-800 px-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold flex items-center">
-                        <CpuChipIcon className="h-4 w-4 mr-1" />
-                        {t('nav.ai_wagons', 'AI Vagnar')}
-                      </span>
-                    </div>
+                  <div className="px-3 pt-5 pb-1">
+                    <span className="flex items-center text-[11px] font-semibold uppercase tracking-wider text-admin-text-faint">
+                      <CpuChipIcon className="mr-1.5 h-3.5 w-3.5" />
+                      {t('nav.ai_wagons', 'AI Vagnar')}
+                    </span>
                   </div>
 
-                  {wagonMenuItems.map((item) => (
-                    <Link
-                      key={`wagon-${item.wagonId}`}
-                      to={item.path}
-                      className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                        isActive(item.path)
-                          ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-200'
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
-                      }`}
-                    >
-                      <SparklesIcon className="mr-3 h-5 w-5 shrink-0 text-blue-500 dark:text-blue-400" />
-                      <div>
-                        <div>{item.title}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{item.description}</div>
-                      </div>
-                    </Link>
-                  ))}
+                  {wagonMenuItems.map((item) => {
+                    const active = isActive(item.path);
+                    return (
+                      <Link
+                        key={`wagon-${item.wagonId}`}
+                        to={item.path}
+                        title={item.description}
+                        className={`group flex h-10 items-center gap-2 rounded-[var(--radius-admin-el)] px-3 font-medium transition-colors ${
+                          active
+                            ? 'bg-admin-surface-2 text-admin-text'
+                            : 'text-admin-text-muted hover:bg-admin-surface-2 hover:text-admin-text'
+                        }`}
+                      >
+                        <SparklesIcon className="h-5 w-5 shrink-0 text-admin-text-muted group-hover:text-admin-text" />
+                        <span>{item.title}</span>
+                      </Link>
+                    );
+                  })}
                 </>
               )}
             </nav>
           </div>
-          
+
           {/* User Profile Section */}
-          <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-            
-            <div className="flex items-center">
+          <div className="border-t border-admin-border p-3">
+            <div className="flex items-center gap-3">
               <div className="shrink-0">
-                <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
-                  {userProfile?.companyName?.charAt(0)?.toUpperCase() || 
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-admin-primary)] text-sm font-semibold text-white">
+                  {userProfile?.companyName?.charAt(0)?.toUpperCase() ||
                    currentUser?.email?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
               </div>
-              <div className="ml-3 min-w-0 flex-1">
-                <div className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium text-admin-text">
                   {userProfile?.companyName || currentUser?.email}
                 </div>
-                <div className="truncate text-sm text-gray-500 dark:text-gray-400">
+                <div className="truncate text-xs text-admin-text-faint">
                   {currentUser?.email}
                 </div>
               </div>
               <button
                 onClick={handleLogout}
-                className="ml-auto shrink-0 bg-white dark:bg-gray-800 p-1 text-gray-400 dark:text-gray-500 rounded-full hover:text-gray-500 dark:hover:text-gray-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                title={t('nav.logout', 'Logga ut')}
+                className="ml-auto shrink-0 rounded-full p-1.5 text-admin-text-faint hover:bg-admin-surface-2 hover:text-admin-text focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-admin-primary)]"
               >
-                <ArrowRightOnRectangleIcon className="h-6 w-6" aria-hidden="true" />
+                <ArrowRightOnRectangleIcon className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
           </div>
         </div>
       </div>
-      
+
       {/* Desktop and Mobile header */}
-      <div className="md:pl-64 flex flex-col flex-1">
+      <div className="md:pl-60 flex flex-col flex-1">
         {/* Desktop header - hidden on mobile */}
-        <div className="sticky top-0 z-20 hidden md:flex h-16 shrink-0 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div className="sticky top-0 z-20 hidden md:flex h-14 shrink-0 bg-admin-surface border-b border-admin-border">
           <div className="flex flex-1 justify-end px-6">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-3">
               {/* Admin tools for desktop */}
               {isAdmin && (
                 <MentionNotifications />
               )}
-              
+
               {/* Dark Mode Toggle */}
               <DarkModeToggle />
-              
+
               {/* Language Switcher */}
               <LanguageSwitcher />
-              
-              <div className="flex items-center space-x-3">
+
+              <div className="flex items-center gap-2 pl-1">
                 <div className="shrink-0">
-                  <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
-                    {userProfile?.companyName?.charAt(0)?.toUpperCase() || 
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-admin-primary)] text-sm font-semibold text-white">
+                    {userProfile?.companyName?.charAt(0)?.toUpperCase() ||
                      currentUser?.email?.charAt(0)?.toUpperCase() || 'U'}
                   </div>
                 </div>
                 <div className="hidden lg:block">
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  <div className="text-sm font-medium text-admin-text">
                     {userProfile?.companyName || currentUser?.email}
                   </div>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="p-1 text-gray-400 hover:text-gray-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                  className="rounded-full p-1.5 text-admin-text-faint hover:bg-admin-surface-2 hover:text-admin-text focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-admin-primary)]"
                   title={t('nav.logout', 'Logga ut')}
                 >
                   <ArrowRightOnRectangleIcon className="h-5 w-5" aria-hidden="true" />
@@ -317,10 +317,10 @@ const AppLayout = ({ children }) => {
         </div>
         
         {/* Mobile header */}
-        <div className="sticky top-0 z-10 flex h-16 shrink-0 bg-white dark:bg-gray-800 shadow-sm md:hidden">
+        <div className="sticky top-0 z-10 flex h-14 shrink-0 bg-admin-surface border-b border-admin-border md:hidden">
           <button
             type="button"
-            className="border-r border-gray-200 px-4 text-gray-500 focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-blue-500 md:hidden"
+            className="border-r border-admin-border px-4 text-admin-text-muted hover:text-admin-text focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-admin-primary)] md:hidden"
             onClick={() => setIsMobileMenuOpen(true)}
           >
             <span className="sr-only">{t('nav.open_sidebar', 'Open sidebar')}</span>
@@ -331,7 +331,7 @@ const AppLayout = ({ children }) => {
               <div className="flex w-full items-center">
                 <Link to="/admin">
                   <img
-                    src="/images/JPH_logo.webp" 
+                    src="/images/JPH_logo.webp"
                     alt="JPH Innovation AB Logo"
                     className="h-8 w-auto"
                   />
@@ -353,7 +353,7 @@ const AppLayout = ({ children }) => {
               <div className="shrink-0">
                 <button
                   onClick={handleLogout}
-                  className="relative p-1 text-gray-400 hover:text-gray-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                  className="relative p-1.5 text-admin-text-faint hover:text-admin-text focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-admin-primary)]"
                 >
                   <span className="sr-only">{t('nav.logout', 'Logga ut')}</span>
                   <ArrowRightOnRectangleIcon className="h-6 w-6" aria-hidden="true" />
@@ -362,132 +362,130 @@ const AppLayout = ({ children }) => {
             </div>
           </div>
         </div>
-        
+
         {/* Mobile menu */}
         {isMobileMenuOpen && (
-          <div className="fixed inset-0 z-40 flex md:hidden">
-            <div 
-              className="fixed inset-0 bg-gray-600 bg-opacity-75" 
+          <div className="fixed inset-0 z-40 flex md:hidden text-[13px]">
+            <div
+              className="fixed inset-0 bg-black/40"
               aria-hidden="true"
               onClick={() => setIsMobileMenuOpen(false)}
             />
-            
-            <div className="relative flex w-full max-w-xs flex-1 flex-col bg-white pt-5 pb-4">
+
+            <div className="relative flex w-full max-w-xs flex-1 flex-col bg-admin-surface pt-5 pb-4">
               <div className="absolute top-0 right-0 -mr-12 pt-2">
                 <button
                   type="button"
-                  className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-white"
+                  className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <span className="sr-only">{t('nav.close_sidebar', 'Close sidebar')}</span>
                   <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
                 </button>
               </div>
-              
-              <div className="flex shrink-0 items-center px-4">
+
+              <div className="flex shrink-0 items-center px-5">
                 <Link to="/admin">
                   <img
-                    src="/images/JPH_logo.webp" 
+                    src="/images/JPH_logo.webp"
                     alt="JPH Innovation AB Logo"
                     className="h-8 w-auto"
                   />
                 </Link>
               </div>
               <div className="mt-5 h-0 flex-1 overflow-y-auto">
-                <nav className="space-y-1 px-2">
+                <nav className="space-y-0.5 px-3">
                   {/* Admin Navigation */}
-                  {adminNavLinks.map((item) => (
-                    <Link
-                      key={item.name}
-                      to={item.path}
-                      className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
-                        isActive(item.path)
-                          ? 'bg-blue-50 text-blue-700'
-                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <item.icon
-                        className={`mr-4 h-6 w-6 shrink-0 ${
-                          isActive(item.path) ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
+                  {adminNavLinks.map((item) => {
+                    const active = isActive(item.path);
+                    return (
+                      <Link
+                        key={item.name}
+                        to={item.path}
+                        className={`group flex h-11 items-center gap-2 rounded-[var(--radius-admin-el)] px-3 font-medium ${
+                          active
+                            ? 'bg-admin-surface-2 text-admin-text'
+                            : 'text-admin-text-muted hover:bg-admin-surface-2 hover:text-admin-text'
                         }`}
-                        aria-hidden="true"
-                      />
-                      <div>
-                        <div>{item.name}</div>
-                        <div className="text-xs text-gray-500">{item.description}</div>
-                      </div>
-                    </Link>
-                  ))}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <item.icon
+                          className={`h-5 w-5 shrink-0 ${
+                            active ? 'text-admin-text' : 'text-admin-text-muted group-hover:text-admin-text'
+                          }`}
+                          aria-hidden="true"
+                        />
+                        <span>{item.name}</span>
+                      </Link>
+                    );
+                  })}
 
                   {/* 🚂 WAGON SYSTEM: Auto-generated wagon menu items */}
                   {wagonMenuItems.length > 0 && (
                     <>
-                      <div className="relative my-4">
-                        <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                          <div className="w-full border-t border-gray-300" />
-                        </div>
-                        <div className="relative flex justify-center">
-                          <span className="bg-white px-2 text-xs text-gray-500 uppercase tracking-wider font-semibold flex items-center">
-                            <CpuChipIcon className="h-4 w-4 mr-1" />
-                            {t('nav.ai_wagons', 'AI Vagnar')}
-                          </span>
-                        </div>
+                      <div className="px-3 pt-5 pb-1">
+                        <span className="flex items-center text-[11px] font-semibold uppercase tracking-wider text-admin-text-faint">
+                          <CpuChipIcon className="mr-1.5 h-3.5 w-3.5" />
+                          {t('nav.ai_wagons', 'AI Vagnar')}
+                        </span>
                       </div>
 
-                      {wagonMenuItems.map((item) => (
-                        <Link
-                          key={`wagon-${item.wagonId}`}
-                          to={item.path}
-                          className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
-                            isActive(item.path)
-                              ? 'bg-blue-50 text-blue-700'
-                              : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                          }`}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          <SparklesIcon className="mr-4 h-6 w-6 shrink-0 text-blue-500" />
-                          <div>
-                            <div>{item.title}</div>
-                            <div className="text-xs text-gray-500">{item.description}</div>
-                          </div>
-                        </Link>
-                      ))}
+                      {wagonMenuItems.map((item) => {
+                        const active = isActive(item.path);
+                        return (
+                          <Link
+                            key={`wagon-${item.wagonId}`}
+                            to={item.path}
+                            className={`group flex h-11 items-center gap-2 rounded-[var(--radius-admin-el)] px-3 font-medium ${
+                              active
+                                ? 'bg-admin-surface-2 text-admin-text'
+                                : 'text-admin-text-muted hover:bg-admin-surface-2 hover:text-admin-text'
+                            }`}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            <SparklesIcon className="h-5 w-5 shrink-0 text-admin-text-muted group-hover:text-admin-text" />
+                            <span>{item.title}</span>
+                          </Link>
+                        );
+                      })}
                     </>
                   )}
                 </nav>
               </div>
-              <div className="border-t border-gray-200 p-4">
-                <div className="flex items-center">
+              <div className="border-t border-admin-border p-3">
+                <div className="flex items-center gap-3">
                   <div className="shrink-0">
-                    <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
-                      {userProfile?.companyName?.charAt(0)?.toUpperCase() || 
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-admin-primary)] text-sm font-semibold text-white">
+                      {userProfile?.companyName?.charAt(0)?.toUpperCase() ||
                        currentUser?.email?.charAt(0)?.toUpperCase() || 'U'}
                     </div>
                   </div>
-                  <div className="ml-3 min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-gray-900">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-admin-text">
                       {userProfile?.companyName || currentUser?.email}
                     </div>
-                    <div className="truncate text-sm text-gray-500">
+                    <div className="truncate text-xs text-admin-text-faint">
                       {currentUser?.email}
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            
+
             <div className="w-14 shrink-0" aria-hidden="true">
               {/* Dummy element to force sidebar to shrink to fit close icon */}
             </div>
           </div>
         )}
-        
+
+        {/* Canvas + ONE shared content container. The <Page> primitive adds the
+            page header + vertical rhythm but NOT its own max-width/centering, so
+            redesigned pages aren't double-boxed; not-yet-redesigned pages still
+            get this container for width + padding. Polaris uses a wide content
+            column on a light canvas. */}
         <main className="flex-1">
-          <div className="py-6">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
-              {children}
-            </div>
+          <div className="mx-auto max-w-[1200px] px-4 py-5 sm:px-6">
+            {children}
           </div>
         </main>
       </div>

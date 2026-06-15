@@ -32,7 +32,7 @@ export function Card({ className = '', padded = false, children, ...rest }) {
 export function CardSection({ title, actions, bare = false, className = '', bodyClassName = '', children }) {
   const header = (title || actions) && (
     <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-admin-border">
-      {title && <h3 className="text-sm font-semibold text-admin-text">{title}</h3>}
+      {title && <h3 className="text-[14px] font-semibold text-admin-text">{title}</h3>}
       {actions && <div className="flex items-center gap-2">{actions}</div>}
     </div>
   );

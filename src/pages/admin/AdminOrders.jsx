@@ -539,7 +539,7 @@ const AdminOrders = () => {
 
   return (
     <AppLayout>
-      <Page title="Ordrar" width="wide" actions={headerActions}>
+      <Page title="Ordrar" actions={headerActions}>
         <div className="space-y-5">
           <KpiStrip metrics={kpis} />
 

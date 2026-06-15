@@ -57,16 +57,12 @@ export function StoreSettingsProvider({ children }) {
     };
   }, [shopId]);
 
-  // Per-shop accent token. Both the NORD storefront (--color-accent) and the
-  // Admin Neutral system (--color-admin-primary) read the SAME shop accent;
-  // the inline value on <html> wins over the static @theme defaults, so the
-  // accent follows shop config across both surfaces. (Admin uses the accent
-  // only on primary buttons / active nav / links / focus — see
-  // docs/ADMIN_REDESIGN_PLAN.md §3.1.)
+  // Per-shop accent token for the NORD STOREFRONT only (--color-accent). The
+  // admin (--color-admin-primary) does NOT use the shop accent — per the
+  // "full Shopify" admin decision it stays Polaris near-black for every shop.
   useEffect(() => {
     if (settings.accent) {
       document.documentElement.style.setProperty('--color-accent', settings.accent);
-      document.documentElement.style.setProperty('--color-admin-primary', settings.accent);
     }
   }, [settings.accent]);
 

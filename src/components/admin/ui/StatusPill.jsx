@@ -23,14 +23,17 @@ import React from 'react';
  * pass a raw status string instead of choosing a tone by hand.
  */
 
+// Polaris Badge tone colors (exact hex from polaris-tokens). Light surfaces +
+// dark text; subdued dark-mode variants. success/positive both green to keep
+// the order-status meaning (shipped vs delivered) without a 2nd green ramp.
 const TONE_CLASSES = {
-  success: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-  positive: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
-  info: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
-  warning: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
-  attention: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300',
-  danger: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
-  neutral: 'bg-gray-100 text-gray-700 dark:bg-gray-700/60 dark:text-gray-300',
+  success: 'bg-[#cdfedc] text-[#014b40] dark:bg-green-900/40 dark:text-green-200',
+  positive: 'bg-[#aee9d1] text-[#003d2e] dark:bg-emerald-900/50 dark:text-emerald-200',
+  info: 'bg-[#eaf4ff] text-[#003a5a] dark:bg-blue-900/40 dark:text-blue-200',
+  warning: 'bg-[#fff1db] text-[#5e4200] dark:bg-yellow-900/40 dark:text-yellow-200',
+  attention: 'bg-[#ffd9a8] text-[#5e3b00] dark:bg-orange-900/40 dark:text-orange-200',
+  danger: 'bg-[#fee8eb] text-[#8e0b21] dark:bg-red-900/40 dark:text-red-200',
+  neutral: 'bg-[#e3e3e3] text-[#414141] dark:bg-gray-700/70 dark:text-gray-200',
 };
 
 // Order lifecycle status → tone. EXACTLY preserves the existing color meaning
@@ -66,9 +69,10 @@ export function toneForOrderStatus(status) {
   return ORDER_STATUS_TONE[status] || 'neutral';
 }
 
+// Polaris Badge: padding 2px/8px, font 12px / medium, radius 8px (border-radius-200).
 const SIZE_CLASSES = {
-  sm: 'px-2 py-0.5 text-[11px]',
-  md: 'px-2.5 py-1 text-xs',
+  sm: 'px-1.5 py-0.5 text-[11px]',
+  md: 'px-2 py-0.5 text-[12px]',
 };
 
 /**
@@ -83,7 +87,7 @@ export default function StatusPill({ tone = 'neutral', size = 'md', dot = false,
   const sizeClass = SIZE_CLASSES[size] || SIZE_CLASSES.md;
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full font-medium whitespace-nowrap ${toneClass} ${sizeClass} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-[var(--radius-admin-el)] font-medium whitespace-nowrap ${toneClass} ${sizeClass} ${className}`}
     >
       {dot && <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" aria-hidden="true" />}
       {children}
