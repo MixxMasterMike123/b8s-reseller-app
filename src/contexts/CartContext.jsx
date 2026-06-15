@@ -218,9 +218,9 @@ export const CartProvider = ({ children }) => {
         specificRegionData: firstProduct?.shipping?.[shippingRegion],
         baseShippingCost: baseShippingCost
       },
-      allCartItems: cart.items.map(item => ({ 
-        name: item.name, 
-        id: item.id,
+      allCartItems: cart.items.map(item => ({
+        name: item.name,
+        id: item.lineId,
         weight: item.weight?.value || 10,
         quantity: item.quantity,
         hasShippingData: !!item.shipping,
@@ -409,87 +409,59 @@ export const CartProvider = ({ children }) => {
     return getProductImage(product); // Pass the product object to use color field
   };
 
-  // Add item to cart
-  const addToCart = (product, quantity = 1) => {
+  // Add item to cart. Product model v2: an optional `variant` ({sku,label,price})
+  // selected on the product page. The line item carries the product id PLUS the
+  // chosen variant's sku/label/price; the dedup key is productId + variantSku so
+  // two variants of the same product are separate lines. The server reprices from
+  // the parent product doc (variant resolved by sku), so price here is display.
+  const addToCart = (product, quantity = 1, variant = null) => {
+    const variantSku = variant?.sku || null;
+    const lineId = `${product.id}::${variantSku || ''}`;
+    const unitPrice = (variant && (variant.price ?? null) !== null)
+      ? variant.price
+      : (product.b2cPrice || product.basePrice);
+
+    const buildItem = (qty) => ({
+      lineId,
+      productId: product.id,
+      variantSku,
+      label: variant?.label || null,
+      name: product.name,
+      price: unitPrice,
+      image: variant?.image || getB2cProductImage(product),
+      sku: variant?.sku || product.sku,
+      weight: product.weight,       // shipping calc (product-level)
+      shipping: product.shipping,   // shipping calc (product-level)
+      quantity: qty,
+    });
+
     setCart(prevCart => {
-      const existingItemIndex = prevCart.items.findIndex(
-        item => item.id === product.id
-      );
-
+      const idx = prevCart.items.findIndex((item) => (item.lineId || `${item.productId || item.id}::${item.variantSku || ''}`) === lineId);
       const newItems = [...prevCart.items];
-      let addedItem = null;
+      let addedItem;
 
-      if (existingItemIndex > -1) {
-        // Update quantity and refresh data if item exists
-        const existingItem = newItems[existingItemIndex];
-        newItems[existingItemIndex] = {
-          // Overwrite with fresh product data to prevent stale fields
-          id: product.id,
-          name: product.name,
-          price: product.b2cPrice || product.basePrice,
-          image: getB2cProductImage(product),
-          sku: product.sku,
-          color: product.color || null,  // Use actual product.color field from database
-          size: product.size || null,    // Use actual product.size field from database
-          weight: product.weight, // Include weight for shipping calculations
-          shipping: product.shipping, // Include shipping information
-          // And update the quantity
-          quantity: existingItem.quantity + quantity
-        };
-        addedItem = {
-          ...newItems[existingItemIndex],
-          quantity: quantity, // Show only the quantity that was just added
-          formattedPrice: `${product.b2cPrice || product.basePrice} kr`
-        };
+      if (idx > -1) {
+        const merged = buildItem(newItems[idx].quantity + quantity);
+        newItems[idx] = merged;
+        addedItem = { ...merged, quantity, formattedPrice: `${unitPrice} kr` };
       } else {
-        // DEBUG: Log the product structure to see multilingual objects
-        console.log('🔍 CartContext - Adding product to cart:', {
-          id: product.id,
-          name: product.name,
-          color: product.color,
-          size: product.size,
-          colorType: typeof product.color,
-          sizeType: typeof product.size
-        });
-        
-        // Add new item - CRITICAL: Use actual product database fields for color and size
-        const newItem = {
-          id: product.id,
-          name: product.name,
-          price: product.b2cPrice || product.basePrice,
-          image: getB2cProductImage(product),
-          sku: product.sku,
-          color: product.color || null,  // Use actual product.color field from database
-          size: product.size || null,    // Use actual product.size field from database
-          weight: product.weight, // Include weight for shipping calculations
-          shipping: product.shipping, // Include shipping information
-          quantity
-        };
-        newItems.push(newItem);
-        addedItem = {
-          ...newItem,
-          formattedPrice: `${product.b2cPrice || product.basePrice} kr`
-        };
+        const item = buildItem(quantity);
+        newItems.push(item);
+        addedItem = { ...item, formattedPrice: `${unitPrice} kr` };
       }
 
-      // Show the "Added to Cart" modal
-      setTimeout(() => {
-        showAddedToCartModal(addedItem);
-      }, 100); // Small delay to ensure state is updated
-
-      return {
-        ...prevCart,
-        items: newItems
-      };
+      setTimeout(() => showAddedToCartModal(addedItem), 100);
+      return { ...prevCart, items: newItems };
     });
   };
 
   // Update item quantity
-  const updateQuantity = (productId, newQuantity) => {
+  // Cart items are identified by lineId (productId::variantSku).
+  const updateQuantity = (lineId, newQuantity) => {
     setCart(prevCart => ({
       ...prevCart,
       items: prevCart.items.map(item =>
-        item.id === productId
+        item.lineId === lineId
           ? { ...item, quantity: Math.max(0, newQuantity) }
           : item
       ).filter(item => item.quantity > 0) // Remove items with quantity 0
@@ -497,12 +469,10 @@ export const CartProvider = ({ children }) => {
   };
 
   // Remove item from cart
-  const removeFromCart = (productId) => {
+  const removeFromCart = (lineId) => {
     setCart(prevCart => ({
       ...prevCart,
-      items: prevCart.items.filter(
-        item => !(item.id === productId)
-      )
+      items: prevCart.items.filter(item => item.lineId !== lineId)
     }));
   };
 

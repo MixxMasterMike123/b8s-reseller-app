@@ -856,7 +856,7 @@ const Checkout = () => {
                   {cart.items.map((item) => {
                     const itemName = getContentValue(item.name);
                     return (
-                      <div key={`${item.id}-${item.size}`} className="flex items-center justify-between py-2">
+                      <div key={item.lineId} className="flex items-center justify-between py-2">
                         <div className="flex items-center">
                           <div className="relative">
                             <img src={item.image} alt={itemName} className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-el bg-canvas" />
@@ -866,7 +866,7 @@ const Checkout = () => {
                           </div>
                           <div className="ml-3 sm:ml-4">
                             <p className="font-semibold text-sm sm:text-base text-ink">{itemName}</p>
-                            {item.size && <p className="text-xs sm:text-sm text-ink-muted">{t('size_label', 'Storlek: {{size}}', { size: item.size })}</p>}
+                            {item.label && <p className="text-xs sm:text-sm text-ink-muted">{item.label}</p>}
                           </div>
                         </div>
                         <p className="font-semibold text-sm sm:text-base">

@@ -122,11 +122,8 @@ const MobileNikeContent = ({ addedItem, onClose, t, getTotalItems, getContentVal
           </h4>
           
           <div className="space-y-1 text-sm text-gray-600">
-            {addedItem.color && (
-              <p>{getContentValue(addedItem.color)}</p>
-            )}
-            {addedItem.size && (
-              <p>Size {getContentValue(addedItem.size)}</p>
+            {addedItem.label && (
+              <p>{addedItem.label}</p>
             )}
             <p>Quantity {addedItem.quantity}</p>
           </div>
@@ -195,11 +192,8 @@ const DesktopNikeContent = ({ addedItem, onClose, t, getTotalItems, getContentVa
           </h4>
           
           <div className="space-y-1 text-sm text-gray-600">
-            {addedItem.color && (
-              <p>{getContentValue(addedItem.color)}</p>
-            )}
-            {addedItem.size && (
-              <p>Size {getContentValue(addedItem.size)}</p>
+            {addedItem.label && (
+              <p>{addedItem.label}</p>
             )}
             <p>Quantity {addedItem.quantity}</p>
           </div>

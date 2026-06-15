@@ -25,36 +25,53 @@ function getShippingRegion(country: string): string {
 }
 
 async function computeOrderTotalsSek(
-  cartItems: Array<{ id: string; quantity: number }>,
+  cartItems: Array<{ productId?: string; id?: string; variantSku?: string | null; quantity: number }>,
   shippingCountry: string,
   discountCode: string | undefined,
   shopId: string,
   deliveryMethod: string
 ): Promise<{ subtotal: number; discountAmount: number; discountPercentage: number; shipping: number; vat: number; total: number; serverPrices: Record<string, number> }> {
-  // Load every product server-side; reject unknown or inactive products
+  // Product model v2: line items reference the PARENT product by productId plus
+  // an optional variantSku. We load the parent doc and resolve the variant's
+  // price from the embedded variants array — never trusting the client price.
   const loaded = await Promise.all(cartItems.map(async (item) => {
+    const productId = item.productId || item.id; // tolerate either key
     const quantity = Math.floor(Number(item.quantity));
-    if (!item.id || !Number.isFinite(quantity) || quantity < 1 || quantity > 1000) {
-      throw new Error(`Invalid cart item: ${item.id}`);
+    if (!productId || !Number.isFinite(quantity) || quantity < 1 || quantity > 1000) {
+      throw new Error(`Invalid cart item: ${productId}`);
     }
-    const snap = await db.collection('products').doc(item.id).get();
+    const snap = await db.collection('products').doc(productId).get();
     if (!snap.exists) {
-      throw new Error(`Unknown product: ${item.id}`);
+      throw new Error(`Unknown product: ${productId}`);
     }
     const product = snap.data() as any;
     if (product.isActive === false) {
-      throw new Error(`Product not available: ${item.id}`);
+      throw new Error(`Product not available: ${productId}`);
     }
-    const price = product.b2cPrice || product.basePrice || 0;
+
+    // Resolve price: a chosen variant's price (matched by sku) wins, else the
+    // product price. A variantSku that doesn't match any variant is rejected.
+    let price = product.b2cPrice || product.basePrice || 0;
+    const variantSku = item.variantSku || null;
+    if (variantSku) {
+      const variant = Array.isArray(product.variants)
+        ? product.variants.find((v: any) => v && v.sku === variantSku)
+        : null;
+      if (!variant) {
+        throw new Error(`Unknown variant ${variantSku} for product ${productId}`);
+      }
+      price = (variant.price ?? null) !== null ? variant.price : price;
+    }
     if (!price || price <= 0) {
-      throw new Error(`Product has no valid price: ${item.id}`);
+      throw new Error(`Product has no valid price: ${productId}`);
     }
-    return { id: item.id, quantity, price, product };
+    const lineKey = `${productId}::${variantSku || ''}`;
+    return { lineKey, productId, variantSku, quantity, price, product };
   }));
 
   const serverPrices: Record<string, number> = {};
-  for (const { id, price } of loaded) {
-    serverPrices[id] = price;
+  for (const { lineKey, price } of loaded) {
+    serverPrices[lineKey] = price;
   }
 
   const subtotal = loaded.reduce((sum, { price, quantity }) => sum + price * quantity, 0);
@@ -105,13 +122,14 @@ interface CreatePaymentIntentRequest {
   b2cCustomerAuthId?: string; // Firebase Auth uid for order linkage
   shopId?: string; // Tenant id — written into metadata; webhook stamps it on the order
   cartItems: Array<{
-    id: string;
+    productId?: string;      // v2: parent product id
+    id?: string;             // legacy fallback
+    variantSku?: string | null; // v2: chosen variant sku (null = no variant)
+    label?: string;          // v2: variant label snapshot
     name: string | { 'sv-SE'?: string; 'en-GB'?: string; 'en-US'?: string; [key: string]: string | undefined };
     price: number;
     quantity: number;
     sku: string;
-    color?: string; // Product color
-    size?: string;  // Product size
     image?: string; // Product image URL
   }>;
   customerInfo: {
@@ -345,19 +363,25 @@ export const createPaymentIntentV2 = onRequest(
             
             // Store complete item details as JSON (within Stripe limits).
             // Prices come from the server-side computation, not the client.
-            itemDetails: JSON.stringify(cartItems.map(item => ({
-              id: item.id,
-              sku: item.sku,
-              name: typeof item.name === 'string' ? item.name : item.name?.['sv-SE'] || item.name?.['en-US'] || 'Product',
-              price: totals.serverPrices[item.id] ?? item.price,
-              quantity: item.quantity,
-              color: item.color || '',
-              size: item.size || '',
-              image: item.image || ''
-            }))),
-            
+            // v2: productId + variantSku + label snapshot.
+            itemDetails: JSON.stringify(cartItems.map(item => {
+              const productId = (item as any).productId || (item as any).id;
+              const variantSku = (item as any).variantSku || '';
+              const lineKey = `${productId}::${variantSku}`;
+              return {
+                productId,
+                variantSku,
+                sku: item.sku,
+                name: typeof item.name === 'string' ? item.name : item.name?.['sv-SE'] || item.name?.['en-US'] || 'Product',
+                label: (item as any).label || '',
+                price: totals.serverPrices[lineKey] ?? item.price,
+                quantity: item.quantity,
+                image: item.image || ''
+              };
+            })),
+
             // Legacy compatibility (keep existing fields)
-            itemIds: cartItems.map(item => item.id.substring(0, 8)).join(','),
+            itemIds: cartItems.map(item => String((item as any).productId || (item as any).id || '').substring(0, 8)).join(','),
             cartSummary: cartItems.map(item => `${item.quantity}x${item.sku}`).join(','),
             
             // B2C customer account linkage (set when the buyer has/creates an account)

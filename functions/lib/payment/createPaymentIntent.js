@@ -30,29 +30,45 @@ function getShippingRegion(country) {
     return euCountries.includes(country) ? 'eu' : 'worldwide';
 }
 async function computeOrderTotalsSek(cartItems, shippingCountry, discountCode, shopId, deliveryMethod) {
-    // Load every product server-side; reject unknown or inactive products
+    // Product model v2: line items reference the PARENT product by productId plus
+    // an optional variantSku. We load the parent doc and resolve the variant's
+    // price from the embedded variants array — never trusting the client price.
     const loaded = await Promise.all(cartItems.map(async (item) => {
+        const productId = item.productId || item.id; // tolerate either key
         const quantity = Math.floor(Number(item.quantity));
-        if (!item.id || !Number.isFinite(quantity) || quantity < 1 || quantity > 1000) {
-            throw new Error(`Invalid cart item: ${item.id}`);
+        if (!productId || !Number.isFinite(quantity) || quantity < 1 || quantity > 1000) {
+            throw new Error(`Invalid cart item: ${productId}`);
         }
-        const snap = await database_1.db.collection('products').doc(item.id).get();
+        const snap = await database_1.db.collection('products').doc(productId).get();
         if (!snap.exists) {
-            throw new Error(`Unknown product: ${item.id}`);
+            throw new Error(`Unknown product: ${productId}`);
         }
         const product = snap.data();
         if (product.isActive === false) {
-            throw new Error(`Product not available: ${item.id}`);
+            throw new Error(`Product not available: ${productId}`);
         }
-        const price = product.b2cPrice || product.basePrice || 0;
+        // Resolve price: a chosen variant's price (matched by sku) wins, else the
+        // product price. A variantSku that doesn't match any variant is rejected.
+        let price = product.b2cPrice || product.basePrice || 0;
+        const variantSku = item.variantSku || null;
+        if (variantSku) {
+            const variant = Array.isArray(product.variants)
+                ? product.variants.find((v) => v && v.sku === variantSku)
+                : null;
+            if (!variant) {
+                throw new Error(`Unknown variant ${variantSku} for product ${productId}`);
+            }
+            price = (variant.price ?? null) !== null ? variant.price : price;
+        }
         if (!price || price <= 0) {
-            throw new Error(`Product has no valid price: ${item.id}`);
+            throw new Error(`Product has no valid price: ${productId}`);
         }
-        return { id: item.id, quantity, price, product };
+        const lineKey = `${productId}::${variantSku || ''}`;
+        return { lineKey, productId, variantSku, quantity, price, product };
     }));
     const serverPrices = {};
-    for (const { id, price } of loaded) {
-        serverPrices[id] = price;
+    for (const { lineKey, price } of loaded) {
+        serverPrices[lineKey] = price;
     }
     const subtotal = loaded.reduce((sum, { price, quantity }) => sum + price * quantity, 0);
     // Discount from the affiliate doc (not from the client)
@@ -232,18 +248,24 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
                     totalItems: cartItems.reduce((sum, item) => sum + item.quantity, 0).toString(),
                     // Store complete item details as JSON (within Stripe limits).
                     // Prices come from the server-side computation, not the client.
-                    itemDetails: JSON.stringify(cartItems.map(item => ({
-                        id: item.id,
-                        sku: item.sku,
-                        name: typeof item.name === 'string' ? item.name : item.name?.['sv-SE'] || item.name?.['en-US'] || 'Product',
-                        price: totals.serverPrices[item.id] ?? item.price,
-                        quantity: item.quantity,
-                        color: item.color || '',
-                        size: item.size || '',
-                        image: item.image || ''
-                    }))),
+                    // v2: productId + variantSku + label snapshot.
+                    itemDetails: JSON.stringify(cartItems.map(item => {
+                        const productId = item.productId || item.id;
+                        const variantSku = item.variantSku || '';
+                        const lineKey = `${productId}::${variantSku}`;
+                        return {
+                            productId,
+                            variantSku,
+                            sku: item.sku,
+                            name: typeof item.name === 'string' ? item.name : item.name?.['sv-SE'] || item.name?.['en-US'] || 'Product',
+                            label: item.label || '',
+                            price: totals.serverPrices[lineKey] ?? item.price,
+                            quantity: item.quantity,
+                            image: item.image || ''
+                        };
+                    })),
                     // Legacy compatibility (keep existing fields)
-                    itemIds: cartItems.map(item => item.id.substring(0, 8)).join(','),
+                    itemIds: cartItems.map(item => String(item.productId || item.id || '').substring(0, 8)).join(','),
                     cartSummary: cartItems.map(item => `${item.quantity}x${item.sku}`).join(','),
                     // B2C customer account linkage (set when the buyer has/creates an account)
                     ...(request.body.b2cCustomerId && {

@@ -43,10 +43,12 @@ export const getEnhancedOrderDistribution = (order) => {
   if (order.items && Array.isArray(order.items) && order.items.length > 0) {
     return order.items.map(item => ({
       ...item,
-      // Ensure color and size are present, extract from SKU if missing
-      color: item.color || extractColorSizeFromSku(item.sku).color || 'Okänd färg',
-      size: item.size || extractColorSizeFromSku(item.sku).size || 'Okänd storlek',
-      name: item.name || 'B8 Shield',
+      // Product model v2: a variant `label` carries the choice. Old orders may
+      // instead have color/size (kept here, with SKU extraction as a fallback).
+      label: item.label || null,
+      color: item.color || extractColorSizeFromSku(item.sku).color || null,
+      size: item.size || extractColorSizeFromSku(item.sku).size || null,
+      name: item.name || 'Produkt',
       quantity: item.quantity || 0,
       price: item.price || 0
     }));

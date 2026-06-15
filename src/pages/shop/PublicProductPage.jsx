@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
-import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getProductImage } from '../../utils/productImages';
-import { 
-  getSkuFromSlug, 
-  getProductUrl, 
-  getProductSeoTitle, 
-  getProductSeoDescription, 
-  getCountryAwareUrl 
+import {
+  getSkuFromSlug,
+  getProductSeoTitle,
+  getProductSeoDescription,
+  getCountryAwareUrl
 } from '../../utils/productUrls';
 // Toast notifications removed - using AddedToCartModal for user feedback
 import { generateProductSchema } from '../../utils/productFeed';
@@ -16,11 +15,8 @@ import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useShopId } from '../../contexts/ShopContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
-import { getProductGroupContent } from '../../utils/productGroups';
-import { translateColor } from '../../utils/colorTranslations';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
-import SizeGuideModal from '../../components/SizeGuideModal';
 import ReviewsSection from '../../components/ReviewsSection';
 import { getReviewStats } from '../../utils/trustpilotAPI';
 import SeoHreflang from '../../components/shop/SeoHreflang';
@@ -68,19 +64,19 @@ const getButtonState = (product, t) => {
 const PublicProductPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const { t } = useTranslation();
   const shopId = useShopId();
   const { getContentValue } = useContentTranslation();
   
   const [product, setProduct] = useState(null);
+  // Product model v2: variants are EMBEDDED on the product ({sku,label,price,image}).
+  // Selecting a variant is in-page state — no navigation between docs, no
+  // same-group query. `selectedVariant` is null for a product with no variants.
   const [variants, setVariants] = useState([]);
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [groupContent, setGroupContent] = useState(null);
-  const [groupContentLoading, setGroupContentLoading] = useState(false);
-  const [sizeGuideModalOpen, setSizeGuideModalOpen] = useState(false);
   const [reviewCount, setReviewCount] = useState(16);
   
   // Nike mobile UX: Fixed button visibility state
@@ -92,9 +88,8 @@ const PublicProductPage = () => {
     isAddedToCartModalVisible, 
     hideAddedToCartModal, 
     lastAddedItem,
-    getTotalItems 
+    getTotalItems
   } = useCart();
-  const [redirected, setRedirected] = useState(false);
 
   // Helper function - declared early to avoid temporal dead zone
   const getProductImages = (p) => {
@@ -175,58 +170,18 @@ const PublicProductPage = () => {
       const mainProduct = { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() };
       setProduct(mainProduct);
 
-      // Load group content if product has a group
-      if (mainProduct.group) {
-        loadGroupContent(mainProduct.group);
-      }
-      
-      // Load all other variants in the same group for the selection UI
-      const productGroup = mainProduct.group;
-      if (productGroup) {
-        const variantsQuery = query(
-          collection(db, 'products'),
-          where('shopId', '==', shopId),
-          where('isActive', '==', true),
-          where('availability.b2c', '==', true),
-          where('group', '==', productGroup)
-        );
-        
-        const variantsSnapshot = await getDocs(variantsQuery);
-        const groupVariants = variantsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Variants are embedded on the product. Default-select the first.
+      const embedded = (mainProduct.hasVariants && Array.isArray(mainProduct.variants))
+        ? mainProduct.variants.filter((v) => v && (v.sku || '').trim())
+        : [];
+      setVariants(embedded);
+      setSelectedVariant(embedded.length > 0 ? embedded[0] : null);
 
-        // Sort variants
-        const isMultipack = productGroup.includes('multipack') || productGroup.includes('3-pack');
-        if (isMultipack) {
-            groupVariants.sort((a, b) => {
-                const colorOrder = ['Transparent', 'Röd', 'Fluorescerande', 'Glitter'];
-                return colorOrder.indexOf(a.color) - colorOrder.indexOf(b.color);
-            });
-        } else {
-            groupVariants.sort((a, b) => (parseInt(a.size) || 0) - (parseInt(b.size) || 0));
-        }
-        setVariants(groupVariants);
-      } else {
-        setVariants([mainProduct]);
-      }
-      
     } catch (error) {
       console.error('Error loading product:', error);
       // Navigation error - handled by redirecting to home
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadGroupContent = async (groupId) => {
-    if (!groupId) return;
-    try {
-      setGroupContentLoading(true);
-      const content = await getProductGroupContent(groupId);
-      setGroupContent(content);
-    } catch (error) {
-      console.error('Error loading group content:', error);
-    } finally {
-      setGroupContentLoading(false);
     }
   };
 
@@ -244,45 +199,18 @@ const PublicProductPage = () => {
 
   const handleAddToCart = () => {
     if (!product) return;
-    addToCart(product, quantity);
+    // Pass the chosen variant (or null). CartContext stamps the variant's sku/
+    // label/price onto the line item; the server reprices from the parent doc.
+    addToCart(product, quantity, selectedVariant);
     // Success feedback now handled by AddedToCartModal
   };
-  
+
   // SEO and rendering helpers
   const getB2cDescription = (p) => getContentValue(p?.descriptions?.b2c) || '';
-  const getProductColor = (p) => translateColor(p?.color, t) || 'Standard';
-  
-  useEffect(() => {
-    // After group content and product are loaded, redirect if needed
-    // SKIP redirect for Special Edition products - they should be treated as individual products
-    const isSpecialEdition = product?.group === 'B8Shield-special-edition';
-    
-    if (!redirected && !location.state?.skipPreferredRedirect && !isSpecialEdition && groupContent?.defaultProductId && product && product.id !== groupContent.defaultProductId) {
-      const preferredId = groupContent.defaultProductId;
-      const preferredVariant = variants.find(v => v.id === preferredId);
-      const handleRedirect = async () => {
-        let preferredProductData = preferredVariant;
-        if (!preferredProductData) {
-          // Fetch from Firestore if not in variants yet
-          try {
-            const docSnap = await getDoc(doc(db, 'products', preferredId));
-            if (docSnap.exists()) {
-              preferredProductData = { id: docSnap.id, ...docSnap.data() };
-            }
-          } catch (err) {
-            console.error('Failed to fetch preferred product variant', err);
-          }
-        }
-        if (preferredProductData) {
-          const url = getProductUrl(preferredProductData);
-          setRedirected(true);
-          navigate(url, { replace: true });
-        }
-      };
-      handleRedirect();
-    }
-  }, [groupContent, product, variants, redirected, navigate, location.state]);
-  
+
+  // The price to display/charge: the selected variant's, else the product's.
+  const currentPrice = selectedVariant?.price ?? (product?.b2cPrice || product?.basePrice);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-canvas font-body flex items-center justify-center">
@@ -307,17 +235,10 @@ const PublicProductPage = () => {
     );
   }
 
-  const isMultipack = product?.group?.includes('multipack') || product?.group?.includes('3-pack');
-
-  // Only show the variant picker ("Välj.." + Storleksguide + buttons) when there
-  // is a REAL choice to make: a multipack (colour choice) OR variants that carry
-  // an actual size (not empty / not the placeholder "Standard"). A single product
-  // with no size set should show no picker at all (fixes the "8× Standard" bug).
-  const hasRealSizes = variants.some((v) => {
-    const s = (v.size || '').trim();
-    return s && s.toLowerCase() !== 'standard';
-  });
-  const showVariantPicker = isMultipack || hasRealSizes;
+  // Show the variant picker only when the product actually has variants. A
+  // simple product (no variants) shows no picker — model-level fix for the old
+  // "8× Standard" bug.
+  const showVariantPicker = variants.length > 0;
 
   return (
     <>
@@ -349,11 +270,11 @@ const PublicProductPage = () => {
                 {getContentValue(product.name)}
               </h1>
               <p className="text-base text-ink-muted mb-4">
-                {getB2cDescription(product) || `${getContentValue(product.name)}${product.size ? ` - ${product.size}` : ''}`}
+                {getB2cDescription(product) || getContentValue(product.name)}
               </p>
               <div className="font-display">
-                <SmartPrice 
-                  sekPrice={product.b2cPrice || product.basePrice} 
+                <SmartPrice
+                  sekPrice={currentPrice}
                   size="large"
                   showOriginal={false}
                 />
@@ -398,36 +319,26 @@ const PublicProductPage = () => {
 
           {/* Nike Mobile: Product details below images */}
           <div className="px-4 py-6 space-y-4">
-            {/* Size/Color Selection — only when there's a real variant choice */}
+            {/* Variant Selection — only when the product has variants */}
             {showVariantPicker && (
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-base font-semibold text-ink">
-                  {isMultipack ? t('select_color', 'Välj färg') : t('select_size', 'Välj storlek')}
-                </h3>
-                {!isMultipack && (
-                  <button onClick={() => setSizeGuideModalOpen(true)} className="text-sm text-ink-muted hover:text-ink underline">
-                    {t('size_guide_link', 'Storleksguide')}
-                  </button>
-                )}
-              </div>
-
+              <h3 className="text-base font-semibold text-ink mb-2">
+                {t('select_variant', 'Välj')}
+              </h3>
               <div className="grid grid-cols-2 gap-2">
                 {variants.map((variant) => (
-                  <Link
-                    key={variant.id}
-                    to={getProductUrl(variant)}
-                    state={{ skipPreferredRedirect: true }}
+                  <button
+                    key={variant.sku}
+                    type="button"
+                    onClick={() => setSelectedVariant(variant)}
                     className={`py-2 px-3 text-center border rounded-el transition-all ${
-                      product.id === variant.id
+                      selectedVariant?.sku === variant.sku
                         ? 'border-ink bg-ink text-white'
                         : 'border-ink/15 bg-white hover:border-ink/40'
                     }`}
                   >
-                    <div className="text-sm font-medium">
-                      {isMultipack ? translateColor(variant.color, t) || 'Standard' : (variant.size || 'Standard')}
-                    </div>
-                  </Link>
+                    <div className="text-sm font-medium">{variant.label || variant.sku}</div>
+                  </button>
                 ))}
               </div>
             </div>
@@ -543,13 +454,13 @@ const PublicProductPage = () => {
                     {getContentValue(product.name)}
                   </h1>
                   <p className="text-lg text-ink-muted mb-4">
-                    {getB2cDescription(product) || `${getContentValue(product.name)}${product.size ? ` - ${product.size}` : ''}`}
+                    {getB2cDescription(product) || getContentValue(product.name)}
                   </p>
 
                 {/* Price */}
                   <div className="font-display mb-6">
-                    <SmartPrice 
-                      sekPrice={product.b2cPrice || product.basePrice} 
+                    <SmartPrice
+                      sekPrice={currentPrice}
                       size="large"
                       showOriginal={false}
                       className="font-display"
@@ -557,36 +468,26 @@ const PublicProductPage = () => {
                   </div>
                 </div>
 
-                {/* Size/Color Selection — only when there's a real variant choice */}
+                {/* Variant Selection — only when the product has variants */}
                 {showVariantPicker && (
                 <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base font-semibold text-ink">
-                      {isMultipack ? t('select_color', 'Välj färg') : t('select_size', 'Välj storlek')}
-                    </h3>
-                    {!isMultipack && (
-                      <button onClick={() => setSizeGuideModalOpen(true)} className="text-sm text-ink-muted hover:text-ink underline">
-                        {t('size_guide_link', 'Storleksguide')}
-                      </button>
-                    )}
-                  </div>
-
+                  <h3 className="text-base font-semibold text-ink mb-4">
+                    {t('select_variant', 'Välj')}
+                  </h3>
                   <div className="grid grid-cols-3 gap-2">
                     {variants.map((variant) => (
-                      <Link
-                        key={variant.id}
-                        to={getProductUrl(variant)}
-                        state={{ skipPreferredRedirect: true }}
+                      <button
+                        key={variant.sku}
+                        type="button"
+                        onClick={() => setSelectedVariant(variant)}
                         className={`py-4 px-4 text-center border rounded-el transition-all ${
-                          product.id === variant.id
+                          selectedVariant?.sku === variant.sku
                             ? 'border-ink bg-ink text-white'
                             : 'border-ink/15 bg-white hover:border-ink/40'
                         }`}
                       >
-                        <div className="text-sm font-medium">
-                          {isMultipack ? translateColor(variant.color, t) || 'Standard' : (variant.size || 'Standard')}
-                        </div>
-                      </Link>
+                        <div className="text-sm font-medium">{variant.label || variant.sku}</div>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -664,105 +565,16 @@ const PublicProductPage = () => {
                     {t('show_product_information', 'Visa produktinformation')}
                   </h2>
                   <div className="prose prose-sm max-w-none text-ink-muted">
-                    <p>
-                      {getB2cDescription(product) || 
-                       t('product_detailed_description', '', { color: getProductColor(product), size: product.size || 'Standard' })}
-                    </p>
-                    
+                    <p>{getB2cDescription(product) || getContentValue(product.name)}</p>
                     <ul className="mt-4 space-y-2">
-                      <li>• {t('product_color_shown', 'Färg som visas: {{color}}', { color: getProductColor(product) })}</li>
-                      <li>• {t('product_size_spec', 'Storlek: {{size}}', { size: product.size || 'Standard' })}</li>
-                      <li>• {t('product_style_spec', 'Stil: {{sku}}', { sku: product.sku || 'B8S-001' })}</li>
+                      {selectedVariant?.label && <li>• {t('product_variant_spec', 'Variant: {{label}}', { label: selectedVariant.label })}</li>}
+                      <li>• {t('product_style_spec', 'Art.nr: {{sku}}', { sku: selectedVariant?.sku || product.sku || '' })}</li>
                     </ul>
                   </div>
                 </div>
 
                 {/* Expandable Information Sections */}
                 <div className="border-t pt-6 space-y-4">
-                  {/* Size and Fit - From Group Content */}
-                  <details className="group">
-                    <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-white px-4 -mx-4 rounded-el transition-colors">
-                      <span className="text-base font-semibold text-ink">
-                        {t('size_and_fit_section', 'Storlek och passform')}
-                      </span>
-                      <svg className="w-5 h-5 text-ink-faint transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </summary>
-                    <div className="pb-4 px-4 -mx-4 text-sm text-ink-muted">
-                      {groupContentLoading ? (
-                        <p className="text-ink-muted italic">
-                          {t('loading_group_content', 'Laddar information...')}
-                        </p>
-                      ) : (
-                        groupContent?.sizeAndFit ? (
-                          <div 
-                            className="prose prose-sm text-ink-muted"
-                            dangerouslySetInnerHTML={{ __html: sanitize(getContentValue(groupContent.sizeAndFit)) }}
-                          />
-                        ) : (
-                          <p className="text-sm text-ink-faint">{t('no_group_content', 'No information available')}</p>
-                        )
-                      )}
-                    </div>
-                  </details>
-
-                  {/* Shipping and Returns - From Group Content */}
-                  <details className="group">
-                    <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-white px-4 -mx-4 rounded-el transition-colors">
-                      <span className="text-base font-semibold text-ink">
-                        {t('shipping_returns_section', 'Frakt och returer')}
-                      </span>
-                      <svg className="w-5 h-5 text-ink-faint transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </summary>
-                    <div className="pb-4 px-4 -mx-4 text-sm text-ink-muted">
-                      {groupContentLoading ? (
-                        <p className="text-ink-muted italic">
-                          {t('loading_group_content', 'Laddar information...')}
-                        </p>
-                      ) : (
-                        groupContent?.shippingReturns ? (
-                          <div 
-                            className="prose prose-sm text-ink-muted"
-                            dangerouslySetInnerHTML={{ __html: sanitize(getContentValue(groupContent.shippingReturns)) }}
-                          />
-                        ) : (
-                          <p className="text-sm text-ink-faint">{t('no_group_content', 'No information available')}</p>
-                        )
-                      )}
-                    </div>
-                  </details>
-
-                  {/* How It's Made - From Group Content */}
-                  <details className="group">
-                    <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-white px-4 -mx-4 rounded-el transition-colors">
-                      <span className="text-base font-semibold text-ink">
-                        {t('how_its_made_section', 'Hur den är gjord')}
-                      </span>
-                      <svg className="w-5 h-5 text-ink-faint transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </summary>
-                    <div className="pb-4 px-4 -mx-4 text-sm text-ink-muted">
-                      {groupContentLoading ? (
-                        <p className="text-ink-muted italic">
-                          {t('loading_group_content', 'Laddar information...')}
-                        </p>
-                      ) : (
-                        groupContent?.howItsMade ? (
-                          <div 
-                            className="prose prose-sm text-ink-muted"
-                            dangerouslySetInnerHTML={{ __html: sanitize(getContentValue(groupContent.howItsMade)) }}
-                          />
-                        ) : (
-                          <p className="text-sm text-ink-faint">{t('no_group_content', 'No information available')}</p>
-                        )
-                      )}
-                    </div>
-                  </details>
-
                   {/* More Information - From Product B2C Content */}
                   {product?.descriptions?.b2cMoreInfo && (
                     <details className="group">
@@ -817,14 +629,6 @@ const PublicProductPage = () => {
             </button>
           </div>
         </div>
-
-        {/* Size Guide Modal */}
-        <SizeGuideModal 
-          isOpen={sizeGuideModalOpen}
-          onClose={() => setSizeGuideModalOpen(false)}
-          groupContent={groupContent}
-          productName={getContentValue(product?.name)}
-        />
 
         {/* Added to Cart Modal */}
         <AddedToCartModal 

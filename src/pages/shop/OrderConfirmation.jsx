@@ -238,14 +238,17 @@ const OrderConfirmation = () => {
                           <p className="text-sm text-gray-500">
                             {t('order_confirmation_quantity', 'Antal: {{quantity}}', { quantity: item.quantity })}
                           </p>
-                          {/* Show color and size separately */}
+                          {/* Variant label (v2); color/size kept for old orders. */}
                           <div className="text-sm text-gray-500 space-x-2">
-                            {item.color && (
+                            {item.label && (
+                              <span className="inline-block bg-gray-100 px-2 py-1 rounded-full text-xs">{item.label}</span>
+                            )}
+                            {!item.label && item.color && (
                               <span className="inline-block bg-gray-100 px-2 py-1 rounded-full text-xs">
                                 {t('order_confirmation_color', 'Färg: {{color}}', { color: getDisplayColor(item.color) })}
                               </span>
                             )}
-                            {item.size && (
+                            {!item.label && item.size && (
                               <span className="inline-block bg-gray-100 px-2 py-1 rounded-full text-xs">
                                 {t('order_confirmation_size', 'Storlek: {{size}}', { size: getDisplaySize(item.size) })}
                               </span>

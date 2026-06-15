@@ -4,7 +4,6 @@ import { useCart } from '../../contexts/CartContext';
 import { SHIPPING_COSTS } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
-import { translateColor } from '../../utils/colorTranslations';
 import toast from 'react-hot-toast';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
@@ -126,7 +125,7 @@ const ShoppingCart = () => {
                   const itemName = getContentValue(item.name);
                   return (
                     <div
-                      key={item.id}
+                      key={item.lineId}
                       className="bg-white rounded-tile p-4 sm:p-6 shadow-tile"
                     >
                       {/* Mobile: Stacked layout, Desktop: Horizontal layout */}
@@ -142,16 +141,11 @@ const ShoppingCart = () => {
                         <div className="grow text-center sm:text-left">
                           <h3 className="font-display text-lg font-bold text-ink mb-2">{itemName}</h3>
                           
-                          {/* Product Specs - Mobile: Compact, Desktop: Detailed */}
+                          {/* Product Specs — variant label + SKU (v2). */}
                           <div className="space-y-1 text-sm text-ink-muted mb-3">
-                            {item.color && (
+                            {item.label && (
                               <p className="inline-block bg-canvas px-2.5 py-1 rounded-full mr-2 mb-1 text-xs font-semibold">
-                                {translateColor(item.color, t)}
-                              </p>
-                            )}
-                            {item.size && (
-                              <p className="inline-block bg-canvas px-2.5 py-1 rounded-full mr-2 mb-1 text-xs font-semibold">
-                                {t('size_label', 'Storlek: {{size}}', { size: item.size })}
+                                {item.label}
                               </p>
                             )}
                             {item.sku && (
@@ -177,7 +171,7 @@ const ShoppingCart = () => {
                           {/* Quantity Selector - Mobile: Large touch targets */}
                           <div className="flex items-center rounded-full border border-ink/15 bg-white">
                             <button
-                              onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                              onClick={() => handleQuantityChange(item.lineId, item.quantity - 1)}
                               className="w-12 h-12 sm:w-10 sm:h-10 flex items-center justify-center text-ink-muted hover:text-ink transition-colors rounded-l-full"
                             >
                               <span className="text-xl font-bold">−</span>
@@ -186,7 +180,7 @@ const ShoppingCart = () => {
                               {item.quantity}
                             </span>
                             <button
-                              onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                              onClick={() => handleQuantityChange(item.lineId, item.quantity + 1)}
                               className="w-12 h-12 sm:w-10 sm:h-10 flex items-center justify-center text-ink-muted hover:text-ink transition-colors rounded-r-full"
                             >
                               <span className="text-xl font-bold">+</span>
@@ -195,7 +189,7 @@ const ShoppingCart = () => {
                           
                           {/* Remove Button - Mobile: Large touch target */}
                           <button
-                            onClick={() => handleRemove(item.id)}
+                            onClick={() => handleRemove(item.lineId)}
                             className="w-12 h-12 sm:w-8 sm:h-8 flex items-center justify-center text-ink-faint hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
                           >
                             <svg 
