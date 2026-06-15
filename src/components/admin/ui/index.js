@@ -5,6 +5,7 @@
  */
 export { default as Page } from './Page';
 export { default as KpiStrip } from './KpiStrip';
+export { default as MetricsBar } from './MetricsBar';
 export { default as DataTable } from './DataTable';
 export { default as RightRail } from './RightRail';
 export { default as Toolbar } from './Toolbar';
@@ -13,7 +14,14 @@ export { default as Button } from './Button';
 
 export { Card, CardSection } from './Card';
 
-export { default as FilterBar, SegmentedTabs, SearchInput } from './FilterBar';
+export {
+  default as FilterBar,
+  SegmentedTabs,
+  SearchInput,
+  ViewTabs,
+  InlineSearch,
+  Pagination,
+} from './FilterBar';
 
 export { Field, Input, Textarea, Select } from './Field';
 

@@ -76,6 +76,28 @@
   --color-admin-text-faint: #8a8a8a;  /* --p-color-icon-secondary (faint labels) */
   --color-admin-primary: #303030;     /* --p-color-bg-fill-brand (near-black primary) */
   --color-admin-primary-hover: #1a1a1a;
+  --color-admin-topbar: #1a1a1a;      /* dark command bar */
+
+  /* Desaturated Polaris Badge tones (bg / text / marker dot). Muted pastels,
+     NOT bright Tailwind badges. success=Paid, caution=Unfulfilled (hollow ring),
+     info, critical, neutral=draft. */
+  --color-admin-success-bg: #e0f0e9;
+  --color-admin-success-text: #1c5c41;
+  --color-admin-success-dot: #2a845a;
+  --color-admin-caution-bg: #fbeed3;
+  --color-admin-caution-text: #69500e;
+  --color-admin-caution-dot: #b98900;
+  --color-admin-info-bg: #e4ecf6;
+  --color-admin-info-text: #2c4b6e;
+  --color-admin-info-dot: #3f6fb0;
+  --color-admin-critical-bg: #fde2d8;
+  --color-admin-critical-text: #8a3214;
+  --color-admin-critical-dot: #c4351c;
+  --color-admin-neutral-bg: #e3e3e3;
+  --color-admin-neutral-text: #5a5a5a;
+  --color-admin-neutral-dot: #8a8a8a;
+  --color-admin-pos-delta: #2a845a;   /* metric up % */
+  --color-admin-neg-delta: #c4351c;   /* metric down % */
 
   /* Polaris border-radius scale: cards/buttons/badges = border-radius-200 = 8px,
      small inputs = border-radius-100 = 4px. */

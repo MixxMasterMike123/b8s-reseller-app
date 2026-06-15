@@ -13,11 +13,11 @@ import { getEnhancedOrderDistribution } from '../../utils/orderUtils';
 import { ArrowDownTrayIcon, DocumentTextIcon, PrinterIcon, TruckIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import {
   Page,
-  KpiStrip,
+  MetricsBar,
   DataTable,
-  FilterBar,
-  SegmentedTabs,
-  SearchInput,
+  ViewTabs,
+  InlineSearch,
+  Pagination,
   Button,
   Toolbar,
   StatusPill,
@@ -366,14 +366,10 @@ const AdminOrders = () => {
       key: 'order',
       header: 'Order',
       render: (order) => (
-        <div className="flex items-center gap-2">
-          <span className="font-mono font-medium text-admin-text">
-            {order.orderNumber || order.id}
-          </span>
-          <StatusPill tone={order.source === 'b2c' ? 'info' : 'neutral'} size="sm">
-            {order.source === 'b2c' ? 'Kund' : 'Återförsäljare'}
-          </StatusPill>
-        </div>
+        // Polaris: order number = dark medium link, underline on hover (not blue).
+        <span className="font-medium text-admin-text group-hover:underline">
+          {order.orderNumber || order.id}
+        </span>
       ),
     },
     {
@@ -397,25 +393,34 @@ const AdminOrders = () => {
             : order.userEmail || '';
         return (
           <div className="min-w-0">
-            <div className="text-admin-text truncate">{name}</div>
-            {email && <div className="text-xs text-admin-text-faint truncate">{email}</div>}
+            <div className="truncate text-admin-text">{name}</div>
+            {email && <div className="truncate text-[12px] text-admin-text-faint">{email}</div>}
           </div>
         );
       },
     },
     {
+      key: 'channel',
+      header: 'Kanal',
+      render: (order) => (
+        <span className="text-admin-text-muted">
+          {order.source === 'b2c' ? 'Webbshop' : 'Återförsäljare'}
+        </span>
+      ),
+    },
+    {
       key: 'payment',
       header: 'Betalning',
       render: (order) => {
-        // B2B/legacy invoice orders have no Stripe payment object — show a
-        // neutral "Faktura" pill rather than misreading them as "Väntar".
+        // B2B/legacy invoice orders have no Stripe payment object — neutral
+        // "Faktura" badge rather than misreading them as "Väntar".
         if (order.source !== 'b2c') {
-          return <StatusPill tone="neutral" size="sm">Faktura</StatusPill>;
+          return <StatusPill tone="neutral">Faktura</StatusPill>;
         }
         return isOrderPaid(order) ? (
-          <StatusPill tone="success" size="sm">Betald</StatusPill>
+          <StatusPill tone="success">Betald</StatusPill>
         ) : (
-          <StatusPill tone="warning" size="sm">Väntar</StatusPill>
+          <StatusPill tone="warning">Väntar</StatusPill>
         );
       },
     },
@@ -537,33 +542,38 @@ const AdminOrders = () => {
     </>
   );
 
+  // In-card toolbar: source view-tabs + inline search + status filter (Polaris
+  // IndexTable header pattern — filters live INSIDE the table card).
+  const tableToolbar = (
+    <>
+      <ViewTabs
+        ariaLabel="Filtrera på källa"
+        options={sourceTabOptions}
+        value={activeSourceTab}
+        onChange={setActiveSourceTab}
+      />
+      <InlineSearch
+        value={searchTerm}
+        onChange={setSearchTerm}
+        placeholder="Sök på ordernr, kundinfo…"
+      />
+    </>
+  );
+
+  const tableFooter = (
+    <Pagination label={sortedOrders.length ? `1–${sortedOrders.length}` : '0'} prevDisabled nextDisabled />
+  );
+
   return (
     <AppLayout>
       <Page title="Ordrar" actions={headerActions}>
-        <div className="space-y-5">
-          <KpiStrip metrics={kpis} />
+        <div className="space-y-4">
+          {/* Thin metrics strip (Polaris s-metrics-bar), not big KPI cards. */}
+          <MetricsBar metrics={kpis} />
 
-          <FilterBar
-            search={
-              <SearchInput
-                value={searchTerm}
-                onChange={setSearchTerm}
-                placeholder="Sök på ordernr, kundinfo…"
-                className="w-full sm:w-72"
-              />
-            }
-            tabs={
-              <SegmentedTabs
-                ariaLabel="Filtrera på källa"
-                options={sourceTabOptions}
-                value={activeSourceTab}
-                onChange={setActiveSourceTab}
-              />
-            }
-          />
-
-          <div className="overflow-x-auto pb-1">
-            <SegmentedTabs
+          {/* Status filter — a second view-tab row on the canvas above the card. */}
+          <div className="overflow-x-auto">
+            <ViewTabs
               ariaLabel="Filtrera på status"
               options={statusTabOptions}
               value={activeStatusTab}
@@ -571,13 +581,10 @@ const AdminOrders = () => {
             />
           </div>
 
+          {/* Bulk-action bar when rows are selected. */}
           {selectedOrders.size > 0 && (
             <Toolbar count={selectedOrders.size}>
-              <Button
-                variant="secondary"
-                onClick={handlePrintSelectedLabels}
-                disabled={printLoading}
-              >
+              <Button variant="secondary" onClick={handlePrintSelectedLabels} disabled={printLoading}>
                 {printLoading ? (
                   <span className="inline-flex items-center gap-2">
                     <span className="h-4 w-4 animate-spin rounded-full border-b-2 border-current" />
@@ -597,7 +604,7 @@ const AdminOrders = () => {
           )}
 
           {currentError ? (
-            <div className="rounded-[var(--radius-admin)] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-900/30 dark:text-red-300">
+            <div className="rounded-[var(--radius-admin)] border border-admin-critical-dot/30 bg-admin-critical-bg px-4 py-3 text-[13px] text-admin-critical-text">
               Fel vid laddning av ordrar: {currentError}
             </div>
           ) : (
@@ -609,6 +616,8 @@ const AdminOrders = () => {
                 loading={isLoading}
                 onRowClick={(o) => navigate(`/admin/orders/${o.id}`)}
                 empty="Inga ordrar matchar de valda filtren."
+                toolbar={tableToolbar}
+                footer={tableFooter}
                 selection={{
                   selectedIds: selectedOrders,
                   onToggle: toggleOne,
@@ -618,14 +627,12 @@ const AdminOrders = () => {
 
               {activeSourceTab === 'b2b' && sortedOrders.length > 0 && (
                 <div className="flex justify-end">
-                  <div className="inline-flex items-baseline gap-3 rounded-[var(--radius-admin)] border border-admin-border bg-admin-surface px-4 py-3 shadow-[var(--shadow-admin)]">
-                    <span className="text-sm text-admin-text-muted">Totalsumma</span>
-                    <span className="text-base font-semibold tabular-nums text-admin-text">
+                  <div className="inline-flex items-baseline gap-3 text-[13px]">
+                    <span className="text-admin-text-muted">Totalsumma</span>
+                    <span className="text-[15px] font-semibold tabular-nums text-admin-text">
                       {formatSek(
                         sortedOrders.reduce(
-                          (sum, order) =>
-                            sum +
-                            (order.prisInfo?.totalPris || order.totalAmount || order.total || 0),
+                          (sum, order) => sum + (order.prisInfo?.totalPris || order.totalAmount || order.total || 0),
                           0
                         ),
                         false

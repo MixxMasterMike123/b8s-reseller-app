@@ -5,6 +5,7 @@ import MentionNotifications from '../../wagons/dining-wagon/components/MentionNo
 import LanguageSwitcher from '../LanguageSwitcher';
 import DarkModeToggle from '../DarkModeToggle';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import ImpersonationBanner from '../auth/ImpersonationBanner';
 
 // 🚂 WAGON SYSTEM: Import wagon registry for menu items
@@ -30,6 +31,7 @@ import {
 const AppLayout = ({ children }) => {
   const { currentUser, userProfile, logout } = useAuth();
   const { t } = useTranslation();
+  const store = useStoreSettings();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -79,6 +81,17 @@ const AppLayout = ({ children }) => {
   const isActive = (path) => {
     return location.pathname === path;
   };
+
+  // Top-bar store identity (Shopify shows the shop name + a rounded-square avatar
+  // with initials). Falls back to the admin's company / email.
+  const shopName = store?.shopName || store?.legalName || userProfile?.companyName || currentUser?.email || 'Butik';
+  const shopInitials = shopName
+    .split(/\s+/)
+    .map((w) => w.charAt(0))
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || 'B';
 
   const adminNavLinks = [
     {
@@ -157,338 +170,185 @@ const AppLayout = ({ children }) => {
     }
   ];
   
-  // Function to get parent path for breadcrumb
-  const getParentPath = (path) => {
-    const parts = path.split('/').filter(Boolean);
-    if (parts.length <= 1) return '/';
-    return '/' + parts.slice(0, -1).join('/');
-  };
+  const navItemClass = (active) =>
+    `group flex h-8 items-center gap-2 rounded-[var(--radius-admin-el)] pl-2 pr-1.5 text-[13px] transition-colors ${
+      active
+        ? 'bg-black/[0.08] font-semibold text-admin-text dark:bg-white/10'
+        : 'font-medium text-admin-text hover:bg-black/[0.06] dark:hover:bg-white/5'
+    }`;
+  const navIconClass = (active) =>
+    `h-[18px] w-[18px] shrink-0 ${active ? 'text-admin-text' : 'text-admin-text-muted group-hover:text-admin-text'}`;
 
   return (
     <div className="min-h-screen bg-admin-bg text-admin-text [font-size:13px] [line-height:20px]">
-      {/* P4.3: non-dismissible operator-impersonation banner (only renders when
-          a session is active). Sits above the whole admin shell. */}
-      <ImpersonationBanner />
-      {/* Desktop Sidebar — Admin Neutral: calm light surface, flat, single-line
-          nav items (descriptions dropped for the Shopify minimalist feel),
-          accent only on the active item. */}
-      <div className="hidden md:fixed md:inset-y-0 md:flex md:w-60 md:flex-col">
-        <div className="flex grow flex-col overflow-y-auto border-r border-admin-border bg-admin-surface">
-          <div className="flex shrink-0 items-center px-5 py-5">
-            <Link to="/admin" className="flex items-center">
-              <img
-                src="/images/JPH_logo.webp"
-                alt="JPH Innovation AB Logo"
-                className="h-8 w-auto"
-              />
-            </Link>
-          </div>
+      {/* ── Dark top command bar (Shopify chrome). Fixed, full-width, 56px. ── */}
+      <header className="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-3 bg-[var(--color-admin-topbar)] px-3">
+        {/* left: mobile menu toggle + logo */}
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="grid h-8 w-8 place-items-center rounded-[var(--radius-admin-el)] text-white/80 hover:bg-white/10 md:hidden"
+            aria-label={t('nav.open_sidebar', 'Öppna meny')}
+          >
+            <Bars3Icon className="h-5 w-5" />
+          </button>
+          <Link to="/admin" className="flex items-center pl-1 pr-2">
+            <img src="/images/JPH_logo.webp" alt="JPH Innovation AB" className="h-6 w-auto brightness-0 invert" />
+          </Link>
+        </div>
 
-          {/* Navigation Links — Polaris metrics: 40px item height, 20px icons,
-              8px icon→label gap, 13px medium label, active = subtle gray fill. */}
-          <div className="flex grow flex-col">
-            <nav className="flex-1 space-y-0.5 px-3 pb-4 text-[13px]">
-              {/* Admin Navigation */}
-              {adminNavLinks.map((item) => {
+        {/* center: search pill */}
+        <div className="flex flex-1 justify-center">
+          <div className="flex h-8 w-full max-w-[480px] items-center gap-2 rounded-[var(--radius-admin-el)] bg-white/10 px-3 text-[13px] text-white/55">
+            <svg className="h-4 w-4 text-white/55" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
+            </svg>
+            <span className="flex-1 text-left">{t('nav.search', 'Sök')}</span>
+          </div>
+        </div>
+
+        {/* right: tools + store/avatar + logout */}
+        <div className="flex items-center gap-1">
+          {isAdmin && (
+            <div className="hidden text-white/80 sm:block">
+              <MentionNotifications />
+            </div>
+          )}
+          <DarkModeToggle />
+          <LanguageSwitcher />
+          <div className="ml-1 flex items-center gap-2 rounded-[var(--radius-admin-el)] py-1 pl-2 pr-1">
+            <span className="hidden max-w-[160px] truncate text-[13px] font-medium text-white/90 lg:block">{shopName}</span>
+            <span className="grid h-6 w-6 place-items-center rounded-[6px] bg-[var(--color-admin-success-dot)] text-[11px] font-semibold text-white">
+              {shopInitials}
+            </span>
+          </div>
+          <button
+            onClick={handleLogout}
+            title={t('nav.logout', 'Logga ut')}
+            className="grid h-8 w-8 place-items-center rounded-[var(--radius-admin-el)] text-white/70 hover:bg-white/10 hover:text-white"
+          >
+            <span className="sr-only">{t('nav.logout', 'Logga ut')}</span>
+            <ArrowRightOnRectangleIcon className="h-5 w-5" aria-hidden="true" />
+          </button>
+        </div>
+      </header>
+
+      {/* Single spacer that clears the fixed 56px top command bar. The
+          impersonation banner (rendered here, null when no session) flows
+          directly below it; <main> below has NO additional top padding so
+          content starts flush under the bar (avoids a double-56px gap). */}
+      <div className="pt-14">
+        <ImpersonationBanner />
+      </div>
+
+      {/* ── Left nav (Polaris): fixed, 232px, on the canvas, below the top bar. ── */}
+      <nav className="fixed bottom-0 left-0 top-14 z-30 hidden w-[232px] flex-col bg-admin-bg px-3 py-3 md:flex">
+        <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto">
+          {adminNavLinks.map((item) => {
+            const active = isActive(item.path);
+            return (
+              <Link key={item.name} to={item.path} title={item.description} className={navItemClass(active)}>
+                <item.icon className={navIconClass(active)} aria-hidden="true" />
+                <span className="flex-1">{item.name}</span>
+              </Link>
+            );
+          })}
+
+          {wagonMenuItems.length > 0 && (
+            <>
+              <div className="mt-3 flex items-center gap-1 px-2 pb-0.5">
+                <CpuChipIcon className="h-3.5 w-3.5 text-admin-text-faint" />
+                <span className="text-[12px] font-medium text-admin-text-muted">{t('nav.ai_wagons', 'AI Vagnar')}</span>
+              </div>
+              {wagonMenuItems.map((item) => {
                 const active = isActive(item.path);
                 return (
-                  <Link
-                    key={item.name}
-                    to={item.path}
-                    title={item.description}
-                    className={`group flex h-10 items-center gap-2 rounded-[var(--radius-admin-el)] px-3 font-medium transition-colors ${
-                      active
-                        ? 'bg-admin-surface-2 text-admin-text'
-                        : 'text-admin-text-muted hover:bg-admin-surface-2 hover:text-admin-text'
-                    }`}
-                  >
-                    <item.icon
-                      className={`h-5 w-5 shrink-0 ${
-                        active ? 'text-admin-text' : 'text-admin-text-muted group-hover:text-admin-text'
-                      }`}
-                      aria-hidden="true"
-                    />
-                    <span>{item.name}</span>
+                  <Link key={`wagon-${item.wagonId}`} to={item.path} title={item.description} className={navItemClass(active)}>
+                    <SparklesIcon className={navIconClass(active)} aria-hidden="true" />
+                    <span className="flex-1">{item.title}</span>
                   </Link>
                 );
               })}
+            </>
+          )}
+        </div>
+      </nav>
 
-              {/* 🚂 WAGON SYSTEM: Auto-generated wagon menu items */}
-              {wagonMenuItems.length > 0 && (
-                <>
-                  <div className="px-3 pt-5 pb-1">
-                    <span className="flex items-center text-[11px] font-semibold uppercase tracking-wider text-admin-text-faint">
-                      <CpuChipIcon className="mr-1.5 h-3.5 w-3.5" />
-                      {t('nav.ai_wagons', 'AI Vagnar')}
-                    </span>
-                  </div>
-
-                  {wagonMenuItems.map((item) => {
-                    const active = isActive(item.path);
-                    return (
-                      <Link
-                        key={`wagon-${item.wagonId}`}
-                        to={item.path}
-                        title={item.description}
-                        className={`group flex h-10 items-center gap-2 rounded-[var(--radius-admin-el)] px-3 font-medium transition-colors ${
-                          active
-                            ? 'bg-admin-surface-2 text-admin-text'
-                            : 'text-admin-text-muted hover:bg-admin-surface-2 hover:text-admin-text'
-                        }`}
-                      >
-                        <SparklesIcon className="h-5 w-5 shrink-0 text-admin-text-muted group-hover:text-admin-text" />
-                        <span>{item.title}</span>
-                      </Link>
-                    );
-                  })}
-                </>
-              )}
-            </nav>
-          </div>
-
-          {/* User Profile Section */}
-          <div className="border-t border-admin-border p-3">
-            <div className="flex items-center gap-3">
-              <div className="shrink-0">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-admin-primary)] text-sm font-semibold text-white">
-                  {userProfile?.companyName?.charAt(0)?.toUpperCase() ||
-                   currentUser?.email?.charAt(0)?.toUpperCase() || 'U'}
-                </div>
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium text-admin-text">
-                  {userProfile?.companyName || currentUser?.email}
-                </div>
-                <div className="truncate text-xs text-admin-text-faint">
-                  {currentUser?.email}
-                </div>
-              </div>
+      {/* ── Mobile slide-over menu ── */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 flex text-[13px] md:hidden">
+          <div className="fixed inset-0 bg-black/40" aria-hidden="true" onClick={() => setIsMobileMenuOpen(false)} />
+          <div className="relative flex w-full max-w-xs flex-1 flex-col bg-admin-bg pb-4 pt-4">
+            <div className="absolute right-0 top-0 -mr-12 pt-2">
               <button
-                onClick={handleLogout}
-                title={t('nav.logout', 'Logga ut')}
-                className="ml-auto shrink-0 rounded-full p-1.5 text-admin-text-faint hover:bg-admin-surface-2 hover:text-admin-text focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-admin-primary)]"
+                type="button"
+                className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
+                onClick={() => setIsMobileMenuOpen(false)}
               >
-                <ArrowRightOnRectangleIcon className="h-5 w-5" aria-hidden="true" />
+                <span className="sr-only">{t('nav.close_sidebar', 'Stäng meny')}</span>
+                <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
               </button>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Desktop and Mobile header */}
-      <div className="md:pl-60 flex flex-col flex-1">
-        {/* Desktop header - hidden on mobile */}
-        <div className="sticky top-0 z-20 hidden md:flex h-14 shrink-0 bg-admin-surface border-b border-admin-border">
-          <div className="flex flex-1 justify-end px-6">
-            <div className="flex items-center gap-3">
-              {/* Admin tools for desktop */}
-              {isAdmin && (
-                <MentionNotifications />
-              )}
-
-              {/* Dark Mode Toggle */}
-              <DarkModeToggle />
-
-              {/* Language Switcher */}
-              <LanguageSwitcher />
-
-              <div className="flex items-center gap-2 pl-1">
-                <div className="shrink-0">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-admin-primary)] text-sm font-semibold text-white">
-                    {userProfile?.companyName?.charAt(0)?.toUpperCase() ||
-                     currentUser?.email?.charAt(0)?.toUpperCase() || 'U'}
-                  </div>
-                </div>
-                <div className="hidden lg:block">
-                  <div className="text-sm font-medium text-admin-text">
-                    {userProfile?.companyName || currentUser?.email}
-                  </div>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="rounded-full p-1.5 text-admin-text-faint hover:bg-admin-surface-2 hover:text-admin-text focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-admin-primary)]"
-                  title={t('nav.logout', 'Logga ut')}
-                >
-                  <ArrowRightOnRectangleIcon className="h-5 w-5" aria-hidden="true" />
-                </button>
-              </div>
+            <div className="flex shrink-0 items-center px-4 pb-2">
+              <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)}>
+                <img src="/images/JPH_logo.webp" alt="JPH Innovation AB" className="h-7 w-auto" />
+              </Link>
             </div>
-          </div>
-        </div>
-        
-        {/* Mobile header */}
-        <div className="sticky top-0 z-10 flex h-14 shrink-0 bg-admin-surface border-b border-admin-border md:hidden">
-          <button
-            type="button"
-            className="border-r border-admin-border px-4 text-admin-text-muted hover:text-admin-text focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-admin-primary)] md:hidden"
-            onClick={() => setIsMobileMenuOpen(true)}
-          >
-            <span className="sr-only">{t('nav.open_sidebar', 'Open sidebar')}</span>
-            <Bars3Icon className="h-6 w-6" aria-hidden="true" />
-          </button>
-          <div className="flex flex-1 justify-between px-4">
-            <div className="flex flex-1 items-center pl-3">
-              <div className="flex w-full items-center">
-                <Link to="/admin">
-                  <img
-                    src="/images/JPH_logo.webp"
-                    alt="JPH Innovation AB Logo"
-                    className="h-8 w-auto"
-                  />
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              {/* Admin tools for mobile */}
-              {isAdmin && (
-                <MentionNotifications />
-              )}
-              
-              {/* Dark Mode Toggle */}
-              <DarkModeToggle />
-              
-              {/* Language Switcher */}
-              <LanguageSwitcher />
-              
-              <div className="shrink-0">
-                <button
-                  onClick={handleLogout}
-                  className="relative p-1.5 text-admin-text-faint hover:text-admin-text focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-admin-primary)]"
-                >
-                  <span className="sr-only">{t('nav.logout', 'Logga ut')}</span>
-                  <ArrowRightOnRectangleIcon className="h-6 w-6" aria-hidden="true" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile menu */}
-        {isMobileMenuOpen && (
-          <div className="fixed inset-0 z-40 flex md:hidden text-[13px]">
-            <div
-              className="fixed inset-0 bg-black/40"
-              aria-hidden="true"
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
-
-            <div className="relative flex w-full max-w-xs flex-1 flex-col bg-admin-surface pt-5 pb-4">
-              <div className="absolute top-0 right-0 -mr-12 pt-2">
-                <button
-                  type="button"
-                  className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <span className="sr-only">{t('nav.close_sidebar', 'Close sidebar')}</span>
-                  <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
-                </button>
-              </div>
-
-              <div className="flex shrink-0 items-center px-5">
-                <Link to="/admin">
-                  <img
-                    src="/images/JPH_logo.webp"
-                    alt="JPH Innovation AB Logo"
-                    className="h-8 w-auto"
-                  />
-                </Link>
-              </div>
-              <div className="mt-5 h-0 flex-1 overflow-y-auto">
-                <nav className="space-y-0.5 px-3">
-                  {/* Admin Navigation */}
-                  {adminNavLinks.map((item) => {
-                    const active = isActive(item.path);
-                    return (
-                      <Link
-                        key={item.name}
-                        to={item.path}
-                        className={`group flex h-11 items-center gap-2 rounded-[var(--radius-admin-el)] px-3 font-medium ${
-                          active
-                            ? 'bg-admin-surface-2 text-admin-text'
-                            : 'text-admin-text-muted hover:bg-admin-surface-2 hover:text-admin-text'
-                        }`}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        <item.icon
-                          className={`h-5 w-5 shrink-0 ${
-                            active ? 'text-admin-text' : 'text-admin-text-muted group-hover:text-admin-text'
+            <div className="mt-2 h-0 flex-1 overflow-y-auto px-3">
+              <nav className="space-y-0.5">
+                {adminNavLinks.map((item) => {
+                  const active = isActive(item.path);
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.path}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`group flex h-10 items-center gap-2 rounded-[var(--radius-admin-el)] pl-2 pr-1.5 text-[13px] ${
+                        active ? 'bg-black/[0.08] font-semibold text-admin-text' : 'font-medium text-admin-text hover:bg-black/[0.06]'
+                      }`}
+                    >
+                      <item.icon className={navIconClass(active)} aria-hidden="true" />
+                      <span className="flex-1">{item.name}</span>
+                    </Link>
+                  );
+                })}
+                {wagonMenuItems.length > 0 && (
+                  <>
+                    <div className="mt-3 flex items-center gap-1 px-2 pb-0.5">
+                      <CpuChipIcon className="h-3.5 w-3.5 text-admin-text-faint" />
+                      <span className="text-[12px] font-medium text-admin-text-muted">{t('nav.ai_wagons', 'AI Vagnar')}</span>
+                    </div>
+                    {wagonMenuItems.map((item) => {
+                      const active = isActive(item.path);
+                      return (
+                        <Link
+                          key={`wagon-${item.wagonId}`}
+                          to={item.path}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className={`group flex h-10 items-center gap-2 rounded-[var(--radius-admin-el)] pl-2 pr-1.5 text-[13px] ${
+                            active ? 'bg-black/[0.08] font-semibold text-admin-text' : 'font-medium text-admin-text hover:bg-black/[0.06]'
                           }`}
-                          aria-hidden="true"
-                        />
-                        <span>{item.name}</span>
-                      </Link>
-                    );
-                  })}
-
-                  {/* 🚂 WAGON SYSTEM: Auto-generated wagon menu items */}
-                  {wagonMenuItems.length > 0 && (
-                    <>
-                      <div className="px-3 pt-5 pb-1">
-                        <span className="flex items-center text-[11px] font-semibold uppercase tracking-wider text-admin-text-faint">
-                          <CpuChipIcon className="mr-1.5 h-3.5 w-3.5" />
-                          {t('nav.ai_wagons', 'AI Vagnar')}
-                        </span>
-                      </div>
-
-                      {wagonMenuItems.map((item) => {
-                        const active = isActive(item.path);
-                        return (
-                          <Link
-                            key={`wagon-${item.wagonId}`}
-                            to={item.path}
-                            className={`group flex h-11 items-center gap-2 rounded-[var(--radius-admin-el)] px-3 font-medium ${
-                              active
-                                ? 'bg-admin-surface-2 text-admin-text'
-                                : 'text-admin-text-muted hover:bg-admin-surface-2 hover:text-admin-text'
-                            }`}
-                            onClick={() => setIsMobileMenuOpen(false)}
-                          >
-                            <SparklesIcon className="h-5 w-5 shrink-0 text-admin-text-muted group-hover:text-admin-text" />
-                            <span>{item.title}</span>
-                          </Link>
-                        );
-                      })}
-                    </>
-                  )}
-                </nav>
-              </div>
-              <div className="border-t border-admin-border p-3">
-                <div className="flex items-center gap-3">
-                  <div className="shrink-0">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-admin-primary)] text-sm font-semibold text-white">
-                      {userProfile?.companyName?.charAt(0)?.toUpperCase() ||
-                       currentUser?.email?.charAt(0)?.toUpperCase() || 'U'}
-                    </div>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-admin-text">
-                      {userProfile?.companyName || currentUser?.email}
-                    </div>
-                    <div className="truncate text-xs text-admin-text-faint">
-                      {currentUser?.email}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="w-14 shrink-0" aria-hidden="true">
-              {/* Dummy element to force sidebar to shrink to fit close icon */}
+                        >
+                          <SparklesIcon className={navIconClass(active)} aria-hidden="true" />
+                          <span className="flex-1">{item.title}</span>
+                        </Link>
+                      );
+                    })}
+                  </>
+                )}
+              </nav>
             </div>
           </div>
-        )}
+          <div className="w-14 shrink-0" aria-hidden="true" />
+        </div>
+      )}
 
-        {/* Canvas + ONE shared content container. The <Page> primitive adds the
-            page header + vertical rhythm but NOT its own max-width/centering, so
-            redesigned pages aren't double-boxed; not-yet-redesigned pages still
-            get this container for width + padding. Polaris uses a wide content
-            column on a light canvas. */}
-        <main className="flex-1">
-          <div className="mx-auto max-w-[1200px] px-4 py-5 sm:px-6">
-            {children}
-          </div>
-        </main>
-      </div>
+      {/* ── Main content: top clearance comes from the banner-wrapper spacer
+          above (single pt-14); here we only offset for the fixed nav. ── */}
+      <main className="md:pl-[232px]">
+        <div className="mx-auto max-w-[1200px] px-4 py-5 sm:px-6">{children}</div>
+      </main>
     </div>
   );
 };
