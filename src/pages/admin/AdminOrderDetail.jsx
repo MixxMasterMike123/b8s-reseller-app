@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useOrder } from '../../contexts/OrderContext';
-import { useAuth } from '../../contexts/AuthContext';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import toast from 'react-hot-toast';
@@ -14,18 +13,13 @@ import { printShippingLabel } from '../../utils/labelPrinter';
 import LabelPrintInstructions from '../../components/LabelPrintInstructions';
 import { getEnhancedOrderDistribution, getDisplayColor, getDisplaySize } from '../../utils/orderUtils';
 import { formatPaymentMethodName } from '../../utils/paymentMethods';
-
-
-// Legacy function - now using enhanced version from utils
-const getOrderDistribution = (order) => {
-  return getEnhancedOrderDistribution(order);
-};
+import { Page, Card, CardSection, RightRail, Button, StatusPill, toneForOrderStatus } from '../../components/admin/ui';
+import { TruckIcon, MapPinIcon, PrinterIcon, TrashIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
 const AdminOrderDetail = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const { getOrderById, updateOrderStatus, deleteOrder } = useOrder();
-  const { isAdmin } = useAuth();
   const [order, setOrder] = useState(null);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -278,7 +272,7 @@ const AdminOrderDetail = () => {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Order_${order.orderNumber || order.id}_B8Shield</title>
+        <title>Order_${order.orderNumber || order.id}</title>
         <style>
           body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
           .header { border-bottom: 2px solid #333; margin-bottom: 20px; padding-bottom: 10px; }
@@ -294,8 +288,7 @@ const AdminOrderDetail = () => {
       </head>
       <body>
         <div class="header">
-          <div class="title">B8Shield Order Details</div>
-          <div>Order Number: <strong>${order.orderNumber || order.id}</strong></div>
+          <div class="title">Order ${order.orderNumber || order.id}</div>
         </div>
 
         <div class="section">
@@ -377,12 +370,12 @@ const AdminOrderDetail = () => {
   if (loading) {
     return (
       <AppLayout>
-        <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-6">
-          <div className="py-12 text-center">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-            <p className="mt-2 text-gray-600">Loading order details...</p>
-          </div>
-        </div>
+        <Page title="Order" back={{ to: '/admin/orders', label: 'Ordrar' }}>
+          <Card className="px-6 py-12 text-center">
+            <div className="inline-block h-7 w-7 animate-spin rounded-full border-2 border-solid border-admin-text-muted border-r-transparent" />
+            <p className="mt-3 text-[13px] text-admin-text-muted">Laddar order…</p>
+          </Card>
+        </Page>
       </AppLayout>
     );
   }
@@ -390,31 +383,16 @@ const AdminOrderDetail = () => {
   if (error) {
     return (
       <AppLayout>
-        <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-6">
-          <div className="py-12 text-center">
-            <div className="text-red-500 mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
+        <Page title="Order" back={{ to: '/admin/orders', label: 'Ordrar' }}>
+          <Card className="px-6 py-12 text-center">
+            <h2 className="text-base font-semibold text-admin-text">Ett fel uppstod</h2>
+            <p className="mt-2 text-[13px] text-admin-text-muted">{error}</p>
+            <div className="mt-5 flex justify-center gap-2">
+              <Button variant="primary" onClick={handleRetry}>Försök igen</Button>
+              <Button as={Link} to="/admin/orders" variant="secondary">Tillbaka till ordrar</Button>
             </div>
-            <h2 className="text-xl font-medium text-gray-700 mb-2">An error occurred</h2>
-            <p className="text-gray-500 mb-6">{error}</p>
-            <div className="flex justify-center space-x-4">
-              <button
-                onClick={handleRetry}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Try Again
-              </button>
-              <Link
-                to="/admin/orders"
-                className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Back to Orders
-              </Link>
-            </div>
-          </div>
-        </div>
+          </Card>
+        </Page>
       </AppLayout>
     );
   }
@@ -422,385 +400,255 @@ const AdminOrderDetail = () => {
   if (!order) {
     return (
       <AppLayout>
-        <div className="max-w-6xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <div className="py-12 text-center">
-            <h2 className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">Order not found</h2>
-            <Link
-              to="/admin/orders"
-              className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
-            >
-              Back to Orders
-            </Link>
-          </div>
-        </div>
+        <Page title="Order" back={{ to: '/admin/orders', label: 'Ordrar' }}>
+          <Card className="px-6 py-12 text-center">
+            <h2 className="text-base font-semibold text-admin-text">Order hittades inte</h2>
+            <div className="mt-4">
+              <Button as={Link} to="/admin/orders" variant="secondary">Tillbaka till ordrar</Button>
+            </div>
+          </Card>
+        </Page>
       </AppLayout>
     );
   }
 
 
 
+  // ── Derivations for the Shopify layout ──
+  const sek = (n) =>
+    (Number(n) || 0).toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' kr';
+  const items = getEnhancedOrderDistribution(order);
+  const isPickup = order.deliveryMethod === 'pickup';
+  const isB2C = order.source === 'b2c';
+  // Payment "paid" — mirrors the list/OrderConfirmation derivation.
+  const paid = ['succeeded', 'paid'].includes(order.payment?.status) || order.status === 'confirmed';
+  const subtotal = isB2C ? order.subtotal : order.prisInfo?.produktPris;
+  const vat = isB2C ? order.vat : order.prisInfo?.moms;
+  const total = isB2C ? order.total : order.prisInfo?.totalPris;
+  const affiliateCode = order.affiliateCode || order.affiliate?.code;
+  const affiliatePct =
+    order.discountPercentage || order.affiliate?.discountPercentage || order.affiliateDiscount?.percentage || 0;
+
+  const headerActions = (
+    <>
+      <Button variant="secondary" onClick={handlePrint}>
+        <PrinterIcon className="h-4 w-4" />
+        Skriv ut
+      </Button>
+      <Button
+        variant="secondary"
+        onClick={handlePrintLabel}
+        disabled={printLoading}
+        title="Laddar ner HTML-fil som öppnas i Preview app för enkel utskrift"
+      >
+        {printLoading ? (
+          <span className="inline-flex items-center gap-2">
+            <span className="h-4 w-4 animate-spin rounded-full border-b-2 border-current" />
+            Laddar ner…
+          </span>
+        ) : (
+          <>
+            <ArrowDownTrayIcon className="h-4 w-4" />
+            Ladda ner etikett
+          </>
+        )}
+      </Button>
+      <LabelPrintInstructions />
+      <Button variant="destructive" onClick={handleDeleteOrder} disabled={deleteLoading}>
+        <TrashIcon className="h-4 w-4" />
+        {deleteLoading ? 'Tar bort…' : 'Ta bort'}
+      </Button>
+    </>
+  );
+
+  const statusPills = (
+    <>
+      {paid ? (
+        <StatusPill tone="success">Betald</StatusPill>
+      ) : isB2C ? (
+        <StatusPill tone="warning">Väntar på betalning</StatusPill>
+      ) : (
+        <StatusPill tone="neutral">Faktura</StatusPill>
+      )}
+      <StatusPill tone={toneForOrderStatus(order.status)}>{getStatusInfo(order.status).text}</StatusPill>
+    </>
+  );
+
+  const Row = ({ label, value, strong, accent }) => (
+    <div className="flex items-baseline justify-between gap-4 py-1 text-[13px]">
+      <span className={accent ? 'text-admin-success-text' : 'text-admin-text-muted'}>{label}</span>
+      <span className={`tabular-nums ${strong ? 'font-semibold text-admin-text' : accent ? 'text-admin-success-text' : 'text-admin-text'}`}>{value}</span>
+    </div>
+  );
+
   return (
     <AppLayout>
-      <div className="max-w-6xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        {/* Header Section */}
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <Link to="/admin/orders" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 mr-2 inline-flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                </svg>
-              </Link>
-              <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">B8Shield Order Details</h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">Order Number: <span className="font-semibold">{order.orderNumber}</span></p>
-            </div>
-            <div className="flex items-center gap-2">
-              {updateStatusLoading ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 dark:border-blue-400 border-r-transparent"></div>
-              ) : (
-                <OrderStatusMenu 
-                  currentStatus={order.status} 
-                  onStatusChange={handleStatusUpdate} 
-                />
-              )}
-              <button
-                onClick={handlePrint}
-                className="bg-gray-600 dark:bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
-              >
-                Print
-              </button>
-                          <button
-              onClick={handlePrintLabel}
-              disabled={printLoading}
-              className="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center gap-2"
-              title="Laddar ner HTML-fil som öppnas i Preview app för enkel utskrift"
-            >
-              {printLoading ? (
-                <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent"></div>
-                  Laddar ner...
-                </>
-              ) : (
-                <>
-                  📄 Ladda ner etikett
-                </>
-              )}
-            </button>
-              <LabelPrintInstructions />
-              <button
-                onClick={handleDeleteOrder}
-                disabled={deleteLoading}
-                className="bg-red-600 dark:bg-red-700 text-white px-4 py-2 rounded-lg hover:bg-red-700 dark:hover:bg-red-800 transition-colors disabled:opacity-50"
-              >
-                {deleteLoading ? 'Deleting...' : 'Delete Order'}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* User Information - Enhanced with user profile data */}
-        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-6">
-          <h2 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">User Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-gray-700 dark:text-gray-300">
-                <span className="font-medium">User ID:</span> {order.userId || 'Not available'}
-              </p>
-              <p className="text-gray-700 dark:text-gray-300">
-                <span className="font-medium">Company/Name:</span> {displayUser.companyName}
-              </p>
-              <p className="text-gray-700 dark:text-gray-300">
-                <span className="font-medium">Contact Person:</span> {displayUser.contactPerson}
-              </p>
-              <p className="text-gray-700 dark:text-gray-300">
-                <span className="font-medium">Role:</span> {displayUser.role}
-              </p>
-              <p className="text-gray-700 dark:text-gray-300">
-                <span className="font-medium">Account Status:</span>{' '}
-                <span className={`px-2 py-0.5 text-xs rounded-full ${displayUser.active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'}`}>
-                  {displayUser.active ? 'Active' : 'Inactive'}
-                </span>
-              </p>
-            </div>
-            <div>
-              <p className="text-gray-700 dark:text-gray-300">
-                <span className="font-medium">Email:</span> {displayUser.email}
-              </p>
-              <p className="text-gray-700 dark:text-gray-300">
-                <span className="font-medium">Phone:</span> {displayUser.phone}
-              </p>
-              {userData && (
-                <>
-                  <p className="text-gray-700 dark:text-gray-300">
-                    <span className="font-medium">Account Created:</span> {userData.createdAt ? formatDate(userData.createdAt) : 'Unknown'}
-                  </p>
-                  <p className="text-gray-700 dark:text-gray-300">
-                    <span className="font-medium">Last Updated:</span> {userData.updatedAt ? formatDate(userData.updatedAt) : 'Unknown'}
-                  </p>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Order Information</h2>
-            <div className="space-y-2">
-              <p className="text-gray-700 dark:text-gray-300">
-                <span className="font-medium">Date:</span> {formatDate(order.createdAt)}
-              </p>
-              <p className="text-gray-700 dark:text-gray-300">
-                <span className="font-medium">Status:</span> {order.status}
-              </p>
-              <p className="text-gray-700 dark:text-gray-300">
-                <span className="font-medium">Payment Method:</span> {formatPaymentMethodName(order.payment) || order.paymentMethod || 'Invoice'}
-              </p>
-              {order.deliveryMethod && (
-                <p className="text-gray-700 dark:text-gray-300">
-                  <span className="font-medium">Leveranssätt:</span>{' '}
-                  {order.deliveryMethod === 'pickup' ? 'Upphämtning' : 'Hemleverans'}
-                </p>
-              )}
-              {order.deliveryMethod === 'pickup' && order.pickupLocation && (
-                <p className="text-gray-700 dark:text-gray-300">
-                  <span className="font-medium">Upphämtningsplats:</span>{' '}
-                  {order.pickupLocation.name}
-                  {order.pickupLocation.address ? ` – ${order.pickupLocation.address}` : ''}
-                </p>
-              )}
-              {order.source && (
-                <p className="text-gray-700 dark:text-gray-300">
-                  <span className="font-medium">Order Source:</span>{' '}
-                  <span className={`px-2 py-0.5 text-xs rounded-full ${order.source === 'b2c' ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300' : 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300'}`}>
-                    {order.source === 'b2c' ? 'B2C Shop' : 'B2B Portal'}
-                  </span>
-                </p>
-              )}
-              {order.source === 'b2c' && order.affiliateCode && (
-                <p className="text-gray-700 dark:text-gray-300">
-                  <span className="font-medium">REF Code:</span>{' '}
-                  <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-300">
-                    {order.affiliateCode}
-                  </span>
-                  {order.affiliateDiscount && (
-                    <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-                      ({order.affiliateDiscount.percentage}% rabatt)
-                    </span>
+      <Page
+        title={`Order ${order.orderNumber || order.id}`}
+        subtitle={formatDate(order.createdAt)}
+        titleAdornment={<span className="flex items-center gap-1.5">{statusPills}</span>}
+        back={{ to: '/admin/orders', label: 'Ordrar' }}
+        actions={headerActions}
+      >
+        <RightRail
+          main={
+            <>
+              {/* Fulfillment / items card */}
+              <Card>
+                <div className="flex items-center justify-between gap-3 border-b border-admin-border px-4 py-3">
+                  <div className="flex items-center gap-2 text-[14px] font-semibold text-admin-text">
+                    {isPickup ? <MapPinIcon className="h-4 w-4 text-admin-text-muted" /> : <TruckIcon className="h-4 w-4 text-admin-text-muted" />}
+                    {isPickup
+                      ? `Upphämtning${order.pickupLocation?.name ? ` · ${order.pickupLocation.name}` : ''}`
+                      : 'Hemleverans'}
+                  </div>
+                  {updateStatusLoading ? (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-admin-text-muted border-r-transparent" />
+                  ) : (
+                    <OrderStatusMenu currentStatus={order.status} onStatusChange={handleStatusUpdate} />
                   )}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Delivery Address</h2>
-            <div className="space-y-2">
-              <p className="text-gray-700 dark:text-gray-300">
-                <span className="font-medium">Name/Company:</span> {displayAddress.company}
-              </p>
-              <p className="text-gray-700 dark:text-gray-300">
-                <span className="font-medium">Contact Person:</span> {displayAddress.contactPerson}
-              </p>
-              <p className="text-gray-700 dark:text-gray-300">
-                <span className="font-medium">Address:</span> {displayAddress.address}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Order Items</h2>
-          <div className="shadow-xs overflow-hidden border-b border-gray-200 dark:border-gray-700 sm:rounded-lg">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Product
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Variant
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    SKU
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Quantity
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Price per item
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Total
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {getEnhancedOrderDistribution(order).map((item, index) => (
-                  <tr key={index}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">
-                      {getContentValue(item.name) || 'B8 Shield'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {item.label || getDisplayColor(item.color)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {item.sku || getDisplaySize(item.size)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {item.quantity} st
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">
-                      {item.price?.toLocaleString('sv-SE', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })} kr
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">
-                      {(item.price * item.quantity).toLocaleString('sv-SE', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })} kr
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium text-gray-800 dark:text-gray-200">Subtotal:</td>
-                  <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300 text-right">
-                    {order.source === 'b2c' ? (
-                      `${order.subtotal?.toLocaleString('sv-SE', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })} kr`
-                    ) : (
-                      `${order.prisInfo?.produktPris?.toLocaleString('sv-SE', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })} kr`
-                    )}
-                  </td>
-                </tr>
-                {order.source === 'b2c' && order.discountAmount > 0 && (
-                  <tr>
-                    <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium text-green-600 dark:text-green-400">
-                      {(() => {
-                        // Handle different affiliate data structures
-                        const affiliateCode = order.affiliateCode || order.affiliate?.code || 'AFFILIATE';
-                        const discountPercentage = order.discountPercentage || order.affiliate?.discountPercentage || order.affiliateDiscount?.percentage || 0;
-                        return `Affiliate rabatt (${affiliateCode}), ${discountPercentage}%:`;
-                      })()}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-green-600 dark:text-green-400 text-right">
-                      - {order.discountAmount?.toLocaleString('sv-SE', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })} kr
-                    </td>
-                  </tr>
+                </div>
+                {isPickup && order.pickupLocation?.address && (
+                  <div className="border-b border-admin-border-soft px-4 py-2 text-[13px] text-admin-text-muted">
+                    {order.pickupLocation.address}
+                  </div>
                 )}
-                {order.source === 'b2c' && order.shipping > 0 && (
-                  <tr>
-                    <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium text-gray-800 dark:text-gray-200">Shipping:</td>
-                    <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300 text-right">
-                      {order.shipping.toLocaleString('sv-SE', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })} kr
-                    </td>
-                  </tr>
-                )}
-                <tr>
-                  <td colSpan="4" className="px-4 py-4 text-sm text-right font-medium text-gray-800 dark:text-gray-200">VAT (25%):</td>
-                  <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300 text-right">
-                    {order.source === 'b2c' ? (
-                      `${order.vat?.toLocaleString('sv-SE', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })} kr`
-                    ) : (
-                      `${order.prisInfo?.moms?.toLocaleString('sv-SE', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })} kr`
-                    )}
-                  </td>
-                </tr>
-                <tr>
-                  <td colSpan="4" className="px-4 py-4 text-sm text-right font-bold text-gray-800 dark:text-gray-100">Total:</td>
-                  <td className="px-4 py-4 text-sm font-bold text-gray-800 dark:text-gray-100 text-right">
-                    {order.source === 'b2c' ? (
-                      `${order.total?.toLocaleString('sv-SE', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })} kr`
-                    ) : (
-                      `${order.prisInfo?.totalPris?.toLocaleString('sv-SE', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })} kr`
-                    )}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </div>
-
-        {order.note && (
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Notes</h2>
-            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-              <p className="text-gray-700 dark:text-gray-300">{order.note}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Status History Section */}
-        {order.statusHistory && order.statusHistory.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Status History</h2>
-            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-              <ul className="space-y-3">
-                {order.statusHistory.map((history, index) => (
-                  <li key={index} className="border-b border-gray-200 dark:border-gray-600 pb-2 last:border-0 last:pb-0">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="font-medium text-gray-800 dark:text-gray-200">Status changed from </span>
-                        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusInfo(history.from).color}`}>
-                          {getStatusInfo(history.from).text}
-                        </span>
-                        <span className="font-medium text-gray-800 dark:text-gray-200"> to </span>
-                        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusInfo(history.to).color}`}>
-                          {getStatusInfo(history.to).text}
-                        </span>
+                <div className="divide-y divide-admin-border-soft">
+                  {items.map((item, index) => (
+                    <div key={index} className="flex items-center gap-3 px-4 py-2.5 text-[13px]">
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-admin-text">{getContentValue(item.name) || 'Produkt'}</div>
+                        {(item.label || getDisplayColor(item.color) || item.sku || getDisplaySize(item.size)) && (
+                          <div className="truncate text-[12px] text-admin-text-faint">
+                            {[item.label || getDisplayColor(item.color), item.sku || getDisplaySize(item.size)]
+                              .filter((x) => x && x !== '-')
+                              .join(' · ')}
+                          </div>
+                        )}
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {history.changedAt ? formatDate(history.changedAt) : 'N/A'}
+                      <div className="whitespace-nowrap text-admin-text-muted tabular-nums">
+                        {sek(item.price)} × {item.quantity}
+                      </div>
+                      <div className="w-24 text-right font-medium text-admin-text tabular-nums">
+                        {sek(item.price * item.quantity)}
                       </div>
                     </div>
-                    {history.displayName && (
-                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        By: {history.displayName}
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
+                  ))}
+                </div>
+              </Card>
 
-        <div className="flex justify-between mt-8">
-          <Link
-            to="/admin/orders"
-            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
-          >
-            Back to Order List
-          </Link>
-        </div>
-      </div>
+              {/* Payment summary card */}
+              <Card>
+                <div className="flex items-center gap-2 border-b border-admin-border px-4 py-3">
+                  <h3 className="text-[14px] font-semibold text-admin-text">Betalning</h3>
+                  {paid ? <StatusPill tone="success">Betald</StatusPill> : !isB2C ? <StatusPill tone="neutral">Faktura</StatusPill> : <StatusPill tone="warning">Väntar</StatusPill>}
+                </div>
+                <div className="px-4 py-3">
+                  <Row label="Delsumma" value={sek(subtotal)} />
+                  {isB2C && order.discountAmount > 0 && (
+                    <Row
+                      label={`Affiliate-rabatt (${affiliateCode || 'AFFILIATE'}), ${affiliatePct}%`}
+                      value={`- ${sek(order.discountAmount)}`}
+                      accent
+                    />
+                  )}
+                  {isB2C && order.shipping > 0 && <Row label="Frakt" value={sek(order.shipping)} />}
+                  <Row label="Moms (25%)" value={sek(vat)} />
+                  <div className="mt-1 border-t border-admin-border-soft pt-2">
+                    <Row label="Totalt" value={sek(total)} strong />
+                  </div>
+                </div>
+              </Card>
+
+              {/* Notes */}
+              {order.note && (
+                <CardSection title="Anteckningar">
+                  <p className="text-[13px] text-admin-text">{order.note}</p>
+                </CardSection>
+              )}
+
+              {/* Status history (real data) */}
+              {order.statusHistory && order.statusHistory.length > 0 && (
+                <CardSection title="Statushistorik" bodyClassName="space-y-2">
+                  {order.statusHistory.map((history, index) => (
+                    <div key={index} className="flex items-center justify-between gap-3 text-[13px]">
+                      <div className="flex flex-wrap items-center gap-1.5 text-admin-text-muted">
+                        <StatusPill tone={toneForOrderStatus(history.from)}>{getStatusInfo(history.from).text}</StatusPill>
+                        <span>→</span>
+                        <StatusPill tone={toneForOrderStatus(history.to)}>{getStatusInfo(history.to).text}</StatusPill>
+                        {history.displayName && <span className="text-admin-text-faint">· {history.displayName}</span>}
+                      </div>
+                      <div className="whitespace-nowrap text-[12px] text-admin-text-faint">
+                        {history.changedAt ? formatDate(history.changedAt) : '—'}
+                      </div>
+                    </div>
+                  ))}
+                </CardSection>
+              )}
+            </>
+          }
+          rail={
+            <>
+              {/* Customer */}
+              <CardSection title="Kund" bodyClassName="space-y-2 text-[13px]">
+                <div>
+                  <div className="font-medium text-admin-text">{displayUser.companyName}</div>
+                  {displayUser.contactPerson && displayUser.contactPerson !== displayUser.companyName && (
+                    <div className="text-admin-text-muted">{displayUser.contactPerson}</div>
+                  )}
+                </div>
+                <div>
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-admin-text-faint">E-post</div>
+                  <div className="break-words text-admin-text">{displayUser.email}</div>
+                </div>
+                {displayUser.phone && displayUser.phone !== 'Not specified' && (
+                  <div>
+                    <div className="text-[11px] font-medium uppercase tracking-wide text-admin-text-faint">Telefon</div>
+                    <div className="text-admin-text">{displayUser.phone}</div>
+                  </div>
+                )}
+                <div>
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-admin-text-faint">Leveransadress</div>
+                  <div className="text-admin-text">{displayAddress.address}</div>
+                </div>
+                {!isB2C && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-admin-text-muted">Konto:</span>
+                    <StatusPill tone={displayUser.active ? 'success' : 'danger'}>
+                      {displayUser.active ? 'Aktiv' : 'Inaktiv'}
+                    </StatusPill>
+                  </div>
+                )}
+              </CardSection>
+
+              {/* Order info + attribution (affiliate/referrer moved here per slice 1c plan) */}
+              <CardSection title="Orderinformation" bodyClassName="space-y-2 text-[13px]">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-admin-text-muted">Kanal</span>
+                  <span className="text-admin-text">{isB2C ? 'Webbshop' : 'Återförsäljare'}</span>
+                </div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-admin-text-muted">Betalsätt</span>
+                  <span className="text-right text-admin-text">{formatPaymentMethodName(order.payment) || order.paymentMethod || 'Faktura'}</span>
+                </div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-admin-text-muted">Leverans</span>
+                  <span className="text-admin-text">{isPickup ? 'Upphämtning' : 'Hemleverans'}</span>
+                </div>
+                {affiliateCode && (
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-admin-text-muted">Affiliate</span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <StatusPill tone="info" marker="none">{affiliateCode}</StatusPill>
+                      {affiliatePct ? <span className="text-[12px] text-admin-text-faint">{affiliatePct}%</span> : null}
+                    </span>
+                  </div>
+                )}
+              </CardSection>
+            </>
+          }
+        />
+      </Page>
     </AppLayout>
   );
 };
