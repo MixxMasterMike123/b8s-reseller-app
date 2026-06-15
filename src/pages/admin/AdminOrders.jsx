@@ -1,114 +1,57 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useOrder } from '../../contexts/OrderContext';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import OrderStatusMenu from '../../components/OrderStatusMenu';
 import { toast } from 'react-hot-toast';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../../firebase/config';
-import { parseReferrer, getReferrerCategory } from '../../utils/referrerParser';
 import { printMultipleShippingLabels } from '../../utils/labelPrinter';
-import { formatPaymentMethodName, getPaymentMethodBadgeClasses } from '../../utils/paymentMethods';
 import { exportOrdersToCSV } from '../../utils/orderExport';
 import { exportSingleOrderVerification, exportAllOrderVerifications } from '../../utils/orderVerification';
-import { ArrowDownTrayIcon, DocumentTextIcon, PrinterIcon } from '@heroicons/react/24/outline';
+import { getEnhancedOrderDistribution } from '../../utils/orderUtils';
+import { ArrowDownTrayIcon, DocumentTextIcon, PrinterIcon, TruckIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import {
+  Page,
+  KpiStrip,
+  DataTable,
+  FilterBar,
+  SegmentedTabs,
+  SearchInput,
+  Button,
+  Toolbar,
+  StatusPill,
+} from '../../components/admin/ui';
 
-
-const getStatusStyles = (status) => {
-  switch (status) {
-    case 'pending':
-      return 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300'; // Waiting for confirmation
-    case 'confirmed':
-      return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300'; // Confirmed
-    case 'processing':
-      return 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300'; // Processing
-    case 'shipped':
-      return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'; // Shipped - GREEN for quick visual identification
-    case 'delivered':
-      return 'bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-300'; // Delivered - Darker green
-    case 'cancelled':
-      return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'; // Cancelled
-    default:
-      return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'; // Unknown status
+// Total units on an order (sum of line-item quantities), via the same resolver
+// the order-detail page uses — always returns a non-empty array, so this is safe.
+const orderItemCount = (order) => {
+  try {
+    return getEnhancedOrderDistribution(order).reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
+  } catch {
+    return 0;
   }
 };
 
+// Payment "paid" derivation — mirrors OrderConfirmation's isPaid logic exactly
+// (there is no explicit order.paymentStatus field). A Stripe order in Firestore
+// fired on payment success, so succeeded/paid or a confirmed status = paid.
+const isOrderPaid = (order) =>
+  ['succeeded', 'paid'].includes(order.payment?.status) || order.status === 'confirmed';
+
 const AdminOrders = () => {
+  const navigate = useNavigate();
   const { getAllOrders, updateOrderStatus, loading: contextLoading, error: contextError } = useOrder();
-  const [affiliateClicks, setAffiliateClicks] = useState({});
-  const [clicksLoading, setClicksLoading] = useState(false);
   const [selectedOrders, setSelectedOrders] = useState(new Set());
   const [printLoading, setPrintLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [verificationProgress, setVerificationProgress] = useState(null);
 
-  // Fetch affiliate click data for orders with affiliate information
-  const fetchAffiliateClicks = async (orders) => {
-    if (!orders || orders.length === 0) return;
-    
-    setClicksLoading(true);
-    try {
-      // Get all unique affiliate click IDs from orders
-      const clickIds = [];
-      orders.forEach(order => {
-        if (order.affiliateClickId) {
-          clickIds.push(order.affiliateClickId);
-        }
-        if (order.affiliate?.clickId) {
-          clickIds.push(order.affiliate.clickId);
-        }
-      });
+  // NOTE (slice 1b): the affiliate-click batch-fetch + the "Trafikkälla" list
+  // column (affiliate code · referrer category · payment method) were removed
+  // from the LIST to keep the table Shopify-clean. That attribution info moves
+  // to the Order DETAIL right rail in slice 1c (Mikael's call, 2026-06-15).
 
-      if (clickIds.length === 0) {
-        setClicksLoading(false);
-        return;
-      }
-
-      // Fetch affiliate clicks in batches (Firestore 'in' query limit is 10)
-      const clickData = {};
-      const batchSize = 10;
-      
-      for (let i = 0; i < clickIds.length; i += batchSize) {
-        const batch = clickIds.slice(i, i + batchSize);
-        const clicksQuery = query(
-          collection(db, 'affiliateClicks'),
-          where('__name__', 'in', batch)
-        );
-        
-        const clicksSnapshot = await getDocs(clicksQuery);
-        clicksSnapshot.docs.forEach(doc => {
-          clickData[doc.id] = { id: doc.id, ...doc.data() };
-        });
-      }
-
-      setAffiliateClicks(clickData);
-    } catch (error) {
-      console.error('Error fetching affiliate clicks:', error);
-    } finally {
-      setClicksLoading(false);
-    }
-  };
-
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case 'pending':
-        return 'Väntar';
-      case 'confirmed':
-        return 'Bekräftad';
-      case 'processing':
-        return 'Behandlas';
-      case 'shipped':
-        return 'Skickad';
-      case 'delivered':
-        return 'Levererad';
-      case 'cancelled':
-        return 'Avbruten';
-      default:
-        return 'Okänd';
-    }
-  };
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -215,13 +158,6 @@ const AdminOrders = () => {
     fetchOrders();
   }, [getAllOrders]);
 
-  // Fetch affiliate click data when orders change
-  useEffect(() => {
-    if (orders && orders.length > 0) {
-      fetchAffiliateClicks(orders);
-    }
-  }, [orders]);
-
   const filteredOrders = useMemo(() => {
     if (!Array.isArray(orders)) {
       return [];
@@ -263,6 +199,42 @@ const AdminOrders = () => {
       return dateB - dateA;
     });
   }, [filteredOrders]);
+
+  // KPI strip — computed from the SOURCE-filtered set (so the metrics follow the
+  // active source tab but not the status tab/search, which would make them
+  // jump around). All derived from already-loaded data — no extra queries
+  // (honesty rule: only real, computable metrics).
+  const sourceScopedOrders = useMemo(() => {
+    if (!Array.isArray(orders)) return [];
+    if (activeSourceTab === 'b2b') return orders.filter((o) => o.source === 'b2b' || !o.source);
+    if (activeSourceTab === 'b2c') return orders.filter((o) => o.source === 'b2c');
+    return orders;
+  }, [orders, activeSourceTab]);
+
+  const kpis = useMemo(() => {
+    const list = sourceScopedOrders;
+    const itemsTotal = list.reduce((sum, o) => sum + orderItemCount(o), 0);
+    // "Att hantera" = open orders not yet shipped/delivered/cancelled.
+    const toHandle = list.filter(
+      (o) => !['shipped', 'delivered', 'cancelled'].includes(o.status)
+    ).length;
+    const delivered = list.filter((o) => o.status === 'delivered').length;
+    return [
+      { key: 'orders', label: 'Ordrar', value: list.length },
+      { key: 'items', label: 'Artiklar', value: itemsTotal },
+      { key: 'tohandle', label: 'Att hantera', value: toHandle },
+      { key: 'delivered', label: 'Levererade', value: delivered },
+    ];
+  }, [sourceScopedOrders]);
+
+  // Status-tab counts (within the active source scope) for the segmented filter.
+  const statusCounts = useMemo(() => {
+    const counts = { all: sourceScopedOrders.length };
+    for (const o of sourceScopedOrders) {
+      counts[o.status] = (counts[o.status] || 0) + 1;
+    }
+    return counts;
+  }, [sourceScopedOrders]);
   
   const formatDate = (date) => {
     if (!date) return 'N/A';
@@ -307,13 +279,11 @@ const AdminOrders = () => {
     setSelectedOrders(newSelection);
   };
 
-  const handleSelectAll = (isSelected) => {
-    if (isSelected) {
-      setSelectedOrders(new Set(filteredOrders.map(order => order.id)));
-    } else {
-      setSelectedOrders(new Set());
-    }
-  };
+  // DataTable selection adapters: it calls onToggle(id) and onToggleAll(checked, ids).
+  // Honor the exact visible ids DataTable passes (identical to filteredOrders
+  // today since there's no pagination; future-proof if paging is added).
+  const toggleOne = (id) => handleOrderSelection(id, !selectedOrders.has(id));
+  const toggleAll = (checked, ids = []) => setSelectedOrders(checked ? new Set(ids) : new Set());
 
   const handlePrintSelectedLabels = async () => {
     if (selectedOrders.size === 0) {
@@ -358,350 +328,316 @@ const AdminOrders = () => {
     }
   };
 
-  const TabButton = ({ tabName, label, activeTab, setActiveTab }) => (
-    <button
-      onClick={() => setActiveTab(tabName)}
-      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-        activeTab === tabName
-          ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-sm'
-          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-      }`}
-    >
-      {label}
-    </button>
-  );
-
-  const sourceTabs = [
-    { key: 'all', label: 'Alla Källor' },
-    { key: 'b2b', label: 'Återförsäljare (B2B)' },
-    { key: 'b2c', label: 'Kunder (B2C)' },
+  const sourceTabOptions = [
+    { value: 'all', label: 'Alla källor' },
+    { value: 'b2b', label: 'Återförsäljare' },
+    { value: 'b2c', label: 'Kunder' },
   ];
 
-  const statusTabs = [
-    { key: 'all', label: 'Alla' },
-    { key: 'pending', label: 'Väntar' },
-    { key: 'processing', label: 'Behandlas' },
-    { key: 'shipped', label: 'Skickad' },
-    { key: 'delivered', label: 'Levererad' },
-    { key: 'cancelled', label: 'Avbruten' },
+  const statusTabOptions = [
+    { value: 'all', label: 'Alla', count: statusCounts.all },
+    { value: 'pending', label: 'Väntar', count: statusCounts.pending || 0 },
+    { value: 'processing', label: 'Behandlas', count: statusCounts.processing || 0 },
+    { value: 'shipped', label: 'Skickad', count: statusCounts.shipped || 0 },
+    { value: 'delivered', label: 'Levererad', count: statusCounts.delivered || 0 },
+    { value: 'cancelled', label: 'Avbruten', count: statusCounts.cancelled || 0 },
   ];
+
+  const formatSek = (amount, withDecimals = true) =>
+    new Intl.NumberFormat('sv-SE', {
+      style: 'currency',
+      currency: 'SEK',
+      minimumFractionDigits: withDecimals ? 2 : 0,
+      maximumFractionDigits: withDecimals ? 2 : 0,
+    }).format(amount || 0);
+
+  const orderTotal = (order) =>
+    order.source === 'b2c'
+      ? order.total || 0
+      : order.prisInfo?.totalPris || order.totalAmount || 0;
 
   const currentError = error || contextError;
+  const isLoading = loading || contextLoading;
+
+  // ── Table column definitions (Shopify-style: Order · Datum · Kund · Betalning ·
+  //    Status · Leverans · Artiklar · Belopp). All fields verified to exist. ──
+  const columns = [
+    {
+      key: 'order',
+      header: 'Order',
+      render: (order) => (
+        <div className="flex items-center gap-2">
+          <span className="font-mono font-medium text-admin-text">
+            {order.orderNumber || order.id}
+          </span>
+          <StatusPill tone={order.source === 'b2c' ? 'info' : 'neutral'} size="sm">
+            {order.source === 'b2c' ? 'Kund' : 'Återförsäljare'}
+          </StatusPill>
+        </div>
+      ),
+    },
+    {
+      key: 'date',
+      header: 'Datum',
+      render: (order) => (
+        <span className="text-admin-text-muted whitespace-nowrap">{formatDate(order.createdAt)}</span>
+      ),
+    },
+    {
+      key: 'customer',
+      header: 'Kund',
+      render: (order) => {
+        const name =
+          order.companyName ||
+          `${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''}`.trim() ||
+          'Gäst';
+        const email =
+          order.source === 'b2c'
+            ? order.customerInfo?.email || ''
+            : order.userEmail || '';
+        return (
+          <div className="min-w-0">
+            <div className="text-admin-text truncate">{name}</div>
+            {email && <div className="text-xs text-admin-text-faint truncate">{email}</div>}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'payment',
+      header: 'Betalning',
+      render: (order) => {
+        // B2B/legacy invoice orders have no Stripe payment object — show a
+        // neutral "Faktura" pill rather than misreading them as "Väntar".
+        if (order.source !== 'b2c') {
+          return <StatusPill tone="neutral" size="sm">Faktura</StatusPill>;
+        }
+        return isOrderPaid(order) ? (
+          <StatusPill tone="success" size="sm">Betald</StatusPill>
+        ) : (
+          <StatusPill tone="warning" size="sm">Väntar</StatusPill>
+        );
+      },
+    },
+    {
+      key: 'delivery',
+      header: 'Leverans',
+      render: (order) => {
+        const isPickup = order.deliveryMethod === 'pickup';
+        return (
+          <span className="inline-flex items-center gap-1.5 text-admin-text-muted whitespace-nowrap">
+            {isPickup ? (
+              <>
+                <MapPinIcon className="h-4 w-4 shrink-0" />
+                <span className="truncate max-w-[160px]" title={order.pickupLocation?.name || 'Upphämtning'}>
+                  {order.pickupLocation?.name || 'Upphämtning'}
+                </span>
+              </>
+            ) : (
+              <>
+                <TruckIcon className="h-4 w-4 shrink-0" />
+                Hemleverans
+              </>
+            )}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'items',
+      header: 'Artiklar',
+      align: 'right',
+      render: (order) => <span className="tabular-nums text-admin-text-muted">{orderItemCount(order)}</span>,
+    },
+    {
+      key: 'total',
+      header: 'Belopp',
+      align: 'right',
+      render: (order) => (
+        <span className="tabular-nums font-medium text-admin-text">{formatSek(orderTotal(order))}</span>
+      ),
+    },
+    {
+      // Actionable status — keeps the inline OrderStatusMenu workflow. Stop row
+      // click so opening the menu / changing status does not navigate to detail.
+      key: 'status',
+      header: 'Status',
+      align: 'right',
+      className: 'w-40',
+      render: (order) => (
+        <div onClick={(e) => e.stopPropagation()} className="flex justify-end">
+          <OrderStatusMenu
+            currentStatus={order.status}
+            onStatusChange={(newStatus) => handleStatusUpdate(order.id, newStatus)}
+            disabled={isLoading}
+          />
+        </div>
+      ),
+    },
+    {
+      // Per-order verification PDF export (bokföring). Stop row click.
+      key: 'actions',
+      header: '',
+      align: 'right',
+      className: 'w-12',
+      render: (order) => (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleExportVerification(order);
+          }}
+          title="Exportera som verifikation för bokföring"
+          aria-label="Exportera verifikation"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-admin-el)] text-admin-text-faint hover:bg-admin-surface-2 hover:text-admin-text"
+        >
+          <PrinterIcon className="h-4 w-4" />
+        </button>
+      ),
+    },
+  ];
+
+  const headerActions = (
+    <>
+      <Button
+        variant="secondary"
+        onClick={handleExportOrders}
+        disabled={exportLoading || isLoading || orders.length === 0}
+      >
+        {exportLoading ? (
+          <span className="inline-flex items-center gap-2">
+            <span className="h-4 w-4 animate-spin rounded-full border-b-2 border-current" />
+            Exporterar…
+          </span>
+        ) : (
+          <>
+            <ArrowDownTrayIcon className="h-4 w-4" />
+            Exportera CSV
+          </>
+        )}
+      </Button>
+      <Button
+        variant="secondary"
+        onClick={handleExportAllVerifications}
+        disabled={isLoading || orders.length === 0 || verificationProgress !== null}
+        title="Exportera varje order som separat PDF-verifikation för bokföring"
+      >
+        {verificationProgress ? (
+          <span className="inline-flex items-center gap-2">
+            <span className="h-4 w-4 animate-spin rounded-full border-b-2 border-current" />
+            {verificationProgress.current}/{verificationProgress.total}
+          </span>
+        ) : (
+          <>
+            <DocumentTextIcon className="h-4 w-4" />
+            Verifikationer
+          </>
+        )}
+      </Button>
+    </>
+  );
 
   return (
     <AppLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Orderhantering</h1>
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-            <input
-              type="text"
-              placeholder="Sök på ordernr, kundinfo..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full sm:w-64 px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-lg focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
+      <Page title="Ordrar" width="wide" actions={headerActions}>
+        <div className="space-y-5">
+          <KpiStrip metrics={kpis} />
+
+          <FilterBar
+            search={
+              <SearchInput
+                value={searchTerm}
+                onChange={setSearchTerm}
+                placeholder="Sök på ordernr, kundinfo…"
+                className="w-full sm:w-72"
+              />
+            }
+            tabs={
+              <SegmentedTabs
+                ariaLabel="Filtrera på källa"
+                options={sourceTabOptions}
+                value={activeSourceTab}
+                onChange={setActiveSourceTab}
+              />
+            }
+          />
+
+          <div className="overflow-x-auto pb-1">
+            <SegmentedTabs
+              ariaLabel="Filtrera på status"
+              options={statusTabOptions}
+              value={activeStatusTab}
+              onChange={setActiveStatusTab}
             />
-            <button
-              onClick={handleExportOrders}
-              disabled={exportLoading || loading || orders.length === 0}
-              className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-xs text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
-            >
-              {exportLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Exporterar...
-                </>
-              ) : (
-                <>
-                  <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
-                  Exportera CSV
-                </>
-              )}
-            </button>
-            <button
-              onClick={handleExportAllVerifications}
-              disabled={loading || orders.length === 0 || verificationProgress !== null}
-              className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-xs text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
-              title="Exportera varje order som separat PDF-verifikation för bokföring"
-            >
-              {verificationProgress ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  {verificationProgress.current}/{verificationProgress.total}
-                </>
-              ) : (
-                <>
-                  <DocumentTextIcon className="h-5 w-5 mr-2" />
-                  Verifikationer
-                </>
-              )}
-            </button>
           </div>
-        </div>
-        
-        <div className="mb-6 space-y-4">
-          <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-3">
-             <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 mr-2">Källa:</span>
-            {sourceTabs.map(tab => (
-              <TabButton
-                key={tab.key}
-                tabName={tab.key}
-                label={tab.label}
-                activeTab={activeSourceTab}
-                setActiveTab={setActiveSourceTab}
-              />
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 mr-2">Status:</span>
-            {statusTabs.map(tab => (
-              <TabButton
-                key={tab.key}
-                tabName={tab.key}
-                label={tab.label}
-                activeTab={activeStatusTab}
-                setActiveTab={setActiveStatusTab}
-              />
-            ))}
-          </div>
-        </div>
 
-        {loading || contextLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
-            <span className="ml-3 text-blue-600 dark:text-blue-400">Laddar ordrar...</span>
-          </div>
-        ) : currentError ? (
-          <div className="text-center py-12">
-            <p className="text-red-500 dark:text-red-400">Fel vid laddning av ordrar: {currentError}</p>
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Order & Kund
-                    </th>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Datum & Belopp
-                    </th>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Trafikkälla
-                    </th>
-                    <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Status & Åtgärd
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {sortedOrders.map(order => (
-                    <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      {/* Column 1: Order & Customer */}
-                      <td className="px-4 md:px-6 py-4">
-                        <div className="flex items-start">
-                          <div className="shrink-0 h-12 w-12 mr-4">
-                            <div className={`h-12 w-12 rounded-full flex items-center justify-center ${
-                              order.source === 'b2c' 
-                                ? 'bg-linear-to-br from-purple-100 to-purple-200 dark:from-purple-800 dark:to-purple-700'
-                                : 'bg-linear-to-br from-blue-100 to-blue-200 dark:from-blue-800 dark:to-blue-700'
-                            }`}>
-                              <span className={`text-sm font-medium ${
-                                order.source === 'b2c' ? 'text-purple-800 dark:text-purple-200' : 'text-blue-800 dark:text-blue-200'
-                              }`}>
-                                {order.source === 'b2c' ? 'B2C' : 'B2B'}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-sm font-mono font-medium text-gray-900 dark:text-gray-100">
-                                {order.orderNumber || order.id}
-                              </span>
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                                order.source === 'b2c' 
-                                  ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300'
-                                  : 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300'
-                              }`}>
-                                {order.source === 'b2c' ? 'Kund' : 'Återförsäljare'}
-                              </span>
-                            </div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 mb-1">
-                              {order.companyName || `${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''}`.trim() || 'Gäst'}
-                            </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {/* B2C orders have customerInfo.email, B2B orders have userEmail or need lookup via userId */}
-                              {order.source === 'b2c' 
-                                ? (order.customerInfo?.email || 'Ingen e-post')
-                                : (order.userEmail || 'B2B kund - se detaljer')
-                              }
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Column 2: Date & Amount */}
-                      <td className="px-4 md:px-6 py-4">
-                        <div className="space-y-2">
-                          <div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Datum:</div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100">
-                              {formatDate(order.createdAt)}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Belopp:</div>
-                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                              {new Intl.NumberFormat('sv-SE', { 
-                                style: 'currency', 
-                                currency: 'SEK',
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                              }).format(
-                                order.source === 'b2c' 
-                                  ? (order.total || 0)
-                                  : (order.prisInfo?.totalPris || order.totalAmount || 0)
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Column 3: Traffic Source */}
-                      <td className="px-4 md:px-6 py-4">
-                        <div className="space-y-1">
-                          {/* Source Type */}
-                          <div className="flex items-center gap-2">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                              order.source === 'b2c' 
-                                ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300'
-                                : 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300'
-                            }`}>
-                              {order.source === 'b2c' ? 'B2C' : 'B2B'}
-                            </span>
-                          </div>
-                          
-                          {/* Affiliate Info */}
-                          {(order.affiliateCode || order.affiliate?.code) && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400">
-                              <span className="font-medium">Affiliate:</span> {order.affiliateCode || order.affiliate?.code}
-                            </div>
-                          )}
-                          
-                          {/* Referrer Information */}
-                          {(() => {
-                            const clickId = order.affiliateClickId || order.affiliate?.clickId;
-                            const clickData = clickId ? affiliateClicks[clickId] : null;
-                            
-                            if (clicksLoading && clickId) {
-                              return (
-                                <div className="text-xs text-gray-400 dark:text-gray-500">
-                                  Laddar referrer...
-                                </div>
-                              );
-                            }
-                            
-                            if (clickData && clickData.landingPage && clickData.landingPage !== 'unknown') {
-                              const referrer = parseReferrer(clickData.landingPage);
-                              const category = getReferrerCategory(referrer.category);
-                              
-                              // Map category colors to actual Tailwind classes with dark mode
-                              const categoryStyles = {
-                                purple: 'text-purple-800 dark:text-purple-300 bg-purple-100 dark:bg-purple-900',
-                                blue: 'text-blue-800 dark:text-blue-300 bg-blue-100 dark:bg-blue-900', 
-                                green: 'text-green-800 dark:text-green-300 bg-green-100 dark:bg-green-900',
-                                red: 'text-red-800 dark:text-red-300 bg-red-100 dark:bg-red-900',
-                                teal: 'text-teal-800 dark:text-teal-300 bg-teal-100 dark:bg-teal-900',
-                                gray: 'text-gray-800 dark:text-gray-300 bg-gray-100 dark:bg-gray-700',
-                                indigo: 'text-indigo-800 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900'
-                              };
-                              
-                              return (
-                                <div className="text-xs">
-                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-sm font-medium ${categoryStyles[category.color] || categoryStyles.gray}`}>
-                                    {referrer.name}
-                                  </span>
-                                </div>
-                              );
-                            }
-                            
-                            return null;
-                          })()}
-                          
-                          {/* Payment Method */}
-                          <div className="text-xs">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded font-medium text-xs ${
-                              order.source === 'b2c' 
-                                ? getPaymentMethodBadgeClasses(order.payment)
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
-                            }`}>
-                              {order.source === 'b2c' 
-                                ? formatPaymentMethodName(order.payment)
-                                : 'B2B Order'
-                              }
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Column 4: Status & Action */}
-                      <td className="px-4 md:px-6 py-4 text-right">
-                        <div className="flex flex-col items-end gap-2">
-                          <div className="w-full max-w-[120px]">
-                            <OrderStatusMenu 
-                              currentStatus={order.status}
-                              onStatusChange={(newStatus) => handleStatusUpdate(order.id, newStatus)}
-                              disabled={loading}
-                            />
-                          </div>
-                          <div className="flex flex-col gap-1 w-full max-w-[120px]">
-                            <Link
-                              to={`/admin/orders/${order.id}`}
-                              className="min-h-[32px] inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 border border-blue-300 dark:border-blue-600 rounded-sm transition-colors"
-                            >
-                              Hantera
-                            </Link>
-                            <button
-                              onClick={() => handleExportVerification(order)}
-                              className="min-h-[32px] inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-sm transition-colors"
-                              title="Exportera som verifikation för bokföring"
-                            >
-                              <PrinterIcon className="h-3.5 w-3.5 mr-1" />
-                              Verifikation
-                            </button>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                {activeSourceTab === 'b2b' && sortedOrders.length > 0 && (
-                  <tfoot className="bg-gray-50 dark:bg-gray-700 font-semibold">
-                    <tr>
-                      <td className="px-4 md:px-6 py-4 text-right text-gray-700 dark:text-gray-300">Totalsumma:</td>
-                      <td className="px-4 md:px-6 py-4 text-gray-900 dark:text-gray-100">
-                        <div className="text-sm font-medium">
-                          {new Intl.NumberFormat('sv-SE', { 
-                            style: 'currency', 
-                            currency: 'SEK' 
-                          }).format(
-                            sortedOrders.reduce((sum, order) => {
-                              const total = order.prisInfo?.totalPris || order.totalAmount || order.total || 0;
-                              return sum + total;
-                            }, 0)
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 md:px-6 py-4"></td>
-                    </tr>
-                  </tfoot>
+          {selectedOrders.size > 0 && (
+            <Toolbar count={selectedOrders.size}>
+              <Button
+                variant="secondary"
+                onClick={handlePrintSelectedLabels}
+                disabled={printLoading}
+              >
+                {printLoading ? (
+                  <span className="inline-flex items-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-b-2 border-current" />
+                    Skriver ut…
+                  </span>
+                ) : (
+                  <>
+                    <PrinterIcon className="h-4 w-4" />
+                    Skriv ut fraktetiketter
+                  </>
                 )}
-              </table>
+              </Button>
+              <Button variant="plain" onClick={() => setSelectedOrders(new Set())}>
+                Avmarkera
+              </Button>
+            </Toolbar>
+          )}
+
+          {currentError ? (
+            <div className="rounded-[var(--radius-admin)] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-900/30 dark:text-red-300">
+              Fel vid laddning av ordrar: {currentError}
             </div>
-          </div>
-        )}
-      </div>
+          ) : (
+            <>
+              <DataTable
+                columns={columns}
+                rows={sortedOrders}
+                rowKey={(o) => o.id}
+                loading={isLoading}
+                onRowClick={(o) => navigate(`/admin/orders/${o.id}`)}
+                empty="Inga ordrar matchar de valda filtren."
+                selection={{
+                  selectedIds: selectedOrders,
+                  onToggle: toggleOne,
+                  onToggleAll: toggleAll,
+                }}
+              />
+
+              {activeSourceTab === 'b2b' && sortedOrders.length > 0 && (
+                <div className="flex justify-end">
+                  <div className="inline-flex items-baseline gap-3 rounded-[var(--radius-admin)] border border-admin-border bg-admin-surface px-4 py-3 shadow-[var(--shadow-admin)]">
+                    <span className="text-sm text-admin-text-muted">Totalsumma</span>
+                    <span className="text-base font-semibold tabular-nums text-admin-text">
+                      {formatSek(
+                        sortedOrders.reduce(
+                          (sum, order) =>
+                            sum +
+                            (order.prisInfo?.totalPris || order.totalAmount || order.total || 0),
+                          0
+                        ),
+                        false
+                      )}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </Page>
     </AppLayout>
   );
 };

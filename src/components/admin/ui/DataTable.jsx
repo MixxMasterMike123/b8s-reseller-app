@@ -99,7 +99,26 @@ export default function DataTable({
                   <tr
                     key={id}
                     onClick={onRowClick ? () => onRowClick(row, index) : undefined}
-                    className={`${onRowClick ? 'cursor-pointer' : ''} ${
+                    // Keyboard affordance: when the row is clickable, make it
+                    // focusable + Enter/Space activatable. Guard on target ===
+                    // currentTarget so a keypress inside an interactive cell
+                    // (e.g. the status menu) doesn't also trigger row activation.
+                    role={onRowClick ? 'button' : undefined}
+                    tabIndex={onRowClick ? 0 : undefined}
+                    onKeyDown={
+                      onRowClick
+                        ? (e) => {
+                            if (
+                              (e.key === 'Enter' || e.key === ' ') &&
+                              e.target === e.currentTarget
+                            ) {
+                              e.preventDefault();
+                              onRowClick(row, index);
+                            }
+                          }
+                        : undefined
+                    }
+                    className={`${onRowClick ? 'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-admin-primary)]' : ''} ${
                       isSelected ? 'bg-admin-surface-2' : 'hover:bg-admin-surface-2'
                     } transition-colors`}
                   >
