@@ -18,9 +18,16 @@
 //  • availability.b2c defaults to true and is preserved (it's a live storefront
 //    query filter: where('availability.b2c','==',true)).
 //
+// Product model v2 (2026-06-15, docs/PRODUCT_MODEL_V2.md):
+//  • `group` → `category` (the browse taxonomy / URL driver). The old
+//    productGroups side-collection + defaultProductId are gone.
+//  • VARIANTS are embedded on the product: `variants: [{ sku, label, price,
+//    image? }]`, gated by `hasVariants` (off by default). No more per-variant
+//    product docs / shared group string. size/color top-level fields removed
+//    (a variant's `label` carries the choice).
+//
 // Tenancy: create stamps shopId via withShopId(...) and the parent passes
-// shopId from useShopId(). Group content (ProductGroupTab) still saves
-// separately to productGroupContents via saveProductGroupContent.
+// shopId from useShopId().
 import React, { useState, useEffect } from 'react';
 import { collection, doc, getDoc, addDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
@@ -29,9 +36,7 @@ import { db, storage } from '../../firebase/config';
 import toast from 'react-hot-toast';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import ProductGroupTab from './ProductGroupTab';
 import SortableImageGallery from './SortableImageGallery';
-import { saveProductGroupContent } from '../../utils/productGroups';
 import { withShopId } from '../../config/withShopId';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -45,17 +50,17 @@ const plainText = (field) => {
   return '';
 };
 
-const COLORS = ['Transparent', 'Röd', 'Fluorescerande', 'Glitter'];
-
 const emptyForm = () => ({
   id: '',
   name: '',
   sku: '',
-  size: '',
-  color: '',
-  group: '',
+  category: '',          // was `group`: the browse taxonomy / URL driver
   tags: [],
   price: 0,
+  // Variants (sizes/colours of THIS product), optional + off by default.
+  // Each: { sku, label, price, image? }. Empty when hasVariants is false.
+  hasVariants: false,
+  variants: [],
   isActive: true,
   imageUrl: '',
   b2cImageUrl: '',
@@ -83,12 +88,16 @@ const formFromProduct = (p) => ({
   id: p.id || '',
   name: plainText(p.name),
   sku: p.sku || '',
-  size: p.size || '',
-  color: p.color || '',
-  group: p.group || '',
+  // category: prefer the new field, fall back to the old `group` (so any
+  // pre-existing test product still shows its taxonomy when edited).
+  category: p.category || p.group || '',
   tags: Array.isArray(p.tags) ? p.tags : [],
   // Single price sourced from the consumer price (b2cPrice || basePrice).
   price: p.b2cPrice || p.basePrice || 0,
+  hasVariants: !!p.hasVariants && Array.isArray(p.variants) && p.variants.length > 0,
+  variants: Array.isArray(p.variants)
+    ? p.variants.map((v) => ({ sku: v.sku || '', label: v.label || '', price: v.price || 0, image: v.image || '' }))
+    : [],
   isActive: p.isActive ?? true,
   imageUrl: p.imageUrl || '',
   b2cImageUrl: p.b2cImageUrl || '',
@@ -118,17 +127,14 @@ const formFromProduct = (p) => ({
 /**
  * @param {object|null} product   the product being edited, or null to create
  * @param {string} shopId         the active shop (tenancy)
- * @param {string[]} availableGroups  existing group names (autocomplete)
+ * @param {string[]} availableCategories  existing category names (autocomplete)
  * @param {string[]} availableTags    existing tag names across the shop (autocomplete)
  * @param {() => void} onSaved     called after a successful save (parent reloads + closes)
  * @param {() => void} onCancel    close without saving
  */
-const ProductForm = ({ product, shopId, userUid = null, availableGroups = [], availableTags = [], onSaved, onCancel }) => {
+const ProductForm = ({ product, shopId, userUid = null, availableCategories = [], availableTags = [], onSaved, onCancel }) => {
   const [formData, setFormData] = useState(() => (product ? formFromProduct(product) : emptyForm()));
   const [saving, setSaving] = useState(false);
-
-  // Group content (separate collection) loaded/edited via ProductGroupTab.
-  const [groupContent, setGroupContent] = useState(null);
 
   // Main B2C image.
   const [mainImageFile, setMainImageFile] = useState(null);
@@ -142,13 +148,14 @@ const ProductForm = ({ product, shopId, userUid = null, availableGroups = [], av
   const [galleryPreviews, setGalleryPreviews] = useState([]);
   const [imagesToDelete, setImagesToDelete] = useState([]);
 
-  // Group autocomplete.
-  const [groupInput, setGroupInput] = useState(product?.group || '');
-  const [showGroupSuggestions, setShowGroupSuggestions] = useState(false);
-  const [filteredGroups, setFilteredGroups] = useState([]);
+  // Category autocomplete (the browse taxonomy / URL driver; was `group`).
+  const [categoryInput, setCategoryInput] = useState(product?.category || product?.group || '');
+  const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
+  const [filteredCategories, setFilteredCategories] = useState([]);
 
-  // Tags: a chip input with autocomplete. tags = filtering labels (cross-cutting,
-  // many products), distinct from `group` (size/colour variants of ONE product).
+  // Tags: a chip input with autocomplete. tags = light filter labels (e.g.
+  // `featured`), distinct from `category` (the browse taxonomy) and from
+  // `variants` (sizes/colours of THIS product).
   const [tagInput, setTagInput] = useState('');
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
 
@@ -182,24 +189,37 @@ const ProductForm = ({ product, shopId, userUid = null, availableGroups = [], av
     else setField(name, value);
   };
 
-  // ----- group autocomplete -----
-  const onGroupChange = (e) => {
+  // ----- category autocomplete -----
+  const onCategoryChange = (e) => {
     const v = e.target.value;
-    setGroupInput(v);
-    setField('group', v);
+    setCategoryInput(v);
+    setField('category', v);
     if (v.trim()) {
-      const f = availableGroups.filter((g) => g.toLowerCase().includes(v.toLowerCase()));
-      setFilteredGroups(f);
-      setShowGroupSuggestions(f.length > 0);
+      const f = availableCategories.filter((g) => g.toLowerCase().includes(v.toLowerCase()));
+      setFilteredCategories(f);
+      setShowCategorySuggestions(f.length > 0);
     } else {
-      setFilteredGroups([]);
-      setShowGroupSuggestions(false);
+      setFilteredCategories([]);
+      setShowCategorySuggestions(false);
     }
   };
-  const pickGroup = (g) => {
-    setGroupInput(g);
-    setField('group', g);
-    setShowGroupSuggestions(false);
+  const pickCategory = (g) => {
+    setCategoryInput(g);
+    setField('category', g);
+    setShowCategorySuggestions(false);
+  };
+
+  // ----- variants -----
+  const addVariant = () => setField('variants', [...formData.variants, { sku: '', label: '', price: formData.price || 0, image: '' }]);
+  const updateVariant = (idx, patch) => setField('variants', formData.variants.map((v, i) => (i === idx ? { ...v, ...patch } : v)));
+  const removeVariant = (idx) => setField('variants', formData.variants.filter((_, i) => i !== idx));
+  const toggleHasVariants = (on) => {
+    if (on) {
+      setField('hasVariants', true);
+      if (formData.variants.length === 0) addVariant();
+    } else {
+      setFormData((prev) => ({ ...prev, hasVariants: false }));
+    }
   };
 
   // ----- images -----
@@ -271,14 +291,28 @@ const ProductForm = ({ product, shopId, userUid = null, availableGroups = [], av
 
       const price = parseFloat(formData.price) || 0;
 
+      // Variants: only persisted when enabled; keep rows that have a SKU, with a
+      // numeric price (falling back to the product price).
+      const cleanVariants = formData.hasVariants
+        ? formData.variants
+            .filter((v) => (v.sku || '').trim())
+            .map((v) => ({
+              sku: v.sku.trim(),
+              label: (v.label || '').trim(),
+              price: parseFloat(v.price) || price,
+              image: v.image || '',
+            }))
+        : [];
+      const hasVariants = cleanVariants.length > 0;
+
       // Build the persisted doc. Single price → BOTH consumer-price fields.
       const data = {
         name: formData.name,            // plain string going forward
         sku: formData.sku,
-        size: formData.size,
-        color: formData.color,
-        group: formData.group,
+        category: formData.category,    // browse taxonomy / URL driver (was `group`)
         tags: formData.tags,
+        hasVariants,
+        variants: cleanVariants,
         b2cPrice: price,
         basePrice: price,               // keep in sync for the `b2cPrice || basePrice` fallback
         isActive: formData.isActive,
@@ -318,15 +352,6 @@ const ProductForm = ({ product, shopId, userUid = null, availableGroups = [], av
         toast.success('Produkt uppdaterad');
       }
 
-      // Group content (separate collection), if edited.
-      if (formData.group && groupContent && Object.keys(groupContent).length > 0) {
-        try {
-          await saveProductGroupContent(formData.group, groupContent, userUid, shopId);
-        } catch (err) {
-          console.error('Error saving group content:', err);
-        }
-      }
-
       onSaved?.();
     } catch (err) {
       console.error('Error saving product:', err);
@@ -362,43 +387,28 @@ const ProductForm = ({ product, shopId, userUid = null, availableGroups = [], av
             <label className={labelCls}>SKU (Artikelnummer)</label>
             <input name="sku" value={formData.sku} onChange={handleInput} placeholder="t.ex. LAX-500" className={inputCls} />
           </div>
-          <div>
-            <label className={labelCls}>Storlek</label>
-            <input name="size" value={formData.size} onChange={handleInput} placeholder="t.ex. Ca. 5-5.5 hg/frp" className={inputCls} />
-          </div>
-
-          <div>
-            <label className={labelCls}>Färg</label>
-            <select name="color" value={formData.color} onChange={handleInput} className={inputCls}>
-              <option value="">Välj färg…</option>
-              {COLORS.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
-
           <div className="relative">
-            <label className={labelCls}>Produktgrupp</label>
+            <label className={labelCls}>Kategori</label>
             <input
-              value={groupInput}
-              onChange={onGroupChange}
+              value={categoryInput}
+              onChange={onCategoryChange}
               onFocus={() => {
-                if (availableGroups.length && !groupInput.trim()) {
-                  setFilteredGroups(availableGroups);
-                  setShowGroupSuggestions(true);
+                if (availableCategories.length && !categoryInput.trim()) {
+                  setFilteredCategories(availableCategories);
+                  setShowCategorySuggestions(true);
                 }
               }}
-              onBlur={() => setTimeout(() => setShowGroupSuggestions(false), 200)}
+              onBlur={() => setTimeout(() => setShowCategorySuggestions(false), 200)}
               placeholder="t.ex. Laxfiskar"
               className={inputCls}
             />
-            {showGroupSuggestions && filteredGroups.length > 0 && (
+            {showCategorySuggestions && filteredCategories.length > 0 && (
               <ul className="absolute z-10 mt-1 w-full max-h-48 overflow-auto rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-lg">
-                {filteredGroups.map((g) => (
+                {filteredCategories.map((g) => (
                   <li key={g}>
                     <button
                       type="button"
-                      onMouseDown={() => pickGroup(g)}
+                      onMouseDown={() => pickCategory(g)}
                       className="block w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
                     >
                       {g}
@@ -407,11 +417,11 @@ const ProductForm = ({ product, shopId, userUid = null, availableGroups = [], av
                 ))}
               </ul>
             )}
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Storlekar/varianter av SAMMA produkt (visas som en kortgrupp).</p>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Butikens kategori (driver toppmenyn + /kategori-sidor).</p>
           </div>
 
-          {/* Tags — cross-cutting filtering labels (top-menu filters on the
-              storefront). Distinct from Produktgrupp. */}
+          {/* Tags — light filter labels (e.g. featured). Categories drive
+              browsing; tags are a nice-to-have flag. */}
           <div className="relative sm:col-span-2">
             <label className={labelCls}>Taggar</label>
             <div className="flex flex-wrap items-center gap-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-2">
@@ -477,6 +487,55 @@ const ProductForm = ({ product, shopId, userUid = null, availableGroups = [], av
             <input id="avB2c" type="checkbox" checked={formData.availability.b2c} onChange={(e) => setField('availability', { b2c: e.target.checked })} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
             <label htmlFor="avB2c" className="text-sm text-gray-700 dark:text-gray-300">Tillgänglig i butiken</label>
           </div>
+        </div>
+
+        {/* Variants — sizes/colours of THIS product. Optional, off by default;
+            when on, the storefront shows a picker, else it's a simple product. */}
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+          <div className="flex items-center gap-2">
+            <input
+              id="hasVariants"
+              type="checkbox"
+              checked={formData.hasVariants}
+              onChange={(e) => toggleHasVariants(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="hasVariants" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Den här produkten har varianter (storlek/färg)
+            </label>
+          </div>
+
+          {formData.hasVariants && (
+            <div className="mt-4 space-y-3">
+              {formData.variants.map((v, idx) => (
+                <div key={idx} className="grid grid-cols-12 gap-3 items-end rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-800/50">
+                  <div className="col-span-12 sm:col-span-4">
+                    <label className={labelCls}>Variant (etikett)</label>
+                    <input value={v.label} onChange={(e) => updateVariant(idx, { label: e.target.value })} placeholder="t.ex. Small / Röd" className={inputCls} />
+                  </div>
+                  <div className="col-span-6 sm:col-span-3">
+                    <label className={labelCls}>SKU</label>
+                    <input value={v.sku} onChange={(e) => updateVariant(idx, { sku: e.target.value })} placeholder="t.ex. LAX-S" className={inputCls} />
+                  </div>
+                  <div className="col-span-6 sm:col-span-3">
+                    <label className={labelCls}>Pris (SEK)</label>
+                    <input type="number" min="0" step="0.01" value={v.price} onChange={(e) => updateVariant(idx, { price: parseFloat(e.target.value) || 0 })} className={inputCls} />
+                  </div>
+                  <div className="col-span-12 sm:col-span-2 flex">
+                    <button type="button" onClick={() => removeVariant(idx)} className="w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-md">
+                      Ta bort
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <button type="button" onClick={addVariant} className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800">
+                + Lägg till variant
+              </button>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Varje variant behöver minst ett SKU. Pris per variant (tomt = produktens pris). Den första bilden/galleriet delas av alla varianter.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Descriptions */}
@@ -603,17 +662,6 @@ const ProductForm = ({ product, shopId, userUid = null, availableGroups = [], av
             </select>
           </div>
         </div>
-
-        {/* Group content — only when a group is set (existing behaviour). */}
-        {formData.group && (
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-            <ProductGroupTab
-              productGroup={formData.group}
-              onContentChange={() => {}}
-              onGroupContentUpdate={(content) => setGroupContent(content)}
-            />
-          </div>
-        )}
 
         <div className="flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700 pt-6">
           <button type="button" onClick={onCancel} disabled={saving} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md disabled:opacity-50">

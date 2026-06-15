@@ -29,7 +29,7 @@ const AdminProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [availableGroups, setAvailableGroups] = useState([]);
+  const [availableCategories, setAvailableCategories] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
 
   // Form state: null = list view; { product: null } = create; { product } = edit.
@@ -43,17 +43,19 @@ const AdminProducts = () => {
       setLoading(true);
       const snap = await getDocs(query(collection(db, 'products'), where('shopId', '==', shopId)));
       const data = [];
-      const groups = new Set();
+      const categories = new Set();
       const tags = new Set();
       snap.forEach((d) => {
         const p = { ...d.data(), id: d.id };
         data.push(p);
-        if (p.group && p.group.trim()) groups.add(p.group.trim());
+        // category (new) with fallback to the legacy `group` field.
+        const cat = (p.category || p.group || '').trim();
+        if (cat) categories.add(cat);
         if (Array.isArray(p.tags)) p.tags.forEach((t) => t && t.trim() && tags.add(t.trim()));
       });
       data.sort((a, b) => productName(a.name).localeCompare(productName(b.name)));
       setProducts(data);
-      setAvailableGroups(Array.from(groups).sort());
+      setAvailableCategories(Array.from(categories).sort());
       setAvailableTags(Array.from(tags).sort());
     } catch (err) {
       console.error('Error fetching products:', err);
@@ -150,7 +152,7 @@ const AdminProducts = () => {
             product={editing.product}
             shopId={shopId}
             userUid={user?.uid || auth.currentUser?.uid || null}
-            availableGroups={availableGroups}
+            availableCategories={availableCategories}
             availableTags={availableTags}
             onSaved={onSaved}
             onCancel={() => setEditing(null)}
@@ -209,14 +211,11 @@ const AdminProducts = () => {
                                 <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">{productName(product.name) || 'Namnlös'}</div>
                                 <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">SKU: <span className="font-mono">{product.sku || 'Ej angivet'}</span></div>
                                 <div className="flex flex-wrap gap-2 text-xs">
-                                  {product.size && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-sm font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300" style={{ fontSize: '10px' }}>{product.size}</span>
+                                  {(product.category || product.group) && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-sm font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300" style={{ fontSize: '10px' }}>{product.category || product.group}</span>
                                   )}
-                                  {product.color && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-sm font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300" style={{ fontSize: '10px' }}>{product.color}</span>
-                                  )}
-                                  {product.group && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-sm font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300" style={{ fontSize: '10px' }}>{product.group}</span>
+                                  {Array.isArray(product.variants) && product.variants.length > 0 && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-sm font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300" style={{ fontSize: '10px' }}>{product.variants.length} varianter</span>
                                   )}
                                 </div>
                               </div>
