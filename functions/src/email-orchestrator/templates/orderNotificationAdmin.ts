@@ -79,13 +79,17 @@ function getCleanProductNameAdmin(item: any): string {
     : item.name || 'Unknown Product';
 }
 
-// Helper function to generate color pill HTML for admin emails
+// Helper function to generate the variant/color pill HTML for admin emails.
+// v2: a variant `label` carries the choice; old orders fall back to color.
 function getColorPillAdmin(item: any): string {
+  if (item.label) {
+    return `<span style="display: inline-block; background-color: #f3f4f6; color: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; margin-right: 6px; border: 1px solid #d1d5db;">${item.label}</span>`;
+  }
   const color = getDisplayColor(item.color);
   if (!color || color === '-' || color === 'Blandade färger' || color === 'Mixed colors') {
     return '';
   }
-  
+
   return `<span style="display: inline-block; background-color: #f3f4f6; color: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; margin-right: 6px; border: 1px solid #d1d5db;">Färg: ${color}</span>`;
 }
 

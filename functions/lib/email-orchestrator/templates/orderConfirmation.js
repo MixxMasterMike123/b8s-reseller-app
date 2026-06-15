@@ -37,8 +37,12 @@ function getDisplayColor(color) {
 function getCleanProductName(item, lang) {
     return getProductName(item, lang);
 }
-// Helper function to generate color pill HTML
+// Helper function to generate the variant/color pill HTML. Product model v2:
+// a variant `label` carries the choice; old orders fall back to color.
 function getColorPill(item) {
+    if (item.label) {
+        return `<span style="display: inline-block; background-color: #f3f4f6; color: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; margin-right: 6px; border: 1px solid #d1d5db;">${item.label}</span>`;
+    }
     const color = getDisplayColor(item.color);
     if (!color || color === '-' || color === 'Blandade färger' || color === 'Mixed colors') {
         return '';

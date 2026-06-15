@@ -1,15 +1,8 @@
-// CollectionPage — a reusable storefront browse listing for a TAG (category) or
-// a product GROUP. Routes: /{shopId}/kategori/:tag and /{shopId}/grupp/:group.
-// Tags act as categories; groups are size/colour variants of one item.
-//
-// Same layout/query as the front page; only the filter differs:
-//   - tag mode:   products whose `tags` (slugified) includes the route slug.
-//                 Same-group products collapse to one representative card (like
-//                 the front page) so a tagged T-shirt shows once.
-//   - group mode: products whose `group` (slugified) matches the route slug —
-//                 shown individually (the page IS the group's members).
-// The route param is a SLUG; we match by slugify(productValue) === slug and
-// derive the human title from the first matching product's real tag/group.
+// CollectionPage — the storefront CATEGORY browse listing.
+// Route: /{shopId}/kategori/:category. Lists EVERY product in the category
+// (matched by slugify(product.category) === route slug; legacy `group` is read
+// as a fallback). Category is the primary taxonomy (product model v2); variants
+// are embedded on each product, so there's no group/variant collapse here.
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { collection, getDocs, query, where } from 'firebase/firestore';
@@ -25,9 +18,10 @@ import NordProductCard from '../../components/shop/NordProductCard';
 import { getProductImage } from '../../utils/productImages';
 import { Helmet } from 'react-helmet-async';
 
-const CollectionPage = ({ mode }) => {
-  const { tag: tagSlug, group: groupSlug } = useParams();
-  const slug = mode === 'group' ? groupSlug : tagSlug;
+const CollectionPage = () => {
+  // Category browse page: /{shopId}/kategori/:category. Lists every product in
+  // the category (matched by slugify(product.category) === route slug).
+  const { category: slug } = useParams();
   const { t, currentLanguage } = useTranslation();
   const store = useStoreSettings();
   const shopId = useShopId();
@@ -57,34 +51,20 @@ const CollectionPage = ({ mode }) => {
       }
     })();
     return () => { cancelled = true; };
-  }, [shopId, mode, slug, currentLanguage]);
+  }, [shopId, slug, currentLanguage]);
 
-  const productTags = (p) => (Array.isArray(p.tags) ? p.tags : []);
+  const categoryOf = (p) => (p.category || p.group || '').trim(); // legacy group fallback
   const nameOf = (p) => {
     const n = getContentValue(p.name);
-    return typeof n === 'string' && n ? n : (p.group || 'Produkt');
+    return typeof n === 'string' && n ? n : (categoryOf(p) || 'Produkt');
   };
   const imageOf = (p) => p.b2cImageUrl || p.imageUrl || getProductImage(p) || '';
 
-  // Filter to the requested collection.
-  const matched = products.filter((p) =>
-    mode === 'group'
-      ? slugify((p.group || '').trim()) === slug
-      : productTags(p).some((tg) => slugify(tg) === slug)
-  );
+  // Every product in this category (slug-matched). Lists ALL — no collapse.
+  const cards = products.filter((p) => slugify(categoryOf(p)) === slug);
 
-  // Human title from the first match's real value (falls back to the slug).
-  const title = (() => {
-    if (!matched.length) return slug;
-    if (mode === 'group') return (matched[0].group || slug);
-    const first = matched[0];
-    return productTags(first).find((tg) => slugify(tg) === slug) || slug;
-  })();
-
-  // A collection page (category OR group) lists EVERY matching product — the
-  // user has already drilled into the category/group, so show all of it. (Group-
-  // collapse happens only on the front page, not here.)
-  const cards = matched;
+  // Human title from the first match's real category value, else the slug.
+  const title = cards.length ? (categoryOf(cards[0]) || slug) : slug;
 
   return (
     <>
@@ -96,9 +76,7 @@ const CollectionPage = ({ mode }) => {
 
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
           <div className="mb-8">
-            <p className="text-sm text-ink-muted">
-              {mode === 'group' ? t('collection_group', 'Produktgrupp') : t('collection_category', 'Kategori')}
-            </p>
+            <p className="text-sm text-ink-muted">{t('collection_category', 'Kategori')}</p>
             <h1 className="font-display font-bold text-3xl lg:text-4xl tracking-tight text-ink mt-1">{title}</h1>
           </div>
 
@@ -114,9 +92,6 @@ const CollectionPage = ({ mode }) => {
                 <NordProductCard
                   key={p.id}
                   to={getProductUrl(p)}
-                  // On a GROUP page the point is to pick a specific member, so
-                  // suppress the product page's redirect-to-default-variant.
-                  linkState={mode === 'group' ? { skipPreferredRedirect: true } : undefined}
                   image={imageOf(p)}
                   imageAlt={nameOf(p)}
                   name={nameOf(p)}

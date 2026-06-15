@@ -86,10 +86,9 @@ export const getCountryAwareUrl = (path) => {
   return `${prefix}/${cleanPath}`;
 };
 
-// Collection (browse) URLs — shop-prefixed. Tags act as categories.
-// getCategoryUrl('Rökt') -> /{shopId}/kategori/rokt ; getGroupUrl('T-shirt') -> /{shopId}/grupp/t-shirt
-export const getCategoryUrl = (tag) => `${currentShopPrefix()}/kategori/${slugify(tag)}`;
-export const getGroupUrl = (group) => `${currentShopPrefix()}/grupp/${slugify(group)}`;
+// Category (browse) URL — shop-prefixed. Category is the primary taxonomy.
+// getCategoryUrl('Rökt') -> /{shopId}/kategori/rokt
+export const getCategoryUrl = (category) => `${currentShopPrefix()}/kategori/${slugify(category)}`;
 
 
 /**

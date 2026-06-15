@@ -104,7 +104,8 @@ function checkCampaignMatch(orderData, campaign, affiliateId, affiliateCode) {
     }
     // Check product targeting
     if (campaign.applicableProducts === 'selected' && campaign.productIds) {
-        const orderProductIds = orderData.items?.map((item) => item.id) || [];
+        // v2 order items carry `productId`; tolerate legacy `id`.
+        const orderProductIds = orderData.items?.map((item) => item.productId || item.id) || [];
         const hasMatchingProduct = campaign.productIds.some((productId) => orderProductIds.includes(productId));
         if (!hasMatchingProduct)
             return false;
@@ -117,13 +118,18 @@ function checkCampaignMatch(orderData, campaign, affiliateId, affiliateCode) {
     }
     return true;
 }
-// Universal Campaign Revenue Tracking for Special Edition Products
+// Universal Campaign Revenue Tracking for Special Edition Products.
+// NOTE (product model v2): the "special edition" concept was the B8Shield brand's
+// `group === 'B8Shield-special-edition'` gating. v2 dropped the per-variant
+// `group` field (it became `category`) and the brand is retired, so there are no
+// special-edition items any more — this path no longs applies and returns early.
+// Standard product-targeted campaign attribution still works via item.productId
+// in checkCampaignMatch.
 async function processUniversalCampaignRevenue(orderData, db) {
     try {
-        // Check if this order contains special edition products
-        const specialEditionItems = orderData.items?.filter((item) => item.group === 'B8Shield-special-edition') || [];
+        // Special-edition gating is retired (no `group` field in v2 order items).
+        const specialEditionItems = [];
         if (specialEditionItems.length === 0) {
-            console.log('📊 No special edition products found in order');
             return;
         }
         console.log(`📊 Found ${specialEditionItems.length} special edition products`);

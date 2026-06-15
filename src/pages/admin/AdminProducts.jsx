@@ -5,7 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, getDocs, doc, deleteDoc, query, where } from 'firebase/firestore';
-import { db, auth } from '../../firebase/config';
+import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import { useShopId } from '../../contexts/ShopContext';
 import toast from 'react-hot-toast';
@@ -23,7 +23,7 @@ const productName = (name) => {
 };
 
 const AdminProducts = () => {
-  const { isAdmin, user } = useAuth();
+  const { isAdmin } = useAuth();
   const shopId = useShopId();
 
   const [products, setProducts] = useState([]);
@@ -151,7 +151,6 @@ const AdminProducts = () => {
           <ProductForm
             product={editing.product}
             shopId={shopId}
-            userUid={user?.uid || auth.currentUser?.uid || null}
             availableCategories={availableCategories}
             availableTags={availableTags}
             onSaved={onSaved}

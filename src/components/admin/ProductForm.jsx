@@ -132,7 +132,7 @@ const formFromProduct = (p) => ({
  * @param {() => void} onSaved     called after a successful save (parent reloads + closes)
  * @param {() => void} onCancel    close without saving
  */
-const ProductForm = ({ product, shopId, userUid = null, availableCategories = [], availableTags = [], onSaved, onCancel }) => {
+const ProductForm = ({ product, shopId, availableCategories = [], availableTags = [], onSaved, onCancel }) => {
   const [formData, setFormData] = useState(() => (product ? formFromProduct(product) : emptyForm()));
   const [saving, setSaving] = useState(false);
 

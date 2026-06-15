@@ -234,10 +234,9 @@ function App() {
               <Route path="/:shopId/affiliate-registration" element={<ShopGate><AffiliateRegistration /></ShopGate>} />
               <Route path="/:shopId/affiliate-portal" element={<ShopGate><AffiliatePortal /></ShopGate>} />
 
-              {/* Browse collections — tags act as categories. Specific paths so
-                  they match before the CMS catch-all below. */}
-              <Route path="/:shopId/kategori/:tag" element={<ShopGate><CollectionPage mode="tag" /></ShopGate>} />
-              <Route path="/:shopId/grupp/:group" element={<ShopGate><CollectionPage mode="group" /></ShopGate>} />
+              {/* Category browse pages (the primary taxonomy). Specific path so
+                  it matches before the CMS catch-all below. */}
+              <Route path="/:shopId/kategori/:category" element={<ShopGate><CollectionPage /></ShopGate>} />
 
               {/* Per-shop CMS pages: /{shopId}/{slug} — DynamicRouteHandler reads
                   the slug after the shopId. Falls back to the shop home. */}

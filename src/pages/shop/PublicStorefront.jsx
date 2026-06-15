@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getProductImage } from '../../utils/productImages';
-import { getProductUrl, getGroupUrl, getCategoryUrl, getCountryAwareUrl, getShopSeoTitle, getShopSeoDescription, generateShopStructuredData } from '../../utils/productUrls';
-import { getAllProductGroups } from '../../utils/productGroups';
+import { getProductUrl, getCategoryUrl, getCountryAwareUrl, getShopSeoTitle, getShopSeoDescription, generateShopStructuredData } from '../../utils/productUrls';
 import { useNavigate } from 'react-router-dom';
 import { translateColor } from '../../utils/colorTranslations';
 // Toast notifications removed - using AddedToCartModal for user feedback
@@ -37,13 +36,11 @@ const PublicStorefront = () => {
   } = useCart();
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
-  const [productGroups, setProductGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [heroReview, setHeroReview] = useState(null);
 
   useEffect(() => {
     loadProducts();
-    loadProductGroups();
     loadHeroReview();
   }, [currentLanguage, shopId]); // Reload when language or shop changes
 
@@ -60,19 +57,6 @@ const PublicStorefront = () => {
       }
     } catch (err) {
       console.error('Error loading hero review:', err);
-    }
-  };
-
-  // Load the shop's product groups so the front page can collapse size/colour
-  // variants into a single card and pick each group's representative product
-  // (defaultProductId). Non-fatal: on failure we just don't collapse.
-  const loadProductGroups = async () => {
-    try {
-      const groups = await getAllProductGroups(shopId);
-      setProductGroups(Array.isArray(groups) ? groups : []);
-    } catch (err) {
-      console.error('Error loading product groups:', err);
-      setProductGroups([]);
     }
   };
 
@@ -202,14 +186,15 @@ const PublicStorefront = () => {
   // already fully loaded into state). =====
   const productTags = (p) => (Array.isArray(p.tags) ? p.tags : []);
 
-  // The shop's tag set for the top-nav links + chips. 'featured' is a reserved
-  // internal tag (it drives the featured grid) — not shown as a browse filter.
-  const allTags = Array.from(
-    new Set(products.flatMap(productTags))
-  ).filter((t) => t && t.toLowerCase() !== 'featured').sort();
+  // Product model v2: CATEGORIES drive the top-nav browse links (the primary
+  // taxonomy → /kategori/{slug} pages). The category field replaced `group`;
+  // read with a legacy `group` fallback for any old test product.
+  const allCategories = Array.from(
+    new Set(products.map((p) => (p.category || p.group || '').trim()).filter(Boolean))
+  ).sort();
 
-  // Featured grid: products tagged 'featured', newest first, capped at 4. The
-  // products query has no createdAt order, so sort here (desc) when present.
+  // Featured grid: products tagged 'featured' (the reserved tag), newest first,
+  // capped at 4. Tags are now a light filter; 'featured' is their main use.
   const featuredProducts = products
     .filter((p) => productTags(p).some((t) => t.toLowerCase() === 'featured'))
     .sort((a, b) => {
@@ -219,33 +204,9 @@ const PublicStorefront = () => {
     })
     .slice(0, 4);
 
-  // Collapse same-group products into ONE representative card; ungrouped
-  // products each get their own card. Representative = the group's
-  // defaultProductId if present, else the first.
-  // NOTE: a productGroups doc id IS the group NAME string (saveProductGroupContent
-  // writes doc(db,'productGroups', groupName)), so g.id keys the same space as a
-  // product's `group` field — the lookup below is correct.
-  const groupDefaults = {}; // groupName -> defaultProductId
-  productGroups.forEach((g) => { if (g.defaultProductId) groupDefaults[g.id] = g.defaultProductId; });
-
-  const displayCards = (() => {
-    const seenGroups = new Set();
-    const cards = [];
-    for (const p of products) {
-      const group = (p.group || '').trim();
-      if (!group) { cards.push(p); continue; } // standalone product
-      if (seenGroups.has(group)) continue;     // group already represented
-      seenGroups.add(group);
-      const def = groupDefaults[group];
-      const rep = (def && products.find((x) => x.id === def && (x.group || '').trim() === group)) || p;
-      cards.push(rep);
-    }
-    return cards;
-  })();
-
-  // A grouped card links to its GROUP page (all members); a standalone product
-  // links to its own product page.
-  const cardLink = (p) => ((p.group || '').trim() ? getGroupUrl(p.group) : getProductUrl(p));
+  // v2: one product = one card (variants are embedded, no group-collapse). Every
+  // card links to its own product page.
+  const displayCards = products;
 
   return (
     <>
@@ -267,8 +228,8 @@ const PublicStorefront = () => {
       <SeoHreflang />
       <div className="min-h-screen bg-canvas font-body text-ink">
         <ShopNavigation
-          tags={allTags}
-          onSelectTag={(tag) => navigate(tag ? getCategoryUrl(tag) : getCountryAwareUrl(''))}
+          tags={allCategories}
+          onSelectTag={(cat) => navigate(cat ? getCategoryUrl(cat) : getCountryAwareUrl(''))}
         />
 
         {/* ===== Bento hero (NORD, DESIGN.md §4) ===== */}
@@ -484,7 +445,7 @@ const PublicStorefront = () => {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
               {featuredProducts.map((product) => {
                 const pn = getContentValue(product.name);
-                const name = typeof pn === 'string' && pn ? pn : (product.group || 'Produkt');
+                const name = typeof pn === 'string' && pn ? pn : (product.category || 'Produkt');
                 const descRaw = getB2cProductDescription(product);
                 return (
                   <NordProductCard
@@ -516,17 +477,17 @@ const PublicStorefront = () => {
             )}
           </div>
 
-          {/* Category links live in the top nav (tags = categories). On small
-              screens, surface them here too since the nav links are md-only. */}
-          {!loading && allTags.length > 0 && (
+          {/* Category links live in the top nav. On small screens, surface them
+              here too since the nav links are md-only. */}
+          {!loading && allCategories.length > 0 && (
             <div className="flex md:hidden flex-wrap gap-2 mb-8">
-              {allTags.map((tag) => (
+              {allCategories.map((cat) => (
                 <Link
-                  key={tag}
-                  to={getCategoryUrl(tag)}
+                  key={cat}
+                  to={getCategoryUrl(cat)}
                   className="px-3 py-1.5 rounded-full text-sm font-medium bg-white text-ink-muted shadow-tile hover:text-ink transition-colors"
                 >
-                  {tag}
+                  {cat}
                 </Link>
               ))}
             </div>
@@ -538,16 +499,15 @@ const PublicStorefront = () => {
             </div>
           ) : (
             <>
-              {/* Group cards: same-group products collapse to one card (the
-                  group's representative); ungrouped products show their own.
-                  Variant (size/colour) selection happens on the product page. */}
+              {/* One product = one card (v2: variants are embedded on the
+                  product; selection happens on the product page). */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
                 {displayCards.map((product) => {
                   // 🚨 CRITICAL: never render an object — prevent React Error #31
                   const productName = getContentValue(product.name);
                   const name = typeof productName === 'string' && productName
                     ? productName
-                    : (product.group || 'Produkt'); // neutral fallback, no shared t()
+                    : (product.category || 'Produkt'); // neutral fallback, no shared t()
 
                   const descRaw = getB2cProductDescription(product);
                   const description = typeof descRaw === 'string' ? descRaw : '';
@@ -555,7 +515,7 @@ const PublicStorefront = () => {
                   return (
                     <NordProductCard
                       key={product.id}
-                      to={cardLink(product)}
+                      to={getProductUrl(product)}
                       image={getB2cProductImage(product)}
                       imageAlt={name}
                       name={name}

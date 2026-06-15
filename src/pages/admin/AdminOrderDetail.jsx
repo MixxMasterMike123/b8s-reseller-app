@@ -327,8 +327,8 @@ const AdminOrderDetail = () => {
             <thead>
               <tr>
                 <th>Product</th>
-                <th>Color</th>
-                <th>Size</th>
+                <th>Variant</th>
+                <th>SKU</th>
                 <th>Quantity</th>
                 <th class="text-right">Price</th>
               </tr>
@@ -336,9 +336,9 @@ const AdminOrderDetail = () => {
             <tbody>
               ${getEnhancedOrderDistribution(order).map(item => `
                 <tr>
-                  <td>${item.name || 'B8 Shield'}</td>
-                  <td>${getDisplayColor(item.color)}</td>
-                  <td>${getDisplaySize(item.size)}</td>
+                  <td>${item.name || 'Produkt'}</td>
+                  <td>${item.label || getDisplayColor(item.color)}</td>
+                  <td>${item.sku || getDisplaySize(item.size)}</td>
                   <td>${item.quantity} st</td>
                   <td class="text-right">${item.price ? item.price.toLocaleString('sv-SE', { minimumFractionDigits: 2 }) + ' kr' : (order.prisInfo?.produktPris ? order.prisInfo.produktPris.toLocaleString('sv-SE', { minimumFractionDigits: 2 }) + ' kr' : '')}</td>
                 </tr>
@@ -619,10 +619,10 @@ const AdminOrderDetail = () => {
                     Product
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Color
+                    Variant
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Size
+                    SKU
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Quantity
@@ -642,10 +642,10 @@ const AdminOrderDetail = () => {
                       {getContentValue(item.name) || 'B8 Shield'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {getDisplayColor(item.color)}
+                      {item.label || getDisplayColor(item.color)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {getDisplaySize(item.size)}
+                      {item.sku || getDisplaySize(item.size)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {item.quantity} st
