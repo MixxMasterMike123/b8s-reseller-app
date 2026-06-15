@@ -2,7 +2,7 @@
 // EmailOrchestrator Functions Index
 // Unified email functions replacing ALL V1/V2/V3 email functions
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendAffiliateApplicationEmails = exports.confirmPasswordReset = exports.verifyEmailCode = exports.sendCustomEmailVerification = exports.sendEmailVerification = exports.approveAffiliate = exports.sendAffiliateWelcomeEmail = exports.sendLoginCredentialsEmail = exports.sendPasswordResetEmail = exports.sendOrderNotificationAdmin = exports.sendOrderStatusUpdateEmail = exports.sendOrderConfirmationEmail = void 0;
+exports.sendAffiliateApplicationEmails = exports.confirmPasswordReset = exports.verifyEmailCode = exports.sendCustomEmailVerification = exports.sendEmailVerification = exports.createShopUser = exports.approveAffiliate = exports.sendAffiliateWelcomeEmail = exports.sendLoginCredentialsEmail = exports.sendPasswordResetEmail = exports.sendOrderNotificationAdmin = exports.sendOrderStatusUpdateEmail = exports.sendOrderConfirmationEmail = void 0;
 // Import all unified email functions
 var sendOrderConfirmationEmail_1 = require("./sendOrderConfirmationEmail");
 Object.defineProperty(exports, "sendOrderConfirmationEmail", { enumerable: true, get: function () { return sendOrderConfirmationEmail_1.sendOrderConfirmationEmail; } });
@@ -18,6 +18,8 @@ var sendAffiliateWelcomeEmail_1 = require("./sendAffiliateWelcomeEmail");
 Object.defineProperty(exports, "sendAffiliateWelcomeEmail", { enumerable: true, get: function () { return sendAffiliateWelcomeEmail_1.sendAffiliateWelcomeEmail; } });
 var approveAffiliate_1 = require("./approveAffiliate");
 Object.defineProperty(exports, "approveAffiliate", { enumerable: true, get: function () { return approveAffiliate_1.approveAffiliate; } });
+var createShopUser_1 = require("./createShopUser");
+Object.defineProperty(exports, "createShopUser", { enumerable: true, get: function () { return createShopUser_1.createShopUser; } });
 var sendEmailVerification_1 = require("./sendEmailVerification");
 Object.defineProperty(exports, "sendEmailVerification", { enumerable: true, get: function () { return sendEmailVerification_1.sendEmailVerification; } });
 var sendCustomEmailVerification_1 = require("./sendCustomEmailVerification");

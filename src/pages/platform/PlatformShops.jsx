@@ -9,11 +9,13 @@ import { APP_URLS } from '../../config/urls';
 import PlatformLayout from '../../components/platform/PlatformLayout';
 import ProvisionShopModal from '../../components/platform/ProvisionShopModal';
 import ImpersonateShopModal from '../../components/platform/ImpersonateShopModal';
+import AddShopUserModal from '../../components/platform/AddShopUserModal';
 import toast from 'react-hot-toast';
 import {
   BuildingStorefrontIcon,
   ArrowTopRightOnSquareIcon,
   PlusIcon,
+  UserPlusIcon,
 } from '@heroicons/react/24/outline';
 
 const PlatformShops = () => {
@@ -22,6 +24,7 @@ const PlatformShops = () => {
   const [savingId, setSavingId] = useState(null);
   const [showProvision, setShowProvision] = useState(false);
   const [impersonateShop, setImpersonateShop] = useState(null);
+  const [addUserShop, setAddUserShop] = useState(null);
 
   const loadShops = useCallback(async () => {
     try {
@@ -151,6 +154,14 @@ const PlatformShops = () => {
                             Butik
                           </button>
                           <button
+                            onClick={() => setAddUserShop(shop)}
+                            title="Lägg till en admin för butiken"
+                            className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium bg-white/5 text-gray-200 hover:bg-indigo-500/15 hover:text-indigo-300"
+                          >
+                            <UserPlusIcon className="h-4 w-4" />
+                            Användare
+                          </button>
+                          <button
                             onClick={() => setImpersonateShop(shop)}
                             disabled={disabled}
                             title={
@@ -205,6 +216,13 @@ const PlatformShops = () => {
         <ImpersonateShopModal
           shop={impersonateShop}
           onClose={() => setImpersonateShop(null)}
+        />
+      )}
+
+      {addUserShop && (
+        <AddShopUserModal
+          shop={addUserShop}
+          onClose={() => setAddUserShop(null)}
         />
       )}
     </PlatformLayout>

@@ -2,7 +2,7 @@
 // V2 FUNCTIONS BATCH 4 - Direct imports to avoid circular dependencies
 // EMAIL ORCHESTRATOR SYSTEM - Unified email functions
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.confirmPasswordReset = exports.confirmPasswordResetV2 = exports.scrapeWebsiteMetaV2 = exports.stripeWebhookV2 = exports.createPaymentIntentV2 = exports.syncAdminClaims = exports.createAdminUserV2 = exports.toggleCustomerActiveStatusV2 = exports.deleteB2CCustomerAccountV2 = exports.deleteCustomerAccountV2 = exports.getGeoDataV2 = exports.reverseAffiliateCommissionOnCancel = exports.processB2COrderCompletionHttpV2 = exports.validateDiscountCode = exports.logAffiliateClickV2 = exports.sendAffiliateApplicationEmails = exports.verifyEmailCode = exports.sendCustomEmailVerification = exports.sendEmailVerification = exports.approveAffiliate = exports.sendAffiliateWelcomeEmail = exports.sendLoginCredentialsEmail = exports.sendPasswordResetEmail = exports.sendOrderNotificationAdmin = exports.sendOrderStatusUpdateEmail = exports.sendOrderConfirmationEmail = void 0;
+exports.confirmPasswordReset = exports.confirmPasswordResetV2 = exports.scrapeWebsiteMetaV2 = exports.stripeWebhookV2 = exports.createPaymentIntentV2 = exports.syncAdminClaims = exports.createAdminUserV2 = exports.toggleCustomerActiveStatusV2 = exports.deleteB2CCustomerAccountV2 = exports.deleteCustomerAccountV2 = exports.getGeoDataV2 = exports.reverseAffiliateCommissionOnCancel = exports.processB2COrderCompletionHttpV2 = exports.validateDiscountCode = exports.logAffiliateClickV2 = exports.sendAffiliateApplicationEmails = exports.verifyEmailCode = exports.sendCustomEmailVerification = exports.sendEmailVerification = exports.createShopUser = exports.approveAffiliate = exports.sendAffiliateWelcomeEmail = exports.sendLoginCredentialsEmail = exports.sendPasswordResetEmail = exports.sendOrderNotificationAdmin = exports.sendOrderStatusUpdateEmail = exports.sendOrderConfirmationEmail = void 0;
 // Initialize Firebase Admin SDK
 const app_1 = require("firebase-admin/app");
 (0, app_1.initializeApp)();
@@ -15,6 +15,7 @@ Object.defineProperty(exports, "sendPasswordResetEmail", { enumerable: true, get
 Object.defineProperty(exports, "sendLoginCredentialsEmail", { enumerable: true, get: function () { return functions_1.sendLoginCredentialsEmail; } });
 Object.defineProperty(exports, "sendAffiliateWelcomeEmail", { enumerable: true, get: function () { return functions_1.sendAffiliateWelcomeEmail; } });
 Object.defineProperty(exports, "approveAffiliate", { enumerable: true, get: function () { return functions_1.approveAffiliate; } });
+Object.defineProperty(exports, "createShopUser", { enumerable: true, get: function () { return functions_1.createShopUser; } });
 Object.defineProperty(exports, "sendEmailVerification", { enumerable: true, get: function () { return functions_1.sendEmailVerification; } });
 Object.defineProperty(exports, "sendCustomEmailVerification", { enumerable: true, get: function () { return functions_1.sendCustomEmailVerification; } });
 Object.defineProperty(exports, "verifyEmailCode", { enumerable: true, get: function () { return functions_1.verifyEmailCode; } });

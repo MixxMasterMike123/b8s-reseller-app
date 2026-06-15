@@ -23,6 +23,7 @@ import toast from 'react-hot-toast';
 import { onNewB2BCustomer } from '../wagons/dining-wagon/utils/customerStatusAutomation';
 import { addAdminUID, removeAdminUID } from '../utils/adminUIDManager';
 import { clearImpersonation } from '../config/impersonation';
+import { setActiveShopId } from '../config/activeShop';
 
 const AuthContext = createContext();
 
@@ -117,6 +118,9 @@ export function AuthProvider({ children }) {
               setUserData(data);
               setIsAdmin(data.role === 'admin');
               setIsPlatform(data.platform === true);
+              // Publish the admin's own shopId so the admin surface resolves to
+              // their shop (P4.6). Platform operators (no shopId / bypass) → null.
+              setActiveShopId(data.platform === true ? null : (data.shopId || null));
 
               // Store preferred language for TranslationContext
               if (data.preferredLang) {
@@ -132,6 +136,7 @@ export function AuthProvider({ children }) {
           setUserData(null);
           setIsAdmin(false);
           setIsPlatform(false);
+          setActiveShopId(null);
         }
 
         setLoading(false);
@@ -196,6 +201,9 @@ export function AuthProvider({ children }) {
       // login in this tab. Clearing on logout stops a stale impersonated shopId
       // from being honored if a different admin logs into the same tab.
       clearImpersonation();
+      // P4.6: drop the published shop-admin shopId too (onAuthStateChanged also
+      // nulls it, but clear eagerly so no stale tenant lingers between users).
+      setActiveShopId(null);
 
       if (isDemoMode) {
         // Demo mode: mock logout

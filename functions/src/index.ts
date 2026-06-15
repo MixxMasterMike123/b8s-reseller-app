@@ -14,6 +14,7 @@ export {
   sendLoginCredentialsEmail,
   sendAffiliateWelcomeEmail,
   approveAffiliate,
+  createShopUser,
   sendEmailVerification,
   sendCustomEmailVerification,
   verifyEmailCode,

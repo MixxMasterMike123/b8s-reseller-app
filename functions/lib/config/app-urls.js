@@ -29,6 +29,12 @@ exports.appUrls = {
             this.B2B_PORTAL,
             this.B2B_LEGACY,
             `https://shop-b8shield.web.app`,
+            // meteorpr surfaces (the live hosting targets) — admin, storefront, and the
+            // platform operator console. The platform host is required so the operator
+            // console's callables (e.g. createShopUser) aren't CORS-rejected.
+            'https://meteorpr.web.app',
+            'https://shop-meteorpr.web.app',
+            'https://platform-meteorpr.web.app',
             'http://localhost:5173',
             'http://localhost:3000',
             ...extras
