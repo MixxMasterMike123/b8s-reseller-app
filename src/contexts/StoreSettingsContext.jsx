@@ -57,12 +57,16 @@ export function StoreSettingsProvider({ children }) {
     };
   }, [shopId]);
 
-  // Per-shop accent token (NORD design system). Tailwind utilities like
-  // bg-accent read var(--color-accent); the inline value on <html> wins
-  // over the static @theme default, so the accent follows shop config.
+  // Per-shop accent token. Both the NORD storefront (--color-accent) and the
+  // Admin Neutral system (--color-admin-primary) read the SAME shop accent;
+  // the inline value on <html> wins over the static @theme defaults, so the
+  // accent follows shop config across both surfaces. (Admin uses the accent
+  // only on primary buttons / active nav / links / focus — see
+  // docs/ADMIN_REDESIGN_PLAN.md §3.1.)
   useEffect(() => {
     if (settings.accent) {
       document.documentElement.style.setProperty('--color-accent', settings.accent);
+      document.documentElement.style.setProperty('--color-admin-primary', settings.accent);
     }
   }, [settings.accent]);
 
