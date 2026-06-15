@@ -38,6 +38,7 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import SortableImageGallery from './SortableImageGallery';
 import { withShopId } from '../../config/withShopId';
+import { CardSection, RightRail, Button } from './ui';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -360,319 +361,300 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
     }
   };
 
-  const labelCls = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1';
+  const labelCls = 'block text-[13px] font-medium text-admin-text mb-1';
   const inputCls =
-    'w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500';
+    'w-full rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-3 py-1.5 text-[13px] text-admin-text placeholder:text-admin-text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-admin-primary)]';
+
+  const checkboxCls = 'h-4 w-4 rounded-[4px] border-admin-border text-[var(--color-admin-primary)] focus:ring-[var(--color-admin-primary)]';
+  const helpCls = 'mt-1 text-[12px] text-admin-text-muted';
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg mb-8">
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-        <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-          {product ? 'Redigera produkt' : 'Lägg till ny produkt'}
-        </h2>
-        <button onClick={onCancel} type="button" className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-          Stäng
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit} className="p-6 space-y-6">
-        {/* Basics */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="sm:col-span-2">
-            <label className={labelCls}>Produktnamn</label>
-            <input name="name" value={formData.name} onChange={handleInput} placeholder="t.ex. Gravad Lax" className={inputCls} />
-          </div>
-
-          <div>
-            <label className={labelCls}>SKU (Artikelnummer)</label>
-            <input name="sku" value={formData.sku} onChange={handleInput} placeholder="t.ex. LAX-500" className={inputCls} />
-          </div>
-          <div className="relative">
-            <label className={labelCls}>Kategori</label>
-            <input
-              value={categoryInput}
-              onChange={onCategoryChange}
-              onFocus={() => {
-                if (availableCategories.length && !categoryInput.trim()) {
-                  setFilteredCategories(availableCategories);
-                  setShowCategorySuggestions(true);
-                }
-              }}
-              onBlur={() => setTimeout(() => setShowCategorySuggestions(false), 200)}
-              placeholder="t.ex. Laxfiskar"
-              className={inputCls}
-            />
-            {showCategorySuggestions && filteredCategories.length > 0 && (
-              <ul className="absolute z-10 mt-1 w-full max-h-48 overflow-auto rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-lg">
-                {filteredCategories.map((g) => (
-                  <li key={g}>
-                    <button
-                      type="button"
-                      onMouseDown={() => pickCategory(g)}
-                      className="block w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
-                    >
-                      {g}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Butikens kategori (driver toppmenyn + /kategori-sidor).</p>
-          </div>
-
-          {/* Tags — light filter labels (e.g. featured). Categories drive
-              browsing; tags are a nice-to-have flag. */}
-          <div className="relative sm:col-span-2">
-            <label className={labelCls}>Taggar</label>
-            <div className="flex flex-wrap items-center gap-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-2">
-              {formData.tags.map((tag) => (
-                <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-blue-100 dark:bg-blue-900 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:text-blue-200">
-                  {tag}
-                  <button type="button" onClick={() => removeTag(tag)} className="text-blue-600 dark:text-blue-300 hover:text-blue-900" aria-label={`Ta bort ${tag}`}>×</button>
-                </span>
-              ))}
-              <input
-                value={tagInput}
-                onChange={(e) => { setTagInput(e.target.value); setShowTagSuggestions(true); }}
-                onFocus={() => setShowTagSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowTagSuggestions(false), 200)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(); }
-                  else if (e.key === 'Backspace' && !tagInput && formData.tags.length) {
-                    removeTag(formData.tags[formData.tags.length - 1]);
-                  }
-                }}
-                placeholder={formData.tags.length ? '' : 't.ex. Lax, Erbjudande, featured'}
-                className="flex-1 min-w-[8rem] bg-transparent text-sm text-gray-900 dark:text-gray-100 focus:outline-none"
-              />
-            </div>
-            {showTagSuggestions && tagSuggestions.length > 0 && (
-              <ul className="absolute z-10 mt-1 w-full max-h-48 overflow-auto rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-lg">
-                {tagSuggestions.map((tg) => (
-                  <li key={tg}>
-                    <button
-                      type="button"
-                      onMouseDown={() => addTag(tg)}
-                      className="block w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
-                    >
-                      {tg}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Enter eller komma för att lägga till. Taggen <span className="font-mono">featured</span> visar produkten i utvalt-rutan.
-            </p>
-          </div>
-
-          <div>
-            <label className={labelCls}>Pris (SEK, inkl. moms)</label>
-            <input
-              type="number"
-              name="price"
-              min="0"
-              step="0.01"
-              value={formData.price}
-              onChange={handleInput}
-              className={inputCls}
-            />
-          </div>
-
-          <div className="flex items-center gap-2 pt-6">
-            <input id="isActive" type="checkbox" name="isActive" checked={formData.isActive} onChange={handleInput} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-            <label htmlFor="isActive" className="text-sm text-gray-700 dark:text-gray-300">Aktiv (synlig i butiken)</label>
-          </div>
-          <div className="flex items-center gap-2 pt-6">
-            <input id="avB2c" type="checkbox" checked={formData.availability.b2c} onChange={(e) => setField('availability', { b2c: e.target.checked })} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-            <label htmlFor="avB2c" className="text-sm text-gray-700 dark:text-gray-300">Tillgänglig i butiken</label>
-          </div>
-        </div>
-
-        {/* Variants — sizes/colours of THIS product. Optional, off by default;
-            when on, the storefront shows a picker, else it's a simple product. */}
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-          <div className="flex items-center gap-2">
-            <input
-              id="hasVariants"
-              type="checkbox"
-              checked={formData.hasVariants}
-              onChange={(e) => toggleHasVariants(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <label htmlFor="hasVariants" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Den här produkten har varianter (storlek/färg)
-            </label>
-          </div>
-
-          {formData.hasVariants && (
-            <div className="mt-4 space-y-3">
-              {formData.variants.map((v, idx) => (
-                <div key={idx} className="grid grid-cols-12 gap-3 items-end rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-800/50">
-                  <div className="col-span-12 sm:col-span-4">
-                    <label className={labelCls}>Variant (etikett)</label>
-                    <input value={v.label} onChange={(e) => updateVariant(idx, { label: e.target.value })} placeholder="t.ex. Small / Röd" className={inputCls} />
-                  </div>
-                  <div className="col-span-6 sm:col-span-3">
-                    <label className={labelCls}>SKU</label>
-                    <input value={v.sku} onChange={(e) => updateVariant(idx, { sku: e.target.value })} placeholder="t.ex. LAX-S" className={inputCls} />
-                  </div>
-                  <div className="col-span-6 sm:col-span-3">
-                    <label className={labelCls}>Pris (SEK)</label>
-                    <input type="number" min="0" step="0.01" value={v.price} onChange={(e) => updateVariant(idx, { price: parseFloat(e.target.value) || 0 })} className={inputCls} />
-                  </div>
-                  <div className="col-span-12 sm:col-span-2 flex">
-                    <button type="button" onClick={() => removeVariant(idx)} className="w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-md">
-                      Ta bort
-                    </button>
-                  </div>
-                </div>
-              ))}
-              <button type="button" onClick={addVariant} className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800">
-                + Lägg till variant
-              </button>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Varje variant behöver minst ett SKU. Pris per variant (tomt = produktens pris). Den första bilden/galleriet delas av alla varianter.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Descriptions */}
-        <div className="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-6">
-          <div>
-            <label className={labelCls}>Beskrivning</label>
-            <textarea
-              rows={3}
-              value={formData.descriptions.b2c}
-              onChange={(e) => setField('descriptions', { ...formData.descriptions, b2c: e.target.value })}
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label className={labelCls}>Mer information</label>
-            <ReactQuill
-              theme="snow"
-              value={formData.descriptions.b2cMoreInfo}
-              onChange={(content) => setField('descriptions', { ...formData.descriptions, b2cMoreInfo: content })}
-              className="bg-white dark:bg-gray-700 rounded-md"
-            />
-          </div>
-          <div>
-            <label className={labelCls}>Lanseringsdatum (valfritt)</label>
-            <input type="datetime-local" name="launchDate" value={formData.launchDate} onChange={handleInput} className={inputCls} />
-          </div>
-        </div>
-
-        {/* Images */}
-        <div className="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-6">
-          <div>
-            <label className={labelCls}>Huvudbild (max 5MB)</label>
-            <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
-              <input type="file" accept="image/*" onChange={onMainImageChange} className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 dark:file:bg-blue-900 file:text-blue-700 dark:file:text-blue-300" />
-              {mainImagePreview && (
-                <img src={mainImagePreview} alt="Förhandsvisning" className="w-32 h-32 object-cover border border-gray-300 dark:border-gray-600 rounded-md shrink-0" />
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label className={labelCls}>Bildgalleri (flera bilder, max 5MB/bild)</label>
-            <div className="space-y-4">
-              <input type="file" accept="image/*" multiple onChange={onGalleryChange} className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 dark:file:bg-blue-900 file:text-blue-700 dark:file:text-blue-300" />
-
-              {existingGallery.length > 0 && (
-                <SortableImageGallery
-                  images={existingGallery.map((url, index) => ({ id: `existing-${index}`, url }))}
-                  onReorder={(reordered) => setExistingGallery(reordered.map((img) => img.url))}
-                  onRemove={(id) => removeExistingGalleryImage(parseInt(id.split('-')[1], 10))}
-                  label="Befintliga bilder:"
-                  itemLabel="Befintlig"
-                  className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4"
-                />
-              )}
-
-              {galleryPreviews.length > 0 && (
-                <SortableImageGallery
-                  images={galleryPreviews.map((preview, index) => ({ id: `new-${index}`, url: preview, file: galleryFiles[index] }))}
-                  onReorder={(reordered) => {
-                    setGalleryPreviews(reordered.map((img) => img.url));
-                    setGalleryFiles(reordered.map((img) => img.file));
-                  }}
-                  onRemove={(id) => removeNewGalleryImage(parseInt(id.split('-')[1], 10))}
-                  label="Nya bilder att ladda upp:"
-                  itemLabel="Ny"
-                  className="grid grid-cols-2 md:grid-cols-4 gap-4"
-                />
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Shipping (per-product cost table, unchanged data model) */}
-        <div className="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-6">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Frakt</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[
-              ['sweden', 'Sverige'],
-              ['nordic', 'Norden'],
-              ['eu', 'EU'],
-              ['worldwide', 'Världen'],
-            ].map(([key, label]) => (
-              <div key={key}>
-                <label className={labelCls}>{label} (SEK)</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.shipping[key].cost}
-                  onChange={(e) =>
-                    setField('shipping', {
-                      ...formData.shipping,
-                      [key]: { ...formData.shipping[key], cost: parseFloat(e.target.value) || 0 },
-                    })
-                  }
+    <form onSubmit={handleSubmit}>
+      <RightRail
+        main={
+          <>
+            {/* Title + SKU + Description */}
+            <CardSection title="Produkt" bodyClassName="space-y-4">
+              <div>
+                <label className={labelCls}>Produktnamn</label>
+                <input name="name" value={formData.name} onChange={handleInput} placeholder="t.ex. Gravad Lax" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>SKU (Artikelnummer)</label>
+                <input name="sku" value={formData.sku} onChange={handleInput} placeholder="t.ex. LAX-500" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Beskrivning</label>
+                <textarea
+                  rows={3}
+                  value={formData.descriptions.b2c}
+                  onChange={(e) => setField('descriptions', { ...formData.descriptions, b2c: e.target.value })}
                   className={inputCls}
                 />
               </div>
-            ))}
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Vikt påverkar frakten i kassan; viktbaserade nivåer beräknas automatiskt.</p>
-        </div>
+              <div>
+                <label className={labelCls}>Mer information</label>
+                <ReactQuill
+                  theme="snow"
+                  value={formData.descriptions.b2cMoreInfo}
+                  onChange={(content) => setField('descriptions', { ...formData.descriptions, b2cMoreInfo: content })}
+                  className="rounded-[var(--radius-admin-el)] bg-admin-surface"
+                />
+              </div>
+            </CardSection>
 
-        {/* Weight (drives the shipping tiers) */}
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-          <label className={labelCls}>Vikt</label>
-          <div className="flex items-center gap-2 max-w-xs">
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.weight.value}
-              onChange={(e) => setField('weight', { ...formData.weight, value: parseFloat(e.target.value) || 0 })}
-              className={inputCls}
-            />
-            <select
-              value={formData.weight.unit}
-              onChange={(e) => setField('weight', { ...formData.weight, unit: e.target.value })}
-              className={inputCls + ' max-w-[6rem]'}
+            {/* Media */}
+            <CardSection title="Media" bodyClassName="space-y-4">
+              <div>
+                <label className={labelCls}>Huvudbild (max 5MB)</label>
+                <div className="flex flex-col items-start gap-4 lg:flex-row lg:items-center">
+                  <input type="file" accept="image/*" onChange={onMainImageChange} className="block w-full text-[13px] text-admin-text-muted file:mr-4 file:rounded-[var(--radius-admin-el)] file:border-0 file:bg-admin-surface-2 file:px-4 file:py-2 file:text-[13px] file:font-medium file:text-admin-text" />
+                  {mainImagePreview && (
+                    <img src={mainImagePreview} alt="Förhandsvisning" className="h-32 w-32 shrink-0 rounded-[var(--radius-admin-el)] border border-admin-border object-cover" />
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className={labelCls}>Bildgalleri (flera bilder, max 5MB/bild)</label>
+                <div className="space-y-4">
+                  <input type="file" accept="image/*" multiple onChange={onGalleryChange} className="block w-full text-[13px] text-admin-text-muted file:mr-4 file:rounded-[var(--radius-admin-el)] file:border-0 file:bg-admin-surface-2 file:px-4 file:py-2 file:text-[13px] file:font-medium file:text-admin-text" />
+                  {existingGallery.length > 0 && (
+                    <SortableImageGallery
+                      images={existingGallery.map((url, index) => ({ id: `existing-${index}`, url }))}
+                      onReorder={(reordered) => setExistingGallery(reordered.map((img) => img.url))}
+                      onRemove={(id) => removeExistingGalleryImage(parseInt(id.split('-')[1], 10))}
+                      label="Befintliga bilder:"
+                      itemLabel="Befintlig"
+                      className="mb-4 grid grid-cols-2 gap-4 md:grid-cols-4"
+                    />
+                  )}
+                  {galleryPreviews.length > 0 && (
+                    <SortableImageGallery
+                      images={galleryPreviews.map((preview, index) => ({ id: `new-${index}`, url: preview, file: galleryFiles[index] }))}
+                      onReorder={(reordered) => {
+                        setGalleryPreviews(reordered.map((img) => img.url));
+                        setGalleryFiles(reordered.map((img) => img.file));
+                      }}
+                      onRemove={(id) => removeNewGalleryImage(parseInt(id.split('-')[1], 10))}
+                      label="Nya bilder att ladda upp:"
+                      itemLabel="Ny"
+                      className="grid grid-cols-2 gap-4 md:grid-cols-4"
+                    />
+                  )}
+                </div>
+              </div>
+            </CardSection>
+
+            {/* Price */}
+            <CardSection title="Pris" bodyClassName="space-y-3">
+              <div className="max-w-xs">
+                <label className={labelCls}>Pris (SEK, inkl. moms)</label>
+                <input type="number" name="price" min="0" step="0.01" value={formData.price} onChange={handleInput} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Lanseringsdatum (valfritt)</label>
+                <input type="datetime-local" name="launchDate" value={formData.launchDate} onChange={handleInput} className={inputCls + ' max-w-xs'} />
+              </div>
+            </CardSection>
+
+            {/* Variants */}
+            <CardSection
+              title="Varianter"
+              actions={
+                <label className="flex items-center gap-2 text-[13px] text-admin-text-muted">
+                  <input type="checkbox" checked={formData.hasVariants} onChange={(e) => toggleHasVariants(e.target.checked)} className={checkboxCls} />
+                  Storlek/färg
+                </label>
+              }
+              bodyClassName="space-y-3"
             >
-              <option value="g">g</option>
-              <option value="kg">kg</option>
-            </select>
-          </div>
-        </div>
+              {formData.hasVariants ? (
+                <>
+                  {formData.variants.map((v, idx) => (
+                    <div key={idx} className="grid grid-cols-12 items-end gap-3 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface-2 p-3">
+                      <div className="col-span-12 sm:col-span-4">
+                        <label className={labelCls}>Variant (etikett)</label>
+                        <input value={v.label} onChange={(e) => updateVariant(idx, { label: e.target.value })} placeholder="t.ex. Small / Röd" className={inputCls} />
+                      </div>
+                      <div className="col-span-6 sm:col-span-3">
+                        <label className={labelCls}>SKU</label>
+                        <input value={v.sku} onChange={(e) => updateVariant(idx, { sku: e.target.value })} placeholder="t.ex. LAX-S" className={inputCls} />
+                      </div>
+                      <div className="col-span-6 sm:col-span-3">
+                        <label className={labelCls}>Pris (SEK)</label>
+                        <input type="number" min="0" step="0.01" value={v.price} onChange={(e) => updateVariant(idx, { price: parseFloat(e.target.value) || 0 })} className={inputCls} />
+                      </div>
+                      <div className="col-span-12 flex sm:col-span-2">
+                        <Button type="button" variant="plain" onClick={() => removeVariant(idx)} className="w-full text-admin-critical-dot">
+                          Ta bort
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  <Button type="button" variant="plain" onClick={addVariant}>+ Lägg till variant</Button>
+                  <p className={helpCls}>
+                    Varje variant behöver minst ett SKU. Pris per variant (tomt = produktens pris). Den första bilden/galleriet delas av alla varianter.
+                  </p>
+                </>
+              ) : (
+                <p className="text-[13px] text-admin-text-muted">Den här produkten har inga varianter. Slå på för att lägga till storlek/färg.</p>
+              )}
+            </CardSection>
 
-        <div className="flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700 pt-6">
-          <button type="button" onClick={onCancel} disabled={saving} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md disabled:opacity-50">
-            Avbryt
-          </button>
-          <button type="submit" disabled={saving} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50">
-            {saving ? 'Sparar…' : product ? 'Spara ändringar' : 'Skapa produkt'}
-          </button>
-        </div>
-      </form>
-    </div>
+            {/* Shipping + Weight */}
+            <CardSection title="Frakt" bodyClassName="space-y-4">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                {[
+                  ['sweden', 'Sverige'],
+                  ['nordic', 'Norden'],
+                  ['eu', 'EU'],
+                  ['worldwide', 'Världen'],
+                ].map(([key, label]) => (
+                  <div key={key}>
+                    <label className={labelCls}>{label} (SEK)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formData.shipping[key].cost}
+                      onChange={(e) =>
+                        setField('shipping', {
+                          ...formData.shipping,
+                          [key]: { ...formData.shipping[key], cost: parseFloat(e.target.value) || 0 },
+                        })
+                      }
+                      className={inputCls}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="max-w-xs">
+                <label className={labelCls}>Vikt</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.weight.value}
+                    onChange={(e) => setField('weight', { ...formData.weight, value: parseFloat(e.target.value) || 0 })}
+                    className={inputCls}
+                  />
+                  <select
+                    value={formData.weight.unit}
+                    onChange={(e) => setField('weight', { ...formData.weight, unit: e.target.value })}
+                    className={inputCls + ' max-w-[6rem]'}
+                  >
+                    <option value="g">g</option>
+                    <option value="kg">kg</option>
+                  </select>
+                </div>
+              </div>
+              <p className={helpCls}>Vikt påverkar frakten i kassan; viktbaserade nivåer beräknas automatiskt.</p>
+            </CardSection>
+
+            {/* Save bar */}
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="secondary" onClick={onCancel} disabled={saving}>Avbryt</Button>
+              <Button type="submit" variant="primary" disabled={saving}>
+                {saving ? 'Sparar…' : product ? 'Spara ändringar' : 'Skapa produkt'}
+              </Button>
+            </div>
+          </>
+        }
+        rail={
+          <>
+            {/* Status */}
+            <CardSection title="Status" bodyClassName="space-y-3">
+              <label className="flex items-center gap-2 text-[13px] text-admin-text">
+                <input id="isActive" type="checkbox" name="isActive" checked={formData.isActive} onChange={handleInput} className={checkboxCls} />
+                Aktiv (synlig i butiken)
+              </label>
+            </CardSection>
+
+            {/* Publishing — the B2C availability gate (add-on seam, slice 1c plan) */}
+            <CardSection title="Publicering" bodyClassName="space-y-3">
+              <label className="flex items-center gap-2 text-[13px] text-admin-text">
+                <input id="avB2c" type="checkbox" checked={formData.availability.b2c} onChange={(e) => setField('availability', { b2c: e.target.checked })} className={checkboxCls} />
+                Tillgänglig i webbshoppen
+              </label>
+              <p className={helpCls}>Avmarkera för att dölja produkten i webbshoppen utan att inaktivera den.</p>
+            </CardSection>
+
+            {/* Organization — category + tags */}
+            <CardSection title="Organisation" bodyClassName="space-y-4">
+              <div className="relative">
+                <label className={labelCls}>Kategori</label>
+                <input
+                  value={categoryInput}
+                  onChange={onCategoryChange}
+                  onFocus={() => {
+                    if (availableCategories.length && !categoryInput.trim()) {
+                      setFilteredCategories(availableCategories);
+                      setShowCategorySuggestions(true);
+                    }
+                  }}
+                  onBlur={() => setTimeout(() => setShowCategorySuggestions(false), 200)}
+                  placeholder="t.ex. Laxfiskar"
+                  className={inputCls}
+                />
+                {showCategorySuggestions && filteredCategories.length > 0 && (
+                  <ul className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface shadow-[var(--shadow-admin)]">
+                    {filteredCategories.map((g) => (
+                      <li key={g}>
+                        <button type="button" onMouseDown={() => pickCategory(g)} className="block w-full px-3 py-2 text-left text-[13px] text-admin-text hover:bg-admin-surface-2">
+                          {g}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className={helpCls}>Driver toppmenyn + /kategori-sidor.</p>
+              </div>
+
+              <div className="relative">
+                <label className={labelCls}>Taggar</label>
+                <div className="flex flex-wrap items-center gap-1.5 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2 py-1.5">
+                  {formData.tags.map((tag) => (
+                    <span key={tag} className="inline-flex items-center gap-1 rounded-[var(--radius-admin-el)] bg-admin-info-bg px-2 py-0.5 text-[12px] font-medium text-admin-info-text">
+                      {tag}
+                      <button type="button" onClick={() => removeTag(tag)} className="text-admin-info-text hover:opacity-70" aria-label={`Ta bort ${tag}`}>×</button>
+                    </span>
+                  ))}
+                  <input
+                    value={tagInput}
+                    onChange={(e) => { setTagInput(e.target.value); setShowTagSuggestions(true); }}
+                    onFocus={() => setShowTagSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowTagSuggestions(false), 200)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(); }
+                      else if (e.key === 'Backspace' && !tagInput && formData.tags.length) {
+                        removeTag(formData.tags[formData.tags.length - 1]);
+                      }
+                    }}
+                    placeholder={formData.tags.length ? '' : 't.ex. Lax, featured'}
+                    className="min-w-[6rem] flex-1 bg-transparent text-[13px] text-admin-text placeholder:text-admin-text-faint focus:outline-none"
+                  />
+                </div>
+                {showTagSuggestions && tagSuggestions.length > 0 && (
+                  <ul className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface shadow-[var(--shadow-admin)]">
+                    {tagSuggestions.map((tg) => (
+                      <li key={tg}>
+                        <button type="button" onMouseDown={() => addTag(tg)} className="block w-full px-3 py-2 text-left text-[13px] text-admin-text hover:bg-admin-surface-2">
+                          {tg}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className={helpCls}>
+                  Enter eller komma för att lägga till. Taggen <span className="font-mono">featured</span> visar produkten i utvalt-rutan.
+                </p>
+              </div>
+            </CardSection>
+          </>
+        }
+      />
+    </form>
   );
 };
 
