@@ -11,9 +11,9 @@ import SmartPrice from './SmartPrice';
  * special editions, clothing) — the optional `tag` pill is the only
  * thing that differs between them.
  */
-const NordProductCard = ({ to, image, imageAlt, tag, name, description, meta, priceSek, ctaLabel }) => {
+const NordProductCard = ({ to, linkState, image, imageAlt, tag, name, description, meta, priceSek, ctaLabel }) => {
   return (
-    <Link to={to} className="group block h-full">
+    <Link to={to} state={linkState} className="group block h-full">
       <div className="bg-white h-full flex flex-col rounded-tile shadow-tile overflow-hidden transition-all duration-300 ease-nord group-hover:-translate-y-1 group-hover:shadow-lift">
         <div className="relative aspect-square overflow-hidden bg-[#F7F5F2]">
           <img

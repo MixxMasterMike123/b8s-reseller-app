@@ -62,6 +62,7 @@ import ForgotPassword from './pages/shop/ForgotPassword';
 import ResetPassword from './pages/shop/ResetPassword';
 import EmailVerificationHandler from './pages/shop/EmailVerificationHandler';
 import ShopGate from './components/shop/ShopGate';
+import CollectionPage from './pages/shop/CollectionPage';
 import DynamicRouteHandler from './components/shop/DynamicRouteHandler';
 import { DEFAULT_SHOP_ID } from './config/tenancy';
 
@@ -232,6 +233,11 @@ function App() {
               <Route path="/:shopId/account" element={<ShopGate><CustomerAccount /></ShopGate>} />
               <Route path="/:shopId/affiliate-registration" element={<ShopGate><AffiliateRegistration /></ShopGate>} />
               <Route path="/:shopId/affiliate-portal" element={<ShopGate><AffiliatePortal /></ShopGate>} />
+
+              {/* Browse collections — tags act as categories. Specific paths so
+                  they match before the CMS catch-all below. */}
+              <Route path="/:shopId/kategori/:tag" element={<ShopGate><CollectionPage mode="tag" /></ShopGate>} />
+              <Route path="/:shopId/grupp/:group" element={<ShopGate><CollectionPage mode="group" /></ShopGate>} />
 
               {/* Per-shop CMS pages: /{shopId}/{slug} — DynamicRouteHandler reads
                   the slug after the shopId. Falls back to the shop home. */}

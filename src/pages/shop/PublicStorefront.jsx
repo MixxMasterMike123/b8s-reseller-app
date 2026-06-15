@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getProductImage } from '../../utils/productImages';
-import { getProductUrl, getShopSeoTitle, getShopSeoDescription, generateShopStructuredData } from '../../utils/productUrls';
+import { getProductUrl, getGroupUrl, getCategoryUrl, getCountryAwareUrl, getShopSeoTitle, getShopSeoDescription, generateShopStructuredData } from '../../utils/productUrls';
 import { getAllProductGroups } from '../../utils/productGroups';
+import { useNavigate } from 'react-router-dom';
 import { translateColor } from '../../utils/colorTranslations';
 // Toast notifications removed - using AddedToCartModal for user feedback
 import { useCart } from '../../contexts/CartContext';
@@ -34,19 +35,16 @@ const PublicStorefront = () => {
     lastAddedItem,
     getTotalItems 
   } = useCart();
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [productGroups, setProductGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [heroReview, setHeroReview] = useState(null);
-  // Active tag filter (single-tag). null = show all. Driven by the top-nav
-  // tag links (ShopNavigation) and the in-section chips.
-  const [activeTag, setActiveTag] = useState(null);
 
   useEffect(() => {
     loadProducts();
     loadProductGroups();
     loadHeroReview();
-    setActiveTag(null); // reset the filter when the shop changes
   }, [currentLanguage, shopId]); // Reload when language or shop changes
 
   const loadHeroReview = async () => {
@@ -221,14 +219,9 @@ const PublicStorefront = () => {
     })
     .slice(0, 4);
 
-  // Apply the active tag filter to the products that feed the main grid.
-  const filteredProducts = activeTag
-    ? products.filter((p) => productTags(p).includes(activeTag))
-    : products;
-
   // Collapse same-group products into ONE representative card; ungrouped
   // products each get their own card. Representative = the group's
-  // defaultProductId if present in the (filtered) set, else the first.
+  // defaultProductId if present, else the first.
   // NOTE: a productGroups doc id IS the group NAME string (saveProductGroupContent
   // writes doc(db,'productGroups', groupName)), so g.id keys the same space as a
   // product's `group` field — the lookup below is correct.
@@ -238,18 +231,21 @@ const PublicStorefront = () => {
   const displayCards = (() => {
     const seenGroups = new Set();
     const cards = [];
-    for (const p of filteredProducts) {
+    for (const p of products) {
       const group = (p.group || '').trim();
       if (!group) { cards.push(p); continue; } // standalone product
       if (seenGroups.has(group)) continue;     // group already represented
       seenGroups.add(group);
-      // Prefer the configured default product for this group, if it's in the set.
       const def = groupDefaults[group];
-      const rep = (def && filteredProducts.find((x) => x.id === def && (x.group || '').trim() === group)) || p;
+      const rep = (def && products.find((x) => x.id === def && (x.group || '').trim() === group)) || p;
       cards.push(rep);
     }
     return cards;
   })();
+
+  // A grouped card links to its GROUP page (all members); a standalone product
+  // links to its own product page.
+  const cardLink = (p) => ((p.group || '').trim() ? getGroupUrl(p.group) : getProductUrl(p));
 
   return (
     <>
@@ -272,12 +268,7 @@ const PublicStorefront = () => {
       <div className="min-h-screen bg-canvas font-body text-ink">
         <ShopNavigation
           tags={allTags}
-          activeTag={activeTag}
-          onSelectTag={(tag) => {
-            setActiveTag(tag);
-            // Jump to the grid so the filter result is visible.
-            setTimeout(() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' }), 0);
-          }}
+          onSelectTag={(tag) => navigate(tag ? getCategoryUrl(tag) : getCountryAwareUrl(''))}
         />
 
         {/* ===== Bento hero (NORD, DESIGN.md §4) ===== */}
@@ -525,23 +516,18 @@ const PublicStorefront = () => {
             )}
           </div>
 
-          {/* Tag filter chips (mirror the top-nav tag links). 'Alla' clears. */}
+          {/* Category links live in the top nav (tags = categories). On small
+              screens, surface them here too since the nav links are md-only. */}
           {!loading && allTags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-8">
-              <button
-                onClick={() => setActiveTag(null)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${!activeTag ? 'bg-accent text-white' : 'bg-white text-ink-muted shadow-tile hover:text-ink'}`}
-              >
-                {t('filter_all', 'Alla')}
-              </button>
+            <div className="flex md:hidden flex-wrap gap-2 mb-8">
               {allTags.map((tag) => (
-                <button
+                <Link
                   key={tag}
-                  onClick={() => setActiveTag(tag)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${activeTag === tag ? 'bg-accent text-white' : 'bg-white text-ink-muted shadow-tile hover:text-ink'}`}
+                  to={getCategoryUrl(tag)}
+                  className="px-3 py-1.5 rounded-full text-sm font-medium bg-white text-ink-muted shadow-tile hover:text-ink transition-colors"
                 >
                   {tag}
-                </button>
+                </Link>
               ))}
             </div>
           )}
@@ -569,7 +555,7 @@ const PublicStorefront = () => {
                   return (
                     <NordProductCard
                       key={product.id}
-                      to={getProductUrl(product)}
+                      to={cardLink(product)}
                       image={getB2cProductImage(product)}
                       imageAlt={name}
                       name={name}

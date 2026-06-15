@@ -23,7 +23,7 @@ const safeGetContent = (field) => {
 };
 
 // Helper to create a URL-friendly slug from a string
-const slugify = (str) => {
+export const slugify = (str) => {
   if (!str) return '';
   return str
     .toString()
@@ -85,6 +85,11 @@ export const getCountryAwareUrl = (path) => {
   if (!cleanPath || cleanPath === '') return prefix;
   return `${prefix}/${cleanPath}`;
 };
+
+// Collection (browse) URLs — shop-prefixed. Tags act as categories.
+// getCategoryUrl('Rökt') -> /{shopId}/kategori/rokt ; getGroupUrl('T-shirt') -> /{shopId}/grupp/t-shirt
+export const getCategoryUrl = (tag) => `${currentShopPrefix()}/kategori/${slugify(tag)}`;
+export const getGroupUrl = (group) => `${currentShopPrefix()}/grupp/${slugify(group)}`;
 
 
 /**
