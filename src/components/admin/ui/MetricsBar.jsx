@@ -47,11 +47,11 @@ export default function MetricsBar({ metrics = [], className = '' }) {
       {metrics.map((m, i) => {
         const value = m.value === null || m.value === undefined ? PLACEHOLDER : m.value;
         return (
-          <div key={m.key || m.label || i} className="min-w-0 flex-1 px-4 py-3">
-            <div className="text-[13px] text-admin-text-muted">{m.label}</div>
-            <div className="mt-1 flex items-end justify-between gap-3">
+          <div key={m.key || m.label || i} className="min-w-0 flex-1 px-3 py-2">
+            <div className="text-[12px] text-admin-text-muted">{m.label}</div>
+            <div className="mt-0.5 flex items-end justify-between gap-3">
               <div className="flex items-baseline gap-1.5">
-                <span className="text-[18px] font-semibold leading-6 text-admin-text tabular-nums">{value}</span>
+                <span className="text-[16px] font-semibold leading-5 text-admin-text tabular-nums">{value}</span>
                 {m.delta && (
                   <span
                     className="inline-flex items-center gap-0.5 text-[12px] font-medium tabular-nums"

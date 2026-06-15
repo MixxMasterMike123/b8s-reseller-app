@@ -61,7 +61,7 @@ export default function DataTable({
               {columns.map((col, ci) => (
                 <th
                   key={col.key}
-                  className={`py-2 text-[12px] font-medium text-admin-text-muted ${
+                  className={`py-1.5 text-[12px] font-medium text-admin-text-muted ${
                     ci === 0 && !selection ? 'pl-3' : 'pl-1.5'
                   } ${ci === lastIdx ? 'pr-3' : 'pr-1.5'} ${alignClass(col.align)} ${col.width || ''} ${col.className || ''}`}
                 >
@@ -104,7 +104,7 @@ export default function DataTable({
                     } ${isSelected ? 'bg-admin-surface-2' : 'hover:bg-admin-surface-2'} transition-colors`}
                   >
                     {selection && (
-                      <td className="w-10 py-2.5 pl-3 pr-1.5" onClick={(e) => e.stopPropagation()}>
+                      <td className="w-10 py-2 pl-3 pr-1.5" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           aria-label="Markera rad"
@@ -117,7 +117,7 @@ export default function DataTable({
                     {columns.map((col, ci) => (
                       <td
                         key={col.key}
-                        className={`py-2.5 align-middle text-admin-text ${
+                        className={`py-2 align-middle text-admin-text ${
                           ci === 0 && !selection ? 'pl-3' : 'pl-1.5'
                         } ${ci === lastIdx ? 'pr-3' : 'pr-1.5'} ${alignClass(col.align)} ${col.className || ''}`}
                       >

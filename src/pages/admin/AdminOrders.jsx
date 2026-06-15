@@ -567,7 +567,7 @@ const AdminOrders = () => {
   return (
     <AppLayout>
       <Page title="Ordrar" actions={headerActions}>
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Thin metrics strip (Polaris s-metrics-bar), not big KPI cards. */}
           <MetricsBar metrics={kpis} />
 

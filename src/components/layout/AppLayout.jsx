@@ -347,7 +347,7 @@ const AppLayout = ({ children }) => {
       {/* ── Main content: top clearance comes from the banner-wrapper spacer
           above (single pt-14); here we only offset for the fixed nav. ── */}
       <main className="md:pl-[232px]">
-        <div className="mx-auto max-w-[1200px] px-4 py-5 sm:px-6">{children}</div>
+        <div className="mx-auto max-w-[1200px] px-4 py-4 sm:px-6">{children}</div>
       </main>
     </div>
   );

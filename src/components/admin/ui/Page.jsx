@@ -29,7 +29,7 @@ export default function Page({
   return (
     <div>
       {(title || actions || back) && (
-        <header className="mb-5">
+        <header className="mb-4">
           {back && (
             <Link
               to={back.to}
