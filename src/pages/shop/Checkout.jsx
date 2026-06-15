@@ -29,8 +29,10 @@ import { useShopId } from '../../contexts/ShopContext';
 import { withShopId } from '../../config/withShopId';
 
 const Checkout = () => {
-  const { cart, calculateTotals, clearCart, updateShippingCountry } = useCart();
+  const { cart, calculateTotals, clearCart, updateShippingCountry, deliveryMethod, pickupLocation, selectHomeDelivery, selectPickup } = useCart();
   const store = useStoreSettings();
+  const pickupLocations = Array.isArray(store?.pickupLocations) ? store.pickupLocations : [];
+  const isPickup = deliveryMethod === 'pickup';
   const shopId = useShopId();
   const { currentUser, login } = useSimpleAuth();
   const { t, currentLanguage } = useTranslation();
@@ -194,7 +196,21 @@ const Checkout = () => {
           return false;
         }
         return true;
-      case 'shipping':
+      case 'shipping': {
+        // Pickup (Click & Collect): only a name + a chosen location are needed —
+        // no shipping address. Home delivery requires the full address.
+        if (isPickup) {
+          if (!pickupLocation?.id) {
+            toast.error(t('checkout_pickup_select', 'Välj en upphämtningsplats.'));
+            return false;
+          }
+          const nameMissing = ['firstName', 'lastName'].filter(f => !shippingInfo[f].trim());
+          if (nameMissing.length > 0) {
+            toast.error(t('checkout_missing_name', 'Vänligen ange för- och efternamn.'));
+            return false;
+          }
+          return true;
+        }
         const required = ['firstName', 'lastName', 'address', 'postalCode', 'city'];
         const missing = required.filter(field => !shippingInfo[field].trim());
         if (missing.length > 0) {
@@ -202,6 +218,7 @@ const Checkout = () => {
           return false;
         }
         return true;
+      }
       default:
         return true;
     }
@@ -561,6 +578,60 @@ const Checkout = () => {
                     <div className="font-medium text-sm sm:text-base">{contactInfo.email}</div>
                   </div>
 
+                  {/* Delivery method (Click & Collect) — only when the shop has
+                      pickup locations configured. Pickup zeroes shipping. */}
+                  {pickupLocations.length > 0 && (
+                    <div className="mb-6">
+                      <div className="text-sm font-semibold text-ink mb-2">
+                        {t('checkout_delivery_method', 'Leveranssätt')}
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => selectHomeDelivery()}
+                          className={`text-left p-3 rounded-el border transition-colors ${!isPickup ? 'border-accent ring-2 ring-accent/20 bg-accent/5' : 'border-ink/15 hover:border-ink/30'}`}
+                        >
+                          <div className="font-semibold text-sm text-ink">{t('checkout_home_delivery', 'Hemleverans')}</div>
+                          <div className="text-xs text-ink-muted">{t('checkout_home_delivery_desc', 'Skickas till din adress')}</div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => selectPickup(pickupLocation || pickupLocations[0])}
+                          className={`text-left p-3 rounded-el border transition-colors ${isPickup ? 'border-accent ring-2 ring-accent/20 bg-accent/5' : 'border-ink/15 hover:border-ink/30'}`}
+                        >
+                          <div className="font-semibold text-sm text-ink">{t('checkout_pickup', 'Upphämtning')}</div>
+                          <div className="text-xs text-ink-muted">{t('checkout_pickup_desc', 'Hämta i butik – ingen fraktkostnad')}</div>
+                        </button>
+                      </div>
+
+                      {isPickup && (
+                        <div className="mt-3">
+                          <label className="block text-sm font-semibold text-ink mb-2">
+                            {t('checkout_pickup_location', 'Upphämtningsplats *')}
+                          </label>
+                          <select
+                            value={pickupLocation?.id || ''}
+                            onChange={(e) => {
+                              const loc = pickupLocations.find((l) => l.id === e.target.value);
+                              selectPickup(loc || null);
+                            }}
+                            className="w-full px-3 sm:px-4 py-3 border border-ink/15 bg-white rounded-el focus:outline-hidden focus:ring-4 focus:ring-accent/10 focus:border-accent text-base transition-colors"
+                          >
+                            <option value="">{t('checkout_pickup_choose', 'Välj plats…')}</option>
+                            {pickupLocations.map((loc) => (
+                              <option key={loc.id} value={loc.id}>
+                                {loc.name}{loc.address ? ` – ${loc.address}` : ''}
+                              </option>
+                            ))}
+                          </select>
+                          {pickupLocation?.hours && (
+                            <p className="mt-1 text-xs text-ink-muted">{t('checkout_pickup_hours', 'Öppettider')}: {pickupLocation.hours}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div>
                       <label className="block text-sm font-semibold text-ink mb-2">
@@ -588,6 +659,9 @@ const Checkout = () => {
                     </div>
                   </div>
 
+                  {/* Address fields — only for home delivery (pickup needs none). */}
+                  {!isPickup && (
+                  <>
                   <div className="mb-4">
                     <label className="block text-sm font-semibold text-ink mb-2">
                       {t('checkout_address', 'Adress *')}
@@ -660,6 +734,8 @@ const Checkout = () => {
                       </select>
                     </div>
                   </div>
+                  </>
+                  )}
 
                   {/* Optional Account Creation - Only show if user is not logged in */}
                   {!currentUser && (
@@ -744,10 +820,14 @@ const Checkout = () => {
                       country: shippingInfo.country,
                       firstName: shippingInfo.firstName,
                       lastName: shippingInfo.lastName,
-                      address: shippingInfo.address,
-                      apartment: shippingInfo.apartment,
-                      city: shippingInfo.city,
-                      postalCode: shippingInfo.postalCode
+                      address: isPickup ? '' : shippingInfo.address,
+                      apartment: isPickup ? '' : shippingInfo.apartment,
+                      city: isPickup ? '' : shippingInfo.city,
+                      postalCode: isPickup ? '' : shippingInfo.postalCode
+                    }}
+                    deliveryInfo={{
+                      method: deliveryMethod,
+                      pickupLocation: isPickup ? pickupLocation : null
                     }}
                     customerLinkage={customerLinkage}
                     onPaymentSuccess={handlePaymentSuccess}

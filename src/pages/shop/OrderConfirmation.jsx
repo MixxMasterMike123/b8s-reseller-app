@@ -179,15 +179,28 @@ const OrderConfirmation = () => {
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900 mb-2">
-                      {t('order_confirmation_shipping_address', 'Leveransadress')}
+                      {order.deliveryMethod === 'pickup'
+                        ? t('order_confirmation_pickup', 'Upphämtning')
+                        : t('order_confirmation_shipping_address', 'Leveransadress')}
                     </h3>
                     <div className="text-gray-600">
                       {(() => {
-                        // Orders store the address in shippingInfo (name lives in customerInfo);
-                        // fall back to the legacy shippingAddress shape for old orders
                         const addr = order.shippingInfo || order.shippingAddress || {};
                         const firstName = order.customerInfo?.firstName || addr.firstName;
                         const lastName = order.customerInfo?.lastName || addr.lastName;
+                        // Pickup order: show the chosen location, not an (empty) address.
+                        if (order.deliveryMethod === 'pickup') {
+                          const loc = order.pickupLocation || {};
+                          return (
+                            <>
+                              <p>{firstName} {lastName}</p>
+                              {loc.name && <p className="font-medium">{loc.name}</p>}
+                              {loc.address && <p>{loc.address}</p>}
+                            </>
+                          );
+                        }
+                        // Orders store the address in shippingInfo (name lives in customerInfo);
+                        // fall back to the legacy shippingAddress shape for old orders
                         return (
                           <>
                             <p>{firstName} {lastName}</p>

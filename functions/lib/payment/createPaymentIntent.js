@@ -29,7 +29,7 @@ function getShippingRegion(country) {
     const euCountries = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES'];
     return euCountries.includes(country) ? 'eu' : 'worldwide';
 }
-async function computeOrderTotalsSek(cartItems, shippingCountry, discountCode, shopId) {
+async function computeOrderTotalsSek(cartItems, shippingCountry, discountCode, shopId, deliveryMethod) {
     // Load every product server-side; reject unknown or inactive products
     const loaded = await Promise.all(cartItems.map(async (item) => {
         const quantity = Math.floor(Number(item.quantity));
@@ -72,14 +72,19 @@ async function computeOrderTotalsSek(cartItems, shippingCountry, discountCode, s
         }
     }
     // Shipping mirrors CartContext.getShippingCost: base cost from the first
-    // product's shipping table for the region, multiplied by 50g weight tiers
-    const region = getShippingRegion(shippingCountry);
-    let baseShippingCost = loaded[0]?.product?.shipping?.[region]?.cost || 0;
-    if (baseShippingCost === 0) {
-        baseShippingCost = shippingCountry === 'SE' ? 29 : 49;
+    // product's shipping table for the region, multiplied by 50g weight tiers.
+    // Click & Collect (pickup) has NO shipping — mirrors the client (CartContext
+    // calculateTotals), so the server-computed total matches the charge.
+    let shipping = 0;
+    if (deliveryMethod !== 'pickup') {
+        const region = getShippingRegion(shippingCountry);
+        let baseShippingCost = loaded[0]?.product?.shipping?.[region]?.cost || 0;
+        if (baseShippingCost === 0) {
+            baseShippingCost = shippingCountry === 'SE' ? 29 : 49;
+        }
+        const totalWeight = loaded.reduce((sum, { product, quantity }) => sum + ((product.weight?.value || 10) * quantity), 0) + 20;
+        shipping = baseShippingCost * Math.ceil(totalWeight / 50);
     }
-    const totalWeight = loaded.reduce((sum, { product, quantity }) => sum + ((product.weight?.value || 10) * quantity), 0) + 20;
-    const shipping = baseShippingCost * Math.ceil(totalWeight / 50);
     const total = subtotal - discountAmount + shipping;
     const vat = total - (total / (1 + app_urls_1.commerceConfig.vatRate));
     return { subtotal, discountAmount, discountPercentage, shipping, vat, total, serverPrices };
@@ -125,7 +130,9 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
             response.status(400).json({ error: 'Request body is required' });
             return;
         }
-        const { amount, currency = app_urls_1.commerceConfig.currency.toLowerCase(), cartItems, customerInfo, shippingInfo, discountInfo, affiliateInfo, shopId } = request.body;
+        const { amount, currency = app_urls_1.commerceConfig.currency.toLowerCase(), cartItems, customerInfo, shippingInfo, discountInfo, affiliateInfo, deliveryInfo, shopId } = request.body;
+        // Click & Collect: 'pickup' makes shipping free and is stamped on the order.
+        const deliveryMethod = deliveryInfo?.method === 'pickup' ? 'pickup' : 'home';
         // Tenant id for the order. Phase 0/1 is single-shop, so this normalizes
         // to the default; the field is carried through metadata → webhook → order
         // so the plumbing is correct before multi-shop exists. (When multiple
@@ -150,7 +157,7 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
         const discountCode = discountInfo?.code || affiliateInfo?.code;
         let totals;
         try {
-            totals = await computeOrderTotalsSek(cartItems, shippingInfo?.country || 'SE', discountCode, resolvedShopId);
+            totals = await computeOrderTotalsSek(cartItems, shippingInfo?.country || 'SE', discountCode, resolvedShopId, deliveryMethod);
         }
         catch (calcError) {
             firebase_functions_1.logger.error('❌ Server-side price computation failed', { error: calcError.message });
@@ -197,6 +204,13 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
                     shippingPostalCode: shippingInfo.postalCode || '',
                     shippingCountry: shippingInfo.country || 'SE',
                     shippingCost: (shippingInfo.cost || 0).toString(),
+                    // Delivery method (Click & Collect) — carried to the order by the webhook.
+                    deliveryMethod,
+                    ...(deliveryMethod === 'pickup' && {
+                        pickupLocationId: deliveryInfo?.pickupLocationId || '',
+                        pickupLocationName: deliveryInfo?.pickupLocationName || '',
+                        pickupLocationAddress: deliveryInfo?.pickupLocationAddress || '',
+                    }),
                     // Order Totals (server-computed breakdown — single source of truth)
                     subtotal: totals.subtotal.toString(),
                     vat: totals.vat.toFixed(2),

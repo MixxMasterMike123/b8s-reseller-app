@@ -558,7 +558,15 @@ const AdminOrderDetail = () => {
               </p>
               {order.deliveryMethod && (
                 <p className="text-gray-700 dark:text-gray-300">
-                  <span className="font-medium">Delivery Method:</span> {order.deliveryMethod}
+                  <span className="font-medium">Leveranssätt:</span>{' '}
+                  {order.deliveryMethod === 'pickup' ? 'Upphämtning' : 'Hemleverans'}
+                </p>
+              )}
+              {order.deliveryMethod === 'pickup' && order.pickupLocation && (
+                <p className="text-gray-700 dark:text-gray-300">
+                  <span className="font-medium">Upphämtningsplats:</span>{' '}
+                  {order.pickupLocation.name}
+                  {order.pickupLocation.address ? ` – ${order.pickupLocation.address}` : ''}
                 </p>
               )}
               {order.source && (

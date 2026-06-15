@@ -198,6 +198,17 @@ export const stripeWebhookV2 = onRequest(
             country: metadata.shippingCountry || 'SE'
           },
 
+          // Delivery method (Click & Collect). AdminOrderDetail renders
+          // order.deliveryMethod; pickupLocation is set only for pickup orders.
+          deliveryMethod: metadata.deliveryMethod || 'home',
+          ...(metadata.deliveryMethod === 'pickup' && {
+            pickupLocation: {
+              id: metadata.pickupLocationId || '',
+              name: metadata.pickupLocationName || '',
+              address: metadata.pickupLocationAddress || ''
+            }
+          }),
+
           // Order items from parsed JSON
           items: cartItems,
 

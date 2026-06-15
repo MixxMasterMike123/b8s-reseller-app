@@ -221,7 +221,7 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
   );
 };
 
-const StripePaymentForm = ({ customerInfo, shippingInfo, customerLinkage, onPaymentSuccess, onPaymentError }) => {
+const StripePaymentForm = ({ customerInfo, shippingInfo, deliveryInfo, customerLinkage, onPaymentSuccess, onPaymentError }) => {
   const { cart, calculateTotals } = useCart();
   const shopId = useShopId();
   const [clientSecret, setClientSecret] = useState('');
@@ -256,6 +256,19 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, customerLinkage, onPaym
             // Add shipping cost for payment processing
             cost: totals.shipping
           },
+          // Delivery method (Click & Collect). The server re-applies the
+          // pickup→no-shipping rule (so the charge matches), and the webhook
+          // stamps method + location onto the order.
+          ...(deliveryInfo?.method && {
+            deliveryInfo: {
+              method: deliveryInfo.method,
+              ...(deliveryInfo.pickupLocation && {
+                pickupLocationId: deliveryInfo.pickupLocation.id || '',
+                pickupLocationName: deliveryInfo.pickupLocation.name || '',
+                pickupLocationAddress: deliveryInfo.pickupLocation.address || ''
+              })
+            }
+          }),
           // Enhanced totals breakdown for complete order recovery
           totals: {
             subtotal: totals.subtotal,

@@ -59,4 +59,10 @@ export const STORE = {
   // in this slice; parameterizing currency/VAT is a later step.
   currency: 'SEK',
   vatRate: 0.25,
+
+  // Pickup locations (Click & Collect). The shop admin manages these in
+  // Settings; the storefront checkout offers them as a no-shipping-cost
+  // alternative to home delivery. Each: { id, name, address, hours }.
+  // Empty = pickup is simply not offered at checkout.
+  pickupLocations: [],
 };

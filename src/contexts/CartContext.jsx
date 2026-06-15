@@ -45,6 +45,24 @@ export const CartProvider = ({ children }) => {
   const [isAddedToCartModalVisible, setIsAddedToCartModalVisible] = useState(false);
   const [lastAddedItem, setLastAddedItem] = useState(null);
 
+  // Delivery method (Click & Collect). A checkout-session choice, deliberately
+  // NOT persisted with the cart — it resets to home delivery on reload so a
+  // stale pickup selection can never silently zero shipping. 'home' | 'pickup'.
+  // When 'pickup', calculateTotals() drops shipping to 0 and the server mirrors
+  // it (createPaymentIntent honors deliveryMethod), keeping client + charge in
+  // agreement. pickupLocation holds the chosen { id, name, address }.
+  const [deliveryMethod, setDeliveryMethod] = useState('home');
+  const [pickupLocation, setPickupLocation] = useState(null);
+
+  const selectHomeDelivery = () => {
+    setDeliveryMethod('home');
+    setPickupLocation(null);
+  };
+  const selectPickup = (location) => {
+    setDeliveryMethod('pickup');
+    setPickupLocation(location || null);
+  };
+
   useEffect(() => {
     localStorage.setItem('b8shield_cart', JSON.stringify(cart));
   }, [cart]);
@@ -278,7 +296,9 @@ export const CartProvider = ({ children }) => {
       return sum + (item.price * item.quantity);
     }, 0);
 
-    const shipping = getShippingCost(cart.shippingCountry);
+    // Click & Collect: no shipping cost. The server (createPaymentIntent)
+    // applies the same rule, so the client total and the charge agree.
+    const shipping = deliveryMethod === 'pickup' ? 0 : getShippingCost(cart.shippingCountry);
     const discountAmount = cart.discountAmount || 0;
 
     // Final total is the sum of VAT-inclusive prices (items + shipping) minus discount
@@ -496,14 +516,17 @@ export const CartProvider = ({ children }) => {
 
   // Clear cart
   const clearCart = () => {
-    setCart({ 
-      items: [], 
+    setCart({
+      items: [],
       shippingCountry: 'SE',
       discountCode: null,
       discountAmount: 0,
       discountPercentage: 0,
       affiliateClickId: null,
     });
+    // Reset the delivery choice so it never carries into a fresh cart.
+    setDeliveryMethod('home');
+    setPickupLocation(null);
   };
 
   const value = {
@@ -523,7 +546,12 @@ export const CartProvider = ({ children }) => {
     isAddedToCartModalVisible,
     showAddedToCartModal,
     hideAddedToCartModal,
-    lastAddedItem
+    lastAddedItem,
+    // Delivery method (Click & Collect)
+    deliveryMethod,
+    pickupLocation,
+    selectHomeDelivery,
+    selectPickup
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
