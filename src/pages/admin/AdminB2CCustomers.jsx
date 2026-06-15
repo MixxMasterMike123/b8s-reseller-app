@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import toast from 'react-hot-toast';
@@ -7,8 +7,19 @@ import AppLayout from '../../components/layout/AppLayout';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { useShopId } from '../../contexts/ShopContext';
+import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import {
+  Page,
+  MetricsBar,
+  DataTable,
+  ViewTabs,
+  InlineSearch,
+  StatusPill,
+  Button,
+} from '../../components/admin/ui';
 
 const AdminB2CCustomers = () => {
+  const navigate = useNavigate();
   const shopId = useShopId();
   const [customers, setCustomers] = useState([]);
   const [filteredCustomers, setFilteredCustomers] = useState([]);
@@ -27,25 +38,25 @@ const AdminB2CCustomers = () => {
       try {
         setLoading(true);
         console.log('Fetching B2C customers from b2cCustomers collection...');
-        
+
         const customersQuery = query(
           collection(db, 'b2cCustomers'),
           where('shopId', '==', shopId),
           orderBy('createdAt', 'desc')
         );
-        
+
         const snapshot = await getDocs(customersQuery);
         const customersList = [];
-        
+
         snapshot.forEach((doc) => {
           customersList.push({
             id: doc.id,
             ...doc.data()
           });
         });
-        
+
         console.log(`Fetched ${customersList.length} B2C customers`);
-        
+
         // Calculate real-time stats from actual orders for each customer
         const customersWithRealStats = await Promise.all(
           customersList.map(async (customer) => {
@@ -56,23 +67,23 @@ const AdminB2CCustomers = () => {
             };
           })
         );
-        
+
         setCustomers(customersWithRealStats);
         setFilteredCustomers(customersWithRealStats);
-        
+
         // Calculate overall statistics from real-time data
         const totalCustomers = customersWithRealStats.length;
         const marketingConsent = customersWithRealStats.filter(c => c.marketingConsent).length;
         const withOrders = customersWithRealStats.filter(c => (c.realStats?.totalOrders || 0) > 0).length;
         const totalSales = customersWithRealStats.reduce((sum, c) => sum + (c.realStats?.totalSpent || 0), 0);
-        
+
         setStats({
           totalCustomers,
           marketingConsent,
           withOrders,
           totalSales
         });
-        
+
         console.log(`Calculated real-time stats: ${withOrders} customers with orders, ${totalSales.toFixed(2)} SEK total sales`);
       } catch (error) {
         console.error('Error fetching B2C customers:', error);
@@ -89,14 +100,14 @@ const AdminB2CCustomers = () => {
   const calculateCustomerRealStats = async (customer) => {
     try {
       const orders = [];
-      
+
       // Query 1: Orders with b2cCustomerId (account orders)
       const ordersWithAccountQuery = query(
         collection(db, 'orders'),
         where('shopId', '==', shopId),
         where('b2cCustomerId', '==', customer.id)
       );
-      
+
       const accountOrdersSnapshot = await getDocs(ordersWithAccountQuery);
       accountOrdersSnapshot.forEach(doc => {
         orders.push({
@@ -104,7 +115,7 @@ const AdminB2CCustomers = () => {
           ...doc.data()
         });
       });
-      
+
       // Query 2: Orders by email (guest orders) - only if customer email exists
       if (customer.email) {
         const ordersWithEmailQuery = query(
@@ -113,7 +124,7 @@ const AdminB2CCustomers = () => {
           where('source', '==', 'b2c'),
           where('customerInfo.email', '==', customer.email)
         );
-        
+
         const emailOrdersSnapshot = await getDocs(ordersWithEmailQuery);
         emailOrdersSnapshot.forEach(doc => {
           const orderData = {
@@ -126,19 +137,19 @@ const AdminB2CCustomers = () => {
           }
         });
       }
-      
+
       // Calculate stats from all orders
       const totalOrders = orders.length;
       const totalSpent = orders.reduce((sum, order) => sum + (order.total || 0), 0);
       const averageOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
-      
+
       console.log(`📊 Customer ${customer.email} stats:`, {
         totalOrders,
         totalSpent,
         orderIds: orders.map(o => o.id),
         orderTotals: orders.map(o => ({ id: o.id, total: o.total }))
       });
-      
+
       // Find latest order date
       let lastOrderDate = null;
       orders.forEach(order => {
@@ -149,14 +160,14 @@ const AdminB2CCustomers = () => {
           }
         }
       });
-      
+
       return {
         totalOrders,
         totalSpent,
         averageOrderValue,
         lastOrderDate
       };
-      
+
     } catch (error) {
       console.error(`Error calculating real stats for customer ${customer.id}:`, error);
       return {
@@ -171,24 +182,24 @@ const AdminB2CCustomers = () => {
   useEffect(() => {
     // Filter customers based on search term and segment filter
     const filtered = customers.filter(customer => {
-      const matchesSearch = 
+      const matchesSearch =
         customer.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         customer.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         customer.email?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesSegment = 
-        segmentFilter === 'all' || 
+
+      const matchesSegment =
+        segmentFilter === 'all' ||
         customer.customerSegment === segmentFilter;
-      
+
       return matchesSearch && matchesSegment;
     });
-    
+
     setFilteredCustomers(filtered);
   }, [searchTerm, segmentFilter, customers]);
 
   const formatDate = (timestamp) => {
     if (!timestamp) return 'Aldrig';
-    
+
     try {
       const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
       return format(date, 'dd MMM yyyy HH:mm', { locale: sv });
@@ -206,7 +217,7 @@ const AdminB2CCustomers = () => {
 
   const exportCustomersCSV = () => {
     const csvHeaders = ['Namn', 'E-post', 'Telefon', 'Stad', 'Land', 'Marknadsföring', 'Totala ordrar', 'Total spenderat', 'Registrerad'];
-    
+
     const csvData = filteredCustomers.map(customer => [
       `${customer.firstName} ${customer.lastName}`,
       customer.email,
@@ -236,210 +247,165 @@ const AdminB2CCustomers = () => {
     toast.success('B2C-kunder exporterade till CSV!');
   };
 
-  return (
-    <AppLayout>
-      <div className="max-w-7xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
-        {/* Header */}
-        <div className="px-4 py-5 border-b border-gray-200 dark:border-gray-700 sm:px-6 flex justify-between items-center">
-          <div>
-            <h1 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
-              B2C Kunder
-            </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Hantera konsumentkunder och deras data
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={exportCustomersCSV}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-            >
-              Exportera CSV
-            </button>
-            <Link
-              to="/admin"
-              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-            >
-              Tillbaka till Admin
-            </Link>
-          </div>
-        </div>
+  // Thin metrics strip (Polaris s-metrics-bar) — all derived from already-loaded
+  // real-time stats, no extra queries.
+  const metrics = [
+    { key: 'total', label: 'Totala kunder', value: stats.totalCustomers },
+    { key: 'consent', label: 'Godkänt marknadsföring', value: stats.marketingConsent },
+    { key: 'withorders', label: 'Med ordrar', value: stats.withOrders },
+    { key: 'sales', label: 'Total försäljning', value: formatCurrency(stats.totalSales) },
+  ];
 
-        {/* Statistics Cards */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-blue-50 dark:bg-blue-900 rounded-lg p-4">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-300">{stats.totalCustomers}</div>
-              <div className="text-sm text-blue-600 dark:text-blue-400">Totala Kunder</div>
-            </div>
-            <div className="bg-green-50 dark:bg-green-900 rounded-lg p-4">
-              <div className="text-2xl font-bold text-green-600 dark:text-green-300">{stats.marketingConsent}</div>
-              <div className="text-sm text-green-600 dark:text-green-400">Godkänt Marknadsföring</div>
-            </div>
-            <div className="bg-purple-50 dark:bg-purple-900 rounded-lg p-4">
-              <div className="text-2xl font-bold text-purple-600 dark:text-purple-300">{stats.withOrders}</div>
-              <div className="text-sm text-purple-600 dark:text-purple-400">Med Ordrar</div>
-            </div>
-            <div className="bg-yellow-50 dark:bg-yellow-900 rounded-lg p-4">
-              <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-300">{formatCurrency(stats.totalSales)}</div>
-              <div className="text-sm text-yellow-600 dark:text-yellow-400">Total Försäljning</div>
-            </div>
-          </div>
-        </div>
+  // Segment filter — same values + logic as before (matches customer.customerSegment).
+  const segmentTabOptions = [
+    { value: 'all', label: 'Alla kunder' },
+    { value: 'new', label: 'Nya kunder' },
+    { value: 'repeat', label: 'Återkommande kunder' },
+    { value: 'vip', label: 'VIP kunder' },
+  ];
 
-        {/* Filter and search */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder="Sök efter namn eller e-post..."
-                className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-xs focus:border-blue-500 focus:ring-blue-500 pl-10 py-2"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                </svg>
-              </div>
-            </div>
-            
-            <div className="shrink-0">
-              <select
-                className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-xs focus:border-blue-500 focus:ring-blue-500 py-2"
-                value={segmentFilter}
-                onChange={(e) => setSegmentFilter(e.target.value)}
-              >
-                <option value="all">Alla Kunder</option>
-                <option value="new">Nya Kunder</option>
-                <option value="repeat">Återkommande Kunder</option>
-                <option value="vip">VIP Kunder</option>
-              </select>
-            </div>
-          </div>
-        </div>
+  const headerActions = (
+    <Button variant="secondary" onClick={exportCustomersCSV}>
+      <ArrowDownTrayIcon className="h-4 w-4" />
+      Exportera CSV
+    </Button>
+  );
 
-        {/* Customer List */}
-        <div className="p-6">
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
-            </div>
-          ) : filteredCustomers.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Kund
-                    </th>
-                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Kontakt
-                    </th>
-                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Ordrar
-                    </th>
-                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Segment
-                    </th>
-                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Registrerad
-                    </th>
-                    <th scope="col" className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Åtgärder
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {filteredCustomers.map((customer) => (
-                    <tr key={customer.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                              {customer.firstName} {customer.lastName}
-                            </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                              {customer.city}, {customer.country}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-gray-100">{customer.email}</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {customer.marketingConsent ? (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300">
-                              Marknadsföring OK
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
-                              Ej marknadsföring
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                        <div>{customer.realStats?.totalOrders || 0} ordrar</div>
-                        <div className="text-gray-500 dark:text-gray-400">{formatCurrency(customer.realStats?.totalSpent || 0)}</div>
-                      </td>
-                      
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          customer.customerSegment === 'vip' ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300' :
-                          customer.customerSegment === 'repeat' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300' :
-                          'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
-                        }`}>
-                          {customer.customerSegment === 'vip' ? 'VIP' :
-                           customer.customerSegment === 'repeat' ? 'Återkommande' :
-                           'Ny'}
-                        </span>
-                      </td>
-                      
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {formatDate(customer.createdAt)}
-                      </td>
-                      
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          <Link
-                            to={`/admin/b2c-customers/${customer.id}`}
-                            className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
-                          >
-                            Redigera
-                          </Link>
-                          <span className="text-gray-300 dark:text-gray-600">|</span>
-                          <Link
-                            to={`/admin/b2c-customers/${customer.id}/orders`}
-                            className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300"
-                          >
-                            Ordrar ({customer.realStats?.totalOrders || 0})
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Inga B2C-kunder hittades</h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                {searchTerm || segmentFilter !== 'all' 
-                  ? 'Försök justera sökkriterier eller filter.'
-                  : 'B2C-kunder kommer att visas här när de skapar konton via kassan.'
-                }
-              </p>
+  // ── Shopify IndexTable columns. ──
+  const columns = [
+    {
+      key: 'customer',
+      header: 'Kund',
+      render: (customer) => (
+        <div className="min-w-0">
+          <div className="truncate font-medium text-admin-text group-hover:underline">
+            {customer.firstName} {customer.lastName}
+          </div>
+          {(customer.city || customer.country) && (
+            <div className="truncate text-[12px] text-admin-text-faint">
+              {[customer.city, customer.country].filter(Boolean).join(', ')}
             </div>
           )}
         </div>
-      </div>
+      ),
+    },
+    {
+      key: 'contact',
+      header: 'Kontakt',
+      render: (customer) => (
+        <div className="min-w-0">
+          <div className="truncate text-admin-text">{customer.email}</div>
+          <div className="mt-1">
+            {customer.marketingConsent ? (
+              <StatusPill tone="success">Marknadsföring OK</StatusPill>
+            ) : (
+              <StatusPill tone="neutral">Ej marknadsföring</StatusPill>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'orders',
+      header: 'Ordrar',
+      align: 'right',
+      render: (customer) => (
+        <div className="whitespace-nowrap">
+          <div className="tabular-nums text-admin-text">{customer.realStats?.totalOrders || 0} ordrar</div>
+          <div className="tabular-nums text-[12px] text-admin-text-faint">
+            {formatCurrency(customer.realStats?.totalSpent || 0)}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'segment',
+      header: 'Segment',
+      render: (customer) =>
+        customer.customerSegment === 'vip' ? (
+          <StatusPill tone="info">VIP</StatusPill>
+        ) : customer.customerSegment === 'repeat' ? (
+          <StatusPill tone="info">Återkommande</StatusPill>
+        ) : (
+          <StatusPill tone="neutral">Ny</StatusPill>
+        ),
+    },
+    {
+      key: 'registered',
+      header: 'Registrerad',
+      render: (customer) => (
+        <span className="whitespace-nowrap text-admin-text-muted">{formatDate(customer.createdAt)}</span>
+      ),
+    },
+    {
+      // Trailing quick-link to the customer's orders; stop row click so it doesn't
+      // open the edit detail instead.
+      key: 'actions',
+      header: '',
+      align: 'right',
+      className: 'w-28',
+      render: (customer) => (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/admin/b2c-customers/${customer.id}/orders`);
+          }}
+          title="Visa ordrar"
+          aria-label="Visa ordrar"
+          className="inline-flex items-center rounded-[var(--radius-admin-el)] px-2 py-1 text-[12px] text-admin-text-muted hover:bg-admin-surface-2 hover:text-admin-text whitespace-nowrap"
+        >
+          Ordrar ({customer.realStats?.totalOrders || 0})
+        </button>
+      ),
+    },
+  ];
+
+  // In-card toolbar: segment view-tabs + inline search (Polaris IndexTable header).
+  const tableToolbar = (
+    <>
+      <ViewTabs
+        ariaLabel="Filtrera på segment"
+        options={segmentTabOptions}
+        value={segmentFilter}
+        onChange={setSegmentFilter}
+      />
+      <InlineSearch
+        value={searchTerm}
+        onChange={setSearchTerm}
+        placeholder="Sök efter namn eller e-post…"
+      />
+    </>
+  );
+
+  return (
+    <AppLayout>
+      <Page
+        title="B2C Kunder"
+        subtitle="Hantera konsumentkunder och deras data"
+        back={{ to: '/admin', label: 'Admin' }}
+        actions={headerActions}
+      >
+        <div className="space-y-3">
+          <MetricsBar metrics={metrics} />
+
+          <DataTable
+            columns={columns}
+            rows={filteredCustomers}
+            rowKey={(c) => c.id}
+            loading={loading}
+            onRowClick={(c) => navigate(`/admin/b2c-customers/${c.id}`)}
+            empty={
+              searchTerm || segmentFilter !== 'all'
+                ? 'Inga B2C-kunder matchar de valda filtren.'
+                : 'B2C-kunder kommer att visas här när de skapar konton via kassan.'
+            }
+            toolbar={tableToolbar}
+          />
+        </div>
+      </Page>
     </AppLayout>
   );
 };
 
-export default AdminB2CCustomers; 
+export default AdminB2CCustomers;
