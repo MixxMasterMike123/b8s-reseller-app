@@ -8,6 +8,7 @@ import { TranslationProvider, useTranslation } from './contexts/TranslationConte
 import { LanguageCurrencyProvider } from './contexts/LanguageCurrencyContext';
 import { StoreSettingsProvider } from './contexts/StoreSettingsContext';
 import { ShopProvider } from './contexts/ShopContext';
+import { ShopFeaturesProvider } from './contexts/ShopFeaturesContext';
 import { functions } from './firebase/config';
 import { httpsCallable } from 'firebase/functions';
 
@@ -452,15 +453,17 @@ function App() {
           target tenant). Storefront/platform never impersonate. */}
       <ShopProvider impersonationEnabled={appMode === 'admin'}>
         <StoreSettingsProvider>
-          <AuthProvider>
-            <SimpleAuthContextProvider>
-              <OrderProvider>
-                <CartProvider>
-                  {content}
-                </CartProvider>
-              </OrderProvider>
-            </SimpleAuthContextProvider>
-          </AuthProvider>
+          <ShopFeaturesProvider>
+            <AuthProvider>
+              <SimpleAuthContextProvider>
+                <OrderProvider>
+                  <CartProvider>
+                    {content}
+                  </CartProvider>
+                </OrderProvider>
+              </SimpleAuthContextProvider>
+            </AuthProvider>
+          </ShopFeaturesProvider>
         </StoreSettingsProvider>
       </ShopProvider>
     </Router>

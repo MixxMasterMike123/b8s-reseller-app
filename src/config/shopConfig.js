@@ -52,6 +52,22 @@ export const loadShopConfig = async (shopId) => {
   return legacy.data()?.storeIdentity || {};
 };
 
+// Read the per-shop add-on entitlement map (`shops/{shopId}.features`), or {}
+// if missing. Reuses the same tenant probe cache as loadShopConfig — no extra
+// read on the common path. The legacy settings/app doc has no `features` field,
+// so when the seed hasn't run this returns {} → every feature reads default-ON
+// (see useShopFeatures). `features` is the entitlement layer, distinct from the
+// platform kill-switch `status`. Written only from the platform console.
+export const loadShopFeatures = async (shopId) => {
+  const probed = await probeTenantDoc(shopId);
+  if (probed) {
+    const f = probed.data()?.features;
+    return f && typeof f === 'object' ? f : {};
+  }
+  // Seed not run yet → no per-shop features doc; default-ON everywhere.
+  return {};
+};
+
 // Merge-write a partial storeIdentity patch. Targets the tenant doc once it
 // exists, else the legacy doc — mirroring the prior write shape exactly:
 // setDoc(..., { storeIdentity, updatedAt }, { merge: true }).
