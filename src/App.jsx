@@ -148,7 +148,7 @@ function App() {
   // 🚂 WAGON SYSTEM: Auto-discover all wagons (ONLY CONNECTION POINT NEEDED!)
   useEffect(() => {
     const initializeWagons = async () => {
-      console.log('🚂 B8Shield Train: Connecting wagons...');
+      console.log('Add-ons: discovering…');
       
       // Discover and connect all wagons
       await wagonRegistry.discoverWagons();
