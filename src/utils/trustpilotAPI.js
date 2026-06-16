@@ -1,11 +1,13 @@
-// Trustpilot API Integration for B8Shield
-// Fetches real reviews from shop.b8shield.com Trustpilot profile
+// Trustpilot API integration. Brand-neutral: the shop's Trustpilot domain/email
+// come from Store Identity (store.trustpilot.*), set per shop in admin Settings.
+// Empty domain → the business-unit lookup is skipped and reviews fall back to
+// the CSV / empty list (no hardcoded brand). Pass a domain via setTrustpilotDomain().
 
 import { loadReviewsFromCsv } from './csvReviews';
 
 const TRUSTPILOT_CONFIG = {
-  DOMAIN: 'shop.b8shield.com',
-  BUSINESS_EMAIL: 'info@b8shield.com',
+  DOMAIN: '',
+  BUSINESS_EMAIL: '',
   // Business Unit ID will be set after Trustpilot verification
   BUSINESS_UNIT_ID: '', // Get this from Trustpilot dashboard
   API_KEY: '', // Get this from Trustpilot dashboard
@@ -29,9 +31,11 @@ let reviewsCache = {
 };
 
 /**
- * Find B8Shield's business unit ID using the domain
+ * Find the shop's Trustpilot business unit ID using its configured domain.
  */
 export const findBusinessUnit = async () => {
+  // No domain configured for this shop → no Trustpilot lookup.
+  if (!TRUSTPILOT_CONFIG.DOMAIN) return null;
   try {
     const response = await fetch(
       `${TRUSTPILOT_CONFIG.PUBLIC_API_BASE}${TRUSTPILOT_CONFIG.BUSINESS_UNITS_ENDPOINT}?name=${encodeURIComponent(TRUSTPILOT_CONFIG.DOMAIN)}`,

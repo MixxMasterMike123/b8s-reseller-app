@@ -2,16 +2,21 @@ import React, { useState, useEffect } from 'react';
 import TrustpilotWidget from './TrustpilotWidget';
 import { getAverageRating, getReviewStats, getAllReviews } from '../utils/trustpilotAPI';
 import { useTranslation } from '../contexts/TranslationContext';
+import { useStoreSettings } from '../contexts/StoreSettingsContext';
 
-const ReviewsSection = ({ 
-  businessId, 
-  domain, 
+const ReviewsSection = ({
+  businessId,
+  domain,
   manualReviews = [],
   showTrustpilot = true,
   showManualReviews = true,
-  className = '' 
+  className = ''
 }) => {
   const { t, currentLanguage } = useTranslation();
+  const store = useStoreSettings();
+  // Per-shop Trustpilot domain: prop wins, else Store Identity (admin Settings).
+  // The review CTA links + widget target this; empty → CTA hidden (no brand leak).
+  const tpDomain = domain || store?.trustpilot?.domain || '';
   const [displayMode, setDisplayMode] = useState('manual');
   const [trustpilotFailed, setTrustpilotFailed] = useState(false);
   const [allReviews, setAllReviews] = useState([]);
@@ -196,31 +201,38 @@ const ReviewsSection = ({
         </div>
       )}
 
-      {/* CTA to read more reviews and leave a review */}
+      {/* CTA block. The two Trustpilot links render only when the shop has a
+          Trustpilot domain configured (admin Settings); hrefs derive from it so
+          no brand is hardcoded. The "show other reviews" cycle button below is
+          always available. */}
       <div className="text-center mt-8 space-y-4">
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <a 
-            href="https://www.trustpilot.com/review/b8shield.com?languages=all"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center bg-white border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-          >
-            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-            </svg>
-            {t('reviews_read_all', 'Läs alla recensioner')}
-          </a>
-          <a 
-            href="https://www.trustpilot.com/evaluate/b8shield.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
-            {t('reviews_leave_review', 'Lämna en recension')}
-          </a>
+          {tpDomain && (
+            <>
+              <a
+                href={`https://www.trustpilot.com/review/${tpDomain}?languages=all`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center bg-white border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                {t('reviews_read_all', 'Läs alla recensioner')}
+              </a>
+              <a
+                href={`https://www.trustpilot.com/evaluate/${tpDomain}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                {t('reviews_leave_review', 'Lämna en recension')}
+              </a>
+            </>
+          )}
           <button 
             onClick={() => {
               if (allReviews.length <= 3) return; // nothing to cycle

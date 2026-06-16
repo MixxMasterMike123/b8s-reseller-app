@@ -11,9 +11,7 @@ const b2bFiles = [
   'src/pages/MarketingMaterialsPage.jsx',
   'src/pages/ProfilePage.jsx',
   'src/pages/ContactPage.jsx',
-  'src/components/layout/AppLayout.jsx',
-  'src/components/TrainingModal.jsx',
-  'src/components/ProductDetailPopup.jsx'
+  'src/components/layout/AppLayout.jsx'
 ];
 
 // Swedish language patterns

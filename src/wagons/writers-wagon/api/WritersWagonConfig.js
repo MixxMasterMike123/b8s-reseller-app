@@ -96,12 +96,6 @@ export const WRITERS_WAGON_CONFIG = {
 
   // Brand Voice Configuration
   BRAND_VOICE: {
-    b8shield: {
-      tone: 'professional-friendly',
-      vocabulary: 'fishing-technical',
-      style: 'informative-confident',
-      keywords: ['B8Shield', 'skydd', 'fiske', 'bete', 'effektiv']
-    },
     default: {
       tone: 'professional',
       vocabulary: 'industry-standard', 

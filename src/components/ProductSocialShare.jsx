@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from '../contexts/TranslationContext';
+import { useStoreSettings } from '../contexts/StoreSettingsContext';
 import { toast } from 'react-hot-toast';
 import { shareToSocial, copyToClipboard } from '../config/socialMedia';
 import { getProductUrl } from '../utils/productUrls';
@@ -12,6 +13,8 @@ import { getProductUrl } from '../utils/productUrls';
 
 const ProductSocialShare = ({ product, compact = true }) => {
   const { t, currentLanguage } = useTranslation();
+  const store = useStoreSettings();
+  const brand = store?.shopName || '';
   const isSwedish = currentLanguage === 'sv-SE';
   
   // DEBUG: Component loading
@@ -25,7 +28,7 @@ const ProductSocialShare = ({ product, compact = true }) => {
     if (typeof name === 'object' && name !== null) {
       return name[currentLanguage] || name['sv-SE'] || name['en-US'] || String(name);
     }
-    return 'B8Shield Product';
+    return brand || 'Produkt';
   };
 
   // Generate product description helper
@@ -73,8 +76,8 @@ const ProductSocialShare = ({ product, compact = true }) => {
       const productName = getProductTitle();
       
       desc = isSwedish 
-        ? `Premium fiskekroksskydd från B8Shield - ${productName}!` 
-        : `Premium fishing lure protection from B8Shield - ${productName}!`;
+        ? `${productName}${brand ? ` från ${brand}` : ''}!`
+        : `${productName}${brand ? ` from ${brand}` : ''}!`;
       console.log('🔄 Using fallback description:', desc);
     }
     
@@ -168,7 +171,7 @@ const ProductSocialShare = ({ product, compact = true }) => {
     
     // Generate product URL
     const productPath = getProductUrl(product);
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://shop.b8shield.com';
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
     const productUrl = `${baseUrl}${productPath}`;
     console.log('🔗 Product URL:', productUrl);
 
@@ -234,7 +237,7 @@ const ProductSocialShare = ({ product, compact = true }) => {
     
     // Convert relative URLs to absolute URLs for social sharing
     if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('data:')) {
-      const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://shop.b8shield.com';
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
       imageUrl = `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
       console.log('🔄 Converted to absolute URL:', imageUrl);
     }
@@ -253,11 +256,11 @@ const ProductSocialShare = ({ product, compact = true }) => {
     const productName = getProductTitle();
     
     const baseText = isSwedish 
-      ? `Kolla in ${productName} från B8Shield - Skydda dina beten från snags!`
-      : `Check out ${productName} from B8Shield - Protect your lures from snags!`;
+      ? `Kolla in ${productName}${brand ? ` från ${brand}` : ''}!`
+      : `Check out ${productName}${brand ? ` from ${brand}` : ''}!`;
     const hashtags = isSwedish
-      ? '#B8Shield #Fiske #Betesskydd #Snagfritt #Sverige'
-      : '#B8Shield #Fishing #LureProtection #SnagFree #Sweden';
+      ? `${brand ? `#${brand.replace(/\s+/g, '')} ` : ''}#Sverige`.trim()
+      : `${brand ? `#${brand.replace(/\s+/g, '')} ` : ''}#Sweden`.trim();
     const finalText = `${baseText} ${hashtags}`;
     console.log('📱 Final share text:', finalText);
     return finalText;

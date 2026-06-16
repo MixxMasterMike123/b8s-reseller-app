@@ -203,6 +203,41 @@ const AdminSettings = () => {
                   </div>
                 </div>
 
+                {/* Trustpilot — empty = no reviews widget. Domain + invite email. */}
+                <div>
+                  <h4 className="mb-3 text-[13px] font-semibold text-admin-text">
+                    Trustpilot (lämna tomt för att inaktivera)
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelCls}>Trustpilot-domän</label>
+                      <input
+                        type="text"
+                        value={storeForm.trustpilot?.domain ?? ''}
+                        placeholder="t.ex. minbutik.se"
+                        onChange={(e) => setStoreForm(prev => ({
+                          ...prev,
+                          trustpilot: { ...(prev.trustpilot || {}), domain: e.target.value },
+                        }))}
+                        className={inputCls}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Trustpilot inbjudnings-e-post</label>
+                      <input
+                        type="email"
+                        value={storeForm.trustpilot?.email ?? ''}
+                        placeholder="t.ex. info@minbutik.se"
+                        onChange={(e) => setStoreForm(prev => ({
+                          ...prev,
+                          trustpilot: { ...(prev.trustpilot || {}), email: e.target.value },
+                        }))}
+                        className={inputCls}
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex justify-end border-t border-admin-border pt-4">
                   <Button variant="primary" onClick={saveStoreIdentity} disabled={saving}>
                     {saving ? (

@@ -7,9 +7,9 @@ const WritersWagonTest = () => {
   const [showPanel, setShowPanel] = useState(false);
   const [testResults, setTestResults] = useState([]);
 
-  // Sample B8Shield product data for testing
+  // Sample product data for testing
   const testProduct = {
-    name: 'B8Shield Original - Transparent',
+    name: 'Sample Product',
     size: 'Medium (15-25cm)',
     basePrice: 149,
     manufacturingCost: 45,
@@ -167,7 +167,7 @@ const WritersWagonTest = () => {
 
         {/* Footer */}
         <div className="text-center text-gray-500 text-sm mt-8">
-          <p>The Writer's Wagon™ • AI-Powered Content Generation för B8Shield</p>
+          <p>AI-Powered Content Generation</p>
           <p>Byggd med Claude 3.5 Sonnet och React</p>
         </div>
       </div>

@@ -5,12 +5,13 @@ import {
   EnvelopeIcon
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';
-import { 
-  SOCIAL_MEDIA_LINKS, 
-  generateShareContent, 
-  shareToSocial, 
-  copyToClipboard 
+import {
+  SOCIAL_MEDIA_LINKS,
+  generateShareContent,
+  shareToSocial,
+  copyToClipboard
 } from '../config/socialMedia';
+import { useStoreSettings } from '../contexts/StoreSettingsContext';
 
 /**
  * FishBrain Custom Icon Component
@@ -111,8 +112,10 @@ const SocialMediaShare = ({
   compact = false
 }) => {
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const shareContent = generateShareContent(product, pageUrl, language);
-  
+  const store = useStoreSettings();
+  const brand = store?.shopName || '';
+  const shareContent = generateShareContent(product, pageUrl, language, brand);
+
   const isSwedish = language === 'sv-SE';
   
   const handleShare = async (platform) => {
@@ -134,7 +137,12 @@ const SocialMediaShare = ({
   };
   
   const shareablePlatforms = ['facebook', 'pinterest', 'linkedin', 'twitter', 'whatsapp', 'email'];
-  const followPlatforms = Object.keys(SOCIAL_MEDIA_LINKS);
+  // Follow links come from the shop's Store Identity (store.social.*). Only show
+  // platforms the shop has actually set a profile URL for (no hardcoded brand).
+  const storeSocial = store?.social || {};
+  const followPlatforms = Object.keys(SOCIAL_MEDIA_LINKS).filter(
+    (p) => storeSocial[p] && String(storeSocial[p]).trim()
+  );
   
   if (compact) {
     return (
@@ -178,10 +186,12 @@ const SocialMediaShare = ({
   
   return (
     <div className="space-y-6">
-      {showFollowLinks && (
+      {showFollowLinks && followPlatforms.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
-            {isSwedish ? 'Följ B8Shield' : 'Follow B8Shield'}
+            {brand
+              ? (isSwedish ? `Följ ${brand}` : `Follow ${brand}`)
+              : (isSwedish ? 'Följ oss' : 'Follow us')}
           </h3>
           <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
             {followPlatforms.map(platform => {
@@ -189,7 +199,7 @@ const SocialMediaShare = ({
               return (
                 <a
                   key={platform}
-                  href={social.url}
+                  href={storeSocial[platform]}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex flex-col items-center p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors group"

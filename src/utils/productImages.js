@@ -85,15 +85,20 @@ export const generateProductImage = (productName, color = 'blue', productColorFi
   ctx.fill();
   
   // Add "B8" text
+  // Neutral placeholder label: the product name's initials (up to 2 letters),
+  // no hardcoded brand.
+  const initials = String(productName || '')
+    .split(/\s+/)
+    .map((w) => w.charAt(0))
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || '•';
   ctx.fillStyle = 'white';
-  ctx.font = 'bold 24px Arial';
+  ctx.font = 'bold 28px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('B8', 0, -10);
-  
-  // Add "SHIELD" text
-  ctx.font = 'bold 12px Arial';
-  ctx.fillText('SHIELD', 0, 15);
+  ctx.fillText(initials, 0, 0);
   
   ctx.restore();
   
@@ -143,13 +148,13 @@ export const getProductImage = (productData) => {
     
     // Generate image using the color field for accurate color matching
     if (color) {
-      return generateProductImage(name || 'B8Shield', null, color);
+      return generateProductImage(name || '', null, color);
     }
-    
+
     // Fallback to name-based generation if no color field
-    return generateProductImage(name || 'B8Shield');
+    return generateProductImage(name || '');
   }
-  
+
   // Final fallback
-  return generateProductImage('B8Shield');
+  return generateProductImage('');
 }; 

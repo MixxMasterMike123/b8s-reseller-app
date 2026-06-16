@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from '../../contexts/TranslationContext';
+import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import {
   BookOpenIcon,
   UserGroupIcon,
@@ -16,16 +17,21 @@ import {
 
 const AffiliateSuccessGuide = () => {
   const { t } = useTranslation();
+  const store = useStoreSettings();
+  // Shop name substituted for the old hardcoded "B8Shield" brand. Passed into
+  // each t() default via {{brand}} interpolation so the copy is brand-neutral
+  // (and editable per shop once a translations editor returns).
+  const brand = store?.shopName || 'Vår produkt';
   const [expandedSection, setExpandedSection] = useState(null);
 
   const sections = [
     {
       id: 'what-is-b8shield',
-      title: t('success_what_is_b8shield_title', '1. What is B8Shield?'),
+      title: t('success_what_is_b8shield_title', '1. What is {{brand}}?', { brand }),
       icon: <BookOpenIcon className="h-6 w-6" />,
       content: (
         <>
-          <p className="mb-4">{t('success_what_is_b8shield_intro', 'B8Shield is a unique innovation that prevents treble-hook lures from getting caught in underwater vegetation – without affecting the ability to hook fish.')}</p>
+          <p className="mb-4">{t('success_what_is_b8shield_intro', '{{brand}} is a unique innovation that prevents treble-hook lures from getting caught in underwater vegetation – without affecting the ability to hook fish.', { brand })}</p>
           <p className="font-medium mb-2">{t('success_how_it_works', 'How it works:')}</p>
           <ul className="list-disc pl-6 space-y-2">
             <li>{t('success_how_it_works_1', 'Rigid wings deflect weeds and branches')}</li>
@@ -39,7 +45,7 @@ const AffiliateSuccessGuide = () => {
     },
     {
       id: 'target-audience',
-      title: t('success_target_audience_title', '2. Who buys B8Shield?'),
+      title: t('success_target_audience_title', '2. Who buys {{brand}}?', { brand }),
       icon: <UserGroupIcon className="h-6 w-6" />,
       content: (
         <>
@@ -47,11 +53,11 @@ const AffiliateSuccessGuide = () => {
           <div className="space-y-4">
             <div>
               <p className="font-medium">{t('success_sport_anglers_label', 'Sport anglers:')}</p>
-              <p>{t('success_sport_anglers_desc', 'Want to cast in tricky or weed-heavy spots but avoid it due to the risk of snagging. B8Shield makes aggressive casting possible without fear.')}</p>
+              <p>{t('success_sport_anglers_desc', 'Want to cast in tricky or weed-heavy spots but avoid it due to the risk of snagging. {{brand}} makes aggressive casting possible without fear.', { brand })}</p>
             </div>
             <div>
               <p className="font-medium">{t('success_recreational_anglers_label', 'Recreational anglers:')}</p>
-              <p>{t('success_recreational_anglers_desc', 'Hate losing expensive lures. B8Shield saves them money by reducing snags and lost gear.')}</p>
+              <p>{t('success_recreational_anglers_desc', 'Hate losing expensive lures. {{brand}} saves them money by reducing snags and lost gear.', { brand })}</p>
             </div>
           </div>
         </>
@@ -72,11 +78,11 @@ const AffiliateSuccessGuide = () => {
                 <li>{t('success_access_tracking_links', 'Tracking links')}</li>
                 <li>{t('success_access_test_products', 'Test products')}</li>
                 <li>{t('success_access_official_content', 'Official images, videos, and copy')}</li>
-                <li>{t('success_access_support', 'Support from the B8Shield team')}</li>
+                <li>{t('success_access_support', 'Support from the {{brand}} team', { brand })}</li>
               </ul>
             </li>
           </ul>
-          <p className="mt-4 text-sm text-gray-600">{t('success_brand_guidelines_note', 'Note: You must follow the B8Shield brand guidelines and communication instructions.')}</p>
+          <p className="mt-4 text-sm text-gray-600">{t('success_brand_guidelines_note', 'Note: You must follow the {{brand}} brand guidelines and communication instructions.', { brand })}</p>
         </>
       )
     },
@@ -88,7 +94,7 @@ const AffiliateSuccessGuide = () => {
         <ol className="list-decimal pl-6 space-y-3">
           <li>{t('success_gs_use_product', 'Use the product yourself (if possible)')}</li>
           <li>{t('success_gs_share_experience', 'Share your real experience – e.g., video, image, blog post')}</li>
-          <li>{t('success_gs_tell_story', 'Tell a story – show how B8Shield solves a real problem')}</li>
+          <li>{t('success_gs_tell_story', 'Tell a story – show how {{brand}} solves a real problem', { brand })}</li>
           <li>{t('success_gs_use_link_smartly', 'Use your link smartly – in bio, stories, comments, YouTube descriptions')}</li>
           <li>{t('success_gs_be_consistent', 'Be consistent – success comes from ongoing effort, not one-time posts')}</li>
         </ol>
@@ -101,10 +107,10 @@ const AffiliateSuccessGuide = () => {
       content: (
         <ul className="list-disc pl-6 space-y-3">
           <li>{t('success_as_content_series', 'Create content series, like "3 places I never dared to cast until now"')}</li>
-          <li>{t('success_as_how_to_videos', 'Make how-to videos showing how to rig and use B8Shield')}</li>
+          <li>{t('success_as_how_to_videos', 'Make how-to videos showing how to rig and use {{brand}}', { brand })}</li>
           <li>{t('success_as_giveaways', 'Run giveaways to drive engagement')}</li>
           <li>{t('success_as_ab_testing', 'A/B test different content types, headlines, and formats')}</li>
-          <li>{t('success_as_address_objections', 'Address objections, especially the myth that B8Shield prevents hooking fish – show how the wings fold back on strike')}</li>
+          <li>{t('success_as_address_objections', 'Address objections, especially the myth that {{brand}} prevents hooking fish – show how the wings fold back on strike', { brand })}</li>
         </ul>
       )
     },
@@ -133,7 +139,7 @@ const AffiliateSuccessGuide = () => {
           <div>
             <h4 className="font-medium mb-2">TikTok</h4>
             <ul className="list-disc pl-6 space-y-2">
-              <li>{t('success_tiktok_visual_demos', 'Create short, visual demos of how B8Shield works')}</li>
+              <li>{t('success_tiktok_visual_demos', 'Create short, visual demos of how {{brand}} works', { brand })}</li>
               <li>{t('success_tiktok_use_humor', 'Use humor, personal stories, or surprising comparisons')}</li>
               <li>{t('success_tiktok_highlight_wings', 'Highlight the wing-folding function and snag resistance')}</li>
             </ul>
@@ -217,12 +223,12 @@ const AffiliateSuccessGuide = () => {
       content: (
         <div className="space-y-6">
           <div>
-            <p className="font-medium mb-2">{t('success_faq_q1', 'Q: Does B8Shield prevent hooking fish?')}</p>
+            <p className="font-medium mb-2">{t('success_faq_q1', 'Q: Does {{brand}} prevent hooking fish?', { brand })}</p>
             <p>{t('success_faq_a1', 'A: No – the wings fold back when a fish strikes, allowing for a clean hook set.')}</p>
           </div>
           <div>
             <p className="font-medium mb-2">{t('success_faq_q2', 'Q: Does it work on all lures?')}</p>
-            <p>{t('success_faq_a2', 'A: B8Shield is designed for treble-hook lures, which are most common in spinning.')}</p>
+            <p>{t('success_faq_a2', 'A: {{brand}} is designed for treble-hook lures, which are most common in spinning.', { brand })}</p>
           </div>
           <div>
             <p className="font-medium mb-2">{t('success_faq_q3', 'Q: Can I use my own images or videos?')}</p>
@@ -243,7 +249,7 @@ const AffiliateSuccessGuide = () => {
         <ul className="list-disc pl-6 space-y-3">
           <li>{t('success_checklist_signup', 'Sign up for the affiliate program')}</li>
           <li>{t('success_checklist_get_link', 'Get your unique link')}</li>
-          <li>{t('success_checklist_test_product', 'Test B8Shield if you have the product')}</li>
+          <li>{t('success_checklist_test_product', 'Test {{brand}} if you have the product', { brand })}</li>
           <li>{t('success_checklist_first_post', 'Publish your first post, story, or video')}</li>
           <li>{t('success_checklist_add_link', 'Add your link to your profiles or content')}</li>
           <li>{t('success_checklist_plan_content', 'Start planning weekly content')}</li>
@@ -256,7 +262,7 @@ const AffiliateSuccessGuide = () => {
       icon: <HeartIcon className="h-6 w-6" />,
       content: (
         <>
-          <p className="mb-4">{t('success_closing_intro', 'When you recommend B8Shield, you don\'t just earn commission – you help other anglers:')}</p>
+          <p className="mb-4">{t('success_closing_intro', 'When you recommend {{brand}}, you don\'t just earn commission – you help other anglers:', { brand })}</p>
           <ul className="list-disc pl-6 space-y-2 mb-4">
             <li>{t('success_closing_benefit_1', 'Fish in hard-to-reach spots')}</li>
             <li>{t('success_closing_benefit_2', 'Stop losing their favorite lures')}</li>
@@ -279,7 +285,7 @@ const AffiliateSuccessGuide = () => {
           {t('success_guide_title', 'Success Manager')}
         </h2>
         <p className="text-gray-600 max-w-2xl mx-auto">
-          {t('success_guide_subtitle', 'Your complete guide to becoming a successful B8Shield affiliate. Learn proven strategies, avoid common mistakes, and maximize your earnings.')}
+          {t('success_guide_subtitle', 'Your complete guide to becoming a successful {{brand}} affiliate. Learn proven strategies, avoid common mistakes, and maximize your earnings.', { brand })}
         </p>
       </div>
 

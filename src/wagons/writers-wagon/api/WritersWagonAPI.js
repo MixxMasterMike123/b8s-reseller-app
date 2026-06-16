@@ -139,23 +139,18 @@ class WritersWagonAPI {
       
       'product-content-specialist': `Du är en produktinnehållsspecialist som skapar både teknisk B2B-information och marknadsförande B2C-innehåll. Anpassa tonen och fokuset baserat på målgruppen.`,
       
-      'default': `Du är en professionell innehållsskapare som specialiserar sig på fiskeprodukter och B8Shield. Skriv tydligt och engagerande på svenska.`
+      'default': `Du är en professionell innehållsskapare. Skriv tydligt och engagerande på svenska, anpassat efter produkten och butiken.`
     };
 
     return systemPrompts[systemRole] || systemPrompts['default'];
   }
 
-  // Get brand context for B8Shield
-  getBrandContext() {
-    return `BRAND KONTEXT - B8Shield:
-B8Shield är ett innovativt skyddssystem för fiskebeten från svenska JPH Innovation AB. Produkten skyddar dyrbara beten från skador och förluster under fiske. B8Shield används av både professionella återförsäljare och hobbyträdgårdsmästare i hela Norden.
-
-NYCKELFÖRDELAR:
-- Effektivt skydd för fiskebeten
-- Minskar beteförluster dramatiskt  
-- Enkel att använda
-- Svensk kvalitet och innovation
-- Miljövänligt och hållbart`;
+  // Brand context for the active shop. Pass the shop name + optional description
+  // so generated copy reflects THIS shop (no hardcoded brand/product domain).
+  getBrandContext(brand = '', description = '') {
+    if (!brand && !description) return '';
+    return `BRAND KONTEXT${brand ? ` - ${brand}` : ''}:
+${description || `${brand} är butiken som produkten säljs av. Skriv så att innehållet passar butikens sortiment och målgrupp.`}`;
   }
 
   // Get role-specific context
@@ -165,7 +160,7 @@ NYCKELFÖRDELAR:
       
       'marketing-copywriter': `MARKNADSFÖRINGSKONTEXT: Fokusera på problemlösning, tidsbesparingar, kostnadsfördelar och användarupplevelse. Målgrupp: slutkonsumenter som vill förbättra sitt fiske.`,
       
-      'seo-optimizer': `SEO KONTEXT: Inkludera relevanta svenska sökord som "fiskebete", "beteskydd", "fiske", "B8Shield". Håll titlar under 60 tecken.`,
+      'seo-optimizer': `SEO KONTEXT: Inkludera relevanta svenska sökord baserade på produkten och butikens sortiment. Håll titlar under 60 tecken.`,
       
       'product-content-specialist': `PRODUKTKONTEXT: Skapa innehåll som fungerar för både B2B (teknisk information) och B2C (marknadsföring). Anpassa språket efter målgruppen.`
     };

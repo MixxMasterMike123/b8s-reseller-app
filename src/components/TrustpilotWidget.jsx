@@ -14,7 +14,10 @@ const TrustpilotWidget = ({
   const [isVisible, setIsVisible] = useState(false);
   const widgetRef = useRef(null);
 
-  const REVIEW_URL = 'https://www.trustpilot.com/review/b8shield.com?languages=all';
+  // Brand-neutral: built from the shop's configured Trustpilot domain (prop).
+  const REVIEW_URL = domain
+    ? `https://www.trustpilot.com/review/${domain}?languages=all`
+    : '';
 
   // PERFORMANCE OPTIMIZATION: Use IntersectionObserver for lazy loading
   useEffect(() => {

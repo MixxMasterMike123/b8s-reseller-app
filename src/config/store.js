@@ -55,6 +55,14 @@ export const STORE = {
     website: '',
   },
 
+  // Trustpilot integration (per-shop, admin-editable). Empty = no Trustpilot
+  // widget/reviews. domain = the shop's Trustpilot business domain; email =
+  // the review-invite sender. Both default empty (no hardcoded brand).
+  trustpilot: {
+    domain: '',
+    email: '',
+  },
+
   // Currency / VAT — included for completeness. NOT wired into pricing math
   // in this slice; parameterizing currency/VAT is a later step.
   currency: 'SEK',
