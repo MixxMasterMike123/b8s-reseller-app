@@ -9,9 +9,9 @@ export const generateProductFeed = async (shopId) => {
   const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
   <channel>
-    <title>B8Shield - Vasskydd för fiskedrag</title>
-    <link>https://shop.b8shield.com</link>
-    <description>Innovativa vasskydd för dina fiskedrag</description>
+    <title>Produktflöde</title>
+    <link>${typeof window !== 'undefined' ? window.location.origin : ''}</link>
+    <description>Produktflöde</description>
     ${products.docs.map(doc => {
       const product = doc.data();
       // Only include products available for B2C
@@ -22,12 +22,12 @@ export const generateProductFeed = async (shopId) => {
       <g:id>${doc.id}</g:id>
       <g:title>${product.name}</g:title>
       <g:description>${product.descriptions?.b2c || product.description}</g:description>
-      <g:link>https://shop.b8shield.com/product/${doc.id}</g:link>
+      <g:link>${typeof window !== 'undefined' ? window.location.origin : ''}/product/${doc.id}</g:link>
       <g:image_link>${product.b2cImageUrl || product.imageUrl}</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>${product.stock > 0 ? 'in stock' : 'out of stock'}</g:availability>
       <g:price>${product.b2cPrice || product.basePrice} SEK</g:price>
-      <g:brand>B8Shield</g:brand>
+      ${product.brand ? `<g:brand>${product.brand}</g:brand>` : ''}
       <g:gtin>${product.eanCode || ''}</g:gtin>
       <g:identifier_exists>no</g:identifier_exists>
       <g:google_product_category>Sporting Goods > Outdoor Recreation > Fishing > Fishing Tackle > Fishing Lures &amp; Flies</g:google_product_category>
@@ -58,25 +58,18 @@ export const generateProductSchema = (product) => {
       product.b2cImageUrl || product.imageUrl,
       ...(product.b2cImageGallery || [])
     ],
-    "brand": {
-      "@type": "Brand",
-      "name": "B8Shield"
-    },
+    ...(product.brand ? { "brand": { "@type": "Brand", "name": product.brand } } : {}),
     "offers": {
       "@type": "Offer",
-      "url": `https://shop.b8shield.com/product/${product.id}`,
+      "url": typeof window !== 'undefined' ? window.location.href : undefined,
       "priceCurrency": "SEK",
       "price": product.b2cPrice || product.basePrice,
       "priceValidUntil": new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
       "itemCondition": "https://schema.org/NewCondition",
-      "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "B8Shield"
-      }
+      "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
     },
     "sku": product.id,
     "gtin13": product.eanCode || undefined,
-    "category": "Sporting Goods > Outdoor Recreation > Fishing > Fishing Tackle > Fishing Lures & Flies"
+    ...(product.category ? { "category": product.category } : {})
   };
 }; 

@@ -310,9 +310,9 @@ export const createOrderVerificationHTML = (order) => {
 <body>
   <div class="header">
     <div class="company-info">
-      <div class="company-name">B8Shield</div>
-      <div>JPH Innovation AB</div>
-      <div>Org.nr: 559434-4245</div>
+      <div class="company-name">${order.shopName || order.sellerName || 'Webbutik'}</div>
+      ${order.sellerLegalName ? `<div>${order.sellerLegalName}</div>` : ''}
+      ${order.sellerOrgNumber ? `<div>Org.nr: ${order.sellerOrgNumber}</div>` : ''}
     </div>
     <div class="verification-info">
       <div class="verification-label">ORDERVERIFIKATION</div>
@@ -432,7 +432,7 @@ export const createOrderVerificationHTML = (order) => {
   ` : ''}
 
   <div class="footer">
-    <p><strong>B8Shield - JPH Innovation AB</strong></p>
+    <p><strong>${order.shopName || order.sellerName || 'Webbutik'}${order.sellerLegalName ? ` - ${order.sellerLegalName}` : ''}</strong></p>
     <p>Detta är en orderverifikation för bokföring enligt Bokföringslagen (BFL 1999:1078)</p>
     <p>Spara detta dokument i minst 7 år enligt Skatteverkets krav</p>
   </div>

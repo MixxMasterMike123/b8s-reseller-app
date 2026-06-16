@@ -207,7 +207,11 @@ const AppLayout = ({ children }) => {
             <Bars3Icon className="h-5 w-5" />
           </button>
           <Link to="/admin" className="flex items-center pl-1 pr-2">
-            <img src="/images/JPH_logo.webp" alt="JPH Innovation AB" className="h-6 w-auto brightness-0 invert" />
+            {store?.logoUrl && store.logoUrl !== '/images/logo.svg' ? (
+              <img src={store.logoUrl} alt={shopName} className="h-6 w-auto brightness-0 invert" />
+            ) : (
+              <span className="text-[15px] font-semibold tracking-tight text-white">{shopName}</span>
+            )}
           </Link>
         </div>
 
@@ -313,7 +317,11 @@ const AppLayout = ({ children }) => {
             </div>
             <div className="flex shrink-0 items-center px-4 pb-2">
               <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)}>
-                <img src="/images/JPH_logo.webp" alt="JPH Innovation AB" className="h-7 w-auto" />
+                {store?.logoUrl && store.logoUrl !== '/images/logo.svg' ? (
+                  <img src={store.logoUrl} alt={shopName} className="h-7 w-auto" />
+                ) : (
+                  <span className="text-[15px] font-semibold tracking-tight text-admin-text">{shopName}</span>
+                )}
               </Link>
             </div>
             <div className="mt-2 h-0 flex-1 overflow-y-auto px-3">

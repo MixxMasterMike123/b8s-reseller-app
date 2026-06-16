@@ -264,7 +264,7 @@ class LabelPrinterService {
     const html = `<!DOCTYPE html>
 <html>
 <head>
-  <title>B8Shield Fraktetikett - ${labelData.orderNumber}</title>
+  <title>Fraktetikett - ${labelData.orderNumber}</title>
   <meta charset="utf-8">
   <style>
     @page {
@@ -348,7 +348,7 @@ class LabelPrinterService {
 </head>
 <body>
   <div class="order-header">
-    B8Shield Order: ${labelData.orderNumber}
+    Order: ${labelData.orderNumber}
   </div>
   
   <div class="address-section">
@@ -374,7 +374,7 @@ class LabelPrinterService {
     // Create download link
     const a = document.createElement('a');
     a.href = url;
-    a.download = `B8Shield-Label-${labelData.orderNumber}.html`;
+    a.download = `Label-${labelData.orderNumber}.html`;
     
     // Trigger download
     document.body.appendChild(a);
@@ -384,7 +384,7 @@ class LabelPrinterService {
     // Clean up
     URL.revokeObjectURL(url);
     
-    console.log(`📄 Label downloaded: B8Shield-Label-${labelData.orderNumber}.html`);
+    console.log(`📄 Label downloaded: Label-${labelData.orderNumber}.html`);
   }
 
   /**

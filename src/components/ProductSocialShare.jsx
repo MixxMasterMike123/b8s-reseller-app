@@ -241,8 +241,8 @@ const ProductSocialShare = ({ product, compact = true }) => {
     
     console.log('📸 Final image URL for sharing:', imageUrl);
     
-    // FIXED: Use PNG logo fallback instead of WebP for social media compatibility
-    const fallbackUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://shop.b8shield.com'}/images/B8S_logo.png`;
+    // Brand-neutral share fallback image (generic mark) on the current origin.
+    const fallbackUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/images/app-mark.svg`;
     console.log('📸 Fallback URL:', fallbackUrl);
     console.log('📸 Returning:', imageUrl || fallbackUrl);
     return imageUrl || fallbackUrl;

@@ -1,0 +1,6 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Neutral generic favicon: white "M" monogram on a dark rounded square.
+       Placeholder until a per-brand favicon is provided. -->
+  <rect width="512" height="512" rx="96" fill="#303030"/>
+  <path d="M150 360 V160 H198 L256 270 L314 160 H362 V360 H316 V244 L268 332 H244 L196 244 V360 Z" fill="#ffffff"/>
+</svg>
