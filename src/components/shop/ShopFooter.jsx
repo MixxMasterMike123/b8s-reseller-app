@@ -9,6 +9,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 // import LanguageCurrencySelector from './LanguageCurrencySelector';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import { useShopId } from '../../contexts/ShopContext';
+import { useShopFeatures } from '../../contexts/ShopFeaturesContext';
 import DOMPurify from 'dompurify';
 
 // Generic platform icons (brand-neutral logos). A link renders only when the
@@ -28,6 +29,8 @@ const ShopFooter = () => {
   const { currentUser } = useSimpleAuth();
   const store = useStoreSettings();
   const shopId = useShopId();
+  const { isEnabled: isAddonEnabled } = useShopFeatures();
+  const affiliateEnabled = isAddonEnabled('affiliate');
   const [isActiveAffiliate, setIsActiveAffiliate] = useState(false);
   const [affiliateCheckLoading, setAffiliateCheckLoading] = useState(false);
   const currentYear = new Date().getFullYear();
@@ -35,11 +38,12 @@ const ShopFooter = () => {
   // Check if current user is an active affiliate
   useEffect(() => {
     const checkAffiliateStatus = async () => {
-      if (!currentUser?.email) {
+      // Affiliate add-on off → skip the check (links hidden anyway).
+      if (!affiliateEnabled || !currentUser?.email) {
         setIsActiveAffiliate(false);
         return;
       }
-      
+
       try {
         setAffiliateCheckLoading(true);
         const affiliatesRef = collection(db, 'affiliates');
@@ -60,7 +64,7 @@ const ShopFooter = () => {
     };
 
     checkAffiliateStatus();
-  }, [currentUser, shopId]);
+  }, [currentUser, shopId, affiliateEnabled]);
 
   return (
     <footer className="bg-ink text-white font-body">
@@ -123,14 +127,17 @@ const ShopFooter = () => {
                   {t('footer_returns', 'Returer & Ångerrätt')}
                 </Link>
               </li>
+              {affiliateEnabled && (
               <li>
                 <Link to={getCountryAwareUrl('affiliate-registration')} className="text-white/70 hover:text-white transition-colors">
                   {t('footer_become_affiliate', 'Bli en affiliate')}
                 </Link>
               </li>
+              )}
+              {affiliateEnabled && (
               <li>
-                <Link 
-                  to={getCountryAwareUrl(isActiveAffiliate ? 'affiliate-portal' : 'affiliate-login')} 
+                <Link
+                  to={getCountryAwareUrl(isActiveAffiliate ? 'affiliate-portal' : 'affiliate-login')}
                   className="text-white/70 hover:text-white transition-colors flex items-center"
                 >
                   {affiliateCheckLoading ? (
@@ -140,8 +147,8 @@ const ShopFooter = () => {
                     </>
                   ) : (
                     <>
-                      {isActiveAffiliate ? 
-                        t('footer_affiliate_portal', 'Affiliate-portal') : 
+                      {isActiveAffiliate ?
+                        t('footer_affiliate_portal', 'Affiliate-portal') :
                         t('footer_affiliate_login', 'Affiliate-inloggning')
                       }
                       {isActiveAffiliate && (
@@ -151,6 +158,7 @@ const ShopFooter = () => {
                   )}
                 </Link>
               </li>
+              )}
               <li>
                 <a href={`mailto:${store.supportEmail}`} className="text-white/70 hover:text-white transition-colors">
                   {t('footer_customer_support', 'Kundtjänst')}

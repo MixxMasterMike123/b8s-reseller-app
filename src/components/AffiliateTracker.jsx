@@ -3,11 +3,19 @@ import { useLocation } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../firebase/config';
 import { normalizeAffiliateCode } from '../utils/affiliateCalculations';
+import { useShopFeatures } from '../contexts/ShopFeaturesContext';
 
 const AffiliateTracker = () => {
   const location = useLocation();
+  const { isEnabled: isAddonEnabled } = useShopFeatures();
+  const affiliateEnabled = isAddonEnabled('affiliate');
 
   useEffect(() => {
+    // Affiliate add-on off → don't track ?ref= at all (no localStorage ref
+    // seeded, no click logged). The upstream cut: with no ref, no discount can
+    // ever be applied. Default-ON: existing shops track normally.
+    if (!affiliateEnabled) return;
+
     const handleAffiliateLink = async () => {
       const params = new URLSearchParams(location.search);
       const refCode = params.get('ref');
@@ -103,7 +111,7 @@ const AffiliateTracker = () => {
     };
 
     handleAffiliateLink();
-  }, [location]); // Re-run this effect whenever the location changes
+  }, [location, affiliateEnabled]); // Re-run on location change or when the add-on flag resolves
 
   return null; // This component does not render anything
 };

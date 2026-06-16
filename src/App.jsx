@@ -238,8 +238,8 @@ function App() {
               <Route path="/:shopId/order-return" element={<ShopGate><OrderReturn /></ShopGate>} />
               <Route path="/:shopId/order-confirmation/:orderId" element={<ShopGate><OrderConfirmation /></ShopGate>} />
               <Route path="/:shopId/account" element={<ShopGate><CustomerAccount /></ShopGate>} />
-              <Route path="/:shopId/affiliate-registration" element={<ShopGate><AffiliateRegistration /></ShopGate>} />
-              <Route path="/:shopId/affiliate-portal" element={<ShopGate><AffiliatePortal /></ShopGate>} />
+              <Route path="/:shopId/affiliate-registration" element={<ShopGate><AddonGate feature="affiliate" redirectTo="shop-home"><AffiliateRegistration /></AddonGate></ShopGate>} />
+              <Route path="/:shopId/affiliate-portal" element={<ShopGate><AddonGate feature="affiliate" redirectTo="shop-home"><AffiliatePortal /></AddonGate></ShopGate>} />
 
               {/* Category browse pages (the primary taxonomy). Specific path so
                   it matches before the CMS catch-all below. */}

@@ -18,6 +18,7 @@ import { useEffect, useState } from 'react';
 import { getCountryAwareUrl } from '../../utils/productUrls';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import { useShopId } from '../../contexts/ShopContext';
+import { useShopFeatures } from '../../contexts/ShopFeaturesContext';
 
 // tags / activeTag / onSelectTag are optional — only the storefront home passes
 // them, to render tag links that filter the product grid. Other pages omit them.
@@ -26,6 +27,8 @@ const ShopNavigation = ({ breadcrumb, tags = [], activeTag = null, onSelectTag }
   const { t } = useTranslation();
   const store = useStoreSettings();
   const shopId = useShopId();
+  const { isEnabled: isAddonEnabled } = useShopFeatures();
+  const affiliateEnabled = isAddonEnabled('affiliate');
   const navigate = useNavigate();
   const { currentUser, logout } = useSimpleAuth();
   const [affiliateData, setAffiliateData] = useState(null);
@@ -36,7 +39,8 @@ const ShopNavigation = ({ breadcrumb, tags = [], activeTag = null, onSelectTag }
 
   useEffect(() => {
     const fetchAffiliateData = async () => {
-      if (!currentUser?.email) {
+      // Affiliate add-on off → no affiliate portal display, skip the query.
+      if (!affiliateEnabled || !currentUser?.email) {
         setAffiliateData(null);
         return;
       }
@@ -54,7 +58,7 @@ const ShopNavigation = ({ breadcrumb, tags = [], activeTag = null, onSelectTag }
       }
     };
     fetchAffiliateData();
-  }, [currentUser, shopId]);
+  }, [currentUser, shopId, affiliateEnabled]);
 
   const handleAffiliateLogout = async () => {
     await logout();
@@ -196,6 +200,7 @@ const ShopNavigation = ({ breadcrumb, tags = [], activeTag = null, onSelectTag }
                         {t('nav_login_customer', 'Logga in som kund')}
                       </Link>
                       
+                      {affiliateEnabled && (
                       <Link
                         to="/affiliate-login"
                         className="flex items-center px-4 py-2 text-sm text-ink hover:bg-canvas hover:text-accent transition-colors"
@@ -206,6 +211,7 @@ const ShopNavigation = ({ breadcrumb, tags = [], activeTag = null, onSelectTag }
                         </div>
                         {t('nav_login_affiliate', 'Logga in som affiliate')}
                       </Link>
+                      )}
                     </div>
                     
                     {/* Footer with registration links */}
@@ -217,6 +223,7 @@ const ShopNavigation = ({ breadcrumb, tags = [], activeTag = null, onSelectTag }
                       >
                         {t('nav_register_customer', 'Skapa kundkonto')}
                       </Link>
+                      {affiliateEnabled && (
                       <Link
                         to={getCountryAwareUrl('affiliate-registration')}
                         className="block px-4 py-2 text-xs text-ink-muted hover:text-accent transition-colors"
@@ -224,6 +231,7 @@ const ShopNavigation = ({ breadcrumb, tags = [], activeTag = null, onSelectTag }
                       >
                         {t('nav_register_affiliate', 'Ansök som affiliate')}
                       </Link>
+                      )}
                     </div>
                   </div>
                 )}
