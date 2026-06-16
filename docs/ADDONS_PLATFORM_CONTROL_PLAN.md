@@ -89,3 +89,15 @@ shops/{shopId}
 - **Q1 — code rename:** NO. Keep `src/wagons/` internal names; rename only user-facing copy this slice. (Code/folder rename = later optional cosmetic pass.)
 - **Q2 — affiliate gating:** DEFERRED to P4.5b. This slice ships rails + wires the 4 wagon add-ons; affiliate appears in the platform toggle but enforcement (12 touchpoints + 3 functions) lands in the follow-up. THIS slice stays entirely off the money path.
 - **Q3 — add-on copy:** I'll draft neutral Swedish labels/descriptions ("Kampanjer", "Dining CRM", "Ambassadörer", "AI-texter", "Affiliate"), editable later by Mikael.
+
+## Sign-off result (2026-06-16) — slice DONE, two carry-forwards
+Adversarial 3-way sign-off (platform↔admin↔shop): all 4 audited areas CLEAN + critic GO. Default-ON invariant proven end-to-end; money path untouched. Shipped S1–S5 (commits c59510c, 97b078e, b9feb67, eb8245e + the sign-off fix).
+
+**Carry-forward items (do NOT re-block this slice):**
+1. **DONE in this slice:** `DEFAULT_FEATURES` now includes `writers:false` (was implicitly ON for new shops; writers is manifest-disabled globally anyway). New-shop defaults: affiliate/campaigns ON, dining/ambassador/writers OFF. Existing shops (no `features` field) = all ON (default-ON).
+2. **⚠️ KNOWN GATE-BYPASS → fold into P4.5b enforcement:** four direct cross-wagon imports run wagon logic REGARDLESS of the per-shop feature flag (they reach into wagon internals, bypassing the menu/route gate):
+   - `src/contexts/AuthContext.jsx` → `onNewB2BCustomer()` (dining-wagon customer-status automation) on every new customer.
+   - `src/contexts/OrderContext.jsx` → `onOrderCompleted()` (dining-wagon) on every completed order.
+   - `src/components/layout/AppLayout.jsx` → `<MentionNotifications/>` (dining-wagon) renders for any admin (role-gated only).
+   - `src/components/AffiliatePortalCampaigns.jsx` → `useCampaigns()` (campaign-wagon) in the storefront affiliate portal.
+   Effect: a "disabled" dining/campaign add-on still runs background logic (writes `users/{id}.status`, reads campaigns). Low impact (CRM field / reads; no money, no admin-visible surface). Proper fix = gate these on `useShopFeatures().isEnabled('dining'|'campaigns')` (or remove the direct coupling via the registry) as part of the affiliate/enforcement follow-up. Documented here so it's tracked, not silent.

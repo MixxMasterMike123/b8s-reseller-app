@@ -14,8 +14,11 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 
 const SHOP_ID_RE = /^[a-z0-9-]{3,30}$/;
 
-// Default add-ons for a new shop (manual toggles; plans come later).
-const DEFAULT_FEATURES = { affiliate: true, campaigns: true, dining: false, ambassador: false };
+// Default add-ons for a new shop (manual toggles; plans come later). All five
+// add-on keys are explicit so a new shop's defaults are unambiguous (writers is
+// also off — it's manifest-disabled globally too). Existing shops with no
+// `features` field default-ON for everything (see config/addons.js isFeatureEnabled).
+const DEFAULT_FEATURES = { affiliate: true, campaigns: true, dining: false, ambassador: false, writers: false };
 
 const slugifyId = (s) =>
   (s || '')
