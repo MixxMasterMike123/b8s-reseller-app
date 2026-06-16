@@ -3,6 +3,7 @@ import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getApp } from 'firebase-admin/app';
 import { AffiliateClickData, AffiliateClickResponse } from '../types';
 import { DEFAULT_SHOP_ID } from '../../config/tenancy';
+import { isShopFeatureEnabled } from '../../config/shopFeatures';
 
 /**
  * Log affiliate link click (Callable version)
@@ -40,6 +41,14 @@ export const logAffiliateClickV2 = onCall<AffiliateClickData>(
       // Tenant of the click = tenant of the affiliate being clicked (more
       // trustworthy than client input). Falls back to the default shop.
       const shopId = affiliateDoc.data()?.shopId || DEFAULT_SHOP_ID;
+
+      // Affiliate add-on OFF for this shop → don't log the click or bump stats
+      // (no new affiliate activity). Benign success so the storefront tracker
+      // doesn't error. Default-ON: existing shops unaffected.
+      if (!(await isShopFeatureEnabled(shopId, 'affiliate'))) {
+        // No click logged; empty clickId signals "not tracked" to the client.
+        return { success: true, message: 'Affiliate add-on disabled for this shop.', clickId: '' };
+      }
 
       // Create click record
       const clickRef = await db.collection('affiliateClicks').add({

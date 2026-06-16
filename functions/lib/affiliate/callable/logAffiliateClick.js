@@ -5,6 +5,7 @@ const https_1 = require("firebase-functions/v2/https");
 const firestore_1 = require("firebase-admin/firestore");
 const app_1 = require("firebase-admin/app");
 const tenancy_1 = require("../../config/tenancy");
+const shopFeatures_1 = require("../../config/shopFeatures");
 /**
  * Log affiliate link click (Callable version)
  * Called when a user clicks an affiliate link
@@ -33,6 +34,13 @@ exports.logAffiliateClickV2 = (0, https_1.onCall)({
         // Tenant of the click = tenant of the affiliate being clicked (more
         // trustworthy than client input). Falls back to the default shop.
         const shopId = affiliateDoc.data()?.shopId || tenancy_1.DEFAULT_SHOP_ID;
+        // Affiliate add-on OFF for this shop → don't log the click or bump stats
+        // (no new affiliate activity). Benign success so the storefront tracker
+        // doesn't error. Default-ON: existing shops unaffected.
+        if (!(await (0, shopFeatures_1.isShopFeatureEnabled)(shopId, 'affiliate'))) {
+            // No click logged; empty clickId signals "not tracked" to the client.
+            return { success: true, message: 'Affiliate add-on disabled for this shop.', clickId: '' };
+        }
         // Create click record
         const clickRef = await db.collection('affiliateClicks').add({
             affiliateCode: affiliateCode,

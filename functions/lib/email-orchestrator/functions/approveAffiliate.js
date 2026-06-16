@@ -10,6 +10,7 @@ const firestore_1 = require("firebase-admin/firestore");
 const auth_1 = require("firebase-admin/auth");
 const EmailOrchestrator_1 = require("../core/EmailOrchestrator");
 const tenancy_1 = require("../../config/tenancy");
+const shopFeatures_1 = require("../../config/shopFeatures");
 // Initialize Firebase services
 const db = (0, firestore_1.getFirestore)('b8s-reseller-db');
 const auth = (0, auth_1.getAuth)();
@@ -58,6 +59,12 @@ exports.approveAffiliate = (0, https_1.onCall)({
         const appData = applicationDoc.data();
         if (!appData) {
             throw new Error('Application data is missing');
+        }
+        // Affiliate add-on gate: don't approve a new affiliate for a shop whose
+        // affiliate add-on is disabled (no new affiliate activity). Checked BEFORE
+        // any Auth/Firestore write so nothing is half-created. Default-ON.
+        if (!(await (0, shopFeatures_1.isShopFeatureEnabled)(appData.shopId || tenancy_1.DEFAULT_SHOP_ID, 'affiliate'))) {
+            throw new Error('Affiliate-tillägget är inaktiverat för den här butiken.');
         }
         // 2. Create Firebase Auth user
         console.log('🔐 Creating Firebase Auth user...');

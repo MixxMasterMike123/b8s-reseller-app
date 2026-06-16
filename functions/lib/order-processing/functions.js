@@ -6,6 +6,7 @@ const firestore_1 = require("firebase-admin/firestore");
 const rate_limits_1 = require("../config/rate-limits");
 const app_urls_1 = require("../config/app-urls");
 const tenancy_1 = require("../config/tenancy");
+const shopFeatures_1 = require("../config/shopFeatures");
 // V3 Email System - imports handled dynamically in functions
 const database_1 = require("../config/database");
 /**
@@ -493,8 +494,18 @@ async function processOrderCompletion(orderId) {
     console.log('🎯 Processing universal campaign revenue tracking...');
     await processUniversalCampaignRevenue(orderData, localDb);
     let commissionProcessed = false;
-    if (!affiliateCode) {
-        console.log('No affiliate code found for order, skipping commission.');
+    // Affiliate add-on gate: award commission ONLY when the order's shop has
+    // affiliate enabled. Paired with reverseAffiliateCommissionOnCancel (which
+    // gates on the same flag) so award + reversal stay consistent if the flag
+    // flips mid-lifecycle. Default-ON: existing shops unaffected.
+    const affiliateEnabled = await (0, shopFeatures_1.isShopFeatureEnabled)(orderData.shopId || tenancy_1.DEFAULT_SHOP_ID, 'affiliate');
+    if (!affiliateCode || !affiliateEnabled) {
+        if (affiliateCode && !affiliateEnabled) {
+            console.log('Affiliate add-on disabled for this shop, skipping commission.');
+        }
+        else {
+            console.log('No affiliate code found for order, skipping commission.');
+        }
         commissionProcessed = false;
     }
     else {

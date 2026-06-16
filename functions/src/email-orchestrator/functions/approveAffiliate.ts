@@ -8,6 +8,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { EmailOrchestrator } from '../core/EmailOrchestrator';
 import { DEFAULT_SHOP_ID } from '../../config/tenancy';
+import { isShopFeatureEnabled } from '../../config/shopFeatures';
 
 // Initialize Firebase services
 const db = getFirestore('b8s-reseller-db');
@@ -94,6 +95,13 @@ export const approveAffiliate = onCall<AffiliateApprovalRequest>(
       const appData = applicationDoc.data();
       if (!appData) {
         throw new Error('Application data is missing');
+      }
+
+      // Affiliate add-on gate: don't approve a new affiliate for a shop whose
+      // affiliate add-on is disabled (no new affiliate activity). Checked BEFORE
+      // any Auth/Firestore write so nothing is half-created. Default-ON.
+      if (!(await isShopFeatureEnabled(appData.shopId || DEFAULT_SHOP_ID, 'affiliate'))) {
+        throw new Error('Affiliate-tillägget är inaktiverat för den här butiken.');
       }
 
       // 2. Create Firebase Auth user

@@ -3,6 +3,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { RATE_LIMITS } from '../config/rate-limits';
 import { commerceConfig } from '../config/app-urls';
 import { DEFAULT_SHOP_ID } from '../config/tenancy';
+import { isShopFeatureEnabled } from '../config/shopFeatures';
 // V3 Email System - imports handled dynamically in functions
 import { db } from '../config/database';
 
@@ -619,9 +620,19 @@ export async function processOrderCompletion(
       await processUniversalCampaignRevenue(orderData, localDb);
 
       let commissionProcessed = false;
-      
-      if (!affiliateCode) {
-        console.log('No affiliate code found for order, skipping commission.');
+
+      // Affiliate add-on gate: award commission ONLY when the order's shop has
+      // affiliate enabled. Paired with reverseAffiliateCommissionOnCancel (which
+      // gates on the same flag) so award + reversal stay consistent if the flag
+      // flips mid-lifecycle. Default-ON: existing shops unaffected.
+      const affiliateEnabled = await isShopFeatureEnabled(orderData.shopId || DEFAULT_SHOP_ID, 'affiliate');
+
+      if (!affiliateCode || !affiliateEnabled) {
+        if (affiliateCode && !affiliateEnabled) {
+          console.log('Affiliate add-on disabled for this shop, skipping commission.');
+        } else {
+          console.log('No affiliate code found for order, skipping commission.');
+        }
         commissionProcessed = false;
       } else {
 
