@@ -10,6 +10,7 @@ import { commerceConfig } from '../config/app-urls';
 import { corsHandler } from '../protection/cors/cors-handler';
 import { db } from '../config/database';
 import { DEFAULT_SHOP_ID } from '../config/tenancy';
+import { isShopFeatureEnabled } from '../config/shopFeatures';
 
 /**
  * Server-side price computation. NEVER trust client-supplied amounts:
@@ -76,10 +77,14 @@ async function computeOrderTotalsSek(
 
   const subtotal = loaded.reduce((sum, { price, quantity }) => sum + price * quantity, 0);
 
-  // Discount from the affiliate doc (not from the client)
+  // Discount from the affiliate doc (not from the client). GATED on the
+  // affiliate add-on: when the shop has affiliate disabled, the code is ignored
+  // and no discount applies — this MUST match the client gate in
+  // CartContext.applyDiscountCode, or the charge diverges from the displayed
+  // total (total-parity). Default-ON (existing shops unaffected).
   let discountAmount = 0;
   let discountPercentage = 0;
-  if (discountCode) {
+  if (discountCode && await isShopFeatureEnabled(shopId, 'affiliate')) {
     const affSnap = await db.collection('affiliates')
       .where('shopId', '==', shopId)
       .where('affiliateCode', '==', discountCode.toUpperCase())

@@ -9,6 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateDiscountCode = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const database_1 = require("../../config/database");
+const shopFeatures_1 = require("../../config/shopFeatures");
 exports.validateDiscountCode = (0, https_1.onCall)({
     region: 'us-central1',
     memory: '256MiB',
@@ -28,6 +29,12 @@ exports.validateDiscountCode = (0, https_1.onCall)({
         return { valid: false };
     }
     const affiliate = snapshot.docs[0].data();
+    // Defense-in-depth: if the affiliate's shop has the affiliate add-on
+    // disabled, the code is not valid here either (matches the createPaymentIntent
+    // gate + the client). Default-ON, so existing shops are unaffected.
+    if (!(await (0, shopFeatures_1.isShopFeatureEnabled)(affiliate.shopId, 'affiliate'))) {
+        return { valid: false };
+    }
     return {
         valid: true,
         code: rawCode,

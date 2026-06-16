@@ -3,6 +3,7 @@ import { httpsCallable, getFunctions } from 'firebase/functions';
 import { normalizeAffiliateCode } from '../utils/affiliateCalculations';
 import { getProductImage } from '../utils/productImages';
 import { STORE } from '../config/store';
+import { useShopFeatures } from './ShopFeaturesContext';
 
 // Shipping cost constants
 export const SHIPPING_COSTS = {
@@ -28,6 +29,11 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({ children }) => {
+  // Affiliate add-on gate (default-ON). When the active shop has affiliate
+  // disabled, NO checkout discount is applied — this MUST match the server gate
+  // in createPaymentIntent.computeOrderTotalsSek or the displayed total and the
+  // Stripe charge diverge (total-parity). See P4.5b plan.
+  const { isEnabled: isAddonEnabled } = useShopFeatures();
   const [cart, setCart] = useState(() => {
     const savedCart = localStorage.getItem('b8shield_cart');
     const initialCart = savedCart ? JSON.parse(savedCart) : { 
@@ -326,6 +332,19 @@ export const CartProvider = ({ children }) => {
   };
 
   const applyDiscountCode = async (code, options = {}) => {
+    // Affiliate add-on OFF for this shop → never apply a discount. Clear any
+    // stale discount fields so the client total is full price, matching the
+    // server (which also ignores the code when affiliate is off). This is the
+    // single client chokepoint — manual entry + both auto-apply paths route here.
+    if (!isAddonEnabled('affiliate')) {
+      setCart(prev => (
+        prev.discountCode || prev.discountAmount
+          ? { ...prev, discountCode: null, discountAmount: 0, discountPercentage: 0, affiliateClickId: null, discountSource: null }
+          : prev
+      ));
+      return { success: false, message: 'Rabattkoder är inte tillgängliga.' };
+    }
+
     const normalizedCode = normalizeAffiliateCode(code);
     if (!normalizedCode) {
       return { success: false, message: 'Ange en kod.' };

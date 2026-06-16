@@ -15,6 +15,7 @@ const app_urls_1 = require("../config/app-urls");
 const cors_handler_1 = require("../protection/cors/cors-handler");
 const database_1 = require("../config/database");
 const tenancy_1 = require("../config/tenancy");
+const shopFeatures_1 = require("../config/shopFeatures");
 /**
  * Server-side price computation. NEVER trust client-supplied amounts:
  * prices come from the products collection, the discount from the affiliate
@@ -71,10 +72,14 @@ async function computeOrderTotalsSek(cartItems, shippingCountry, discountCode, s
         serverPrices[lineKey] = price;
     }
     const subtotal = loaded.reduce((sum, { price, quantity }) => sum + price * quantity, 0);
-    // Discount from the affiliate doc (not from the client)
+    // Discount from the affiliate doc (not from the client). GATED on the
+    // affiliate add-on: when the shop has affiliate disabled, the code is ignored
+    // and no discount applies — this MUST match the client gate in
+    // CartContext.applyDiscountCode, or the charge diverges from the displayed
+    // total (total-parity). Default-ON (existing shops unaffected).
     let discountAmount = 0;
     let discountPercentage = 0;
-    if (discountCode) {
+    if (discountCode && await (0, shopFeatures_1.isShopFeatureEnabled)(shopId, 'affiliate')) {
         const affSnap = await database_1.db.collection('affiliates')
             .where('shopId', '==', shopId)
             .where('affiliateCode', '==', discountCode.toUpperCase())

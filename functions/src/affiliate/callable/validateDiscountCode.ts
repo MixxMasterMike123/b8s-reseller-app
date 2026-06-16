@@ -7,6 +7,7 @@
 
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { db } from '../../config/database';
+import { isShopFeatureEnabled } from '../../config/shopFeatures';
 
 interface ValidateDiscountCodeRequest {
   code: string;
@@ -37,6 +38,13 @@ export const validateDiscountCode = onCall<ValidateDiscountCodeRequest>(
     }
 
     const affiliate = snapshot.docs[0].data();
+
+    // Defense-in-depth: if the affiliate's shop has the affiliate add-on
+    // disabled, the code is not valid here either (matches the createPaymentIntent
+    // gate + the client). Default-ON, so existing shops are unaffected.
+    if (!(await isShopFeatureEnabled(affiliate.shopId, 'affiliate'))) {
+      return { valid: false };
+    }
 
     return {
       valid: true,
