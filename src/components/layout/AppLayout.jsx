@@ -227,7 +227,7 @@ const AppLayout = ({ children }) => {
 
         {/* right: tools + store/avatar + logout */}
         <div className="flex items-center gap-1">
-          {isAdmin && (
+          {isAdmin && isAddonEnabled('dining') && (
             <div className="hidden text-white/80 sm:block">
               <MentionNotifications />
             </div>

@@ -23,6 +23,7 @@ import { useShopId } from './ShopContext';
 import { withShopId } from '../config/withShopId';
 import toast from 'react-hot-toast';
 import { onOrderCompleted } from '../wagons/dining-wagon/utils/customerStatusAutomation';
+import { useShopFeatures } from './ShopFeaturesContext';
 
 // Create context
 const OrderContext = createContext();
@@ -114,6 +115,10 @@ const DEMO_ORDERS = [
 export const OrderProvider = ({ children }) => {
   const { currentUser, isAdmin } = useAuth();
   const shopId = useShopId();
+  // Dining add-on gate (default-ON). OrderProvider sits inside
+  // ShopFeaturesProvider (App.jsx), so the hook is available; referenced in the
+  // updateOrderStatus callback below for the dining automation.
+  const { isEnabled: isAddonEnabled } = useShopFeatures();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [demoOrders, setDemoOrders] = useState(DEMO_ORDERS);
@@ -584,8 +589,9 @@ export const OrderProvider = ({ children }) => {
           // Don't fail the status update if email fails
         }
         
-        // ZEN Automation: Trigger customer status update on order completion (B2B only)
-        if (['delivered', 'shipped', 'completed'].includes(newStatus) && orderData.userId) {
+        // ZEN Automation: Trigger customer status update on order completion (B2B
+        // only) — only when the dining add-on is enabled (gate-bypass closed).
+        if (isAddonEnabled('dining') && ['delivered', 'shipped', 'completed'].includes(newStatus) && orderData.userId) {
           try {
             console.log('📦 Order completed, running automation...');
             await onOrderCompleted({ 
@@ -612,7 +618,7 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [currentUser, isAdmin, demoOrders]);
+  }, [currentUser, isAdmin, demoOrders, isAddonEnabled]);
 
   // Get order statistics (admin only) - memoized with useCallback
   const getOrderStats = useCallback(async () => {

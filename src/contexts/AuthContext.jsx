@@ -21,6 +21,7 @@ import { httpsCallable } from 'firebase/functions';
 import { auth, db, isDemoMode, functions } from '../firebase/config';
 import toast from 'react-hot-toast';
 import { onNewB2BCustomer } from '../wagons/dining-wagon/utils/customerStatusAutomation';
+import { useShopFeatures } from './ShopFeaturesContext';
 import { addAdminUID, removeAdminUID } from '../utils/adminUIDManager';
 import { clearImpersonation } from '../config/impersonation';
 import { setActiveShopId } from '../config/activeShop';
@@ -82,6 +83,10 @@ const DEMO_USERS = [
 ];
 
 export function AuthProvider({ children }) {
+  // Dining add-on gate (default-ON). AuthProvider sits inside ShopFeaturesProvider
+  // (App.jsx tree), so the hook is available; captured here for use in
+  // createUserProfile's dining automation call below.
+  const { isEnabled: isAddonEnabled } = useShopFeatures();
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -563,11 +568,14 @@ export function AuthProvider({ children }) {
         // Create user document in Firestore
         await setDoc(doc(db, 'users', newUserId), userProfile);
 
-        // ZEN Automation: Trigger automatic status detection
-        try {
-          await onNewB2BCustomer(newUserId);
-        } catch (automationError) {
-          console.error('Automation error (non-critical):', automationError);
+        // ZEN Automation: Trigger automatic status detection — only when the
+        // dining add-on is enabled for this shop (gate-bypass closed). Default-ON.
+        if (isAddonEnabled('dining')) {
+          try {
+            await onNewB2BCustomer(newUserId);
+          } catch (automationError) {
+            console.error('Automation error (non-critical):', automationError);
+          }
         }
 
         return { uid: newUserId, email };

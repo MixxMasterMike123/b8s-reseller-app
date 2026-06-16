@@ -15,6 +15,7 @@ import {
 import { useContentTranslation } from '../hooks/useContentTranslation';
 import { useTranslation } from '../contexts/TranslationContext';
 import { useShopId } from '../contexts/ShopContext';
+import { useShopFeatures } from '../contexts/ShopFeaturesContext';
 import { useCampaigns } from '../wagons/campaign-wagon/hooks/useCampaigns';
 import { generateAffiliateLink, getCountryAwareUrl } from '../utils/productUrls';
 import { CAMPAIGN_STATUS } from '../wagons/campaign-wagon/utils/campaignUtils';
@@ -26,7 +27,10 @@ import QRCode from 'qrcode';
 const AffiliatePortalCampaigns = ({ affiliateData }) => {
   const { t } = useTranslation();
   const shopId = useShopId();
+  const { isEnabled: isAddonEnabled } = useShopFeatures();
   const { getContentValue } = useContentTranslation();
+  // useCampaigns is a hook → always called (can't be conditional); when the
+  // campaigns add-on is off we just don't render its output (gated below).
   const { campaigns, loading, error } = useCampaigns();
   
   const [availableCampaigns, setAvailableCampaigns] = useState([]);
@@ -214,6 +218,12 @@ const AffiliatePortalCampaigns = ({ affiliateData }) => {
     });
     setGeneratedLinks(links);
   }, [availableCampaigns, affiliateData]);
+
+  // Campaigns add-on off for this shop → render nothing (all hooks above have
+  // already run, so this conditional return is hooks-safe). Default-ON.
+  if (!isAddonEnabled('campaigns')) {
+    return null;
+  }
 
   if (loading) {
     return (
