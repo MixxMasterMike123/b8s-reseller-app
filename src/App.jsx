@@ -9,6 +9,8 @@ import { LanguageCurrencyProvider } from './contexts/LanguageCurrencyContext';
 import { StoreSettingsProvider } from './contexts/StoreSettingsContext';
 import { ShopProvider } from './contexts/ShopContext';
 import { ShopFeaturesProvider } from './contexts/ShopFeaturesContext';
+import AddonGate from './components/addons/AddonGate';
+import { WAGON_FEATURE_KEY } from './config/addons';
 import { functions } from './firebase/config';
 import { httpsCallable } from 'firebase/functions';
 
@@ -414,31 +416,39 @@ function App() {
                 </AdminRoute>
               } /> */}
 
-              {/* �� WAGON SYSTEM: Auto-generated wagon routes */}
-              {wagonRoutes.map(({ path, component: Component, adminOnly, private: isPrivate, wagonId }) => (
-                <Route 
-                  key={`${wagonId}-${path}`} 
-                  path={path}
-                  element={
-                    <Suspense fallback={
-                      <div className="flex items-center justify-center py-12">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
-                        <span className="ml-3 text-lg text-gray-600">Laddar wagon...</span>
-                      </div>
-                    }>
-                      {isPrivate ? (
-                        adminOnly ? (
-                          <AdminRoute><Component /></AdminRoute>
-                        ) : (
-                          <PrivateRoute><Component /></PrivateRoute>
-                        )
+              {/* 🚂 WAGON SYSTEM: Auto-generated wagon (add-on) routes.
+                  Each is wrapped in <AddonGate> so a disabled add-on's route
+                  redirects to /admin even via deep link (defense in depth on
+                  top of the hidden menu item). Gated only when the wagon id maps
+                  to a feature key; default-ON keeps existing shops working. */}
+              {wagonRoutes.map(({ path, component: Component, adminOnly, private: isPrivate, wagonId }) => {
+                const featureKey = WAGON_FEATURE_KEY[wagonId];
+                const inner = (
+                  <Suspense fallback={
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+                      <span className="ml-3 text-lg text-gray-600">Laddar tillägg...</span>
+                    </div>
+                  }>
+                    {isPrivate ? (
+                      adminOnly ? (
+                        <AdminRoute><Component /></AdminRoute>
                       ) : (
-                        <Component />
-                      )}
-                    </Suspense>
-                  }
-                />
-              ))}
+                        <PrivateRoute><Component /></PrivateRoute>
+                      )
+                    ) : (
+                      <Component />
+                    )}
+                  </Suspense>
+                );
+                return (
+                  <Route
+                    key={`${wagonId}-${path}`}
+                    path={path}
+                    element={featureKey ? <AddonGate feature={featureKey}>{inner}</AddonGate> : inner}
+                  />
+                );
+              })}
               
               {/* Catch-all redirect */}
               <Route path="*" element={<Navigate to="/" replace />} />

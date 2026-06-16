@@ -6,6 +6,8 @@ import LanguageSwitcher from '../LanguageSwitcher';
 import DarkModeToggle from '../DarkModeToggle';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
+import { useShopFeatures } from '../../contexts/ShopFeaturesContext';
+import { WAGON_FEATURE_KEY } from '../../config/addons';
 import ImpersonationBanner from '../auth/ImpersonationBanner';
 
 // 🚂 WAGON SYSTEM: Import wagon registry for menu items
@@ -32,6 +34,7 @@ const AppLayout = ({ children }) => {
   const { currentUser, userProfile, logout } = useAuth();
   const { t } = useTranslation();
   const store = useStoreSettings();
+  const { isEnabled: isAddonEnabled } = useShopFeatures();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -41,33 +44,33 @@ const AppLayout = ({ children }) => {
 
   const isAdmin = userProfile?.role === 'admin';
 
-  // 🚂 WAGON SYSTEM: Load admin wagon menu items
+  // Add-on (wagon) admin menu items, gated PER SHOP by the platform-controlled
+  // features map (shops/{id}.features). Previously gated per-user via
+  // userWagonSettings; now a wagon shows iff its manifest is enabled (dev kill)
+  // AND the active shop has its add-on feature on (default-ON → existing shops
+  // keep everything until an operator disables it from the platform console).
   useEffect(() => {
     const loadWagonMenuItems = async () => {
       try {
-        // Load admin menu items
-        if (currentUser) {
-          const adminMenuItems = await wagonRegistry.getAdminMenuItems(currentUser.uid);
-          setWagonMenuItems(adminMenuItems);
-          console.log(`🚂 AppLayout: Loaded ${adminMenuItems.length} admin wagon menu items for user ${currentUser.uid}`);
-        } else {
-          // Fallback to sync version for non-authenticated users
-          const adminMenuItems = wagonRegistry.getAdminMenuItemsSync();
-          setWagonMenuItems(adminMenuItems);
-          console.log(`🚂 AppLayout: Loaded ${adminMenuItems.length} admin wagon menu items (no user permissions)`);
-        }
+        await wagonRegistry.ensureWagonsDiscovered();
+        const allItems = wagonRegistry.getAdminMenuItemsSync();
+        const gated = allItems.filter((item) => {
+          const featureKey = WAGON_FEATURE_KEY[item.wagonId];
+          // Unknown wagon id (no mapping) → show it (don't hide an add-on we
+          // forgot to map); known id → gate on the per-shop feature flag.
+          return featureKey ? isAddonEnabled(featureKey) : true;
+        });
+        setWagonMenuItems(gated);
       } catch (error) {
-        console.error('Error loading wagon menu items:', error);
-        // Fallback to sync version on error
-        const adminMenuItems = wagonRegistry.getAdminMenuItemsSync();
-        setWagonMenuItems(adminMenuItems);
+        console.error('Error loading add-on menu items:', error);
+        setWagonMenuItems([]);
       }
     };
 
     // Small delay to ensure wagons are discovered first
     const timer = setTimeout(loadWagonMenuItems, 100);
     return () => clearTimeout(timer);
-  }, [currentUser]);
+  }, [isAddonEnabled]);
   
   const handleLogout = async () => {
     try {
@@ -259,7 +262,7 @@ const AppLayout = ({ children }) => {
             <>
               <div className="mt-3 flex items-center gap-1 px-2 pb-0.5">
                 <CpuChipIcon className="h-3.5 w-3.5 text-admin-text-faint" />
-                <span className="text-[12px] font-medium text-admin-text-muted">{t('nav.ai_wagons', 'AI Vagnar')}</span>
+                <span className="text-[12px] font-medium text-admin-text-muted">{t('nav.addons', 'Tillägg')}</span>
               </div>
               {wagonMenuItems.map((item) => {
                 const active = isActive(item.path);
@@ -317,7 +320,7 @@ const AppLayout = ({ children }) => {
                   <>
                     <div className="mt-3 flex items-center gap-1 px-2 pb-0.5">
                       <CpuChipIcon className="h-3.5 w-3.5 text-admin-text-faint" />
-                      <span className="text-[12px] font-medium text-admin-text-muted">{t('nav.ai_wagons', 'AI Vagnar')}</span>
+                      <span className="text-[12px] font-medium text-admin-text-muted">{t('nav.addons', 'Tillägg')}</span>
                     </div>
                     {wagonMenuItems.map((item) => {
                       const active = isActive(item.path);
