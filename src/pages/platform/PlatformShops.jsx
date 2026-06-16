@@ -201,7 +201,7 @@ const PlatformShops = () => {
         )}
 
         <p className="mt-6 text-xs text-gray-600">
-          Nästa steg: säker "Öppna Shop Admin" (impersonering), tillägg/add-ons, fakturering.
+          Nästa steg: fakturering.
         </p>
       </div>
 

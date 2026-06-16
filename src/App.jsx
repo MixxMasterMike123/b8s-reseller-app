@@ -27,6 +27,7 @@ import AdminRoute from './components/auth/AdminRoute';
 import PlatformRoute from './components/auth/PlatformRoute';
 import ImpersonationIntake from './components/auth/ImpersonationIntake';
 import PlatformShops from './pages/platform/PlatformShops';
+import PlatformAddons from './pages/platform/PlatformAddons';
 import LoginPage from './pages/LoginPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -202,6 +203,9 @@ function App() {
               } />
               <Route path="/shops" element={
                 <PlatformRoute><PlatformShops /></PlatformRoute>
+              } />
+              <Route path="/addons" element={
+                <PlatformRoute><PlatformAddons /></PlatformRoute>
               } />
               <Route path="*" element={<Navigate to="/" replace />} />
             </>
