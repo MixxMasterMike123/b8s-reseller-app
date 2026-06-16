@@ -25,7 +25,6 @@ import {
   CubeIcon,
   MegaphoneIcon,
   SparklesIcon,
-  CpuChipIcon,
   DocumentTextIcon,
   BuildingStorefrontIcon
 } from '@heroicons/react/24/outline';
@@ -159,12 +158,9 @@ const AppLayout = ({ children }) => {
     //   icon: LanguageIcon,
     //   description: t('nav.admin_translations_desc', 'Hantera språk och översättningar'),
     // },
-    {
-      name: t('nav.admin_affiliates', 'Affiliates'),
-      path: '/admin/affiliates',
-      icon: UsersIcon,
-      description: t('nav.admin_affiliates_desc', 'Hantera affiliate-partners'),
-    },
+    // NOTE: Affiliates moved OUT of the main menu — it's now an add-on, rendered
+    // below the divider and gated on the `affiliate` feature flag (see the
+    // add-on section in the nav). Settings stays last in the main menu.
     {
       name: t('nav.admin_settings', 'Inställningar'),
       path: '/admin/settings',
@@ -172,6 +168,20 @@ const AppLayout = ({ children }) => {
       description: t('nav.admin_settings_desc', 'Systeminställningar'),
     }
   ];
+
+  // The native (non-wagon) "Affiliate" add-on link. Gated on the affiliate
+  // feature flag at render time (menu gating only — storefront/checkout/function
+  // enforcement is deferred to P4.5b). Rendered in the add-on section below the
+  // divider, alongside the wagon add-on items.
+  const affiliateEnabled = isAddonEnabled('affiliate');
+  const affiliateNavItem = {
+    name: t('nav.admin_affiliates', 'Affiliate'),
+    path: '/admin/affiliates',
+    icon: UsersIcon,
+    description: t('nav.admin_affiliates_desc', 'Hantera affiliate-partners'),
+  };
+  // Whether the add-on section (divider + items) has anything to show.
+  const hasAddonItems = affiliateEnabled || wagonMenuItems.length > 0;
   
   const navItemClass = (active) =>
     `group flex h-8 items-center gap-2 rounded-[var(--radius-admin-el)] pl-2 pr-1.5 text-[13px] transition-colors ${
@@ -258,12 +268,20 @@ const AppLayout = ({ children }) => {
             );
           })}
 
-          {wagonMenuItems.length > 0 && (
+          {hasAddonItems && (
             <>
-              <div className="mt-3 flex items-center gap-1 px-2 pb-0.5">
-                <CpuChipIcon className="h-3.5 w-3.5 text-admin-text-faint" />
-                <span className="text-[12px] font-medium text-admin-text-muted">{t('nav.addons', 'Tillägg')}</span>
-              </div>
+              {/* Thin divider separating the add-on items from the main menu. */}
+              <div className="my-2 border-t border-admin-border-soft" />
+              {affiliateEnabled && (
+                <Link
+                  to={affiliateNavItem.path}
+                  title={affiliateNavItem.description}
+                  className={navItemClass(isActive(affiliateNavItem.path))}
+                >
+                  <affiliateNavItem.icon className={navIconClass(isActive(affiliateNavItem.path))} aria-hidden="true" />
+                  <span className="flex-1">{affiliateNavItem.name}</span>
+                </Link>
+              )}
               {wagonMenuItems.map((item) => {
                 const active = isActive(item.path);
                 return (
@@ -316,12 +334,22 @@ const AppLayout = ({ children }) => {
                     </Link>
                   );
                 })}
-                {wagonMenuItems.length > 0 && (
+                {hasAddonItems && (
                   <>
-                    <div className="mt-3 flex items-center gap-1 px-2 pb-0.5">
-                      <CpuChipIcon className="h-3.5 w-3.5 text-admin-text-faint" />
-                      <span className="text-[12px] font-medium text-admin-text-muted">{t('nav.addons', 'Tillägg')}</span>
-                    </div>
+                    {/* Thin divider separating the add-on items from the main menu. */}
+                    <div className="my-2 border-t border-admin-border-soft" />
+                    {affiliateEnabled && (
+                      <Link
+                        to={affiliateNavItem.path}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`group flex h-10 items-center gap-2 rounded-[var(--radius-admin-el)] pl-2 pr-1.5 text-[13px] ${
+                          isActive(affiliateNavItem.path) ? 'bg-black/[0.08] font-semibold text-admin-text' : 'font-medium text-admin-text hover:bg-black/[0.06]'
+                        }`}
+                      >
+                        <affiliateNavItem.icon className={navIconClass(isActive(affiliateNavItem.path))} aria-hidden="true" />
+                        <span className="flex-1">{affiliateNavItem.name}</span>
+                      </Link>
+                    )}
                     {wagonMenuItems.map((item) => {
                       const active = isActive(item.path);
                       return (

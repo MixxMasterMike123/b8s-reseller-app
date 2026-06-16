@@ -367,39 +367,43 @@ function App() {
                 </AdminRoute>
               } />
 
-                      <Route path="/admin/affiliates" element={
-          <AdminRoute>
-            <AdminAffiliates />
-          </AdminRoute>
-        } />
-        <Route path="/admin/affiliates/create" element={
-          <AdminRoute>
-            <AdminAffiliateCreate />
-          </AdminRoute>
-        } />
+              {/* Affiliate is an add-on: its ADMIN routes are gated on the
+                  `affiliate` feature flag (menu + route now). Storefront/checkout/
+                  function enforcement is the P4.5b follow-up. Default-ON keeps
+                  existing shops working. */}
+              <Route path="/admin/affiliates" element={
+                <AddonGate feature="affiliate"><AdminRoute>
+                  <AdminAffiliates />
+                </AdminRoute></AddonGate>
+              } />
+              <Route path="/admin/affiliates/create" element={
+                <AddonGate feature="affiliate"><AdminRoute>
+                  <AdminAffiliateCreate />
+                </AdminRoute></AddonGate>
+              } />
 
               <Route path="/admin/affiliates/analytics" element={
-                <AdminRoute>
+                <AddonGate feature="affiliate"><AdminRoute>
                   <AdminAffiliateAnalytics />
-                </AdminRoute>
+                </AdminRoute></AddonGate>
               } />
 
               <Route path="/admin/affiliates/application/:id" element={
-                <AdminRoute>
+                <AddonGate feature="affiliate"><AdminRoute>
                   <AdminAffiliateEdit />
-                </AdminRoute>
+                </AdminRoute></AddonGate>
               } />
 
               <Route path="/admin/affiliates/manage/:id" element={
-                <AdminRoute>
+                <AddonGate feature="affiliate"><AdminRoute>
                   <AdminAffiliateEdit />
-                </AdminRoute>
+                </AdminRoute></AddonGate>
               } />
 
               <Route path="/admin/affiliates/payout/:affiliateId" element={
-                <AdminRoute>
+                <AddonGate feature="affiliate"><AdminRoute>
                   <AdminAffiliatePayout />
-                </AdminRoute>
+                </AdminRoute></AddonGate>
               } />
 
               <Route path="/admin/settings" element={
