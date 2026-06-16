@@ -97,10 +97,10 @@ const FileManager = ({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-gray-700">
+        <h4 className="text-[13px] font-medium text-admin-text">
           Bilagor ({files.length})
         </h4>
-        <div className="text-xs text-gray-500">
+        <div className="text-[12px] text-admin-text-muted">
           Klicka på ikonerna för att hantera filer
         </div>
       </div>
@@ -113,10 +113,10 @@ const FileManager = ({
           return (
             <div
               key={file.id}
-              className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
-                file.isPublic 
-                  ? 'bg-white border-gray-200' 
-                  : 'bg-gray-50 border-gray-200'
+              className={`flex items-center justify-between p-3 rounded-[var(--radius-admin-el)] border border-admin-border transition-colors ${
+                file.isPublic
+                  ? 'bg-admin-surface'
+                  : 'bg-admin-surface-2'
               }`}
             >
               {/* File Info */}
@@ -131,17 +131,17 @@ const FileManager = ({
                       onChange={(e) => setEditName(e.target.value)}
                       onKeyDown={handleKeyPress}
                       onBlur={handleEditSave}
-                      className="w-full text-sm border border-gray-300 rounded-sm px-2 py-1 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                      className="w-full text-[13px] border border-admin-border rounded-[var(--radius-admin-el)] px-2 py-1 text-admin-text focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-admin-primary)]"
                       autoFocus
                     />
                   ) : (
                     <div>
-                      <p className={`text-sm font-medium truncate ${
-                        file.isPublic ? 'text-gray-900' : 'text-gray-500'
+                      <p className={`text-[13px] font-medium truncate ${
+                        file.isPublic ? 'text-admin-text' : 'text-admin-text-muted'
                       }`}>
                         {file.displayName || file.name}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-[12px] text-admin-text-muted">
                         {formatFileSize(file.size)} • {fileTypeInfo.label} • {formatDate(file.uploadedAt)}
                         {file.downloads > 0 && ` • ${file.downloads} nedladdningar`}
                       </p>
@@ -157,9 +157,9 @@ const FileManager = ({
                   href={file.url}
                   download={file.name}
                   className={`p-1 rounded transition-colors ${
-                    file.isPublic 
-                      ? 'text-blue-600 hover:bg-blue-50' 
-                      : 'text-gray-400 cursor-not-allowed'
+                    file.isPublic
+                      ? 'text-admin-text hover:bg-admin-surface-2'
+                      : 'text-admin-text-faint cursor-not-allowed'
                   }`}
                   title="Ladda ner"
                 >
@@ -170,7 +170,7 @@ const FileManager = ({
                 <button
                   onClick={() => handleEditStart(file)}
                   disabled={disabled}
-                  className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-sm transition-colors disabled:opacity-50"
+                  className="p-1 text-admin-text-faint hover:text-admin-text hover:bg-admin-surface-2 rounded-[var(--radius-admin-el)] transition-colors disabled:opacity-50"
                   title="Redigera namn"
                 >
                   <PencilIcon className="h-4 w-4" />
@@ -181,9 +181,9 @@ const FileManager = ({
                   onClick={() => onToggleVisibility(file.id)}
                   disabled={disabled}
                   className={`p-1 rounded transition-colors disabled:opacity-50 ${
-                    file.isPublic 
-                      ? 'text-green-600 hover:bg-green-50' 
-                      : 'text-gray-400 hover:bg-gray-100'
+                    file.isPublic
+                      ? 'text-admin-success-dot hover:bg-admin-success-bg'
+                      : 'text-admin-text-faint hover:bg-admin-surface-2'
                   }`}
                   title={file.isPublic ? 'Göm från besökare' : 'Visa för besökare'}
                 >
@@ -198,7 +198,7 @@ const FileManager = ({
                 <button
                   onClick={() => onDeleteFile(file.id)}
                   disabled={disabled}
-                  className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-sm transition-colors disabled:opacity-50"
+                  className="p-1 text-admin-text-faint hover:text-admin-critical-dot hover:bg-admin-critical-bg rounded-[var(--radius-admin-el)] transition-colors disabled:opacity-50"
                   title="Ta bort fil"
                 >
                   <TrashIcon className="h-4 w-4" />
@@ -210,9 +210,9 @@ const FileManager = ({
       </div>
 
       {/* Legend */}
-      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-        <h5 className="text-xs font-medium text-gray-700 mb-2">Färgkodning:</h5>
-        <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+      <div className="mt-4 p-3 bg-admin-surface-2 rounded-[var(--radius-admin-el)]">
+        <h5 className="text-[12px] font-medium text-admin-text mb-2">Färgkodning:</h5>
+        <div className="grid grid-cols-2 gap-2 text-[12px] text-admin-text-muted">
           <div className="flex items-center space-x-2">
             <DocumentIcon className="h-3 w-3 text-red-500" />
             <span>PDF</span>

@@ -33,18 +33,18 @@ const PickupLocationsEditor = ({ value, onChange }) => {
   };
 
   const inputCls =
-    'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500';
+    'w-full rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-3 py-1.5 text-[13px] text-admin-text placeholder:text-admin-text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-admin-primary)]';
 
   return (
     <div className="md:col-span-2">
       <div className="flex items-center justify-between mb-2">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label className="block text-[13px] font-medium text-admin-text">
           Upphämtningsplatser (Click &amp; Collect)
         </label>
         <button
           type="button"
           onClick={add}
-          className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800"
+          className="inline-flex items-center gap-1 text-[13px] font-medium text-admin-text hover:opacity-70"
         >
           <PlusIcon className="h-4 w-4" />
           Lägg till plats
@@ -52,7 +52,7 @@ const PickupLocationsEditor = ({ value, onChange }) => {
       </div>
 
       {locations.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-[13px] text-admin-text-muted">
           Inga upphämtningsplatser. Lägg till en för att erbjuda upphämtning i kassan (annars visas bara hemleverans).
         </p>
       ) : (
@@ -60,7 +60,7 @@ const PickupLocationsEditor = ({ value, onChange }) => {
           {locations.map((loc, idx) => (
             <div
               key={loc.id || idx}
-              className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-800/50"
+              className="rounded-[var(--radius-admin-el)] border border-admin-border p-3 bg-admin-surface-2"
             >
               <div className="flex items-start gap-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
@@ -87,7 +87,7 @@ const PickupLocationsEditor = ({ value, onChange }) => {
                   type="button"
                   onClick={() => remove(idx)}
                   title="Ta bort plats"
-                  className="shrink-0 p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md"
+                  className="shrink-0 p-2 text-admin-critical-dot hover:bg-admin-critical-bg rounded-[var(--radius-admin-el)]"
                 >
                   <TrashIcon className="h-5 w-5" />
                 </button>
@@ -96,7 +96,7 @@ const PickupLocationsEditor = ({ value, onChange }) => {
           ))}
         </div>
       )}
-      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+      <p className="mt-1 text-[12px] text-admin-text-muted">
         Kunden väljer hemleverans eller en upphämtningsplats i kassan. Upphämtning har ingen fraktkostnad.
       </p>
     </div>

@@ -77,10 +77,10 @@ const FileUpload = ({ onFileSelect, onFileRemove, selectedFiles = [], disabled =
     <div className="space-y-4">
       {/* File Upload Area */}
       <div
-        className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+        className={`relative border-2 border-dashed rounded-[var(--radius-admin)] p-6 text-center transition-colors ${
           isDragOver
-            ? 'border-blue-400 bg-blue-50'
-            : 'border-gray-300 hover:border-gray-400'
+            ? 'border-[var(--color-admin-primary)] bg-admin-surface-2'
+            : 'border-admin-border hover:border-admin-text-faint'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -95,15 +95,15 @@ const FileUpload = ({ onFileSelect, onFileRemove, selectedFiles = [], disabled =
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
         
-        <CloudArrowUpIcon className="mx-auto h-12 w-12 text-gray-400" />
+        <CloudArrowUpIcon className="mx-auto h-12 w-12 text-admin-text-faint" />
         <div className="mt-4">
-          <p className="text-sm text-gray-600">
-            <span className="font-medium text-blue-600 hover:text-blue-500">
+          <p className="text-[13px] text-admin-text-muted">
+            <span className="font-medium text-admin-text hover:opacity-70">
               Klicka för att ladda upp
             </span>{' '}
             eller dra och släpp
           </p>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-[12px] text-admin-text-muted mt-1">
             PDF, DOC, DOCX, XLS, XLSX, TXT, ZIP (max {formatFileSize(MAX_FILE_SIZE)})
           </p>
         </div>
@@ -133,7 +133,7 @@ const FileUpload = ({ onFileSelect, onFileRemove, selectedFiles = [], disabled =
       {/* Selected Files */}
       {selectedFiles.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-medium text-gray-700">
+          <h4 className="text-[13px] font-medium text-admin-text">
             Valda filer ({selectedFiles.length})
           </h4>
           <div className="space-y-2">
@@ -142,15 +142,15 @@ const FileUpload = ({ onFileSelect, onFileRemove, selectedFiles = [], disabled =
               return (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border"
+                  className="flex items-center justify-between p-3 bg-admin-surface-2 rounded-[var(--radius-admin-el)] border border-admin-border"
                 >
                   <div className="flex items-center space-x-3">
                     <DocumentIcon className={`h-5 w-5 ${fileTypeInfo.color}`} />
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-[13px] font-medium text-admin-text">
                         {file.name}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-[12px] text-admin-text-muted">
                         {formatFileSize(file.size)} • {fileTypeInfo.label}
                       </p>
                     </div>
@@ -158,7 +158,7 @@ const FileUpload = ({ onFileSelect, onFileRemove, selectedFiles = [], disabled =
                   <button
                     type="button"
                     onClick={() => removeFile(index)}
-                    className="text-gray-400 hover:text-red-500 transition-colors"
+                    className="text-admin-text-faint hover:text-admin-critical-dot transition-colors"
                     disabled={disabled}
                   >
                     <XMarkIcon className="h-4 w-4" />
