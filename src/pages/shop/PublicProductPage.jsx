@@ -14,6 +14,7 @@ import { generateProductSchema } from '../../utils/productFeed';
 import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useShopId } from '../../contexts/ShopContext';
+import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
@@ -67,6 +68,7 @@ const PublicProductPage = () => {
   const { t } = useTranslation();
   const shopId = useShopId();
   const { getContentValue } = useContentTranslation();
+  const store = useStoreSettings();
   
   const [product, setProduct] = useState(null);
   // Product model v2: variants are EMBEDDED on the product ({sku,label,price,image}).
@@ -210,6 +212,46 @@ const PublicProductPage = () => {
 
   // The price to display/charge: the selected variant's, else the product's.
   const currentPrice = selectedVariant?.price ?? (product?.b2cPrice || product?.basePrice);
+
+  // Delivery & Pickup v2: what delivery the customer can actually use for THIS
+  // product, cross-checked against the shop's configuration.
+  //  • product.delivery flags (default-ON: a product without the field is both).
+  //  • shopOffersPickup: the shop must actually have pickup locations, else a
+  //    "pickup available" hint would be a lie (admin↔shop cross-check).
+  // The same product flags drive the checkout method restriction (Slice 4) and
+  // the server enforcement, so this hint matches the real options at checkout.
+  const productAllowsShipping = product?.delivery?.shipping !== false;
+  const productAllowsPickup = product?.delivery?.pickup !== false;
+  const shopOffersPickup = Array.isArray(store?.pickupLocations) && store.pickupLocations.length > 0;
+  const canShip = productAllowsShipping;
+  const canPickup = productAllowsPickup && shopOffersPickup;
+
+  // A single truthful delivery line, reused by both layouts. Renders nothing
+  // when neither mode is available (defensive — Slice 4 blocks such carts).
+  const DeliveryInfo = () => {
+    if (canShip && canPickup) {
+      return (
+        <p className="text-sm text-ink-muted">
+          {t('product_delivery_both', 'Hemleverans eller upphämtning (Click & Collect) i kassan.')}
+        </p>
+      );
+    }
+    if (canPickup && !canShip) {
+      return (
+        <p className="text-sm text-ink-muted">
+          {t('product_delivery_pickup_only', 'Endast upphämtning (Click & Collect) i kassan.')}
+        </p>
+      );
+    }
+    if (canShip && !canPickup) {
+      return (
+        <p className="text-sm text-ink-muted">
+          {t('product_delivery_shipping_only', 'Endast hemleverans.')}
+        </p>
+      );
+    }
+    return null;
+  };
 
   if (loading) {
     return (
@@ -404,11 +446,12 @@ const PublicProductPage = () => {
               </button>
             </div>
 
-            {/* Additional product info */}
-            <div className="border-t pt-6">
-              <p className="text-sm text-ink-muted mb-4">
+            {/* Additional product info — Klarna + product-aware delivery line */}
+            <div className="border-t pt-6 space-y-2">
+              <p className="text-sm text-ink-muted">
                 <span className="font-medium">Klarna.</span> {t('klarna_available_at_checkout', 'är tillgängligt i kassan.')}
               </p>
+              <DeliveryInfo />
             </div>
           </div>
         </div>
@@ -571,14 +614,14 @@ const PublicProductPage = () => {
                   compact={true}
                 />
 
-                {/* Payment Options */}
-                <div className="border-t pt-6">
-                  <p className="text-sm text-ink-muted mb-4">
+                {/* Payment + delivery options. The delivery line is product-aware
+                    (per-product delivery modes + whether the shop offers pickup),
+                    replacing the old unconditional "Click & Collect" claim. */}
+                <div className="border-t pt-6 space-y-2">
+                  <p className="text-sm text-ink-muted">
                     <span className="font-medium">Klarna.</span> {t('klarna_available_at_checkout', 'är tillgängligt i kassan.')}
                   </p>
-                  <p className="text-sm text-ink-muted">
-                    {t('click_and_collect_available', 'Tillgängligt för Click and Collect i kassan')}
-                  </p>
+                  <DeliveryInfo />
                 </div>
 
                 {/* Product Description */}
