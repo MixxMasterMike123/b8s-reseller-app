@@ -81,6 +81,11 @@ const emptyForm = () => ({
     eu: { cost: 0, service: 'EU' },
     worldwide: { cost: 0, service: 'International' },
   },
+  // Per-product delivery modes (Delivery & Pickup v2). Both default ON, so a
+  // product without this field behaves exactly as before: shippable AND
+  // pickup-eligible. At least one must stay on (a product no one can receive
+  // makes no sense) — enforced at save time.
+  delivery: { shipping: true, pickup: true },
 });
 
 // Build the form state from an existing product doc (read-compatible).
@@ -122,6 +127,13 @@ const formFromProduct = (p) => ({
     nordic: { cost: p.shipping?.nordic?.cost || 0, service: p.shipping?.nordic?.service || 'Nordic' },
     eu: { cost: p.shipping?.eu?.cost || 0, service: p.shipping?.eu?.service || 'EU' },
     worldwide: { cost: p.shipping?.worldwide?.cost || 0, service: p.shipping?.worldwide?.service || 'International' },
+  },
+  // Default-ON read: a product without `delivery` (every product before this
+  // feature) is treated as both shippable and pickup-eligible. Only an explicit
+  // `false` turns a mode off.
+  delivery: {
+    shipping: p.delivery?.shipping !== false,
+    pickup: p.delivery?.pickup !== false,
   },
 });
 
@@ -273,6 +285,14 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (saving) return;
+
+    // Per-product delivery modes: at least one must be on, otherwise the product
+    // can't be received by any method (and checkout would have no valid option).
+    if (!formData.delivery?.shipping && !formData.delivery?.pickup) {
+      toast.error('Välj minst ett leveranssätt (hemleverans eller upphämtning).');
+      return;
+    }
+
     setSaving(true);
     try {
       const productId = product ? (product.documentId || product.id || formData.id) : `prod_${Date.now()}`;
@@ -328,6 +348,8 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
         weight: formData.weight,
         dimensions: formData.dimensions,
         shipping: formData.shipping,
+        // Per-product delivery modes (validated above: at least one is true).
+        delivery: { shipping: !!formData.delivery?.shipping, pickup: !!formData.delivery?.pickup },
         updatedAt: serverTimestamp(),
       };
 
@@ -545,6 +567,36 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
                 </div>
               </div>
               <p className={helpCls}>Vikt påverkar frakten i kassan; viktbaserade nivåer beräknas automatiskt.</p>
+
+              {/* Per-product delivery modes (Delivery & Pickup v2). Controls
+                  whether this product can be shipped and/or picked up. The
+                  storefront + checkout offer only the enabled methods, and the
+                  server rejects a charge using a disabled method. Both default
+                  on; at least one must stay on. */}
+              <div className="border-t border-admin-border-soft pt-4">
+                <label className={labelCls}>Leveranssätt</label>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-[13px] text-admin-text">
+                    <input
+                      type="checkbox"
+                      checked={formData.delivery.shipping}
+                      onChange={(e) => setField('delivery', { ...formData.delivery, shipping: e.target.checked })}
+                      className={checkboxCls}
+                    />
+                    Kan skickas (hemleverans)
+                  </label>
+                  <label className="flex items-center gap-2 text-[13px] text-admin-text">
+                    <input
+                      type="checkbox"
+                      checked={formData.delivery.pickup}
+                      onChange={(e) => setField('delivery', { ...formData.delivery, pickup: e.target.checked })}
+                      className={checkboxCls}
+                    />
+                    Kan hämtas (upphämtning / Click &amp; Collect)
+                  </label>
+                </div>
+                <p className={helpCls}>Minst ett alternativ måste vara valt. Styr vilka leveranssätt kunden kan välja i kassan.</p>
+              </div>
             </CardSection>
 
             {/* Variants */}
