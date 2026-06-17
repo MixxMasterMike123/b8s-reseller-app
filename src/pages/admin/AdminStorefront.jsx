@@ -94,7 +94,9 @@ const AdminStorefront = () => {
     let cancelled = false;
     (async () => {
       try {
-        const saved = await loadShopConfig();
+        // Load THIS shop's config (impersonation / shop-admin's own shop / path),
+        // not the default — so a non-default shop edits its own branding.
+        const saved = await loadShopConfig(shopId);
         if (cancelled) return;
         // STORE defaults under saved values (only branding keys).
         setForm({ ...pickBranding(STORE), ...pickBranding(saved) });
@@ -105,14 +107,14 @@ const AdminStorefront = () => {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [shopId]);
 
   const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const handleSave = useCallback(async () => {
     try {
       setSaving(true);
-      await saveShopConfig(pickBranding(form));
+      await saveShopConfig(pickBranding(form), shopId);
       toast.success('Butikens utseende sparat. Ladda om butiken för att se ändringarna.');
     } catch (error) {
       console.error('Error saving storefront branding:', error);
@@ -120,7 +122,7 @@ const AdminStorefront = () => {
     } finally {
       setSaving(false);
     }
-  }, [form]);
+  }, [form, shopId]);
 
   const handleImageUpload = async (kind, file) => {
     if (!file) return;

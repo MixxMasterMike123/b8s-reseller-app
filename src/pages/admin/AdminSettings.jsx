@@ -6,6 +6,7 @@ import AppLayout from '../../components/layout/AppLayout';
 import toast from 'react-hot-toast';
 import { STORE } from '../../config/store';
 import { loadShopConfig, saveShopConfig } from '../../config/shopConfig';
+import { useShopId } from '../../contexts/ShopContext';
 import PickupLocationsEditor from '../../components/admin/PickupLocationsEditor';
 import {
   Page,
@@ -23,16 +24,19 @@ const AdminSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [storeForm, setStoreForm] = useState(STORE);
+  // The shop this admin manages (impersonation > shop-admin's own shop > path).
+  // Config MUST read/write THIS shop, not the default — else a non-default shop
+  // (e.g. 'sillmans') would save to 'b8shield' and the storefront, which reads
+  // its own shopId, would never see the change (pickup locations, branding…).
+  const shopId = useShopId();
 
-  // Seed the store-identity form from the shopConfig SEAM (not the raw
-  // settings/app doc) so it follows the tenant doc shops/{shopId} once the
-  // seed has run, falling back to settings/app + STORE defaults otherwise.
+  // Seed the store-identity form from the shopConfig SEAM for THIS shop.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       let saved = {};
       try {
-        saved = (await loadShopConfig()) || {};
+        saved = (await loadShopConfig(shopId)) || {};
       } catch (e) {
         console.warn('AdminSettings: could not load shop config, using defaults:', e?.message);
       }
@@ -43,14 +47,13 @@ const AdminSettings = () => {
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [shopId]);
 
-  // Save store identity via the shopConfig seam (shops/{shopId}, falling back
-  // to settings/app until the seed runs — see src/config/shopConfig.js).
+  // Save store identity via the shopConfig seam for THIS shop.
   const saveStoreIdentity = useCallback(async () => {
     try {
       setSaving(true);
-      await saveShopConfig(storeForm);
+      await saveShopConfig(storeForm, shopId);
       toast.success('Butiksinställningar sparade. Ladda om butiken för att se ändringarna.');
     } catch (error) {
       console.error('Error saving store identity:', error);
@@ -58,7 +61,7 @@ const AdminSettings = () => {
     } finally {
       setSaving(false);
     }
-  }, [storeForm]);
+  }, [storeForm, shopId]);
 
 
 

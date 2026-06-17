@@ -68,15 +68,30 @@ export const loadShopFeatures = async (shopId) => {
   return {};
 };
 
-// Merge-write a partial storeIdentity patch. Targets the tenant doc once it
-// exists, else the legacy doc — mirroring the prior write shape exactly:
-// setDoc(..., { storeIdentity, updatedAt }, { merge: true }).
+// Merge-write a partial storeIdentity patch.
+//  • DEFAULT shop: targets shops/{default} once it exists, else the legacy
+//    settings/app doc — preserving the pre-tenancy single-shop behavior exactly.
+//  • NON-DEFAULT shop (e.g. 'sillmans'): ALWAYS targets shops/{shopId},
+//    CREATING it via merge if it doesn't exist yet. It must NEVER fall back to
+//    the shared settings/app doc — that would clobber the default shop's config
+//    with another tenant's data (cross-tenant data loss). The storefront reads
+//    the same shops/{shopId} for non-default shops, so the round-trip matches.
 export const saveShopConfig = async (patch, shopId) => {
-  const exists = await probeTenantDoc(shopId);
-  const ref = exists ? tenantRef(shopId) : legacyRef();
+  const id = shopId || DEFAULT_SHOP_ID;
+  let ref;
+  if (id === DEFAULT_SHOP_ID) {
+    const exists = await probeTenantDoc(id);
+    ref = exists ? tenantRef(id) : legacyRef();
+  } else {
+    // Non-default tenant: own doc only (create-on-merge); no legacy fallback.
+    ref = tenantRef(id);
+  }
   await setDoc(
     ref,
     { storeIdentity: patch, updatedAt: new Date().toISOString() },
     { merge: true }
   );
+  // The doc now exists — invalidate the probe cache so a subsequent
+  // loadShopConfig in this session reads the tenant doc, not the legacy fallback.
+  tenantProbe.delete(id);
 };
