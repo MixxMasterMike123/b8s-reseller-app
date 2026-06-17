@@ -14,6 +14,7 @@ import SeoHreflang from '../../components/shop/SeoHreflang';
 import { getCountryAwareUrl } from '../../utils/productUrls';
 import { getEnhancedOrderDistribution, getDisplayColor, getDisplaySize } from '../../utils/orderUtils';
 import { STORE } from '../../config/store';
+import { formatPickupDate } from '../../utils/pickupDates';
 
 const OrderConfirmation = () => {
   const { orderId } = useParams();
@@ -196,6 +197,11 @@ const OrderConfirmation = () => {
                               <p>{firstName} {lastName}</p>
                               {loc.name && <p className="font-medium">{loc.name}</p>}
                               {loc.address && <p>{loc.address}</p>}
+                              {loc.date && (
+                                <p className="mt-1">
+                                  {t('order_confirmation_pickup_date', 'Upphämtningsdatum')}: {formatPickupDate(loc.date)}
+                                </p>
+                              )}
                             </>
                           );
                         }

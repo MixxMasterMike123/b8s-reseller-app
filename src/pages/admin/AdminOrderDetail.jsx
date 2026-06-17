@@ -13,6 +13,7 @@ import { printShippingLabel } from '../../utils/labelPrinter';
 import LabelPrintInstructions from '../../components/LabelPrintInstructions';
 import { getEnhancedOrderDistribution, getDisplayColor, getDisplaySize } from '../../utils/orderUtils';
 import { formatPaymentMethodName } from '../../utils/paymentMethods';
+import { formatPickupDate } from '../../utils/pickupDates';
 import { Page, Card, CardSection, RightRail, Button, StatusPill, toneForOrderStatus } from '../../components/admin/ui';
 import { TruckIcon, MapPinIcon, PrinterIcon, TrashIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
@@ -508,9 +509,14 @@ const AdminOrderDetail = () => {
                     <OrderStatusMenu currentStatus={order.status} onStatusChange={handleStatusUpdate} />
                   )}
                 </div>
-                {isPickup && order.pickupLocation?.address && (
+                {isPickup && (order.pickupLocation?.address || order.pickupLocation?.date) && (
                   <div className="border-b border-admin-border-soft px-4 py-2 text-[13px] text-admin-text-muted">
-                    {order.pickupLocation.address}
+                    {order.pickupLocation?.address && <div>{order.pickupLocation.address}</div>}
+                    {order.pickupLocation?.date && (
+                      <div className="font-medium text-admin-text">
+                        Upphämtningsdatum: {formatPickupDate(order.pickupLocation.date)}
+                      </div>
+                    )}
                   </div>
                 )}
                 <div className="divide-y divide-admin-border-soft">

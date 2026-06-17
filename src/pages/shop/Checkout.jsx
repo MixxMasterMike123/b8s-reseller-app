@@ -27,21 +27,7 @@ import StripePaymentForm from '../../components/shop/StripePaymentForm';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import { useShopId } from '../../contexts/ShopContext';
 import { withShopId } from '../../config/withShopId';
-
-// Format an ISO YYYY-MM-DD pickup date for display (e.g. "fre 18 jul 2026").
-// Parsed as a local date (no timezone shift); falls back to the raw string.
-const formatPickupDate = (iso) => {
-  if (!iso || typeof iso !== 'string') return iso || '';
-  const [y, m, d] = iso.split('-').map(Number);
-  if (!y || !m || !d) return iso;
-  try {
-    return new Date(y, m - 1, d).toLocaleDateString('sv-SE', {
-      weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
-    });
-  } catch {
-    return iso;
-  }
-};
+import { formatPickupDate } from '../../utils/pickupDates';
 
 const Checkout = () => {
   const {
