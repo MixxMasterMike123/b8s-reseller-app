@@ -64,6 +64,9 @@ import {
   processB2COrderCompletionHttp // single order-completion engine (idempotent)
 } from './order-processing/functions';
 import { reverseAffiliateCommissionOnCancel } from './order-processing/commissionReversal';
+// Tenant isolation: keep Auth custom claims (role/shopId/platform) in sync with
+// the users doc on every write + revoke tokens on privilege reduction.
+import { syncUserClaimsOnWrite } from './auth/syncUserClaimsOnWrite';
 
 // Import geo functions for B2C shop currency detection
 import {
@@ -106,6 +109,9 @@ export {
   processB2COrderCompletionHttp as processB2COrderCompletionHttpV2,
   reverseAffiliateCommissionOnCancel
 };
+
+// Tenant-isolation: claim-resync trigger on users/{uid}.
+export { syncUserClaimsOnWrite };
 
 // Re-export geo functions for B2C shop currency detection
 export {
