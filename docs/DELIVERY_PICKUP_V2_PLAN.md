@@ -1,7 +1,8 @@
 # Delivery & Pickup v2 — Per-product delivery modes + pickup dates
 
-**Status:** PLAN — awaiting Mikael's approval. No code until approved.
-**Branch:** `salvage/cleanup-and-security` (HEAD `7c519d9`).
+**Status:** ✅ SHIPPED + LIVE (2026-06-17). All 7 slices built, adversarially verified, committed+pushed, deployed, live-verified. Final 3-way cross-check (platform↔admin↔shop) + inverse audit: all PASS, no gaps.
+**Commits:** 356b38b (S1) · a48bc7e (S2) · bcd4e7b (S3) · 27d2866 (S4) · 9f96699 (S5) · af6cd78 (S6) · 93c0d7e (S7). Live bundle `index-l9uNF2xO.js`. Functions `createPaymentIntentV2` + `stripeWebhookV2` updated.
+**Branch:** `salvage/cleanup-and-security` (was HEAD `7c519d9` at plan time).
 **Stakes:** money path (Stripe total-parity), schema/data (product + storeIdentity + order docs), multi-tenant. Plan-first per [[working-method]].
 **Method anchor:** every field / function / text below is cross-checked **platform ↔ admin ↔ shop**, all directions. A field saved-but-unread, rendered-but-uncontrollable, or platform-toggled-but-not-reflected = a bug, not a ship.
 
