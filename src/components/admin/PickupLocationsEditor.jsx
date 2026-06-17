@@ -26,10 +26,28 @@ const PickupLocationsEditor = ({ value, onChange }) => {
     onChange(locations.map((loc, i) => (i === idx ? { ...loc, ...patch } : loc)));
   };
   const add = () => {
-    onChange([...locations, { id: makeId(locations), name: '', address: '', hours: '' }]);
+    onChange([...locations, { id: makeId(locations), name: '', address: '', hours: '', dates: [] }]);
   };
   const remove = (idx) => {
     onChange(locations.filter((_, i) => i !== idx));
+  };
+
+  // Pickup dates per location (Delivery & Pickup v2). Stored as ISO YYYY-MM-DD
+  // strings; the checkout offers them as a date picker. Empty = no specific
+  // dates (pickup still works, just without a date choice).
+  const datesOf = (loc) => (Array.isArray(loc.dates) ? loc.dates : []);
+  const addDate = (idx) => {
+    const loc = locations[idx];
+    update(idx, { dates: [...datesOf(loc), ''] });
+  };
+  const updateDate = (idx, dIdx, value) => {
+    const loc = locations[idx];
+    const next = datesOf(loc).map((d, i) => (i === dIdx ? value : d));
+    update(idx, { dates: next });
+  };
+  const removeDate = (idx, dIdx) => {
+    const loc = locations[idx];
+    update(idx, { dates: datesOf(loc).filter((_, i) => i !== dIdx) });
   };
 
   const inputCls =
@@ -91,6 +109,51 @@ const PickupLocationsEditor = ({ value, onChange }) => {
                 >
                   <TrashIcon className="h-5 w-5" />
                 </button>
+              </div>
+
+              {/* Pickup dates for this location (Delivery & Pickup v2). The
+                  customer chooses one of these in checkout. Leave empty if the
+                  location has no specific pickup dates. */}
+              <div className="mt-3 border-t border-admin-border pt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="block text-[12px] font-medium text-admin-text">
+                    Upphämtningsdatum (valfritt)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => addDate(idx)}
+                    className="inline-flex items-center gap-1 text-[12px] font-medium text-admin-text hover:opacity-70"
+                  >
+                    <PlusIcon className="h-3.5 w-3.5" />
+                    Lägg till datum
+                  </button>
+                </div>
+                {datesOf(loc).length === 0 ? (
+                  <p className="text-[12px] text-admin-text-muted">
+                    Inga specifika datum. Lägg till datum om kunden ska välja ett upphämtningsdatum i kassan.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {datesOf(loc).map((d, dIdx) => (
+                      <div key={dIdx} className="flex items-center gap-1">
+                        <input
+                          type="date"
+                          value={d || ''}
+                          onChange={(e) => updateDate(idx, dIdx, e.target.value)}
+                          className={inputCls + ' w-auto'}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeDate(idx, dIdx)}
+                          title="Ta bort datum"
+                          className="shrink-0 p-1.5 text-admin-critical-dot hover:bg-admin-critical-bg rounded-[var(--radius-admin-el)]"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           ))}

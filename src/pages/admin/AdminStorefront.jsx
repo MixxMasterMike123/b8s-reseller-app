@@ -25,6 +25,11 @@ import {
 
 // Only the keys this page owns. We load the full config but save a merge of
 // just these, so we never clobber identity/social fields owned by Settings.
+// ⚠️ Do NOT add `pickupLocations` (or any array field owned by Settings) here.
+// saveShopConfig does setDoc({storeIdentity: patch}, {merge:true}); Firestore
+// deep-merges nested maps but REPLACES arrays wholesale when the array key is
+// present in the patch — so listing pickupLocations here would wipe a shop's
+// pickup locations + their dates whenever this page is saved. Settings owns it.
 const BRANDING_KEYS = [
   'accent',
   'logoUrl',

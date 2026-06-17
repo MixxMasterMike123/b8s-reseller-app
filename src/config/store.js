@@ -84,7 +84,9 @@ export const STORE = {
 
   // Pickup locations (Click & Collect). The shop admin manages these in
   // Settings; the storefront checkout offers them as a no-shipping-cost
-  // alternative to home delivery. Each: { id, name, address, hours }.
+  // alternative to home delivery. Each: { id, name, address, hours, dates }
+  // where dates is an optional string[] of ISO YYYY-MM-DD pickup dates the
+  // customer chooses between at checkout (empty = no specific date choice).
   // Empty = pickup is simply not offered at checkout.
   pickupLocations: [],
 };
