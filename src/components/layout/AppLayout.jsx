@@ -7,6 +7,7 @@ import DarkModeToggle from '../DarkModeToggle';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import { useShopFeatures } from '../../contexts/ShopFeaturesContext';
+import { useShopId } from '../../contexts/ShopContext';
 import { WAGON_FEATURE_KEY } from '../../config/addons';
 import ImpersonationBanner from '../auth/ImpersonationBanner';
 
@@ -34,6 +35,10 @@ const AppLayout = ({ children }) => {
   const { t } = useTranslation();
   const store = useStoreSettings();
   const { isEnabled: isAddonEnabled } = useShopFeatures();
+  // The shop this admin session is managing (impersonation > own shop > default).
+  // Surfaced in the top bar so "which shop am I editing?" is always explicit —
+  // every admin shares the /admin URL, so the name alone wasn't enough.
+  const shopId = useShopId();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -234,8 +239,14 @@ const AppLayout = ({ children }) => {
           )}
           <DarkModeToggle />
           <LanguageSwitcher />
-          <div className="ml-1 flex items-center gap-2 rounded-[var(--radius-admin-el)] py-1 pl-2 pr-1">
-            <span className="hidden max-w-[160px] truncate text-[13px] font-medium text-white/90 lg:block">{shopName}</span>
+          <div
+            className="ml-1 flex items-center gap-2 rounded-[var(--radius-admin-el)] py-1 pl-2 pr-1"
+            title={`${shopName} (${shopId})`}
+          >
+            <span className="hidden max-w-[180px] flex-col items-end leading-tight lg:flex">
+              <span className="max-w-[180px] truncate text-[13px] font-medium text-white/90">{shopName}</span>
+              <span className="max-w-[180px] truncate font-mono text-[10px] text-white/55">{shopId}</span>
+            </span>
             <span className="grid h-6 w-6 place-items-center rounded-[6px] bg-[var(--color-admin-success-dot)] text-[11px] font-semibold text-white">
               {shopInitials}
             </span>
