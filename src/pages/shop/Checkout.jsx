@@ -27,7 +27,7 @@ import StripePaymentForm from '../../components/shop/StripePaymentForm';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import { useShopId } from '../../contexts/ShopContext';
 import { withShopId } from '../../config/withShopId';
-import { formatPickupDate } from '../../utils/pickupDates';
+import { formatPickupDayShort } from '../../utils/pickupDates';
 
 const Checkout = () => {
   const {
@@ -60,15 +60,31 @@ const Checkout = () => {
   //  • a pickup-only cart but the shop offers no pickup location → can't be
   //    bought here at all; splitting won't help.
   const blockedByConflict = hasDeliveryConflict;
-  // Available pickup dates for the chosen location, from the LIVE shop config
-  // (source of truth) — the cart's pickupLocation is a snapshot that may lack
-  // dates. Empty = the location offers no specific dates (no date picker shown).
-  const selectedLocationConfig = pickupLocation?.id
-    ? pickupLocations.find((l) => l.id === pickupLocation.id)
-    : null;
-  const selectedLocationDates = Array.isArray(selectedLocationConfig?.dates)
-    ? selectedLocationConfig.dates.filter(Boolean)
-    : [];
+
+  // Flatten the shop's pickup config into one selectable OPTION per
+  // (location, date) pair — each is a concrete pickup occasion shown as a card.
+  // A location with no dates yields a single dateless option. Sorted by date so
+  // the earliest occasion is first; a location's dates each become their own card
+  // (so "Rökeriet, Onsdag 17/6" and "…Torsdag 18/6" are distinct, selectable).
+  // `past` flags dates strictly before today (today's pickup is still valid) so
+  // they render disabled rather than vanish — the customer sees the full schedule.
+  const todayIso = new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD, local
+  const pickupOptions = [];
+  for (const loc of pickupLocations) {
+    const dates = Array.isArray(loc.dates) ? loc.dates.filter(Boolean) : [];
+    if (dates.length === 0) {
+      pickupOptions.push({ key: loc.id, loc, date: '', past: false });
+    } else {
+      for (const d of dates) {
+        pickupOptions.push({ key: `${loc.id}::${d}`, loc, date: d, past: d < todayIso });
+      }
+    }
+  }
+  pickupOptions.sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999'));
+  // The currently-selected option key (location + chosen date).
+  const selectedOptionKey = pickupLocation?.id
+    ? (pickupDate ? `${pickupLocation.id}::${pickupDate}` : pickupLocation.id)
+    : '';
   const shopId = useShopId();
   const { currentUser, login } = useSimpleAuth();
   const { t, currentLanguage } = useTranslation();
@@ -253,8 +269,12 @@ const Checkout = () => {
             toast.error(t('checkout_pickup_select', 'Välj en upphämtningsplats.'));
             return false;
           }
-          // A location that offers specific dates requires a chosen date.
-          if (selectedLocationDates.length > 0 && !pickupDate) {
+          // A location that offers specific dates requires a chosen date. With
+          // the card UI each card sets the date on click, so this only guards a
+          // location whose dates exist but none was picked (defensive).
+          const chosenLoc = pickupLocations.find((l) => l.id === pickupLocation.id);
+          const chosenLocHasDates = Array.isArray(chosenLoc?.dates) && chosenLoc.dates.filter(Boolean).length > 0;
+          if (chosenLocHasDates && !pickupDate) {
             toast.error(t('checkout_pickup_date_select', 'Välj ett upphämtningsdatum.'));
             return false;
           }
@@ -686,7 +706,7 @@ const Checkout = () => {
                           </button>
                           <button
                             type="button"
-                            onClick={() => selectPickup(pickupLocation || pickupLocations[0])}
+                            onClick={() => selectPickup(pickupLocation || null)}
                             className={`text-left p-3 rounded-el border transition-colors ${isPickup ? 'border-accent ring-2 ring-accent/20 bg-accent/5' : 'border-ink/15 hover:border-ink/30'}`}
                           >
                             <div className="font-semibold text-sm text-ink">{t('checkout_pickup', 'Upphämtning')}</div>
@@ -707,46 +727,45 @@ const Checkout = () => {
                           <label className="block text-sm font-semibold text-ink mb-2">
                             {t('checkout_pickup_location', 'Upphämtningsplats *')}
                           </label>
-                          <select
-                            value={pickupLocation?.id || ''}
-                            onChange={(e) => {
-                              const loc = pickupLocations.find((l) => l.id === e.target.value);
-                              selectPickup(loc || null);
-                            }}
-                            className="w-full px-3 sm:px-4 py-3 border border-ink/15 bg-white rounded-el focus:outline-hidden focus:ring-4 focus:ring-accent/10 focus:border-accent text-base transition-colors"
-                          >
-                            <option value="">{t('checkout_pickup_choose', 'Välj plats…')}</option>
-                            {pickupLocations.map((loc) => (
-                              <option key={loc.id} value={loc.id}>
-                                {loc.name}{loc.address ? ` – ${loc.address}` : ''}
-                              </option>
-                            ))}
-                          </select>
-                          {pickupLocation?.hours && (
-                            <p className="mt-1 text-xs text-ink-muted">{t('checkout_pickup_hours', 'Öppettider')}: {pickupLocation.hours}</p>
-                          )}
-
-                          {/* Pickup date selector — only when the chosen location
-                              offers specific dates (Delivery & Pickup v2). Dates
-                              come from the LIVE shop config (source of truth), not
-                              the cart snapshot. Required when present. */}
-                          {selectedLocationDates.length > 0 && (
-                            <div className="mt-3">
-                              <label className="block text-sm font-semibold text-ink mb-2">
-                                {t('checkout_pickup_date', 'Upphämtningsdatum *')}
-                              </label>
-                              <select
-                                value={pickupDate || ''}
-                                onChange={(e) => setPickupDate(e.target.value)}
-                                className="w-full px-3 sm:px-4 py-3 border border-ink/15 bg-white rounded-el focus:outline-hidden focus:ring-4 focus:ring-accent/10 focus:border-accent text-base transition-colors"
-                              >
-                                <option value="">{t('checkout_pickup_date_choose', 'Välj datum…')}</option>
-                                {selectedLocationDates.map((d) => (
-                                  <option key={d} value={d}>{formatPickupDate(d)}</option>
-                                ))}
-                              </select>
-                            </div>
-                          )}
+                          {/* One selectable card per pickup occasion (location +
+                              date), all visible at once — same card style as the
+                              delivery-method toggle above. Past dates render
+                              disabled (shown for context, not selectable). */}
+                          <div className="space-y-2">
+                            {pickupOptions.map((opt) => {
+                              const selected = selectedOptionKey === opt.key;
+                              const place = [opt.loc.name, opt.loc.address].filter(Boolean).join(' – ');
+                              const dayLine = [opt.date ? formatPickupDayShort(opt.date) : '', opt.loc.hours]
+                                .filter(Boolean).join(' · ');
+                              return (
+                                <button
+                                  key={opt.key}
+                                  type="button"
+                                  disabled={opt.past}
+                                  onClick={() => {
+                                    selectPickup(opt.loc);
+                                    setPickupDate(opt.date || '');
+                                  }}
+                                  aria-pressed={selected}
+                                  className={`w-full text-left p-3 rounded-el border transition-colors ${
+                                    opt.past
+                                      ? 'border-ink/10 bg-ink/[0.03] opacity-50 cursor-not-allowed'
+                                      : selected
+                                        ? 'border-accent ring-2 ring-accent/20 bg-accent/5'
+                                        : 'border-ink/15 hover:border-ink/30'
+                                  }`}
+                                >
+                                  <div className="font-semibold text-sm text-ink">{place || t('checkout_pickup', 'Upphämtning')}</div>
+                                  {dayLine && (
+                                    <div className="text-xs text-ink-muted">
+                                      {dayLine}
+                                      {opt.past && ` · ${t('checkout_pickup_date_passed', 'passerat')}`}
+                                    </div>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>
