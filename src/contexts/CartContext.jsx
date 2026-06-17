@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { httpsCallable, getFunctions } from 'firebase/functions';
 import { normalizeAffiliateCode } from '../utils/affiliateCalculations';
 import { getProductImage } from '../utils/productImages';
@@ -60,14 +60,47 @@ export const CartProvider = ({ children }) => {
   const [deliveryMethod, setDeliveryMethod] = useState('home');
   const [pickupLocation, setPickupLocation] = useState(null);
 
-  const selectHomeDelivery = () => {
+  // Memoized so consumers (Checkout effects) get a stable reference and don't
+  // re-run effects on every CartContext render.
+  const selectHomeDelivery = useCallback(() => {
     setDeliveryMethod('home');
     setPickupLocation(null);
-  };
-  const selectPickup = (location) => {
+  }, []);
+  const selectPickup = useCallback((location) => {
     setDeliveryMethod('pickup');
     setPickupLocation(location || null);
-  };
+  }, []);
+
+  // Delivery & Pickup v2: which delivery methods the WHOLE cart allows, derived
+  // from each item's per-product delivery flags (default-ON: an item without the
+  // field, incl. legacy line items saved before this feature, permits both). A
+  // method is allowed only if EVERY item permits it.
+  //  • home allowed   ⇔ every item is shippable
+  //  • pickup allowed ⇔ every item is pickup-eligible (the SHOP must also have
+  //    pickup locations — Checkout AND-combines this with pickupLocations.length)
+  // When NEITHER is allowed the cart is a conflicting mix (e.g. a shipping-only
+  // item + a pickup-only item): Checkout blocks it (no single method works).
+  const cartAllowsHome = cart.items.length > 0 && cart.items.every((i) => i.delivery?.shipping !== false);
+  const cartAllowsPickup = cart.items.length > 0 && cart.items.every((i) => i.delivery?.pickup !== false);
+  // A non-empty cart where no single method serves every item.
+  const hasDeliveryConflict = cart.items.length > 0 && !cartAllowsHome && !cartAllowsPickup;
+
+  // If the current method becomes disallowed (cart changed), switch to an allowed
+  // one so a stale 'pickup' can't carry a shipping-only cart (or vice-versa).
+  // Only auto-corrects between the two product-level options; the shop-level
+  // pickup-locations gate lives in Checkout (which never selects pickup without a
+  // location). A conflicting cart is left as-is for Checkout to block.
+  useEffect(() => {
+    if (cart.items.length === 0 || hasDeliveryConflict) return;
+    if (deliveryMethod === 'pickup' && !cartAllowsPickup) {
+      setDeliveryMethod('home');
+      setPickupLocation(null);
+    } else if (deliveryMethod === 'home' && !cartAllowsHome && cartAllowsPickup) {
+      // The cart is pickup-only; switch to pickup. Location is chosen in Checkout.
+      setDeliveryMethod('pickup');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartAllowsHome, cartAllowsPickup, hasDeliveryConflict, deliveryMethod, cart.items.length]);
 
   useEffect(() => {
     localStorage.setItem('b8shield_cart', JSON.stringify(cart));
@@ -451,6 +484,14 @@ export const CartProvider = ({ children }) => {
       sku: variant?.sku || product.sku,
       weight: product.weight,       // shipping calc (product-level)
       shipping: product.shipping,   // shipping calc (product-level)
+      // Per-product delivery modes (Delivery & Pickup v2). Default-ON: a product
+      // without the field is both shippable and pickup-eligible. The cart derives
+      // which delivery methods the whole cart allows from this (see
+      // cartAllowsHome / cartAllowsPickup); the server re-checks the live product.
+      delivery: {
+        shipping: product.delivery?.shipping !== false,
+        pickup: product.delivery?.pickup !== false,
+      },
       quantity: qty,
     });
 
@@ -540,7 +581,11 @@ export const CartProvider = ({ children }) => {
     deliveryMethod,
     pickupLocation,
     selectHomeDelivery,
-    selectPickup
+    selectPickup,
+    // Per-product delivery modes (Delivery & Pickup v2) — cart-level allowance
+    cartAllowsHome,
+    cartAllowsPickup,
+    hasDeliveryConflict,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

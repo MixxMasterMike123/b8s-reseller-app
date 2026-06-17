@@ -29,10 +29,36 @@ import { useShopId } from '../../contexts/ShopContext';
 import { withShopId } from '../../config/withShopId';
 
 const Checkout = () => {
-  const { cart, calculateTotals, clearCart, updateShippingCountry, deliveryMethod, pickupLocation, selectHomeDelivery, selectPickup } = useCart();
+  const {
+    cart, calculateTotals, clearCart, updateShippingCountry,
+    deliveryMethod, pickupLocation, selectHomeDelivery, selectPickup,
+    cartAllowsHome, cartAllowsPickup, hasDeliveryConflict,
+  } = useCart();
   const store = useStoreSettings();
   const pickupLocations = Array.isArray(store?.pickupLocations) ? store.pickupLocations : [];
+  // Has the async shop config resolved? Until then `pickupLocations` is the
+  // static default ([]), so we must not conclude "no pickup" yet.
+  const storeLoaded = store?.__loaded === true;
+  // Delivery & Pickup v2: pickup is offered only when the products allow it AND
+  // the shop has pickup locations. Home is offered when the products allow it.
+  const shopHasPickup = pickupLocations.length > 0;
+  const pickupAvailable = cartAllowsPickup && shopHasPickup;
+  const homeAvailable = cartAllowsHome;
+  // Both methods selectable → show the chooser. Exactly one → lock to it.
+  const showDeliveryChooser = pickupAvailable && homeAvailable;
   const isPickup = deliveryMethod === 'pickup';
+  // The cart can't be fulfilled by any available method: either a conflicting
+  // mix (pickup-only + shipping-only items) or a pickup-only cart in a shop with
+  // no pickup locations configured. Checkout blocks rather than charge wrongly.
+  // Gate on storeLoaded so a pickup-only cart at a shop that DOES have locations
+  // doesn't briefly flash the block before the config arrives.
+  const cannotFulfill =
+    storeLoaded && cart.items.length > 0 && !homeAvailable && !pickupAvailable;
+  // Distinguish the two block causes for an accurate message:
+  //  • a true mix conflict → split the order; vs.
+  //  • a pickup-only cart but the shop offers no pickup location → can't be
+  //    bought here at all; splitting won't help.
+  const blockedByConflict = hasDeliveryConflict;
   const shopId = useShopId();
   const { currentUser, login } = useSimpleAuth();
   const { t, currentLanguage } = useTranslation();
@@ -113,6 +139,19 @@ const Checkout = () => {
       updateShippingCountry(shippingInfo.country);
     }
   }, [shippingInfo.country, cart.shippingCountry, updateShippingCountry]);
+
+  // Delivery & Pickup v2: CartContext auto-corrects between the two product-level
+  // methods but can't see the SHOP-level pickup gate. Here we enforce it: if the
+  // chosen method is 'pickup' but pickup isn't actually available (no shop
+  // locations, or the cart no longer permits pickup), fall back to home delivery
+  // whenever home IS available — so a stale pickup can't zero shipping. (When
+  // home is also unavailable the cart can't be fulfilled; cannotFulfill blocks
+  // the page, so we don't force an invalid method here.)
+  useEffect(() => {
+    if (deliveryMethod === 'pickup' && !pickupAvailable && homeAvailable) {
+      selectHomeDelivery();
+    }
+  }, [deliveryMethod, pickupAvailable, homeAvailable, selectHomeDelivery]);
 
   const loadCustomerProfile = async () => {
     try {
@@ -402,6 +441,37 @@ const Checkout = () => {
     );
   }
 
+  // Delivery & Pickup v2: the cart can't be received by any available method
+  // (a pickup-only + shipping-only mix, or a pickup-only cart with no pickup
+  // location at this shop). Block checkout with a clear message instead of
+  // charging an unfulfillable order.
+  if (cannotFulfill && !processingPayment) {
+    return (
+      <div className="min-h-screen bg-canvas font-body text-ink">
+        <ShopNavigation />
+        <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+          <ShoppingBagIcon className="h-16 w-16 text-ink-faint mx-auto mb-4" />
+          <h1 className="font-display text-2xl font-bold text-ink mb-4">
+            {blockedByConflict
+              ? t('checkout_delivery_conflict_title', 'Produkterna kan inte levereras tillsammans')
+              : t('checkout_pickup_unavailable_title', 'Upphämtning är inte tillgänglig')}
+          </h1>
+          <p className="text-ink-muted mb-8">
+            {blockedByConflict
+              ? t('checkout_delivery_conflict_desc', 'Vissa produkter i din varukorg kan bara hämtas och andra bara skickas. Lägg dem i separata beställningar.')
+              : t('checkout_pickup_unavailable_desc', 'Produkterna i din varukorg kan bara hämtas, men butiken har inga upphämtningsplatser just nu. Kontakta butiken eller försök igen senare.')}
+          </p>
+          <button
+            onClick={() => navigate(getCountryAwareUrl('cart'))}
+            className="bg-accent text-white px-6 py-3 rounded-full font-bold hover:opacity-90 transition-opacity"
+          >
+            {t('checkout_back_to_cart', 'Tillbaka till varukorg')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Show processing spinner when payment is being processed
   if (processingPayment) {
     return (
@@ -578,31 +648,44 @@ const Checkout = () => {
                     <div className="font-medium text-sm sm:text-base">{contactInfo.email}</div>
                   </div>
 
-                  {/* Delivery method (Click & Collect) — only when the shop has
-                      pickup locations configured. Pickup zeroes shipping. */}
-                  {pickupLocations.length > 0 && (
+                  {/* Delivery method (Click & Collect). Shown whenever pickup is
+                      an option for this cart (products allow it AND the shop has
+                      locations). Per-product delivery modes can disable one side:
+                      the chooser appears only when BOTH are available; otherwise
+                      the single available method is locked in. Pickup zeroes
+                      shipping (mirrored server-side for total-parity). */}
+                  {pickupAvailable && (
                     <div className="mb-6">
                       <div className="text-sm font-semibold text-ink mb-2">
                         {t('checkout_delivery_method', 'Leveranssätt')}
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <button
-                          type="button"
-                          onClick={() => selectHomeDelivery()}
-                          className={`text-left p-3 rounded-el border transition-colors ${!isPickup ? 'border-accent ring-2 ring-accent/20 bg-accent/5' : 'border-ink/15 hover:border-ink/30'}`}
-                        >
-                          <div className="font-semibold text-sm text-ink">{t('checkout_home_delivery', 'Hemleverans')}</div>
-                          <div className="text-xs text-ink-muted">{t('checkout_home_delivery_desc', 'Skickas till din adress')}</div>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => selectPickup(pickupLocation || pickupLocations[0])}
-                          className={`text-left p-3 rounded-el border transition-colors ${isPickup ? 'border-accent ring-2 ring-accent/20 bg-accent/5' : 'border-ink/15 hover:border-ink/30'}`}
-                        >
+                      {showDeliveryChooser ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <button
+                            type="button"
+                            onClick={() => selectHomeDelivery()}
+                            className={`text-left p-3 rounded-el border transition-colors ${!isPickup ? 'border-accent ring-2 ring-accent/20 bg-accent/5' : 'border-ink/15 hover:border-ink/30'}`}
+                          >
+                            <div className="font-semibold text-sm text-ink">{t('checkout_home_delivery', 'Hemleverans')}</div>
+                            <div className="text-xs text-ink-muted">{t('checkout_home_delivery_desc', 'Skickas till din adress')}</div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => selectPickup(pickupLocation || pickupLocations[0])}
+                            className={`text-left p-3 rounded-el border transition-colors ${isPickup ? 'border-accent ring-2 ring-accent/20 bg-accent/5' : 'border-ink/15 hover:border-ink/30'}`}
+                          >
+                            <div className="font-semibold text-sm text-ink">{t('checkout_pickup', 'Upphämtning')}</div>
+                            <div className="text-xs text-ink-muted">{t('checkout_pickup_desc', 'Hämta i butik – ingen fraktkostnad')}</div>
+                          </button>
+                        </div>
+                      ) : (
+                        // Pickup-only cart (home delivery disabled for these
+                        // products): the method is locked to pickup, shown as info.
+                        <div className="p-3 rounded-el border border-accent ring-2 ring-accent/20 bg-accent/5">
                           <div className="font-semibold text-sm text-ink">{t('checkout_pickup', 'Upphämtning')}</div>
-                          <div className="text-xs text-ink-muted">{t('checkout_pickup_desc', 'Hämta i butik – ingen fraktkostnad')}</div>
-                        </button>
-                      </div>
+                          <div className="text-xs text-ink-muted">{t('checkout_pickup_only_notice', 'Dessa produkter kan endast hämtas – ingen fraktkostnad.')}</div>
+                        </div>
+                      )}
 
                       {isPickup && (
                         <div className="mt-3">

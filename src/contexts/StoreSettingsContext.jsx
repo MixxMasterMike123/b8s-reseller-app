@@ -35,19 +35,25 @@ export function StoreSettingsProvider({ children }) {
         const saved = await loadShopConfig(shopId);
         if (cancelled) return;
 
+        // Override defaults only with non-empty saved values. `__loaded` marks
+        // that the async shop config has resolved, so consumers can distinguish
+        // "config loaded, genuinely no pickup locations" from "still on static
+        // defaults" (avoids a false 'cannot fulfill' flash for pickup-only carts
+        // before the real pickupLocations arrive — see Checkout).
+        const merged = { ...STORE, __loaded: true };
         if (saved && typeof saved === 'object') {
-          // Override defaults only with non-empty saved values.
-          const merged = { ...STORE };
           for (const [key, value] of Object.entries(saved)) {
             if (value !== undefined && value !== null && value !== '') {
               merged[key] = value;
             }
           }
-          setSettings(merged);
         }
+        setSettings(merged);
       } catch (error) {
-        // Degrade gracefully to defaults — store must always render.
+        // Degrade gracefully to defaults — store must always render. Still mark
+        // loaded: we finished trying, so consumers shouldn't wait forever.
         console.warn('StoreSettings: using defaults (could not load shop config):', error?.message);
+        if (!cancelled) setSettings((prev) => ({ ...prev, __loaded: true }));
       }
     };
 

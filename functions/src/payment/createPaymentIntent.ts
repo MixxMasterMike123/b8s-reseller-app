@@ -50,6 +50,19 @@ async function computeOrderTotalsSek(
       throw new Error(`Product not available: ${productId}`);
     }
 
+    // Per-product delivery modes (Delivery & Pickup v2). Default-ON: a product
+    // without the `delivery` field permits both methods. Reject a charge whose
+    // delivery method is disabled for this product — anti-tamper backstop for the
+    // client-side restriction (a tampered client could otherwise send 'pickup'
+    // for a shipping-only product to zero shipping, or 'home' for a pickup-only
+    // one). The legitimate client never sends a disabled method.
+    if (deliveryMethod === 'pickup' && product.delivery?.pickup === false) {
+      throw new Error(`Product not available for pickup: ${productId}`);
+    }
+    if (deliveryMethod === 'home' && product.delivery?.shipping === false) {
+      throw new Error(`Product not available for home delivery: ${productId}`);
+    }
+
     // Resolve price: a chosen variant's price (matched by sku) wins, else the
     // product price. A variantSku that doesn't match any variant is rejected.
     let price = product.b2cPrice || product.basePrice || 0;

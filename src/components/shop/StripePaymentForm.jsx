@@ -335,7 +335,13 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, deliveryInfo, customerL
     if (cart.items.length > 0 && customerInfo?.email) {
       initializePayment();
     }
-  }, [cart.items, customerInfo, shippingInfo, shopId]);
+    // Depend on the delivery METHOD (a primitive), not the deliveryInfo object
+    // (a fresh literal each render — would recreate the PI every render). This
+    // recreates the PaymentIntent with the correct shipping if the method changes
+    // while the form stays mounted, preserving total-parity. eslint can't see
+    // through deliveryInfo?.method so the object dep is intentionally omitted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart.items, customerInfo, shippingInfo, shopId, deliveryInfo?.method]);
 
   if (isLoading) {
     return (
