@@ -175,7 +175,10 @@ exports.stripeWebhookV2 = (0, https_1.onRequest)({
                     pickupLocation: {
                         id: metadata.pickupLocationId || '',
                         name: metadata.pickupLocationName || '',
-                        address: metadata.pickupLocationAddress || ''
+                        address: metadata.pickupLocationAddress || '',
+                        // Chosen pickup date (ISO YYYY-MM-DD), '' when the location has no
+                        // specific dates. Shown in admin + order confirmation (Slice 6).
+                        date: metadata.pickupLocationDate || ''
                     }
                 }),
                 // Order items from parsed JSON

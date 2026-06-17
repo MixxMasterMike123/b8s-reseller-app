@@ -28,10 +28,25 @@ import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import { useShopId } from '../../contexts/ShopContext';
 import { withShopId } from '../../config/withShopId';
 
+// Format an ISO YYYY-MM-DD pickup date for display (e.g. "fre 18 jul 2026").
+// Parsed as a local date (no timezone shift); falls back to the raw string.
+const formatPickupDate = (iso) => {
+  if (!iso || typeof iso !== 'string') return iso || '';
+  const [y, m, d] = iso.split('-').map(Number);
+  if (!y || !m || !d) return iso;
+  try {
+    return new Date(y, m - 1, d).toLocaleDateString('sv-SE', {
+      weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
+    });
+  } catch {
+    return iso;
+  }
+};
+
 const Checkout = () => {
   const {
     cart, calculateTotals, clearCart, updateShippingCountry,
-    deliveryMethod, pickupLocation, selectHomeDelivery, selectPickup,
+    deliveryMethod, pickupLocation, pickupDate, setPickupDate, selectHomeDelivery, selectPickup,
     cartAllowsHome, cartAllowsPickup, hasDeliveryConflict,
   } = useCart();
   const store = useStoreSettings();
@@ -59,6 +74,15 @@ const Checkout = () => {
   //  • a pickup-only cart but the shop offers no pickup location → can't be
   //    bought here at all; splitting won't help.
   const blockedByConflict = hasDeliveryConflict;
+  // Available pickup dates for the chosen location, from the LIVE shop config
+  // (source of truth) — the cart's pickupLocation is a snapshot that may lack
+  // dates. Empty = the location offers no specific dates (no date picker shown).
+  const selectedLocationConfig = pickupLocation?.id
+    ? pickupLocations.find((l) => l.id === pickupLocation.id)
+    : null;
+  const selectedLocationDates = Array.isArray(selectedLocationConfig?.dates)
+    ? selectedLocationConfig.dates.filter(Boolean)
+    : [];
   const shopId = useShopId();
   const { currentUser, login } = useSimpleAuth();
   const { t, currentLanguage } = useTranslation();
@@ -241,6 +265,11 @@ const Checkout = () => {
         if (isPickup) {
           if (!pickupLocation?.id) {
             toast.error(t('checkout_pickup_select', 'Välj en upphämtningsplats.'));
+            return false;
+          }
+          // A location that offers specific dates requires a chosen date.
+          if (selectedLocationDates.length > 0 && !pickupDate) {
+            toast.error(t('checkout_pickup_date_select', 'Välj ett upphämtningsdatum.'));
             return false;
           }
           const nameMissing = ['firstName', 'lastName'].filter(f => !shippingInfo[f].trim());
@@ -710,6 +739,28 @@ const Checkout = () => {
                           {pickupLocation?.hours && (
                             <p className="mt-1 text-xs text-ink-muted">{t('checkout_pickup_hours', 'Öppettider')}: {pickupLocation.hours}</p>
                           )}
+
+                          {/* Pickup date selector — only when the chosen location
+                              offers specific dates (Delivery & Pickup v2). Dates
+                              come from the LIVE shop config (source of truth), not
+                              the cart snapshot. Required when present. */}
+                          {selectedLocationDates.length > 0 && (
+                            <div className="mt-3">
+                              <label className="block text-sm font-semibold text-ink mb-2">
+                                {t('checkout_pickup_date', 'Upphämtningsdatum *')}
+                              </label>
+                              <select
+                                value={pickupDate || ''}
+                                onChange={(e) => setPickupDate(e.target.value)}
+                                className="w-full px-3 sm:px-4 py-3 border border-ink/15 bg-white rounded-el focus:outline-hidden focus:ring-4 focus:ring-accent/10 focus:border-accent text-base transition-colors"
+                              >
+                                <option value="">{t('checkout_pickup_date_choose', 'Välj datum…')}</option>
+                                {selectedLocationDates.map((d) => (
+                                  <option key={d} value={d}>{formatPickupDate(d)}</option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -910,7 +961,8 @@ const Checkout = () => {
                     }}
                     deliveryInfo={{
                       method: deliveryMethod,
-                      pickupLocation: isPickup ? pickupLocation : null
+                      pickupLocation: isPickup ? pickupLocation : null,
+                      pickupDate: isPickup ? (pickupDate || '') : ''
                     }}
                     customerLinkage={customerLinkage}
                     onPaymentSuccess={handlePaymentSuccess}

@@ -243,6 +243,7 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
                         pickupLocationId: deliveryInfo?.pickupLocationId || '',
                         pickupLocationName: deliveryInfo?.pickupLocationName || '',
                         pickupLocationAddress: deliveryInfo?.pickupLocationAddress || '',
+                        pickupLocationDate: deliveryInfo?.pickupLocationDate || '',
                     }),
                     // Order Totals (server-computed breakdown — single source of truth)
                     subtotal: totals.subtotal.toString(),

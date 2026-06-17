@@ -265,7 +265,10 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, deliveryInfo, customerL
               ...(deliveryInfo.pickupLocation && {
                 pickupLocationId: deliveryInfo.pickupLocation.id || '',
                 pickupLocationName: deliveryInfo.pickupLocation.name || '',
-                pickupLocationAddress: deliveryInfo.pickupLocation.address || ''
+                pickupLocationAddress: deliveryInfo.pickupLocation.address || '',
+                // Chosen pickup date (ISO YYYY-MM-DD), when the location offers
+                // specific dates. Carried to the order via PI metadata + webhook.
+                pickupLocationDate: deliveryInfo.pickupDate || ''
               })
             }
           }),

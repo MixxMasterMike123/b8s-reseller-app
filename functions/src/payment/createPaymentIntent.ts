@@ -184,6 +184,7 @@ interface CreatePaymentIntentRequest {
     pickupLocationId?: string;
     pickupLocationName?: string;
     pickupLocationAddress?: string;
+    pickupLocationDate?: string; // chosen pickup date, ISO YYYY-MM-DD (optional)
   };
   // Enhanced totals for complete order reconstruction
   totals?: {
@@ -354,6 +355,7 @@ export const createPaymentIntentV2 = onRequest(
               pickupLocationId: deliveryInfo?.pickupLocationId || '',
               pickupLocationName: deliveryInfo?.pickupLocationName || '',
               pickupLocationAddress: deliveryInfo?.pickupLocationAddress || '',
+              pickupLocationDate: deliveryInfo?.pickupLocationDate || '',
             }),
             
             // Order Totals (server-computed breakdown — single source of truth)

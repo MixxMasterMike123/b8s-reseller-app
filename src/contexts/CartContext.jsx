@@ -59,16 +59,25 @@ export const CartProvider = ({ children }) => {
   // agreement. pickupLocation holds the chosen { id, name, address }.
   const [deliveryMethod, setDeliveryMethod] = useState('home');
   const [pickupLocation, setPickupLocation] = useState(null);
+  // The chosen pickup date (ISO YYYY-MM-DD), when the selected location offers
+  // specific dates. Session-only like deliveryMethod/pickupLocation. Cleared
+  // when leaving pickup or switching location (a date belongs to one location).
+  const [pickupDate, setPickupDate] = useState('');
 
   // Memoized so consumers (Checkout effects) get a stable reference and don't
   // re-run effects on every CartContext render.
   const selectHomeDelivery = useCallback(() => {
     setDeliveryMethod('home');
     setPickupLocation(null);
+    setPickupDate('');
   }, []);
   const selectPickup = useCallback((location) => {
     setDeliveryMethod('pickup');
-    setPickupLocation(location || null);
+    setPickupLocation((prev) => {
+      // Switching to a different location invalidates a previously chosen date.
+      if (!location || prev?.id !== location.id) setPickupDate('');
+      return location || null;
+    });
   }, []);
 
   // Delivery & Pickup v2: which delivery methods the WHOLE cart allows, derived
@@ -557,6 +566,7 @@ export const CartProvider = ({ children }) => {
     // Reset the delivery choice so it never carries into a fresh cart.
     setDeliveryMethod('home');
     setPickupLocation(null);
+    setPickupDate('');
   };
 
   const value = {
@@ -580,6 +590,8 @@ export const CartProvider = ({ children }) => {
     // Delivery method (Click & Collect)
     deliveryMethod,
     pickupLocation,
+    pickupDate,
+    setPickupDate,
     selectHomeDelivery,
     selectPickup,
     // Per-product delivery modes (Delivery & Pickup v2) — cart-level allowance

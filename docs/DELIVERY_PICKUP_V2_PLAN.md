@@ -187,6 +187,11 @@ Per the mandatory 3-way check, the platform axis was considered for every change
 
 ---
 
+## 8b. Backlog from adversarial verify (deferred, low-sev, no charge risk)
+- **Cart-page conflict hint:** `ShoppingCart.jsx` doesn't surface `hasDeliveryConflict` / which items conflict, so a blocked customer loops back to a cart with no indication of what to fix. Checkout already blocks the bad charge; this is a UX improvement. (LOW)
+- **Server-validate the pickup date (S5):** `createPaymentIntent` passes `pickupLocationDate` to metadata without checking it's one of the location's configured dates (mirrors the existing un-validated `pickupLocationName/Address` pass-through). A tampered client could stamp an arbitrary date on its OWN order — data-only, no money/total impact, bounded by Stripe's 500-char cap, and the legitimate client constrains the `<option>`s to live config + requires a choice. Deliberately NOT added to the money path now (a new Firestore read + failure mode on every pickup checkout isn't worth it for a non-money tamper; would need to read the same config source `loadShopConfig` probes — tenant doc OR legacy settings/app). Revisit if pickup dates become operationally load-bearing. (LOW)
+- (Resolved in S4: async-config false-flash of the block screen; misleading block copy; selector dep churn; StripePaymentForm PI-recreate-on-method-change.)
+
 ## 9. Risk register
 - **R1 (money):** server reject on disallowed method must never fire for a legitimate client flow → client selector must be the single source of allowed methods, server only a backstop. Mitigation: slice 4 verifies all cart shapes client+server before deploy.
 - **R2 (data):** `dates`/`delivery` must round-trip the config + product seams. Mitigation: explicit reload-after-save verify in slices 1/3.
