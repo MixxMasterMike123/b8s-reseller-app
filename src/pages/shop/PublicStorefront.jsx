@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getProductImage } from '../../utils/productImages';
@@ -35,6 +35,11 @@ const PublicStorefront = () => {
     getTotalItems 
   } = useCart();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // ?alla=1 → bypass the frontpage showcase filter and show the full assortment
+  // (the "Visa alla produkter" link sets it). Lets the frontpage double as the
+  // all-products view without a separate route.
+  const showAll = searchParams.get('alla') === '1';
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [heroReview, setHeroReview] = useState(null);
@@ -206,7 +211,14 @@ const PublicStorefront = () => {
 
   // v2: one product = one card (variants are embedded, no group-collapse). Every
   // card links to its own product page.
-  const displayCards = products;
+  // Frontpage showcase: when the shop picked a `frontpageCategory`, the homepage
+  // grid features ONLY that category (with a "show all" link); empty = all
+  // products (default). Matched against the same category/group taxonomy.
+  // Active only when a category is configured AND the visitor hasn't asked for all.
+  const showcaseCategory = showAll ? '' : (store.frontpageCategory || '').trim();
+  const displayCards = showcaseCategory
+    ? products.filter((p) => (p.category || p.group || '').trim() === showcaseCategory)
+    : products;
 
   return (
     <>
@@ -466,14 +478,26 @@ const PublicStorefront = () => {
 
         {/* ===== Products ===== */}
         <section id="products" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
-          <div className="mb-6">
-            <h2 className="font-display font-bold text-3xl lg:text-4xl tracking-tight text-ink">
-              {store.productsTitle || 'Våra produkter'}
-            </h2>
-            {store.productsSubtitle && (
-              <p className="text-ink-muted mt-2 max-w-2xl">
-                {store.productsSubtitle}
-              </p>
+          <div className="mb-6 flex items-end justify-between gap-4 flex-wrap">
+            <div>
+              <h2 className="font-display font-bold text-3xl lg:text-4xl tracking-tight text-ink">
+                {showcaseCategory || store.productsTitle || 'Våra produkter'}
+              </h2>
+              {store.productsSubtitle && (
+                <p className="text-ink-muted mt-2 max-w-2xl">
+                  {store.productsSubtitle}
+                </p>
+              )}
+            </div>
+            {/* When a category is showcased, link to the full assortment
+                (the frontpage itself, showcase bypassed via ?alla=1). */}
+            {showcaseCategory && (
+              <Link
+                to={`${getCountryAwareUrl('')}?alla=1#products`}
+                className="text-sm font-semibold text-accent hover:opacity-80 transition-opacity shrink-0"
+              >
+                {t('view_all_products', 'Visa alla produkter')} →
+              </Link>
             )}
           </div>
 
@@ -501,7 +525,7 @@ const PublicStorefront = () => {
             <>
               {/* One product = one card (v2: variants are embedded on the
                   product; selection happens on the product page). */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
                 {displayCards.map((product) => {
                   // 🚨 CRITICAL: never render an object — prevent React Error #31
                   const productName = getContentValue(product.name);

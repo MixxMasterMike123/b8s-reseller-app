@@ -87,7 +87,7 @@ const CollectionPage = () => {
           ) : cards.length === 0 ? (
             <p className="text-ink-muted py-16 text-center">{t('collection_empty', 'Inga produkter i den här samlingen.')}</p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
               {cards.map((p) => (
                 <NordProductCard
                   key={p.id}

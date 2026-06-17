@@ -6,9 +6,12 @@
 // later). Images go through the shared uploader (utils/imageUpload).
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../../firebase/config';
 import AppLayout from '../../components/layout/AppLayout';
 import toast from 'react-hot-toast';
 import { STORE } from '../../config/store';
+import { useShopId } from '../../contexts/ShopContext';
 import { loadShopConfig, saveShopConfig } from '../../config/shopConfig';
 import { uploadStoreImage } from '../../utils/imageUpload';
 import { evaluateAccentContrast } from '../../utils/colorContrast';
@@ -36,6 +39,13 @@ const BRANDING_KEYS = [
   'story',
   'gallery',
   'blocks',
+  'frontpageCategory',
+  // Section headings/subtitles (close the rendered-but-uncontrollable gap).
+  'featuredTitle',
+  'productsTitle',
+  'productsSubtitle',
+  'reviewsTitle',
+  'reviewsSubtitle',
 ];
 
 const pickBranding = (cfg) =>
@@ -50,6 +60,30 @@ const AdminStorefront = () => {
   const [uploading, setUploading] = useState({ logo: false, hero: false });
   const [galleryUploading, setGalleryUploading] = useState(-1);
   const [form, setForm] = useState(pickBranding(STORE));
+  const shopId = useShopId();
+  // Existing category names for THIS shop — same derivation AdminProducts +
+  // the storefront use (products' category/group fields). Drives the frontpage
+  // showcase-category picker.
+  const [availableCategories, setAvailableCategories] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const snap = await getDocs(query(collection(db, 'products'), where('shopId', '==', shopId)));
+        const cats = new Set();
+        snap.forEach((d) => {
+          const p = d.data();
+          const cat = (p.category || p.group || '').trim();
+          if (cat) cats.add(cat);
+        });
+        if (!cancelled) setAvailableCategories(Array.from(cats).sort());
+      } catch (err) {
+        console.warn('AdminStorefront: could not load categories:', err?.message);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [shopId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -362,6 +396,79 @@ const AdminStorefront = () => {
                       value={form.heroSecondaryLabel ?? ''}
                       placeholder="t.ex. Se sortimentet ↓"
                       onChange={(e) => setField('heroSecondaryLabel', e.target.value)}
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
+              </CardSection>
+
+              {/* Startsida — frontpage showcase category + section headings */}
+              <CardSection title="Startsida" bodyClassName="space-y-4">
+                <div>
+                  <label className={labelCls}>Utvald kategori på startsidan</label>
+                  <select
+                    value={form.frontpageCategory ?? ''}
+                    onChange={(e) => setField('frontpageCategory', e.target.value)}
+                    className={inputCls}
+                  >
+                    <option value="">Visa alla produkter</option>
+                    {availableCategories.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-[12px] text-admin-text-muted">
+                    Välj en kategori att lyfta fram på startsidan (med en länk till alla produkter). Lämna på "Visa alla produkter" för att visa hela sortimentet.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Rubrik: Utvalt</label>
+                    <input
+                      type="text"
+                      value={form.featuredTitle ?? ''}
+                      placeholder="Utvalt"
+                      onChange={(e) => setField('featuredTitle', e.target.value)}
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Rubrik: Produkter</label>
+                    <input
+                      type="text"
+                      value={form.productsTitle ?? ''}
+                      placeholder="Våra produkter"
+                      onChange={(e) => setField('productsTitle', e.target.value)}
+                      className={inputCls}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className={labelCls}>Underrubrik: Produkter</label>
+                    <input
+                      type="text"
+                      value={form.productsSubtitle ?? ''}
+                      placeholder="(valfri)"
+                      onChange={(e) => setField('productsSubtitle', e.target.value)}
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Rubrik: Recensioner</label>
+                    <input
+                      type="text"
+                      value={form.reviewsTitle ?? ''}
+                      placeholder="Vad våra kunder säger"
+                      onChange={(e) => setField('reviewsTitle', e.target.value)}
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Underrubrik: Recensioner</label>
+                    <input
+                      type="text"
+                      value={form.reviewsSubtitle ?? ''}
+                      placeholder="(valfri)"
+                      onChange={(e) => setField('reviewsSubtitle', e.target.value)}
                       className={inputCls}
                     />
                   </div>

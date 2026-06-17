@@ -15,14 +15,14 @@ import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { db } from '../../firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { getCountryAwareUrl } from '../../utils/productUrls';
+import { getCountryAwareUrl, getCategoryUrl } from '../../utils/productUrls';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import { useShopId } from '../../contexts/ShopContext';
 import { useShopFeatures } from '../../contexts/ShopFeaturesContext';
 
 // tags / activeTag / onSelectTag are optional — only the storefront home passes
 // them, to render tag links that filter the product grid. Other pages omit them.
-const ShopNavigation = ({ breadcrumb, tags = [], activeTag = null, onSelectTag }) => {
+const ShopNavigation = ({ breadcrumb, breadcrumbCategory = null, tags = [], activeTag = null, onSelectTag }) => {
   const { cart } = useCart();
   const { t } = useTranslation();
   const store = useStoreSettings();
@@ -109,6 +109,15 @@ const ShopNavigation = ({ breadcrumb, tags = [], activeTag = null, onSelectTag }
               <Link to={getCountryAwareUrl('')} className="hover:text-ink transition-colors">
                 {t('nav_home', 'Hem')}
               </Link>
+              {/* Category segment — linked to its browse page. Shown when set. */}
+              {breadcrumbCategory && (
+                <>
+                  <span>/</span>
+                  <Link to={getCategoryUrl(breadcrumbCategory)} className="hover:text-ink transition-colors">
+                    {breadcrumbCategory}
+                  </Link>
+                </>
+              )}
               {breadcrumb && (
                 <>
                   <span>/</span>

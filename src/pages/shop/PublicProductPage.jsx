@@ -259,7 +259,7 @@ const PublicProductPage = () => {
       <SeoHreflang />
       
       <div className="min-h-screen bg-canvas font-body text-ink">
-        <ShopNavigation breadcrumb={getContentValue(product?.name)} />
+        <ShopNavigation breadcrumb={getContentValue(product?.name)} breadcrumbCategory={product?.category || null} />
         
         {/* Nike Mobile Layout: Product info ABOVE images */}
         <div className="lg:hidden">
@@ -269,9 +269,19 @@ const PublicProductPage = () => {
               <h1 className="font-display text-2xl font-bold tracking-tight text-ink mb-2">
                 {getContentValue(product.name)}
               </h1>
-              <p className="text-base text-ink-muted mb-4">
-                {getB2cDescription(product) || getContentValue(product.name)}
-              </p>
+              {/* Short description — only when set; no name fallback (would dupe the title). */}
+              {getB2cDescription(product) && (
+                <p className="text-base text-ink-muted mb-4">
+                  {getB2cDescription(product)}
+                </p>
+              )}
+              {/* More information (admin "Mer information") — above the price. */}
+              {product?.descriptions?.b2cMoreInfo && (
+                <div
+                  className="prose prose-sm max-w-none text-ink-muted mb-4"
+                  dangerouslySetInnerHTML={{ __html: sanitize(getContentValue(product.descriptions.b2cMoreInfo)) }}
+                />
+              )}
               <div className="font-display">
                 <SmartPrice
                   sekPrice={currentPrice}
@@ -453,9 +463,21 @@ const PublicProductPage = () => {
                   <h1 className="font-display text-4xl font-bold tracking-tight text-ink mb-2">
                     {getContentValue(product.name)}
                   </h1>
-                  <p className="text-lg text-ink-muted mb-4">
-                    {getB2cDescription(product) || getContentValue(product.name)}
-                  </p>
+                  {/* Short description — only when set; no name fallback (would dupe the title). */}
+                  {getB2cDescription(product) && (
+                    <p className="text-lg text-ink-muted mb-4">
+                      {getB2cDescription(product)}
+                    </p>
+                  )}
+
+                {/* More information (admin "Mer information" / b2cMoreInfo) —
+                    shown above the price per the storefront content order. */}
+                  {product?.descriptions?.b2cMoreInfo && (
+                    <div
+                      className="prose prose-sm max-w-none text-ink-muted mb-6"
+                      dangerouslySetInnerHTML={{ __html: sanitize(getContentValue(product.descriptions.b2cMoreInfo)) }}
+                    />
+                  )}
 
                 {/* Price */}
                   <div className="font-display mb-6">
@@ -571,29 +593,6 @@ const PublicProductPage = () => {
                       <li>• {t('product_style_spec', 'Art.nr: {{sku}}', { sku: selectedVariant?.sku || product.sku || '' })}</li>
                     </ul>
                   </div>
-                </div>
-
-                {/* Expandable Information Sections */}
-                <div className="border-t pt-6 space-y-4">
-                  {/* More Information - From Product B2C Content */}
-                  {product?.descriptions?.b2cMoreInfo && (
-                    <details className="group">
-                      <summary className="flex items-center justify-between py-4 cursor-pointer hover:bg-white px-4 -mx-4 rounded-el transition-colors">
-                        <span className="text-base font-semibold text-ink">
-                          {t('more_product_information', 'Mer produktinformation')}
-                        </span>
-                        <svg className="w-5 h-5 text-ink-faint transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </summary>
-                      <div className="pb-4 px-4 -mx-4 text-sm text-ink-muted">
-                        <div 
-                          className="prose prose-sm text-ink-muted"
-                          dangerouslySetInnerHTML={{ __html: sanitize(getContentValue(product.descriptions.b2cMoreInfo)) }}
-                        />
-                      </div>
-                    </details>
-                  )}
                 </div>
 
                 {/* Reviews Section */}

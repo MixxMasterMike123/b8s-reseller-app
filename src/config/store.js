@@ -32,6 +32,20 @@ export const STORE = {
   heroHeadline: '',
   heroSubtitle: '',
 
+  // Frontpage showcase category. When set to an existing category name, the shop
+  // frontpage features THAT category's products + a "show all products" link;
+  // empty = show all products (current behavior). Admin picks it in the Butik page.
+  frontpageCategory: '',
+
+  // Optional per-shop section headings/subtitles. Empty → inline default (see
+  // PublicStorefront). Admin-editable in the Butik page so a shop can rename
+  // "Utvalt"/"Våra produkter"/"Vad våra kunder säger" etc.
+  featuredTitle: '',
+  productsTitle: '',
+  productsSubtitle: '',
+  reviewsTitle: '',
+  reviewsSubtitle: '',
+
   // Contact
   supportEmail: 'hello@example.com',
   // HTML allowed (rendered via dangerouslySetInnerHTML in the footer).
