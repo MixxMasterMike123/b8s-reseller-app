@@ -24,6 +24,10 @@
  *   node scripts/backfill-shopid.cjs --only=orders    # dry run, one collection
  *   node scripts/backfill-shopid.cjs --commit         # write all collections
  *   node scripts/backfill-shopid.cjs --only=orders --commit
+ *   # users is OPT-IN ONLY (never in the default sweep). Legacy single-shop
+ *   # users all belong to the original shop; platform super-admins are skipped:
+ *   node scripts/backfill-shopid.cjs --only=users --shop=b8shield           # dry run
+ *   node scripts/backfill-shopid.cjs --only=users --shop=b8shield --commit  # write
  *
  * PRECONDITION: run scripts/seed-default-shop.cjs first so shops/{id} exists
  * (not strictly required for the backfill itself, but it's the intended order).
@@ -61,6 +65,16 @@ const IN_SCOPE_COLLECTIONS = [
   'orders',
 ];
 
+// OPT-IN-ONLY collections — reachable via --only=<name> but NEVER in the default
+// all-collections sweep, because blanket-stamping them to ONE shop is a
+// deliberate, shop-specific decision (you must pass --shop explicitly):
+//   • users — legacy B2B/B2C users from the original single-shop app all belong
+//     to that shop. Tenant-isolation prereq (firestore.rules users scoping).
+//     ⚠️ PLATFORM users (platform==true) are NEVER stamped — they bypass
+//     shop-scoping and must not be pinned to one shop (guarded in stampMissing).
+const OPT_IN_COLLECTIONS = ['users'];
+const ALLOWED_COLLECTIONS = [...IN_SCOPE_COLLECTIONS, ...OPT_IN_COLLECTIONS];
+
 const BATCH_SIZE = 400; // under Firestore's 500-writes-per-batch limit
 
 const args = process.argv.slice(2);
@@ -70,9 +84,19 @@ const shopArg = args.find((a) => a.startsWith('--shop='));
 const SHOP_ID = shopArg ? shopArg.split('=')[1] : DEFAULT_SHOP_ID;
 const ONLY = onlyArg ? onlyArg.split('=')[1].split(',').map((s) => s.trim()).filter(Boolean) : null;
 
+// Default sweep = IN_SCOPE only. --only can target ANY allowed collection
+// (including the opt-in `users`). An --only name not in the allowed set is an error.
 const collectionsToRun = ONLY
-  ? IN_SCOPE_COLLECTIONS.filter((c) => ONLY.includes(c))
+  ? ALLOWED_COLLECTIONS.filter((c) => ONLY.includes(c))
   : IN_SCOPE_COLLECTIONS;
+
+if (ONLY) {
+  const unknown = ONLY.filter((c) => !ALLOWED_COLLECTIONS.includes(c));
+  if (unknown.length) {
+    console.error(`❌ Unknown --only collection(s): ${unknown.join(', ')}. Allowed: ${ALLOWED_COLLECTIONS.join(', ')}`);
+    process.exit(1);
+  }
+}
 
 admin.initializeApp(); // default credentials, like the other admin scripts here
 const db = getFirestore('b8s-reseller-db'); // the CORRECT named database
@@ -82,10 +106,20 @@ async function backfillCollection(name) {
   const snap = await db.collection(name).get();
   const total = snap.size;
   // Only docs missing a shopId (idempotent: already-tagged docs are skipped).
+  // For `users`, ALSO skip platform super-admins — they bypass shop-scoping and
+  // must never be pinned to a single shop (even if their shopId were missing).
+  let platformSkipped = 0;
   const toStamp = snap.docs.filter((d) => {
-    const sid = d.data()?.shopId;
-    return sid === undefined || sid === null || sid === '';
+    const data = d.data() || {};
+    const sid = data.shopId;
+    const missing = sid === undefined || sid === null || sid === '';
+    if (!missing) return false;
+    if (name === 'users' && data.platform === true) { platformSkipped++; return false; }
+    return true;
   });
+  if (name === 'users' && platformSkipped > 0) {
+    console.log(`    (skipped ${platformSkipped} platform super-admin user(s) — never shop-pinned)`);
+  }
 
   console.log(
     `  ${name}: ${total} docs, ${toStamp.length} need shopId` +
