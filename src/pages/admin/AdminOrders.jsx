@@ -8,6 +8,7 @@ import OrderStatusMenu from '../../components/OrderStatusMenu';
 import { toast } from 'react-hot-toast';
 import { printMultipleShippingLabels } from '../../utils/labelPrinter';
 import { exportOrdersToCSV } from '../../utils/orderExport';
+import { exportPickupOrdersToCSV } from '../../utils/pickupExport';
 import { exportSingleOrderVerification, exportAllOrderVerifications } from '../../utils/orderVerification';
 import { getEnhancedOrderDistribution } from '../../utils/orderUtils';
 import { ArrowDownTrayIcon, DocumentTextIcon, PrinterIcon, TruckIcon, MapPinIcon } from '@heroicons/react/24/outline';
@@ -45,6 +46,7 @@ const AdminOrders = () => {
   const [selectedOrders, setSelectedOrders] = useState(new Set());
   const [printLoading, setPrintLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+  const [pickupExportLoading, setPickupExportLoading] = useState(false);
   const [verificationProgress, setVerificationProgress] = useState(null);
 
   // NOTE (slice 1b): the affiliate-click batch-fetch + the "Trafikkälla" list
@@ -84,6 +86,26 @@ const AdminOrders = () => {
       toast.error('Kunde inte exportera ordrar');
     } finally {
       setExportLoading(false);
+    }
+  };
+
+  // Handle export pickup orders → picklist grouped by location + date
+  // (Delivery & Pickup v2). Respects the page's current filters, like CSV export.
+  const handleExportPickup = async () => {
+    try {
+      setPickupExportLoading(true);
+      const ordersToExport = sortedOrders.length > 0 ? sortedOrders : orders;
+      const result = exportPickupOrdersToCSV(ordersToExport);
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error('Error exporting pickup orders:', error);
+      toast.error('Kunde inte exportera upphämtningar');
+    } finally {
+      setPickupExportLoading(false);
     }
   };
 
@@ -518,6 +540,24 @@ const AdminOrders = () => {
           <>
             <ArrowDownTrayIcon className="h-4 w-4" />
             Exportera CSV
+          </>
+        )}
+      </Button>
+      <Button
+        variant="secondary"
+        onClick={handleExportPickup}
+        disabled={pickupExportLoading || isLoading || orders.length === 0}
+        title="Exportera upphämtningsordrar som plocklista, grupperad per plats och datum"
+      >
+        {pickupExportLoading ? (
+          <span className="inline-flex items-center gap-2">
+            <span className="h-4 w-4 animate-spin rounded-full border-b-2 border-current" />
+            Exporterar…
+          </span>
+        ) : (
+          <>
+            <MapPinIcon className="h-4 w-4" />
+            Upphämtningar
           </>
         )}
       </Button>
