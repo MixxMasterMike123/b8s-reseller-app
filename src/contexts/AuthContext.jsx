@@ -363,10 +363,18 @@ export function AuthProvider({ children }) {
       } else {
         // Real Firebase users
         if (!isAdmin) throw new Error('Unauthorized');
-        
+
+        // Tenant isolation: a shop admin lists ONLY their own shop's users; a
+        // platform super-admin lists everyone. Scoping the QUERY (not just the
+        // rules) is required — the hardened users read-rule denies cross-shop
+        // docs, and Firestore rejects the whole getDocs() if any matched doc is
+        // unreadable. (See docs/TENANT_ISOLATION_HARDENING_PLAN.md.)
         const usersCollection = collection(db, 'users');
-        const querySnapshot = await getDocs(usersCollection);
-        
+        const usersQuery = (userData?.platform === true)
+          ? usersCollection
+          : query(usersCollection, where('shopId', '==', userData?.shopId || null));
+        const querySnapshot = await getDocs(usersQuery);
+
         const users = [];
         querySnapshot.forEach((doc) => {
           users.push({
@@ -374,7 +382,7 @@ export function AuthProvider({ children }) {
             ...doc.data()
           });
         });
-        
+
         return users;
       }
     } catch (error) {
@@ -531,8 +539,11 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // Create user profile (Admin only) - For direct customer creation without Firebase Auth
-  async function createUserProfile(userData, email) {
+  // Create user profile (Admin only) - For direct customer creation without Firebase Auth.
+  // NOTE: the param is `newUserData` (the user being created) — distinct from the
+  // AuthContext `userData` state (the CALLER's own doc), which we read for the
+  // caller's shopId/platform to scope the new user (tenant isolation).
+  async function createUserProfile(newUserData, email) {
     try {
       if (!isAdmin) throw new Error('Unauthorized - Admin access required');
 
@@ -543,7 +554,7 @@ export function AuthProvider({ children }) {
           id: newUserId,
           uid: newUserId,
           email,
-          ...userData,
+          ...newUserData,
           createdByAdmin: true, // Mark as admin-created
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
@@ -556,10 +567,23 @@ export function AuthProvider({ children }) {
         // Real Firebase: Create user document directly without authentication
         // Generate a unique ID for the customer
         const newUserId = doc(collection(db, 'users')).id;
-        
+
+        // Tenant isolation: stamp the new user with a shopId so it isn't an
+        // unscoped (cross-shop-visible) doc. A platform super-admin (caller)
+        // may target any shop via the payload; a shop admin (caller) always
+        // gets their OWN shop (userData = the caller's doc). Force platform:false
+        // — a created customer/sub-admin is never a platform super-admin (only a
+        // dedicated platform path mints those). Matches the hardened users.create
+        // rule (own-shop, non-platform).
+        const callerIsPlatform = userData?.platform === true;
+        const resolvedShopId = callerIsPlatform
+          ? (newUserData?.shopId || userData?.shopId || null)
+          : (userData?.shopId || null);
         const userProfile = {
-          ...userData,
+          ...newUserData,
           email,
+          shopId: resolvedShopId,
+          platform: false,
           createdByAdmin: true, // Mark as admin-created
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()

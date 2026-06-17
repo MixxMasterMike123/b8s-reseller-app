@@ -12,6 +12,9 @@ import {
   onSnapshot 
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
+import { useShopId } from '../../../contexts/ShopContext';
+import { useAuth } from '../../../contexts/AuthContext';
+import { withShopId } from '../../../config/withShopId';
 import toast from 'react-hot-toast';
 
 export const useDiningContacts = () => {
@@ -19,17 +22,26 @@ export const useDiningContacts = () => {
   const [loading, setLoading] = useState(true); // Start as true
   const [error, setError] = useState(null);
   const [hasInitialized, setHasInitialized] = useState(false); // Track if Firebase has responded
+  // Tenant isolation: dining contacts live in the shared `users` collection,
+  // which is shop-scoped. A NON-platform admin reads/writes only THIS shop; a
+  // platform super-admin reads unscoped (unchanged + pre-backfill-safe, so the
+  // list doesn't go empty before legacy users are stamped with shopId).
+  const shopId = useShopId();
+  const { isPlatform } = useAuth();
 
   // Real-time contact subscription
   useEffect(() => {
     console.log('🍽️ Setting up Firebase subscription to users collection...');
     setLoading(true);
-    
-    // Use users collection - simplified query to avoid index requirement
+
+    // Scope to this shop for shop admins; platform sees all. The hardened
+    // read-rule denies cross-shop docs and Firestore rejects the whole snapshot
+    // if any matched doc is unreadable — so a shop admin MUST filter by shopId.
     const contactsRef = collection(db, 'users');
-    // Remove complex query that requires index - filter in memory instead
-    const q = query(contactsRef);
-    
+    const q = isPlatform
+      ? query(contactsRef)
+      : query(contactsRef, where('shopId', '==', shopId));
+
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {
         console.log('🍽️ Firebase snapshot received:', {
@@ -109,7 +121,7 @@ export const useDiningContacts = () => {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [shopId, isPlatform]);
 
   // Create new contact (Add new guest to restaurant)
   const addContact = useCallback(async (contactData) => {
@@ -134,7 +146,8 @@ export const useDiningContacts = () => {
         updatedAt: now.toISOString()
       };
 
-      const docRef = await addDoc(collection(db, 'users'), newContact);
+      // Stamp shopId so the new user doc is tenant-scoped (not cross-shop-visible).
+      const docRef = await addDoc(collection(db, 'users'), withShopId(newContact, shopId));
       
       // ✅ No sync needed - using unified users collection
       
