@@ -55,19 +55,19 @@ const LandingPage = () => {
   // A field of meteors at RANDOMIZED placements/lengths/timing. Computed once
   // per mount (varies each visit) and reused so re-renders don't reshuffle.
   const meteors = useMemo(() => {
-    const n = 16;
+    const n = 7;
     return Array.from({ length: n }, (_, i) => {
       const r = (min, max) => min + Math.random() * (max - min);
       return {
         id: i,
         left: r(-5, 100),       // vw — can start slightly off the left edge
         top: r(-12, 55),        // vh — mostly upper half, some above the fold
-        len: r(70, 200),        // px streak length
-        dur: r(3.6, 8.5),       // s fall duration
-        delay: r(0, 9),         // s stagger so they don't fall in sync
+        len: r(60, 150),        // px streak length
+        dur: r(5, 11),          // s fall duration (slower = calmer)
+        delay: r(0, 12),        // s stagger so they don't fall in sync
         angle: r(28, 40),       // deg — varied diagonal
-        opacity: r(0.25, 0.7),
-        thin: Math.random() > 0.5 ? 1 : 2, // px streak width
+        opacity: r(0.14, 0.4),  // softer
+        thin: 1,                // px streak width (always thin)
       };
     });
   }, []);
