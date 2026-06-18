@@ -64,6 +64,13 @@ async function seed() {
     await setDoc(doc(db, 'users/adminB'), { role: 'admin', platform: false, shopId: 'shopB', active: true, email: 'adminB@x.com' });
     // a plain B2B/customer user in shop B (the kind a shopA admin must not read)
     await setDoc(doc(db, 'users/custB'), { role: 'user', shopId: 'shopB', active: true, email: 'custB@x.com' });
+    // a plain customer user in shop A (used to prove same-shop admin CAN manage,
+    // cross-shop admin CANNOT — and that the customer reads their OWN sub-docs).
+    await setDoc(doc(db, 'users/custA'), { role: 'user', shopId: 'shopA', active: true, email: 'custA@x.com' });
+    // dedicated delete-target users (so the delete ALLOW tests don't remove a doc
+    // that a later subcollection test depends on via parentUserShop()).
+    await setDoc(doc(db, 'users/delA'), { role: 'user', shopId: 'shopA', active: true, email: 'delA@x.com' });
+    await setDoc(doc(db, 'users/delB'), { role: 'user', shopId: 'shopB', active: true, email: 'delB@x.com' });
 
     await setDoc(doc(db, 'shops/shopA'), { name: 'Shop A', status: 'active' });
     await setDoc(doc(db, 'shops/shopB'), { name: 'Shop B', status: 'active' });
@@ -73,6 +80,11 @@ async function seed() {
     await setDoc(doc(db, 'orderStatuses/osB'), { shopId: 'shopB', label: 'Skickad' });
     await setDoc(doc(db, 'marketingMaterials/mmA'), { shopId: 'shopA', title: 'A flyer' });
     await setDoc(doc(db, 'marketingMaterials/mmB'), { shopId: 'shopB', title: 'B flyer' });
+
+    // per-customer marketing materials subcollection (admin doc distribution).
+    // custA is in shopA, custB is in shopB.
+    await setDoc(doc(db, 'users/custA/marketingMaterials/pcmA'), { title: 'custA doc' });
+    await setDoc(doc(db, 'users/custB/marketingMaterials/pcmB'), { title: 'custB doc' });
 
     // global config (a shop admin must NOT write these)
     await setDoc(doc(db, 'translations_sv_SE/k1'), { value: 'Hej' });
@@ -84,7 +96,9 @@ async function seed() {
     await setDoc(doc(db, 'ambassadorActivities/aa1'), { note: 'amb' });
     await setDoc(doc(db, 'customerDocuments/cd1'), { note: 'doc' });
     await setDoc(doc(db, 'appSettings/s1'), { k: 'v' });
-    await setDoc(doc(db, 'adminPresence/p1'), { uid: 'adminB' });
+    // adminPresence keyed by the admin's OWN uid (the client writes doc id == uid)
+    await setDoc(doc(db, 'adminPresence/adminA'), { uid: 'adminA' });
+    await setDoc(doc(db, 'adminPresence/adminB'), { uid: 'adminB' });
   });
 }
 
@@ -102,10 +116,30 @@ async function run() {
   await check('shopA admin reads OWN user doc', assertSucceeds(getDoc(doc(shopAAdminDb(), 'users/adminA'))));
   await check('shopA admin creates a user in OWN shop (non-platform)', assertSucceeds(
     setDoc(doc(shopAAdminDb(), 'users/newA'), { role: 'admin', platform: false, shopId: 'shopA', active: true })));
+  await check('shopA admin updates OWN-shop user (delA profile)', assertSucceeds(
+    updateDoc(doc(shopAAdminDb(), 'users/delA'), { active: false })));
+  await check('shopA admin deletes OWN-shop user (delA)', assertSucceeds(
+    deleteDoc(doc(shopAAdminDb(), 'users/delA'))));
   await check('platform reads any user (shopB)', assertSucceeds(getDoc(doc(platformDb(), 'users/adminB'))));
+  await check('platform deletes any user (shopB delB)', assertSucceeds(deleteDoc(doc(platformDb(), 'users/delB'))));
   await check('platform writes global translation', assertSucceeds(setDoc(doc(platformDb(), 'translations_sv_SE/k2'), { value: 'Hej2' })));
   await check('platform reads wagon CRM (activities)', assertSucceeds(getDoc(doc(platformDb(), 'activities/a1'))));
   await check('anon reads global translation (storefront)', assertSucceeds(getDoc(doc(env.unauthenticatedContext().firestore(), 'translations_sv_SE/k1'))));
+  // per-customer marketing materials: same-shop admin manages; customer reads own
+  await check('shopA admin reads OWN-shop customer per-doc material', assertSucceeds(
+    getDoc(doc(shopAAdminDb(), 'users/custA/marketingMaterials/pcmA'))));
+  await check('shopA admin writes OWN-shop customer per-doc material', assertSucceeds(
+    setDoc(doc(shopAAdminDb(), 'users/custA/marketingMaterials/pcmA2'), { title: 'new' })));
+  await check('customer reads OWN per-doc material', assertSucceeds(
+    getDoc(doc(customerDb('custA'), 'users/custA/marketingMaterials/pcmA'))));
+  // marketing materials (top-level): an active non-admin (affiliate) reads OWN shop
+  await check('active affiliate reads OWN-shop marketingMaterial', assertSucceeds(
+    getDoc(doc(env.authenticatedContext('custA', { email: 'custA@x.com' }).firestore(), 'marketingMaterials/mmA'))));
+  // adminPresence heartbeat: admin writes its OWN presence doc (id == uid)
+  await check('shopA admin writes OWN adminPresence (heartbeat)', assertSucceeds(
+    setDoc(doc(shopAAdminDb(), 'adminPresence/adminA'), { uid: 'adminA', status: 'online' })));
+  await check('shopA admin reads adminPresence collection (onSnapshot)', assertSucceeds(
+    getDoc(doc(shopAAdminDb(), 'adminPresence/adminB'))));
 
   console.log('\n=== ISOLATION: cross-shop / privilege escalation must be DENIED ===');
   // users — the biggest leak
@@ -117,11 +151,32 @@ async function run() {
     setDoc(doc(shopAAdminDb(), 'users/evilP'), { role: 'admin', platform: true, shopId: 'shopA', active: true })));
   await check('shopA admin CANNOT create an UNSCOPED admin (no shopId)', assertFails(
     setDoc(doc(shopAAdminDb(), 'users/evilU'), { role: 'admin', active: true })));
+  // users UPDATE — cross-shop blind-write (block fix #1): shopA admin must not
+  // write a shopB user's doc even without re-homing/escalating (e.g. demote role).
+  await check('shopA admin CANNOT update shopB user doc (blind cross-shop write)', assertFails(
+    updateDoc(doc(shopAAdminDb(), 'users/adminB'), { active: false })));
+  await check('shopA admin CANNOT re-home a shopB user to shopA via update', assertFails(
+    updateDoc(doc(shopAAdminDb(), 'users/adminB'), { shopId: 'shopA' })));
+  await check('shopA admin CANNOT escalate own-shop user to platform via update', assertFails(
+    updateDoc(doc(shopAAdminDb(), 'users/adminA'), { platform: true })));
+  // users DELETE — cross-shop deletion (block fix #2)
+  await check('shopA admin CANNOT delete shopB user doc', assertFails(
+    deleteDoc(doc(shopAAdminDb(), 'users/adminB'))));
+  // per-customer marketingMaterials subcollection — cross-shop (block fix #3)
+  await check('shopA admin CANNOT read shopB customer per-doc material', assertFails(
+    getDoc(doc(shopAAdminDb(), 'users/custB/marketingMaterials/pcmB'))));
+  await check('shopA admin CANNOT write shopB customer per-doc material', assertFails(
+    setDoc(doc(shopAAdminDb(), 'users/custB/marketingMaterials/evil'), { title: 'x' })));
   // global config
   await check('shopA admin CANNOT write global translation', assertFails(setDoc(doc(shopAAdminDb(), 'translations_sv_SE/k1'), { value: 'hacked' })));
   await check('shopA admin CANNOT write settings/app (global)', assertFails(updateDoc(doc(shopAAdminDb(), 'settings/app'), { COMPANY_NAME: 'hacked' })));
-  // cross-shop reads on shop-scoped collections
-  await check('shopA admin CANNOT read shopB orderStatus', assertFails(getDoc(doc(shopAAdminDb(), 'orderStatuses/osB'))));
+  // cross-shop reads on shop-scoped collections.
+  // orderStatuses is DEAD/GLOBAL config (no shopId) — by the locked decision its
+  // read stays isActiveUser() and is intentionally NOT shop-scoped, so an active
+  // admin reading any orderStatus is ALLOWED by design. The hardening on this
+  // collection is the WRITE (now platform-only), asserted below.
+  await check('shopA admin CAN read any orderStatus (global/dead by design)', assertSucceeds(getDoc(doc(shopAAdminDb(), 'orderStatuses/osB'))));
+  await check('shopA admin CANNOT WRITE orderStatuses (platform-only global)', assertFails(setDoc(doc(shopAAdminDb(), 'orderStatuses/osHack'), { label: 'x' })));
   await check('shopA admin CANNOT read shopB marketingMaterial', assertFails(getDoc(doc(shopAAdminDb(), 'marketingMaterials/mmB'))));
   // wagon CRM — platform-only after hardening (a shop admin must be denied)
   await check('shopA admin CANNOT read wagon CRM (activities)', assertFails(getDoc(doc(shopAAdminDb(), 'activities/a1'))));
@@ -129,7 +184,10 @@ async function run() {
   await check('shopA admin CANNOT read ambassadorActivities', assertFails(getDoc(doc(shopAAdminDb(), 'ambassadorActivities/aa1'))));
   await check('shopA admin CANNOT read customerDocuments', assertFails(getDoc(doc(shopAAdminDb(), 'customerDocuments/cd1'))));
   await check('shopA admin CANNOT write appSettings', assertFails(setDoc(doc(shopAAdminDb(), 'appSettings/s2'), { k: 'x' })));
-  await check('shopA admin CANNOT read adminPresence of shopB admin', assertFails(getDoc(doc(shopAAdminDb(), 'adminPresence/p1'))));
+  // adminPresence: read is intentionally cross-admin (isAdmin); the WRITE is the
+  // hardened bit — an admin may write ONLY their own presence doc (id == uid).
+  await check('shopA admin CANNOT write ANOTHER admin presence doc (not own uid)', assertFails(
+    setDoc(doc(shopAAdminDb(), 'adminPresence/adminB'), { uid: 'adminB', status: 'spoofed' })));
 
   console.log(`\n=== RESULT: ${passed} passed, ${failed} failed ===`);
   await env.cleanup();

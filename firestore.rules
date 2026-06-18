@@ -15,6 +15,23 @@ rules_version = '2';
 // campaignParticipants, campaignRevenueTracking) have NO rules on purpose:
 // Cloud Functions use the Admin SDK (bypasses rules) and clients must never
 // touch them — they fall through to the default deny at the bottom.
+//
+// TENANT-ISOLATION HARDENING (Phase A, 2026-06-18): close the cross-shop leaks
+// the adversarial audit found — users read/create/update/delete + per-customer
+// marketingMaterials escalation, global-config writes (translations / settings /
+// appSettings / orderStatuses), top-level marketing-material cross-shop read,
+// and wagon-CRM exposure. Authority checks keep using the user DOC (userDoc())
+// so privilege revokes are INSTANT on doc-write; the trusted token claims
+// (role/shopId/platform) are only a perf optimization and are intentionally NOT
+// relied upon here. Phase B (Storage rules) is separate.
+//
+// HARD DEPENDENCY (do not break): every NON-platform admin's users/{uid} doc
+// MUST carry a non-null `shopId`. All same-shop authority checks pivot on
+// userDoc().shopId / isAdminOfShop(); an admin whose own doc lacks shopId would
+// be locked out of their own shop (empty user list, can't create/update
+// products/orders/users). Provisioning (createShopUser + the syncUserClaimsOnWrite
+// trigger + createUserProfile) stamps shopId; the legacy users were purged so no
+// null-shopId admin exists. Keep it that way.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -59,26 +76,79 @@ service cloud.firestore {
     }
 
     // ============================================================
-    // Users (B2B portal + admin accounts) — NOT shop-scoped
+    // Users (B2B portal + admin accounts) — NOT shop-scoped, but TENANT-FILTERED
+    // (tenant-isolation hardening): a user reads their own doc; platform reads
+    // anyone; a shop admin reads/creates/updates/deletes ONLY same-shop users. A
+    // shop admin may MINT a user only for their OWN shop and never a platform
+    // super-admin; platform may target any shop. Updates keep the non-admin
+    // privilege-field guard AND additionally require a non-platform admin to act
+    // only on their OWN shop's users, never re-home a user to another shop, and
+    // never escalate to platform. Platform may do anything.
     // ============================================================
     match /users/{userId} {
-      allow read: if isUserOrAdmin(userId);
-      allow create: if isAdmin();
-      // Users update their own profile except role/isActive/platform/shopId
-      // (privilege + tenant fields are admin-only); admins update anything.
+      // read: own doc OR platform (any) OR same-shop admin. Scoping the QUERY is
+      // the client's job (AuthContext.getAllUsers filters where shopId==callerShop
+      // for non-platform); Firestore denies the whole getDocs() if any matched doc
+      // is unreadable, so this rule permits exactly the docs that query returns.
+      allow read: if request.auth.uid == userId ||
+        isPlatform() ||
+        (isAdmin() && resource.data.shopId == userDoc().shopId);
+
+      // create: platform may target any shop; a shop admin may create only for
+      // their OWN shop and never a platform super-admin. Unscoped (missing
+      // shopId) admin creates are denied because request.resource.data.shopId
+      // would not equal the caller's (non-null) shopId.
+      allow create: if isPlatform() ||
+        (isAdmin() &&
+          request.resource.data.shopId == userDoc().shopId &&
+          request.resource.data.platform != true);
+
+      // update: non-admins update their own profile except privilege/tenant
+      // fields (role/isActive/platform/shopId). A NON-platform admin may update
+      // only a user IN THEIR OWN SHOP (resource.data.shopId == caller's shopId —
+      // mirrors isAdminOfShop, and closes the cross-shop blind-write leak: a
+      // shop-X admin must not write a shop-Y user's doc by knowing its uid), must
+      // not re-home the user to another shop (incoming shopId == existing), and
+      // must not set platform:true. Platform may change anything.
+      // NOTE: a partial updateDoc() sends only the changed fields, so the merged
+      // request.resource.data may not CONTAIN `platform` at all. In rules,
+      // reading a missing map key errors (and `error != true` denies), so the
+      // platform guard must be written as "key absent OR not true" — otherwise a
+      // normal profile edit (which never touches platform) is wrongly denied.
       allow update: if isUserOrAdmin(userId) &&
         (!isAdmin() ? (
           !("role" in request.resource.data) &&
           !("isActive" in request.resource.data) &&
           !("platform" in request.resource.data) &&
           !("shopId" in request.resource.data)
-        ) : true);
-      allow delete: if isAdmin();
+        ) : (
+          isPlatform() || (
+            resource.data.shopId == userDoc().shopId &&
+            request.resource.data.shopId == resource.data.shopId &&
+            (!("platform" in request.resource.data) || request.resource.data.platform != true)
+          )
+        ));
 
-      // Per-customer marketing materials (admin document distribution)
+      // delete: platform deletes any user; a shop admin only their OWN shop's
+      // users (closes the cross-shop deletion leak the old `isAdmin()` allowed).
+      allow delete: if isPlatform() ||
+        (isAdmin() && resource.data.shopId == userDoc().shopId);
+
+      // Per-customer marketing materials (admin document distribution). TENANT-
+      // ISOLATION HARDENING: was global isUserOrAdmin/isAdmin (any admin, any
+      // shop). Now: the customer themselves reads their own; platform anything;
+      // a shop admin reads/writes only when the PARENT user belongs to the
+      // admin's shop. AdminCustomerMarketingMaterials manages customers in the
+      // admin's own shop, so this does not lock out the legit distribution flow.
       match /marketingMaterials/{materialId} {
-        allow read: if isUserOrAdmin(userId);
-        allow write: if isAdmin();
+        function parentUserShop() {
+          return get(/databases/$(database)/documents/users/$(userId)).data.shopId;
+        }
+        allow read: if request.auth.uid == userId ||
+          isPlatform() ||
+          (isAdmin() && parentUserShop() == userDoc().shopId);
+        allow write: if isPlatform() ||
+          (isAdmin() && parentUserShop() == userDoc().shopId);
       }
     }
 
@@ -108,29 +178,41 @@ service cloud.firestore {
       allow update, delete: if isAdminOfShop(resource.data.shopId);
     }
 
-    // UI translations, one collection per locale — global (not shop-scoped)
+    // UI translations, one collection per locale — GLOBAL config (no shopId),
+    // public read by the storefront (anonymous). TENANT-ISOLATION HARDENING:
+    // write is PLATFORM-ONLY so a shop admin can no longer overwrite the shared
+    // global translations of every shop. No in-app per-shop translation writer
+    // exists, so this does not lock out any legitimate caller.
     match /translations_sv_SE/{docId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isPlatform();
     }
     match /translations_en_GB/{docId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isPlatform();
     }
     match /translations_en_US/{docId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isPlatform();
     }
 
-    // Store identity (legacy global config). The per-shop config lives in
+    // Store identity (legacy GLOBAL config). The per-shop config lives in
     // shops/{shopId} now; settings/app remains readable for the fallback seam.
+    // TENANT-ISOLATION HARDENING: write is PLATFORM-ONLY (shared global config).
+    // saveShopConfig's default-shop fallback to settings/app still works because
+    // the only admins today are platform super-admins (micke, kent), so no
+    // legitimate caller is locked out. (NOTE: this exact-path rule and the
+    // settings/{settingId} wildcard below both match settings/app; under v2
+    // OR-semantics that's intentional — read = true OR isActiveUser() = public,
+    // write = isPlatform() OR isPlatform() = platform-only. Keep both write
+    // conditions identical or the union will silently widen access.)
     match /settings/app {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isPlatform();
     }
     match /settings/{settingId} {
       allow read: if isActiveUser();
-      allow write: if isAdmin();
+      allow write: if isPlatform();
     }
 
     // ============================================================
@@ -185,9 +267,14 @@ service cloud.firestore {
       allow update, delete: if isAdminOfShop(resource.data.shopId);
     }
 
+    // orderStatuses — DEAD/GLOBAL config (no shopId; only seed scripts touch it,
+    // never the app or Cloud Functions). Read stays isActiveUser() (unchanged).
+    // TENANT-ISOLATION HARDENING: write is PLATFORM-ONLY (global config). It is
+    // intentionally NOT scoped by shopId — these docs have no shopId, so scoping
+    // would be a latent lockout.
     match /orderStatuses/{statusId} {
       allow read: if isActiveUser();
-      allow write: if isAdmin();
+      allow write: if isPlatform();
     }
 
     // ============================================================
@@ -249,8 +336,17 @@ service cloud.firestore {
     // ============================================================
     // Marketing materials (shop-scoped top-level collection)
     // ============================================================
+    // TENANT-ISOLATION HARDENING: read was `isActiveUser() || isAdmin()`, which
+    // let ANY admin (and effectively any active user) read every shop's
+    // materials. Now: platform reads all; a shop admin reads only their shop's
+    // (isAdminOfShop); an active non-admin (affiliate) reads only their OWN
+    // shop's materials. The client queries already filter where shopId==shop
+    // (getGenericMaterials + AffiliateMarketingMaterials), so legit readers are
+    // unaffected. Write stays isAdminOfShop(...).
     match /marketingMaterials/{materialId} {
-      allow read: if isActiveUser() || isAdmin();
+      allow read: if isPlatform() ||
+        isAdminOfShop(resource.data.shopId) ||
+        (isActiveUser() && resource.data.shopId == userDoc().shopId);
       allow create: if isAdminOfShop(request.resource.data.shopId);
       allow update, delete: if isAdminOfShop(resource.data.shopId);
     }
@@ -272,39 +368,58 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // adminPresence — 60s heartbeat (useAdminPresence.js writes
+    // doc(db,'adminPresence',currentUser.uid)); the whole collection is read via
+    // onSnapshot. Read stays isAdmin() (cross-shop presence visibility is a minor
+    // info leak, deferred). TENANT-ISOLATION HARDENING: write is tightened to an
+    // admin's OWN doc only (presenceId == request.auth.uid) — the client already
+    // writes a doc id == currentUser.uid, so this is a no-client-change harden.
+    // Deliberately NOT platform-only: that would break the shop-admin heartbeat.
     match /adminPresence/{presenceId} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin();
+      allow write: if isAdmin() && presenceId == request.auth.uid;
     }
 
+    // adminUIDs — admin tracking (no shopId). Kept read,write isAdmin: a SHOP
+    // admin legitimately writes here via adminUIDManager (addAdminUID/
+    // removeAdminUID) on the role-toggle path in AuthContext.updateUserRole,
+    // which is gated on isAdmin (not platform). Making this platform-only would
+    // lock out that flow, so it is intentionally left as isAdmin (low risk: no
+    // shopId, internal admin bookkeeping). Revisit when adminUIDs is deprecated.
     match /adminUIDs/{adminUID} {
       allow read, write: if isAdmin();
     }
 
-    // Dining/ambassador wagon CRM data — admin-only internal tooling
-    // (deferred from shop-scoping; admin-gated)
+    // Dining/ambassador wagon CRM data — operator add-on tooling (no shopId).
+    // TENANT-ISOLATION HARDENING (locked decision): PLATFORM-ONLY read+write so
+    // a shop admin cannot see/write another tenant's CRM data. No shop-admin
+    // client path writes these collections, so platform-only does not lock out
+    // any legitimate caller.
     match /activities/{docId} {
-      allow read, write: if isAdmin();
+      allow read, write: if isPlatform();
     }
     match /followUps/{docId} {
-      allow read, write: if isAdmin();
+      allow read, write: if isPlatform();
     }
     match /deferredActivities/{docId} {
-      allow read, write: if isAdmin();
+      allow read, write: if isPlatform();
     }
     match /ambassadorActivities/{docId} {
-      allow read, write: if isAdmin();
+      allow read, write: if isPlatform();
     }
     match /userMentions/{docId} {
-      allow read, write: if isAdmin();
+      allow read, write: if isPlatform();
     }
     match /customerDocuments/{docId} {
-      allow read, write: if isAdmin();
+      allow read, write: if isPlatform();
     }
     match /adminCustomerDocuments/{docId} {
-      allow read, write: if isAdmin();
+      allow read, write: if isPlatform();
     }
+    // appSettings — global operator tooling (translationSettings; no shopId).
+    // TENANT-ISOLATION HARDENING: PLATFORM-ONLY read+write (global config).
     match /appSettings/{docId} {
-      allow read, write: if isAdmin();
+      allow read, write: if isPlatform();
     }
 
     // Default deny for everything else (incl. server-only collections:
