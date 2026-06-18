@@ -4,6 +4,7 @@ import { normalizeAffiliateCode } from '../utils/affiliateCalculations';
 import { getProductImage } from '../utils/productImages';
 import { STORE } from '../config/store';
 import { useShopFeatures } from './ShopFeaturesContext';
+import { useShopId } from './ShopContext';
 
 // Shipping cost constants
 export const SHIPPING_COSTS = {
@@ -34,6 +35,10 @@ export const CartProvider = ({ children }) => {
   // in createPaymentIntent.computeOrderTotalsSek or the displayed total and the
   // Stripe charge diverge (total-parity). See P4.5b plan.
   const { isEnabled: isAddonEnabled } = useShopFeatures();
+  // The active storefront shop (resolved from the URL via ShopContext). Passed
+  // to validateDiscountCode so the affiliate-code lookup is scoped to this shop
+  // (tenant isolation — codes are unique only within a shop).
+  const shopId = useShopId();
   const [cart, setCart] = useState(() => {
     const savedCart = localStorage.getItem('b8shield_cart');
     const initialCart = savedCart ? JSON.parse(savedCart) : { 
@@ -396,7 +401,7 @@ export const CartProvider = ({ children }) => {
       // Validate server-side: anonymous visitors must not read affiliate
       // docs directly (they contain PII and earnings data)
       const validate = httpsCallable(getFunctions(), 'validateDiscountCode');
-      const { data: validation } = await validate({ code: normalizedCode });
+      const { data: validation } = await validate({ code: normalizedCode, shopId });
 
       if (!validation?.valid) {
         setCart(prev => ({ ...prev, discountCode: null, discountAmount: 0, discountPercentage: 0, affiliateClickId: null, discountSource: null }));

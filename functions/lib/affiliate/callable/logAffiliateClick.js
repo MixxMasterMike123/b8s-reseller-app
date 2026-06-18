@@ -61,7 +61,8 @@ exports.logAffiliateClickV2 = (0, https_1.onCall)({
         if (campaignCode) {
             try {
                 const campaignsRef = db.collection('campaigns');
-                const campaignQuery = campaignsRef.where('code', '==', campaignCode);
+                // TENANT ISOLATION: campaign codes are unique per shop
+                const campaignQuery = campaignsRef.where('code', '==', campaignCode).where('shopId', '==', shopId);
                 const campaignSnapshot = await campaignQuery.get();
                 if (!campaignSnapshot.empty) {
                     const campaignDoc = campaignSnapshot.docs[0];

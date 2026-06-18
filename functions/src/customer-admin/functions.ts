@@ -98,6 +98,16 @@ export const deleteCustomerAccount = onCall<DeleteCustomerData>(async (request) 
     }
 
     const customerData = customerDoc.data() as CustomerData;
+
+    // 🛡️ TENANT ISOLATION: Admin SDK bypasses Firestore rules, so the shop
+    // boundary MUST be enforced here. A platform super-admin may delete in any
+    // shop; a shop admin only within their OWN shop. The target's shopId is read
+    // from the resource doc (trustworthy), never from the request payload.
+    const adminData = adminDoc.data();
+    if (adminData?.platform !== true && adminData?.shopId !== customerData.shopId) {
+      throw new Error('Du har inte behörighet att hantera kunder i en annan butik');
+    }
+
     let authDeletionResult: string | null = null;
 
     // Delete Firebase Auth account if it exists
@@ -224,6 +234,14 @@ export const deleteB2CCustomerAccount = onCall<DeleteB2CCustomerData>(async (req
     }
 
     const customerData = customerDoc.data() as any;
+
+    // 🛡️ TENANT ISOLATION (Admin SDK bypasses rules): platform may delete in any
+    // shop; a shop admin only their own. Target shopId from the resource doc.
+    const adminData = adminDoc.data();
+    if (adminData?.platform !== true && adminData?.shopId !== customerData.shopId) {
+      throw new Error('Du har inte behörighet att hantera kunder i en annan butik');
+    }
+
     let authDeletionResult: string | null = null;
 
     // Delete Firebase Auth account if it exists
@@ -264,9 +282,13 @@ export const deleteB2CCustomerAccount = onCall<DeleteB2CCustomerData>(async (req
     // Mark orders as orphaned (customer deleted) instead of deleting them
     let ordersAffected = 0;
     try {
-      // Find orders with b2cCustomerId
-      const ordersWithAccountQuery = await db.collection('orders').where('b2cCustomerId', '==', customerId).get();
-      const accountOrderUpdates = ordersWithAccountQuery.docs.map(doc => 
+      // Find orders with b2cCustomerId — scoped to the customer's shop so a
+      // colliding id/email in another shop is never touched (tenant isolation).
+      const ordersWithAccountQuery = await db.collection('orders')
+        .where('b2cCustomerId', '==', customerId)
+        .where('shopId', '==', customerData.shopId)
+        .get();
+      const accountOrderUpdates = ordersWithAccountQuery.docs.map(doc =>
         doc.ref.update({
           customerDeleted: true,
           customerDeletedAt: FieldValue.serverTimestamp(),
@@ -274,11 +296,12 @@ export const deleteB2CCustomerAccount = onCall<DeleteB2CCustomerData>(async (req
           updatedAt: FieldValue.serverTimestamp()
         })
       );
-      
-      // Find orders by email (guest orders)
+
+      // Find orders by email (guest orders) — also shop-scoped.
       const ordersWithEmailQuery = await db.collection('orders')
         .where('source', '==', 'b2c')
         .where('customerInfo.email', '==', customerData.email)
+        .where('shopId', '==', customerData.shopId)
         .get();
       
       const emailOrderUpdates = ordersWithEmailQuery.docs.map(doc => 
@@ -370,6 +393,14 @@ export const toggleCustomerActiveStatus = onCall<ToggleCustomerStatusData>(async
     }
 
     const customerData = customerDoc.data() as CustomerData;
+
+    // 🛡️ TENANT ISOLATION (Admin SDK bypasses rules): platform may toggle in any
+    // shop; a shop admin only their own. Target shopId from the resource doc.
+    const adminData = adminDoc.data();
+    if (adminData?.platform !== true && adminData?.shopId !== customerData.shopId) {
+      throw new Error('Du har inte behörighet att hantera kunder i en annan butik');
+    }
+
     let authUpdateResult: string | null = null;
 
     // Update Firebase Auth account if it exists

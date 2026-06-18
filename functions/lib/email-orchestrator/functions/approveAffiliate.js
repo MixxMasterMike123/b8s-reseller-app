@@ -11,26 +11,10 @@ const auth_1 = require("firebase-admin/auth");
 const EmailOrchestrator_1 = require("../core/EmailOrchestrator");
 const tenancy_1 = require("../../config/tenancy");
 const shopFeatures_1 = require("../../config/shopFeatures");
+const authGuard_1 = require("./authGuard");
 // Initialize Firebase services
 const db = (0, firestore_1.getFirestore)('b8s-reseller-db');
 const auth = (0, auth_1.getAuth)();
-// Helper function for admin authentication
-async function verifyAdminAuth(authUid) {
-    if (!authUid) {
-        throw new Error('Authentication required');
-    }
-    try {
-        const userDoc = await db.collection('users').doc(authUid).get();
-        const userData = userDoc.data();
-        if (!userData || userData.role !== 'admin') {
-            throw new Error('Admin access required');
-        }
-    }
-    catch (error) {
-        console.error('Admin verification failed:', error);
-        throw new Error('Unauthorized access');
-    }
-}
 exports.approveAffiliate = (0, https_1.onCall)({
     region: 'us-central1',
     memory: '256MiB',
@@ -43,8 +27,9 @@ exports.approveAffiliate = (0, https_1.onCall)({
             applicationId: request.data.applicationId,
             checkoutDiscount: request.data.checkoutDiscount
         });
-        // Verify admin authentication
-        await verifyAdminAuth(request.auth?.uid);
+        // Basic auth gate (full shop-parity check happens AFTER the application
+        // is loaded — the application's own shopId is the trustworthy source).
+        (0, authGuard_1.requireAuth)(request.auth?.uid);
         const { applicationId, checkoutDiscount, phone, address, postalCode, city, country, socials, promotionMethod, message } = request.data;
         if (!applicationId) {
             throw new Error('Application ID is required');
@@ -60,6 +45,11 @@ exports.approveAffiliate = (0, https_1.onCall)({
         if (!appData) {
             throw new Error('Application data is missing');
         }
+        // TENANT ISOLATION: enforce shop parity using the application's OWN shopId
+        // (trustworthy source). A shop admin may only approve their own shop's
+        // applications; a platform super-admin may approve any. Admin-SDK bypasses
+        // Firestore rules, so this MUST be checked here in code.
+        await (0, authGuard_1.requireAdminOfShop)(appData.shopId || tenancy_1.DEFAULT_SHOP_ID, request.auth?.uid);
         // Affiliate add-on gate: don't approve a new affiliate for a shop whose
         // affiliate add-on is disabled (no new affiliate activity). Checked BEFORE
         // any Auth/Firestore write so nothing is half-created. Default-ON.

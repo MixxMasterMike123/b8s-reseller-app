@@ -4,7 +4,8 @@
 import { onCall } from 'firebase-functions/v2/https';
 import { appUrls } from '../../config/app-urls';
 import { EmailOrchestrator } from '../core/EmailOrchestrator';
-import { requireAdmin } from './authGuard';
+import { requireAuth, requireAdminOfShop } from './authGuard';
+import { db } from '../../config/database';
 
 interface OrderConfirmationRequest {
   orderData: {
@@ -47,8 +48,10 @@ export const sendOrderConfirmationEmail = onCall<OrderConfirmationRequest>(
   },
   async (request) => {
     try {
-      // SECURITY: privileged mailer - admin only
-      await requireAdmin(request.auth?.uid);
+      // SECURITY: privileged mailer - basic auth gate; full shop-parity check
+      // happens AFTER the order is loaded server-side (the order doc's own
+      // shopId is the trustworthy source). Admin-SDK bypasses Firestore rules.
+      requireAuth(request.auth?.uid);
 
       console.log('📧 sendOrderConfirmationEmail: Starting unified order confirmation');
       console.log('📧 Request data:', {
@@ -71,6 +74,17 @@ export const sendOrderConfirmationEmail = onCall<OrderConfirmationRequest>(
       if (!request.data.orderId) {
         throw new Error('Order ID is required');
       }
+
+      // TENANT ISOLATION: load the order server-side and enforce shop parity
+      // against the order's OWN shopId (trustworthy source) — a shop admin may
+      // only send confirmations for their own shop's orders; platform may send
+      // for any.
+      const orderSnap = await db.collection('orders').doc(request.data.orderId).get();
+      if (!orderSnap.exists) {
+        throw new Error('Order not found');
+      }
+      const orderData = orderSnap.data();
+      await requireAdminOfShop(orderData?.shopId, request.auth?.uid);
 
       // Initialize EmailOrchestrator
       const orchestrator = new EmailOrchestrator();

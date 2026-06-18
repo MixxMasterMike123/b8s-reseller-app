@@ -72,7 +72,8 @@ export const logAffiliateClickV2 = onCall<AffiliateClickData>(
       if (campaignCode) {
         try {
           const campaignsRef = db.collection('campaigns');
-          const campaignQuery = campaignsRef.where('code', '==', campaignCode);
+          // TENANT ISOLATION: campaign codes are unique per shop
+          const campaignQuery = campaignsRef.where('code', '==', campaignCode).where('shopId', '==', shopId);
           const campaignSnapshot = await campaignQuery.get();
           
           if (!campaignSnapshot.empty) {

@@ -9,6 +9,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { EmailOrchestrator } from '../core/EmailOrchestrator';
 import { DEFAULT_SHOP_ID } from '../../config/tenancy';
 import { isShopFeatureEnabled } from '../../config/shopFeatures';
+import { requireAuth, requireAdminOfShop } from './authGuard';
 
 // Initialize Firebase services
 const db = getFirestore('b8s-reseller-db');
@@ -29,25 +30,6 @@ interface AffiliateApprovalRequest {
   checkoutDiscount?: number;
 }
 
-// Helper function for admin authentication
-async function verifyAdminAuth(authUid?: string): Promise<void> {
-  if (!authUid) {
-    throw new Error('Authentication required');
-  }
-
-  try {
-    const userDoc = await db.collection('users').doc(authUid).get();
-    const userData = userDoc.data();
-    
-    if (!userData || userData.role !== 'admin') {
-      throw new Error('Admin access required');
-    }
-  } catch (error) {
-    console.error('Admin verification failed:', error);
-    throw new Error('Unauthorized access');
-  }
-}
-
 export const approveAffiliate = onCall<AffiliateApprovalRequest>(
   {
     region: 'us-central1',
@@ -63,8 +45,9 @@ export const approveAffiliate = onCall<AffiliateApprovalRequest>(
         checkoutDiscount: request.data.checkoutDiscount
       });
 
-      // Verify admin authentication
-      await verifyAdminAuth(request.auth?.uid);
+      // Basic auth gate (full shop-parity check happens AFTER the application
+      // is loaded — the application's own shopId is the trustworthy source).
+      requireAuth(request.auth?.uid);
 
       const { 
         applicationId,
@@ -96,6 +79,12 @@ export const approveAffiliate = onCall<AffiliateApprovalRequest>(
       if (!appData) {
         throw new Error('Application data is missing');
       }
+
+      // TENANT ISOLATION: enforce shop parity using the application's OWN shopId
+      // (trustworthy source). A shop admin may only approve their own shop's
+      // applications; a platform super-admin may approve any. Admin-SDK bypasses
+      // Firestore rules, so this MUST be checked here in code.
+      await requireAdminOfShop(appData.shopId || DEFAULT_SHOP_ID, request.auth?.uid);
 
       // Affiliate add-on gate: don't approve a new affiliate for a shop whose
       // affiliate add-on is disabled (no new affiliate activity). Checked BEFORE

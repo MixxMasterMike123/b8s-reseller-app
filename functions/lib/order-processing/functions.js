@@ -509,19 +509,30 @@ async function processOrderCompletion(orderId) {
         commissionProcessed = false;
     }
     else {
-        // Get affiliate details
+        // Get affiliate details — SCOPED TO THIS ORDER'S SHOP (tenant isolation).
+        // Affiliate codes are only unique within a shop; without the shopId filter
+        // a code that collides across shops would credit the WRONG shop's affiliate
+        // on every order (cross-shop commission siphoning). The post-fetch guard
+        // below re-asserts shop parity as defence-in-depth.
+        const orderShopId = orderData.shopId || tenancy_1.DEFAULT_SHOP_ID;
         const affiliateSnap = await localDb
             .collection('affiliates')
+            .where('shopId', '==', orderShopId)
             .where('affiliateCode', '==', affiliateCode)
             .where('status', '==', 'active')
             .limit(1)
             .get();
         if (affiliateSnap.empty) {
-            console.error(`No active affiliate found for code: ${affiliateCode}`);
+            console.error(`No active affiliate found for code: ${affiliateCode} in shop ${orderShopId}`);
             return { statusCode: 200, body: { success: true, message: 'Order processed (invalid affiliate)' } };
         }
         const affiliateDoc = affiliateSnap.docs[0];
         const affiliate = affiliateDoc.data();
+        // Defence-in-depth: never credit an affiliate that belongs to another shop.
+        if (affiliate.shopId && affiliate.shopId !== orderShopId) {
+            console.error(`Affiliate ${affiliateCode} shop ${affiliate.shopId} != order shop ${orderShopId}; skipping commission`);
+            return { statusCode: 200, body: { success: true, message: 'Order processed (affiliate shop mismatch)' } };
+        }
         // FRAUD GUARD: an affiliate earns no commission on their own purchases
         const customerEmail = (orderData.customerInfo?.email || '').toLowerCase();
         const affiliateEmail = (affiliate.email || '').toLowerCase();

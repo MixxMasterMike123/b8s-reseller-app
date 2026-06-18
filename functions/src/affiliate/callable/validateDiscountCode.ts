@@ -11,6 +11,7 @@ import { isShopFeatureEnabled } from '../../config/shopFeatures';
 
 interface ValidateDiscountCodeRequest {
   code: string;
+  shopId: string;
 }
 
 export const validateDiscountCode = onCall<ValidateDiscountCodeRequest>(
@@ -21,13 +22,24 @@ export const validateDiscountCode = onCall<ValidateDiscountCodeRequest>(
   },
   async (request) => {
     const rawCode = (request.data?.code || '').toString().trim().toUpperCase();
+    // TENANT ISOLATION: affiliate codes are unique only WITHIN a shop, so the
+    // lookup must be scoped to the storefront's own shop. This isn't an
+    // authority check (the caller is an anonymous shopper) — it's correctness:
+    // a code belonging to shop B must not validate (or leak its discount) on
+    // shop A's storefront. The storefront passes its own shopId (known from the
+    // URL/shop context).
+    const shopId = (request.data?.shopId || '').toString().trim();
 
     if (!rawCode || rawCode.length > 50) {
       throw new HttpsError('invalid-argument', 'A discount code is required');
     }
+    if (!shopId) {
+      throw new HttpsError('invalid-argument', 'A shopId is required');
+    }
 
     const snapshot = await db
       .collection('affiliates')
+      .where('shopId', '==', shopId)
       .where('affiliateCode', '==', rawCode)
       .where('status', '==', 'active')
       .limit(1)

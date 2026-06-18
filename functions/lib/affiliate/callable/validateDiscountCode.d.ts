@@ -6,6 +6,7 @@
  */
 interface ValidateDiscountCodeRequest {
     code: string;
+    shopId: string;
 }
 export declare const validateDiscountCode: import("firebase-functions/v2/https").CallableFunction<ValidateDiscountCodeRequest, any, unknown>;
 export {};

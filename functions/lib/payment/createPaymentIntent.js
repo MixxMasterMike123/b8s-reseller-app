@@ -168,9 +168,17 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
         const deliveryMethod = deliveryInfo?.method === 'pickup' ? 'pickup' : 'home';
         // Tenant id for the order. Phase 0/1 is single-shop, so this normalizes
         // to the default; the field is carried through metadata → webhook → order
-        // so the plumbing is correct before multi-shop exists. (When multiple
-        // shops are live, validate this against the shops collection here.)
+        // so the plumbing is correct before multi-shop exists.
         const resolvedShopId = shopId || tenancy_1.DEFAULT_SHOP_ID;
+        // TENANT ISOLATION (H1): validate the (client-supplied) shopId names a real
+        // shop before charging against it — reject unknown tenants. Deriving the
+        // shopId from the request origin instead of trusting the payload is a
+        // future hardening pass (H1, out of scope here).
+        const shopSnap = await database_1.db.collection('shops').doc(resolvedShopId).get();
+        if (!shopSnap.exists) {
+            response.status(400).json({ error: 'Unknown shop' });
+            return;
+        }
         // Validate required fields
         if (!cartItems || cartItems.length === 0 || cartItems.length > 100) {
             response.status(400).json({ error: 'Cart items are required' });

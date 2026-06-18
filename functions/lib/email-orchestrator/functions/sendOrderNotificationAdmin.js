@@ -7,6 +7,7 @@ const https_1 = require("firebase-functions/v2/https");
 const app_urls_1 = require("../../config/app-urls");
 const EmailOrchestrator_1 = require("../core/EmailOrchestrator");
 const authGuard_1 = require("./authGuard");
+const database_1 = require("../../config/database");
 exports.sendOrderNotificationAdmin = (0, https_1.onCall)({
     region: 'us-central1',
     memory: '256MiB',
@@ -14,8 +15,10 @@ exports.sendOrderNotificationAdmin = (0, https_1.onCall)({
     cors: app_urls_1.appUrls.CORS_ORIGINS
 }, async (request) => {
     try {
-        // SECURITY: privileged mailer - admin only
-        await (0, authGuard_1.requireAdmin)(request.auth?.uid);
+        // SECURITY: privileged mailer - basic auth gate; full shop-parity check
+        // happens AFTER the order is loaded server-side (the order doc's own
+        // shopId is the trustworthy source). Admin-SDK bypasses Firestore rules.
+        (0, authGuard_1.requireAuth)(request.auth?.uid);
         console.log('📧 sendOrderNotificationAdmin: Starting admin order notification');
         console.log('📧 Request data:', {
             orderNumber: request.data.orderData.orderNumber,
@@ -31,6 +34,16 @@ exports.sendOrderNotificationAdmin = (0, https_1.onCall)({
         if (!request.data.orderId) {
             throw new Error('Order ID is required');
         }
+        // TENANT ISOLATION: load the order server-side and enforce shop parity
+        // against the order's OWN shopId (trustworthy source) — a shop admin may
+        // only send notifications for their own shop's orders; platform may send
+        // for any.
+        const orderSnap = await database_1.db.collection('orders').doc(request.data.orderId).get();
+        if (!orderSnap.exists) {
+            throw new Error('Order not found');
+        }
+        const orderData = orderSnap.data();
+        await (0, authGuard_1.requireAdminOfShop)(orderData?.shopId, request.auth?.uid);
         // Initialize EmailOrchestrator
         const orchestrator = new EmailOrchestrator_1.EmailOrchestrator();
         // Send admin notification email via orchestrator

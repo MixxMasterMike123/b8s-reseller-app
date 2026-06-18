@@ -34,3 +34,57 @@ export async function requirePlatform(authUid?: string): Promise<void> {
     throw new HttpsError('permission-denied', 'Platform access required');
   }
 }
+
+// The caller's resolved admin identity (read from their users/{uid} DOC, not the
+// token claim — so a demotion/shop-move takes effect immediately, matching the
+// firestore.rules convention of reading userDoc()).
+export interface AdminContext {
+  uid: string;
+  role: string;
+  platform: boolean;
+  shopId: string | null;
+}
+
+// Resolve + assert the caller is an admin, returning their tenant context.
+// Throws like requireAdmin if not an admin.
+export async function getAdminContext(authUid?: string): Promise<AdminContext> {
+  if (!authUid) {
+    throw new HttpsError('unauthenticated', 'Authentication required');
+  }
+  const snap = await db.collection('users').doc(authUid).get();
+  const data = snap.data();
+  if (!snap.exists || data?.role !== 'admin') {
+    throw new HttpsError('permission-denied', 'Admin access required');
+  }
+  return {
+    uid: authUid,
+    role: data!.role,
+    platform: data?.platform === true,
+    shopId: data?.shopId ?? null,
+  };
+}
+
+// TENANT ISOLATION (the core multi-tenant guard for Admin-SDK functions, which
+// BYPASS Firestore security rules — so the shop boundary MUST be enforced here
+// in code). Asserts the caller is an admin who may administer `targetShopId`:
+// a platform super-admin may act on ANY shop; a shop admin only on their OWN.
+// Mirrors isAdminOfShop(shopId) in firestore.rules. Returns the caller context.
+//
+// IMPORTANT: `targetShopId` must be derived from a TRUSTWORTHY source — the
+// resource being mutated (e.g. the target customer/order/affiliate doc's
+// shopId), NEVER from a caller-supplied request payload field. Passing the
+// request's own shopId here would defeat the check.
+export async function requireAdminOfShop(
+  targetShopId: string | null | undefined,
+  authUid?: string
+): Promise<AdminContext> {
+  const ctx = await getAdminContext(authUid);
+  if (ctx.platform) return ctx; // platform bypasses shop-scoping
+  if (!targetShopId || ctx.shopId !== targetShopId) {
+    throw new HttpsError(
+      'permission-denied',
+      'Tenant isolation: not an admin of this shop'
+    );
+  }
+  return ctx;
+}
