@@ -1,6 +1,6 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SimpleAuthContextProvider } from './contexts/SimpleAuthContext';
 import { OrderProvider } from './contexts/OrderContext';
 import { CartProvider } from './contexts/CartContext';
@@ -31,6 +31,7 @@ import ImpersonationIntake from './components/auth/ImpersonationIntake';
 import PlatformShops from './pages/platform/PlatformShops';
 import PlatformAddons from './pages/platform/PlatformAddons';
 import LoginPage from './pages/LoginPage';
+import LandingPage from './pages/LandingPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsers from './pages/admin/AdminUsers';
@@ -122,6 +123,15 @@ const ConditionalTranslationProvider = ({ children, appMode }) => {
     return <TranslationProvider>{children}</TranslationProvider>;
   }
 };
+
+// Root gate on the admin host: a logged-in user goes straight to the console;
+// everyone else gets the public meteorpr landing page (the login gateway).
+function LandingGate() {
+  const { currentUser, loading } = useAuth();
+  if (loading) return null;
+  if (currentUser) return <Navigate to="/admin" replace />;
+  return <LandingPage />;
+}
 
 function App() {
   // 🚂 WAGON SYSTEM: State for wagon routes
@@ -267,8 +277,9 @@ function App() {
               {/* Firebase Auth Action Handler - Email Verification */}
               <Route path="/__/auth/action" element={<EmailVerificationHandler />} />
 
-              {/* Root goes straight to the admin console (login-gated) */}
-              <Route path="/" element={<Navigate to="/admin" replace />} />
+              {/* Root: public meteorpr landing page (login gateway). Logged-in
+                  users are bounced to the console; logged-out visitors get the LP. */}
+              <Route path="/" element={<LandingGate />} />
 
               {/* Admin Routes - Grouped under /admin prefix */}
               <Route path="/admin" element={
