@@ -26,13 +26,40 @@ service firebase.storage {
       return request.auth != null && request.auth.token.platform == true;
     }
 
+    // Tenant-isolation (Phase B): a write is allowed only by the PLATFORM
+    // operator (cross-shop) or by an admin whose trusted `shopId` claim matches
+    // the shop segment of the path. This is the storage analogue of the
+    // firestore.rules shop scoping — the claim is synced by syncAdminClaims and
+    // cannot be spoofed by the client.
+    function isAdminOfShop(shopId) {
+      return isPlatform() || (isAdmin() && request.auth.token.shopId == shopId);
+    }
+
+    // ⚠️ STORAGE RULES MATCHING NOTE (why the LEGACY blocks below are READ-ONLY):
+    // In rules_version '2', a path like products/{shopId}/p1/x.jpg matches BOTH
+    // the partitioned `match /products/{shopId}/{allPaths=**}` AND the flat
+    // `match /products/{allPaths=**}` — and access is granted if EITHER allows
+    // it (OR-semantics). If the legacy flat block kept `allow write: if isAdmin()`
+    // it would RE-OPEN the cross-shop write hole on the new partitioned paths
+    // too (a shop-X admin could write products/shopY/...). So every LEGACY block
+    // is READ-ONLY: it only keeps un-migrated files RENDERING during the
+    // transition; ALL writes go through the partitioned blocks (every uploader
+    // now writes partitioned). After migration (Phase B step 5) delete them.
+
     // User profile images
     match /users/{userId}/profile.jpg {
       allow read: if true;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Order attachments
+    // Order attachments.
+    // NOTE (Phase B / tenant-isolation): order attachments are keyed by an
+    // unguessable random orderId and the order doc itself carries shopId in
+    // Firestore. Read is already gated to the owning customer or an admin, and
+    // an admin would need to know the exact orderId to write. This is LOW RISK,
+    // so shopId-partitioning the storage path here is DEFERRED — left as-is to
+    // avoid breaking the per-order path. Revisit if order attachments ever
+    // become enumerable.
     match /orders/{orderId}/{fileName} {
       allow read: if request.auth != null && (
         isAdmin() ||
@@ -44,61 +71,121 @@ service firebase.storage {
       );
     }
 
-    // Product images
+    // Product images — PARTITIONED by shopId. New uploads land at
+    // products/{shopId}/{productId}/... Public read; write gated to the
+    // shop's own admin (or platform).
+    match /products/{shopId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdminOfShop(shopId);
+    }
+
+    // LEGACY FLAT PATH (READ-ONLY) — remove after migration (Phase B step 5).
+    // Keeps existing pre-partition product images readable during transition.
+    // New uploads target products/{shopId}/... Write intentionally omitted (see
+    // the matching note above) so this can't re-open cross-shop writes.
     match /products/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
     }
 
     // Storefront branding (logo + hero + gallery images), set via the admin
-    // Butik page. Public read so anonymous shoppers see them; admin-only write.
+    // Butik page. PARTITIONED by shopId. Public read so anonymous shoppers see
+    // them; write gated to the shop's own admin (or platform).
+    match /branding/{shopId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdminOfShop(shopId);
+    }
+
+    // LEGACY FLAT PATH (READ-ONLY) — remove after migration (Phase B step 5).
+    // Keeps existing pre-partition branding images readable during transition.
     match /branding/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
     }
 
-    // Marketing materials
+    // Marketing materials — generic (PARTITIONED by shopId).
+    // Any authenticated user of the shop can read; write gated to shop admin.
+    match /marketing-materials/{shopId}/generic/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if isAdminOfShop(shopId);
+    }
+
+    // Customer-specific marketing materials (PARTITIONED by shopId).
+    // Customer self-read OR shop admin; write gated to shop admin.
+    match /marketing-materials/{shopId}/customers/{customerId}/{fileName} {
+      allow read: if request.auth != null && (
+        isAdminOfShop(shopId) ||
+        request.auth.uid == customerId
+      );
+      allow write: if isAdminOfShop(shopId);
+    }
+
+    // CRM documents for customers (PARTITIONED by shopId).
+    match /marketing-materials/{shopId}/customers/{customerId}/crm-documents/{fileName} {
+      allow read: if request.auth != null && (
+        isAdminOfShop(shopId) ||
+        request.auth.uid == customerId
+      );
+      allow write: if isAdminOfShop(shopId);
+    }
+
+    // LEGACY FLAT PATHS (READ-ONLY) — remove after migration (Phase B step 5).
+    // Pre-partition marketing materials. Kept readable during transition; new
+    // uploads target the partitioned paths above. Writes intentionally omitted.
     match /marketing-materials/generic/{fileName} {
       allow read: if request.auth != null;
-      allow write: if isAdmin();
     }
-
-    // Customer-specific marketing materials
     match /marketing-materials/customers/{customerId}/{fileName} {
       allow read: if request.auth != null && (
         isAdmin() ||
         request.auth.uid == customerId
       );
-      allow write: if isAdmin();
     }
-
-    // CRM documents for customers
     match /marketing-materials/customers/{customerId}/crm-documents/{fileName} {
       allow read: if request.auth != null && (
         isAdmin() ||
         request.auth.uid == customerId
       );
-      allow write: if isAdmin();
     }
 
-    // Affiliate invoice storage (admin upload, affiliates read their own)
+    // Affiliate invoice storage (PARTITIONED by shopId).
+    // Affiliate self-read OR shop admin; write gated to shop admin.
+    match /affiliates/{shopId}/{affiliateId}/invoices/{fileName} {
+      allow read: if request.auth != null && (
+        isAdminOfShop(shopId) ||
+        request.auth.uid == affiliateId
+      );
+      allow write: if isAdminOfShop(shopId);
+    }
+
+    // LEGACY FLAT PATH (READ-ONLY) — remove after migration (Phase B step 5).
     match /affiliates/{affiliateId}/invoices/{fileName} {
       allow read: if request.auth != null && (
         isAdmin() ||
         request.auth.uid == affiliateId
       );
-      allow write: if isAdmin();
     }
 
-    // Admin-only customer documents
+    // Admin-only customer documents (PARTITIONED by shopId).
+    match /admin-documents/{shopId}/customers/{customerId}/{fileName} {
+      allow read, write: if isAdminOfShop(shopId);
+    }
+
+    // LEGACY FLAT PATH (READ-ONLY) — remove after migration (Phase B step 5).
+    // (Read stays isAdmin during transition so un-migrated admin docs render;
+    // the migration closes this. Write omitted — goes to the partitioned path.)
     match /admin-documents/customers/{customerId}/{fileName} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin();
     }
 
-    // Page attachments (CMS file upload system)
+    // Page attachments (CMS file upload system) — PARTITIONED by shopId.
+    // Public read for published page attachments; write gated to shop admin.
+    match /pages/{shopId}/{pageId}/attachments/{fileName} {
+      allow read: if true;
+      allow write: if isAdminOfShop(shopId);
+    }
+
+    // LEGACY FLAT PATH (READ-ONLY) — remove after migration (Phase B step 5).
     match /pages/{pageId}/attachments/{fileName} {
       allow read: if true;
-      allow write: if isAdmin();
     }
   }
 }

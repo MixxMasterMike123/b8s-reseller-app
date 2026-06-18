@@ -300,12 +300,12 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
       // Resolve images.
       let mainImageUrl = formData.b2cImageUrl;
       if (mainImageFile) {
-        mainImageUrl = await uploadImageToStorage(mainImageFile, `products/${productId}`, 'b2c_main');
+        mainImageUrl = await uploadImageToStorage(mainImageFile, `products/${shopId}/${productId}`, 'b2c_main');
       }
 
       let gallery = [...existingGallery];
       for (let i = 0; i < galleryFiles.length; i++) {
-        const u = await uploadImageToStorage(galleryFiles[i], `products/${productId}`, `b2c_gallery_${Date.now()}_${i}`);
+        const u = await uploadImageToStorage(galleryFiles[i], `products/${shopId}/${productId}`, `b2c_gallery_${Date.now()}_${i}`);
         gallery.push(u);
       }
       for (const url of imagesToDelete) await deleteImageFromStorage(url);

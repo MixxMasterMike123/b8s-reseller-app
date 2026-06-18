@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
+import { useShopId } from '../../contexts/ShopContext';
 import { toast } from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
 import {
@@ -32,6 +33,7 @@ import { Page, Card, CardSection, RightRail, Button, StatusPill } from '../../co
 
 const AdminUserEdit = () => {
   const { userId } = useParams();
+  const shopId = useShopId();
   const navigate = useNavigate();
   const { getAllUsers, updateAnyUserProfile, updateUserMarginal, updateUserRole, toggleUserActive, isAdmin, currentUser, sendCustomerWelcomeEmail, deleteCustomerAccount } = useAuth();
   const { getContentValue } = useContentTranslation();
@@ -235,7 +237,7 @@ const AdminUserEdit = () => {
         name: materialFormData.name,
         description: materialFormData.description,
         category: materialFormData.category
-      });
+      }, shopId);
       
       toast.success('Material uppladdat');
       setMaterialFormData({ name: '', description: '', category: 'kundspecifikt', file: null });
@@ -315,7 +317,7 @@ const AdminUserEdit = () => {
         description: adminDocFormData.description,
         notes: adminDocFormData.notes,
         category: adminDocFormData.category
-      }, currentUser?.uid);
+      }, currentUser?.uid, shopId);
       
       toast.success('Admin-dokument uppladdat');
       setAdminDocFormData({ title: '', description: '', notes: '', category: 'dokument', file: null });

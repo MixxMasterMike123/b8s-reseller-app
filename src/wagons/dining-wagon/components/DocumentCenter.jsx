@@ -18,8 +18,10 @@ import {
 import { db, storage } from '../../../firebase/config';
 import { collection, addDoc, deleteDoc, doc, onSnapshot, query, where, orderBy } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { useShopId } from '../../../contexts/ShopContext';
 
 const DocumentCenter = ({ contactId, contactName, isOpen, onClose }) => {
+  const shopId = useShopId();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -90,8 +92,10 @@ const DocumentCenter = ({ contactId, contactName, isOpen, onClose }) => {
         // Generate unique filename
         const timestamp = Date.now();
         const filename = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-        // 🚂 WAGON TRICK: Use existing marketing-materials path to avoid new storage rules
-        const filePath = `marketing-materials/customers/${contactId}/crm-documents/${filename}`;
+        // 🚂 WAGON TRICK: Use the marketing-materials crm-documents path.
+        // PARTITIONED by shopId (Phase B tenant isolation) so the storage rule
+        // isAdminOfShop(shopId) can scope the write.
+        const filePath = `marketing-materials/${shopId}/customers/${contactId}/crm-documents/${filename}`;
 
         // Upload to Firebase Storage
         const storageRef = ref(storage, filePath);

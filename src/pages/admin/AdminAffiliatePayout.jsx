@@ -124,7 +124,7 @@ const AdminAffiliatePayout = () => {
     try {
       // Upload invoice PDF
       setUploading(true);
-      const uploadResult = await uploadInvoicePDF(invoiceFile, affiliateId, invoiceNumber);
+      const uploadResult = await uploadInvoicePDF(invoiceFile, affiliateId, invoiceNumber, shopId);
       setUploading(false);
 
       // Process payout

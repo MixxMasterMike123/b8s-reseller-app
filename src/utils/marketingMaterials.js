@@ -88,8 +88,10 @@ export const uploadGenericMaterial = async (file, materialData, shopId) => {
       throw new Error('Filtypen stöds inte');
     }
 
-    // Upload file to Firebase Storage
-    const storageRef = ref(storage, `marketing-materials/generic/${Date.now()}_${file.name}`);
+    // Upload file to Firebase Storage. PARTITIONED by shopId (Phase B tenant
+    // isolation) so the storage rule isAdminOfShop(shopId) can scope the write.
+    const resolvedShopId = shopId || DEFAULT_SHOP_ID;
+    const storageRef = ref(storage, `marketing-materials/${resolvedShopId}/generic/${Date.now()}_${file.name}`);
     const snapshot = await uploadBytes(storageRef, file);
     const downloadURL = await getDownloadURL(snapshot.ref);
 
@@ -203,14 +205,16 @@ export const deleteGenericMaterial = async (materialId) => {
 };
 
 // Customer-Specific Marketing Materials Functions
-export const uploadCustomerMaterial = async (customerId, file, materialData) => {
+export const uploadCustomerMaterial = async (customerId, file, materialData, shopId) => {
   try {
     if (!isValidFileType(file.name)) {
       throw new Error('Filtypen stöds inte');
     }
 
-    // Upload file to Firebase Storage
-    const storageRef = ref(storage, `marketing-materials/customers/${customerId}/${Date.now()}_${file.name}`);
+    // Upload file to Firebase Storage. PARTITIONED by shopId (Phase B tenant
+    // isolation) so the storage rule isAdminOfShop(shopId) can scope the write.
+    const resolvedShopId = shopId || DEFAULT_SHOP_ID;
+    const storageRef = ref(storage, `marketing-materials/${resolvedShopId}/customers/${customerId}/${Date.now()}_${file.name}`);
     const snapshot = await uploadBytes(storageRef, file);
     const downloadURL = await getDownloadURL(snapshot.ref);
 

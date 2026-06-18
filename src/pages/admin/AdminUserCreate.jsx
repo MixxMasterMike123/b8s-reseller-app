@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useShopId } from '../../contexts/ShopContext';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { storage, db } from '../../firebase/config';
@@ -15,6 +16,7 @@ import {
 
 const AdminUserCreate = () => {
   const navigate = useNavigate();
+  const shopId = useShopId();
   const { createUserProfile, isAdmin, currentUser } = useAuth();
   
   const [saving, setSaving] = useState(false);
@@ -126,8 +128,9 @@ const AdminUserCreate = () => {
     setUploadingDocs(true);
     try {
       const uploadPromises = pendingDocuments.map(async (doc) => {
-        // Upload file to Firebase Storage (admin-only location)
-        const storageRef = ref(storage, `admin-documents/customers/${userId}/${Date.now()}_${doc.file.name}`);
+        // Upload file to Firebase Storage (admin-only, shopId-partitioned —
+        // Phase B tenant isolation; scoped by isAdminOfShop(shopId)).
+        const storageRef = ref(storage, `admin-documents/${shopId}/customers/${userId}/${Date.now()}_${doc.file.name}`);
         const snapshot = await uploadBytes(storageRef, doc.file);
         const downloadURL = await getDownloadURL(snapshot.ref);
 

@@ -90,6 +90,9 @@ export const uploadImageToStorage = async (file, pathPrefix, imageType) => {
 };
 
 // Convenience wrapper for storefront branding images (logo/hero).
-// kind is 'logo' | 'hero'. Stored under branding/.
-export const uploadStoreImage = (file, kind) =>
-  uploadImageToStorage(file, 'branding', kind);
+// kind is 'logo' | 'hero'. Stored under branding/{shopId}/ (Phase B tenant
+// isolation — the path is shopId-partitioned so the storage rule
+// isAdminOfShop(shopId) can scope writes to the owning shop). Callers MUST
+// pass the active shopId (from useShopId()).
+export const uploadStoreImage = (file, kind, shopId) =>
+  uploadImageToStorage(file, `branding/${shopId}`, kind);

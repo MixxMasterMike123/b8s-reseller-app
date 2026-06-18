@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
+import { useShopId } from '../../contexts/ShopContext';
 import AppLayout from '../../components/layout/AppLayout';
 import ContentLanguageIndicator from '../../components/ContentLanguageIndicator';
 import toast from 'react-hot-toast';
@@ -33,6 +34,7 @@ import { ArrowDownTrayIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react
 
 function AdminCustomerMarketingMaterials() {
   const { customerId } = useParams();
+  const shopId = useShopId();
   const { isAdmin } = useAuth();
   const { t, currentLanguage } = useTranslation();
   const { getContentValue, setContentValue } = useContentTranslation();
@@ -124,7 +126,7 @@ function AdminCustomerMarketingMaterials() {
         name: formData.name,
         description: formData.description,
         category: formData.category
-      });
+      }, shopId);
 
       toast.success('Material uppladdat för kund');
 

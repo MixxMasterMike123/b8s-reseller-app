@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
+import { useShopId } from '../../contexts/ShopContext';
 import AppLayout from '../../components/layout/AppLayout';
 import ContentLanguageIndicator from '../../components/ContentLanguageIndicator';
 import toast from 'react-hot-toast';
@@ -21,6 +22,7 @@ import { Page, Card, CardSection, RightRail, Button } from '../../components/adm
 
 function AdminCustomerMarketingMaterialEdit() {
   const { customerId, materialId } = useParams();
+  const shopId = useShopId();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const { currentLanguage } = useTranslation();
@@ -131,7 +133,7 @@ function AdminCustomerMarketingMaterialEdit() {
           name: formData.name,
           description: formData.description,
           category: formData.category
-        });
+        }, shopId);
         toast.success('Kundspecifikt material ersatt framgångsrikt');
       } else {
         // Update metadata only

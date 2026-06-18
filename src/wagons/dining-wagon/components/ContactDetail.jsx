@@ -36,6 +36,7 @@ import toast from 'react-hot-toast';
 import { doc, updateDoc, Timestamp, collection, addDoc, orderBy, query, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useShopId } from '../../../contexts/ShopContext';
 import {
   getAdminDocuments,
   uploadAdminDocument,
@@ -189,6 +190,7 @@ const InlineActivityEditor = ({ activity, onSave, onCancel, contactName }) => {
 const ContactDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const shopId = useShopId();
   const { currentUser, userData, isAdmin, getAllUsers } = useAuth();
   const { contacts, getContact, updateContact, deleteContact, activateContact, hasInitialized, getAllTags } = useDiningContacts();
   const { getActivitiesByContact, addActivity, updateActivity, deleteActivity } = useDiningActivities();
@@ -654,7 +656,7 @@ const ContactDetail = () => {
         category: adminDocCategory,
         notes: adminDocNotes,
         title: adminDocFile.name.split('.')[0]
-      }, currentUser?.uid);
+      }, currentUser?.uid, shopId);
       
       toast.success('Admin-dokument uppladdat');
       setAdminDocFile(null);

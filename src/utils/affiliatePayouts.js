@@ -26,9 +26,12 @@ import { calculateCommission } from './affiliateCalculations';
 const storage = getStorage();
 
 /**
- * Upload invoice PDF to Firebase Storage
+ * Upload invoice PDF to Firebase Storage.
+ * PARTITIONED by shopId (Phase B tenant isolation) so the storage rule
+ * isAdminOfShop(shopId) can scope the write. Callers MUST pass the active
+ * shopId (from useShopId()).
  */
-export const uploadInvoicePDF = async (file, affiliateId, invoiceNumber) => {
+export const uploadInvoicePDF = async (file, affiliateId, invoiceNumber, shopId) => {
   try {
     // Validate file type
     if (file.type !== 'application/pdf') {
@@ -40,10 +43,11 @@ export const uploadInvoicePDF = async (file, affiliateId, invoiceNumber) => {
       throw new Error('Fakturafilen är för stor (max 10MB)');
     }
 
-    // Create storage reference
+    // Create storage reference (shopId-partitioned).
+    const resolvedShopId = shopId || DEFAULT_SHOP_ID;
     const timestamp = Date.now();
     const fileName = `invoice_${invoiceNumber}_${timestamp}.pdf`;
-    const storageRef = ref(storage, `affiliates/${affiliateId}/invoices/${fileName}`);
+    const storageRef = ref(storage, `affiliates/${resolvedShopId}/${affiliateId}/invoices/${fileName}`);
 
     // Upload file
     const snapshot = await uploadBytes(storageRef, file);

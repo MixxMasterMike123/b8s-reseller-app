@@ -1,5 +1,6 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from '../firebase/config';
+import { DEFAULT_SHOP_ID } from '../config/tenancy';
 
 // File type configurations
 export const ALLOWED_FILE_TYPES = {
@@ -43,8 +44,11 @@ export const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-// Upload file to Firebase Storage
-export const uploadFile = async (file, pageId, userId) => {
+// Upload file to Firebase Storage.
+// PARTITIONED by shopId (Phase B tenant isolation) so the storage rule
+// isAdminOfShop(shopId) can scope the write. Callers MUST pass the active
+// shopId (from useShopId()).
+export const uploadFile = async (file, pageId, userId, shopId) => {
   try {
     // Validate file
     const errors = validateFile(file);
@@ -52,11 +56,12 @@ export const uploadFile = async (file, pageId, userId) => {
       throw new Error(errors.join(', '));
     }
 
-    // Generate unique filename
+    // Generate unique filename (shopId-partitioned path)
+    const resolvedShopId = shopId || DEFAULT_SHOP_ID;
     const timestamp = Date.now();
     const fileExtension = file.name.split('.').pop();
     const fileName = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    const storagePath = `pages/${pageId}/attachments/${fileName}`;
+    const storagePath = `pages/${resolvedShopId}/${pageId}/attachments/${fileName}`;
 
     // Create storage reference
     const storageRef = ref(storage, storagePath);

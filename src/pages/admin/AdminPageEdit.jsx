@@ -218,7 +218,7 @@ const AdminPageEdit = () => {
     setUploadingFiles(true);
     try {
       const uploadPromises = selectedFiles.map(file =>
-        uploadFile(file, isNewPage ? 'temp' : id, currentUser.uid)
+        uploadFile(file, isNewPage ? 'temp' : id, currentUser.uid, shopId)
       );
 
       const uploadedFiles = await Promise.all(uploadPromises);

@@ -132,7 +132,7 @@ const AdminStorefront = () => {
     }
     try {
       setUploading((u) => ({ ...u, [kind]: true }));
-      const url = await uploadStoreImage(file, kind);
+      const url = await uploadStoreImage(file, kind, shopId);
       setField(kind === 'logo' ? 'logoUrl' : 'heroImageUrl', url);
       toast.success(`${kind === 'logo' ? 'Logotyp' : 'Hero-bild'} uppladdad. Glöm inte att spara.`);
     } catch (error) {
@@ -193,7 +193,7 @@ const AdminStorefront = () => {
     }
     try {
       setGalleryUploading(i);
-      const url = await uploadStoreImage(file, 'hero');
+      const url = await uploadStoreImage(file, 'hero', shopId);
       setGalleryItem(i, 'imageUrl', url);
       toast.success('Bild uppladdad. Glöm inte att spara.');
     } catch (error) {

@@ -11,13 +11,14 @@ import {
   orderBy,
   serverTimestamp 
 } from 'firebase/firestore';
-import { 
-  ref, 
-  uploadBytes, 
-  getDownloadURL, 
-  deleteObject 
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject
 } from 'firebase/storage';
 import { db, storage } from '../firebase/config';
+import { DEFAULT_SHOP_ID } from '../config/tenancy';
 
 // Admin-only document management utilities
 // These documents are NOT visible to customers - only to admins
@@ -80,15 +81,19 @@ export const isValidFileType = (fileName) => {
   return validExtensions.includes(extension);
 };
 
-// Upload admin document for specific customer
-export const uploadAdminDocument = async (customerId, file, documentData, uploadedBy) => {
+// Upload admin document for specific customer.
+// PARTITIONED by shopId (Phase B tenant isolation) so the storage rule
+// isAdminOfShop(shopId) can scope the write. Callers MUST pass the active
+// shopId (from useShopId()).
+export const uploadAdminDocument = async (customerId, file, documentData, uploadedBy, shopId) => {
   try {
     if (!isValidFileType(file.name)) {
       throw new Error('Filtypen stöds inte');
     }
 
-    // Upload file to Firebase Storage (admin-only location)
-    const storageRef = ref(storage, `admin-documents/customers/${customerId}/${Date.now()}_${file.name}`);
+    // Upload file to Firebase Storage (admin-only, shopId-partitioned location)
+    const resolvedShopId = shopId || DEFAULT_SHOP_ID;
+    const storageRef = ref(storage, `admin-documents/${resolvedShopId}/customers/${customerId}/${Date.now()}_${file.name}`);
     const snapshot = await uploadBytes(storageRef, file);
     const downloadURL = await getDownloadURL(snapshot.ref);
 
