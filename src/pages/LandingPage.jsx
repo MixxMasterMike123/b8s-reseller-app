@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 /**
@@ -52,14 +52,55 @@ const LandingPage = () => {
     transition: `opacity .7s cubic-bezier(.22,1,.36,1) ${delay}ms, transform .7s cubic-bezier(.22,1,.36,1) ${delay}ms`,
   });
 
+  // A field of meteors at RANDOMIZED placements/lengths/timing. Computed once
+  // per mount (varies each visit) and reused so re-renders don't reshuffle.
+  const meteors = useMemo(() => {
+    const n = 16;
+    return Array.from({ length: n }, (_, i) => {
+      const r = (min, max) => min + Math.random() * (max - min);
+      return {
+        id: i,
+        left: r(-5, 100),       // vw — can start slightly off the left edge
+        top: r(-12, 55),        // vh — mostly upper half, some above the fold
+        len: r(70, 200),        // px streak length
+        dur: r(3.6, 8.5),       // s fall duration
+        delay: r(0, 9),         // s stagger so they don't fall in sync
+        angle: r(28, 40),       // deg — varied diagonal
+        opacity: r(0.25, 0.7),
+        thin: Math.random() > 0.5 ? 1 : 2, // px streak width
+      };
+    });
+  }, []);
+
   return (
     <div style={styles.root}>
       <style>{KEYFRAMES}</style>
 
-      {/* Atmosphere: dot grid + radial glow + a single drifting meteor streak */}
+      {/* Atmosphere: dot grid + radial glow + a randomized field of meteors */}
       <div style={styles.dotGrid} aria-hidden="true" />
       <div style={styles.glow} aria-hidden="true" />
-      <div style={styles.meteor} aria-hidden="true" />
+      <div style={styles.meteorField} aria-hidden="true">
+        {meteors.map((m) => (
+          <span
+            key={m.id}
+            style={{
+              position: 'absolute',
+              left: `${m.left}vw`,
+              top: `${m.top}vh`,
+              width: m.thin,
+              height: m.len,
+              transformOrigin: 'top right',
+              background: 'linear-gradient(180deg, rgba(125,211,252,0.8), rgba(56,189,248,0.15) 55%, transparent)',
+              borderRadius: 999,
+              opacity: 0,
+              animation: `mprMeteor ${m.dur}s linear ${m.delay}s infinite`,
+              // per-meteor rotation + peak opacity fed to the shared keyframe
+              '--mpr-rot': `rotate(${m.angle}deg)`,
+              '--mpr-peak': m.opacity,
+            }}
+          />
+        ))}
+      </div>
       <div style={styles.vignette} aria-hidden="true" />
 
       {/* Top bar */}
@@ -94,13 +135,17 @@ const LandingPage = () => {
               Logga in till din butik
               <Arrow />
             </Link>
+            <a href="#kontakt" style={styles.ctaSecondary} className="mpr-secondary">
+              Kontakta sälj
+            </a>
             <Link to="/forgot-password" style={styles.ctaGhost} className="mpr-ghost">
               Glömt lösenord?
             </Link>
           </div>
 
           <div style={{ ...styles.reassure, ...rise(360) }}>
-            Endast för inbjudna butiker. Ny butik? Din leverantör sätter upp dig.
+            Endast för inbjudna butiker. Ny butik?{' '}
+            <a href="#kontakt" style={styles.reassureLink} className="mpr-ghost">Hör av dig så fixar vi det.</a>
           </div>
         </div>
 
@@ -119,6 +164,9 @@ const LandingPage = () => {
             </div>
           ))}
         </section>
+
+        {/* Contact sales */}
+        <ContactSection />
       </main>
 
       {/* Footer */}
@@ -131,6 +179,100 @@ const LandingPage = () => {
     </div>
   );
 };
+
+/* Contact-sales section + form. FRONTEND ONLY for now — on submit it shows a
+   success state and logs the payload. TODO: wire a backend (Cloud Function /
+   email) to actually deliver the lead. No real submission happens yet. */
+const ContactSection = () => {
+  const [form, setForm] = useState({ name: '', company: '', email: '', message: '' });
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
+
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.email.trim()) {
+      setError('Fyll i namn och e-post.');
+      return;
+    }
+    setError('');
+    // TODO(backend): POST `form` to a Cloud Function that emails sales / writes
+    // a `leads` doc. Until then we just acknowledge locally.
+    // eslint-disable-next-line no-console
+    console.log('[meteorpr] sales lead (no backend yet):', form);
+    setSent(true);
+  };
+
+  return (
+    <section id="kontakt" style={cStyles.wrap} aria-label="Kontakta sälj">
+      <div style={cStyles.inner}>
+        <div style={cStyles.copy}>
+          <h2 style={cStyles.h2}>Vill du ha en egen butik?</h2>
+          <p style={cStyles.sub}>
+            Berätta lite om dig så hör vi av oss. Vi sätter upp din butik —
+            du behöver bara börja sälja.
+          </p>
+          <ul style={cStyles.points}>
+            <li style={cStyles.point}><Dot /> Inga startavgifter att räkna på</li>
+            <li style={cStyles.point}><Dot /> Igång inom någon dag</li>
+            <li style={cStyles.point}><Dot /> Hjälp hela vägen</li>
+          </ul>
+        </div>
+
+        {sent ? (
+          <div style={cStyles.success} role="status">
+            <div style={cStyles.successIcon}>✓</div>
+            <h3 style={cStyles.successTitle}>Tack — vi hör av oss!</h3>
+            <p style={cStyles.successBody}>
+              Vi återkommer till {form.email} så snart vi kan.
+            </p>
+          </div>
+        ) : (
+          <form style={cStyles.form} onSubmit={onSubmit} noValidate>
+            <div style={cStyles.field2}>
+              <Input label="Namn" value={form.name} onChange={set('name')} autoComplete="name" />
+              <Input label="Företag" value={form.company} onChange={set('company')} autoComplete="organization" />
+            </div>
+            <Input label="E-post" type="email" value={form.email} onChange={set('email')} autoComplete="email" />
+            <Field label="Meddelande">
+              <textarea
+                rows={3}
+                value={form.message}
+                onChange={set('message')}
+                placeholder="Vad säljer du? Vad vill du veta?"
+                style={cStyles.textarea}
+                className="mpr-input"
+              />
+            </Field>
+            {error && <div style={cStyles.error}>{error}</div>}
+            <button type="submit" style={cStyles.submit} className="mpr-cta">
+              Skicka <Arrow />
+            </button>
+            <p style={cStyles.formNote}>Vi använder bara dina uppgifter för att kontakta dig.</p>
+          </form>
+        )}
+      </div>
+    </section>
+  );
+};
+
+const Field = ({ label, children }) => (
+  <label style={cStyles.label}>
+    <span style={cStyles.labelText}>{label}</span>
+    {children}
+  </label>
+);
+
+const Input = ({ label, type = 'text', ...rest }) => (
+  <Field label={label}>
+    <input type={type} style={cStyles.input} className="mpr-input" {...rest} />
+  </Field>
+);
+
+const Dot = () => (
+  <span style={{ width: 6, height: 6, borderRadius: 999, background: '#38bdf8', flex: '0 0 auto', boxShadow: '0 0 0 3px rgba(56,189,248,0.18)' }} />
+);
 
 /* Brand mark — a minimal meteor: a filled disc with a tapering streak. */
 const Mark = () => (
@@ -184,13 +326,12 @@ const styles = {
     background: 'radial-gradient(closest-side, rgba(14,165,233,0.20), rgba(14,165,233,0.06) 55%, transparent 75%)',
     filter: 'blur(8px)',
   },
-  meteor: {
-    position: 'absolute', top: '8%', right: '12%', width: 2, height: 150,
-    pointerEvents: 'none', transformOrigin: 'top right',
-    transform: 'rotate(35deg)',
-    background: 'linear-gradient(180deg, rgba(125,211,252,0.65), transparent)',
-    animation: 'mprMeteor 7s ease-in-out infinite',
-    opacity: 0.5,
+  meteorField: {
+    position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden',
+    // fade the whole field toward the lower half so meteors read as falling
+    // "from the sky" and don't clutter the content/cards area.
+    maskImage: 'linear-gradient(180deg, #000 0%, #000 45%, transparent 78%)',
+    WebkitMaskImage: 'linear-gradient(180deg, #000 0%, #000 45%, transparent 78%)',
   },
   vignette: {
     position: 'absolute', inset: 0, pointerEvents: 'none',
@@ -249,11 +390,19 @@ const styles = {
     boxShadow: '0 10px 30px -8px rgba(14,165,233,0.55), inset 0 1px 0 rgba(255,255,255,0.4)',
     transition: 'transform .18s ease, box-shadow .18s ease',
   },
+  ctaSecondary: {
+    display: 'inline-flex', alignItems: 'center', gap: 7,
+    fontFamily: FONT_BODY, fontSize: 15, fontWeight: 600, color: '#cfe2f5',
+    textDecoration: 'none', padding: '12px 20px', borderRadius: 11,
+    border: '1px solid rgba(125,211,252,0.22)', background: 'rgba(125,211,252,0.05)',
+    transition: 'background .2s ease, border-color .2s ease',
+  },
   ctaGhost: {
     fontFamily: FONT_BODY, fontSize: 14.5, fontWeight: 500, color: '#9fb2cb',
     textDecoration: 'none', padding: '13px 6px', transition: 'color .2s ease',
   },
   reassure: { fontSize: 13, color: '#6f829b', margin: '20px 0 0' },
+  reassureLink: { color: '#8fbfe6', textDecoration: 'none', fontWeight: 500 },
 
   grid: {
     display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(228px, 1fr))',
@@ -290,20 +439,88 @@ const styles = {
   footerMeta: { fontSize: 12.5, color: '#5f7290' },
 };
 
+const cStyles = {
+  wrap: { margin: 'clamp(40px, 7vh, 80px) 0 72px', scrollMarginTop: 80 },
+  inner: {
+    display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gap: 'clamp(24px, 4vw, 56px)', alignItems: 'center',
+    padding: 'clamp(26px, 4vw, 44px)', borderRadius: 20,
+    background: 'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.012))',
+    border: '1px solid rgba(125,211,252,0.12)',
+    boxShadow: '0 30px 80px -40px rgba(2,8,20,0.9)',
+  },
+  copy: {},
+  h2: {
+    fontFamily: FONT_DISPLAY, fontWeight: 600, fontSize: 'clamp(26px, 3.4vw, 36px)',
+    letterSpacing: '-0.025em', lineHeight: 1.08, color: '#f3f8ff', margin: 0,
+  },
+  sub: { fontSize: 15.5, lineHeight: 1.55, color: '#a7b8cf', margin: '14px 0 0', maxWidth: 380 },
+  points: { listStyle: 'none', padding: 0, margin: '22px 0 0', display: 'grid', gap: 11 },
+  point: { display: 'flex', alignItems: 'center', gap: 11, fontSize: 14, color: '#c2d2e6' },
+
+  form: { display: 'grid', gap: 14 },
+  field2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 },
+  label: { display: 'grid', gap: 7 },
+  labelText: { fontSize: 12.5, fontWeight: 600, letterSpacing: '0.01em', color: '#8ea3bd' },
+  input: {
+    fontFamily: FONT_BODY, fontSize: 14.5, color: '#eef4fb',
+    background: 'rgba(6,11,20,0.7)', border: '1px solid rgba(125,211,252,0.16)',
+    borderRadius: 10, padding: '11px 13px', outline: 'none', width: '100%',
+    transition: 'border-color .18s ease, box-shadow .18s ease',
+  },
+  textarea: {
+    fontFamily: FONT_BODY, fontSize: 14.5, color: '#eef4fb', resize: 'vertical',
+    background: 'rgba(6,11,20,0.7)', border: '1px solid rgba(125,211,252,0.16)',
+    borderRadius: 10, padding: '11px 13px', outline: 'none', width: '100%',
+    transition: 'border-color .18s ease, box-shadow .18s ease',
+  },
+  error: { fontSize: 13, color: '#fca5a5', margin: '-2px 0 0' },
+  submit: {
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+    fontFamily: FONT_BODY, fontSize: 15, fontWeight: 600, color: '#04121f',
+    cursor: 'pointer', padding: '13px 22px', borderRadius: 11, border: 'none',
+    background: 'linear-gradient(180deg, #7dd3fc, #0ea5e9)',
+    boxShadow: '0 10px 30px -8px rgba(14,165,233,0.55), inset 0 1px 0 rgba(255,255,255,0.4)',
+    transition: 'transform .18s ease, box-shadow .18s ease', justifySelf: 'start',
+  },
+  formNote: { fontSize: 12, color: '#647890', margin: 0 },
+
+  success: {
+    display: 'grid', justifyItems: 'start', gap: 8,
+    padding: '28px 24px', borderRadius: 14,
+    background: 'linear-gradient(180deg, rgba(56,189,248,0.08), rgba(56,189,248,0.02))',
+    border: '1px solid rgba(56,189,248,0.25)',
+  },
+  successIcon: {
+    width: 38, height: 38, borderRadius: 999, display: 'grid', placeItems: 'center',
+    background: 'linear-gradient(180deg, #7dd3fc, #0ea5e9)', color: '#04121f',
+    fontWeight: 800, fontSize: 18,
+  },
+  successTitle: { fontFamily: FONT_DISPLAY, fontWeight: 600, fontSize: 19, color: '#eaf2fb', margin: '6px 0 0' },
+  successBody: { fontSize: 14, color: '#9fb2cb', margin: 0 },
+};
+
 const KEYFRAMES = `
+  /* Meteors fall along their own rotated axis (translateY in the rotated frame
+     reads as a diagonal down-right streak). Each <span> sets its own --mpr-peak
+     and rotation inline; this keyframe just drives the travel + fade so all 16
+     share one declaration. */
   @keyframes mprMeteor {
-    0%   { opacity: 0; transform: rotate(35deg) translateY(-40px); }
-    12%  { opacity: 0.5; }
-    40%  { opacity: 0; transform: rotate(35deg) translateY(120px); }
-    100% { opacity: 0; transform: rotate(35deg) translateY(120px); }
+    0%   { opacity: 0; transform: var(--mpr-rot, rotate(35deg)) translateY(-60px); }
+    8%   { opacity: var(--mpr-peak, 0.5); }
+    70%  { opacity: var(--mpr-peak, 0.5); }
+    100% { opacity: 0; transform: var(--mpr-rot, rotate(35deg)) translateY(380px); }
   }
   .mpr-cta:hover { transform: translateY(-2px); box-shadow: 0 16px 38px -8px rgba(14,165,233,0.65), inset 0 1px 0 rgba(255,255,255,0.5); }
   .mpr-ghost:hover { color: #d7e6f7; }
   .mpr-card:hover { transform: translateY(-3px); border-color: rgba(125,211,252,0.28); background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); }
   .mpr-card:hover span:last-child { transform: scaleX(1); }
-  a.mpr-cta:focus-visible, a.mpr-ghost:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; border-radius: 11px; }
+  .mpr-secondary:hover { background: rgba(125,211,252,0.10); border-color: rgba(125,211,252,0.38); }
+  .mpr-input:focus { border-color: rgba(56,189,248,0.6); box-shadow: 0 0 0 3px rgba(56,189,248,0.14); }
+  .mpr-input::placeholder { color: #5f7290; }
+  .mpr-cta:focus-visible, .mpr-ghost:focus-visible, .mpr-secondary:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; border-radius: 11px; }
   @media (prefers-reduced-motion: reduce) {
-    [style*="mprMeteor"] { animation: none !important; }
+    [style*="mprMeteor"] { animation: none !important; opacity: 0.35 !important; }
   }
 `;
 
