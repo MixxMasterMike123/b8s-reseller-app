@@ -221,7 +221,14 @@ service cloud.firestore {
     // provisions/kills shops; a shop admin may update their OWN shop's config.
     // ============================================================
     match /shops/{shopId} {
-      allow read: if true;
+      // Single-doc GET stays public: the storefront (anonymous) loads its own
+      // shop config by known id (shopConfig.js / ShopGate.jsx use getDoc).
+      allow get: if true;
+      // LIST is PLATFORM-ONLY (tenant-isolation hardening): only the operator
+      // console enumerates all shops (PlatformShops/PlatformAddons). Without
+      // this split, any user could getDocs(shops) and read every tenant's
+      // config/features/ownerUid — cross-tenant enumeration.
+      allow list: if isPlatform();
       allow create, delete: if isPlatform();
       allow update: if isPlatform() ||
         (isAdmin() && userDoc().shopId == shopId);

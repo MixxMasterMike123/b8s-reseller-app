@@ -184,6 +184,10 @@ async function run() {
   await check('shopA admin CANNOT read ambassadorActivities', assertFails(getDoc(doc(shopAAdminDb(), 'ambassadorActivities/aa1'))));
   await check('shopA admin CANNOT read customerDocuments', assertFails(getDoc(doc(shopAAdminDb(), 'customerDocuments/cd1'))));
   await check('shopA admin CANNOT write appSettings', assertFails(setDoc(doc(shopAAdminDb(), 'appSettings/s2'), { k: 'x' })));
+  // shops: single-doc GET public (storefront), LIST platform-only (no cross-tenant enumeration)
+  await check('anon CAN get a single shop doc (storefront config)', assertSucceeds(getDoc(doc(env.unauthenticatedContext().firestore(), 'shops/shopB'))));
+  await check('shopA admin CANNOT LIST all shops (enumeration)', assertFails(getDocs(collection(shopAAdminDb(), 'shops'))));
+  await check('platform CAN list all shops (operator console)', assertSucceeds(getDocs(collection(platformDb(), 'shops'))));
   // adminPresence: read is intentionally cross-admin (isAdmin); the WRITE is the
   // hardened bit — an admin may write ONLY their own presence doc (id == uid).
   await check('shopA admin CANNOT write ANOTHER admin presence doc (not own uid)', assertFails(
