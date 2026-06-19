@@ -91,6 +91,13 @@ import {
 import {
   stripeWebhookV2
 } from './payment/stripeWebhook';
+// Stripe Connect — onboarding callables (Slice 1)
+import {
+  createConnectAccount,
+  createConnectAccountLink,
+  refreshConnectStatus,
+  createConnectLoginLink
+} from './payment/connectOnboarding';
 
 // Import website scraper functions for DiningWagon
 import {
@@ -131,6 +138,14 @@ export {
 export {
   createPaymentIntentV2,
   stripeWebhookV2
+};
+
+// Stripe Connect — onboarding callables (Slice 1)
+export {
+  createConnectAccount,
+  createConnectAccountLink,
+  refreshConnectStatus,
+  createConnectLoginLink
 };
 
 // Re-export website scraper functions for DiningWagon

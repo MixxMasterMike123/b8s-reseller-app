@@ -18,6 +18,7 @@ import wagonRegistry from '../../wagons/WagonRegistry.js';
 import {
   ClipboardDocumentListIcon,
   Cog6ToothIcon,
+  BanknotesIcon,
   UsersIcon,
   ArrowRightOnRectangleIcon,
   Bars3Icon,
@@ -166,6 +167,12 @@ const AppLayout = ({ children }) => {
     // NOTE: Affiliates moved OUT of the main menu — it's now an add-on, rendered
     // below the divider and gated on the `affiliate` feature flag (see the
     // add-on section in the nav). Settings stays last in the main menu.
+    {
+      name: t('nav.admin_payments', 'Utbetalningar'),
+      path: '/admin/payments',
+      icon: BanknotesIcon,
+      description: t('nav.admin_payments_desc', 'Ta emot betalningar och utbetalningar'),
+    },
     {
       name: t('nav.admin_settings', 'Inställningar'),
       path: '/admin/settings',

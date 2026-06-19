@@ -230,8 +230,16 @@ service cloud.firestore {
       // config/features/ownerUid — cross-tenant enumeration.
       allow list: if isPlatform();
       allow create, delete: if isPlatform();
+      // Platform may update anything. A shop admin may update their OWN shop's
+      // config (storefront/identity), but NOT the `payments` map — Connect
+      // opt-in (connectEnabled), commission, and the Stripe-derived status are
+      // platform-/server-set only. The onboarding Cloud Functions write
+      // payments.* via the Admin SDK (bypassing rules), so this doesn't block
+      // legitimate onboarding; it only stops a shop admin from self-granting
+      // payments via a direct SDK write.
       allow update: if isPlatform() ||
-        (isAdmin() && userDoc().shopId == shopId);
+        (isAdmin() && userDoc().shopId == shopId &&
+          !("payments" in request.resource.data.diff(resource.data).affectedKeys()));
     }
 
     // ============================================================

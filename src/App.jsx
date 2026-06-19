@@ -52,6 +52,7 @@ import AdminCustomerMarketingMaterialEdit from './pages/admin/AdminCustomerMarke
 import AdminPages from './pages/admin/AdminPages';
 import AdminPageEdit from './pages/admin/AdminPageEdit';
 import AdminSettings from './pages/admin/AdminSettings';
+import AdminPayments from './pages/admin/AdminPayments';
 // 🇸🇪 SE-ONLY LAUNCH: AdminTranslations hidden (single-language). Re-enable with its route below.
 // import AdminTranslations from './pages/admin/AdminTranslations';
 
@@ -420,6 +421,12 @@ function App() {
               <Route path="/admin/settings" element={
                 <AdminRoute>
                   <AdminSettings />
+                </AdminRoute>
+              } />
+
+              <Route path="/admin/payments" element={
+                <AdminRoute>
+                  <AdminPayments />
                 </AdminRoute>
               } />
 

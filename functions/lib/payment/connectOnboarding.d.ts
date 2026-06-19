@@ -1,0 +1,11 @@
+import Stripe from 'stripe';
+declare function deriveStatus(acct: Stripe.Account): string;
+declare function statusPatch(acct: Stripe.Account, existing: any): Record<string, any>;
+interface ShopIdRequest {
+    shopId: string;
+}
+export declare const createConnectAccount: import("firebase-functions/v2/https").CallableFunction<ShopIdRequest, any, unknown>;
+export declare const createConnectAccountLink: import("firebase-functions/v2/https").CallableFunction<ShopIdRequest, any, unknown>;
+export declare const refreshConnectStatus: import("firebase-functions/v2/https").CallableFunction<ShopIdRequest, any, unknown>;
+export declare const createConnectLoginLink: import("firebase-functions/v2/https").CallableFunction<ShopIdRequest, any, unknown>;
+export { deriveStatus, statusPatch };

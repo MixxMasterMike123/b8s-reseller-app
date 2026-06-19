@@ -16,6 +16,10 @@ export const appUrls = {
   // Hosting default domain for this project (works on any deploy)
   B2B_LEGACY: `https://${projectId}.web.app`,
 
+  // Admin console base URL — used for Stripe Connect Account Link return/refresh
+  // redirects (shop owner returns here after Stripe-hosted onboarding).
+  ADMIN_BASE: process.env.ADMIN_BASE_URL || 'https://meteorpr.web.app',
+
   // Asset URLs
   LOGO_URL:
     process.env.EMAIL_LOGO_URL ||
@@ -62,5 +66,11 @@ export const commerceConfig = {
   // VAT rate as a fraction (0.25 = 25%)
   vatRate: parseFloat(process.env.VAT_RATE || '0.25'),
   // ISO currency code for charges
-  currency: (process.env.SHOP_CURRENCY || 'SEK').toUpperCase()
+  currency: (process.env.SHOP_CURRENCY || 'SEK').toUpperCase(),
+  // Stripe Connect: the PLATFORM's default cut, in BASIS POINTS (500 = 5.00%).
+  // Effective rate per sale = shops/{id}.payments.commissionBps
+  //   ?? settings/platform.defaultCommissionBps ?? this env default.
+  // Basis points (integer) avoid float drift and match Stripe's integer
+  // minor-unit fee math (see functions/src/payment/connectFee.ts).
+  defaultCommissionBps: parseInt(process.env.PLATFORM_DEFAULT_COMMISSION_BPS || '500', 10)
 };

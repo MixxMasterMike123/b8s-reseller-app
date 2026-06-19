@@ -85,6 +85,33 @@ const PlatformShops = () => {
     window.open(`${APP_URLS.B2C_SHOP}/${shop.id}`, '_blank', 'noopener');
   };
 
+  // Operator opt-in for Stripe Connect. This only flips the gate that lets the
+  // shop START onboarding (payments.connectEnabled); the shop still has to
+  // complete Stripe onboarding before it can take payments (chargesEnabled).
+  const toggleConnectEnabled = async (shop) => {
+    const next = !(shop.payments?.connectEnabled === true);
+    try {
+      setSavingId(shop.id);
+      await updateDoc(doc(db, 'shops', shop.id), { 'payments.connectEnabled': next });
+      setShops((prev) => prev.map((s) =>
+        s.id === shop.id ? { ...s, payments: { ...(s.payments || {}), connectEnabled: next } } : s));
+      toast.success(`Betalningar ${next ? 'aktiverade' : 'inaktiverade'} för "${shop.name || shop.id}"`);
+    } catch (e) {
+      console.error('Error toggling connectEnabled:', e);
+      toast.error('Kunde inte ändra betalningsinställning');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const connectLabel = (shop) => {
+    const p = shop.payments || {};
+    if (p.chargesEnabled) return { text: 'Aktivt', cls: 'bg-green-500/15 text-green-300' };
+    if (p.stripeAccountId) return { text: 'Onboarding', cls: 'bg-amber-500/15 text-amber-300' };
+    if (p.connectEnabled) return { text: 'Inbjuden', cls: 'bg-sky-500/15 text-sky-300' };
+    return { text: 'Av', cls: 'bg-white/5 text-gray-500' };
+  };
+
   return (
     <PlatformLayout>
       <div className="px-6 lg:px-10 py-8 max-w-6xl">
@@ -116,6 +143,7 @@ const PlatformShops = () => {
                 <tr className="text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                   <th className="px-5 py-3">Butik</th>
                   <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3">Betalningar</th>
                   <th className="px-5 py-3 text-right">Produkter</th>
                   <th className="px-5 py-3 text-right">Ordrar</th>
                   <th className="px-5 py-3 text-right">Kunder</th>
@@ -140,6 +168,23 @@ const PlatformShops = () => {
                         >
                           {disabled ? 'Inaktiverad' : 'Aktiv'}
                         </span>
+                      </td>
+                      <td className="px-5 py-4">
+                        {(() => { const c = connectLabel(shop); return (
+                          <div className="flex items-center gap-2">
+                            <span className={'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ' + c.cls}>{c.text}</span>
+                            {!shop.payments?.chargesEnabled && (
+                              <button
+                                onClick={() => toggleConnectEnabled(shop)}
+                                disabled={savingId === shop.id}
+                                title={shop.payments?.connectEnabled ? 'Dra tillbaka inbjudan' : 'Bjud in butiken att aktivera betalningar'}
+                                className="rounded-lg px-2 py-1 text-xs font-medium bg-white/5 text-gray-300 hover:bg-sky-500/15 hover:text-sky-300 disabled:opacity-50"
+                              >
+                                {savingId === shop.id ? '…' : (shop.payments?.connectEnabled ? 'Återkalla' : 'Bjud in')}
+                              </button>
+                            )}
+                          </div>
+                        ); })()}
                       </td>
                       <td className="px-5 py-4 text-right tabular-nums text-gray-300">{shop.counts?.products ?? '–'}</td>
                       <td className="px-5 py-4 text-right tabular-nums text-gray-300">{shop.counts?.orders ?? '–'}</td>

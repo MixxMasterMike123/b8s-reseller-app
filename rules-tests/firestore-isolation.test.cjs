@@ -140,6 +140,11 @@ async function run() {
     setDoc(doc(shopAAdminDb(), 'adminPresence/adminA'), { uid: 'adminA', status: 'online' })));
   await check('shopA admin reads adminPresence collection (onSnapshot)', assertSucceeds(
     getDoc(doc(shopAAdminDb(), 'adminPresence/adminB'))));
+  // shops: own-shop admin may update storefront config (NOT payments)
+  await check('shopA admin updates OWN shop storefront config', assertSucceeds(
+    updateDoc(doc(shopAAdminDb(), 'shops/shopA'), { storeIdentity: { tagline: 'Hej' } })));
+  await check('platform sets payments.connectEnabled on a shop', assertSucceeds(
+    updateDoc(doc(platformDb(), 'shops/shopA'), { 'payments.connectEnabled': true })));
 
   console.log('\n=== ISOLATION: cross-shop / privilege escalation must be DENIED ===');
   // users — the biggest leak
@@ -188,6 +193,13 @@ async function run() {
   await check('anon CAN get a single shop doc (storefront config)', assertSucceeds(getDoc(doc(env.unauthenticatedContext().firestore(), 'shops/shopB'))));
   await check('shopA admin CANNOT LIST all shops (enumeration)', assertFails(getDocs(collection(shopAAdminDb(), 'shops'))));
   await check('platform CAN list all shops (operator console)', assertSucceeds(getDocs(collection(platformDb(), 'shops'))));
+  // shops.payments is platform-/server-set: a shop admin must NOT self-grant it.
+  // Use shopB (whose payments map the platform ALLOW test did not touch, so the
+  // write is a real diff and not a value-unchanged no-op) via the shopB admin.
+  await check('shopB admin CANNOT set payments.connectEnabled on own shop', assertFails(
+    updateDoc(doc(shopBAdminDb(), 'shops/shopB'), { 'payments.connectEnabled': true })));
+  await check('shopB admin CANNOT set payments.commissionBps on own shop', assertFails(
+    updateDoc(doc(shopBAdminDb(), 'shops/shopB'), { 'payments.commissionBps': 9999 })));
   // adminPresence: read is intentionally cross-admin (isAdmin); the WRITE is the
   // hardened bit — an admin may write ONLY their own presence doc (id == uid).
   await check('shopA admin CANNOT write ANOTHER admin presence doc (not own uid)', assertFails(
