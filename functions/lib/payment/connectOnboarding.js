@@ -23,7 +23,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.statusPatch = exports.deriveStatus = exports.createConnectLoginLink = exports.refreshConnectStatus = exports.createConnectAccountLink = exports.createConnectAccount = void 0;
+exports.statusPatch = exports.deriveStatus = exports.setShopCommission = exports.createConnectLoginLink = exports.refreshConnectStatus = exports.createConnectAccountLink = exports.createConnectAccount = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const stripe_1 = __importDefault(require("stripe"));
 const firestore_1 = require("firebase-admin/firestore");
@@ -182,5 +182,20 @@ exports.createConnectLoginLink = (0, https_1.onCall)(COMMON, async (request) => 
     const stripe = getStripe();
     const link = await stripe.accounts.createLoginLink(pay.stripeAccountId);
     return { url: link.url };
+});
+exports.setShopCommission = (0, https_1.onCall)({ region: 'us-central1', memory: '256MiB', timeoutSeconds: 30, cors: app_urls_1.appUrls.CORS_ORIGINS }, async (request) => {
+    await (0, authGuard_1.requirePlatform)(request.auth?.uid);
+    const shopId = (request.data?.shopId || '').trim();
+    const bps = request.data?.commissionBps;
+    if (!shopId)
+        throw new https_1.HttpsError('invalid-argument', 'shopId is required');
+    if (!Number.isInteger(bps) || bps < 0 || bps > 10000) {
+        throw new https_1.HttpsError('invalid-argument', 'commissionBps must be an integer 0..10000');
+    }
+    const snap = await database_1.db.collection('shops').doc(shopId).get();
+    if (!snap.exists)
+        throw new https_1.HttpsError('not-found', `Shop "${shopId}" does not exist`);
+    await database_1.db.collection('shops').doc(shopId).update({ 'payments.commissionBps': bps });
+    return { shopId, commissionBps: bps };
 });
 //# sourceMappingURL=connectOnboarding.js.map

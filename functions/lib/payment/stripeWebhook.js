@@ -328,6 +328,33 @@ exports.stripeWebhookV2 = (0, https_1.onRequest)({
             }
             response.status(200).json({ received: true, accountUpdated: true });
         }
+        else if (event.type === 'charge.dispute.created') {
+            // 💸 A dispute opened. For destination charges with the platform as
+            // merchant of record, Stripe debits the PLATFORM balance — so the
+            // platform carries this exposure (reconcile with the shop out of band).
+            // We stamp the order so admins can see it; the order id == the
+            // payment_intent id, so we resolve via the dispute's payment_intent.
+            const dispute = event.data.object;
+            const pi = dispute?.payment_intent;
+            if (pi) {
+                try {
+                    const ref = db.collection('orders').doc(typeof pi === 'string' ? pi : pi.id);
+                    const s = await ref.get();
+                    if (s.exists) {
+                        await ref.update({
+                            disputeStatus: dispute.status || 'open',
+                            disputedAt: new Date(),
+                            disputeId: dispute.id || null,
+                        });
+                        firebase_functions_1.logger.info('💸 dispute stamped on order', { orderId: ref.id, status: dispute.status });
+                    }
+                }
+                catch (e) {
+                    firebase_functions_1.logger.warn('⚠️ dispute stamp failed', { error: e?.message });
+                }
+            }
+            response.status(200).json({ received: true, disputeRecorded: true });
+        }
         else {
             // Handle other webhook events if needed
             firebase_functions_1.logger.info('⏭️ Unhandled webhook event type', { type: event.type });

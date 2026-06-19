@@ -96,8 +96,10 @@ import {
   createConnectAccount,
   createConnectAccountLink,
   refreshConnectStatus,
-  createConnectLoginLink
+  createConnectLoginLink,
+  setShopCommission
 } from './payment/connectOnboarding';
+import { refundOrder } from './payment/connectRefund';
 
 // Import website scraper functions for DiningWagon
 import {
@@ -140,12 +142,14 @@ export {
   stripeWebhookV2
 };
 
-// Stripe Connect — onboarding callables (Slice 1)
+// Stripe Connect — onboarding (Slice 1) + commission (Slice 3) + refund (Slice 4)
 export {
   createConnectAccount,
   createConnectAccountLink,
   refreshConnectStatus,
-  createConnectLoginLink
+  createConnectLoginLink,
+  setShopCommission,
+  refundOrder
 };
 
 // Re-export website scraper functions for DiningWagon

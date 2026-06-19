@@ -24,7 +24,7 @@ import Stripe from 'stripe';
 import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '../config/database';
 import { appUrls } from '../config/app-urls';
-import { requireAdminOfShop } from '../email-orchestrator/functions/authGuard';
+import { requireAdminOfShop, requirePlatform } from '../email-orchestrator/functions/authGuard';
 
 const COMMON = {
   region: 'us-central1' as const,
@@ -193,6 +193,29 @@ export const createConnectLoginLink = onCall<ShopIdRequest>(COMMON, async (reque
   const link = await stripe.accounts.createLoginLink(pay.stripeAccountId);
   return { url: link.url };
 });
+
+// ── setShopCommission ───────────────────────────────────────────────────────
+// PLATFORM-ONLY: set a shop's per-sale commission in basis points (0..10000).
+// The platform's cut is a platform decision — a shop admin must never set it
+// (the firestore.rules payments-map guard also blocks a direct client write).
+interface SetCommissionRequest { shopId: string; commissionBps: number }
+
+export const setShopCommission = onCall<SetCommissionRequest>(
+  { region: 'us-central1', memory: '256MiB', timeoutSeconds: 30, cors: appUrls.CORS_ORIGINS },
+  async (request) => {
+    await requirePlatform(request.auth?.uid);
+    const shopId = (request.data?.shopId || '').trim();
+    const bps = request.data?.commissionBps;
+    if (!shopId) throw new HttpsError('invalid-argument', 'shopId is required');
+    if (!Number.isInteger(bps) || bps < 0 || bps > 10000) {
+      throw new HttpsError('invalid-argument', 'commissionBps must be an integer 0..10000');
+    }
+    const snap = await db.collection('shops').doc(shopId).get();
+    if (!snap.exists) throw new HttpsError('not-found', `Shop "${shopId}" does not exist`);
+    await db.collection('shops').doc(shopId).update({ 'payments.commissionBps': bps });
+    return { shopId, commissionBps: bps };
+  }
+);
 
 // Exported for reuse by the stripeWebhook account.updated branch (Slice 2).
 export { deriveStatus, statusPatch };

@@ -7,7 +7,8 @@ import toast from 'react-hot-toast';
 import AppLayout from '../../components/layout/AppLayout';
 import OrderStatusMenu from '../../components/OrderStatusMenu';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase/config';
+import { httpsCallable } from 'firebase/functions';
+import { db, functions } from '../../firebase/config';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
 import { printShippingLabel } from '../../utils/labelPrinter';
 import LabelPrintInstructions from '../../components/LabelPrintInstructions';
@@ -224,6 +225,25 @@ const AdminOrderDetail = () => {
       toast.error('Failed to update order status: ' + (err.message || ''));
     } finally {
       setUpdateStatusLoading(false);
+    }
+  };
+
+  const [refundLoading, setRefundLoading] = useState(false);
+  const handleRefund = async () => {
+    if (!window.confirm('Återbetala hela ordern? Detta kan inte ångras.')) return;
+    setRefundLoading(true);
+    try {
+      // Server is Connect-aware: a destination-charge order is refunded with
+      // transfer reversal + fee refund; a legacy order takes a plain refund.
+      await httpsCallable(functions, 'refundOrder')({ orderId });
+      toast.success('Ordern återbetalad');
+      setFetchAttempted(false);
+      await fetchOrder();
+    } catch (err) {
+      console.error('Refund failed:', err);
+      toast.error('Återbetalning misslyckades: ' + (err.message || ''));
+    } finally {
+      setRefundLoading(false);
     }
   };
 
@@ -503,11 +523,18 @@ const AdminOrderDetail = () => {
                       ? `Upphämtning${order.pickupLocation?.name ? ` · ${order.pickupLocation.name}` : ''}`
                       : 'Hemleverans'}
                   </div>
-                  {updateStatusLoading ? (
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-admin-text-muted border-r-transparent" />
-                  ) : (
-                    <OrderStatusMenu currentStatus={order.status} onStatusChange={handleStatusUpdate} />
-                  )}
+                  <div className="flex items-center gap-2">
+                    {updateStatusLoading ? (
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-admin-text-muted border-r-transparent" />
+                    ) : (
+                      <OrderStatusMenu currentStatus={order.status} onStatusChange={handleStatusUpdate} />
+                    )}
+                    {paid && order.status !== 'refunded' && (
+                      <Button variant="plain" disabled={refundLoading} onClick={handleRefund}>
+                        {refundLoading ? 'Återbetalar…' : 'Återbetala'}
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 {isPickup && (order.pickupLocation?.address || order.pickupLocation?.date) && (
                   <div className="border-b border-admin-border-soft px-4 py-2 text-[13px] text-admin-text-muted">

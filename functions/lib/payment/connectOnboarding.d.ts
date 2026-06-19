@@ -8,4 +8,9 @@ export declare const createConnectAccount: import("firebase-functions/v2/https")
 export declare const createConnectAccountLink: import("firebase-functions/v2/https").CallableFunction<ShopIdRequest, any, unknown>;
 export declare const refreshConnectStatus: import("firebase-functions/v2/https").CallableFunction<ShopIdRequest, any, unknown>;
 export declare const createConnectLoginLink: import("firebase-functions/v2/https").CallableFunction<ShopIdRequest, any, unknown>;
+interface SetCommissionRequest {
+    shopId: string;
+    commissionBps: number;
+}
+export declare const setShopCommission: import("firebase-functions/v2/https").CallableFunction<SetCommissionRequest, any, unknown>;
 export { deriveStatus, statusPatch };
