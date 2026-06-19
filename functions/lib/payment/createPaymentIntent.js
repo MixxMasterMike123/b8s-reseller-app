@@ -16,6 +16,7 @@ const cors_handler_1 = require("../protection/cors/cors-handler");
 const database_1 = require("../config/database");
 const tenancy_1 = require("../config/tenancy");
 const shopFeatures_1 = require("../config/shopFeatures");
+const connectFee_1 = require("./connectFee");
 /**
  * Server-side price computation. NEVER trust client-supplied amounts:
  * prices come from the products collection, the discount from the affiliate
@@ -218,6 +219,41 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
             currency,
             itemCount: cartItems.length
         });
+        // 💸 STRIPE CONNECT (opt-in per shop). If this shop has a usable connected
+        // account, make this a DESTINATION CHARGE: the full amount transfers to
+        // the shop's account minus the platform's cut (application_fee_amount).
+        // A shop WITHOUT chargesEnabled stays on the legacy single-account flow —
+        // connectParams/connectMeta are then empty and the create call below is
+        // byte-identical to before. NO on_behalf_of → platform stays VAT merchant
+        // of record. The fee is taken off the GROSS total (documented choice).
+        const pay = shopSnap.data()?.payments || {};
+        const useConnect = pay.chargesEnabled === true && !!pay.stripeAccountId;
+        let connectParams = {};
+        let connectMeta = {};
+        if (useConnect) {
+            // Resolve the per-shop commission, falling back to the platform default
+            // (settings/platform.defaultCommissionBps, else commerceConfig env).
+            let platformDefaultBps = app_urls_1.commerceConfig.defaultCommissionBps;
+            try {
+                const ps = await database_1.db.collection('settings').doc('platform').get();
+                const v = ps.exists ? ps.data()?.defaultCommissionBps : undefined;
+                if (Number.isInteger(v))
+                    platformDefaultBps = v;
+            }
+            catch { /* keep env default */ }
+            const bps = (0, connectFee_1.resolveCommissionBps)(pay.commissionBps, platformDefaultBps);
+            const feeOre = (0, connectFee_1.computeApplicationFeeOre)(amountInOre, bps);
+            connectParams = {
+                transfer_data: { destination: pay.stripeAccountId },
+                application_fee_amount: feeOre,
+            };
+            connectMeta = {
+                connectedAccountId: pay.stripeAccountId,
+                applicationFeeAmount: feeOre.toString(),
+                commissionBps: bps.toString(),
+            };
+            firebase_functions_1.logger.info('💸 Destination charge', { shopId: resolvedShopId, connectedAccountId: pay.stripeAccountId, feeOre, bps });
+        }
         // Create Payment Intent with simplified configuration for live mode
         let paymentIntent;
         try {
@@ -302,10 +338,14 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
                     source: 'b2c_shop',
                     platform: 'b8shield',
                     shopId: resolvedShopId,
-                    version: 'enhanced_v2' // server-priced metadata
+                    version: 'enhanced_v2',
+                    // Stripe Connect (empty for legacy shops → metadata unchanged)
+                    ...connectMeta
                 },
                 receipt_email: customerInfo.email,
                 description: `${app_urls_1.commerceConfig.shopName} Order - ${cartItems.length} item${cartItems.length > 1 ? 's' : ''}`,
+                // Stripe Connect destination-charge params (empty {} for legacy shops)
+                ...connectParams
             });
         }
         catch (stripeError) {

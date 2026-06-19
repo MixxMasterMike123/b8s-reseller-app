@@ -10,6 +10,7 @@ import Stripe from 'stripe';
 import { commerceConfig } from '../config/app-urls';
 import { getFirestore } from 'firebase-admin/firestore';
 import { DEFAULT_SHOP_ID } from '../config/tenancy';
+import { statusPatch } from './connectOnboarding';
 // CORS not needed for webhooks - server-to-server communication
 
 // Initialize Firestore with named database
@@ -113,10 +114,12 @@ export const stripeWebhookV2 = onRequest(
         const orderRef = db.collection('orders').doc(paymentIntent.id);
 
         // Expand payment_method so card/Klarna details are actually present
-        // (the event payload only carries the payment_method ID as a string)
+        // (the event payload only carries the payment_method ID as a string).
+        // Also expand latest_charge so a Connect destination charge exposes its
+        // transfer + application_fee ids for reconciliation (order.connect).
         try {
           paymentIntent = await stripe.paymentIntents.retrieve(paymentIntent.id, {
-            expand: ['payment_method']
+            expand: ['payment_method', 'latest_charge']
           }) as any;
         } catch (expandError) {
           logger.warn('⚠️ Could not expand payment_method, continuing without details', {
@@ -262,6 +265,24 @@ export const stripeWebhookV2 = onRequest(
             hasAccount: true
           }),
 
+          // 💸 Stripe Connect (destination charge) — recorded for reconciliation
+          // ONLY when this was a destination charge (metadata carries the
+          // connected account). Legacy single-account orders never get this
+          // field. This is the PLATFORM cut; it is INDEPENDENT of any affiliate
+          // commission (processOrderCompletion below) — never net one vs the
+          // other. transfer/fee ids come from the expanded latest_charge.
+          ...(metadata.connectedAccountId && {
+            connect: {
+              isDestinationCharge: true,
+              connectedAccountId: metadata.connectedAccountId,
+              applicationFeeAmount: parseInt(metadata.applicationFeeAmount || '0', 10),
+              applicationFeeId: ((paymentIntent.latest_charge as any)?.application_fee) || null,
+              transferId: ((paymentIntent.latest_charge as any)?.transfer) || null,
+              commissionBps: parseInt(metadata.commissionBps || '0', 10),
+              transferReversed: false
+            }
+          }),
+
           // ✅ Timestamps using FieldValue for consistency with frontend
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -327,6 +348,25 @@ export const stripeWebhookV2 = onRequest(
           orderNumber,
           emailsTriggered: true
         });
+
+      } else if (event.type === 'account.updated') {
+        // 💸 Stripe Connect: a connected account's KYC/capabilities changed
+        // (can happen long after the admin closed the onboarding tab). Mirror
+        // the fresh status onto shops/{shopId}.payments. The shopId is on the
+        // account metadata we set at creation. Idempotent — writes derived state.
+        const acct = event.data.object as any;
+        const shopId = acct?.metadata?.shopId;
+        if (shopId) {
+          try {
+            const snap = await db.collection('shops').doc(shopId).get();
+            const existing = (snap.data() as any)?.payments || {};
+            await db.collection('shops').doc(shopId).update(statusPatch(acct, existing));
+            logger.info('💸 account.updated synced', { shopId, chargesEnabled: acct.charges_enabled });
+          } catch (e: any) {
+            logger.warn('⚠️ account.updated sync failed', { shopId, error: e?.message });
+          }
+        }
+        response.status(200).json({ received: true, accountUpdated: true });
 
       } else {
         // Handle other webhook events if needed

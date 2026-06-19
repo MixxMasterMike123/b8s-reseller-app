@@ -11,6 +11,7 @@ import { corsHandler } from '../protection/cors/cors-handler';
 import { db } from '../config/database';
 import { DEFAULT_SHOP_ID } from '../config/tenancy';
 import { isShopFeatureEnabled } from '../config/shopFeatures';
+import { computeApplicationFeeOre, resolveCommissionBps } from './connectFee';
 
 /**
  * Server-side price computation. NEVER trust client-supplied amounts:
@@ -328,6 +329,40 @@ export const createPaymentIntentV2 = onRequest(
         itemCount: cartItems.length
       });
 
+      // 💸 STRIPE CONNECT (opt-in per shop). If this shop has a usable connected
+      // account, make this a DESTINATION CHARGE: the full amount transfers to
+      // the shop's account minus the platform's cut (application_fee_amount).
+      // A shop WITHOUT chargesEnabled stays on the legacy single-account flow —
+      // connectParams/connectMeta are then empty and the create call below is
+      // byte-identical to before. NO on_behalf_of → platform stays VAT merchant
+      // of record. The fee is taken off the GROSS total (documented choice).
+      const pay = (shopSnap.data() as any)?.payments || {};
+      const useConnect = pay.chargesEnabled === true && !!pay.stripeAccountId;
+      let connectParams: Record<string, any> = {};
+      let connectMeta: Record<string, string> = {};
+      if (useConnect) {
+        // Resolve the per-shop commission, falling back to the platform default
+        // (settings/platform.defaultCommissionBps, else commerceConfig env).
+        let platformDefaultBps = commerceConfig.defaultCommissionBps;
+        try {
+          const ps = await db.collection('settings').doc('platform').get();
+          const v = ps.exists ? (ps.data() as any)?.defaultCommissionBps : undefined;
+          if (Number.isInteger(v)) platformDefaultBps = v;
+        } catch { /* keep env default */ }
+        const bps = resolveCommissionBps(pay.commissionBps, platformDefaultBps);
+        const feeOre = computeApplicationFeeOre(amountInOre, bps);
+        connectParams = {
+          transfer_data: { destination: pay.stripeAccountId },
+          application_fee_amount: feeOre,
+        };
+        connectMeta = {
+          connectedAccountId: pay.stripeAccountId,
+          applicationFeeAmount: feeOre.toString(),
+          commissionBps: bps.toString(),
+        };
+        logger.info('💸 Destination charge', { shopId: resolvedShopId, connectedAccountId: pay.stripeAccountId, feeOre, bps });
+      }
+
       // Create Payment Intent with simplified configuration for live mode
       let paymentIntent;
       try {
@@ -423,10 +458,16 @@ export const createPaymentIntentV2 = onRequest(
             source: 'b2c_shop',
             platform: 'b8shield',
             shopId: resolvedShopId, // tenant id — webhook stamps it on the order
-            version: 'enhanced_v2' // server-priced metadata
+            version: 'enhanced_v2', // server-priced metadata
+
+            // Stripe Connect (empty for legacy shops → metadata unchanged)
+            ...connectMeta
           },
           receipt_email: customerInfo.email,
           description: `${commerceConfig.shopName} Order - ${cartItems.length} item${cartItems.length > 1 ? 's' : ''}`,
+
+          // Stripe Connect destination-charge params (empty {} for legacy shops)
+          ...connectParams
         });
       } catch (stripeError: any) {
         logger.error('❌ Stripe Payment Intent creation failed', {
