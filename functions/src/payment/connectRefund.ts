@@ -22,6 +22,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '../config/database';
 import { appUrls } from '../config/app-urls';
 import { requireAdminOfShop } from '../email-orchestrator/functions/authGuard';
+import { buildRefundParams } from './connectParams';
 
 interface RefundRequest { orderId: string; amount?: number } // amount in SEK (optional partial)
 
@@ -57,16 +58,9 @@ export const refundOrder = onCall<RefundRequest>(
     const stripe = new Stripe(key, { apiVersion: '2023-10-16' });
 
     const isConnect = order.connect?.isDestinationCharge === true;
-    const params: Stripe.RefundCreateParams = { payment_intent: paymentIntentId };
-    if (typeof request.data?.amount === 'number' && request.data.amount > 0) {
-      params.amount = Math.round(request.data.amount * 100); // partial, in öre
-    }
-    if (isConnect) {
-      // Claw the principal back from the connected account AND return our fee.
-      // (For a partial refund Stripe refunds a proportional share of the fee.)
-      params.reverse_transfer = true;
-      params.refund_application_fee = true;
-    }
+    // Pure builder (connectParams.ts, unit-tested): a destination-charge order
+    // gets reverse_transfer + refund_application_fee; a legacy order is plain.
+    const params = buildRefundParams(order, request.data?.amount) as Stripe.RefundCreateParams;
 
     const refund = await stripe.refunds.create(params);
 

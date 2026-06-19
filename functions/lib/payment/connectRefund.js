@@ -27,6 +27,7 @@ const firestore_1 = require("firebase-admin/firestore");
 const database_1 = require("../config/database");
 const app_urls_1 = require("../config/app-urls");
 const authGuard_1 = require("../email-orchestrator/functions/authGuard");
+const connectParams_1 = require("./connectParams");
 exports.refundOrder = (0, https_1.onCall)({
     region: 'us-central1',
     memory: '256MiB',
@@ -56,16 +57,9 @@ exports.refundOrder = (0, https_1.onCall)({
         throw new https_1.HttpsError('failed-precondition', 'Stripe is not configured');
     const stripe = new stripe_1.default(key, { apiVersion: '2023-10-16' });
     const isConnect = order.connect?.isDestinationCharge === true;
-    const params = { payment_intent: paymentIntentId };
-    if (typeof request.data?.amount === 'number' && request.data.amount > 0) {
-        params.amount = Math.round(request.data.amount * 100); // partial, in öre
-    }
-    if (isConnect) {
-        // Claw the principal back from the connected account AND return our fee.
-        // (For a partial refund Stripe refunds a proportional share of the fee.)
-        params.reverse_transfer = true;
-        params.refund_application_fee = true;
-    }
+    // Pure builder (connectParams.ts, unit-tested): a destination-charge order
+    // gets reverse_transfer + refund_application_fee; a legacy order is plain.
+    const params = (0, connectParams_1.buildRefundParams)(order, request.data?.amount);
     const refund = await stripe.refunds.create(params);
     // Stamp the order. Setting status 'refunded' fires the affiliate-reversal
     // trigger (commissionReversal.ts) — the affiliate ledger reverses on its own.
