@@ -3,9 +3,10 @@
 // email to arbitrary recipients, so every privileged one must verify the
 // caller — otherwise the system is an open phishing mailer.
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.requireAdminOfShop = exports.getAdminContext = exports.requirePlatform = exports.requireAuth = exports.requireAdmin = void 0;
+exports.resolveShopIdByEmail = exports.requireAdminOfShop = exports.getAdminContext = exports.requirePlatform = exports.requireAuth = exports.requireAdmin = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const database_1 = require("../../config/database");
+const tenancy_1 = require("../../config/tenancy");
 async function requireAdmin(authUid) {
     if (!authUid) {
         throw new https_1.HttpsError('unauthenticated', 'Authentication required');
@@ -75,4 +76,31 @@ async function requireAdminOfShop(targetShopId, authUid) {
     return ctx;
 }
 exports.requireAdminOfShop = requireAdminOfShop;
+// TENANT ISOLATION — resolve the shop a given email belongs to, for the
+// ANONYMOUS storefront flows that have no caller identity (password reset) or
+// only a freshly-created account (email verification). A Firebase Auth email is
+// globally unique per project, so there is at most one account per email; this
+// looks up which shop's data that account lives in so server-only docs
+// (passwordResets/emailVerifications) can be stamped + queried by shopId.
+//
+// Checks the three account homes in order; returns the first shopId found, else
+// DEFAULT_SHOP_ID (so a missing match can never produce an untagged doc). This
+// value is NOT a security boundary by itself (the reset still targets the one
+// global Auth account); it provides deterministic per-shop scoping + INV-1
+// compliance for these previously-unscoped collections.
+async function resolveShopIdByEmail(email) {
+    if (!email)
+        return tenancy_1.DEFAULT_SHOP_ID;
+    const collections = ['users', 'b2cCustomers', 'affiliates'];
+    for (const name of collections) {
+        const snap = await database_1.db.collection(name).where('email', '==', email).limit(1).get();
+        if (!snap.empty) {
+            const sid = snap.docs[0].data()?.shopId;
+            if (sid)
+                return sid;
+        }
+    }
+    return tenancy_1.DEFAULT_SHOP_ID;
+}
+exports.resolveShopIdByEmail = resolveShopIdByEmail;
 //# sourceMappingURL=authGuard.js.map

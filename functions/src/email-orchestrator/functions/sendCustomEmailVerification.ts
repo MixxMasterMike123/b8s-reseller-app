@@ -6,6 +6,7 @@ import { onCall } from 'firebase-functions/v2/https';
 import { appUrls } from '../../config/app-urls';
 import { getFirestore } from 'firebase-admin/firestore';
 import { EmailOrchestrator } from '../core/EmailOrchestrator';
+import { resolveShopIdByEmail } from './authGuard';
 
 // Initialize Firestore with named database
 const db = getFirestore('b8s-reseller-db');
@@ -62,9 +63,17 @@ export const sendCustomEmailVerification = onCall<CustomEmailVerificationRequest
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
       const language = request.data.language || request.data.customerInfo.preferredLang || 'sv-SE';
 
+      // TENANT ISOLATION: stamp the shop this account belongs to so the
+      // verification record is shop-scoped (INV-1). The verify step looks the
+      // doc up by code-as-doc-id bound to firebaseAuthUid, so this is for
+      // scoping/audit rather than an attack boundary. Falls back to
+      // DEFAULT_SHOP_ID (never untagged).
+      const shopId = await resolveShopIdByEmail(request.data.customerInfo.email);
+
       // Store verification record in Firestore
       console.log('💾 Creating verification record...');
       const verificationData = {
+        shopId,
         email: request.data.customerInfo.email,
         firebaseAuthUid: request.data.firebaseAuthUid,
         verificationCode: verificationCode,

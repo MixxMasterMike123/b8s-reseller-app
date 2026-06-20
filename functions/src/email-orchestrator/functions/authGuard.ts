@@ -4,6 +4,7 @@
 
 import { HttpsError } from 'firebase-functions/v2/https';
 import { db } from '../../config/database';
+import { DEFAULT_SHOP_ID } from '../../config/tenancy';
 
 export async function requireAdmin(authUid?: string): Promise<void> {
   if (!authUid) {
@@ -87,4 +88,29 @@ export async function requireAdminOfShop(
     );
   }
   return ctx;
+}
+
+// TENANT ISOLATION — resolve the shop a given email belongs to, for the
+// ANONYMOUS storefront flows that have no caller identity (password reset) or
+// only a freshly-created account (email verification). A Firebase Auth email is
+// globally unique per project, so there is at most one account per email; this
+// looks up which shop's data that account lives in so server-only docs
+// (passwordResets/emailVerifications) can be stamped + queried by shopId.
+//
+// Checks the three account homes in order; returns the first shopId found, else
+// DEFAULT_SHOP_ID (so a missing match can never produce an untagged doc). This
+// value is NOT a security boundary by itself (the reset still targets the one
+// global Auth account); it provides deterministic per-shop scoping + INV-1
+// compliance for these previously-unscoped collections.
+export async function resolveShopIdByEmail(email?: string | null): Promise<string> {
+  if (!email) return DEFAULT_SHOP_ID;
+  const collections = ['users', 'b2cCustomers', 'affiliates'];
+  for (const name of collections) {
+    const snap = await db.collection(name).where('email', '==', email).limit(1).get();
+    if (!snap.empty) {
+      const sid = snap.docs[0].data()?.shopId;
+      if (sid) return sid;
+    }
+  }
+  return DEFAULT_SHOP_ID;
 }

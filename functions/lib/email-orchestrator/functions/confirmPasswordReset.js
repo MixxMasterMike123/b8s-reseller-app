@@ -7,6 +7,7 @@ const https_1 = require("firebase-functions/v2/https");
 const app_urls_1 = require("../../config/app-urls");
 const auth_1 = require("firebase-admin/auth");
 const database_1 = require("../../config/database");
+const authGuard_1 = require("./authGuard");
 exports.confirmPasswordReset = (0, https_1.onCall)({
     region: 'us-central1',
     memory: '256MiB',
@@ -37,6 +38,18 @@ exports.confirmPasswordReset = (0, https_1.onCall)({
         const expiresAt = resetData.expiresAt.toDate();
         if (now > expiresAt) {
             throw new https_1.HttpsError('invalid-argument', 'Reset code has expired');
+        }
+        // TENANT ISOLATION (defense-in-depth): the reset code is the unique key
+        // (256-bit, stored as the doc), so the query already returns the one right
+        // doc. As a consistency assertion, confirm the reset doc's shopId matches
+        // the shop the target email currently belongs to — a reset minted for one
+        // shop can't be redeemed against a user re-homed to another. Skipped only
+        // for legacy docs created before stamping (resetData.shopId undefined).
+        if (resetData.shopId) {
+            const emailShopId = await (0, authGuard_1.resolveShopIdByEmail)(resetData.email);
+            if (emailShopId !== resetData.shopId) {
+                throw new https_1.HttpsError('permission-denied', 'Reset code is not valid for this account');
+            }
         }
         // Find the user by email
         const auth = (0, auth_1.getAuth)();

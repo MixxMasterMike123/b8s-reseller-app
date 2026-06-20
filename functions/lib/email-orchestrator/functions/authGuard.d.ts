@@ -9,3 +9,4 @@ export interface AdminContext {
 }
 export declare function getAdminContext(authUid?: string): Promise<AdminContext>;
 export declare function requireAdminOfShop(targetShopId: string | null | undefined, authUid?: string): Promise<AdminContext>;
+export declare function resolveShopIdByEmail(email?: string | null): Promise<string>;

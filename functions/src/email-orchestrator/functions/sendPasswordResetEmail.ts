@@ -6,6 +6,7 @@ import { appUrls } from '../../config/app-urls';
 import { randomBytes } from 'crypto';
 import { EmailOrchestrator } from '../core/EmailOrchestrator';
 import { db } from '../../config/database';
+import { resolveShopIdByEmail } from './authGuard';
 
 interface PasswordResetRequest {
   email: string;
@@ -47,7 +48,14 @@ export const sendPasswordResetEmail = onCall<PasswordResetRequest>(
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 1); // 1 hour expiry
 
+      // TENANT ISOLATION: this is an anonymous storefront flow (no caller
+      // identity), so infer the shop the email belongs to and stamp it. The
+      // confirm step queries by resetCode AND shopId, so a code is consumed
+      // only within its own shop. Falls back to DEFAULT_SHOP_ID (never untagged).
+      const shopId = await resolveShopIdByEmail(request.data.email);
+
       await db.collection('passwordResets').add({
+        shopId,
         email: request.data.email,
         resetCode,
         expiresAt,

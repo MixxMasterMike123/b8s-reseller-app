@@ -8,6 +8,7 @@ const app_urls_1 = require("../../config/app-urls");
 const crypto_1 = require("crypto");
 const EmailOrchestrator_1 = require("../core/EmailOrchestrator");
 const database_1 = require("../../config/database");
+const authGuard_1 = require("./authGuard");
 exports.sendPasswordResetEmail = (0, https_1.onCall)({
     region: 'us-central1',
     memory: '256MiB',
@@ -32,7 +33,13 @@ exports.sendPasswordResetEmail = (0, https_1.onCall)({
         // Store reset code in Firestore (matching V3 behavior)
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 1); // 1 hour expiry
+        // TENANT ISOLATION: this is an anonymous storefront flow (no caller
+        // identity), so infer the shop the email belongs to and stamp it. The
+        // confirm step queries by resetCode AND shopId, so a code is consumed
+        // only within its own shop. Falls back to DEFAULT_SHOP_ID (never untagged).
+        const shopId = await (0, authGuard_1.resolveShopIdByEmail)(request.data.email);
         await database_1.db.collection('passwordResets').add({
+            shopId,
             email: request.data.email,
             resetCode,
             expiresAt,

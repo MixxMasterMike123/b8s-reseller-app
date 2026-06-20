@@ -67,12 +67,51 @@ async function requireAdminOfShop(targetShopId, authUid) {
   return data;
 }
 
+// EXACT re-implementation of resolveShopIdByEmail(email) from authGuard.ts —
+// the shopId-inference used by the anonymous storefront flows (password reset,
+// email verification) to stamp/scope passwordResets + emailVerifications. Checks
+// users -> b2cCustomers -> affiliates by email; first shopId wins; else DEFAULT.
+const DEFAULT_SHOP_ID = 'b8shield';
+async function resolveShopIdByEmail(email) {
+  if (!email) return DEFAULT_SHOP_ID;
+  for (const name of ['users', 'b2cCustomers', 'affiliates']) {
+    const snap = await db.collection(name).where('email', '==', email).limit(1).get();
+    if (!snap.empty) {
+      const sid = snap.docs[0].data() && snap.docs[0].data().shopId;
+      if (sid) return sid;
+    }
+  }
+  return DEFAULT_SHOP_ID;
+}
+
+// EXACT re-implementation of the confirmPasswordReset.ts tenant cross-check: a
+// reset doc is redeemable only if its stamped shopId still matches the shop the
+// email belongs to (legacy docs with no shopId skip the check). Returns true if
+// the reset is allowed to proceed.
+async function resetAllowed(resetData) {
+  if (!resetData.shopId) return true; // legacy/un-stamped → no check (back-compat)
+  const emailShopId = await resolveShopIdByEmail(resetData.email);
+  return emailShopId === resetData.shopId;
+}
+
 async function seed() {
   await db.collection('users').doc('platformAdmin').set({ role: 'admin', platform: true, shopId: 'shopA', active: true });
   await db.collection('users').doc('shopAadmin').set({ role: 'admin', platform: false, shopId: 'shopA', active: true });
   await db.collection('users').doc('shopBadmin').set({ role: 'admin', platform: false, shopId: 'shopB', active: true });
   await db.collection('users').doc('plainUser').set({ role: 'user', shopId: 'shopA', active: true });
   await db.collection('users').doc('legacyNoShop').set({ role: 'admin', platform: false, active: true }); // missing shopId
+}
+
+// Seeds the account homes used by resolveShopIdByEmail (Finding 3).
+async function seedEmailHomes() {
+  for (const name of ['users', 'b2cCustomers', 'affiliates']) {
+    const ex = await db.collection(name).get();
+    await Promise.all(ex.docs.map(d => d.ref.delete()));
+  }
+  // a B2B user in shopA, a B2C customer in shopB, an affiliate in shopA
+  await db.collection('users').doc('uA').set({ role: 'user', shopId: 'shopA', email: 'b2b@x.com', active: true });
+  await db.collection('b2cCustomers').doc('cB').set({ shopId: 'shopB', email: 'b2c@x.com' });
+  await db.collection('affiliates').doc('aA').set({ shopId: 'shopA', email: 'aff@x.com' });
 }
 
 async function run() {
@@ -94,6 +133,27 @@ async function run() {
   await check('unauthenticated (no uid) is denied', () => assertThrows(requireAdminOfShop('shopA', undefined)));
   await check('admin with NO shopId denied on a real shop (lockout-by-design, not a leak)', () => assertThrows(requireAdminOfShop('shopA', 'legacyNoShop')));
   await check('shop admin denied when targetShopId is null/missing', () => assertThrows(requireAdminOfShop(null, 'shopAadmin')));
+
+  // ── Finding 3: passwordResets / emailVerifications shopId scoping ──────────
+  await seedEmailHomes();
+
+  console.log('\n=== resolveShopIdByEmail: derives the right shop per account home ===');
+  await check('B2B email → its users-doc shopId (shopA)', async () => assert(await resolveShopIdByEmail('b2b@x.com') === 'shopA'));
+  await check('B2C email → its b2cCustomers-doc shopId (shopB)', async () => assert(await resolveShopIdByEmail('b2c@x.com') === 'shopB'));
+  await check('affiliate email → its affiliates-doc shopId (shopA)', async () => assert(await resolveShopIdByEmail('aff@x.com') === 'shopA'));
+  await check('unknown email → DEFAULT_SHOP_ID (never untagged)', async () => assert(await resolveShopIdByEmail('nobody@x.com') === DEFAULT_SHOP_ID));
+  await check('missing email → DEFAULT_SHOP_ID', async () => assert(await resolveShopIdByEmail(undefined) === DEFAULT_SHOP_ID));
+
+  console.log('\n=== confirmPasswordReset cross-check: code redeemable only within its own shop ===');
+  // a reset minted for the B2C user while they were in shopB, redeemed now
+  await check('reset stamped shopB for b2c@x.com (still shopB) → ALLOWED', async () =>
+    assert(await resetAllowed({ email: 'b2c@x.com', shopId: 'shopB' }) === true));
+  // same reset doc but the email now resolves to a DIFFERENT shop → DENIED
+  await check('reset stamped shopA for b2c@x.com (email is shopB) → DENIED', async () =>
+    assert(await resetAllowed({ email: 'b2c@x.com', shopId: 'shopA' }) === false));
+  // legacy reset doc with no shopId stamp → check skipped (back-compat, ALLOWED)
+  await check('legacy reset with NO shopId → check skipped (ALLOWED)', async () =>
+    assert(await resetAllowed({ email: 'b2c@x.com' }) === true));
 
   console.log(`\n=== RESULT: ${passed} passed, ${failed} failed ===`);
   process.exit(failed === 0 ? 0 : 1);

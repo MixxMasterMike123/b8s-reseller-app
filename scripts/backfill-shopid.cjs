@@ -69,8 +69,14 @@ const IN_SCOPE_COLLECTIONS = [
   //   • adminCustomerDocuments — admin-uploaded per-customer files (rule is
   //     already isPlatform()-only; this adds the field for CF-layer scoping).
   //   • auditLogs — customer-deletion audit records (target's shop).
+  //   • passwordResets / emailVerifications — server-only, short-lived
+  //     (1h / 24h expiry) flow records. New writes now infer + stamp shopId by
+  //     email; legacy docs are expired and belong to the original shop, so the
+  //     DEFAULT_SHOP_ID stamp is correct (they're never read after expiry).
   'adminCustomerDocuments',
   'auditLogs',
+  'passwordResets',
+  'emailVerifications',
 ];
 
 // OPT-IN-ONLY collections — reachable via --only=<name> but NEVER in the default
