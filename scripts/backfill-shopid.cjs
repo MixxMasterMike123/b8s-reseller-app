@@ -63,6 +63,14 @@ const IN_SCOPE_COLLECTIONS = [
   'marketingMaterials',
   'affiliatePayouts',
   'orders',
+  // Tenant-isolation audit (2026-06-18) follow-ups — these collections were
+  // created before Phase 1 and never stamped. All legacy docs belong to the
+  // original single-shop (DEFAULT_SHOP_ID), so the default stamp is correct:
+  //   • adminCustomerDocuments — admin-uploaded per-customer files (rule is
+  //     already isPlatform()-only; this adds the field for CF-layer scoping).
+  //   • auditLogs — customer-deletion audit records (target's shop).
+  'adminCustomerDocuments',
+  'auditLogs',
 ];
 
 // OPT-IN-ONLY collections — reachable via --only=<name> but NEVER in the default

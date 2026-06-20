@@ -134,8 +134,11 @@ const AdminUserCreate = () => {
         const snapshot = await uploadBytes(storageRef, doc.file);
         const downloadURL = await getDownloadURL(snapshot.ref);
 
-        // Save metadata to admin-only collection
+        // Save metadata to admin-only collection. Tenant isolation: stamp
+        // shopId (same value that partitions the storage path above) so these
+        // docs are shop-scoped for any future Cloud Function that reads them.
         const docData = {
+          shopId,
           customerId: userId,
           fileName: doc.file.name,
           fileType: doc.file.type || 'application/octet-stream',

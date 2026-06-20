@@ -324,6 +324,10 @@ export const deleteB2CCustomerAccount = onCall<DeleteB2CCustomerData>(async (req
     // Create audit log entry
     try {
       await db.collection('auditLogs').add({
+        // Tenant isolation: stamp the target's shopId so audit records are
+        // shop-scoped (a future admin-audit UI must filter by shopId). The
+        // target shopId comes from the resource doc, never the caller payload.
+        shopId: customerData.shopId || null,
         action: 'delete_b2c_customer',
         targetId: customerId,
         targetType: 'b2cCustomer',

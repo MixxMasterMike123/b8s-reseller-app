@@ -97,8 +97,11 @@ export const uploadAdminDocument = async (customerId, file, documentData, upload
     const snapshot = await uploadBytes(storageRef, file);
     const downloadURL = await getDownloadURL(snapshot.ref);
 
-    // Save metadata to admin-only collection
+    // Save metadata to admin-only collection. Tenant isolation: stamp shopId
+    // (same value that partitions the storage path above) so these docs are
+    // shop-scoped for any future Cloud Function that reads them.
     const docData = {
+      shopId: resolvedShopId,
       customerId,
       fileName: file.name,
       fileType: getFileType(file.name),
