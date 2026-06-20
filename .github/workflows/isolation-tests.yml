@@ -1,0 +1,75 @@
+name: Tenant Isolation Tests
+
+# Permanent regression gate for the multi-tenant isolation guarantees
+# (firestore.rules + storage.rules + the Cloud Functions shop-parity guard +
+# the Stripe Connect money-path builders). Runs the rules-tests/ suites against
+# the Firebase emulators on every push/PR so cross-tenant leaks cannot regress
+# as shops are added. See docs/TENANT_ISOLATION_REMEDIATION_PLAN.md §4 (INV-1..7).
+
+on:
+  push:
+    branches: [main, 'salvage/**']
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: isolation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  isolation:
+    name: Rules + Functions + Storage isolation suites
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Node 20 matches functions/package.json engines.node and the deployed
+      # Cloud Functions runtime (nodejs20).
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+
+      # The Firestore emulator is a Java app and needs JDK 21+.
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      # Root deps provide @firebase/rules-unit-testing + firebase (client SDK)
+      # used by the rules suites. Use `npm ci` for reproducible installs.
+      - name: Install root dependencies
+        run: npm ci
+
+      # functions deps provide firebase-admin (functions-isolation suite) and
+      # tsc (to compile lib/ for connect-params).
+      - name: Install functions dependencies
+        run: npm ci
+        working-directory: functions
+
+      # Compile functions → functions/lib so connect-params can require the
+      # built money-path builders and functions-isolation can resolve admin.
+      - name: Build functions (tsc)
+        run: npm run build
+        working-directory: functions
+
+      # firebase-tools provides the `firebase emulators:exec` runner the gate
+      # script calls via `npx --no-install firebase`. Pin to the local version.
+      - name: Install firebase-tools
+        run: npm install --no-save firebase-tools@15.19.0
+
+      # Single source of truth: the same script developers run locally. It
+      # starts/stops the emulators, runs all 5 suites, and exits non-zero on the
+      # first red — which fails this job and blocks the merge.
+      - name: Run tenant-isolation gate
+        run: npm run test:isolation
