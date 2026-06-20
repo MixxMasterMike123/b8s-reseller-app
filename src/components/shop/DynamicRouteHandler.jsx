@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { useShopId } from '../../contexts/ShopContext';
 import DynamicPage from '../../pages/shop/DynamicPage';
 
 /**
@@ -10,6 +11,7 @@ import DynamicPage from '../../pages/shop/DynamicPage';
  */
 const DynamicRouteHandler = ({ children }) => {
   const location = useLocation();
+  const shopId = useShopId();
   const [isCmsPage, setIsCmsPage] = useState(false);
   const [loading, setLoading] = useState(true);
   const [cmsSlug, setCmsSlug] = useState(null);
@@ -43,9 +45,16 @@ const DynamicRouteHandler = ({ children }) => {
       try {
         console.log('🔍 DynamicRouteHandler: Checking for CMS page with slug:', slugPath);
 
+        // Tenant isolation: scope the slug existence-check to the CURRENT shop
+        // (mirrors DynamicPage's fetch). Without this, a slug that exists only
+        // in another shop would flip isCmsPage=true, and DynamicPage's
+        // shop-scoped re-query would then find nothing and render a "page not
+        // found" error instead of the normal storefront route — plus it leaks
+        // cross-tenant slug existence. See TENANT_ISOLATION_AUDIT_2026-06-18 (H29).
         const pagesRef = collection(db, 'pages');
         const q = query(
           pagesRef,
+          where('shopId', '==', shopId),
           where('slug', '==', slugPath),
           where('status', '==', 'published')
         );
@@ -67,7 +76,7 @@ const DynamicRouteHandler = ({ children }) => {
     };
 
     checkForCmsPage();
-  }, [location.pathname]);
+  }, [location.pathname, shopId]);
 
   if (loading) {
     return (
