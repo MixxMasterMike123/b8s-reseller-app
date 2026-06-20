@@ -7,7 +7,7 @@ const ACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes in milliseconds
 const HEARTBEAT_INTERVAL = 60 * 1000; // 1 minute heartbeat
 
 export const useAdminPresence = () => {
-  const { currentUser, isAdmin } = useAuth();
+  const { currentUser, isAdmin, userData } = useAuth();
   const [adminPresence, setAdminPresence] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userActivity, setUserActivity] = useState(Date.now());
@@ -53,6 +53,10 @@ export const useAdminPresence = () => {
       await setDoc(presenceRef, {
         userId: currentUser.uid,
         email: currentUser.email,
+        // Tenant isolation: stamp the admin's OWN shopId so the read rule can
+        // scope presence to the same shop (no cross-tenant presence enumeration).
+        // Platform super-admins have no shopId (null) and bypass the scoping rule.
+        shopId: userData?.shopId || null,
         status: status,
         lastSeen: serverTimestamp(),
         lastActivity: new Date(userActivity),
@@ -62,7 +66,7 @@ export const useAdminPresence = () => {
     } catch (error) {
       console.error('Error updating admin presence:', error);
     }
-  }, [currentUser, isAdmin, userActivity]);
+  }, [currentUser, isAdmin, userData, userActivity]);
 
   // Remove presence when going offline
   const removePresence = useCallback(async () => {
@@ -123,7 +127,13 @@ export const useAdminPresence = () => {
     };
   }, [currentUser, isAdmin, userActivity, updatePresence, removePresence, updateActivity]);
 
-  // Listen to all admin presence
+  // Listen to admin presence. Tenant isolation: a platform super-admin sees ALL
+  // shops' presence (operator console); a shop admin sees ONLY their own shop's.
+  // The query MUST mirror the read rule — Firestore denies the whole snapshot if
+  // any matched doc is unreadable, so a shop admin filters by shopId client-side
+  // (matching the rule) rather than reading the collection unscoped.
+  const isPlatformAdmin = userData?.platform === true;
+  const myShopId = userData?.shopId || null;
   useEffect(() => {
     if (!isAdmin) {
       setAdminPresence([]);
@@ -131,8 +141,10 @@ export const useAdminPresence = () => {
       return;
     }
 
-    const presenceQuery = query(collection(db, 'adminPresence'));
-    
+    const presenceQuery = isPlatformAdmin
+      ? query(collection(db, 'adminPresence'))
+      : query(collection(db, 'adminPresence'), where('shopId', '==', myShopId));
+
     const unsubscribe = onSnapshot(presenceQuery, (snapshot) => {
       const presenceList = [];
       
@@ -177,7 +189,7 @@ export const useAdminPresence = () => {
     });
 
     return unsubscribe;
-  }, [isAdmin]);
+  }, [isAdmin, isPlatformAdmin, myShopId]);
 
   // Format time since last seen
   const formatTimeSince = (milliseconds) => {

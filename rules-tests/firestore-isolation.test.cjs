@@ -96,9 +96,15 @@ async function seed() {
     await setDoc(doc(db, 'ambassadorActivities/aa1'), { note: 'amb' });
     await setDoc(doc(db, 'customerDocuments/cd1'), { note: 'doc' });
     await setDoc(doc(db, 'appSettings/s1'), { k: 'v' });
-    // adminPresence keyed by the admin's OWN uid (the client writes doc id == uid)
-    await setDoc(doc(db, 'adminPresence/adminA'), { uid: 'adminA' });
-    await setDoc(doc(db, 'adminPresence/adminB'), { uid: 'adminB' });
+    // adminPresence keyed by the admin's OWN uid (the client writes doc id == uid).
+    // TENANT-ISOLATION (Finding 2): now shopId-stamped so reads are shop-scoped.
+    await setDoc(doc(db, 'adminPresence/adminA'), { uid: 'adminA', shopId: 'shopA' });
+    await setDoc(doc(db, 'adminPresence/adminB'), { uid: 'adminB', shopId: 'shopB' });
+    // adminUIDs registry keyed by uid, shopId-stamped (Finding 2). Platform
+    // super-admin doc carries shopId: null.
+    await setDoc(doc(db, 'adminUIDs/adminA'), { uid: 'adminA', shopId: 'shopA', level: 'admin' });
+    await setDoc(doc(db, 'adminUIDs/adminB'), { uid: 'adminB', shopId: 'shopB', level: 'admin' });
+    await setDoc(doc(db, 'adminUIDs/mikael'), { uid: 'mikael', shopId: null, level: 'super' });
   });
 }
 
@@ -135,11 +141,22 @@ async function run() {
   // marketing materials (top-level): an active non-admin (affiliate) reads OWN shop
   await check('active affiliate reads OWN-shop marketingMaterial', assertSucceeds(
     getDoc(doc(env.authenticatedContext('custA', { email: 'custA@x.com' }).firestore(), 'marketingMaterials/mmA'))));
-  // adminPresence heartbeat: admin writes its OWN presence doc (id == uid)
+  // adminPresence heartbeat: admin writes its OWN presence doc (id == uid),
+  // shopId-stamped (Finding 2).
   await check('shopA admin writes OWN adminPresence (heartbeat)', assertSucceeds(
-    setDoc(doc(shopAAdminDb(), 'adminPresence/adminA'), { uid: 'adminA', status: 'online' })));
-  await check('shopA admin reads adminPresence collection (onSnapshot)', assertSucceeds(
-    getDoc(doc(shopAAdminDb(), 'adminPresence/adminB'))));
+    setDoc(doc(shopAAdminDb(), 'adminPresence/adminA'), { uid: 'adminA', shopId: 'shopA', status: 'online' })));
+  // Finding 2: presence read is now SHOP-SCOPED — own shop allowed.
+  await check('shopA admin reads OWN-shop adminPresence', assertSucceeds(
+    getDoc(doc(shopAAdminDb(), 'adminPresence/adminA'))));
+  // adminUIDs registry: own-shop read allowed, own-shop write (role-toggle) allowed.
+  await check('shopA admin reads OWN-shop adminUID doc', assertSucceeds(
+    getDoc(doc(shopAAdminDb(), 'adminUIDs/adminA'))));
+  await check('shopA admin creates OWN-shop adminUID (role-toggle preserved)', assertSucceeds(
+    setDoc(doc(shopAAdminDb(), 'adminUIDs/newAdminA'), { uid: 'newAdminA', shopId: 'shopA', level: 'admin' })));
+  await check('platform reads ANY-shop adminUID doc', assertSucceeds(
+    getDoc(doc(platformDb(), 'adminUIDs/adminB'))));
+  await check('platform reads ANY-shop adminPresence', assertSucceeds(
+    getDoc(doc(platformDb(), 'adminPresence/adminB'))));
   // shops: own-shop admin may update storefront config (NOT payments)
   await check('shopA admin updates OWN shop storefront config', assertSucceeds(
     updateDoc(doc(shopAAdminDb(), 'shops/shopA'), { storeIdentity: { tagline: 'Hej' } })));
@@ -200,10 +217,24 @@ async function run() {
     updateDoc(doc(shopBAdminDb(), 'shops/shopB'), { 'payments.connectEnabled': true })));
   await check('shopB admin CANNOT set payments.commissionBps on own shop', assertFails(
     updateDoc(doc(shopBAdminDb(), 'shops/shopB'), { 'payments.commissionBps': 9999 })));
-  // adminPresence: read is intentionally cross-admin (isAdmin); the WRITE is the
-  // hardened bit — an admin may write ONLY their own presence doc (id == uid).
+  // adminPresence: an admin may write ONLY their own presence doc (id == uid).
   await check('shopA admin CANNOT write ANOTHER admin presence doc (not own uid)', assertFails(
     setDoc(doc(shopAAdminDb(), 'adminPresence/adminB'), { uid: 'adminB', status: 'spoofed' })));
+  // Finding 2: presence READ is now SHOP-SCOPED — cross-shop read denied.
+  await check('shopA admin CANNOT read shopB adminPresence (cross-shop enum)', assertFails(
+    getDoc(doc(shopAAdminDb(), 'adminPresence/adminB'))));
+  // Finding 2: adminUIDs READ is now SHOP-SCOPED — no cross-shop admin enumeration.
+  await check('shopA admin CANNOT read shopB adminUID doc (cross-shop enum)', assertFails(
+    getDoc(doc(shopAAdminDb(), 'adminUIDs/adminB'))));
+  await check('shopA admin CANNOT read PLATFORM super-admin UID doc (shopId null)', assertFails(
+    getDoc(doc(shopAAdminDb(), 'adminUIDs/mikael'))));
+  // Finding 2: adminUIDs WRITE is shop-scoped — cannot inject a cross-shop admin.
+  await check('shopA admin CANNOT create a shopB adminUID (cross-shop injection)', assertFails(
+    setDoc(doc(shopAAdminDb(), 'adminUIDs/evilB'), { uid: 'evilB', shopId: 'shopB', level: 'admin' })));
+  await check('shopA admin CANNOT create an UNSCOPED adminUID (no shopId)', assertFails(
+    setDoc(doc(shopAAdminDb(), 'adminUIDs/evilU'), { uid: 'evilU', level: 'admin' })));
+  await check('shopA admin CANNOT delete a shopB adminUID doc', assertFails(
+    deleteDoc(doc(shopAAdminDb(), 'adminUIDs/adminB'))));
 
   console.log(`\n=== RESULT: ${passed} passed, ${failed} failed ===`);
   await env.cleanup();

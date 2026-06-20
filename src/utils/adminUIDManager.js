@@ -44,14 +44,21 @@ export const CURRENT_ADMIN_UIDS = [
  * Add a user to the adminUIDs collection
  * 🛡️ SAFE: Only adds to parallel collection, doesn't modify existing systems
  */
-export const addAdminUID = async (uid, email, level = 'admin', createdBy = 'system') => {
+export const addAdminUID = async (uid, email, level = 'admin', createdBy = 'system', shopId = null) => {
   try {
     console.log(`🔧 AdminUID: Adding admin UID ${uid} (${email}) with level ${level}`);
-    
+
+    // Tenant isolation: stamp the admin's shopId so the adminUIDs registry is
+    // shop-scoped — the read rule lets a shop admin see only their own shop's
+    // admin docs (no cross-tenant admin enumeration), and the write rule lets a
+    // shop admin write only an own-shop doc. Platform super-admins pass null
+    // (they bypass scoping). The caller (AuthContext.updateUserRole) supplies the
+    // TARGET user's shopId, which the users-rule already guarantees is same-shop.
     const adminUIDData = {
       uid,
       email,
       level, // 'super', 'admin', 'limited'
+      shopId: shopId || null,
       createdAt: serverTimestamp(),
       createdBy,
       addedAt: serverTimestamp(),

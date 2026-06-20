@@ -384,25 +384,40 @@ service cloud.firestore {
     }
 
     // adminPresence — 60s heartbeat (useAdminPresence.js writes
-    // doc(db,'adminPresence',currentUser.uid)); the whole collection is read via
-    // onSnapshot. Read stays isAdmin() (cross-shop presence visibility is a minor
-    // info leak, deferred). TENANT-ISOLATION HARDENING: write is tightened to an
-    // admin's OWN doc only (presenceId == request.auth.uid) — the client already
-    // writes a doc id == currentUser.uid, so this is a no-client-change harden.
-    // Deliberately NOT platform-only: that would break the shop-admin heartbeat.
+    // doc(db,'adminPresence',currentUser.uid) stamped with the admin's shopId).
+    // TENANT-ISOLATION HARDENING: read is now SHOP-SCOPED — a platform super-admin
+    // sees all shops' presence (operator console); a shop admin sees only their
+    // OWN shop's. The client query mirrors this (shop admins filter
+    // where('shopId','==', myShopId)), so Firestore never matches an un-stamped
+    // legacy doc for a shop admin (its absent shopId can't equal the filter) and
+    // never trips a whole-snapshot deny. Platform bypasses the shopId check.
+    // Write stays the admin's OWN doc only (presenceId == request.auth.uid).
     match /adminPresence/{presenceId} {
-      allow read: if isAdmin();
+      allow read: if isPlatform() ||
+        (isAdmin() && resource.data.shopId == userDoc().shopId);
       allow write: if isAdmin() && presenceId == request.auth.uid;
     }
 
-    // adminUIDs — admin tracking (no shopId). Kept read,write isAdmin: a SHOP
-    // admin legitimately writes here via adminUIDManager (addAdminUID/
-    // removeAdminUID) on the role-toggle path in AuthContext.updateUserRole,
-    // which is gated on isAdmin (not platform). Making this platform-only would
-    // lock out that flow, so it is intentionally left as isAdmin (low risk: no
-    // shopId, internal admin bookkeeping). Revisit when adminUIDs is deprecated.
+    // adminUIDs — parallel admin registry, now SHOP-STAMPED (addAdminUID writes
+    // the target user's shopId). TENANT-ISOLATION HARDENING: read+write are
+    // shop-scoped to kill cross-tenant admin ENUMERATION (a shop admin previously
+    // could getDocs(adminUIDs) and list every platform + shop admin).
+    //   • read: platform sees all; a shop admin sees only own-shop admin docs.
+    //   • create/update: a shop admin may write only an own-shop doc
+    //     (request.resource.data.shopId == their shopId); platform writes any.
+    //     This preserves the role-toggle (the users-rule already guarantees a
+    //     shop admin only promotes a SAME-shop user, so the stamped shopId equals
+    //     the caller's) while blocking cross-shop admin injection.
+    //   • delete: own-shop (removeAdminUID has no shopId at the call site, so the
+    //     guard is on the EXISTING doc's shopId) or platform.
+    // Platform super-admin docs carry shopId == null and are platform-managed.
     match /adminUIDs/{adminUID} {
-      allow read, write: if isAdmin();
+      allow read: if isPlatform() ||
+        (isAdmin() && resource.data.shopId == userDoc().shopId);
+      allow create, update: if isPlatform() ||
+        (isAdmin() && request.resource.data.shopId == userDoc().shopId);
+      allow delete: if isPlatform() ||
+        (isAdmin() && resource.data.shopId == userDoc().shopId);
     }
 
     // Dining/ambassador wagon CRM data — operator add-on tooling (no shopId).

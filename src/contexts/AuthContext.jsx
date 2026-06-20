@@ -412,10 +412,11 @@ export function AuthProvider({ children }) {
         if (currentUser) {
           const oldRole = currentUser.role;
           const userEmail = currentUser.email;
-          
+
           if (oldRole !== 'admin' && newRole === 'admin') {
             console.log(`📝 Demo: Adding ${userEmail} to adminUIDs collection`);
-            await addAdminUID(userId, userEmail, 'admin');
+            // Tenant isolation: stamp the target user's shopId on the adminUIDs doc.
+            await addAdminUID(userId, userEmail, 'admin', 'system', currentUser.shopId || null);
           } else if (oldRole === 'admin' && newRole !== 'admin') {
             console.log(`📝 Demo: Removing ${userEmail} from adminUIDs collection`);
             await removeAdminUID(userId);
@@ -439,22 +440,37 @@ export function AuthProvider({ children }) {
         const currentUserData = userDoc.data();
         const oldRole = currentUserData.role;
         const userEmail = currentUserData.email;
-        
+        // Tenant isolation: the TARGET user's shopId (the users-rule already
+        // guarantees a non-platform admin can only role-toggle a same-shop user,
+        // so this equals the caller's shopId and satisfies the adminUIDs write rule).
+        const targetShopId = currentUserData.shopId || null;
+
         // Update user role in Firestore
         await updateDoc(userRef, {
           role: newRole,
           updatedAt: new Date().toISOString()
         });
-        
-        // Sync adminUIDs collection based on role change
-        if (oldRole !== 'admin' && newRole === 'admin') {
-          console.log(`🔧 Adding ${userEmail} to adminUIDs collection`);
-          await addAdminUID(userId, userEmail, 'admin');
-        } else if (oldRole === 'admin' && newRole !== 'admin') {
-          console.log(`🔧 Removing ${userEmail} from adminUIDs collection`);
-          await removeAdminUID(userId);
+
+        // Sync the PARALLEL adminUIDs registry based on the role change. This is
+        // best-effort, non-fatal: the real privilege (users/{id}.role) is already
+        // committed above, so a registry-write failure must NOT surface as "role
+        // update failed". In particular, a shop admin demoting a user whose legacy
+        // adminUIDs doc predates shopId stamping would get PERMISSION_DENIED on the
+        // delete (rule checks the existing doc's shopId) — that's a stale cosmetic
+        // doc, not a failed demote. (The backfill closes this; the catch makes it
+        // harmless either way.)
+        try {
+          if (oldRole !== 'admin' && newRole === 'admin') {
+            console.log(`🔧 Adding ${userEmail} to adminUIDs collection`);
+            await addAdminUID(userId, userEmail, 'admin', 'system', targetShopId);
+          } else if (oldRole === 'admin' && newRole !== 'admin') {
+            console.log(`🔧 Removing ${userEmail} from adminUIDs collection`);
+            await removeAdminUID(userId);
+          }
+        } catch (registryError) {
+          console.warn('⚠️ adminUIDs registry sync failed (role change already applied):', registryError);
         }
-        
+
         toast.success(`User role updated to ${newRole} successfully`);
         return true;
       }
