@@ -18,6 +18,9 @@ const CustomerLogin = ({ onLoginSuccess, hideLanguageSwitcher = false, hideNavig
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Where to go after login. Honor the `from` a guard passed (e.g. the B2B
+  // portal bounces here with state.from so the customer returns to /:shop/b2b).
+  // Falls back to the historical default when no origin was provided.
   const from = location.state?.from?.pathname || "/affiliate-portal";
 
   const handleSubmit = async (e) => {
@@ -31,7 +34,7 @@ const CustomerLogin = ({ onLoginSuccess, hideLanguageSwitcher = false, hideNavig
       if (onLoginSuccess) {
         onLoginSuccess();
       } else {
-        navigate('/affiliate-portal'); 
+        navigate(from); // honor the origin (B2B portal etc.); defaults to /affiliate-portal
       }
     } catch (err) {
       console.error(err);

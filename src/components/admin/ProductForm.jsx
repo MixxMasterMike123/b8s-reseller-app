@@ -697,13 +697,27 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
               </label>
             </CardSection>
 
-            {/* Publishing — the B2C availability gate (add-on seam, slice 1c plan) */}
+            {/* Publishing — per-channel availability gates. MERGE into the
+                availability object (never replace it) so the b2c toggle can't
+                clobber the sibling b2b key, and vice versa. */}
             <CardSection title="Publicering" bodyClassName="space-y-3">
               <label className="flex items-center gap-2 text-[13px] text-admin-text">
-                <input id="avB2c" type="checkbox" checked={formData.availability.b2c} onChange={(e) => setField('availability', { b2c: e.target.checked })} className={checkboxCls} />
+                <input id="avB2c" type="checkbox" checked={formData.availability.b2c} onChange={(e) => setField('availability', { ...formData.availability, b2c: e.target.checked })} className={checkboxCls} />
                 Tillgänglig i webbshoppen
               </label>
               <p className={helpCls}>Avmarkera för att dölja produkten i webbshoppen utan att inaktivera den.</p>
+              {/* B2B-availability gate — only for shops with the B2B add-on. Lets
+                  an admin offer a product wholesale-only or hide it from B2B
+                  while keeping it in the consumer shop (independent of b2c). */}
+              {b2bEnabled && (
+                <>
+                  <label className="flex items-center gap-2 text-[13px] text-admin-text">
+                    <input id="avB2b" type="checkbox" checked={formData.availability.b2b} onChange={(e) => setField('availability', { ...formData.availability, b2b: e.target.checked })} className={checkboxCls} />
+                    Tillgänglig i grossistportalen
+                  </label>
+                  <p className={helpCls}>Avmarkera för att dölja produkten för B2B-kunder.</p>
+                </>
+              )}
             </CardSection>
 
             {/* Organization — tags (category lives in the main column, Shopify-style) */}
