@@ -144,9 +144,9 @@ const AdminB2BCustomers = () => {
         <div className="min-w-0">
           <div className="truncate text-admin-text">{c.contactPerson || c.email}</div>
           <div className="truncate text-[12px] text-admin-text-faint">{c.email}</div>
-          {(c.phone || c.city) && (
+          {(c.phone || c.address || c.city) && (
             <div className="truncate text-[12px] text-admin-text-faint">
-              {[c.phone, [c.postalCode, c.city].filter(Boolean).join(' ')]
+              {[c.phone, [c.address, c.postalCode, c.city].filter(Boolean).join(' ')]
                 .filter(Boolean)
                 .join(' · ')}
             </div>

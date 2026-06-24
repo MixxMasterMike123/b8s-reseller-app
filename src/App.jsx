@@ -66,6 +66,12 @@ import CustomerAccount from './pages/shop/CustomerAccount';
 import CustomerLogin from './pages/shop/CustomerLogin';
 import CustomerRegister from './pages/shop/CustomerRegister';
 import B2BRegister from './pages/shop/B2BRegister';
+import B2BDashboard from './pages/shop/B2BDashboard';
+import B2BCatalog from './pages/shop/B2BCatalog';
+import B2BProfile from './pages/shop/B2BProfile';
+import B2BOrders from './pages/shop/B2BOrders';
+import B2BPortalLayout from './components/shop/B2BPortalLayout';
+import { B2BCustomerProvider } from './contexts/B2BCustomerContext';
 import ForgotPassword from './pages/shop/ForgotPassword';
 import ResetPassword from './pages/shop/ResetPassword';
 import EmailVerificationHandler from './pages/shop/EmailVerificationHandler';
@@ -258,6 +264,14 @@ function App() {
                   Declared BEFORE the /:shopId/* CMS catch-all so it isn't
                   swallowed. Portal pages (catalog/orders) land in Phase 3. */}
               <Route path="/:shopId/b2b/register" element={<ShopGate><AddonGate feature="b2b" redirectTo="shop-home"><B2BRegister /></AddonGate></ShopGate>} />
+              {/* B2B portal (browse-only in this phase; ordering = Phase 4).
+                  Each page: ShopGate → AddonGate(b2b) → B2BCustomerProvider →
+                  B2BPortalLayout (resolves profile + gates active). Declared
+                  BEFORE the /:shopId/* CMS catch-all. */}
+              <Route path="/:shopId/b2b" element={<ShopGate><AddonGate feature="b2b" redirectTo="shop-home"><B2BCustomerProvider><B2BPortalLayout><B2BDashboard /></B2BPortalLayout></B2BCustomerProvider></AddonGate></ShopGate>} />
+              <Route path="/:shopId/b2b/products" element={<ShopGate><AddonGate feature="b2b" redirectTo="shop-home"><B2BCustomerProvider><B2BPortalLayout><B2BCatalog /></B2BPortalLayout></B2BCustomerProvider></AddonGate></ShopGate>} />
+              <Route path="/:shopId/b2b/orders" element={<ShopGate><AddonGate feature="b2b" redirectTo="shop-home"><B2BCustomerProvider><B2BPortalLayout><B2BOrders /></B2BPortalLayout></B2BCustomerProvider></AddonGate></ShopGate>} />
+              <Route path="/:shopId/b2b/profile" element={<ShopGate><AddonGate feature="b2b" redirectTo="shop-home"><B2BCustomerProvider><B2BPortalLayout><B2BProfile /></B2BPortalLayout></B2BCustomerProvider></AddonGate></ShopGate>} />
 
               {/* Category browse pages (the primary taxonomy). Specific path so
                   it matches before the CMS catch-all below. */}
