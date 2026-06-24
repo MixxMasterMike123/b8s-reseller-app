@@ -192,8 +192,17 @@ const AppLayout = ({ children }) => {
     icon: UsersIcon,
     description: t('nav.admin_affiliates_desc', 'Hantera affiliate-partners'),
   };
+  // The native "B2B Grossist" add-on link (wholesale customers). Gated on the
+  // b2b feature flag, same pattern as affiliate.
+  const b2bEnabled = isAddonEnabled('b2b');
+  const b2bNavItem = {
+    name: t('nav.admin_b2b_customers', 'B2B-kunder'),
+    path: '/admin/b2b-customers',
+    icon: UsersIcon,
+    description: t('nav.admin_b2b_customers_desc', 'Hantera grossistkunder'),
+  };
   // Whether the add-on section (divider + items) has anything to show.
-  const hasAddonItems = affiliateEnabled || wagonMenuItems.length > 0;
+  const hasAddonItems = affiliateEnabled || b2bEnabled || wagonMenuItems.length > 0;
   
   const navItemClass = (active) =>
     `group flex h-8 items-center gap-2 rounded-[var(--radius-admin-el)] pl-2 pr-1.5 text-[13px] transition-colors ${
@@ -304,6 +313,16 @@ const AppLayout = ({ children }) => {
                   <span className="flex-1">{affiliateNavItem.name}</span>
                 </Link>
               )}
+              {b2bEnabled && (
+                <Link
+                  to={b2bNavItem.path}
+                  title={b2bNavItem.description}
+                  className={navItemClass(isActive(b2bNavItem.path))}
+                >
+                  <b2bNavItem.icon className={navIconClass(isActive(b2bNavItem.path))} aria-hidden="true" />
+                  <span className="flex-1">{b2bNavItem.name}</span>
+                </Link>
+              )}
               {wagonMenuItems.map((item) => {
                 const active = isActive(item.path);
                 return (
@@ -374,6 +393,18 @@ const AppLayout = ({ children }) => {
                       >
                         <affiliateNavItem.icon className={navIconClass(isActive(affiliateNavItem.path))} aria-hidden="true" />
                         <span className="flex-1">{affiliateNavItem.name}</span>
+                      </Link>
+                    )}
+                    {b2bEnabled && (
+                      <Link
+                        to={b2bNavItem.path}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`group flex h-10 items-center gap-2 rounded-[var(--radius-admin-el)] pl-2 pr-1.5 text-[13px] ${
+                          isActive(b2bNavItem.path) ? 'bg-black/[0.08] font-semibold text-admin-text' : 'font-medium text-admin-text hover:bg-black/[0.06]'
+                        }`}
+                      >
+                        <b2bNavItem.icon className={navIconClass(isActive(b2bNavItem.path))} aria-hidden="true" />
+                        <span className="flex-1">{b2bNavItem.name}</span>
                       </Link>
                     )}
                     {wagonMenuItems.map((item) => {

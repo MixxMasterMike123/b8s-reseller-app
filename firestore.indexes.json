@@ -380,6 +380,22 @@
       ]
     },
     {
+      "collectionGroup": "b2bCustomers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "shopId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "b2bCustomers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "shopId", "order": "ASCENDING" },
+        { "fieldPath": "firebaseAuthUid", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "affiliates",
       "queryScope": "COLLECTION",
       "fields": [

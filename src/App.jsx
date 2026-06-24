@@ -39,6 +39,7 @@ import AdminUserCreate from './pages/admin/AdminUserCreate';
 import AdminUserEdit from './pages/admin/AdminUserEdit';
 import AdminB2CCustomers from './pages/admin/AdminB2CCustomers';
 import AdminB2CCustomerEdit from './pages/admin/AdminB2CCustomerEdit';
+import AdminB2BCustomers from './pages/admin/AdminB2BCustomers';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminOrderDetail from './pages/admin/AdminOrderDetail';
 import AdminProducts from './pages/admin/AdminProducts';
@@ -64,6 +65,7 @@ import Checkout from './pages/shop/Checkout';
 import CustomerAccount from './pages/shop/CustomerAccount';
 import CustomerLogin from './pages/shop/CustomerLogin';
 import CustomerRegister from './pages/shop/CustomerRegister';
+import B2BRegister from './pages/shop/B2BRegister';
 import ForgotPassword from './pages/shop/ForgotPassword';
 import ResetPassword from './pages/shop/ResetPassword';
 import EmailVerificationHandler from './pages/shop/EmailVerificationHandler';
@@ -251,6 +253,11 @@ function App() {
               <Route path="/:shopId/account" element={<ShopGate><CustomerAccount /></ShopGate>} />
               <Route path="/:shopId/affiliate-registration" element={<ShopGate><AddonGate feature="affiliate" redirectTo="shop-home"><AffiliateRegistration /></AddonGate></ShopGate>} />
               <Route path="/:shopId/affiliate-portal" element={<ShopGate><AddonGate feature="affiliate" redirectTo="shop-home"><AffiliatePortal /></AddonGate></ShopGate>} />
+              {/* B2B Wholesale add-on: per-shop wholesale self-registration.
+                  Gated on features.b2b; a non-B2B shop bounces to its home.
+                  Declared BEFORE the /:shopId/* CMS catch-all so it isn't
+                  swallowed. Portal pages (catalog/orders) land in Phase 3. */}
+              <Route path="/:shopId/b2b/register" element={<ShopGate><AddonGate feature="b2b" redirectTo="shop-home"><B2BRegister /></AddonGate></ShopGate>} />
 
               {/* Category browse pages (the primary taxonomy). Specific path so
                   it matches before the CMS catch-all below. */}
@@ -317,6 +324,15 @@ function App() {
                 <AdminRoute>
                   <AdminB2CCustomerEdit />
                 </AdminRoute>
+              } />
+
+              {/* B2B Wholesale add-on: admin manages wholesale customers (list +
+                  activate). Gated on features.b2b (route + AppLayout menu);
+                  default-ON keeps existing shops working. */}
+              <Route path="/admin/b2b-customers" element={
+                <AddonGate feature="b2b"><AdminRoute>
+                  <AdminB2BCustomers />
+                </AdminRoute></AddonGate>
               } />
               
               <Route path="/admin/orders" element={
