@@ -34,6 +34,10 @@ const AdminOrderDetail = () => {
   const { getContentValue } = useContentTranslation();
 
   // Use guest data if it exists, otherwise use fetched user data
+  // New B2B Faktura orders embed the buyer in customerInfo/shippingInfo (the
+  // buyer is in b2bCustomers, NOT users — so the users/{userId} lookup would
+  // miss). Read straight off the order doc for source==='b2b' with customerInfo.
+  const isNewB2B = order?.source === 'b2b' && !!order?.customerInfo;
   const displayUser = order?.source === 'b2c' ? {
     email: order.customerInfo?.email || 'Not specified',
     companyName: `${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''} (B2C Customer)`.trim(),
@@ -41,6 +45,13 @@ const AdminOrderDetail = () => {
     phone: 'Not specified',
     role: 'B2C Customer',
     active: true, // B2C customers are implicitly active for their order
+  } : isNewB2B ? {
+    email: order.customerInfo?.email || 'Not specified',
+    companyName: order.customerInfo?.companyName || 'Not specified',
+    contactPerson: order.customerInfo?.contactPerson || 'Not specified',
+    phone: order.customerInfo?.phone || 'Not specified',
+    role: 'B2B-kund',
+    active: true,
   } : userData || {
     email: 'Not specified',
     companyName: 'Not specified',
@@ -70,13 +81,21 @@ const AdminOrderDetail = () => {
       
       return 'Address information missing';
     })()
+  } : isNewB2B ? {
+    company: order.customerInfo?.companyName || 'Not specified',
+    contactPerson: order.customerInfo?.contactPerson || 'Not specified',
+    address: [
+      order.shippingInfo?.address,
+      `${order.shippingInfo?.postalCode || ''} ${order.shippingInfo?.city || ''}`.trim(),
+      order.shippingInfo?.country,
+    ].filter(Boolean).join(', ') || 'Not specified'
   } : {
     company: userData?.companyName || 'Not specified',
     contactPerson: userData?.contactPerson || 'Not specified',
     address: [
-      userData?.deliveryAddress, 
-      userData?.deliveryPostalCode, 
-      userData?.deliveryCity, 
+      userData?.deliveryAddress,
+      userData?.deliveryPostalCode,
+      userData?.deliveryCity,
       userData?.deliveryCountry
     ].filter(Boolean).join(', ') || 'Not specified'
   };
@@ -204,6 +223,13 @@ const AdminOrderDetail = () => {
         return { text: 'Skickad', color: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' };
       case 'delivered':
         return { text: 'Levererad', color: 'bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-300' };
+      // B2B Faktura lifecycle (pending → invoiced → paid → shipped → completed)
+      case 'invoiced':
+        return { text: 'Fakturerad', color: 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-300' };
+      case 'paid':
+        return { text: 'Betald', color: 'bg-teal-100 dark:bg-teal-900 text-teal-800 dark:text-teal-300' };
+      case 'completed':
+        return { text: 'Slutförd', color: 'bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-300' };
       case 'cancelled':
         return { text: 'Avbruten', color: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300' };
       default:
@@ -443,9 +469,13 @@ const AdminOrderDetail = () => {
   const isB2C = order.source === 'b2c';
   // Payment "paid" — mirrors the list/OrderConfirmation derivation.
   const paid = ['succeeded', 'paid'].includes(order.payment?.status) || order.status === 'confirmed';
-  const subtotal = isB2C ? order.subtotal : order.prisInfo?.produktPris;
-  const vat = isB2C ? order.vat : order.prisInfo?.moms;
-  const total = isB2C ? order.total : order.prisInfo?.totalPris;
+  // New-shape orders (B2C + new B2B Faktura) carry subtotal/vat/total; legacy B2B
+  // orders carry prisInfo. Prefer the new fields whenever present so B2B Faktura
+  // totals render (not 0,00 kr).
+  const hasNewShape = order.total != null;
+  const subtotal = hasNewShape ? order.subtotal : order.prisInfo?.produktPris;
+  const vat = hasNewShape ? order.vat : order.prisInfo?.moms;
+  const total = hasNewShape ? order.total : order.prisInfo?.totalPris;
   const affiliateCode = order.affiliateCode || order.affiliate?.code;
   const affiliatePct =
     order.discountPercentage || order.affiliate?.discountPercentage || order.affiliateDiscount?.percentage || 0;
@@ -527,7 +557,7 @@ const AdminOrderDetail = () => {
                     {updateStatusLoading ? (
                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-admin-text-muted border-r-transparent" />
                     ) : (
-                      <OrderStatusMenu currentStatus={order.status} onStatusChange={handleStatusUpdate} />
+                      <OrderStatusMenu currentStatus={order.status} onStatusChange={handleStatusUpdate} source={order.source} />
                     )}
                     {paid && order.status !== 'refunded' && (
                       <Button variant="plain" disabled={refundLoading} onClick={handleRefund}>

@@ -514,7 +514,18 @@ export const OrderProvider = ({ children }) => {
             contactPerson: 'Unknown'
           };
           
-          if (actualUserId) {
+          // New B2B Faktura orders: the buyer is in b2bCustomers (NOT users /
+          // b2cCustomers), and the order already embeds the contact in
+          // customerInfo — use it directly so the status-update email goes to the
+          // real recipient instead of the unknown@example.com placeholder.
+          if (orderData.source === 'b2b' && orderData.customerInfo?.email) {
+            userData = {
+              email: orderData.customerInfo.email,
+              companyName: orderData.customerInfo.companyName || orderData.customerInfo.name || 'B2B Customer',
+              contactPerson: orderData.customerInfo.contactPerson || orderData.customerInfo.name || 'Customer'
+            };
+            console.log('🔧 DEBUG: Using embedded B2B customerInfo for email:', userData.email);
+          } else if (actualUserId) {
             console.log('🔧 DEBUG: Looking up user in "users" collection with ID:', actualUserId);
             const userDoc = await getDoc(doc(db, "users", actualUserId));
             if (userDoc.exists()) {

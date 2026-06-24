@@ -119,6 +119,11 @@ async function seed() {
     // tests, so the admin-activate LEGIT test (which flips b2bA) can't turn the
     // customer's self-activate into a value-unchanged no-op that the rule allows.
     await setDoc(doc(db, 'b2bCustomers/b2bSelf'), { firebaseAuthUid: 'b2bUserA', shopId: 'shopA', active: false, companyName: 'Self A', email: 'self@x.com' });
+
+    // B2B Faktura orders (Phase 4): each links to a b2bCustomers doc via
+    // b2bCustomerId. ordB2bA is owned by b2bUserA (via b2bA), ordB2bB by b2bUserB.
+    await setDoc(doc(db, 'orders/ordB2bA'), { source: 'b2b', shopId: 'shopA', b2bCustomerId: 'b2bA', userId: 'b2bUserA', orderNumber: 'B8S-1-A', total: 100 });
+    await setDoc(doc(db, 'orders/ordB2bB'), { source: 'b2b', shopId: 'shopB', b2bCustomerId: 'b2bB', userId: 'b2bUserB', orderNumber: 'B8S-1-B', total: 200 });
   });
 }
 
@@ -189,6 +194,12 @@ async function run() {
     updateDoc(doc(shopAAdminDb(), 'b2bCustomers/b2bA'), { active: true })));
   await check('platform reads ANY-shop b2bCustomer', assertSucceeds(
     getDoc(doc(platformDb(), 'b2bCustomers/b2bB'))));
+  // B2B orders LIST: a B2B customer lists their OWN orders (source=='b2b' +
+  // b2bCustomerId links to their b2bCustomers doc). Query must be scoped the way
+  // the client queries (where source/b2bCustomerId) so the per-doc rule passes.
+  await check('B2B customer LISTS own orders (via b2bCustomerId linkage)', assertSucceeds(
+    getDocs(query(collection(b2bUserDb('b2bUserA'), 'orders'),
+      where('source', '==', 'b2b'), where('b2bCustomerId', '==', 'b2bA')))));
 
   console.log('\n=== ISOLATION: cross-shop / privilege escalation must be DENIED ===');
   // users — the biggest leak
@@ -286,6 +297,14 @@ async function run() {
     updateDoc(doc(b2bUserDb('b2bUserA'), 'b2bCustomers/b2bSelf'), { shopId: 'shopB' })));
   await check('B2B customer CANNOT rewrite own firebaseAuthUid (orphan/hand-off)', assertFails(
     updateDoc(doc(b2bUserDb('b2bUserA'), 'b2bCustomers/b2bSelf'), { firebaseAuthUid: 'someoneElse' })));
+  // B2B orders LIST isolation: a B2B customer must NOT list ANOTHER customer's
+  // B2B orders, even cross-shop (b2bUserA querying b2bUserB's order in shopB).
+  await check('B2B customer CANNOT list ANOTHER customer B2B orders (cross-customer/shop)', assertFails(
+    getDocs(query(collection(b2bUserDb('b2bUserA'), 'orders'),
+      where('source', '==', 'b2b'), where('b2bCustomerId', '==', 'b2bB')))));
+  // And cannot enumerate ALL b2b orders by source alone (matches b2bB → denied).
+  await check('B2B customer CANNOT list ALL b2b orders (unscoped source query)', assertFails(
+    getDocs(query(collection(b2bUserDb('b2bUserA'), 'orders'), where('source', '==', 'b2b')))));
 
   console.log(`\n=== RESULT: ${passed} passed, ${failed} failed ===`);
   await env.cleanup();

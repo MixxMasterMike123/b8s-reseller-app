@@ -373,10 +373,11 @@ const AdminOrders = () => {
       maximumFractionDigits: withDecimals ? 2 : 0,
     }).format(amount || 0);
 
+  // New-shape orders (B2C + new B2B Faktura) carry `total`; legacy B2B orders
+  // carry prisInfo.totalPris. Prefer `total` whenever present so B2B Faktura
+  // orders show their real amount (not 0 kr).
   const orderTotal = (order) =>
-    order.source === 'b2c'
-      ? order.total || 0
-      : order.prisInfo?.totalPris || order.totalAmount || 0;
+    (order.total != null ? order.total : (order.prisInfo?.totalPris ?? order.totalAmount)) || 0;
 
   const currentError = error || contextError;
   const isLoading = loading || contextLoading;
@@ -405,14 +406,15 @@ const AdminOrders = () => {
       key: 'customer',
       header: 'Kund',
       render: (order) => {
+        // New-shape orders (B2C + new B2B Faktura) carry customerInfo; legacy B2B
+        // carried top-level companyName/userEmail. Read customerInfo first.
         const name =
           order.companyName ||
+          order.customerInfo?.companyName ||
+          order.customerInfo?.name ||
           `${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''}`.trim() ||
           'Gäst';
-        const email =
-          order.source === 'b2c'
-            ? order.customerInfo?.email || ''
-            : order.userEmail || '';
+        const email = order.customerInfo?.email || order.userEmail || '';
         return (
           <div className="min-w-0">
             <div className="truncate text-admin-text">{name}</div>
@@ -497,6 +499,7 @@ const AdminOrders = () => {
             currentStatus={order.status}
             onStatusChange={(newStatus) => handleStatusUpdate(order.id, newStatus)}
             disabled={isLoading}
+            source={order.source}
           />
         </div>
       ),

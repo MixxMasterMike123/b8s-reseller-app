@@ -276,7 +276,14 @@ service cloud.firestore {
           (resource.data.b2cCustomerId != null &&
             get(/databases/$(database)/documents/b2cCustomers/$(resource.data.b2cCustomerId)).data.firebaseAuthUid == request.auth.uid) ||
           resource.data.customerInfo.email == request.auth.token.email
-        ));
+        )) ||
+        // B2B customer lists their OWN orders. The B2B identity lives in
+        // b2bCustomers (NOT users), so we can't use isActiveUser(); instead we
+        // verify the order's b2bCustomerId links to a b2bCustomers doc owned by
+        // the caller (firebaseAuthUid match) — mirrors the b2cCustomerId branch.
+        (isAuthenticated() && resource.data.source == 'b2b' &&
+          resource.data.b2bCustomerId != null &&
+          get(/databases/$(database)/documents/b2bCustomers/$(resource.data.b2bCustomerId)).data.firebaseAuthUid == request.auth.uid);
       // Orders are created ONLY server-side by the Stripe webhook (Admin SDK).
       allow create: if false;
       allow update, delete: if isAdminOfShop(resource.data.shopId);
