@@ -310,6 +310,38 @@ service cloud.firestore {
     }
 
     // ============================================================
+    // B2B customer accounts (wholesale; shop-scoped; owner reads own)
+    // Mirrors b2cCustomers, with an admin ACTIVATION gate: a self-registrant
+    // creates an INACTIVE profile (active != true) and can never flip their own
+    // `active` — only a same-shop admin (or platform) activates them. This
+    // revives the old reseller "awaiting activation" flow, shop-scoped.
+    // ============================================================
+    match /b2bCustomers/{customerId} {
+      allow read: if isAuthenticated() && (
+        resource.data.firebaseAuthUid == request.auth.uid ||
+        isAdminOfShop(resource.data.shopId)
+      );
+      // Self-register by the just-authenticated customer. Must stamp a string
+      // shopId and must NOT self-activate (active != true → admin gates it).
+      allow create: if isAuthenticated() &&
+        request.resource.data.firebaseAuthUid == request.auth.uid &&
+        request.resource.data.shopId is string &&
+        request.resource.data.active != true;
+      // Owner may edit their own profile but NOT change `active` (the gate),
+      // re-home themselves (shopId immutable), or rewrite their identity link
+      // (firebaseAuthUid immutable — closes the self-orphan/hand-off gap that
+      // b2cCustomers still has); a same-shop admin may change those.
+      allow update: if isAuthenticated() && (
+        (resource.data.firebaseAuthUid == request.auth.uid &&
+          request.resource.data.firebaseAuthUid == resource.data.firebaseAuthUid &&
+          request.resource.data.active == resource.data.active &&
+          request.resource.data.shopId == resource.data.shopId) ||
+        isAdminOfShop(resource.data.shopId)
+      );
+      allow delete: if isAdminOfShop(resource.data.shopId);
+    }
+
+    // ============================================================
     // Affiliate system (shop-scoped; affiliates read own)
     // ============================================================
     // Affiliate doc ID == the affiliate's Firebase Auth uid. Affiliates read

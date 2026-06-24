@@ -54,6 +54,10 @@ const shopBAdminDb = () =>
   env.authenticatedContext('adminB', { role: 'admin', platform: false, shopId: 'shopB' }).firestore();
 const customerDb = (uid) =>
   env.authenticatedContext(uid, { email: uid + '@x.com' }).firestore();
+// B2B customers are plain authenticated users (no admin/platform claims) — the
+// b2bCustomers profile doc, not a claim, carries their shop + active state.
+const b2bUserDb = (uid) =>
+  env.authenticatedContext(uid, { email: uid + '@x.com' }).firestore();
 
 async function seed() {
   await env.withSecurityRulesDisabled(async (ctx) => {
@@ -105,6 +109,16 @@ async function seed() {
     await setDoc(doc(db, 'adminUIDs/adminA'), { uid: 'adminA', shopId: 'shopA', level: 'admin' });
     await setDoc(doc(db, 'adminUIDs/adminB'), { uid: 'adminB', shopId: 'shopB', level: 'admin' });
     await setDoc(doc(db, 'adminUIDs/mikael'), { uid: 'mikael', shopId: null, level: 'super' });
+
+    // B2B customer profiles (wholesale add-on). One per shop, owned by a
+    // distinct Auth uid. Both seeded INACTIVE so the admin-activate LEGIT test
+    // is a real diff and the customer self-activate DENY test is meaningful.
+    await setDoc(doc(db, 'b2bCustomers/b2bA'), { firebaseAuthUid: 'b2bUserA', shopId: 'shopA', active: false, companyName: 'Acme A', email: 'b2bA@x.com' });
+    await setDoc(doc(db, 'b2bCustomers/b2bB'), { firebaseAuthUid: 'b2bUserB', shopId: 'shopB', active: false, companyName: 'Acme B', email: 'b2bB@x.com' });
+    // A dedicated self-owned doc for the customer self-activate/re-home DENY
+    // tests, so the admin-activate LEGIT test (which flips b2bA) can't turn the
+    // customer's self-activate into a value-unchanged no-op that the rule allows.
+    await setDoc(doc(db, 'b2bCustomers/b2bSelf'), { firebaseAuthUid: 'b2bUserA', shopId: 'shopA', active: false, companyName: 'Self A', email: 'self@x.com' });
   });
 }
 
@@ -162,6 +176,19 @@ async function run() {
     updateDoc(doc(shopAAdminDb(), 'shops/shopA'), { storeIdentity: { tagline: 'Hej' } })));
   await check('platform sets payments.connectEnabled on a shop', assertSucceeds(
     updateDoc(doc(platformDb(), 'shops/shopA'), { 'payments.connectEnabled': true })));
+  // b2bCustomers (wholesale add-on): owner reads/edits own; same-shop admin manages.
+  await check('B2B customer reads OWN profile', assertSucceeds(
+    getDoc(doc(b2bUserDb('b2bUserA'), 'b2bCustomers/b2bA'))));
+  await check('B2B customer self-registers an INACTIVE profile (own uid)', assertSucceeds(
+    setDoc(doc(b2bUserDb('b2bNewA'), 'b2bCustomers/b2bNewA'), { firebaseAuthUid: 'b2bNewA', shopId: 'shopA', active: false, companyName: 'New A', email: 'newA@x.com' })));
+  await check('B2B customer edits OWN profile (non-active field)', assertSucceeds(
+    updateDoc(doc(b2bUserDb('b2bUserA'), 'b2bCustomers/b2bA'), { phone: '070-1234567' })));
+  await check('shopA admin reads OWN-shop b2bCustomer', assertSucceeds(
+    getDoc(doc(shopAAdminDb(), 'b2bCustomers/b2bA'))));
+  await check('shopA admin ACTIVATES a b2bCustomer (the gate)', assertSucceeds(
+    updateDoc(doc(shopAAdminDb(), 'b2bCustomers/b2bA'), { active: true })));
+  await check('platform reads ANY-shop b2bCustomer', assertSucceeds(
+    getDoc(doc(platformDb(), 'b2bCustomers/b2bB'))));
 
   console.log('\n=== ISOLATION: cross-shop / privilege escalation must be DENIED ===');
   // users — the biggest leak
@@ -235,6 +262,30 @@ async function run() {
     setDoc(doc(shopAAdminDb(), 'adminUIDs/evilU'), { uid: 'evilU', level: 'admin' })));
   await check('shopA admin CANNOT delete a shopB adminUID doc', assertFails(
     deleteDoc(doc(shopAAdminDb(), 'adminUIDs/adminB'))));
+  // b2bCustomers — cross-shop + self-activation escalation must be DENIED.
+  await check('shopA admin CANNOT read shopB b2bCustomer (cross-shop)', assertFails(
+    getDoc(doc(shopAAdminDb(), 'b2bCustomers/b2bB'))));
+  await check('shopA admin CANNOT update shopB b2bCustomer (cross-shop)', assertFails(
+    updateDoc(doc(shopAAdminDb(), 'b2bCustomers/b2bB'), { active: true })));
+  await check('shopA admin CANNOT delete shopB b2bCustomer (cross-shop)', assertFails(
+    deleteDoc(doc(shopAAdminDb(), 'b2bCustomers/b2bB'))));
+  await check('B2B customer CANNOT read ANOTHER customer profile', assertFails(
+    getDoc(doc(b2bUserDb('b2bUserA'), 'b2bCustomers/b2bB'))));
+  await check('B2B self-registrant CANNOT create an ACTIVE profile (self-activation)', assertFails(
+    setDoc(doc(b2bUserDb('b2bEvil'), 'b2bCustomers/b2bEvil'), { firebaseAuthUid: 'b2bEvil', shopId: 'shopA', active: true, email: 'evil@x.com' })));
+  await check('B2B self-registrant CANNOT create a profile for ANOTHER uid', assertFails(
+    setDoc(doc(b2bUserDb('b2bUserA'), 'b2bCustomers/spoof'), { firebaseAuthUid: 'someoneElse', shopId: 'shopA', active: false, email: 's@x.com' })));
+  // Client contract: create MUST send an explicit active:false. A create that
+  // OMITS active is denied (missing-key read fails closed) — register code must
+  // always stamp active:false.
+  await check('B2B self-registrant create OMITTING active is DENIED (must send active:false)', assertFails(
+    setDoc(doc(b2bUserDb('b2bNoActive'), 'b2bCustomers/b2bNoActive'), { firebaseAuthUid: 'b2bNoActive', shopId: 'shopA', email: 'na@x.com' })));
+  await check('B2B customer CANNOT self-activate via update (the gate)', assertFails(
+    updateDoc(doc(b2bUserDb('b2bUserA'), 'b2bCustomers/b2bSelf'), { active: true })));
+  await check('B2B customer CANNOT re-home self to another shop', assertFails(
+    updateDoc(doc(b2bUserDb('b2bUserA'), 'b2bCustomers/b2bSelf'), { shopId: 'shopB' })));
+  await check('B2B customer CANNOT rewrite own firebaseAuthUid (orphan/hand-off)', assertFails(
+    updateDoc(doc(b2bUserDb('b2bUserA'), 'b2bCustomers/b2bSelf'), { firebaseAuthUid: 'someoneElse' })));
 
   console.log(`\n=== RESULT: ${passed} passed, ${failed} failed ===`);
   await env.cleanup();
