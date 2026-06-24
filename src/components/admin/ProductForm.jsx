@@ -38,6 +38,7 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import SortableImageGallery from './SortableImageGallery';
 import { withShopId } from '../../config/withShopId';
+import { useShopFeatures } from '../../contexts/ShopFeaturesContext';
 import { CardSection, RightRail, Button } from './ui';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -58,6 +59,12 @@ const emptyForm = () => ({
   category: '',          // was `group`: the browse taxonomy / URL driver
   tags: [],
   price: 0,
+  // Wholesale price (B2B add-on). Distinct from the consumer price: the B2B
+  // portal charges this (ex moms), the storefront never reads it. Persisted to
+  // a NEW `b2bPrice` field — NOT basePrice (basePrice mirrors b2cPrice as the
+  // consumer fallback). 0 = no wholesale price set. Only shown/saved when the
+  // shop has the `b2b` add-on enabled.
+  b2bPrice: 0,
   // Variants (sizes/colours of THIS product), optional + off by default.
   // Each: { sku, label, price, image? }. Empty when hasVariants is false.
   hasVariants: false,
@@ -67,7 +74,9 @@ const emptyForm = () => ({
   b2cImageUrl: '',
   b2cImageGallery: [],
   launchDate: '',
-  availability: { b2c: true },
+  // b2c: live storefront query filter. b2b: wholesale-catalog filter (B2B
+  // add-on). Both default-ON: a product without the key is available.
+  availability: { b2c: true, b2b: true },
   descriptions: { b2c: '', b2cMoreInfo: '' },
   weight: { value: 0, unit: 'g' },
   dimensions: {
@@ -100,6 +109,8 @@ const formFromProduct = (p) => ({
   tags: Array.isArray(p.tags) ? p.tags : [],
   // Single price sourced from the consumer price (b2cPrice || basePrice).
   price: p.b2cPrice || p.basePrice || 0,
+  // Wholesale price (B2B add-on). Read straight from b2bPrice; 0 if unset.
+  b2bPrice: p.b2bPrice || 0,
   hasVariants: !!p.hasVariants && Array.isArray(p.variants) && p.variants.length > 0,
   variants: Array.isArray(p.variants)
     ? p.variants.map((v) => ({ sku: v.sku || '', label: v.label || '', price: v.price || 0, image: v.image || '' }))
@@ -111,7 +122,7 @@ const formFromProduct = (p) => ({
   launchDate: p.launchDate
     ? new Date(p.launchDate.toDate ? p.launchDate.toDate() : p.launchDate).toISOString().slice(0, 16)
     : '',
-  availability: { b2c: p.availability?.b2c !== false },
+  availability: { b2c: p.availability?.b2c !== false, b2b: p.availability?.b2b !== false },
   descriptions: {
     b2c: plainText(p.descriptions?.b2c),
     b2cMoreInfo: plainText(p.descriptions?.b2cMoreInfo),
@@ -148,6 +159,12 @@ const formFromProduct = (p) => ({
 const ProductForm = ({ product, shopId, availableCategories = [], availableTags = [], onSaved, onCancel }) => {
   const [formData, setFormData] = useState(() => (product ? formFromProduct(product) : emptyForm()));
   const [saving, setSaving] = useState(false);
+
+  // B2B Wholesale add-on: gates the wholesale-price field. Default-ON for shops
+  // without a `features` map, but nothing else in this form depends on it, so a
+  // non-B2B shop simply never sees the extra field.
+  const { isEnabled } = useShopFeatures();
+  const b2bEnabled = isEnabled('b2b');
 
   // Main B2C image.
   const [mainImageFile, setMainImageFile] = useState(null);
@@ -311,6 +328,7 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
       for (const url of imagesToDelete) await deleteImageFromStorage(url);
 
       const price = parseFloat(formData.price) || 0;
+      const b2bPrice = parseFloat(formData.b2bPrice) || 0;
 
       // Variants: only persisted when enabled; keep rows that have a SKU, with a
       // numeric price (falling back to the product price).
@@ -336,11 +354,19 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
         variants: cleanVariants,
         b2cPrice: price,
         basePrice: price,               // keep in sync for the `b2cPrice || basePrice` fallback
+        // Wholesale price — only written for B2B shops (a non-B2B shop's
+        // products never gain the field). NOT folded into base/b2cPrice.
+        ...(b2bEnabled ? { b2bPrice } : {}),
         isActive: formData.isActive,
         imageUrl: mainImageUrl || formData.imageUrl || '',
         b2cImageUrl: mainImageUrl || '',
         b2cImageGallery: gallery,
-        availability: { b2c: formData.availability.b2c !== false },
+        availability: {
+          b2c: formData.availability.b2c !== false,
+          // Only carry the b2b availability flag for B2B shops, so a non-B2B
+          // shop's products never gain a stray key.
+          ...(b2bEnabled ? { b2b: formData.availability.b2b !== false } : {}),
+        },
         descriptions: {
           b2c: formData.descriptions.b2c || '',
           b2cMoreInfo: formData.descriptions.b2cMoreInfo || '',
@@ -505,6 +531,15 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
                 <label className={labelCls}>Pris (SEK, inkl. moms)</label>
                 <input type="number" name="price" min="0" step="0.01" value={formData.price} onChange={handleInput} className={inputCls} />
               </div>
+              {/* Wholesale price — only when the shop has the B2B add-on. The
+                  consumer storefront never reads this; the B2B portal charges it. */}
+              {b2bEnabled && (
+                <div className="max-w-xs">
+                  <label className={labelCls}>Grossistpris (SEK, ex. moms)</label>
+                  <input type="number" name="b2bPrice" min="0" step="0.01" value={formData.b2bPrice} onChange={handleInput} className={inputCls} />
+                  <p className={helpCls}>Priset B2B-återförsäljare betalar. Visas inte i konsumentbutiken.</p>
+                </div>
+              )}
               <div>
                 <label className={labelCls}>Lanseringsdatum (valfritt)</label>
                 <input type="datetime-local" name="launchDate" value={formData.launchDate} onChange={handleInput} className={inputCls + ' max-w-xs'} />

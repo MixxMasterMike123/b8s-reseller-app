@@ -22,6 +22,7 @@ export const WAGON_FEATURE_KEY = {
 // see the plan. The four wagon add-ons are wired end-to-end in this slice.
 export const ADDON_CATALOG = [
   { key: 'affiliate', label: 'Affiliate', description: 'Affiliate-program: registrering, portal, provisioner och rabattkoder.' },
+  { key: 'b2b', label: 'B2B Grossist', description: 'Grossistportal: grossistpriser per produkt, inloggning för återförsäljare och fakturaköp.' },
   { key: 'campaigns', label: 'Kampanjer', description: 'Kampanjhanterare för affiliate-marknadsföring, banners och tävlingar.' },
   { key: 'dining', label: 'Dining CRM', description: 'CRM för säljkontakter: kontakter, aktiviteter, uppföljningar och dokument.' },
   { key: 'ambassador', label: 'Ambassadörer', description: 'CRM för influencers/ambassadörer per plattform och följarnivå.' },
