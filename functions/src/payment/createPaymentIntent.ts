@@ -33,7 +33,7 @@ async function computeOrderTotalsSek(
   discountCode: string | undefined,
   shopId: string,
   deliveryMethod: string
-): Promise<{ subtotal: number; discountAmount: number; discountPercentage: number; shipping: number; vat: number; total: number; serverPrices: Record<string, number> }> {
+): Promise<{ subtotal: number; discountAmount: number; discountPercentage: number; shipping: number; vat: number; total: number; serverPrices: Record<string, number>; hasPersonalizedItem: boolean }> {
   // Product model v2: line items reference the PARENT product by productId plus
   // an optional variantSku. We load the parent doc and resolve the variant's
   // price from the embedded variants array — never trusting the client price.
@@ -132,7 +132,12 @@ async function computeOrderTotalsSek(
   const total = subtotal - discountAmount + shipping;
   const vat = total - (total / (1 + commerceConfig.vatRate));
 
-  return { subtotal, discountAmount, discountPercentage, shipping, vat, total, serverPrices };
+  // Right-of-withdrawal (POD): derive from the LIVE product docs (never trust a
+  // client flag) whether any line item is personalized → the no-withdrawal
+  // consent gate was required at checkout.
+  const hasPersonalizedItem = loaded.some(({ product }) => product?.isPersonalized === true);
+
+  return { subtotal, discountAmount, discountPercentage, shipping, vat, total, serverPrices, hasPersonalizedItem };
 }
 
 interface CreatePaymentIntentRequest {
@@ -316,6 +321,30 @@ export const createPaymentIntentV2 = onRequest(
 
       const amountInOre = Math.round(totals.total * 100);
 
+      // Right-of-withdrawal (POD) proof. The server decides whether the gate was
+      // REQUIRED from the live products (totals.hasPersonalizedItem) — never the
+      // client. We record what arrived (locked decision: server backstop =
+      // record-what-arrived) into PI metadata; the webhook stamps order.withdrawal.
+      const wc = (request.body as any)?.withdrawalConsent;
+      let withdrawalMeta: Record<string, string> = {};
+      if (totals.hasPersonalizedItem) {
+        const accepted = wc?.accepted === true;
+        if (!accepted) {
+          // A personalized item with no client consent → the legitimate client
+          // blocks this. Record it (don't silently drop) for evidence/audit.
+          logger.warn('⚠️ POD: personalized item charged WITHOUT recorded withdrawal consent', {
+            shopId: resolvedShopId,
+          });
+        }
+        withdrawalMeta = {
+          withdrawalRequired: 'true',
+          withdrawalConsent: accepted ? 'true' : 'false',
+          withdrawalNoticeVersion: String(wc?.noticeVersion || ''),
+          withdrawalNoticeFingerprint: String(wc?.noticeFingerprint || ''),
+          withdrawalConsentAt: new Date().toISOString(),
+        };
+      }
+
       if (typeof amount === 'number' && Math.abs(amount - totals.total) > 1) {
         logger.warn('⚠️ Client amount differs from server-computed total — charging server total', {
           clientAmount: amount,
@@ -451,6 +480,9 @@ export const createPaymentIntentV2 = onRequest(
             platform: 'b8shield',
             shopId: resolvedShopId, // tenant id — webhook stamps it on the order
             version: 'enhanced_v2', // server-priced metadata
+
+            // Right-of-withdrawal proof (empty {} for standard-options carts)
+            ...withdrawalMeta,
 
             // Stripe Connect (empty for legacy shops → metadata unchanged)
             ...connectMeta

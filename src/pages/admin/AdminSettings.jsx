@@ -241,6 +241,37 @@ const AdminSettings = () => {
                   </div>
                 </div>
 
+                {/* Right-of-withdrawal notice (POD). Shown in the checkout gate
+                    for personalized products. Leave empty to use the neutral
+                    platform default. Editing bumps the stored version so the
+                    proof persisted on orders references the exact text. */}
+                <div>
+                  <h4 className="mb-3 text-[13px] font-semibold text-admin-text">
+                    Ångerrätt — text för specialtillverkade produkter
+                  </h4>
+                  <textarea
+                    rows={4}
+                    value={storeForm.legal?.noWithdrawalNotice ?? ''}
+                    placeholder="Lämna tomt för plattformens standardtext (ingen ångerrätt för specialtillverkade varor)."
+                    onChange={(e) => setStoreForm(prev => ({
+                      ...prev,
+                      legal: {
+                        ...(prev.legal || {}),
+                        noWithdrawalNotice: e.target.value,
+                        // Stamp a version when the shop sets its own text, so the
+                        // order proof can cite it. ISO date keeps it human + sortable.
+                        withdrawalNoticeVersion: e.target.value.trim()
+                          ? `shop-${new Date().toISOString().slice(0, 10)}`
+                          : '',
+                      },
+                    }))}
+                    className={inputCls}
+                  />
+                  <p className="mt-1 text-[12px] text-admin-text-muted">
+                    Visas i kassan när kunden köper en specialtillverkad produkt. Kunden måste kryssa i en ruta innan betalning.
+                  </p>
+                </div>
+
                 <div className="flex justify-end border-t border-admin-border pt-4">
                   <Button variant="primary" onClick={saveStoreIdentity} disabled={saving}>
                     {saving ? (

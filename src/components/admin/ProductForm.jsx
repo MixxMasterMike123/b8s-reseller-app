@@ -78,6 +78,14 @@ const emptyForm = () => ({
   // add-on). Both default-ON: a product without the key is available.
   availability: { b2c: true, b2b: true },
   descriptions: { b2c: '', b2cMoreInfo: '' },
+  // Right-of-withdrawal (POD). A "personalized" / made-to-order product (buyer
+  // supplies own image/text/measurements) is a specialtillverkad vara → consumer
+  // ångerrätt (14-day withdrawal) does NOT apply, IF disclosed + consented at
+  // checkout. Default false = a normal standard-options product WITH withdrawal.
+  isPersonalized: false,
+  // Optional per-product size guide (rich text). Shown on the product page and
+  // referenced by the no-withdrawal notice for size-dependent products.
+  sizeGuide: '',
   weight: { value: 0, unit: 'g' },
   dimensions: {
     length: { value: 0, unit: 'mm' },
@@ -123,6 +131,9 @@ const formFromProduct = (p) => ({
     ? new Date(p.launchDate.toDate ? p.launchDate.toDate() : p.launchDate).toISOString().slice(0, 16)
     : '',
   availability: { b2c: p.availability?.b2c !== false, b2b: p.availability?.b2b !== false },
+  // Right-of-withdrawal: default false (a normal product retains 14-day withdrawal).
+  isPersonalized: p.isPersonalized === true,
+  sizeGuide: p.sizeGuide || '',
   descriptions: {
     b2c: plainText(p.descriptions?.b2c),
     b2cMoreInfo: plainText(p.descriptions?.b2cMoreInfo),
@@ -371,6 +382,11 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
           b2c: formData.descriptions.b2c || '',
           b2cMoreInfo: formData.descriptions.b2cMoreInfo || '',
         },
+        // Right-of-withdrawal (POD): always written so toggling OFF persists
+        // (a product can move from personalized → standard). Size guide is
+        // free text; empty string when unset.
+        isPersonalized: formData.isPersonalized === true,
+        sizeGuide: formData.sizeGuide || '',
         weight: formData.weight,
         dimensions: formData.dimensions,
         shipping: formData.shipping,
@@ -448,6 +464,17 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
                   onChange={(content) => setField('descriptions', { ...formData.descriptions, b2cMoreInfo: content })}
                   className="rounded-[var(--radius-admin-el)] bg-admin-surface"
                 />
+              </div>
+              <div>
+                <label className={labelCls}>Storleksguide (valfritt)</label>
+                <textarea
+                  rows={4}
+                  value={formData.sizeGuide}
+                  onChange={(e) => setField('sizeGuide', e.target.value)}
+                  placeholder="t.ex. mått per storlek (S/M/L), mätinstruktioner…"
+                  className={inputCls}
+                />
+                <p className={helpCls}>Visas på produktsidan. Viktigt för storleksberoende produkter — hjälper kunden välja rätt och styrker att specialtillverkning godkändes på rätt grunder.</p>
               </div>
             </CardSection>
 
@@ -718,6 +745,25 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
                   <p className={helpCls}>Avmarkera för att dölja produkten för B2B-kunder.</p>
                 </>
               )}
+            </CardSection>
+
+            {/* Right of withdrawal / made-to-order (POD consumer law). */}
+            <CardSection title="Ångerrätt" bodyClassName="space-y-3">
+              <label className="flex items-center gap-2 text-[13px] text-admin-text">
+                <input
+                  id="isPersonalized"
+                  type="checkbox"
+                  checked={formData.isPersonalized}
+                  onChange={(e) => setField('isPersonalized', e.target.checked)}
+                  className={checkboxCls}
+                />
+                Specialtillverkad / personlig produkt (ingen ångerrätt)
+              </label>
+              <p className={helpCls}>
+                Markera om produkten tillverkas efter kundens egen design, text, bild eller mått.
+                Då gäller ingen 14-dagars ångerrätt — kunden måste godkänna detta i kassan innan köp.
+                Lämna omarkerad för en standardprodukt med full ångerrätt.
+              </p>
             </CardSection>
 
             {/* Organization — tags (category lives in the main column, Shopify-style) */}

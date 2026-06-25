@@ -297,6 +297,20 @@ exports.stripeWebhookV2 = (0, https_1.onRequest)({
                     discountPercentage: parseFloat(metadata.discountPercentage || '0'),
                     clickId: metadata.affiliateClickId || ''
                 } : null,
+                // 📝 Right-of-withdrawal (POD) proof — stamped only when the cart had a
+                // personalized item (server set withdrawalRequired in PI metadata).
+                // Records what the buyer accepted: the notice version + a fingerprint
+                // of the exact wording shown, plus the consent timestamp. Standard-
+                // options orders never get this field (normal 14-day withdrawal).
+                ...(metadata.withdrawalRequired === 'true' && {
+                    withdrawal: {
+                        required: true,
+                        consent: metadata.withdrawalConsent === 'true',
+                        noticeVersion: metadata.withdrawalNoticeVersion || '',
+                        noticeFingerprint: metadata.withdrawalNoticeFingerprint || '',
+                        consentAt: metadata.withdrawalConsentAt || ''
+                    }
+                }),
                 // ✅ B2C customer account linkage (from metadata, set at payment time)
                 ...(metadata.b2cCustomerId && {
                     b2cCustomerId: metadata.b2cCustomerId,

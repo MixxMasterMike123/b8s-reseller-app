@@ -506,6 +506,10 @@ export const CartProvider = ({ children }) => {
         shipping: product.delivery?.shipping !== false,
         pickup: product.delivery?.pickup !== false,
       },
+      // Right-of-withdrawal (POD): true = specialtillverkad, no 14-day withdrawal.
+      // Carried so the checkout can gate on a required consent (the server
+      // re-derives the canonical flag from the live product at order time).
+      isPersonalized: product.isPersonalized === true,
       quantity: qty,
     });
 

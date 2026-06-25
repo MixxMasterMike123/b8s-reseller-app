@@ -28,6 +28,7 @@ import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import { useShopId } from '../../contexts/ShopContext';
 import { withShopId } from '../../config/withShopId';
 import { formatPickupDayShort } from '../../utils/pickupDates';
+import { requiresWithdrawalGate, resolveWithdrawalNotice } from '../../utils/withdrawal';
 
 const Checkout = () => {
   const {
@@ -37,6 +38,14 @@ const Checkout = () => {
   } = useCart();
   const store = useStoreSettings();
   const pickupLocations = Array.isArray(store?.pickupLocations) ? store.pickupLocations : [];
+
+  // Right-of-withdrawal (POD): if any cart item is personalized, the buyer must
+  // accept the no-withdrawal notice before payment. The notice text + version
+  // come from the shop's legal config (with a neutral default); the accepted
+  // wording is persisted with the order as proof.
+  const needsWithdrawalGate = requiresWithdrawalGate(cart?.items);
+  const withdrawalNotice = resolveWithdrawalNotice(store?.legal);
+  const [withdrawalAccepted, setWithdrawalAccepted] = useState(false);
   // Has the async shop config resolved? Until then `pickupLocations` is the
   // static default ([]), so we must not conclude "no pickup" yet.
   const storeLoaded = store?.__loaded === true;
@@ -945,8 +954,33 @@ const Checkout = () => {
                     </div>
                   </div>
 
+                  {/* Right-of-withdrawal gate — only for carts with a
+                      personalized / made-to-order item. The buyer must accept
+                      that the 14-day withdrawal right does not apply BEFORE
+                      payment; the confirm button stays blocked until then. */}
+                  {needsWithdrawalGate && (
+                    <div className="mb-4 rounded-el border-l-4 border-amber-400 bg-amber-50 p-4">
+                      <p className="text-sm text-ink mb-3">{withdrawalNotice.text}</p>
+                      <label className="flex items-start gap-2 text-sm text-ink cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={withdrawalAccepted}
+                          onChange={(e) => setWithdrawalAccepted(e.target.checked)}
+                          className="mt-0.5"
+                        />
+                        <span>{t('checkout_withdrawal_accept', 'Jag har läst och godkänner att ångerrätten inte gäller för specialtillverkade produkter i denna beställning.')}</span>
+                      </label>
+                    </div>
+                  )}
+
                   {/* Stripe Payment Form */}
                   <StripePaymentForm
+                    withdrawalGate={{
+                      required: needsWithdrawalGate,
+                      accepted: needsWithdrawalGate ? withdrawalAccepted : null,
+                      noticeVersion: withdrawalNotice.version,
+                      noticeFingerprint: withdrawalNotice.fingerprint
+                    }}
                     customerInfo={{
                       email: contactInfo.email,
                       name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,

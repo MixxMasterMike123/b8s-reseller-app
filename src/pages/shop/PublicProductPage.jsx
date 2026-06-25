@@ -522,6 +522,25 @@ const PublicProductPage = () => {
                     />
                   )}
 
+                {/* Size guide (admin "Storleksguide" / sizeGuide) — plain text. */}
+                  {product?.sizeGuide && getContentValue(product.sizeGuide) && (
+                    <details className="mb-6 rounded-el border border-line">
+                      <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-ink">
+                        {t('product_size_guide', 'Storleksguide')}
+                      </summary>
+                      <div className="whitespace-pre-line px-4 pb-4 text-sm text-ink-muted">
+                        {getContentValue(product.sizeGuide)}
+                      </div>
+                    </details>
+                  )}
+
+                {/* Made-to-order / no-withdrawal notice for personalized products. */}
+                  {product?.isPersonalized === true && (
+                    <p className="mb-6 rounded-el border-l-4 border-amber-400 bg-amber-50 px-4 py-3 text-sm text-ink-muted">
+                      {t('product_made_to_order', 'Specialtillverkad produkt — tillverkas på beställning. Ingen ångerrätt (14-dagars ångerrätt gäller ej för specialtillverkade varor). Du godkänner detta i kassan.')}
+                    </p>
+                  )}
+
                 {/* Price */}
                   <div className="font-display mb-6">
                     <SmartPrice

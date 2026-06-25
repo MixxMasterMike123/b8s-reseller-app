@@ -13,7 +13,7 @@ import { getCountryAwareUrl } from '../../utils/productUrls';
 import { functionUrl } from '../../config/urls';
 import toast from 'react-hot-toast';
 
-const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentError, clientSecret }) => {
+const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentError, clientSecret, gateBlocked }) => {
   const stripe = useStripe();
   const elements = useElements();
   const { cart, calculateTotals, clearCart } = useCart();
@@ -24,6 +24,12 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    // Right-of-withdrawal gate (defense in depth — the button is also disabled).
+    if (gateBlocked) {
+      toast.error(t('checkout_withdrawal_required', 'Du måste godkänna villkoren för specialtillverkade produkter innan du betalar.'));
+      return;
+    }
 
     if (!stripe || !elements) {
       console.error('❌ Stripe not loaded');
@@ -183,9 +189,9 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
       {/* Submit Button */}
       <button
         type="submit"
-        disabled={!stripe || !elements || !isElementReady || isProcessing}
+        disabled={!stripe || !elements || !isElementReady || isProcessing || gateBlocked}
         className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-colors ${
-          isProcessing || !stripe || !elements || !isElementReady
+          isProcessing || !stripe || !elements || !isElementReady || gateBlocked
             ? 'bg-gray-400 cursor-not-allowed'
             : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
         }`}
@@ -221,14 +227,28 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
   );
 };
 
-const StripePaymentForm = ({ customerInfo, shippingInfo, deliveryInfo, customerLinkage, onPaymentSuccess, onPaymentError }) => {
+const StripePaymentForm = ({ customerInfo, shippingInfo, deliveryInfo, customerLinkage, withdrawalGate, onPaymentSuccess, onPaymentError }) => {
+  const { t } = useTranslation();
   const { cart, calculateTotals } = useCart();
   const shopId = useShopId();
+  // Block confirm until the no-withdrawal notice is accepted (when required).
+  const gateBlocked = withdrawalGate?.required === true && withdrawalGate?.accepted !== true;
   const [clientSecret, setClientSecret] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Defer creating the PaymentIntent until the no-withdrawal notice is
+    // accepted (when required), so the consent proof is guaranteed to be in the
+    // PI metadata the webhook reads — rather than creating a PI on mount and
+    // re-creating it on consent. Until then we show the gate (not a spinner).
+    if (gateBlocked) {
+      // Clear any PI created before an un-check so the UI consistently shows the
+      // gate (and a stale consented secret is never reused after un-checking).
+      setClientSecret('');
+      setIsLoading(false);
+      return;
+    }
     const initializePayment = async () => {
       try {
         setIsLoading(true);
@@ -298,6 +318,17 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, deliveryInfo, customerL
           ...(customerLinkage?.b2cCustomerId && {
             b2cCustomerId: customerLinkage.b2cCustomerId,
             b2cCustomerAuthId: customerLinkage.b2cCustomerAuthId || ''
+          }),
+          // Right-of-withdrawal consent proof (POD). Only sent when the gate was
+          // required AND accepted; the server writes it into the PI metadata and
+          // the webhook stamps order.withdrawal as the record of what the buyer
+          // accepted (version + fingerprint of the exact notice shown).
+          ...(withdrawalGate?.required && withdrawalGate?.accepted === true && {
+            withdrawalConsent: {
+              accepted: true,
+              noticeVersion: withdrawalGate.noticeVersion || '',
+              noticeFingerprint: withdrawalGate.noticeFingerprint || ''
+            }
           })
         };
 
@@ -344,7 +375,8 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, deliveryInfo, customerL
     // while the form stays mounted, preserving total-parity. eslint can't see
     // through deliveryInfo?.method so the object dep is intentionally omitted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cart.items, customerInfo, shippingInfo, shopId, deliveryInfo?.method]);
+    // gateBlocked / consent flags are primitives so they don't churn the effect.
+  }, [cart.items, customerInfo, shippingInfo, shopId, deliveryInfo?.method, gateBlocked, withdrawalGate?.noticeVersion, withdrawalGate?.noticeFingerprint]);
 
   if (isLoading) {
     return (
@@ -375,7 +407,11 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, deliveryInfo, customerL
   if (!clientSecret) {
     return (
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
-        <p className="text-gray-600">Väntar på betalningsinformation...</p>
+        <p className="text-gray-600">
+          {gateBlocked
+            ? t('checkout_withdrawal_gate_hint', 'Godkänn villkoren ovan för att fortsätta till betalning.')
+            : 'Väntar på betalningsinformation...'}
+        </p>
       </div>
     );
   }
@@ -388,12 +424,13 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, deliveryInfo, customerL
 
   return (
     <Elements stripe={getStripe()} options={options}>
-      <PaymentForm 
+      <PaymentForm
         customerInfo={customerInfo}
         shippingInfo={shippingInfo}
         onPaymentSuccess={onPaymentSuccess}
         onPaymentError={onPaymentError}
         clientSecret={clientSecret} // Pass clientSecret to form for validation
+        gateBlocked={gateBlocked}
       />
     </Elements>
   );

@@ -642,6 +642,26 @@ const AdminOrderDetail = () => {
                 </div>
               </Card>
 
+              {/* Right-of-withdrawal proof (POD) — shown only for orders that had
+                  a personalized item. Legal evidence that the buyer accepted the
+                  no-withdrawal notice (or that it was missing). */}
+              {order.withdrawal?.required && (
+                <Card>
+                  <div className="flex items-center gap-2 border-b border-admin-border px-4 py-3">
+                    <h3 className="text-[14px] font-semibold text-admin-text">Ångerrätt (specialtillverkat)</h3>
+                    <StatusPill tone={order.withdrawal.consent ? 'success' : 'danger'}>
+                      {order.withdrawal.consent ? 'Godkänd' : 'Saknas'}
+                    </StatusPill>
+                  </div>
+                  <div className="px-4 py-3">
+                    <Row label="Kund godkände att ångerrätt ej gäller" value={order.withdrawal.consent ? 'Ja' : 'Nej'} />
+                    {order.withdrawal.noticeVersion && <Row label="Textversion" value={order.withdrawal.noticeVersion} />}
+                    {order.withdrawal.consentAt && <Row label="Tidpunkt" value={new Date(order.withdrawal.consentAt).toLocaleString('sv-SE')} />}
+                    {order.withdrawal.noticeFingerprint && <Row label="Text-ID" value={order.withdrawal.noticeFingerprint} />}
+                  </div>
+                </Card>
+              )}
+
               {/* Dispute / chargeback (shown only when a dispute exists).
                   For a destination charge the platform balance is debited; the
                   webhook reverses the transfer to recover from the shop and

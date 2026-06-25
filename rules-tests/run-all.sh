@@ -48,6 +48,8 @@ echo "==> [1/3] connect-params (pure unit test)"
 node rules-tests/connect-params.test.cjs
 echo "==> [1/3] dispute-recovery (pure unit test)"
 node rules-tests/dispute-recovery.test.cjs
+echo "==> [1/3] withdrawal-gate (pure unit test, ESM)"
+node rules-tests/withdrawal-gate.test.mjs
 
 # 2) The three Firestore-emulator suites in one emulator lifecycle.
 echo "==> [2/3] firestore-emulator suites (rules + isolation + functions-guard)"

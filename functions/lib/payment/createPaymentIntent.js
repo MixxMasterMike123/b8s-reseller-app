@@ -122,7 +122,11 @@ async function computeOrderTotalsSek(cartItems, shippingCountry, discountCode, s
     }
     const total = subtotal - discountAmount + shipping;
     const vat = total - (total / (1 + app_urls_1.commerceConfig.vatRate));
-    return { subtotal, discountAmount, discountPercentage, shipping, vat, total, serverPrices };
+    // Right-of-withdrawal (POD): derive from the LIVE product docs (never trust a
+    // client flag) whether any line item is personalized → the no-withdrawal
+    // consent gate was required at checkout.
+    const hasPersonalizedItem = loaded.some(({ product }) => product?.isPersonalized === true);
+    return { subtotal, discountAmount, discountPercentage, shipping, vat, total, serverPrices, hasPersonalizedItem };
 }
 exports.createPaymentIntentV2 = (0, https_1.onRequest)({
     region: 'us-central1',
@@ -208,6 +212,29 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
             return;
         }
         const amountInOre = Math.round(totals.total * 100);
+        // Right-of-withdrawal (POD) proof. The server decides whether the gate was
+        // REQUIRED from the live products (totals.hasPersonalizedItem) — never the
+        // client. We record what arrived (locked decision: server backstop =
+        // record-what-arrived) into PI metadata; the webhook stamps order.withdrawal.
+        const wc = request.body?.withdrawalConsent;
+        let withdrawalMeta = {};
+        if (totals.hasPersonalizedItem) {
+            const accepted = wc?.accepted === true;
+            if (!accepted) {
+                // A personalized item with no client consent → the legitimate client
+                // blocks this. Record it (don't silently drop) for evidence/audit.
+                firebase_functions_1.logger.warn('⚠️ POD: personalized item charged WITHOUT recorded withdrawal consent', {
+                    shopId: resolvedShopId,
+                });
+            }
+            withdrawalMeta = {
+                withdrawalRequired: 'true',
+                withdrawalConsent: accepted ? 'true' : 'false',
+                withdrawalNoticeVersion: String(wc?.noticeVersion || ''),
+                withdrawalNoticeFingerprint: String(wc?.noticeFingerprint || ''),
+                withdrawalConsentAt: new Date().toISOString(),
+            };
+        }
         if (typeof amount === 'number' && Math.abs(amount - totals.total) > 1) {
             firebase_functions_1.logger.warn('⚠️ Client amount differs from server-computed total — charging server total', {
                 clientAmount: amount,
@@ -329,6 +356,8 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
                     platform: 'b8shield',
                     shopId: resolvedShopId,
                     version: 'enhanced_v2',
+                    // Right-of-withdrawal proof (empty {} for standard-options carts)
+                    ...withdrawalMeta,
                     // Stripe Connect (empty for legacy shops → metadata unchanged)
                     ...connectMeta
                 },
