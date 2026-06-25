@@ -8,10 +8,12 @@
 
 | Result | Count |
 |---|---|
-| ✅ PASS | 39 |
-| ⚠️ PARTIAL | 4 |
+| ✅ PASS | 41 |
+| ⚠️ PARTIAL | 2 |
 | ❌ MISSING | 0 |
 | ⏸️ Scoped-not-built (07, expected) | 1 package |
+
+> **Update (punch-list 09, commit `962c79e`):** two of the four original PARTIALs are now **PASS** — 05 #11 (active transparency notification) and 06 (sellerType first-class). The remaining two PARTIALs are 05 #10 (approved identity change still overwrites the DB rather than routing to Stripe re-KYC) and 01 (insufficient-balance path covered by a manual Stripe-CLI recipe, not an automated test). See the punch-list at the bottom.
 
 **Headline:** all P0 financial + legal mechanisms (01 dispute recovery, 05 DAC7) are PASS. The 4 PARTIALs are fit-refinements to the DAC7/seller model + one test-depth gap — none are deploy-blockers. 07 (charge model) is correctly scoped + estimated, not implemented, as intended.
 
@@ -80,8 +82,8 @@
 | Aggregation/report/export are platform-admin-only | ✅ PASS | `requirePlatform` is the first statement on save/get/pull/aggregate/export (`functions.ts:81,99,207,266,302`) + `resolveDac7Correction` `:176` |
 | No seller can view another seller's data (verified) | ✅ PASS | `firestore-isolation.test.cjs:344-346` anon-PII-deny + cross-shop-deny; list denied (`firestore.rules`); 96 assertions green |
 | Seller corrects contact directly; identity via approved request | ✅ PASS | `correctOwnDac7Contact` `functions.ts:126` (contact only); `requestDac7Correction`/`resolveDac7Correction` `functions.ts:154,175` |
-| Contact edits NOT written to Stripe; **identity-key change routes to Stripe** | ⚠️ PARTIAL | Contact edits are Firestore-only ✅ (`functions.ts:142`). **But** an approved identity change **overwrites our DB** (`functions.ts:188`) instead of routing the seller to re-do KYC at Stripe (spec req #10). |
-| Each reported seller receives a transparency notice | ⚠️ PARTIAL | A transparency notice **is displayed** on the seller's own page (`AdminMyTaxData.jsx:93-96`). **But** there is no active per-seller notification tied to actually being included in a report (spec implies a push/notice event, not only a passive page). |
+| Contact edits NOT written to Stripe; **identity-key change routes to Stripe** | ⚠️ PARTIAL | Contact edits are Firestore-only ✅ (`functions.ts:142`). **But** an approved identity change **overwrites our DB** (`functions.ts:188`) instead of routing the seller to re-do KYC at Stripe (spec req #10). *(Remaining — punch-list item 1.)* |
+| Each reported seller receives a transparency notice | ✅ PASS *(was PARTIAL — fixed in 09)* | Finalising the export (`exportDac7Report` with `markReported:true`) writes a per-reportable-seller `reported[]` record (`functions.ts` `appendReportedRecord`); the seller's page actively shows "Du har rapporterats till Skatteverket för år X" (`AdminMyTaxData.jsx`). De-minimis-excluded sellers get no record. Preview runs are side-effect-free; sellers can't forge the record (rules `hasOnly` allowlist; isolation-tested). |
 
 ---
 
@@ -90,7 +92,7 @@
 | Criterion | Status | Evidence |
 |---|---|---|
 | An individual can complete onboarding + run a shop | ✅ PASS | Stripe Express `accounts.create` `connectOnboarding.ts:108` (hosted onboarding lets the seller select individual); no company-only gate anywhere in onboarding/checkout |
-| Data model distinguishes individual vs company | ⚠️ PARTIAL | Distinguished in the **DAC7 record** (`sellerType`, `functions.ts:57`, pulled from Stripe `business_type` `:221-223`). **NOT** in `storeIdentity`/provisioning — the shop-identity model has no `sellerType`. |
+| Data model distinguishes individual vs company | ✅ PASS *(was PARTIAL — fixed in 09)* | `sellerType` is now a first-class `storeIdentity` attribute (`store.js`, AdminSettings select) AND in the DAC7 record, kept in sync (Stripe pull writes both; Stripe-verified wins). Available to contract-track/UI logic outside DAC7. |
 | DAC7 identifier resolves personnummer (individual) / org.nr (company) | ✅ PASS | `sellerType` branches the `taxId` meaning; UI labels switch in `PlatformDac7.jsx` + `AdminMyTaxData.jsx`; individual requires DOB (`functions.ts:339`) |
 
 ---
@@ -106,25 +108,24 @@
 
 ---
 
-## 📋 Punch list (4 PARTIALs — nothing fully MISSING)
+## 📋 Punch list
+
+### ✅ Resolved in punch-list 09 (commit `962c79e`)
+
+- **05 #11 — active transparency notification.** Finalising the export writes a per-reportable-seller `reported[]` record; the seller page actively shows "Du har rapporterats till Skatteverket för år X". Preview runs write nothing; sellers can't forge the record (isolation-tested).
+- **06 — `sellerType` first-class.** Added to `storeIdentity` (model + AdminSettings select); synced with the Stripe pull (Stripe-verified wins); available to contract-track/UI logic outside DAC7.
+
+### ⚠️ Remaining (2 PARTIALs — not deploy-blockers)
 
 1. **05 #10 — approved identity change overwrites the DB instead of routing to Stripe.**
    `resolveDac7Correction` writes the requested value straight into `dac7Sellers` (`functions.ts:188`). The spec wants an approval to **route the seller to re-verify at Stripe (re-run KYC)** so a Stripe-verified identifier is never overwritten in our DB.
    *Fix:* on approve, mark the field "pending Stripe re-verification" + surface a Stripe onboarding/account link; don't persist the raw value.
 
-2. **05 #11 — transparency is a passive page, not an active notification.**
-   Sellers see a notice on `/admin/skatteuppgifter`, but no event notifies a seller when they're actually included in a report.
-   *Fix:* emit a per-seller transparency record at export time that the seller page surfaces (email system is shelved, so a Firestore "you were reported for year X" notice satisfies the requirement without email).
-
-3. **06 — `sellerType` lives only in the DAC7 record, not in `storeIdentity`/onboarding.**
-   Individual-vs-company isn't a first-class shop attribute outside DAC7.
-   *Fix:* add `sellerType` to provisioning / `storeIdentity` (or derive shop-wide from the Stripe pull) so onboarding, contracts, and UI can branch — not only DAC7.
-
-4. **01 — insufficient-balance/shortfall path isn't an automated test.**
+2. **01 — insufficient-balance/shortfall path isn't an automated test.**
    The pure builders are unit-tested; the live shortfall behaviour is only a documented Stripe-CLI recipe.
    *Fix (optional):* a webhook-handler unit test with a mocked Stripe `createReversal` that throws, asserting `disputeRecoveryStatus:'shortfall'` + HTTP 200 (no retry-storm).
 
-**None of the four are deploy-blockers.** Items 1–3 are correctness-of-fit refinements to the DAC7/seller model; item 4 is test depth.
+**Neither remaining item is a deploy-blocker.** Item 1 is a correctness-of-fit refinement to the DAC7 correction flow; item 2 is test depth.
 
 ---
 
