@@ -11,6 +11,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../firebase/config';
 import { useShopId } from '../../contexts/ShopContext';
+import AppLayout from '../../components/layout/AppLayout';
 import { Page, Card, CardSection, Button } from '../../components/admin/ui';
 import toast from 'react-hot-toast';
 
@@ -84,10 +85,15 @@ const AdminMyTaxData = () => {
   };
 
   if (loading) {
-    return <Page title="Mina skatteuppgifter"><Card className="py-12 text-center text-[13px] text-admin-text-muted">Laddar…</Card></Page>;
+    return (
+      <AppLayout>
+        <Page title="Mina skatteuppgifter"><Card className="py-12 text-center text-[13px] text-admin-text-muted">Laddar…</Card></Page>
+      </AppLayout>
+    );
   }
 
   return (
+    <AppLayout>
     <Page title="Mina skatteuppgifter" subtitle="Uppgifter som rapporteras om dig enligt DAC7">
       <div className="space-y-4">
         {/* Transparency notice (DAC7 art. requirement). */}
@@ -176,6 +182,7 @@ const AdminMyTaxData = () => {
         </CardSection>
       </div>
     </Page>
+    </AppLayout>
   );
 };
 

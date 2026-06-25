@@ -4,6 +4,7 @@ import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../firebase/config';
 import { useShopId } from '../../contexts/ShopContext';
 import { useAuth } from '../../contexts/AuthContext';
+import AppLayout from '../../components/layout/AppLayout';
 import { Page, Card, CardSection, Button, StatusPill } from '../../components/admin/ui';
 
 /**
@@ -95,11 +96,13 @@ const AdminPayments = () => {
 
   if (loading) {
     return (
-      <Page title="Utbetalningar">
-        <Card className="flex items-center justify-center py-16">
-          <span className="text-[13px] text-admin-text-muted">Laddar…</span>
-        </Card>
-      </Page>
+      <AppLayout>
+        <Page title="Utbetalningar">
+          <Card className="flex items-center justify-center py-16">
+            <span className="text-[13px] text-admin-text-muted">Laddar…</span>
+          </Card>
+        </Page>
+      </AppLayout>
     );
   }
 
@@ -112,6 +115,7 @@ const AdminPayments = () => {
   const commissionBps = Number.isInteger(pay?.commissionBps) ? pay.commissionBps : null;
 
   return (
+    <AppLayout>
     <Page
       title="Utbetalningar"
       subtitle="Ta emot betalningar och få utbetalt via Stripe"
@@ -206,6 +210,7 @@ const AdminPayments = () => {
         )}
       </div>
     </Page>
+    </AppLayout>
   );
 };
 
