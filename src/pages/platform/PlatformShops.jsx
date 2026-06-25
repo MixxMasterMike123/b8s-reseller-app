@@ -115,7 +115,7 @@ const PlatformShops = () => {
 
   return (
     <PlatformLayout>
-      <div className="px-6 lg:px-10 py-8 max-w-6xl">
+      <div className="px-6 lg:px-10 py-8 max-w-7xl">
         <div className="flex items-start justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-white">Butiker</h1>
@@ -138,7 +138,7 @@ const PlatformShops = () => {
             Inga butiker ännu.
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-white/10 bg-gray-900">
+          <div className="overflow-x-auto rounded-xl border border-white/10 bg-gray-900">
             <table className="min-w-full divide-y divide-white/10 text-sm">
               <thead>
                 <tr className="text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -196,7 +196,7 @@ const PlatformShops = () => {
                       <td className="px-5 py-4 text-right tabular-nums text-gray-300">{shop.counts?.orders ?? '–'}</td>
                       <td className="px-5 py-4 text-right tabular-nums text-gray-300">{shop.counts?.b2cCustomers ?? '–'}</td>
                       <td className="px-5 py-4">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                           <button
                             onClick={() => openStorefront(shop)}
                             className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium bg-white/5 text-gray-200 hover:bg-white/10"
