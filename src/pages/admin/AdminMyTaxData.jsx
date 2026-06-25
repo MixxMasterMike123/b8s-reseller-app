@@ -15,16 +15,40 @@ import AppLayout from '../../components/layout/AppLayout';
 import { Page, Card, CardSection, Button } from '../../components/admin/ui';
 import toast from 'react-hot-toast';
 
+// The Skatte-ID label depends on the seller type: org.nr for a company,
+// personnummer for an individual. Generic only when the type isn't set yet.
+const taxIdLabel = (sellerType) =>
+  sellerType === 'company' ? 'Organisationsnummer'
+  : sellerType === 'individual' ? 'Personnummer'
+  : 'Skatte-ID (personnr / org.nr)';
+
+const sellerTypeLabel = (sellerType) =>
+  sellerType === 'company' ? 'Företag'
+  : sellerType === 'individual' ? 'Privatperson'
+  : '—';
+
+// Contact fields a seller may rectify directly. Same for both types.
 const CONTACT_FIELDS = [
   { k: 'legalName', label: 'Juridiskt namn' },
-  { k: 'vatNumber', label: 'VAT-nummer' },
+  { k: 'vatNumber', label: 'VAT-nummer (momsregistreringsnummer)' },
   { k: 'address', label: 'Adress' },
   { k: 'countryOfResidence', label: 'Hemvistland (ISO, t.ex. SE)' },
 ];
-const IDENTITY_FIELDS = [
-  { k: 'sellerType', label: 'Säljartyp' },
-  { k: 'taxId', label: 'Skatte-ID (personnr / org.nr)' },
-  { k: 'dateOfBirth', label: 'Födelsedatum' },
+
+// Identity fields shown read-only, BRANCHED on seller type: a company has no
+// date of birth; the Skatte-ID label adapts. Values rendered specially for type.
+const identityFields = (sellerType) => [
+  { k: 'sellerType', label: 'Säljartyp', render: sellerTypeLabel },
+  { k: 'taxId', label: taxIdLabel(sellerType) },
+  // DOB only applies to individuals.
+  ...(sellerType === 'individual' ? [{ k: 'dateOfBirth', label: 'Födelsedatum' }] : []),
+];
+
+// Which identity fields a seller can request a correction for, by type.
+const correctableIdentity = (sellerType) => [
+  { value: 'taxId', label: taxIdLabel(sellerType) },
+  ...(sellerType === 'individual' ? [{ value: 'dateOfBirth', label: 'Födelsedatum' }] : []),
+  { value: 'sellerType', label: 'Säljartyp' },
 ];
 
 const AdminMyTaxData = () => {
@@ -127,14 +151,14 @@ const AdminMyTaxData = () => {
           </Card>
         )}
 
-        {/* Identity fields — read-only for the seller. */}
+        {/* Identity fields — read-only for the seller, branched on seller type. */}
         {profile && (
           <CardSection title="Identitetsuppgifter (hanteras av plattformen)">
             <dl className="space-y-1 text-[13px]">
-              {IDENTITY_FIELDS.map(({ k, label }) => (
+              {identityFields(profile.sellerType).map(({ k, label, render }) => (
                 <div key={k} className="flex justify-between gap-4">
                   <dt className="text-admin-text-muted">{label}</dt>
-                  <dd className="text-admin-text">{profile[k] || '—'}</dd>
+                  <dd className="text-admin-text">{render ? render(profile[k]) : (profile[k] || '—')}</dd>
                 </div>
               ))}
             </dl>
@@ -166,9 +190,9 @@ const AdminMyTaxData = () => {
             <div>
               <label className="block text-[12px] font-semibold text-admin-text-muted mb-1">Fält</label>
               <select value={reqField} onChange={(e) => setReqField(e.target.value)} className="rounded-md border border-admin-border bg-admin-surface px-3 py-1.5 text-[13px]">
-                <option value="taxId">Skatte-ID</option>
-                <option value="dateOfBirth">Födelsedatum</option>
-                <option value="sellerType">Säljartyp</option>
+                {correctableIdentity(profile?.sellerType).map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
               </select>
             </div>
             <div className="flex-1 min-w-[180px]">

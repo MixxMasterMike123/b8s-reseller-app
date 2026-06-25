@@ -216,7 +216,7 @@ const SellerEditor = ({ shopId, shopName, onClose }) => {
             {[
               { k: 'legalName', label: 'Juridiskt namn' },
               { k: 'taxId', label: isIndividual ? 'Personnummer' : 'Organisationsnummer' },
-              { k: 'vatNumber', label: 'VAT-nummer' },
+              { k: 'vatNumber', label: 'VAT-nummer (momsregistreringsnummer)' },
               { k: 'address', label: 'Adress' },
               { k: 'countryOfResidence', label: 'Hemvistland (ISO, t.ex. SE)' },
               ...(isIndividual ? [{ k: 'dateOfBirth', label: 'Födelsedatum (YYYY-MM-DD)' }] : []),
