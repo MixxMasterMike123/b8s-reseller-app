@@ -142,6 +142,36 @@ Implemented as the config flag in **Slice C** (default = current behaviour). Fli
 
 ---
 
+## 4b. Slice A — manual Stripe test recipe (live paths not unit-testable)
+
+The reversal/re-transfer + negative-balance handling live in the webhook and call
+Stripe — unit tests pin the pure builders; the live path is verified in TEST mode:
+
+```bash
+# 1. Forward webhooks to the deployed/emulated function:
+stripe listen --forward-to <FUNCTION_URL>/stripeWebhookV2
+# 2. Place a TEST destination-charge order on a Connect-enabled shop (real flow),
+#    so an order doc exists with connect.transferId.
+# 3. Open a dispute on that charge (Stripe test card 4000000000000259 auto-disputes,
+#    or trigger synthetically):
+stripe trigger charge.dispute.created
+#    → expect: order stamped disputeStatus + connect.transferReversed=true +
+#      connect.disputeRecoveryStatus='recovered' + disputeReversedAmount set.
+#      Admin → order detail shows the "Tvist / Återkrav" card.
+# 4. Close the dispute won/lost:
+stripe trigger charge.dispute.closed
+#    won  → connect.disputeReTransferId set, status 'returned_won'.
+#    lost → status 'lost_final' (and recovery happened on created or now).
+```
+Negative-balance/shortfall: reverse on a connected account with insufficient
+balance → expect disputeRecoveryStatus='shortfall' + disputeRecoveryError, webhook
+still returns 200 (no crash, no retry-storm). **Verified manually before live cutover; never claimed green off a build pass.**
+
+## 4c. Slice A — open follow-ups (flagged, NOT auto-implemented)
+- **Affiliate commission on a chargeback:** the dispute reversal claws the principal back from the shop but does NOT reverse affiliate commission (the `reverseAffiliateCommissionOnCancel` trigger only fires on `status` → `cancelled`/`refunded`). On a lost dispute the affiliate keeps commission on money that's gone. Fix touches the affiliate ledger (a different subsystem) + has order-display side-effects → deferred for an explicit decision: reverse affiliate commission on a lost/recovered dispute? (Recommend yes, via extending the trigger to a dispute-lost signal, NOT by mislabelling status='refunded'.)
+- **Concurrency hardening (DONE in this slice):** both money calls now carry a Stripe `idempotencyKey` keyed on the dispute id → concurrent/duplicate webhook deliveries collapse to one Stripe operation (no double-reversal, no double re-transfer of real funds). This also fixes the patch-corruption case (a duplicate returns the original success, writing the same `recovered` patch, never a false `shortfall`).
+- **`warning_closed` (DONE):** handled alongside `lost` so an early-fraud-warning close doesn't leave funds unrecovered in wait-for-outcome mode.
+
 ## 5. Test & verification strategy
 - **Unit (pure builders):** extend `connect-params.test.cjs`; new `dispute-recovery.test.cjs`, `dac7-aggregation.test.cjs`, `withdrawal-gate.test.cjs`. Run `node rules-tests/<x>.test.cjs` (and add to `rules-tests/run-all.sh`).
 - **Isolation gate:** `npm run test:isolation` / `run-all.sh` MUST stay green; any rules change (Slice E) re-runs it before commit. New `sellerProfile`/`dac7` isolation assertions added.

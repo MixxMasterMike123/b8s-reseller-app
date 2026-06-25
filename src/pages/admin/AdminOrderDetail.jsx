@@ -18,6 +18,25 @@ import { formatPickupDate } from '../../utils/pickupDates';
 import { Page, Card, CardSection, RightRail, Button, StatusPill, toneForOrderStatus } from '../../components/admin/ui';
 import { TruckIcon, MapPinIcon, PrinterIcon, TrashIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
+// Dispute display maps (Slice A). disputeStatus mirrors Stripe's dispute status;
+// connect.disputeRecoveryStatus is our own transfer-recovery state.
+const DISPUTE_LABEL = {
+  warning_needs_response: 'Kräver svar', needs_response: 'Kräver svar',
+  under_review: 'Under granskning', won: 'Vunnen', lost: 'Förlorad',
+  open: 'Öppen', closed: 'Avslutad',
+};
+const DISPUTE_TONE = {
+  won: 'success', lost: 'danger',
+  warning_needs_response: 'warning', needs_response: 'warning', under_review: 'info',
+  open: 'warning', closed: 'neutral',
+};
+const RECOVERY_LABEL = {
+  recovered: 'Återhämtad från butik', shortfall: '⚠️ Underskott — manuell avstämning',
+  no_transfer_id: '⚠️ Ingen överföring att återkräva', pending_outcome: 'Väntar på utfall',
+  returned_won: 'Återförd till butik (vunnen)', won_no_reversal: 'Vunnen — inget att återföra',
+  retransfer_failed: '⚠️ Återföring misslyckades', lost_final: 'Förlorad — slutförd',
+};
+
 const AdminOrderDetail = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
@@ -622,6 +641,36 @@ const AdminOrderDetail = () => {
                   </div>
                 </div>
               </Card>
+
+              {/* Dispute / chargeback (shown only when a dispute exists).
+                  For a destination charge the platform balance is debited; the
+                  webhook reverses the transfer to recover from the shop and
+                  stamps the recovery status here so the admin can reconcile. */}
+              {order.disputeStatus && (
+                <Card>
+                  <div className="flex items-center gap-2 border-b border-admin-border px-4 py-3">
+                    <h3 className="text-[14px] font-semibold text-admin-text">Tvist / Återkrav</h3>
+                    <StatusPill tone={DISPUTE_TONE[order.disputeStatus] || 'warning'}>
+                      {DISPUTE_LABEL[order.disputeStatus] || order.disputeStatus}
+                    </StatusPill>
+                  </div>
+                  <div className="px-4 py-3">
+                    {order.disputeId && <Row label="Tvist-ID" value={order.disputeId} />}
+                    {order.connect?.disputeRecoveryStatus && (
+                      <Row
+                        label="Återhämtning"
+                        value={RECOVERY_LABEL[order.connect.disputeRecoveryStatus] || order.connect.disputeRecoveryStatus}
+                      />
+                    )}
+                    {Number.isFinite(order.connect?.disputeReversedAmount) && order.connect.disputeReversedAmount > 0 && (
+                      <Row label="Återförd överföring" value={sek(order.connect.disputeReversedAmount / 100)} />
+                    )}
+                    {order.connect?.disputeRecoveryError && (
+                      <p className="mt-2 text-[12px] text-red-600">{order.connect.disputeRecoveryError}</p>
+                    )}
+                  </div>
+                </Card>
+              )}
 
               {/* Notes */}
               {order.note && (

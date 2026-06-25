@@ -11,17 +11,105 @@ import { commerceConfig } from '../config/app-urls';
 import { getFirestore } from 'firebase-admin/firestore';
 import { DEFAULT_SHOP_ID } from '../config/tenancy';
 import { statusPatch } from './connectOnboarding';
+import { readPlatformConfig } from './platformConfig';
+import { buildDisputeReversalParams, buildDisputeReTransferParams } from './connectParams';
 // CORS not needed for webhooks - server-to-server communication
 
 // Initialize Firestore with named database
 const db = getFirestore('b8s-reseller-db');
 
+// The webhook handles several event types whose data.object differ
+// (PaymentIntent, Account, Dispute). We keep the narrow PaymentIntent shape for
+// the order-recovery path (the bulk of the handler) and narrow the other
+// branches explicitly with the right Stripe type — see each branch below.
 interface StripeWebhookEvent {
   id: string;
   type: string;
   data: {
     object: Stripe.PaymentIntent;
   };
+}
+
+// Resolve the order doc for a dispute. order id == payment_intent id, so we use
+// the dispute's payment_intent (string or expanded object). Returns null when
+// the PI is absent or no matching order exists.
+async function loadOrderForDispute(
+  dispute: Stripe.Dispute
+): Promise<{ ref: FirebaseFirestore.DocumentReference; order: any } | null> {
+  const pi = (dispute as any)?.payment_intent;
+  const piId = typeof pi === 'string' ? pi : pi?.id;
+  if (!piId) return null;
+  const ref = db.collection('orders').doc(piId);
+  const snap = await ref.get();
+  if (!snap.exists) return null;
+  return { ref, order: snap.data() as any };
+}
+
+// Recover the disputed funds from the connected account by reversing the
+// destination-charge transfer. Returns a patch to stamp on the order. NEVER
+// throws — a failed reversal (already reversed, insufficient balance on the
+// connected account, etc.) is caught, logged, and stamped as a shortfall so the
+// platform can reconcile out of band. SE/EU connected accounts do NOT auto-debit
+// the seller's bank, so a negative balance can simply sit there → we alert.
+async function recoverDisputedTransfer(
+  stripe: Stripe,
+  order: any,
+  disputeId: string
+): Promise<Record<string, any>> {
+  const reversal = buildDisputeReversalParams(order);
+  if (!reversal) {
+    // Nothing to reverse: legacy charge (platform always bore it), or no
+    // transferId recorded, or already reversed. Distinguish for the admin.
+    const connect = order?.connect;
+    if (connect?.isDestinationCharge === true && connect?.transferReversed !== true && !connect?.transferId) {
+      logger.warn('💸 dispute: Connect order has NO transferId — cannot auto-recover, manual reconcile needed', {
+        orderId: order?.payment?.paymentIntentId,
+      });
+      return { 'connect.disputeRecoveryStatus': 'no_transfer_id' };
+    }
+    return {}; // legacy or already reversed → nothing to do
+  }
+
+  try {
+    // Idempotency key keyed on the dispute → concurrent/duplicate webhook
+    // deliveries collapse to ONE Stripe reversal (Stripe returns the original
+    // result for a repeated key) instead of two concurrent createReversal calls
+    // racing the Firestore guard. This is the cross-instance-safe guard.
+    const result = await stripe.transfers.createReversal(
+      reversal.transferId,
+      reversal.params,
+      { idempotencyKey: `dispute-reversal:${disputeId || reversal.transferId}` }
+    );
+    logger.info('💸 dispute: transfer reversed (funds recovered from shop)', {
+      orderId: order?.payment?.paymentIntentId,
+      transferId: reversal.transferId,
+      reversalId: result.id,
+      amount: result.amount,
+    });
+    return {
+      'connect.transferReversed': true,
+      'connect.disputeReversalId': result.id,
+      // The amount Stripe actually reversed (öre) — authoritative; used to
+      // re-transfer exactly this much back if the dispute is later won.
+      'connect.disputeReversedAmount': result.amount,
+      'connect.disputeRecoveryStatus': 'recovered',
+    };
+  } catch (e: any) {
+    // A negative balance on the connected account, an already-reversed transfer,
+    // or any Stripe error: do NOT crash the webhook (Stripe would retry-storm).
+    // Stamp a shortfall + alert so the platform reconciles manually.
+    logger.error('🚨 dispute: transfer reversal FAILED — possible shortfall, manual reconcile needed', {
+      orderId: order?.payment?.paymentIntentId,
+      transferId: reversal.transferId,
+      connectedAccountId: order?.connect?.connectedAccountId,
+      error: e?.message,
+      code: e?.code,
+    });
+    return {
+      'connect.disputeRecoveryStatus': 'shortfall',
+      'connect.disputeRecoveryError': (e?.message || 'reversal_failed').slice(0, 300),
+    };
+  }
 }
 
 export const stripeWebhookV2 = onRequest(
@@ -369,30 +457,103 @@ export const stripeWebhookV2 = onRequest(
         response.status(200).json({ received: true, accountUpdated: true });
 
       } else if (event.type === 'charge.dispute.created') {
-        // 💸 A dispute opened. For destination charges with the platform as
-        // merchant of record, Stripe debits the PLATFORM balance — so the
-        // platform carries this exposure (reconcile with the shop out of band).
-        // We stamp the order so admins can see it; the order id == the
-        // payment_intent id, so we resolve via the dispute's payment_intent.
-        const dispute = event.data.object as any;
-        const pi = dispute?.payment_intent;
-        if (pi) {
-          try {
-            const ref = db.collection('orders').doc(typeof pi === 'string' ? pi : pi.id);
-            const s = await ref.get();
-            if (s.exists) {
-              await ref.update({
-                disputeStatus: dispute.status || 'open',
-                disputedAt: new Date(),
-                disputeId: dispute.id || null,
+        // 💸 A dispute opened. For destination charges the platform is merchant
+        // of record, so Stripe debits the PLATFORM balance for the full charge.
+        // The principal already left for the shop as the transfer → recover it
+        // by reversing that transfer (protect the platform). Reverse-on-created
+        // is the documented default (settings/platform.reverseDisputeOnCreated);
+        // set it false to only stamp + wait for the outcome. We always stamp the
+        // dispute; the recovery is best-effort and never crashes the webhook.
+        const dispute = event.data.object as unknown as Stripe.Dispute;
+        try {
+          const found = await loadOrderForDispute(dispute);
+          if (found) {
+            const cfg = await readPlatformConfig();
+            const patch: Record<string, any> = {
+              disputeStatus: dispute.status || 'open',
+              disputedAt: new Date(),
+              disputeId: dispute.id || null,
+            };
+            if (cfg.reverseDisputeOnCreated) {
+              const recovery = await recoverDisputedTransfer(stripe, found.order, dispute.id);
+              Object.assign(patch, recovery);
+            } else {
+              // Wait-for-outcome: stamp only; reversal deferred to dispute.closed(lost).
+              patch['connect.disputeRecoveryStatus'] = 'pending_outcome';
+              logger.info('💸 dispute: reverse-on-created OFF — stamping only, will recover if lost', {
+                orderId: found.ref.id,
               });
-              logger.info('💸 dispute stamped on order', { orderId: ref.id, status: dispute.status });
             }
-          } catch (e: any) {
-            logger.warn('⚠️ dispute stamp failed', { error: e?.message });
+            await found.ref.update(patch);
+            logger.info('💸 dispute stamped on order', { orderId: found.ref.id, status: dispute.status });
           }
+        } catch (e: any) {
+          // Never fail the webhook on a dispute-stamp error (Stripe retries).
+          logger.warn('⚠️ dispute.created handling failed', { error: e?.message });
         }
         response.status(200).json({ received: true, disputeRecorded: true });
+
+      } else if (event.type === 'charge.dispute.closed') {
+        // 💸 A dispute resolved. WON → send the reversed funds back to the shop
+        // (a fresh transfer of exactly what we reversed). LOST → finalize; if we
+        // were in wait-for-outcome mode and never reversed, recover now. Both
+        // paths are idempotent and never crash the webhook.
+        const dispute = event.data.object as unknown as Stripe.Dispute;
+        try {
+          const found = await loadOrderForDispute(dispute);
+          if (found) {
+            const patch: Record<string, any> = {
+              disputeStatus: dispute.status || 'closed',
+              disputeClosedAt: new Date(),
+            };
+            if (dispute.status === 'won') {
+              // Re-transfer the reversed amount back to the connected account.
+              const reTransfer = buildDisputeReTransferParams(found.order);
+              if (reTransfer) {
+                try {
+                  // Idempotency key keyed on the dispute → concurrent/duplicate
+                  // won deliveries collapse to ONE transfer (no double-send of
+                  // real money to the shop). Cross-instance safe.
+                  const t = await stripe.transfers.create(
+                    reTransfer.params as Stripe.TransferCreateParams,
+                    { idempotencyKey: `dispute-retransfer:${dispute.id || found.ref.id}` }
+                  );
+                  patch['connect.disputeReTransferId'] = t.id;
+                  patch['connect.transferReversed'] = false; // funds are back with the shop
+                  patch['connect.disputeRecoveryStatus'] = 'returned_won';
+                  logger.info('💸 dispute WON: funds re-transferred to shop', { orderId: found.ref.id, transferId: t.id, amount: t.amount });
+                } catch (e: any) {
+                  patch['connect.disputeRecoveryStatus'] = 'retransfer_failed';
+                  patch['connect.disputeRecoveryError'] = (e?.message || 'retransfer_failed').slice(0, 300);
+                  logger.error('🚨 dispute WON but re-transfer FAILED — manual reconcile', { orderId: found.ref.id, error: e?.message });
+                }
+              } else {
+                // Won but nothing was reversed (e.g. wait-for-outcome, never reversed) → nothing to return.
+                patch['connect.disputeRecoveryStatus'] = 'won_no_reversal';
+                logger.info('💸 dispute WON, no prior reversal — nothing to return', { orderId: found.ref.id });
+              }
+            } else if (dispute.status === 'lost' || dispute.status === 'warning_closed') {
+              // LOST (or warning_closed = an early-fraud warning that closed
+              // without escalating). If we never reversed (wait-for-outcome
+              // mode), recover now that it's terminal so funds don't sit
+              // unrecovered. reverseDisputeOnCreated isn't re-checked: once a
+              // dispute is terminal the platform has definitively paid (lost) or
+              // the warning closed, so claw back regardless of created-time mode.
+              // The createReversal idempotency key (dispute id) means a prior
+              // created-time reversal won't double-fire here.
+              if (found.order?.connect?.isDestinationCharge === true && found.order?.connect?.transferReversed !== true) {
+                const recovery = await recoverDisputedTransfer(stripe, found.order, dispute.id);
+                Object.assign(patch, recovery);
+              }
+              patch['connect.disputeRecoveryStatus'] = patch['connect.disputeRecoveryStatus'] || 'lost_final';
+              logger.info('💸 dispute LOST: finalized', { orderId: found.ref.id });
+            }
+            await found.ref.update(patch);
+          }
+        } catch (e: any) {
+          logger.warn('⚠️ dispute.closed handling failed', { error: e?.message });
+        }
+        response.status(200).json({ received: true, disputeClosed: true });
 
       } else {
         // Handle other webhook events if needed

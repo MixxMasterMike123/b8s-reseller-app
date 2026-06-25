@@ -37,3 +37,33 @@ export declare function buildConnectChargeParams(pay: any, amountOre: number, pl
  *                            fee as a non-refundable service fee.
  */
 export declare function buildRefundParams(order: any, amountSek?: number, refundApplicationFee?: boolean): Record<string, any>;
+/** A reversal target: the order's recorded destination-charge transfer. */
+export interface DisputeReversal {
+    transferId: string;
+    params: Record<string, any>;
+}
+/**
+ * Params to reverse the transfer for a disputed order, or null when there is
+ * nothing to reverse (legacy order, no transferId, or already reversed). The
+ * reversal is FULL (no amount → Stripe reverses the entire remaining transfer)
+ * because a chargeback claws the whole charge. refund_application_fee is FALSE
+ * (see the money-correctness note above): the platform keeps the fee it already
+ * lost in the dispute debit and recovers the full principal from the shop.
+ *
+ * @param order  the order doc (needs order.connect.transferId)
+ */
+export declare function buildDisputeReversalParams(order: any): DisputeReversal | null;
+/** A re-transfer target: send previously-reversed funds back to the shop. */
+export interface DisputeReTransfer {
+    params: Record<string, any>;
+}
+/**
+ * Params to re-transfer the reversed amount back to the connected account when
+ * a dispute is WON, or null when there is nothing/no-one to send to. Uses the
+ * amount we actually reversed (persisted on the order at reversal time) so we
+ * never over- or under-send. Currency mirrors the original charge.
+ *
+ * @param order  the order doc (needs connect.connectedAccountId +
+ *               connect.disputeReversedAmount in öre)
+ */
+export declare function buildDisputeReTransferParams(order: any): DisputeReTransfer | null;

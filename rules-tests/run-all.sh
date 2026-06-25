@@ -12,8 +12,8 @@
 #   - firestore-isolation.test.cjs  } (port 8080); run together in one exec.
 #   - functions-isolation.test.cjs  } (Admin-SDK guard matrix against the emulator)
 #   - storage-isolation.test.cjs      → STORAGE emulator (port 9199), own exec.
-#   - connect-params.test.cjs         → PURE unit test (no emulator); needs
-#                                       functions/lib compiled (tsc) first.
+#   - connect-params.test.cjs         } PURE unit tests (no emulator); need
+#   - dispute-recovery.test.cjs       } functions/lib compiled (tsc) first.
 #
 # Local run:
 #   JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home \
@@ -46,6 +46,8 @@ if [ ! -f functions/lib/payment/connectParams.js ]; then
 fi
 echo "==> [1/3] connect-params (pure unit test)"
 node rules-tests/connect-params.test.cjs
+echo "==> [1/3] dispute-recovery (pure unit test)"
+node rules-tests/dispute-recovery.test.cjs
 
 # 2) The three Firestore-emulator suites in one emulator lifecycle.
 echo "==> [2/3] firestore-emulator suites (rules + isolation + functions-guard)"

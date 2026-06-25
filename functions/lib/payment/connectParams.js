@@ -10,7 +10,7 @@
  * transfer reversal). Fee arithmetic lives in connectFee.ts.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildRefundParams = exports.buildConnectChargeParams = void 0;
+exports.buildDisputeReTransferParams = exports.buildDisputeReversalParams = exports.buildRefundParams = exports.buildConnectChargeParams = void 0;
 const connectFee_1 = require("./connectFee");
 /**
  * Decide the destination-charge params for a checkout. A shop is "Connect-
@@ -72,4 +72,76 @@ function buildRefundParams(order, amountSek, refundApplicationFee = true) {
     return params;
 }
 exports.buildRefundParams = buildRefundParams;
+/**
+ * Params to reverse the transfer for a disputed order, or null when there is
+ * nothing to reverse (legacy order, no transferId, or already reversed). The
+ * reversal is FULL (no amount → Stripe reverses the entire remaining transfer)
+ * because a chargeback claws the whole charge. refund_application_fee is FALSE
+ * (see the money-correctness note above): the platform keeps the fee it already
+ * lost in the dispute debit and recovers the full principal from the shop.
+ *
+ * @param order  the order doc (needs order.connect.transferId)
+ */
+function buildDisputeReversalParams(order) {
+    const connect = order?.connect;
+    if (!connect || connect.isDestinationCharge !== true)
+        return null; // legacy → platform already bears it, nothing to claw
+    if (connect.transferReversed === true)
+        return null; // idempotent: already reversed (refund or prior dispute)
+    const transferId = connect.transferId;
+    if (!transferId || typeof transferId !== 'string')
+        return null; // no transfer recorded → cannot reverse, caller alerts
+    return {
+        transferId,
+        params: {
+            // No `amount` → full reversal of the remaining transfer (gross − fee).
+            // false → fee stays lost on the platform (already debited); shop nets 0.
+            refund_application_fee: false,
+            metadata: {
+                reason: 'dispute_recovery',
+                orderId: order?.payment?.paymentIntentId || '',
+                disputeId: order?.disputeId || '',
+            },
+        },
+    };
+}
+exports.buildDisputeReversalParams = buildDisputeReversalParams;
+/**
+ * Params to re-transfer the reversed amount back to the connected account when
+ * a dispute is WON, or null when there is nothing/no-one to send to. Uses the
+ * amount we actually reversed (persisted on the order at reversal time) so we
+ * never over- or under-send. Currency mirrors the original charge.
+ *
+ * @param order  the order doc (needs connect.connectedAccountId +
+ *               connect.disputeReversedAmount in öre)
+ */
+function buildDisputeReTransferParams(order) {
+    const connect = order?.connect;
+    if (!connect || connect.isDestinationCharge !== true)
+        return null;
+    if (connect.transferReversed !== true)
+        return null; // nothing was reversed → nothing to send back
+    if (connect.disputeReTransferId)
+        return null; // idempotent: already re-transferred
+    const destination = connect.connectedAccountId;
+    const amountOre = connect.disputeReversedAmount;
+    if (!destination || typeof destination !== 'string')
+        return null;
+    if (!Number.isInteger(amountOre) || amountOre <= 0)
+        return null;
+    const currency = (order?.payment?.currency || 'sek').toLowerCase();
+    return {
+        params: {
+            amount: amountOre,
+            currency,
+            destination,
+            metadata: {
+                reason: 'dispute_won_retransfer',
+                orderId: order?.payment?.paymentIntentId || '',
+                disputeId: order?.disputeId || '',
+            },
+        },
+    };
+}
+exports.buildDisputeReTransferParams = buildDisputeReTransferParams;
 //# sourceMappingURL=connectParams.js.map
