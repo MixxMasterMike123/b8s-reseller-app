@@ -30,6 +30,7 @@ import PlatformRoute from './components/auth/PlatformRoute';
 import ImpersonationIntake from './components/auth/ImpersonationIntake';
 import PlatformShops from './pages/platform/PlatformShops';
 import PlatformAddons from './pages/platform/PlatformAddons';
+import PlatformDac7 from './pages/platform/PlatformDac7';
 import LoginPage from './pages/LoginPage';
 import LandingPage from './pages/LandingPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -54,6 +55,7 @@ import AdminPages from './pages/admin/AdminPages';
 import AdminPageEdit from './pages/admin/AdminPageEdit';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminPayments from './pages/admin/AdminPayments';
+import AdminMyTaxData from './pages/admin/AdminMyTaxData';
 // 🇸🇪 SE-ONLY LAUNCH: AdminTranslations hidden (single-language). Re-enable with its route below.
 // import AdminTranslations from './pages/admin/AdminTranslations';
 
@@ -236,6 +238,9 @@ function App() {
               } />
               <Route path="/addons" element={
                 <PlatformRoute><PlatformAddons /></PlatformRoute>
+              } />
+              <Route path="/dac7" element={
+                <PlatformRoute><PlatformDac7 /></PlatformRoute>
               } />
               <Route path="*" element={<Navigate to="/" replace />} />
             </>
@@ -476,6 +481,12 @@ function App() {
               <Route path="/admin/payments" element={
                 <AdminRoute>
                   <AdminPayments />
+                </AdminRoute>
+              } />
+
+              <Route path="/admin/skatteuppgifter" element={
+                <AdminRoute>
+                  <AdminMyTaxData />
                 </AdminRoute>
               } />
 

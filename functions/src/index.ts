@@ -106,6 +106,18 @@ import {
   setConnectPayoutDelay
 } from './payment/connectOnboarding';
 import { refundOrder } from './payment/connectRefund';
+// DAC7 seller due-diligence + aggregation + export (Slices E/F)
+import {
+  saveDac7SellerProfile,
+  getDac7SellerProfile,
+  pullDac7FromStripe,
+  aggregateDac7Year,
+  exportDac7Report,
+  getOwnDac7,
+  correctOwnDac7Contact,
+  requestDac7Correction,
+  resolveDac7Correction
+} from './dac7/functions';
 
 // Import website scraper functions for DiningWagon
 import {
@@ -160,6 +172,21 @@ export {
   getConnectBalance,
   setConnectPayoutDelay,
   refundOrder
+};
+
+// DAC7 seller due-diligence + aggregation + export (Slices E/F).
+// Platform-only: save/get/pull/aggregate/export + resolveDac7Correction.
+// Seller (own shop): getOwnDac7 / correctOwnDac7Contact / requestDac7Correction.
+export {
+  saveDac7SellerProfile,
+  getDac7SellerProfile,
+  pullDac7FromStripe,
+  aggregateDac7Year,
+  exportDac7Report,
+  getOwnDac7,
+  correctOwnDac7Contact,
+  requestDac7Correction,
+  resolveDac7Correction
 };
 
 // Re-export website scraper functions for DiningWagon

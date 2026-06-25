@@ -2,7 +2,7 @@
 // V2 FUNCTIONS BATCH 4 - Direct imports to avoid circular dependencies
 // EMAIL ORCHESTRATOR SYSTEM - Unified email functions
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.confirmPasswordReset = exports.confirmPasswordResetV2 = exports.scrapeWebsiteMetaV2 = exports.refundOrder = exports.setConnectPayoutDelay = exports.getConnectBalance = exports.setShopCommission = exports.createConnectLoginLink = exports.refreshConnectStatus = exports.createConnectAccountLink = exports.createConnectAccount = exports.stripeWebhookV2 = exports.createPaymentIntentV2 = exports.syncAdminClaims = exports.createAdminUserV2 = exports.toggleCustomerActiveStatusV2 = exports.deleteB2CCustomerAccountV2 = exports.deleteCustomerAccountV2 = exports.getGeoDataV2 = exports.syncUserClaimsOnWrite = exports.cancelB2BOrder = exports.createB2BOrder = exports.reverseAffiliateCommissionOnCancel = exports.processB2COrderCompletionHttpV2 = exports.validateDiscountCode = exports.logAffiliateClickV2 = exports.sendAffiliateApplicationEmails = exports.verifyEmailCode = exports.sendCustomEmailVerification = exports.sendEmailVerification = exports.createShopUser = exports.approveAffiliate = exports.sendAffiliateWelcomeEmail = exports.sendLoginCredentialsEmail = exports.sendPasswordResetEmail = exports.sendOrderNotificationAdmin = exports.sendOrderStatusUpdateEmail = exports.sendOrderConfirmationEmail = void 0;
+exports.confirmPasswordReset = exports.confirmPasswordResetV2 = exports.scrapeWebsiteMetaV2 = exports.resolveDac7Correction = exports.requestDac7Correction = exports.correctOwnDac7Contact = exports.getOwnDac7 = exports.exportDac7Report = exports.aggregateDac7Year = exports.pullDac7FromStripe = exports.getDac7SellerProfile = exports.saveDac7SellerProfile = exports.refundOrder = exports.setConnectPayoutDelay = exports.getConnectBalance = exports.setShopCommission = exports.createConnectLoginLink = exports.refreshConnectStatus = exports.createConnectAccountLink = exports.createConnectAccount = exports.stripeWebhookV2 = exports.createPaymentIntentV2 = exports.syncAdminClaims = exports.createAdminUserV2 = exports.toggleCustomerActiveStatusV2 = exports.deleteB2CCustomerAccountV2 = exports.deleteCustomerAccountV2 = exports.getGeoDataV2 = exports.syncUserClaimsOnWrite = exports.cancelB2BOrder = exports.createB2BOrder = exports.reverseAffiliateCommissionOnCancel = exports.processB2COrderCompletionHttpV2 = exports.validateDiscountCode = exports.logAffiliateClickV2 = exports.sendAffiliateApplicationEmails = exports.verifyEmailCode = exports.sendCustomEmailVerification = exports.sendEmailVerification = exports.createShopUser = exports.approveAffiliate = exports.sendAffiliateWelcomeEmail = exports.sendLoginCredentialsEmail = exports.sendPasswordResetEmail = exports.sendOrderNotificationAdmin = exports.sendOrderStatusUpdateEmail = exports.sendOrderConfirmationEmail = void 0;
 // Initialize Firebase Admin SDK
 const app_1 = require("firebase-admin/app");
 (0, app_1.initializeApp)();
@@ -99,9 +99,20 @@ Object.defineProperty(exports, "getConnectBalance", { enumerable: true, get: fun
 Object.defineProperty(exports, "setConnectPayoutDelay", { enumerable: true, get: function () { return connectOnboarding_1.setConnectPayoutDelay; } });
 const connectRefund_1 = require("./payment/connectRefund");
 Object.defineProperty(exports, "refundOrder", { enumerable: true, get: function () { return connectRefund_1.refundOrder; } });
+// DAC7 seller due-diligence + aggregation + export (Slices E/F)
+const functions_6 = require("./dac7/functions");
+Object.defineProperty(exports, "saveDac7SellerProfile", { enumerable: true, get: function () { return functions_6.saveDac7SellerProfile; } });
+Object.defineProperty(exports, "getDac7SellerProfile", { enumerable: true, get: function () { return functions_6.getDac7SellerProfile; } });
+Object.defineProperty(exports, "pullDac7FromStripe", { enumerable: true, get: function () { return functions_6.pullDac7FromStripe; } });
+Object.defineProperty(exports, "aggregateDac7Year", { enumerable: true, get: function () { return functions_6.aggregateDac7Year; } });
+Object.defineProperty(exports, "exportDac7Report", { enumerable: true, get: function () { return functions_6.exportDac7Report; } });
+Object.defineProperty(exports, "getOwnDac7", { enumerable: true, get: function () { return functions_6.getOwnDac7; } });
+Object.defineProperty(exports, "correctOwnDac7Contact", { enumerable: true, get: function () { return functions_6.correctOwnDac7Contact; } });
+Object.defineProperty(exports, "requestDac7Correction", { enumerable: true, get: function () { return functions_6.requestDac7Correction; } });
+Object.defineProperty(exports, "resolveDac7Correction", { enumerable: true, get: function () { return functions_6.resolveDac7Correction; } });
 // Import website scraper functions for DiningWagon
-const functions_6 = require("./website-scraper/functions");
-Object.defineProperty(exports, "scrapeWebsiteMetaV2", { enumerable: true, get: function () { return functions_6.scrapeWebsiteMeta; } });
+const functions_7 = require("./website-scraper/functions");
+Object.defineProperty(exports, "scrapeWebsiteMetaV2", { enumerable: true, get: function () { return functions_7.scrapeWebsiteMeta; } });
 // OLD V1/V2/V3 EMAIL SYSTEM FUNCTIONS - MOVED TO QUARANTINE
 // All old email functions have been migrated to the new Email Orchestrator system
 // Old files moved to: functions/quarantine/old-email-systems/

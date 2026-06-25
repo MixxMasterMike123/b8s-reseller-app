@@ -22,6 +22,7 @@ import {
 const NAV = [
   { name: 'Butiker', path: '/shops', icon: BuildingStorefrontIcon, live: true },
   { name: 'Tillägg', path: '/addons', icon: PuzzlePieceIcon, live: true },
+  { name: 'DAC7', path: '/dac7', icon: ShieldCheckIcon, live: true },
   { name: 'Betalningar', path: '/payments', icon: CreditCardIcon, live: false },
   { name: 'Inställningar', path: '/settings', icon: Cog6ToothIcon, live: false },
 ];

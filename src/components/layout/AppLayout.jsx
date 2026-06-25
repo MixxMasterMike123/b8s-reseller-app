@@ -174,6 +174,12 @@ const AppLayout = ({ children }) => {
       description: t('nav.admin_payments_desc', 'Ta emot betalningar och utbetalningar'),
     },
     {
+      name: t('nav.admin_dac7', 'Mina skatteuppgifter'),
+      path: '/admin/skatteuppgifter',
+      icon: DocumentTextIcon,
+      description: t('nav.admin_dac7_desc', 'Dina rapporterade uppgifter (DAC7)'),
+    },
+    {
       name: t('nav.admin_settings', 'Inställningar'),
       path: '/admin/settings',
       icon: Cog6ToothIcon,

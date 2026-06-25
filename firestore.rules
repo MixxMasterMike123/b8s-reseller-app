@@ -260,6 +260,65 @@ service cloud.firestore {
     }
 
     // ============================================================
+    // dac7Sellers — DAC7 seller due-diligence data (sensitive PII: tax id /
+    // personnummer, DOB, verified legal name + address, country of residence).
+    // ⚠️ DAC7 is the PLATFORM operator's obligation (reporting platform operator,
+    // EU Dir. 2021/514), NOT the shop owner's. So the AUTHORITATIVE record is
+    // PLATFORM-owned. A seller may VIEW their OWN record (GDPR access/transparency)
+    // and directly CORRECT a small set of CONTACT fields (GDPR rectification);
+    // the IDENTITY keys (personnummer/orgNumber/dateOfBirth/sellerType) are
+    // platform-only — a seller requests those changes via dac7CorrectionRequests.
+    // It is a SEPARATE collection (NOT a field on shops/{id}) because shops is
+    // PUBLIC-readable — PII there would leak. Doc id == shopId. NEVER public,
+    // NEVER cross-shop, NEVER listable. The platform server (Admin SDK) bypasses
+    // rules for pull/aggregate/export.
+    // ============================================================
+    match /dac7Sellers/{shopId} {
+      // Platform reads any; a shop admin reads ONLY their own (GDPR access).
+      allow get: if isPlatform() || isAdminOfShop(shopId);
+      allow list: if false; // never enumerate sellers' PII
+      // Platform owns create + the authoritative identity fields.
+      allow create: if isPlatform() && request.resource.data.shopId == shopId;
+      // Update: platform may change anything (incl. identity). A shop admin may
+      // update their OWN doc but ONLY the contact-field subset — a positive
+      // allowlist: their update may AFFECT only the contact fields + timestamps,
+      // nothing else. This blocks identity edits AND novel/misleading metadata
+      // (e.g. spoofing verifiedViaStripe). Rectification of identity goes through
+      // a correction request. (Platform path + the Admin-SDK Stripe-pull bypass.)
+      allow update: if request.resource.data.shopId == shopId && (
+        isPlatform() ||
+        (isAdminOfShop(shopId) && dac7SellerUpdateAllowed())
+      );
+      allow delete: if isPlatform();
+    }
+    // A seller's own-doc update may affect ONLY these keys (contact fields the
+    // seller may rectify + the timestamps the callable stamps). Anything else —
+    // identity keys OR arbitrary metadata — is denied.
+    function dac7SellerUpdateAllowed() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['legalName', 'vatNumber', 'address', 'countryOfResidence', 'updatedAt', 'lastSelfCorrectedAt']);
+    }
+
+    // dac7CorrectionRequests — a seller's request to correct an IDENTITY field
+    // they cannot self-edit. Own-shop admin creates/reads their OWN requests;
+    // platform reads/updates any (to approve/reject + apply). shopId-stamped.
+    match /dac7CorrectionRequests/{reqId} {
+      allow get: if isPlatform() ||
+        (isAuthenticated() && isAdminOfShop(resource.data.shopId));
+      allow list: if isPlatform() ||
+        (isAdmin() && resource.data.shopId == userDoc().shopId);
+      allow create: if isAdminOfShop(request.resource.data.shopId)
+        && request.resource.data.status == 'pending'
+        // field must be a real DAC7 identity key (keeps junk requests out; the
+        // resolve callable also re-checks before applying).
+        && request.resource.data.field in ['taxId', 'dateOfBirth', 'sellerType'];
+      // Only the platform resolves a request (approve/reject); a seller can't
+      // self-approve. (Applying the change is a server/Admin-SDK write.)
+      allow update: if isPlatform();
+      allow delete: if isPlatform();
+    }
+
+    // ============================================================
     // Orders (shop-scoped)
     // ============================================================
     match /orders/{orderId} {

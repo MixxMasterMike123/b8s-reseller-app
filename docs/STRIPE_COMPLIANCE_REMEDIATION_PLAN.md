@@ -172,6 +172,22 @@ still returns 200 (no crash, no retry-storm). **Verified manually before live cu
 - **Concurrency hardening (DONE in this slice):** both money calls now carry a Stripe `idempotencyKey` keyed on the dispute id → concurrent/duplicate webhook deliveries collapse to one Stripe operation (no double-reversal, no double re-transfer of real funds). This also fixes the patch-corruption case (a duplicate returns the original success, writing the same `recovered` patch, never a false `shortfall`).
 - **`warning_closed` (DONE):** handled alongside `lost` so an early-fraud-warning close doesn't leave funds unrecovered in wait-for-outcome mode.
 
+## 4d. Slice E/F — DAC7 model (CORRECTED per Mikael, platform-owned)
+
+**DAC7 is the PLATFORM operator's obligation** (reporting platform operator under EU Dir. 2021/514), NOT the shop owner's. Access model is SPLIT:
+
+**Platform-only (requirePlatform, platform console, never visible to shop owners):**
+- Pull-from-Stripe (primary source), aggregation, de-minimis test, report generation, Skatteverket export.
+- The AUTHORITATIVE identity fields (personnummer/org.nr/DOB) — platform sets/verifies.
+
+**Stripe DAC7 feature eval (2026):** Stripe Connect "platform tax reporting" = the `tax_reporting` ADDITIONAL VERIFICATION on connected accounts (auto-collected during Express onboarding; Stripe validates + generates XML for "NL (for EU)"). **BUT: (a) "Request early access" — NOT self-serve, must contact Stripe; (b) NO documented raw-data export API (only per-seller PDF statements via API).** → We CANNOT rely on it alone today. **Chosen: pull what `accounts.retrieve` exposes now (business_type→sellerType, name, DOB, address, country) + keep our own platform record + aggregation + export; manual gap-fill for redacted fields (full tax-ID). Wire Stripe's PDF/report on top IF early access is granted.**
+
+**Seller-facing (own-shop admin, OWN doc ONLY — hard rule: never another seller's data):**
+- **GDPR rectification:** seller VIEWS own reported data + can directly correct CONTACT fields (address/VAT/legalName); for IDENTITY keys (personnummer/org.nr/DOB) submits a CORRECTION REQUEST the platform approves (rectification right satisfied, platform keeps report integrity).
+- **DAC7 transparency:** each reported seller is notified what is reported about them.
+
+**Rules:** `dac7Sellers/{shopId}` — platform read/write (authoritative) + own-shop-admin read-own + own-shop-admin write only the contact-field subset + a `dac7CorrectionRequests` path for identity-change requests. NO list, NO cross-shop, NO public. (Replaces the simpler platform+own-admin draft.) STOP-and-surface before deploy.
+
 ## 5. Test & verification strategy
 - **Unit (pure builders):** extend `connect-params.test.cjs`; new `dispute-recovery.test.cjs`, `dac7-aggregation.test.cjs`, `withdrawal-gate.test.cjs`. Run `node rules-tests/<x>.test.cjs` (and add to `rules-tests/run-all.sh`).
 - **Isolation gate:** `npm run test:isolation` / `run-all.sh` MUST stay green; any rules change (Slice E) re-runs it before commit. New `sellerProfile`/`dac7` isolation assertions added.

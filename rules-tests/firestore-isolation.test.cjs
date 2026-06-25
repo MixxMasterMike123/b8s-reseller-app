@@ -124,6 +124,16 @@ async function seed() {
     // b2bCustomerId. ordB2bA is owned by b2bUserA (via b2bA), ordB2bB by b2bUserB.
     await setDoc(doc(db, 'orders/ordB2bA'), { source: 'b2b', shopId: 'shopA', b2bCustomerId: 'b2bA', userId: 'b2bUserA', orderNumber: 'B8S-1-A', total: 100 });
     await setDoc(doc(db, 'orders/ordB2bB'), { source: 'b2b', shopId: 'shopB', b2bCustomerId: 'b2bB', userId: 'b2bUserB', orderNumber: 'B8S-1-B', total: 200 });
+
+    // DAC7 seller due-diligence docs (sensitive PII). doc id == shopId; carries
+    // shopId for the rules' equality check. Seeded for both shops to test that
+    // a shop admin reads ONLY their own, and that anon CANNOT read PII at all.
+    await setDoc(doc(db, 'dac7Sellers/shopA'), { shopId: 'shopA', sellerType: 'company', legalName: 'Acme A AB', taxId: '556677-8899' });
+    await setDoc(doc(db, 'dac7Sellers/shopB'), { shopId: 'shopB', sellerType: 'individual', legalName: 'B Person', taxId: '19900101-1234', dateOfBirth: '1990-01-01' });
+
+    // DAC7 identity-correction requests (seller asks, platform resolves).
+    await setDoc(doc(db, 'dac7CorrectionRequests/reqA'), { shopId: 'shopA', field: 'taxId', requestedValue: 'x', status: 'pending', requestedBy: 'adminA' });
+    await setDoc(doc(db, 'dac7CorrectionRequests/reqB'), { shopId: 'shopB', field: 'taxId', requestedValue: 'y', status: 'pending', requestedBy: 'adminB' });
   });
 }
 
@@ -200,6 +210,29 @@ async function run() {
   await check('B2B customer LISTS own orders (via b2bCustomerId linkage)', assertSucceeds(
     getDocs(query(collection(b2bUserDb('b2bUserA'), 'orders'),
       where('source', '==', 'b2b'), where('b2bCustomerId', '==', 'b2bA')))));
+
+  // DAC7 seller PII — PLATFORM-owned record. A seller may READ their own (GDPR
+  // access) + CORRECT contact fields, but NOT identity fields; platform writes
+  // anything; anon NEVER.
+  await check('platform creates a dac7Seller (authoritative record)', assertSucceeds(
+    setDoc(doc(platformDb(), 'dac7Sellers/shopA'), { shopId: 'shopA', sellerType: 'company', legalName: 'Acme A AB', taxId: '556677-8899', address: 'Old 1' })));
+  await check('shopA admin reads OWN dac7Seller (GDPR access)', assertSucceeds(
+    getDoc(doc(shopAAdminDb(), 'dac7Sellers/shopA'))));
+  await check('shopA admin CORRECTS own CONTACT field (address)', assertSucceeds(
+    updateDoc(doc(shopAAdminDb(), 'dac7Sellers/shopA'), { address: 'New 2' })));
+  await check('platform reads ANY dac7Seller', assertSucceeds(
+    getDoc(doc(platformDb(), 'dac7Sellers/shopB'))));
+  await check('platform updates an IDENTITY field (authoritative)', assertSucceeds(
+    updateDoc(doc(platformDb(), 'dac7Sellers/shopA'), { taxId: '556677-0000' })));
+  // DAC7 correction requests — seller creates/reads OWN; platform resolves.
+  await check('shopA admin reads OWN correction request', assertSucceeds(
+    getDoc(doc(shopAAdminDb(), 'dac7CorrectionRequests/reqA'))));
+  await check('shopA admin CREATES own pending correction request', assertSucceeds(
+    setDoc(doc(shopAAdminDb(), 'dac7CorrectionRequests/reqA2'), { shopId: 'shopA', field: 'taxId', requestedValue: 'z', status: 'pending', requestedBy: 'adminA' })));
+  await check('platform RESOLVES a correction request', assertSucceeds(
+    updateDoc(doc(platformDb(), 'dac7CorrectionRequests/reqA'), { status: 'approved' })));
+  await check('platform LISTS pending correction requests (across shops)', assertSucceeds(
+    getDocs(query(collection(platformDb(), 'dac7CorrectionRequests'), where('status', '==', 'pending')))));
 
   console.log('\n=== ISOLATION: cross-shop / privilege escalation must be DENIED ===');
   // users — the biggest leak
@@ -305,6 +338,34 @@ async function run() {
   // And cannot enumerate ALL b2b orders by source alone (matches b2bB → denied).
   await check('B2B customer CANNOT list ALL b2b orders (unscoped source query)', assertFails(
     getDocs(query(collection(b2bUserDb('b2bUserA'), 'orders'), where('source', '==', 'b2b')))));
+
+  // DAC7 PII isolation — the whole reason it's NOT on the public shops doc.
+  await check('ANON CANNOT read dac7Seller PII (not public, unlike shops)', assertFails(
+    getDoc(doc(env.unauthenticatedContext().firestore(), 'dac7Sellers/shopA'))));
+  await check('shopA admin CANNOT read shopB dac7Seller PII (cross-shop)', assertFails(
+    getDoc(doc(shopAAdminDb(), 'dac7Sellers/shopB'))));
+  await check('shopA admin CANNOT write a dac7Seller under shopB (cross-shop)', assertFails(
+    setDoc(doc(shopAAdminDb(), 'dac7Sellers/shopB'), { shopId: 'shopB', legalName: 'evil' })));
+  await check('plain customer CANNOT read dac7Seller PII', assertFails(
+    getDoc(doc(customerDb('custA'), 'dac7Sellers/shopA'))));
+  // Seller may NOT CREATE the record (platform-owned) nor SELF-EDIT identity.
+  await check('shopA admin CANNOT create own dac7Seller (platform-owned record)', assertFails(
+    setDoc(doc(shopAAdminDb(), 'dac7Sellers/shopNew'), { shopId: 'shopNew', legalName: 'x' })));
+  await check('shopA admin CANNOT self-edit IDENTITY field (taxId)', assertFails(
+    updateDoc(doc(shopAAdminDb(), 'dac7Sellers/shopA'), { taxId: 'fake-id' })));
+  await check('shopA admin CANNOT self-edit IDENTITY field (dateOfBirth)', assertFails(
+    updateDoc(doc(shopAAdminDb(), 'dac7Sellers/shopA'), { dateOfBirth: '2000-01-01' })));
+  await check('shopA admin CANNOT enumerate dac7Sellers (list denied)', assertFails(
+    getDocs(query(collection(shopAAdminDb(), 'dac7Sellers')))));
+  // Correction requests — cross-shop + self-approve denials.
+  await check('shopA admin CANNOT read shopB correction request', assertFails(
+    getDoc(doc(shopAAdminDb(), 'dac7CorrectionRequests/reqB'))));
+  await check('shopA admin CANNOT create a request under shopB', assertFails(
+    setDoc(doc(shopAAdminDb(), 'dac7CorrectionRequests/evilReq'), { shopId: 'shopB', field: 'taxId', requestedValue: 'x', status: 'pending' })));
+  await check('shopA admin CANNOT create a PRE-APPROVED request (self-approve)', assertFails(
+    setDoc(doc(shopAAdminDb(), 'dac7CorrectionRequests/evilReq2'), { shopId: 'shopA', field: 'taxId', requestedValue: 'x', status: 'approved' })));
+  await check('shopA admin CANNOT resolve (approve) own request', assertFails(
+    updateDoc(doc(shopAAdminDb(), 'dac7CorrectionRequests/reqA'), { status: 'approved' })));
 
   console.log(`\n=== RESULT: ${passed} passed, ${failed} failed ===`);
   await env.cleanup();
