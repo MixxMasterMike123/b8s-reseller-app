@@ -12,7 +12,7 @@
 // bg-gray-950 surface, bg-gray-900 cards, border-white/10, indigo accent.
 import React, { useState, useCallback, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, query, where, onSnapshot } from 'firebase/firestore';
 import { db, functions } from '../../firebase/config';
 import PlatformLayout from '../../components/platform/PlatformLayout';
 import toast from 'react-hot-toast';
@@ -62,6 +62,98 @@ const CorrectionRequests = () => {
 };
 
 const CURRENT_YEAR = new Date().getFullYear();
+
+function dac7ProfileComplete(p) {
+  if (!p) return false;
+  if (p.sellerType !== 'individual' && p.sellerType !== 'company') return false;
+  if (!p.legalName || !p.taxId || !p.address || !p.countryOfResidence) return false;
+  if (p.sellerType === 'individual' && !p.dateOfBirth) return false;
+  return true;
+}
+
+// ALL shops — edit any shop's DAC7 tax data regardless of sales/year. This is
+// the way to enter due-diligence data at onboarding (before a shop is even
+// reportable); the report table below only shows shops with qualifying orders.
+const AllShopsDac7 = ({ onEdit, refreshKey }) => {
+  const [shops, setShops] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Platform may list shops (firestore.rules). For each, pull its DAC7
+      // profile (platform-only callable) to show the status.
+      const snap = await getDocs(collection(db, 'shops'));
+      const base = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      base.sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id));
+      const withProfiles = await Promise.all(base.map(async (s) => {
+        try {
+          const res = await httpsCallable(functions, 'getDac7SellerProfile')({ shopId: s.id });
+          return { ...s, dac7: res.data?.profile || null };
+        } catch { return { ...s, dac7: null }; }
+      }));
+      setShops(withProfiles);
+    } catch (e) {
+      toast.error(e.message || 'Kunde inte ladda butiker.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load, refreshKey]);
+
+  return (
+    <div className="mb-8">
+      <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-3">Alla butiker — skatteuppgifter</h2>
+      {loading ? (
+        <div className="rounded-xl border border-white/10 bg-gray-900 py-8 text-center text-gray-500">Laddar…</div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-white/10 bg-gray-900">
+          <table className="min-w-full divide-y divide-white/10 text-sm">
+            <thead>
+              <tr className="text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <th className="px-4 py-3">Butik</th>
+                <th className="px-4 py-3">Säljartyp</th>
+                <th className="px-4 py-3">Juridiskt namn</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 text-right">Åtgärd</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/10">
+              {shops.map((s) => {
+                const complete = dac7ProfileComplete(s.dac7);
+                const typeLabel = s.dac7?.sellerType === 'company' ? 'Företag'
+                  : s.dac7?.sellerType === 'individual' ? 'Privatperson' : '—';
+                return (
+                  <tr key={s.id} className="hover:bg-white/5">
+                    <td className="px-4 py-3"><span className="font-medium text-white">{s.name || s.id}</span> <span className="text-xs text-gray-500">{s.id}</span></td>
+                    <td className="px-4 py-3 text-gray-300">{typeLabel}</td>
+                    <td className="px-4 py-3 text-gray-300">{s.dac7?.legalName || '—'}</td>
+                    <td className="px-4 py-3">
+                      {!s.dac7
+                        ? <span className="rounded-md bg-white/5 px-2 py-0.5 text-xs font-medium text-gray-500">Inga uppgifter</span>
+                        : complete
+                          ? <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-300">Komplett</span>
+                          : <span className="rounded-md bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-300">Ofullständig</span>}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => onEdit({ shopId: s.id, shopName: s.name || s.id })}
+                        className="rounded-lg bg-white/5 px-3 py-1 text-xs font-medium text-gray-200 hover:bg-indigo-500/15 hover:text-indigo-300"
+                      >
+                        Redigera
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
 
 // Platform per-seller DAC7 editor: pull from Stripe + manually fill the fields
 // Stripe redacts (full tax-ID). Platform owns the authoritative record.
@@ -149,6 +241,7 @@ const SellerEditor = ({ shopId, shopName, onClose }) => {
 
 const PlatformDac7 = () => {
   const [editing, setEditing] = useState(null); // {shopId, shopName} | null
+  const [editKey, setEditKey] = useState(0); // bump to refresh the all-shops list after a save
   const [year, setYear] = useState(CURRENT_YEAR - 1); // DAC7 reports the PRIOR calendar year
   const [rate, setRate] = useState('0.087');
   const [includeBelow, setIncludeBelow] = useState(false);
@@ -215,6 +308,10 @@ const PlatformDac7 = () => {
 
         <CorrectionRequests />
 
+        {/* Edit ANY shop's tax data, regardless of sales/year (onboarding). */}
+        <AllShopsDac7 onEdit={setEditing} refreshKey={editKey} />
+
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-3">Årsrapport</h2>
         <div className="mb-6 flex flex-wrap items-end gap-4 rounded-xl border border-white/10 bg-gray-900 p-5">
           <div>
             <label className={labelCls}>År</label>
@@ -309,7 +406,11 @@ const PlatformDac7 = () => {
         <SellerEditor
           shopId={editing.shopId}
           shopName={editing.shopName}
-          onClose={() => { setEditing(null); run(); }}
+          onClose={() => {
+            setEditing(null);
+            setEditKey((k) => k + 1);   // refresh the all-shops list
+            if (report) run();          // refresh the year report only if one is loaded
+          }}
         />
       )}
     </PlatformLayout>

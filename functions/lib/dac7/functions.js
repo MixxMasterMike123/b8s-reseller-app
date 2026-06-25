@@ -69,6 +69,12 @@ exports.saveDac7SellerProfile = (0, https_1.onCall)(COMMON, async (request) => {
     const profile = sanitizeProfile(request.data?.profile);
     // Stamp shopId == doc id so the rules' shopId-equality check passes.
     await database_1.db.collection('dac7Sellers').doc(shopId).set({ shopId, ...profile, updatedAt: firestore_1.FieldValue.serverTimestamp() }, { merge: true });
+    // SSOT for sellerType: keep the shop's first-class storeIdentity.sellerType in
+    // sync with what the platform set here, so contract-track / UI logic outside
+    // DAC7 reads the same value (mirrors the pull-from-Stripe sync).
+    if (profile.sellerType === 'individual' || profile.sellerType === 'company') {
+        await database_1.db.collection('shops').doc(shopId).set({ storeIdentity: { sellerType: profile.sellerType } }, { merge: true });
+    }
     return { shopId, saved: true };
 });
 exports.getDac7SellerProfile = (0, https_1.onCall)(COMMON, async (request) => {

@@ -88,6 +88,15 @@ export const saveDac7SellerProfile = onCall<SaveProfileRequest>(COMMON, async (r
     { shopId, ...profile, updatedAt: FieldValue.serverTimestamp() },
     { merge: true }
   );
+  // SSOT for sellerType: keep the shop's first-class storeIdentity.sellerType in
+  // sync with what the platform set here, so contract-track / UI logic outside
+  // DAC7 reads the same value (mirrors the pull-from-Stripe sync).
+  if (profile.sellerType === 'individual' || profile.sellerType === 'company') {
+    await db.collection('shops').doc(shopId).set(
+      { storeIdentity: { sellerType: profile.sellerType } },
+      { merge: true }
+    );
+  }
   return { shopId, saved: true };
 });
 
