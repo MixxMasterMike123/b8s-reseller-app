@@ -197,8 +197,127 @@ const AdminPayments = () => {
             </p>
           )}
         </CardSection>
+
+        {/* Balance & payout risk — only meaningful once the account exists. */}
+        {hasAccount && (
+          <CardSection title="Saldo & utbetalningsrisk">
+            <BalancePanel shopId={shopId} isPlatform={isPlatform} />
+          </CardSection>
+        )}
       </div>
     </Page>
+  );
+};
+
+// Connected-account balance + (platform-only) per-account payout-delay control.
+// The balance read is shop-admin-allowed (own shop); setting the delay is a
+// platform risk decision (setConnectPayoutDelay is requirePlatform server-side).
+const BalancePanel = ({ shopId, isPlatform }) => {
+  const [bal, setBal] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState('');
+
+  const load = useCallback(async () => {
+    setErr('');
+    try {
+      setLoading(true);
+      const res = await httpsCallable(functions, 'getConnectBalance')({ shopId });
+      setBal(res.data);
+    } catch (e) {
+      setErr(e.message || 'Kunde inte hämta saldo.');
+    } finally {
+      setLoading(false);
+    }
+  }, [shopId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (loading) return <p className="text-[13px] text-admin-text-muted">Hämtar saldo…</p>;
+  if (err) return <p className="text-[13px] text-red-700">{err}</p>;
+  if (!bal?.hasAccount) return <p className="text-[13px] text-admin-text-muted">Inget anslutet konto ännu.</p>;
+
+  const sek = (ore) => `${(ore / 100).toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr`;
+
+  return (
+    <div className="space-y-3">
+      {bal.negative && (
+        <div className="rounded-md bg-red-50 border-l-4 border-red-400 p-3 text-[13px] text-red-700">
+          ⚠️ Negativt saldo på det anslutna kontot ({sek(bal.availableOre)}). Stripe drar inte automatiskt
+          från säljarens bankkonto i SE/EU — saldot kan ligga kvar tills det regleras.
+        </div>
+      )}
+      <div className="grid grid-cols-3 gap-3 text-[13px]">
+        <div>
+          <div className="text-[12px] text-admin-text-muted">Tillgängligt</div>
+          <div className={`tabular-nums ${bal.negative ? 'text-red-700 font-semibold' : 'text-admin-text'}`}>{sek(bal.availableOre)}</div>
+        </div>
+        <div>
+          <div className="text-[12px] text-admin-text-muted">Väntande</div>
+          <div className="tabular-nums text-admin-text">{sek(bal.pendingOre)}</div>
+        </div>
+        {bal.reservedOre > 0 && (
+          <div>
+            <div className="text-[12px] text-admin-text-muted">Reserverat</div>
+            <div className="tabular-nums text-admin-text">{sek(bal.reservedOre)}</div>
+          </div>
+        )}
+      </div>
+      <Button variant="plain" onClick={load}>Uppdatera saldo</Button>
+
+      {isPlatform && <PayoutDelayEditor shopId={shopId} current={bal.payoutDelayDays} onSaved={load} />}
+    </div>
+  );
+};
+
+// Platform-only: hold a SPECIFIC seller's payouts longer (targeted risk control,
+// not a blanket hold). 'minimum' resets to the account-country floor.
+const PayoutDelayEditor = ({ shopId, current, onSaved }) => {
+  const [days, setDays] = useState(typeof current === 'number' ? String(current) : '');
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  const save = async (value) => {
+    setMsg('');
+    try {
+      setSaving(true);
+      await httpsCallable(functions, 'setConnectPayoutDelay')({ shopId, delayDays: value });
+      setMsg('Sparat.');
+      onSaved?.();
+    } catch (e) {
+      setMsg(e.message || 'Kunde inte spara.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 border-t border-admin-border-soft pt-3">
+      <label className="block text-[12px] font-semibold text-admin-text-muted mb-1">
+        Utbetalningsfördröjning (dagar) — riskkontroll för denna säljare
+      </label>
+      <div className="flex items-end gap-3">
+        <input
+          type="number" min="0" max="365" step="1" value={days}
+          onChange={(e) => setDays(e.target.value)}
+          placeholder="t.ex. 7"
+          className="w-28 rounded-md border border-admin-border bg-admin-surface px-3 py-1.5 text-[13px] text-admin-text"
+        />
+        <Button variant="primary" disabled={saving} onClick={() => {
+          const n = parseInt(days, 10);
+          if (!Number.isInteger(n) || n < 0 || n > 365) { setMsg('Ange 0–365 dagar.'); return; }
+          save(n);
+        }}>
+          {saving ? 'Sparar…' : 'Sätt fördröjning'}
+        </Button>
+        <Button variant="plain" disabled={saving} onClick={() => save('minimum')}>
+          Återställ till minimum
+        </Button>
+        {msg && <span className="text-[12px] text-admin-text-muted">{msg}</span>}
+      </div>
+      {typeof current !== 'undefined' && current !== null && (
+        <p className="mt-1 text-[12px] text-admin-text-muted">Nuvarande: {current === 'minimum' ? 'minimum' : `${current} dagar`}</p>
+      )}
+    </div>
   );
 };
 

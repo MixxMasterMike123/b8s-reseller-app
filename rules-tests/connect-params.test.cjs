@@ -12,7 +12,7 @@
  */
 const path = require('path');
 const LIB = path.join(__dirname, '..', 'functions', 'lib', 'payment');
-const { buildConnectChargeParams, buildRefundParams } = require(path.join(LIB, 'connectParams'));
+const { buildConnectChargeParams, buildRefundParams, summarizeConnectBalance } = require(path.join(LIB, 'connectParams'));
 
 let pass = 0, fail = 0;
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -138,6 +138,51 @@ console.log('\n=== Refund: platform-fee-on-refund config flag (Slice C / decisio
   const p = buildRefundParams(order, 40, false);
   ok(p.amount === 4000, 'partial fee-retain: amount = 4000 öre');
   ok(p.reverse_transfer === true && p.refund_application_fee === false, 'partial fee-retain: reverses principal, keeps fee');
+}
+
+console.log('\n=== Connected-account balance summary (Slice B / payout risk) ===');
+
+// Positive balance → not negative; sums the matching-currency entries.
+{
+  const balance = {
+    available: [{ amount: 12500, currency: 'sek' }, { amount: 9999, currency: 'eur' }],
+    pending: [{ amount: 3000, currency: 'sek' }],
+  };
+  const s = summarizeConnectBalance(balance, 'sek');
+  ok(s.availableOre === 12500, 'available sums only the SEK entry (12500)');
+  ok(s.pendingOre === 3000, 'pending sums the SEK entry (3000)');
+  ok(s.negative === false, 'positive available → not negative');
+  ok(s.currency === 'sek', 'currency echoed lowercase');
+}
+
+// Negative available → flagged negative (the payout-risk signal).
+{
+  const balance = { available: [{ amount: -4200, currency: 'sek' }], pending: [] };
+  const s = summarizeConnectBalance(balance, 'SEK');
+  ok(s.availableOre === -4200, 'negative available preserved');
+  ok(s.negative === true, 'negative available → negative flag true');
+}
+
+// connect_reserved surfaces as reservedOre.
+{
+  const balance = { available: [{ amount: 0, currency: 'sek' }], pending: [], connect_reserved: [{ amount: 5000, currency: 'sek' }] };
+  const s = summarizeConnectBalance(balance, 'sek');
+  ok(s.reservedOre === 5000, 'connect_reserved summed into reservedOre');
+}
+
+// Missing/empty arrays → zeros, never throws.
+{
+  const s = summarizeConnectBalance({}, 'sek');
+  ok(s.availableOre === 0 && s.pendingOre === 0 && s.reservedOre === 0 && s.negative === false, 'empty balance → all zero, not negative');
+  const s2 = summarizeConnectBalance(null, 'sek');
+  ok(s2.availableOre === 0 && s2.negative === false, 'null balance → safe zeros (no throw)');
+}
+
+// Multiple SEK entries (different source_types) all sum.
+{
+  const balance = { available: [{ amount: 1000, currency: 'sek' }, { amount: 500, currency: 'sek' }], pending: [] };
+  const s = summarizeConnectBalance(balance, 'sek');
+  ok(s.availableOre === 1500, 'multiple same-currency available entries sum (1500)');
 }
 
 console.log(`\n=== RESULT: ${pass} passed, ${fail} failed ===`);

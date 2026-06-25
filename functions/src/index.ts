@@ -101,7 +101,9 @@ import {
   createConnectAccountLink,
   refreshConnectStatus,
   createConnectLoginLink,
-  setShopCommission
+  setShopCommission,
+  getConnectBalance,
+  setConnectPayoutDelay
 } from './payment/connectOnboarding';
 import { refundOrder } from './payment/connectRefund';
 
@@ -155,6 +157,8 @@ export {
   refreshConnectStatus,
   createConnectLoginLink,
   setShopCommission,
+  getConnectBalance,
+  setConnectPayoutDelay,
   refundOrder
 };
 

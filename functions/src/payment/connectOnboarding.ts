@@ -25,6 +25,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '../config/database';
 import { appUrls } from '../config/app-urls';
 import { requireAdminOfShop, requirePlatform } from '../email-orchestrator/functions/authGuard';
+import { summarizeConnectBalance } from './connectParams';
 
 const COMMON = {
   region: 'us-central1' as const,
@@ -216,6 +217,76 @@ export const setShopCommission = onCall<SetCommissionRequest>(
     return { shopId, commissionBps: bps };
   }
 );
+
+// ── getConnectBalance ───────────────────────────────────────────────────────
+// Read the connected account's Stripe balance (available/pending/reserved) +
+// the negative-balance flag = the payout-risk signal. A shop admin may read
+// THEIR OWN shop's balance; platform may read any (requireAdminOfShop). The
+// summary math is the pure, unit-tested summarizeConnectBalance.
+export const getConnectBalance = onCall<ShopIdRequest>(COMMON, async (request) => {
+  const { data } = await loadShopForAdmin(request.data?.shopId, request.auth?.uid);
+  const pay = data.payments || {};
+  if (!pay.stripeAccountId) {
+    return { hasAccount: false };
+  }
+  const stripe = getStripe();
+  // Balance OF THE CONNECTED ACCOUNT — addressed via the stripeAccount option.
+  const balance = await stripe.balance.retrieve({ stripeAccount: pay.stripeAccountId });
+  // Report in the shop's currency. All Express accounts are created
+  // country:'SE' default_currency:'sek', so this matches the account's balance
+  // currency today; if multi-currency accounts arrive, summarize per currency.
+  const currency = (data.storeIdentity?.currency || 'sek').toLowerCase();
+  const summary = summarizeConnectBalance(balance, currency);
+  // Surface the stored delay as-is: an integer, the string 'minimum', or null
+  // when never set — so the admin UI can round-trip the 'minimum' state.
+  const payoutDelayDays =
+    Number.isInteger(pay.payoutDelayDays) || pay.payoutDelayDays === 'minimum'
+      ? pay.payoutDelayDays
+      : null;
+  return {
+    hasAccount: true,
+    payoutDelayDays,
+    ...summary,
+  };
+});
+
+// ── setConnectPayoutDelay ───────────────────────────────────────────────────
+// PLATFORM-ONLY: apply a payout delay to a SPECIFIC connected account (e.g. a
+// new/high-risk seller) so funds are held longer before auto-payout — a
+// TARGETED risk control, NOT a blanket hold of all sellers. delayDays is an
+// integer (Stripe minimum for the account country applies as the floor) or the
+// string 'minimum' to reset to the account's lowest allowed delay.
+interface SetPayoutDelayRequest { shopId: string; delayDays: number | 'minimum' }
+
+export const setConnectPayoutDelay = onCall<SetPayoutDelayRequest>(COMMON, async (request) => {
+  await requirePlatform(request.auth?.uid);
+  const shopId = (request.data?.shopId || '').trim();
+  const delayDays = request.data?.delayDays;
+  if (!shopId) throw new HttpsError('invalid-argument', 'shopId is required');
+  const isMinimum = delayDays === 'minimum';
+  const isValidNumber = Number.isInteger(delayDays) && (delayDays as number) >= 0 && (delayDays as number) <= 365;
+  if (!isMinimum && !isValidNumber) {
+    throw new HttpsError('invalid-argument', "delayDays must be an integer 0..365 or 'minimum'");
+  }
+  const snap = await db.collection('shops').doc(shopId).get();
+  if (!snap.exists) throw new HttpsError('not-found', `Shop "${shopId}" does not exist`);
+  const pay = (snap.data() as any)?.payments || {};
+  if (!pay.stripeAccountId) {
+    throw new HttpsError('failed-precondition', 'No connected account to configure yet');
+  }
+  const stripe = getStripe();
+  // Set the per-account payout schedule delay. interval stays the account
+  // default (daily); we only adjust the hold window.
+  await stripe.accounts.update(pay.stripeAccountId, {
+    settings: { payouts: { schedule: { delay_days: delayDays as any } } },
+  });
+  // Persist for display (the source of truth is Stripe; this mirrors it).
+  await db.collection('shops').doc(shopId).update({
+    'payments.payoutDelayDays': isMinimum ? 'minimum' : delayDays,
+    'payments.payoutDelayUpdatedAt': FieldValue.serverTimestamp(),
+  });
+  return { shopId, delayDays };
+});
 
 // Exported for reuse by the stripeWebhook account.updated branch (Slice 2).
 export { deriveStatus, statusPatch };

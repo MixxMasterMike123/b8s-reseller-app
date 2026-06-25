@@ -187,3 +187,48 @@ export function buildDisputeReTransferParams(order: any): DisputeReTransfer | nu
     },
   };
 }
+
+// ── Connected-account balance summary (Slice B) ─────────────────────────────
+//
+// Reduce a Stripe.Balance (available/pending/connect_reserved arrays, one entry
+// per currency) to the figures the admin UI shows for ONE currency, plus a
+// negative-balance flag. Pure so it's unit-testable without Stripe. A negative
+// available balance on a connected account is the payout-risk signal: SE/EU
+// accounts do NOT auto-debit the seller's bank, so it can sit negative until
+// recovered — the platform must SEE it.
+
+export interface ConnectBalanceSummary {
+  currency: string;
+  availableOre: number;
+  pendingOre: number;
+  reservedOre: number;
+  negative: boolean;
+}
+
+function sumForCurrency(arr: any[] | undefined, currency: string): number {
+  if (!Array.isArray(arr)) return 0;
+  return arr
+    .filter((e) => (e?.currency || '').toLowerCase() === currency)
+    .reduce((acc, e) => acc + (Number.isFinite(e?.amount) ? e.amount : 0), 0);
+}
+
+/**
+ * @param balance   a Stripe.Balance (or compatible) object
+ * @param currency  ISO code to report (default 'sek')
+ */
+export function summarizeConnectBalance(balance: any, currency: string = 'sek'): ConnectBalanceSummary {
+  const cur = (currency || 'sek').toLowerCase();
+  const availableOre = sumForCurrency(balance?.available, cur);
+  const pendingOre = sumForCurrency(balance?.pending, cur);
+  // connect_reserved holds funds withheld to cover negative balances on
+  // connected accounts; it's another risk signal.
+  const reservedOre = sumForCurrency(balance?.connect_reserved, cur);
+  return {
+    currency: cur,
+    availableOre,
+    pendingOre,
+    reservedOre,
+    // Negative when the spendable balance is below zero (the seller owes).
+    negative: availableOre < 0,
+  };
+}

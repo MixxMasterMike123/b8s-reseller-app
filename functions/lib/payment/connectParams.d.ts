@@ -67,3 +67,15 @@ export interface DisputeReTransfer {
  *               connect.disputeReversedAmount in öre)
  */
 export declare function buildDisputeReTransferParams(order: any): DisputeReTransfer | null;
+export interface ConnectBalanceSummary {
+    currency: string;
+    availableOre: number;
+    pendingOre: number;
+    reservedOre: number;
+    negative: boolean;
+}
+/**
+ * @param balance   a Stripe.Balance (or compatible) object
+ * @param currency  ISO code to report (default 'sek')
+ */
+export declare function summarizeConnectBalance(balance: any, currency?: string): ConnectBalanceSummary;

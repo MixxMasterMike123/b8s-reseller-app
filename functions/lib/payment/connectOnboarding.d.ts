@@ -13,4 +13,10 @@ interface SetCommissionRequest {
     commissionBps: number;
 }
 export declare const setShopCommission: import("firebase-functions/v2/https").CallableFunction<SetCommissionRequest, any, unknown>;
+export declare const getConnectBalance: import("firebase-functions/v2/https").CallableFunction<ShopIdRequest, any, unknown>;
+interface SetPayoutDelayRequest {
+    shopId: string;
+    delayDays: number | 'minimum';
+}
+export declare const setConnectPayoutDelay: import("firebase-functions/v2/https").CallableFunction<SetPayoutDelayRequest, any, unknown>;
 export { deriveStatus, statusPatch };

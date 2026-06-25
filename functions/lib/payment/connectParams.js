@@ -10,7 +10,7 @@
  * transfer reversal). Fee arithmetic lives in connectFee.ts.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildDisputeReTransferParams = exports.buildDisputeReversalParams = exports.buildRefundParams = exports.buildConnectChargeParams = void 0;
+exports.summarizeConnectBalance = exports.buildDisputeReTransferParams = exports.buildDisputeReversalParams = exports.buildRefundParams = exports.buildConnectChargeParams = void 0;
 const connectFee_1 = require("./connectFee");
 /**
  * Decide the destination-charge params for a checkout. A shop is "Connect-
@@ -144,4 +144,32 @@ function buildDisputeReTransferParams(order) {
     };
 }
 exports.buildDisputeReTransferParams = buildDisputeReTransferParams;
+function sumForCurrency(arr, currency) {
+    if (!Array.isArray(arr))
+        return 0;
+    return arr
+        .filter((e) => (e?.currency || '').toLowerCase() === currency)
+        .reduce((acc, e) => acc + (Number.isFinite(e?.amount) ? e.amount : 0), 0);
+}
+/**
+ * @param balance   a Stripe.Balance (or compatible) object
+ * @param currency  ISO code to report (default 'sek')
+ */
+function summarizeConnectBalance(balance, currency = 'sek') {
+    const cur = (currency || 'sek').toLowerCase();
+    const availableOre = sumForCurrency(balance?.available, cur);
+    const pendingOre = sumForCurrency(balance?.pending, cur);
+    // connect_reserved holds funds withheld to cover negative balances on
+    // connected accounts; it's another risk signal.
+    const reservedOre = sumForCurrency(balance?.connect_reserved, cur);
+    return {
+        currency: cur,
+        availableOre,
+        pendingOre,
+        reservedOre,
+        // Negative when the spendable balance is below zero (the seller owes).
+        negative: availableOre < 0,
+    };
+}
+exports.summarizeConnectBalance = summarizeConnectBalance;
 //# sourceMappingURL=connectParams.js.map
