@@ -4,7 +4,8 @@
 // audited-impersonation slice P4.3). Platform-only. (docs/PLATFORM_ARCHITECTURE.md)
 import React, { useState, useEffect, useCallback } from 'react';
 import { collection, getDocs, doc, updateDoc, query, where, getCountFromServer } from 'firebase/firestore';
-import { db } from '../../firebase/config';
+import { httpsCallable } from 'firebase/functions';
+import { db, functions } from '../../firebase/config';
 import { APP_URLS } from '../../config/urls';
 import PlatformLayout from '../../components/platform/PlatformLayout';
 import ProvisionShopModal from '../../components/platform/ProvisionShopModal';
@@ -144,6 +145,7 @@ const PlatformShops = () => {
                   <th className="px-5 py-3">Butik</th>
                   <th className="px-5 py-3">Status</th>
                   <th className="px-5 py-3">Betalningar</th>
+                  <th className="px-5 py-3">Avgift</th>
                   <th className="px-5 py-3 text-right">Produkter</th>
                   <th className="px-5 py-3 text-right">Ordrar</th>
                   <th className="px-5 py-3 text-right">Kunder</th>
@@ -185,6 +187,10 @@ const PlatformShops = () => {
                             )}
                           </div>
                         ); })()}
+                      </td>
+                      <td className="px-5 py-4">
+                        <CommissionCell shop={shop} onSaved={(bps) => setShops((prev) => prev.map((s) =>
+                          s.id === shop.id ? { ...s, payments: { ...(s.payments || {}), commissionBps: bps } } : s))} />
                       </td>
                       <td className="px-5 py-4 text-right tabular-nums text-gray-300">{shop.counts?.products ?? '–'}</td>
                       <td className="px-5 py-4 text-right tabular-nums text-gray-300">{shop.counts?.orders ?? '–'}</td>
@@ -271,6 +277,64 @@ const PlatformShops = () => {
         />
       )}
     </PlatformLayout>
+  );
+};
+
+// Per-shop platform commission — PLATFORM-ONLY (negotiate a lower fee for a big
+// seller). Shows the effective fee or "Standard" (platform default applies when
+// unset), with an inline editor. Percentage in/out; stored as integer basis
+// points via setShopCommission (requirePlatform server-side; firestore.rules
+// also blocks a direct payments-map write). The shop owner never sees this.
+const CommissionCell = ({ shop, onSaved }) => {
+  const currentBps = Number.isInteger(shop.payments?.commissionBps) ? shop.payments.commissionBps : null;
+  const [editing, setEditing] = useState(false);
+  const [pct, setPct] = useState(currentBps != null ? (currentBps / 100).toString() : '');
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    const n = parseFloat((pct || '').replace(',', '.'));
+    if (!Number.isFinite(n) || n < 0 || n > 100) { toast.error('Ange 0–100 %.'); return; }
+    const bps = Math.round(n * 100);
+    try {
+      setSaving(true);
+      await httpsCallable(functions, 'setShopCommission')({ shopId: shop.id, commissionBps: bps });
+      toast.success(`Avgift sparad: ${(bps / 100).toFixed(2)} %`);
+      onSaved?.(bps);
+      setEditing(false);
+    } catch (e) {
+      toast.error(e.message || 'Kunde inte spara avgift.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!editing) {
+    return (
+      <button
+        onClick={() => { setPct(currentBps != null ? (currentBps / 100).toString() : ''); setEditing(true); }}
+        title="Sätt plattformsavgift för denna butik"
+        className="inline-flex items-center gap-1.5 rounded-lg bg-white/5 px-2.5 py-1 text-xs font-medium text-gray-200 hover:bg-indigo-500/15 hover:text-indigo-300"
+      >
+        {currentBps != null ? `${(currentBps / 100).toFixed(2)} %` : <span className="text-gray-500">Standard</span>}
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <input
+        type="number" min="0" max="100" step="0.01" value={pct} autoFocus
+        onChange={(e) => setPct(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false); }}
+        placeholder="5"
+        className="w-16 rounded-lg border border-white/10 bg-gray-950 px-2 py-1 text-xs text-gray-100 focus:border-indigo-500 focus:outline-none"
+      />
+      <span className="text-xs text-gray-500">%</span>
+      <button disabled={saving} onClick={save} className="rounded-lg bg-indigo-600 px-2 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-50">
+        {saving ? '…' : 'Spara'}
+      </button>
+      <button onClick={() => setEditing(false)} className="rounded-lg bg-white/5 px-2 py-1 text-xs text-gray-400 hover:bg-white/10">✕</button>
+    </div>
   );
 };
 

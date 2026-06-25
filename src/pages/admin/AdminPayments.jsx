@@ -112,7 +112,6 @@ const AdminPayments = () => {
   const hasAccount = !!pay?.stripeAccountId;
   const chargesEnabled = pay?.chargesEnabled === true;
   const requirementsDue = Array.isArray(pay?.requirementsDue) ? pay.requirementsDue : [];
-  const commissionBps = Number.isInteger(pay?.commissionBps) ? pay.commissionBps : null;
 
   return (
     <AppLayout>
@@ -187,20 +186,9 @@ const AdminPayments = () => {
           )}
         </CardSection>
 
-        <CardSection title="Avgift">
-          <p className="text-[13px] text-admin-text-muted">
-            {commissionBps != null
-              ? `Plattformsavgift: ${(commissionBps / 100).toFixed(2)} % per försäljning.`
-              : 'Plattformsavgift: plattformens standard tillämpas (sätt en egen nedan).'}
-          </p>
-          {isPlatform ? (
-            <CommissionEditor shopId={shopId} currentBps={commissionBps} />
-          ) : (
-            <p className="mt-2 text-[12px] text-admin-text-muted">
-              Avgiften sätts av plattformen.
-            </p>
-          )}
-        </CardSection>
+        {/* Platform commission is a PLATFORM decision — set per-shop in the
+            platform console (PlatformShops), never shown/editable here on the
+            shop owner's page. (setShopCommission is requirePlatform server-side.) */}
 
         {/* Balance & payout risk — only meaningful once the account exists. */}
         {hasAccount && (
@@ -326,47 +314,7 @@ const PayoutDelayEditor = ({ shopId, current, onSaved }) => {
   );
 };
 
-// Platform-only: edit a shop's per-sale commission. Input is a percentage for
-// humans; stored as integer basis points (server validates 0..10000). The
-// firestore.rules payments-map guard means this MUST go through the callable.
-const CommissionEditor = ({ shopId, currentBps }) => {
-  const [pct, setPct] = useState(currentBps != null ? (currentBps / 100).toString() : '');
-  const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState('');
-
-  const save = async () => {
-    setMsg('');
-    const n = parseFloat((pct || '').replace(',', '.'));
-    if (!Number.isFinite(n) || n < 0 || n > 100) { setMsg('Ange 0–100 %.'); return; }
-    const bps = Math.round(n * 100);
-    try {
-      setSaving(true);
-      await httpsCallable(functions, 'setShopCommission')({ shopId, commissionBps: bps });
-      setMsg(`Sparat: ${(bps / 100).toFixed(2)} %`);
-    } catch (e) {
-      setMsg(e.message || 'Kunde inte spara.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="mt-3 flex items-end gap-3">
-      <div>
-        <label className="block text-[12px] font-semibold text-admin-text-muted mb-1">Plattformsavgift (%)</label>
-        <input
-          type="number" min="0" max="100" step="0.01" value={pct}
-          onChange={(e) => setPct(e.target.value)}
-          placeholder="t.ex. 5"
-          className="w-28 rounded-md border border-admin-border bg-admin-surface px-3 py-1.5 text-[13px] text-admin-text"
-        />
-      </div>
-      <Button variant="primary" disabled={saving} onClick={save}>
-        {saving ? 'Sparar…' : 'Spara avgift'}
-      </Button>
-      {msg && <span className="text-[12px] text-admin-text-muted">{msg}</span>}
-    </div>
-  );
-};
+// (CommissionEditor moved to the platform console — PlatformShops. The platform
+// fee is a platform decision and is never shown/set on the shop owner's page.)
 
 export default AdminPayments;
