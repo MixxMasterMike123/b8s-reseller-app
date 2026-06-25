@@ -136,12 +136,22 @@ exports.createB2BOrder = (0, https_1.onCall)({ region: 'us-central1', memory: '2
             phone: cust.phone || '',
             preferredLang: cust.preferredLang || 'sv-SE',
         },
-        shippingInfo: {
-            address: cust.address || '',
-            postalCode: cust.postalCode || '',
-            city: cust.city || '',
-            country: cust.country || 'Sverige',
-        },
+        // Ship-to: a distinct delivery address when the customer set one
+        // (sameAsCompany === false AND a delivery address is present), else the
+        // company/billing address. Wholesale buyers often bill HQ, ship to a store.
+        shippingInfo: (cust.sameAsCompany === false && (cust.deliveryAddress || '').trim())
+            ? {
+                address: cust.deliveryAddress || '',
+                postalCode: cust.deliveryPostalCode || '',
+                city: cust.deliveryCity || '',
+                country: cust.country || 'Sverige',
+            }
+            : {
+                address: cust.address || '',
+                postalCode: cust.postalCode || '',
+                city: cust.city || '',
+                country: cust.country || 'Sverige',
+            },
         items: orderItems,
         subtotal,
         shipping: 0,

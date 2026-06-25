@@ -67,6 +67,7 @@ import { reverseAffiliateCommissionOnCancel } from './order-processing/commissio
 // B2B Faktura ordering (Phase 4 v1): server-side order creation for the B2B
 // wholesale portal (orders are client-uncreatable; totals computed from b2bPrice).
 import { createB2BOrder } from './order-processing/createB2BOrder';
+import { cancelB2BOrder } from './order-processing/cancelB2BOrder';
 // Tenant isolation: keep Auth custom claims (role/shopId/platform) in sync with
 // the users doc on every write + revoke tokens on privilege reduction.
 import { syncUserClaimsOnWrite } from './auth/syncUserClaimsOnWrite';
@@ -120,7 +121,8 @@ export { logAffiliateClickV2, validateDiscountCode };
 export {
   processB2COrderCompletionHttp as processB2COrderCompletionHttpV2,
   reverseAffiliateCommissionOnCancel,
-  createB2BOrder
+  createB2BOrder,
+  cancelB2BOrder
 };
 
 // Tenant-isolation: claim-resync trigger on users/{uid}.

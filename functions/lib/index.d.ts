@@ -5,6 +5,7 @@ import { validateDiscountCode } from './affiliate/callable/validateDiscountCode'
 import { processB2COrderCompletionHttp } from './order-processing/functions';
 import { reverseAffiliateCommissionOnCancel } from './order-processing/commissionReversal';
 import { createB2BOrder } from './order-processing/createB2BOrder';
+import { cancelB2BOrder } from './order-processing/cancelB2BOrder';
 import { syncUserClaimsOnWrite } from './auth/syncUserClaimsOnWrite';
 import { getGeoData } from './geo/functions';
 import { deleteCustomerAccount, deleteB2CCustomerAccount, toggleCustomerActiveStatus, createAdminUser, syncAdminClaims } from './customer-admin/functions';
@@ -14,7 +15,7 @@ import { createConnectAccount, createConnectAccountLink, refreshConnectStatus, c
 import { refundOrder } from './payment/connectRefund';
 import { scrapeWebsiteMeta } from './website-scraper/functions';
 export { logAffiliateClickV2, validateDiscountCode };
-export { processB2COrderCompletionHttp as processB2COrderCompletionHttpV2, reverseAffiliateCommissionOnCancel, createB2BOrder };
+export { processB2COrderCompletionHttp as processB2COrderCompletionHttpV2, reverseAffiliateCommissionOnCancel, createB2BOrder, cancelB2BOrder };
 export { syncUserClaimsOnWrite };
 export { getGeoData as getGeoDataV2 };
 export { deleteCustomerAccount as deleteCustomerAccountV2, deleteB2CCustomerAccount as deleteB2CCustomerAccountV2, toggleCustomerActiveStatus as toggleCustomerActiveStatusV2, createAdminUser as createAdminUserV2, syncAdminClaims };

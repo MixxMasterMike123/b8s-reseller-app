@@ -70,6 +70,7 @@ import B2BDashboard from './pages/shop/B2BDashboard';
 import B2BCatalog from './pages/shop/B2BCatalog';
 import B2BProfile from './pages/shop/B2BProfile';
 import B2BOrders from './pages/shop/B2BOrders';
+import B2BOrderDetail from './pages/shop/B2BOrderDetail';
 import B2BPortalLayout from './components/shop/B2BPortalLayout';
 import { B2BCustomerProvider } from './contexts/B2BCustomerContext';
 import ForgotPassword from './pages/shop/ForgotPassword';
@@ -286,6 +287,7 @@ function App() {
               <Route path="/:shopId/b2b" element={<ShopGate><AddonGate feature="b2b" redirectTo="/login"><B2BCustomerProvider><B2BPortalLayout><B2BDashboard /></B2BPortalLayout></B2BCustomerProvider></AddonGate></ShopGate>} />
               <Route path="/:shopId/b2b/products" element={<ShopGate><AddonGate feature="b2b" redirectTo="/login"><B2BCustomerProvider><B2BPortalLayout><B2BCatalog /></B2BPortalLayout></B2BCustomerProvider></AddonGate></ShopGate>} />
               <Route path="/:shopId/b2b/orders" element={<ShopGate><AddonGate feature="b2b" redirectTo="/login"><B2BCustomerProvider><B2BPortalLayout><B2BOrders /></B2BPortalLayout></B2BCustomerProvider></AddonGate></ShopGate>} />
+              <Route path="/:shopId/b2b/orders/:orderId" element={<ShopGate><AddonGate feature="b2b" redirectTo="/login"><B2BCustomerProvider><B2BPortalLayout><B2BOrderDetail /></B2BPortalLayout></B2BCustomerProvider></AddonGate></ShopGate>} />
               <Route path="/:shopId/b2b/profile" element={<ShopGate><AddonGate feature="b2b" redirectTo="/login"><B2BCustomerProvider><B2BPortalLayout><B2BProfile /></B2BPortalLayout></B2BCustomerProvider></AddonGate></ShopGate>} />
 
               {/* Category browse pages (the primary taxonomy). Specific path so

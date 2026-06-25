@@ -4,8 +4,10 @@
 // (it get()s the b2bCustomers doc and checks firebaseAuthUid). Uses the
 // orders [source, b2bCustomerId, createdAt] composite index.
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { useShopId } from '../../contexts/ShopContext';
 import { useB2BCustomer } from '../../contexts/B2BCustomerContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { format } from 'date-fns';
@@ -34,6 +36,8 @@ const STATUS_LABEL = {
 export default function B2BOrders() {
   const { profile } = useB2BCustomer();
   const { t } = useTranslation();
+  const shopId = useShopId();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -93,8 +97,12 @@ export default function B2BOrders() {
               {orders.map((o) => {
                 const d = orderDate(o.createdAt);
                 return (
-                  <tr key={o.id}>
-                    <td className="px-4 py-3 font-medium text-gray-900">{o.orderNumber || o.id}</td>
+                  <tr
+                    key={o.id}
+                    onClick={() => navigate(`/${shopId}/b2b/orders/${o.id}`)}
+                    className="cursor-pointer hover:bg-gray-50"
+                  >
+                    <td className="px-4 py-3 font-medium text-blue-700 hover:underline">{o.orderNumber || o.id}</td>
                     <td className="px-4 py-3 text-gray-600">{d ? format(d, 'dd MMM yyyy', { locale: sv }) : '—'}</td>
                     <td className="px-4 py-3 text-gray-600">{STATUS_LABEL[o.status] || o.status || '—'}</td>
                     <td className="px-4 py-3 text-right tabular-nums text-gray-900">{sek(o.total)}</td>

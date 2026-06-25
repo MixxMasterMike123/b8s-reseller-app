@@ -9,6 +9,7 @@ import { useB2BCustomer } from '../../contexts/B2BCustomerContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import toast from 'react-hot-toast';
 
+// Company (billing) fields.
 const FIELDS = [
   ['companyName', 'Företagsnamn'],
   ['orgNumber', 'Organisationsnummer'],
@@ -19,24 +20,44 @@ const FIELDS = [
   ['postalCode', 'Postnummer'],
   ['city', 'Ort'],
 ];
+// Separate delivery (shipping) fields — wholesale buyers often bill HQ but ship
+// to a store. Editable only when "same as company" is OFF.
+const DELIVERY_FIELDS = [
+  ['deliveryAddress', 'Leveransadress'],
+  ['deliveryPostalCode', 'Postnummer'],
+  ['deliveryCity', 'Ort'],
+];
 
 export default function B2BProfile() {
   const { profile, reload } = useB2BCustomer();
   const { t } = useTranslation();
-  const [form, setForm] = useState(() =>
-    FIELDS.reduce((acc, [k]) => ({ ...acc, [k]: profile?.[k] || '' }), {})
-  );
+  const [form, setForm] = useState(() => ({
+    ...FIELDS.reduce((acc, [k]) => ({ ...acc, [k]: profile?.[k] || '' }), {}),
+    ...DELIVERY_FIELDS.reduce((acc, [k]) => ({ ...acc, [k]: profile?.[k] || '' }), {}),
+    // Default-ON: a profile without the flag (incl. all existing ones) ships to
+    // the company address, exactly as before this feature.
+    sameAsCompany: profile?.sameAsCompany !== false,
+  }));
   const [saving, setSaving] = useState(false);
 
-  const onChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  const onChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm((f) => ({ ...f, [name]: type === 'checkbox' ? checked : value }));
+  };
 
   const onSave = async (e) => {
     e.preventDefault();
     if (!profile?.id) return;
     setSaving(true);
     try {
-      // Only the profile fields — never active/shopId/firebaseAuthUid.
+      // Only profile fields — never active/shopId/firebaseAuthUid.
       const patch = FIELDS.reduce((acc, [k]) => ({ ...acc, [k]: (form[k] || '').trim() }), {});
+      patch.sameAsCompany = !!form.sameAsCompany;
+      // Persist delivery fields only when a distinct delivery address is used;
+      // when "same as company" is on, clear them so stale values can't ship.
+      for (const [k] of DELIVERY_FIELDS) {
+        patch[k] = form.sameAsCompany ? '' : (form[k] || '').trim();
+      }
       patch.updatedAt = serverTimestamp();
       await updateDoc(doc(db, 'b2bCustomers', profile.id), patch);
       toast.success(t('b2b_profile_saved', 'Uppgifter sparade'));
@@ -71,6 +92,25 @@ export default function B2BProfile() {
             </div>
           ))}
         </div>
+
+        {/* Delivery address — bill HQ, ship elsewhere. Default = same as company. */}
+        <div className="mt-6 border-t border-gray-100 pt-4">
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input type="checkbox" name="sameAsCompany" checked={form.sameAsCompany} onChange={onChange} />
+            {t('b2b_profile_same_delivery', 'Leveransadress är samma som företagsadress')}
+          </label>
+          {!form.sameAsCompany && (
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {DELIVERY_FIELDS.map(([key, label]) => (
+                <div key={key} className={key === 'deliveryAddress' ? 'sm:col-span-2' : ''}>
+                  <label className="block text-sm font-medium text-gray-700">{t(`b2b_profile_${key}`, label)}</label>
+                  <input name={key} value={form[key]} onChange={onChange} className={inputCls} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="mt-6 flex justify-end">
           <button
             type="submit"
