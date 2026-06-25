@@ -1,9 +1,28 @@
 # Stripe Connect — Compliance & Financial-Exposure Remediation Plan
 
-**Branch (new):** `feat/stripe-compliance` (off `salvage/cleanup-and-security`)
-**Status:** PLAN — awaiting Mikael's go before any code.
+**Branch:** `feat/stripe-compliance` (off `salvage/cleanup-and-security`)
+**Status:** ✅ ALL SLICES BUILT + COMMITTED + PUSHED. ⛔ NOT DEPLOYED (awaiting explicit go; Slice E firestore.rules = hard STOP-and-surface).
 **Scope:** turn the Stripe-review gaps into a buildable plan; implement A–F; scope (don't build) decisions 1 & 2.
-**Ground truth:** verified against current HEAD (46d16b4), every cited file read this session.
+**Ground truth:** verified against HEAD at start (46d16b4), every cited file read; adversarial-verified per slice; isolation gate green (96 firestore-isolation assertions).
+
+## ✅ What shipped (commits)
+- **Slice C** (`643c0bb`) — platform-fee-on-refund flag + shared platformConfig reader (= decision 2).
+- **Slice A** (`9339cd1`) — dispute/chargeback recovery (reverse-on-created + dispute.closed + idempotency keys + negative-balance alert). **Money-correctness fix: reversal uses refund_application_fee=false.**
+- **Slice B** (`0ebfc8e`) — per-account payout-delay (platform-only) + connected-account balance surface.
+- **Slice D** (`3e3ef39`) — POD/right-of-withdrawal checkout gate (server-authoritative) + size guide + order proof.
+- **Slice E/F** (`1dfa834`) — DAC7 platform-owned seller data + pull-from-Stripe + aggregation + export + seller GDPR rights (view/rectify-contact/request-identity-correction).
+
+## ⛔ Deploy gating (needs explicit go)
+- **hosting + functions:** Slices A/B/D/E/F all add functions + client. Deploy `firebase deploy --only functions,hosting`.
+- **firestore.rules (STOP-and-surface):** Slice E adds `dac7Sellers` + `dac7CorrectionRequests` (PII isolation). Deploy `--only firestore:rules` ONLY with explicit go; gate is green.
+- **firestore.indexes:** Slice E aggregation queries `orders where shopId==X` (existing index) — verify no new composite needed at deploy.
+- **No secrets touched.** `settings/platform` flags (`refundApplicationFee`, `reverseDisputeOnCreated`) default to current behaviour; set them only when you decide.
+
+## ⚠️ Open decisions flagged (don't block deploy, want your call)
+- **Affiliate commission on a chargeback** (Slice A §4c) — not reversed today; recommend yes via a dispute-lost signal.
+- **DAC7 SEK→EUR rate source** — currently a documented placeholder (0.087); wire a live rate before filing.
+- **Stripe DAC7 early access** — request it if you want Stripe's XML generation on top of our export.
+- **Buyer-type branch** (Slice D) — corporate=lighter withdrawal text is a documented seam (parked POD plan).
 
 ---
 
