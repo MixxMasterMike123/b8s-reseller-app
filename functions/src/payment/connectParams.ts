@@ -55,21 +55,34 @@ export function buildConnectChargeParams(
 
 /**
  * Decide the refund params for an order. A destination-charge order must claw
- * the principal back from the connected account AND return the platform fee;
- * a legacy order takes a plain refund.
+ * the principal back from the connected account (reverse_transfer); whether it
+ * ALSO returns the platform fee to the buyer is a platform policy
+ * (refundApplicationFee). A legacy order takes a plain refund.
  *
- * @param order        the order doc
- * @param amountSek    optional partial refund amount in SEK
+ * @param order               the order doc
+ * @param amountSek           optional partial refund amount in SEK
+ * @param refundApplicationFee  platform policy: also return the platform fee?
+ *                            Default true (current behaviour). false keeps the
+ *                            fee as a non-refundable service fee.
  */
-export function buildRefundParams(order: any, amountSek?: number): Record<string, any> {
+export function buildRefundParams(
+  order: any,
+  amountSek?: number,
+  refundApplicationFee: boolean = true
+): Record<string, any> {
   const paymentIntentId = order?.payment?.paymentIntentId;
   const params: Record<string, any> = { payment_intent: paymentIntentId };
   if (typeof amountSek === 'number' && amountSek > 0) {
     params.amount = Math.round(amountSek * 100);
   }
   if (order?.connect?.isDestinationCharge === true) {
+    // Always claw the principal back from the shop on a Connect refund —
+    // otherwise the platform eats the refund while the shop keeps the transfer.
     params.reverse_transfer = true;
-    params.refund_application_fee = true;
+    // The platform fee is returned only when policy says so. We set the key
+    // explicitly (true OR false) so the intent is unambiguous to Stripe and in
+    // the persisted reconciliation — never silently omitted.
+    params.refund_application_fee = refundApplicationFee === true;
   }
   return params;
 }

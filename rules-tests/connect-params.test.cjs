@@ -97,5 +97,48 @@ console.log('\n=== Refund params (connectRefund path) ===');
   ok(!('refund_application_fee' in p), 'legacy refund: NO refund_application_fee');
 }
 
+console.log('\n=== Refund: platform-fee-on-refund config flag (Slice C / decision 2) ===');
+
+// Default (flag omitted) = CURRENT behaviour: Connect refund returns the fee.
+{
+  const order = { payment: { paymentIntentId: 'pi_4' }, connect: { isDestinationCharge: true } };
+  const p = buildRefundParams(order, undefined /* full */);
+  ok(p.reverse_transfer === true, 'default: Connect refund still reverses the transfer');
+  ok(p.refund_application_fee === true, 'default: refund_application_fee = true (unchanged behaviour)');
+}
+
+// Flag TRUE explicitly → fee returned (same as default).
+{
+  const order = { payment: { paymentIntentId: 'pi_5' }, connect: { isDestinationCharge: true } };
+  const p = buildRefundParams(order, undefined, true);
+  ok(p.refund_application_fee === true, 'flag true: platform fee returned to buyer');
+}
+
+// Flag FALSE → platform KEEPS the fee (non-refundable service fee) but STILL
+// claws the principal back from the shop.
+{
+  const order = { payment: { paymentIntentId: 'pi_6' }, connect: { isDestinationCharge: true } };
+  const p = buildRefundParams(order, undefined, false);
+  ok(p.reverse_transfer === true, 'flag false: principal STILL clawed back from the shop (reverse_transfer)');
+  ok(p.refund_application_fee === false, 'flag false: refund_application_fee = false (platform keeps its fee)');
+}
+
+// Flag never leaks onto a LEGACY refund regardless of value.
+{
+  const order = { payment: { paymentIntentId: 'pi_7' } };
+  const pTrue = buildRefundParams(order, undefined, true);
+  const pFalse = buildRefundParams(order, undefined, false);
+  ok(!('refund_application_fee' in pTrue) && !('reverse_transfer' in pTrue), 'legacy + flag true → still plain refund');
+  ok(!('refund_application_fee' in pFalse) && !('reverse_transfer' in pFalse), 'legacy + flag false → still plain refund');
+}
+
+// Partial refund + fee-retain → amount AND reverse but no fee return.
+{
+  const order = { payment: { paymentIntentId: 'pi_8' }, connect: { isDestinationCharge: true } };
+  const p = buildRefundParams(order, 40, false);
+  ok(p.amount === 4000, 'partial fee-retain: amount = 4000 öre');
+  ok(p.reverse_transfer === true && p.refund_application_fee === false, 'partial fee-retain: reverses principal, keeps fee');
+}
+
 console.log(`\n=== RESULT: ${pass} passed, ${fail} failed ===`);
 process.exit(fail === 0 ? 0 : 1);

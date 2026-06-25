@@ -12,6 +12,7 @@ import { db } from '../config/database';
 import { DEFAULT_SHOP_ID } from '../config/tenancy';
 import { isShopFeatureEnabled } from '../config/shopFeatures';
 import { buildConnectChargeParams } from './connectParams';
+import { readPlatformConfig } from './platformConfig';
 
 /**
  * Server-side price computation. NEVER trust client-supplied amounts:
@@ -338,14 +339,14 @@ export const createPaymentIntentV2 = onRequest(
       // of record. The fee is taken off the GROSS total (documented choice).
       const pay = (shopSnap.data() as any)?.payments || {};
       // Resolve the platform-default commission (I/O) once; the pure param
-      // builder (connectParams.ts, unit-tested) decides the rest.
+      // builder (connectParams.ts, unit-tested) decides the rest. Read via the
+      // single platform-config reader (platformConfig.ts) — same source of
+      // truth as the refund/dispute policy flags. Only read when Connect is
+      // active so a legacy checkout gains no extra Firestore read.
       let platformDefaultBps = commerceConfig.defaultCommissionBps;
       if (pay.chargesEnabled === true && pay.stripeAccountId) {
-        try {
-          const ps = await db.collection('settings').doc('platform').get();
-          const v = ps.exists ? (ps.data() as any)?.defaultCommissionBps : undefined;
-          if (Number.isInteger(v)) platformDefaultBps = v;
-        } catch { /* keep env default */ }
+        const cfg = await readPlatformConfig();
+        platformDefaultBps = cfg.defaultCommissionBps;
       }
       const connectBuild = buildConnectChargeParams(pay, amountInOre, platformDefaultBps);
       const connectParams = connectBuild.params;

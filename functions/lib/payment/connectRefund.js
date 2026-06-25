@@ -28,6 +28,7 @@ const database_1 = require("../config/database");
 const app_urls_1 = require("../config/app-urls");
 const authGuard_1 = require("../email-orchestrator/functions/authGuard");
 const connectParams_1 = require("./connectParams");
+const platformConfig_1 = require("./platformConfig");
 exports.refundOrder = (0, https_1.onCall)({
     region: 'us-central1',
     memory: '256MiB',
@@ -57,9 +58,14 @@ exports.refundOrder = (0, https_1.onCall)({
         throw new https_1.HttpsError('failed-precondition', 'Stripe is not configured');
     const stripe = new stripe_1.default(key, { apiVersion: '2023-10-16' });
     const isConnect = order.connect?.isDestinationCharge === true;
+    // Platform policy: should a refund ALSO return the platform fee to the buyer?
+    // Default true (current behaviour); settings/platform.refundApplicationFee
+    // can flip it to keep the fee as a non-refundable service fee.
+    const { refundApplicationFee } = await (0, platformConfig_1.readPlatformConfig)();
     // Pure builder (connectParams.ts, unit-tested): a destination-charge order
-    // gets reverse_transfer + refund_application_fee; a legacy order is plain.
-    const params = (0, connectParams_1.buildRefundParams)(order, request.data?.amount);
+    // gets reverse_transfer (+ refund_application_fee per policy); a legacy
+    // order is plain.
+    const params = (0, connectParams_1.buildRefundParams)(order, request.data?.amount, refundApplicationFee);
     const refund = await stripe.refunds.create(params);
     // Stamp the order. Setting status 'refunded' fires the affiliate-reversal
     // trigger (commissionReversal.ts) — the affiliate ledger reverses on its own.
@@ -69,9 +75,13 @@ exports.refundOrder = (0, https_1.onCall)({
         'payment.refundId': refund.id,
         'payment.refundedAt': firestore_1.FieldValue.serverTimestamp(),
     };
-    if (isConnect)
+    if (isConnect) {
         patch['connect.transferReversed'] = true;
+        // Reconciliation: record whether the platform fee was returned on this
+        // refund (policy at the time of the refund), so the ledger is auditable.
+        patch['connect.refundApplicationFee'] = refundApplicationFee === true;
+    }
     await orderRef.update(patch);
-    return { refundId: refund.id, isConnect, amount: refund.amount };
+    return { refundId: refund.id, isConnect, amount: refund.amount, refundApplicationFee };
 });
 //# sourceMappingURL=connectRefund.js.map

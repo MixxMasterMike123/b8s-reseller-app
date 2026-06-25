@@ -26,10 +26,14 @@ export interface ConnectChargeBuild {
 export declare function buildConnectChargeParams(pay: any, amountOre: number, platformDefaultBps: number): ConnectChargeBuild;
 /**
  * Decide the refund params for an order. A destination-charge order must claw
- * the principal back from the connected account AND return the platform fee;
- * a legacy order takes a plain refund.
+ * the principal back from the connected account (reverse_transfer); whether it
+ * ALSO returns the platform fee to the buyer is a platform policy
+ * (refundApplicationFee). A legacy order takes a plain refund.
  *
- * @param order        the order doc
- * @param amountSek    optional partial refund amount in SEK
+ * @param order               the order doc
+ * @param amountSek           optional partial refund amount in SEK
+ * @param refundApplicationFee  platform policy: also return the platform fee?
+ *                            Default true (current behaviour). false keeps the
+ *                            fee as a non-refundable service fee.
  */
-export declare function buildRefundParams(order: any, amountSek?: number): Record<string, any>;
+export declare function buildRefundParams(order: any, amountSek?: number, refundApplicationFee?: boolean): Record<string, any>;

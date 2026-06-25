@@ -23,6 +23,7 @@ import { db } from '../config/database';
 import { appUrls } from '../config/app-urls';
 import { requireAdminOfShop } from '../email-orchestrator/functions/authGuard';
 import { buildRefundParams } from './connectParams';
+import { readPlatformConfig } from './platformConfig';
 
 interface RefundRequest { orderId: string; amount?: number } // amount in SEK (optional partial)
 
@@ -58,9 +59,18 @@ export const refundOrder = onCall<RefundRequest>(
     const stripe = new Stripe(key, { apiVersion: '2023-10-16' });
 
     const isConnect = order.connect?.isDestinationCharge === true;
+    // Platform policy: should a refund ALSO return the platform fee to the buyer?
+    // Default true (current behaviour); settings/platform.refundApplicationFee
+    // can flip it to keep the fee as a non-refundable service fee.
+    const { refundApplicationFee } = await readPlatformConfig();
     // Pure builder (connectParams.ts, unit-tested): a destination-charge order
-    // gets reverse_transfer + refund_application_fee; a legacy order is plain.
-    const params = buildRefundParams(order, request.data?.amount) as Stripe.RefundCreateParams;
+    // gets reverse_transfer (+ refund_application_fee per policy); a legacy
+    // order is plain.
+    const params = buildRefundParams(
+      order,
+      request.data?.amount,
+      refundApplicationFee
+    ) as Stripe.RefundCreateParams;
 
     const refund = await stripe.refunds.create(params);
 
@@ -72,9 +82,14 @@ export const refundOrder = onCall<RefundRequest>(
       'payment.refundId': refund.id,
       'payment.refundedAt': FieldValue.serverTimestamp(),
     };
-    if (isConnect) patch['connect.transferReversed'] = true;
+    if (isConnect) {
+      patch['connect.transferReversed'] = true;
+      // Reconciliation: record whether the platform fee was returned on this
+      // refund (policy at the time of the refund), so the ledger is auditable.
+      patch['connect.refundApplicationFee'] = refundApplicationFee === true;
+    }
     await orderRef.update(patch);
 
-    return { refundId: refund.id, isConnect, amount: refund.amount };
+    return { refundId: refund.id, isConnect, amount: refund.amount, refundApplicationFee };
   }
 );
