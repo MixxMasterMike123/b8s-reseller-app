@@ -7,12 +7,21 @@
 // de-minimis verdict. Skatteverket registration/filing is a separate manual
 // step; this is the data the operator files (or cross-checks against Stripe's
 // own DAC7 export). CSV download for hand-off.
+//
+// Styling matches the dark platform console (PlatformLayout / PlatformShops):
+// bg-gray-950 surface, bg-gray-900 cards, border-white/10, indigo accent.
 import React, { useState, useCallback, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db, functions } from '../../firebase/config';
 import PlatformLayout from '../../components/platform/PlatformLayout';
 import toast from 'react-hot-toast';
+
+// Shared field styles (dark console).
+const inputCls = 'rounded-lg border border-white/10 bg-gray-950 px-3 py-1.5 text-sm text-gray-100 placeholder-gray-600 focus:border-indigo-500 focus:outline-none';
+const labelCls = 'block text-xs font-medium uppercase tracking-wider text-gray-500 mb-1';
+const btnPrimary = 'rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50';
+const btnGhost = 'rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-gray-200 hover:bg-white/10 disabled:opacity-50';
 
 // Pending identity-correction requests from sellers → platform approves/rejects.
 const CorrectionRequests = () => {
@@ -35,15 +44,15 @@ const CorrectionRequests = () => {
 
   if (reqs.length === 0) return null;
   return (
-    <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
-      <h2 className="text-sm font-semibold text-amber-900 mb-2">Begärda rättelser ({reqs.length})</h2>
+    <div className="mb-6 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+      <h2 className="text-sm font-semibold text-amber-300 mb-3">Begärda rättelser ({reqs.length})</h2>
       <div className="space-y-2">
         {reqs.map((r) => (
-          <div key={r.id} className="flex items-center justify-between gap-3 rounded bg-white px-3 py-2 text-sm">
-            <span><strong>{r.shopId}</strong> · {r.field} → <span className="font-mono">{r.requestedValue}</span></span>
+          <div key={r.id} className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-gray-900 px-3 py-2 text-sm text-gray-200">
+            <span><strong className="text-white">{r.shopId}</strong> · {r.field} → <span className="font-mono text-indigo-300">{r.requestedValue}</span></span>
             <span className="flex gap-2">
-              <button disabled={busy === r.id} onClick={() => resolve(r.id, true)} className="rounded bg-green-600 px-3 py-1 text-white disabled:opacity-50">Godkänn</button>
-              <button disabled={busy === r.id} onClick={() => resolve(r.id, false)} className="rounded border border-gray-300 px-3 py-1">Avvisa</button>
+              <button disabled={busy === r.id} onClick={() => resolve(r.id, true)} className="rounded-lg bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/25 disabled:opacity-50">Godkänn</button>
+              <button disabled={busy === r.id} onClick={() => resolve(r.id, false)} className="rounded-lg bg-white/5 px-3 py-1 text-xs font-medium text-gray-300 hover:bg-red-500/15 hover:text-red-300 disabled:opacity-50">Avvisa</button>
             </span>
           </div>
         ))}
@@ -93,25 +102,25 @@ const SellerEditor = ({ shopId, shopName, onClose }) => {
   const isIndividual = profile?.sellerType === 'individual';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="w-full max-w-lg rounded-lg bg-white p-6" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900">DAC7-uppgifter — {shopName}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">×</button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div className="w-full max-w-lg rounded-xl border border-white/10 bg-gray-900 p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-lg font-bold text-white">DAC7-uppgifter — {shopName}</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-xl leading-none">×</button>
         </div>
         {loading ? <p className="text-sm text-gray-500">Laddar…</p> : (
-          <div className="space-y-3">
-            <button onClick={pull} disabled={busy === 'pull'} className="rounded border border-gray-300 px-3 py-1.5 text-sm">
+          <div className="space-y-4">
+            <button onClick={pull} disabled={busy === 'pull'} className={btnGhost}>
               {busy === 'pull' ? 'Hämtar…' : 'Hämta från Stripe Express'}
             </button>
-            <label className="block text-sm">
-              <span className="text-gray-600">Säljartyp</span>
-              <select value={profile?.sellerType || ''} onChange={(e) => set('sellerType', e.target.value)} className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5">
+            <div>
+              <label className={labelCls}>Säljartyp</label>
+              <select value={profile?.sellerType || ''} onChange={(e) => set('sellerType', e.target.value)} className={`w-full ${inputCls}`}>
                 <option value="">—</option>
                 <option value="individual">Privatperson</option>
                 <option value="company">Företag</option>
               </select>
-            </label>
+            </div>
             {[
               { k: 'legalName', label: 'Juridiskt namn' },
               { k: 'taxId', label: isIndividual ? 'Personnummer' : 'Organisationsnummer' },
@@ -120,14 +129,14 @@ const SellerEditor = ({ shopId, shopName, onClose }) => {
               { k: 'countryOfResidence', label: 'Hemvistland (ISO, t.ex. SE)' },
               ...(isIndividual ? [{ k: 'dateOfBirth', label: 'Födelsedatum (YYYY-MM-DD)' }] : []),
             ].map(({ k, label }) => (
-              <label key={k} className="block text-sm">
-                <span className="text-gray-600">{label}</span>
-                <input value={profile?.[k] || ''} onChange={(e) => set(k, e.target.value)} className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5" />
-              </label>
+              <div key={k}>
+                <label className={labelCls}>{label}</label>
+                <input value={profile?.[k] || ''} onChange={(e) => set(k, e.target.value)} className={`w-full ${inputCls}`} />
+              </div>
             ))}
             <div className="flex justify-end gap-2 pt-2">
-              <button onClick={onClose} className="rounded border border-gray-300 px-4 py-2 text-sm">Avbryt</button>
-              <button onClick={save} disabled={busy === 'save'} className="rounded bg-gray-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+              <button onClick={onClose} className={btnGhost}>Avbryt</button>
+              <button onClick={save} disabled={busy === 'save'} className={btnPrimary}>
                 {busy === 'save' ? 'Sparar…' : 'Spara'}
               </button>
             </div>
@@ -196,37 +205,39 @@ const PlatformDac7 = () => {
 
   return (
     <PlatformLayout>
-      <div className="p-6 max-w-5xl mx-auto">
-        <h1 className="text-xl font-bold text-gray-900 mb-1">DAC7 — rapporterbara säljare</h1>
-        <p className="text-sm text-gray-500 mb-6">
-          Bruttoersättning + antal transaktioner per säljare och kalenderår. De-minimis: färre än 30 försäljningar OCH ≤ 2 000 EUR → undantagen (men beräknas ändå). Registrering hos Skatteverket sker separat.
-        </p>
+      <div className="px-6 lg:px-10 py-8 max-w-6xl">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-white">DAC7 — rapporterbara säljare</h1>
+          <p className="text-gray-400 mt-1 max-w-3xl">
+            Bruttoersättning + antal transaktioner per säljare och kalenderår. De-minimis: färre än 30 försäljningar OCH ≤ 2 000 EUR → undantagen (men beräknas ändå). Registrering hos Skatteverket sker separat.
+          </p>
+        </div>
 
         <CorrectionRequests />
 
-        <div className="flex flex-wrap items-end gap-4 mb-6 rounded-lg border border-gray-200 bg-white p-4">
-          <label className="text-sm">
-            <span className="block text-gray-600 mb-1">År</span>
-            <input type="number" min="2020" max={CURRENT_YEAR} value={year} onChange={(e) => setYear(e.target.value)} className="w-28 rounded border border-gray-300 px-2 py-1.5" />
-          </label>
-          <label className="text-sm">
-            <span className="block text-gray-600 mb-1">SEK→EUR-kurs</span>
-            <input type="text" value={rate} onChange={(e) => setRate(e.target.value)} className="w-28 rounded border border-gray-300 px-2 py-1.5" />
-          </label>
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" checked={includeBelow} onChange={(e) => setIncludeBelow(e.target.checked)} />
+        <div className="mb-6 flex flex-wrap items-end gap-4 rounded-xl border border-white/10 bg-gray-900 p-5">
+          <div>
+            <label className={labelCls}>År</label>
+            <input type="number" min="2020" max={CURRENT_YEAR} value={year} onChange={(e) => setYear(e.target.value)} className={`w-28 ${inputCls}`} />
+          </div>
+          <div>
+            <label className={labelCls}>SEK→EUR-kurs</label>
+            <input type="text" value={rate} onChange={(e) => setRate(e.target.value)} className={`w-28 ${inputCls}`} />
+          </div>
+          <label className="flex items-center gap-2 pb-1.5 text-sm text-gray-300">
+            <input type="checkbox" checked={includeBelow} onChange={(e) => setIncludeBelow(e.target.checked)} className="rounded border-white/20 bg-gray-950 text-indigo-500 focus:ring-indigo-500" />
             Inkludera undantagna (de-minimis)
           </label>
-          <button onClick={() => run()} disabled={loading} className="rounded bg-gray-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+          <button onClick={() => run()} disabled={loading} className={btnPrimary}>
             {loading ? 'Hämtar…' : 'Hämta rapport'}
           </button>
           {report?.rows?.length > 0 && (
-            <button onClick={downloadCsv} className="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">
+            <button onClick={downloadCsv} className={btnGhost}>
               Ladda ner CSV
             </button>
           )}
           {report?.reportableCount > 0 && (
-            <button onClick={markReported} disabled={loading} className="rounded border border-amber-400 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 disabled:opacity-50">
+            <button onClick={markReported} disabled={loading} className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-300 hover:bg-amber-500/20 disabled:opacity-50">
               Markera som rapporterad ({report.reportableCount})
             </button>
           )}
@@ -234,45 +245,45 @@ const PlatformDac7 = () => {
 
         {report && (
           <>
-            <p className="text-sm text-gray-600 mb-3">
+            <p className="text-sm text-gray-400 mb-3">
               {report.rows.length} säljare visas · {report.reportableCount} rapporterbara · kurs {report.sekToEurRate}
             </p>
-            <div className="overflow-x-auto rounded-lg border border-gray-200">
-              <table className="min-w-full text-sm">
-                <thead className="bg-gray-50 text-left text-gray-600">
-                  <tr>
-                    <th className="px-3 py-2">Butik</th>
-                    <th className="px-3 py-2">Typ</th>
-                    <th className="px-3 py-2">Juridiskt namn</th>
-                    <th className="px-3 py-2 text-right">Transaktioner</th>
-                    <th className="px-3 py-2 text-right">Brutto SEK</th>
-                    <th className="px-3 py-2 text-right">Brutto EUR</th>
-                    <th className="px-3 py-2">Rapporterbar</th>
-                    <th className="px-3 py-2">Profil</th>
+            <div className="overflow-x-auto rounded-xl border border-white/10 bg-gray-900">
+              <table className="min-w-full divide-y divide-white/10 text-sm">
+                <thead>
+                  <tr className="text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    <th className="px-4 py-3">Butik</th>
+                    <th className="px-4 py-3">Typ</th>
+                    <th className="px-4 py-3">Juridiskt namn</th>
+                    <th className="px-4 py-3 text-right">Transaktioner</th>
+                    <th className="px-4 py-3 text-right">Brutto SEK</th>
+                    <th className="px-4 py-3 text-right">Brutto EUR</th>
+                    <th className="px-4 py-3">Rapporterbar</th>
+                    <th className="px-4 py-3">Profil</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-white/10">
                   {report.rows.map((r) => (
-                    <tr key={r.shopId}>
-                      <td className="px-3 py-2 font-medium text-gray-900">{r.shopName}</td>
-                      <td className="px-3 py-2">{r.profile?.sellerType || '—'}</td>
-                      <td className="px-3 py-2">{r.profile?.legalName || '—'}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{r.aggregate.transactionCount}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{r.aggregate.grossConsiderationSek.toLocaleString('sv-SE')}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{r.aggregate.grossConsiderationEur.toLocaleString('sv-SE')}</td>
-                      <td className="px-3 py-2">
+                    <tr key={r.shopId} className="hover:bg-white/5">
+                      <td className="px-4 py-3 font-medium text-white">{r.shopName}</td>
+                      <td className="px-4 py-3 text-gray-300">{r.profile?.sellerType || '—'}</td>
+                      <td className="px-4 py-3 text-gray-300">{r.profile?.legalName || '—'}</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-gray-200">{r.aggregate.transactionCount}</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-gray-200">{r.aggregate.grossConsiderationSek.toLocaleString('sv-SE')}</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-gray-200">{r.aggregate.grossConsiderationEur.toLocaleString('sv-SE')}</td>
+                      <td className="px-4 py-3">
                         {r.aggregate.reportable
-                          ? <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-800">Ja</span>
-                          : <span className="rounded bg-gray-100 px-2 py-0.5 text-gray-600">Undantagen</span>}
+                          ? <span className="rounded-md bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-300">Ja</span>
+                          : <span className="rounded-md bg-white/5 px-2 py-0.5 text-xs font-medium text-gray-500">Undantagen</span>}
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-4 py-3">
                         <button
                           onClick={() => setEditing({ shopId: r.shopId, shopName: r.shopName })}
-                          className="underline underline-offset-2 hover:opacity-70"
+                          className="text-xs font-medium underline underline-offset-2 hover:opacity-80"
                         >
                           {r.profileComplete
-                            ? <span className="text-green-700">Komplett</span>
-                            : <span className="text-red-600">Komplettera</span>}
+                            ? <span className="text-emerald-400">Komplett</span>
+                            : <span className="text-red-400">Komplettera</span>}
                         </button>
                       </td>
                     </tr>
@@ -281,11 +292,17 @@ const PlatformDac7 = () => {
               </table>
             </div>
             {report.rows.some((r) => r.aggregate.reportable && !r.profileComplete) && (
-              <p className="mt-3 rounded bg-red-50 border-l-4 border-red-400 p-3 text-sm text-red-700">
+              <p className="mt-4 rounded-lg border-l-4 border-red-500/50 bg-red-500/10 p-3 text-sm text-red-300">
                 ⚠️ En eller flera rapporterbara säljare saknar komplett DAC7-profil (juridiskt namn, skatte-ID, adress, land, ev. födelsedatum). Komplettera innan rapportering.
               </p>
             )}
           </>
+        )}
+
+        {!report && !loading && (
+          <div className="rounded-xl border border-white/10 bg-gray-900 py-16 text-center text-gray-500">
+            Välj år och kurs, klicka <span className="text-gray-300">Hämta rapport</span>.
+          </div>
         )}
       </div>
       {editing && (
