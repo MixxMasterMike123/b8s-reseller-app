@@ -3,6 +3,7 @@ import { useParams, useLocation, Navigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { DEFAULT_SHOP_ID, COUNTRY_PREFIXES } from '../../config/tenancy';
+import LandingPage from '../../pages/LandingPage';
 
 /**
  * ShopGate — single entry guard for every per-shop storefront route
@@ -56,11 +57,12 @@ const ShopGate = ({ children }) => {
     return () => { cancelled = true; };
   }, [shopId, isLegacyCountry]);
 
-  // 1. Legacy country code → redirect to default shop, preserving the rest.
+  // 1. Legacy country code (/se/...) → the platform Landing Page. Storefronts
+  //    live ONLY at an explicit /{shopId}; a legacy country prefix is NOT a shop,
+  //    so it must not resolve to the default (b8shield) storefront. (Strict rule,
+  //    decided 2026-06-25: any non-/{shopId} path shows the LP, not a store.)
   if (isLegacyCountry) {
-    const segs = location.pathname.split('/').filter(Boolean).slice(1); // drop the country seg
-    const target = `/${DEFAULT_SHOP_ID}${segs.length ? '/' + segs.join('/') : ''}`;
-    return <Navigate to={`${target}${location.search}`} replace />;
+    return <LandingPage />;
   }
 
   if (state.status === 'checking') {
@@ -71,9 +73,11 @@ const ShopGate = ({ children }) => {
     );
   }
 
-  // 2. Unknown shop → default shop.
+  // 2. Unknown shop (no shops/{id} doc) → the platform Landing Page, NOT the
+  //    default (b8shield) storefront. A typo'd/nonexistent shop must never leak
+  //    into b8shield's store.
   if (state.status === 'unknown') {
-    return <Navigate to={`/${DEFAULT_SHOP_ID}`} replace />;
+    return <LandingPage />;
   }
 
   // 3. Disabled shop → kill-switch "unavailable" page.

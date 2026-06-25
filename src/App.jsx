@@ -7,7 +7,7 @@ import { CartProvider } from './contexts/CartContext';
 import { TranslationProvider, useTranslation } from './contexts/TranslationContext';
 import { LanguageCurrencyProvider } from './contexts/LanguageCurrencyContext';
 import { StoreSettingsProvider } from './contexts/StoreSettingsContext';
-import { ShopProvider } from './contexts/ShopContext';
+import { ShopProvider, useShopId } from './contexts/ShopContext';
 import { ShopFeaturesProvider } from './contexts/ShopFeaturesContext';
 import AddonGate from './components/addons/AddonGate';
 import { WAGON_FEATURE_KEY } from './config/addons';
@@ -142,6 +142,14 @@ function LandingGate() {
   return <LandingPage />;
 }
 
+// Fallback for an unknown slug UNDER a real shop (/{shopId}/badslug): bounce to
+// THAT shop's home, keeping shop context — NOT to the bare root (which is now
+// the platform LP, where the shop context would be lost).
+function ShopHomeRedirect() {
+  const shopId = useShopId();
+  return <Navigate to={`/${shopId}`} replace />;
+}
+
 function App() {
   // 🚂 WAGON SYSTEM: State for wagon routes
   const [wagonRoutes, setWagonRoutes] = useState([]);
@@ -236,8 +244,11 @@ function App() {
             // Bare / redirects to the default shop. Swedish-only (i18n deferred);
             // legacy /se/... links are redirected by LegacyCountryRedirect.
             <>
-              {/* Bare root → default shop's storefront */}
-              <Route path="/" element={<Navigate to={`/${DEFAULT_SHOP_ID}`} replace />} />
+              {/* Bare root → the platform Landing Page. A naked URL (no
+                  /{shopId}) must NEVER render a storefront — storefronts live
+                  ONLY at /{shopId}. Do NOT auto-redirect to DEFAULT_SHOP_ID
+                  (that leaked the b8shield store at the bare root). */}
+              <Route path="/" element={<LandingPage />} />
 
               {/* Credential pages — shop-global, no shop prefix */}
               <Route path="/login" element={<CustomerLogin />} />
@@ -286,13 +297,15 @@ function App() {
               <Route path="/:shopId/*" element={
                 <ShopGate>
                   <DynamicRouteHandler>
-                    <Navigate to="/" replace />
+                    <ShopHomeRedirect />
                   </DynamicRouteHandler>
                 </ShopGate>
               } />
 
-              {/* Catch-all → default shop */}
-              <Route path="*" element={<Navigate to={`/${DEFAULT_SHOP_ID}`} replace />} />
+              {/* Catch-all → the Landing Page, NOT the default storefront. An
+                  unmatched naked path must not dump the visitor into b8shield's
+                  store. (Credential pages + /{shopId} routes are matched above.) */}
+              <Route path="*" element={<LandingPage />} />
             </>
           ) : (
             // Admin console routes (B2B portal removed — see b2b-portal-archive tag)
