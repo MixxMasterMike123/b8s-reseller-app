@@ -1,7 +1,7 @@
 // Product URL utilities for clean, SEO-friendly URLs
 import { APP_URLS } from '../config/urls';
 import { STORE } from '../config/store';
-import { resolveShopId } from '../config/tenancy';
+import { resolveShopId, isShoplessPath } from '../config/tenancy';
 
 // Current shop prefix for storefront links, derived from the URL (path-prefix
 // multi-tenant grammar: /{shopId}/...). Single source = config/tenancy.
@@ -79,7 +79,17 @@ export const getProductUrl = (product) => {
 
 // Generate a shop-prefixed storefront URL for B2C links.
 // getCountryAwareUrl('cart') -> /{shopId}/cart ; getCountryAwareUrl('') -> /{shopId}
+//
+// SHOPLESS GUARD: on a shopless path (bare root, credential routes like /login,
+// /register, /affiliate-login), there is no real shop — resolveShopId() would
+// fall back to DEFAULT_SHOP_ID and this used to manufacture a /b8shield store
+// link out of thin air (the credential-page → b8shield leak). In that case
+// return the platform Landing Page ('/') instead. On a real /{shopId}/... route
+// this is unchanged: the prefix is the genuine tenant.
 export const getCountryAwareUrl = (path) => {
+  if (typeof window !== 'undefined' && isShoplessPath(window.location.pathname)) {
+    return '/';
+  }
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
   const prefix = currentShopPrefix();
   if (!cleanPath || cleanPath === '') return prefix;

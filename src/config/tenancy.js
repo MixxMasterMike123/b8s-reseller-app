@@ -63,3 +63,23 @@ export const resolveShopId = (pathname) => {
   if (!first || NON_SHOP_FIRST_SEGMENTS.has(first)) return DEFAULT_SHOP_ID;
   return first;
 };
+
+/**
+ * True when the path has NO real shop in it — the bare root or a non-shop first
+ * segment (credential routes, legacy country codes, admin/platform). On such a
+ * path resolveShopId() FALLS BACK to DEFAULT_SHOP_ID; callers that build links
+ * (getCountryAwareUrl) use this to avoid manufacturing a /{DEFAULT_SHOP_ID}
+ * store URL out of thin air — a shopless context has no storefront to link to,
+ * so links resolve to the platform Landing Page instead. (Decided 2026-06-25:
+ * a shopless context must never default into the b8shield store.)
+ *
+ * @param {string} [pathname]
+ * @returns {boolean}
+ */
+export const isShoplessPath = (pathname) => {
+  const path = typeof pathname === 'string'
+    ? pathname
+    : (typeof window !== 'undefined' ? window.location.pathname : '/');
+  const first = (path.split('/').filter(Boolean)[0] || '').toLowerCase();
+  return !first || NON_SHOP_FIRST_SEGMENTS.has(first);
+};
