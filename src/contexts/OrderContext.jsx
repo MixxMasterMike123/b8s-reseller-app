@@ -113,7 +113,7 @@ const DEMO_ORDERS = [
 
 // Provider component
 export const OrderProvider = ({ children }) => {
-  const { currentUser, isAdmin } = useAuth();
+  const { currentUser, isAdmin, isPlatform } = useAuth();
   const shopId = useShopId();
   // Dining add-on gate (default-ON). OrderProvider sits inside
   // ShopFeaturesProvider (App.jsx), so the hook is available; referenced in the
@@ -165,9 +165,16 @@ export const OrderProvider = ({ children }) => {
           if (orderDoc.exists()) {
             const orderData = orderDoc.data();
             
-            // Check if user is authorized to view this order
-            if (orderData.userId !== currentUser.uid && !isAdmin) {
-              setError('Unauthorized');
+            // Authorization (mirrors the firestore.rules orders-list scoping —
+            // the `allow get: if true` rule can't enforce tenancy, so it MUST be
+            // enforced here): the owner sees their own order; a PLATFORM admin
+            // sees any shop's; a SHOP admin sees ONLY their own shop's order.
+            // Without the shopId match a shopA admin could load shopB's order by
+            // ID (cross-tenant PII leak) — the go-live audit's one real hole.
+            const isOwner = orderData.userId === currentUser.uid;
+            const isAdminOfThisShop = isAdmin && (isPlatform || orderData.shopId === shopId);
+            if (!isOwner && !isAdminOfThisShop) {
+              setError('Order not found');
               return null;
             }
             
@@ -196,7 +203,7 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [currentUser, demoOrders, isAdmin]);
+  }, [currentUser, demoOrders, isAdmin, isPlatform, shopId]);
 
   // Helper function to process Firestore timestamps to stable format
   // This prevents re-render loops caused by timestamp objects changing identity
