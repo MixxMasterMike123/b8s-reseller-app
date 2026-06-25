@@ -355,6 +355,8 @@ async function run() {
     updateDoc(doc(shopAAdminDb(), 'dac7Sellers/shopA'), { taxId: 'fake-id' })));
   await check('shopA admin CANNOT self-edit IDENTITY field (dateOfBirth)', assertFails(
     updateDoc(doc(shopAAdminDb(), 'dac7Sellers/shopA'), { dateOfBirth: '2000-01-01' })));
+  await check('shopA admin CANNOT self-write the reported transparency record', assertFails(
+    updateDoc(doc(shopAAdminDb(), 'dac7Sellers/shopA'), { reported: [{ year: 2025, txCountReported: 999 }] })));
   await check('shopA admin CANNOT enumerate dac7Sellers (list denied)', assertFails(
     getDocs(query(collection(shopAAdminDb(), 'dac7Sellers')))));
   // Correction requests — cross-shop + self-approve denials.

@@ -10,7 +10,7 @@
  */
 const path = require('path');
 const LIB = path.join(__dirname, '..', 'functions', 'lib', 'dac7');
-const { aggregateSellerYear, toDate, DAC7_MIN_TRANSACTIONS, DAC7_MAX_CONSIDERATION_EUR } = require(path.join(LIB, 'aggregate'));
+const { aggregateSellerYear, toDate, mergeReportedRecord, DAC7_MIN_TRANSACTIONS, DAC7_MAX_CONSIDERATION_EUR } = require(path.join(LIB, 'aggregate'));
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) { pass++; console.log('  ✅', m); } else { fail++; console.log('  ❌', m); } };
@@ -87,6 +87,25 @@ console.log('\n=== toDate normalisation ===');
   ok(toDate({ seconds: Math.floor(Date.UTC(2026, 0, 1) / 1000) })?.getUTCFullYear() === 2026, '{seconds} shape');
   ok(toDate('2026-03-15')?.getUTCFullYear() === 2026, 'ISO string');
   ok(toDate(null) === null && toDate(undefined) === null && toDate('garbage') === null, 'null/undefined/garbage → null');
+}
+
+console.log('\n=== mergeReportedRecord (transparency, replace-by-year, no dupes) ===');
+{
+  const a = mergeReportedRecord(undefined, { year: 2025, txCountReported: 5 });
+  ok(a.length === 1 && a[0].year === 2025, 'undefined existing → single entry');
+}
+{
+  const a = mergeReportedRecord([{ year: 2024, txCountReported: 1 }], { year: 2025, txCountReported: 5 });
+  ok(a.length === 2 && a[0].year === 2024 && a[1].year === 2025, 'different year → appended + sorted');
+}
+{
+  // Re-filing the SAME year replaces, never duplicates.
+  const a = mergeReportedRecord([{ year: 2025, txCountReported: 5 }], { year: 2025, txCountReported: 9 });
+  ok(a.length === 1 && a[0].txCountReported === 9, 're-file same year → replaced (no duplicate)');
+}
+{
+  const a = mergeReportedRecord([{ year: 2026 }, { year: 2024 }], { year: 2025 });
+  ok(a.map((e) => e.year).join(',') === '2024,2025,2026', 'always sorted ascending by year');
 }
 
 console.log(`\n=== RESULT: ${pass} passed, ${fail} failed ===`);

@@ -146,22 +146,33 @@ const PlatformDac7 = () => {
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState(null);
 
-  const run = useCallback(async () => {
+  const run = useCallback(async (markReported = false) => {
     setLoading(true);
-    setReport(null);
+    if (!markReported) setReport(null);
     try {
       const res = await httpsCallable(functions, 'exportDac7Report')({
         year: Number(year),
         sekToEurRate: parseFloat((rate || '').replace(',', '.')) || undefined,
         includeBelowDeMinimis: includeBelow,
+        ...(markReported && { markReported: true }),
       });
       setReport(res.data);
+      if (markReported) {
+        toast.success(`Markerade ${res.data?.markedReported ?? 0} säljare som rapporterade för ${year}. De informeras i sin admin.`);
+      }
     } catch (e) {
       toast.error(e.message || 'Kunde inte hämta DAC7-rapport.');
     } finally {
       setLoading(false);
     }
   }, [year, rate, includeBelow]);
+
+  // Finalise: writes the per-seller transparency record for every reportable
+  // seller this year. Deliberate + confirmed (it tells sellers they were reported).
+  const markReported = useCallback(() => {
+    if (!window.confirm(`Markera alla rapporterbara säljare som rapporterade för ${year}? Varje berörd säljare informeras i sin admin (DAC7-transparens). Detta är efter att du lämnat rapporten till Skatteverket.`)) return;
+    run(true);
+  }, [run, year]);
 
   const downloadCsv = useCallback(() => {
     if (!report?.rows?.length) return;
@@ -206,12 +217,17 @@ const PlatformDac7 = () => {
             <input type="checkbox" checked={includeBelow} onChange={(e) => setIncludeBelow(e.target.checked)} />
             Inkludera undantagna (de-minimis)
           </label>
-          <button onClick={run} disabled={loading} className="rounded bg-gray-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+          <button onClick={() => run()} disabled={loading} className="rounded bg-gray-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
             {loading ? 'Hämtar…' : 'Hämta rapport'}
           </button>
           {report?.rows?.length > 0 && (
             <button onClick={downloadCsv} className="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">
               Ladda ner CSV
+            </button>
+          )}
+          {report?.reportableCount > 0 && (
+            <button onClick={markReported} disabled={loading} className="rounded border border-amber-400 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 disabled:opacity-50">
+              Markera som rapporterad ({report.reportableCount})
             </button>
           )}
         </div>

@@ -15,7 +15,7 @@
  * orders are priced in SEK, the threshold is in EUR).
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.aggregateSellerYear = exports.toDate = exports.DAC7_MAX_CONSIDERATION_EUR = exports.DAC7_MIN_TRANSACTIONS = void 0;
+exports.mergeReportedRecord = exports.aggregateSellerYear = exports.toDate = exports.DAC7_MAX_CONSIDERATION_EUR = exports.DAC7_MIN_TRANSACTIONS = void 0;
 // De-minimis thresholds (DAC7).
 exports.DAC7_MIN_TRANSACTIONS = 30; // "fewer than 30" → < 30
 exports.DAC7_MAX_CONSIDERATION_EUR = 2000;
@@ -82,4 +82,18 @@ function aggregateSellerYear(orders, year, sekToEurRate) {
     };
 }
 exports.aggregateSellerYear = aggregateSellerYear;
+/**
+ * Merge a per-year "reported" transparency entry into a seller's existing list:
+ * replace any entry for the same year (re-filing) and keep it sorted by year —
+ * so re-running the finalise never duplicates a year. Pure (no I/O).
+ *
+ * @param existing  the seller's current reported[] (may be undefined)
+ * @param entry     the new entry (must carry a numeric `year`)
+ */
+function mergeReportedRecord(existing, entry) {
+    const list = Array.isArray(existing) ? existing : [];
+    return [...list.filter((e) => e?.year !== entry?.year), entry]
+        .sort((a, b) => (a?.year || 0) - (b?.year || 0));
+}
+exports.mergeReportedRecord = mergeReportedRecord;
 //# sourceMappingURL=aggregate.js.map

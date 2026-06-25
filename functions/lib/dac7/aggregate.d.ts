@@ -41,3 +41,12 @@ export declare function toDate(ts: any): Date | null;
  *                    used only to apply the EUR de-minimis threshold.
  */
 export declare function aggregateSellerYear(orders: Dac7Order[], year: number, sekToEurRate: number): Dac7YearAggregate;
+/**
+ * Merge a per-year "reported" transparency entry into a seller's existing list:
+ * replace any entry for the same year (re-filing) and keep it sorted by year —
+ * so re-running the finalise never duplicates a year. Pure (no I/O).
+ *
+ * @param existing  the seller's current reported[] (may be undefined)
+ * @param entry     the new entry (must carry a numeric `year`)
+ */
+export declare function mergeReportedRecord(existing: any[] | undefined, entry: any): any[];

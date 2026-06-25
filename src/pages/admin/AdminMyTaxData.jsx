@@ -98,6 +98,23 @@ const AdminMyTaxData = () => {
           via plattformen.
         </div>
 
+        {/* ACTIVE transparency notification — shown when this seller has
+            actually been included in a report for a given year. */}
+        {Array.isArray(profile?.reported) && profile.reported.length > 0 && (
+          <div className="rounded-md bg-amber-50 border-l-4 border-amber-400 p-4 text-[13px] text-amber-900">
+            <p className="font-semibold mb-2">Du har rapporterats till Skatteverket (DAC7)</p>
+            <ul className="space-y-1">
+              {profile.reported.map((r) => (
+                <li key={r.year}>
+                  <strong>{r.year}</strong>: rapporterad {r.reportedAt ? new Date(r.reportedAt).toLocaleDateString('sv-SE') : ''} —
+                  {' '}{r.txCountReported} transaktioner, brutto {Number(r.grossReportedSek || 0).toLocaleString('sv-SE')} kr
+                  {Number.isFinite(r.grossReportedEur) ? ` (${Number(r.grossReportedEur).toLocaleString('sv-SE')} EUR)` : ''}.
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {!profile && (
           <Card className="py-8 text-center text-[13px] text-admin-text-muted">
             Inga DAC7-uppgifter registrerade ännu.

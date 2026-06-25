@@ -96,3 +96,17 @@ export function aggregateSellerYear(
     reportable: !belowDeMinimis,
   };
 }
+
+/**
+ * Merge a per-year "reported" transparency entry into a seller's existing list:
+ * replace any entry for the same year (re-filing) and keep it sorted by year —
+ * so re-running the finalise never duplicates a year. Pure (no I/O).
+ *
+ * @param existing  the seller's current reported[] (may be undefined)
+ * @param entry     the new entry (must carry a numeric `year`)
+ */
+export function mergeReportedRecord(existing: any[] | undefined, entry: any): any[] {
+  const list = Array.isArray(existing) ? existing : [];
+  return [...list.filter((e) => e?.year !== entry?.year), entry]
+    .sort((a, b) => (a?.year || 0) - (b?.year || 0));
+}

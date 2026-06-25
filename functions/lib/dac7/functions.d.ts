@@ -71,6 +71,7 @@ interface ExportRequest {
     year: number;
     sekToEurRate?: number;
     includeBelowDeMinimis?: boolean;
+    markReported?: boolean;
 }
 export declare const exportDac7Report: import("firebase-functions/v2/https").CallableFunction<ExportRequest, any, unknown>;
 export {};

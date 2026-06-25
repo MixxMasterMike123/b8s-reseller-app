@@ -165,6 +165,20 @@ const AdminSettings = () => {
                     />
                   </div>
 
+                  <div>
+                    <label className={labelCls}>Säljartyp</label>
+                    <select
+                      value={storeForm.sellerType ?? ''}
+                      onChange={(e) => setStoreForm(prev => ({ ...prev, sellerType: e.target.value }))}
+                      className={inputCls}
+                    >
+                      <option value="">Ej angivet</option>
+                      <option value="individual">Privatperson</option>
+                      <option value="company">Företag</option>
+                    </select>
+                    <p className="mt-1 text-[12px] text-admin-text-muted">Hämtas automatiskt från Stripe vid betalnings-onboarding; kan anges här innan dess.</p>
+                  </div>
+
                   {[
                     { key: 'orgNumber', label: 'Organisationsnummer', placeholder: 'T.ex. 556677-8899' },
                     { key: 'businessInfo', label: 'Företagsinfo (sidfot)', placeholder: 'T.ex. Registrerad för F-skatt' },

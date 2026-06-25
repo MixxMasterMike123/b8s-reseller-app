@@ -77,7 +77,17 @@ exports.getDac7SellerProfile = (0, https_1.onCall)(COMMON, async (request) => {
     if (!shopId)
         throw new https_1.HttpsError('invalid-argument', 'shopId is required');
     const snap = await database_1.db.collection('dac7Sellers').doc(shopId).get();
-    return { shopId, profile: snap.exists ? snap.data() : null };
+    const profile = snap.exists ? snap.data() : null;
+    // Single source of truth: if the DAC7 record has no sellerType yet, fall back
+    // to the shop's first-class storeIdentity.sellerType (set at onboarding) so the
+    // editor + identifier resolution stay coherent before a Stripe pull runs.
+    if (profile && !profile.sellerType) {
+        const shopSnap = await database_1.db.collection('shops').doc(shopId).get();
+        const st = shopSnap.data()?.storeIdentity?.sellerType;
+        if (st === 'individual' || st === 'company')
+            profile.sellerType = st;
+    }
+    return { shopId, profile };
 });
 exports.getOwnDac7 = (0, https_1.onCall)(COMMON, async (request) => {
     const shopId = (request.data?.shopId || '').trim();
@@ -209,6 +219,12 @@ exports.pullDac7FromStripe = (0, https_1.onCall)(COMMON, async (request) => {
     // Merge (don't overwrite manually-entered values with empty Stripe values).
     const clean = sanitizeProfile(pulled);
     await database_1.db.collection('dac7Sellers').doc(shopId).set({ shopId, ...clean, verifiedViaStripe: true, stripePulledAt: firestore_1.FieldValue.serverTimestamp() }, { merge: true });
+    // Single source of truth: keep the shop's first-class sellerType in sync with
+    // the Stripe-verified business_type, so contract-track / UI logic outside DAC7
+    // reads the same value. Only write when Stripe resolved it.
+    if (clean.sellerType === 'individual' || clean.sellerType === 'company') {
+        await database_1.db.collection('shops').doc(shopId).set({ storeIdentity: { sellerType: clean.sellerType } }, { merge: true });
+    }
     return { shopId, pulled: clean };
 });
 function formatStripeAddress(a) {
@@ -248,8 +264,10 @@ exports.exportDac7Report = (0, https_1.onCall)(COMMON, async (request) => {
     }
     const rate = Number.isFinite(request.data?.sekToEurRate) ? request.data.sekToEurRate : DEFAULT_SEK_TO_EUR;
     const includeBelow = request.data?.includeBelowDeMinimis === true;
+    const markReported = request.data?.markReported === true;
     const shopsSnap = await database_1.db.collection('shops').get();
     const rows = [];
+    let markedReported = 0;
     for (const shopDoc of shopsSnap.docs) {
         const shopId = shopDoc.id;
         const shop = shopDoc.data();
@@ -262,6 +280,13 @@ exports.exportDac7Report = (0, https_1.onCall)(COMMON, async (request) => {
             continue;
         const profileSnap = await database_1.db.collection('dac7Sellers').doc(shopId).get();
         const profile = profileSnap.exists ? profileSnap.data() : null;
+        // Transparency: when finalising, record that this REPORTABLE seller was
+        // reported for this year. De-minimis-excluded sellers are NOT reported, so
+        // they get no record (their page shows nothing).
+        if (markReported && agg.reportable) {
+            await appendReportedRecord(shopId, year, agg);
+            markedReported += 1;
+        }
         rows.push({
             shopId,
             shopName: shop?.storeIdentity?.shopName || shop?.name || shopId,
@@ -271,8 +296,32 @@ exports.exportDac7Report = (0, https_1.onCall)(COMMON, async (request) => {
             profileComplete: isProfileComplete(profile),
         });
     }
-    return { year, sekToEurRate: rate, reportableCount: rows.filter((r) => r.aggregate.reportable).length, rows };
+    return {
+        year, sekToEurRate: rate,
+        reportableCount: rows.filter((r) => r.aggregate.reportable).length,
+        markedReported: markReported ? markedReported : undefined,
+        rows,
+    };
 });
+// Append (or replace, per year) a transparency record on the seller's DAC7 doc.
+// reported is an array of { year, reportedAt, activity, grossReportedSek/Eur,
+// txCountReported }. One entry per year; re-filing a year replaces it (no dupes).
+async function appendReportedRecord(shopId, year, agg) {
+    const ref = database_1.db.collection('dac7Sellers').doc(shopId);
+    const snap = await ref.get();
+    const entry = {
+        year,
+        reportedAt: new Date().toISOString(),
+        activity: 'sale_of_goods',
+        grossReportedSek: agg.grossConsiderationSek,
+        grossReportedEur: agg.grossConsiderationEur,
+        txCountReported: agg.transactionCount,
+    };
+    // Pure merge (aggregate.ts, unit-tested): replace this year, no dupes.
+    const next = (0, aggregate_1.mergeReportedRecord)(snap.data()?.reported, entry);
+    // shopId stamped so the rules' shopId-equality holds (platform write anyway).
+    await ref.set({ shopId, reported: next }, { merge: true });
+}
 function isProfileComplete(p) {
     if (!p)
         return false;

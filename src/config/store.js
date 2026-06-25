@@ -56,6 +56,11 @@ export const STORE = {
   companyDescription: 'Quality products, delivered.',
   orgNumber: '',   // e.g. company/VAT registration number; empty hides the line
   businessInfo: '', // e.g. 'Registered for VAT'; empty hides the line
+  // Seller type: a first-class shop attribute (individual privatperson vs
+  // company). Drives the contract track + consumer-protection handling + UI,
+  // beyond DAC7. Populated from Stripe `business_type` at the DAC7 pull, or set
+  // at provisioning/onboarding. '' = not yet resolved.
+  sellerType: '', // '' | 'individual' | 'company'
 
   // Social links. Empty string = icon hidden. If all empty, the whole
   // "Follow us" block is hidden.

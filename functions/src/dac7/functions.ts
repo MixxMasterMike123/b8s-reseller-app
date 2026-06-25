@@ -27,7 +27,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '../config/database';
 import { appUrls } from '../config/app-urls';
 import { requireAdminOfShop, requirePlatform } from '../email-orchestrator/functions/authGuard';
-import { aggregateSellerYear, Dac7Order } from './aggregate';
+import { aggregateSellerYear, mergeReportedRecord, Dac7Order } from './aggregate';
 
 // ⚠️ DAC7 is the PLATFORM operator's legal obligation (the "reporting platform
 // operator" under EU Directive 2021/514) — NOT the shop owner's. The
@@ -100,7 +100,16 @@ export const getDac7SellerProfile = onCall<ShopIdRequest>(COMMON, async (request
   const shopId = (request.data?.shopId || '').trim();
   if (!shopId) throw new HttpsError('invalid-argument', 'shopId is required');
   const snap = await db.collection('dac7Sellers').doc(shopId).get();
-  return { shopId, profile: snap.exists ? snap.data() : null };
+  const profile = snap.exists ? (snap.data() as any) : null;
+  // Single source of truth: if the DAC7 record has no sellerType yet, fall back
+  // to the shop's first-class storeIdentity.sellerType (set at onboarding) so the
+  // editor + identifier resolution stay coherent before a Stripe pull runs.
+  if (profile && !profile.sellerType) {
+    const shopSnap = await db.collection('shops').doc(shopId).get();
+    const st = (shopSnap.data() as any)?.storeIdentity?.sellerType;
+    if (st === 'individual' || st === 'company') profile.sellerType = st;
+  }
+  return { shopId, profile };
 });
 
 // ── getOwnDac7 (SELLER, own shop only) ──────────────────────────────────────
@@ -248,6 +257,15 @@ export const pullDac7FromStripe = onCall<ShopIdRequest>(COMMON, async (request) 
     { shopId, ...clean, verifiedViaStripe: true, stripePulledAt: FieldValue.serverTimestamp() },
     { merge: true }
   );
+  // Single source of truth: keep the shop's first-class sellerType in sync with
+  // the Stripe-verified business_type, so contract-track / UI logic outside DAC7
+  // reads the same value. Only write when Stripe resolved it.
+  if (clean.sellerType === 'individual' || clean.sellerType === 'company') {
+    await db.collection('shops').doc(shopId).set(
+      { storeIdentity: { sellerType: clean.sellerType } },
+      { merge: true }
+    );
+  }
   return { shopId, pulled: clean };
 });
 
@@ -296,7 +314,15 @@ async function loadShopOrders(shopId: string): Promise<Dac7Order[]> {
 // active shop: its DAC7 profile + the year aggregate, with the de-minimis
 // verdict. Skatteverket registration/filing is a separate manual step (we hand
 // over this data or cross-check Stripe's DAC7 export).
-interface ExportRequest { year: number; sekToEurRate?: number; includeBelowDeMinimis?: boolean }
+//
+// markReported (default false): a plain run is a PREVIEW (the platform may run
+// it repeatedly to try FX rates) and writes NOTHING. When the platform actually
+// FILES, it calls with markReported:true → for each REPORTABLE seller (NOT the
+// de-minimis-excluded ones) we append a per-seller transparency record on
+// dac7Sellers/{shopId}.reported so the seller is actively informed (DAC7
+// transparency requirement). Idempotent per (shopId, year): re-filing the same
+// year replaces that year's record, never duplicates.
+interface ExportRequest { year: number; sekToEurRate?: number; includeBelowDeMinimis?: boolean; markReported?: boolean }
 
 export const exportDac7Report = onCall<ExportRequest>(COMMON, async (request) => {
   await requirePlatform(request.auth?.uid);
@@ -306,9 +332,11 @@ export const exportDac7Report = onCall<ExportRequest>(COMMON, async (request) =>
   }
   const rate = Number.isFinite(request.data?.sekToEurRate) ? (request.data!.sekToEurRate as number) : DEFAULT_SEK_TO_EUR;
   const includeBelow = request.data?.includeBelowDeMinimis === true;
+  const markReported = request.data?.markReported === true;
 
   const shopsSnap = await db.collection('shops').get();
   const rows: any[] = [];
+  let markedReported = 0;
   for (const shopDoc of shopsSnap.docs) {
     const shopId = shopDoc.id;
     const shop = shopDoc.data() as any;
@@ -320,6 +348,15 @@ export const exportDac7Report = onCall<ExportRequest>(COMMON, async (request) =>
 
     const profileSnap = await db.collection('dac7Sellers').doc(shopId).get();
     const profile = profileSnap.exists ? (profileSnap.data() as any) : null;
+
+    // Transparency: when finalising, record that this REPORTABLE seller was
+    // reported for this year. De-minimis-excluded sellers are NOT reported, so
+    // they get no record (their page shows nothing).
+    if (markReported && agg.reportable) {
+      await appendReportedRecord(shopId, year, agg);
+      markedReported += 1;
+    }
+
     rows.push({
       shopId,
       shopName: shop?.storeIdentity?.shopName || shop?.name || shopId,
@@ -329,8 +366,33 @@ export const exportDac7Report = onCall<ExportRequest>(COMMON, async (request) =>
       profileComplete: isProfileComplete(profile),
     });
   }
-  return { year, sekToEurRate: rate, reportableCount: rows.filter((r) => r.aggregate.reportable).length, rows };
+  return {
+    year, sekToEurRate: rate,
+    reportableCount: rows.filter((r) => r.aggregate.reportable).length,
+    markedReported: markReported ? markedReported : undefined,
+    rows,
+  };
 });
+
+// Append (or replace, per year) a transparency record on the seller's DAC7 doc.
+// reported is an array of { year, reportedAt, activity, grossReportedSek/Eur,
+// txCountReported }. One entry per year; re-filing a year replaces it (no dupes).
+async function appendReportedRecord(shopId: string, year: number, agg: any): Promise<void> {
+  const ref = db.collection('dac7Sellers').doc(shopId);
+  const snap = await ref.get();
+  const entry = {
+    year,
+    reportedAt: new Date().toISOString(),
+    activity: 'sale_of_goods',
+    grossReportedSek: agg.grossConsiderationSek,
+    grossReportedEur: agg.grossConsiderationEur,
+    txCountReported: agg.transactionCount,
+  };
+  // Pure merge (aggregate.ts, unit-tested): replace this year, no dupes.
+  const next = mergeReportedRecord(snap.data()?.reported, entry);
+  // shopId stamped so the rules' shopId-equality holds (platform write anyway).
+  await ref.set({ shopId, reported: next }, { merge: true });
+}
 
 function isProfileComplete(p: any): boolean {
   if (!p) return false;
