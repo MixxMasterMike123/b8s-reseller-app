@@ -1,9 +1,17 @@
 # Stripe Connect — Compliance & Financial-Exposure Remediation Plan
 
-**Branch:** `feat/stripe-compliance` (off `salvage/cleanup-and-security`)
-**Status:** ✅ ALL SLICES BUILT + COMMITTED + PUSHED. ⛔ NOT DEPLOYED (awaiting explicit go; Slice E firestore.rules = hard STOP-and-surface).
+**Branch:** `feat/stripe-compliance` (off `salvage/cleanup-and-security`) — **NOT merged to main.**
+**Status:** ✅ **ALL SLICES + PUNCH-LIST DEPLOYED LIVE (2026-06-26)** — functions + hosting×3 (meteorpr/shop-meteorpr/platform-meteorpr) + firestore.rules, all byte-verified at origin; isolation gate 97/97. ⏳ Connect-dependent paths (dispute reversal, DAC7 Stripe-pull, real fee splits) await **Meteor PR AB registered as a Stripe Connect platform** before a real charge runs.
 **Scope:** turn the Stripe-review gaps into a buildable plan; implement A–F; scope (don't build) decisions 1 & 2.
-**Ground truth:** verified against HEAD at start (46d16b4), every cited file read; adversarial-verified per slice; isolation gate green (96 firestore-isolation assertions).
+**Ground truth:** verified against HEAD at start (46d16b4), every cited file read; adversarial-verified per slice; spec acceptance-criteria verified (`stripe-review-export/MD_specs/VERIFICATION_RESULTS.md` — 41 PASS / 2 PARTIAL / 0 MISSING).
+
+## 🛠️ Post-deploy fixes (2026-06-26, all live)
+- **Punch-list 09** (`962c79e`): DAC7 active transparency notification + sellerType first-class → resolved 2 of the 4 original PARTIALs (`VERIFICATION_RESULTS.md`); 2 remain in `FOLLOWUPS.md` (FU-1 identity→Stripe re-KYC; FU-2 shortfall test).
+- **🎨 Design hard-rule** (`40bc373`, `655cdd0`): PlatformDac7 was light-mode on the dark platform console (invisible); AdminMyTaxData + AdminPayments lacked `<AppLayout>` (no menu). Fixed + a blocking design gate added to working-method (match surface system + render-check).
+- **💰 Platform fee relocated** (`e2fbe70`, `19c3fad`): commission moved OFF the shop-owner page → **platform console PlatformShops "Avgift" column**, per-shop inline editor (the negotiate-down-for-a-big-artist lever). "Standard" (no override) = `settings/platform.defaultCommissionBps` ?? env ?? **code default 500bps = 5%**. No UI for the GLOBAL default yet (per-shop only).
+- **DAC7 edit-any-shop** (`19c3fad`): "Alla butiker — skatteuppgifter" section → enter a shop's tax data at onboarding regardless of sales. SSOT confirmed (platform + shop-owner read/write the same `dac7Sellers/{shopId}`); saveDac7SellerProfile now mirrors sellerType→storeIdentity.
+- **Seller-type tax labels** (`b973d6e`): Organisationsnummer/Personnummer by type; DOB only for individuals; "VAT-nummer (momsregistreringsnummer)".
+- **Table overflow** (`f08e734`): PlatformShops fleet table — `overflow-x-auto` + `max-w-7xl`.
 
 ## ✅ What shipped (commits)
 - **Slice C** (`643c0bb`) — platform-fee-on-refund flag + shared platformConfig reader (= decision 2).
@@ -12,11 +20,11 @@
 - **Slice D** (`3e3ef39`) — POD/right-of-withdrawal checkout gate (server-authoritative) + size guide + order proof.
 - **Slice E/F** (`1dfa834`) — DAC7 platform-owned seller data + pull-from-Stripe + aggregation + export + seller GDPR rights (view/rectify-contact/request-identity-correction).
 
-## ⛔ Deploy gating (needs explicit go)
-- **hosting + functions:** Slices A/B/D/E/F all add functions + client. Deploy `firebase deploy --only functions,hosting`.
-- **firestore.rules (STOP-and-surface):** Slice E adds `dac7Sellers` + `dac7CorrectionRequests` (PII isolation). Deploy `--only firestore:rules` ONLY with explicit go; gate is green.
-- **firestore.indexes:** Slice E aggregation queries `orders where shopId==X` (existing index) — verify no new composite needed at deploy.
-- **No secrets touched.** `settings/platform` flags (`refundApplicationFee`, `reverseDisputeOnCreated`) default to current behaviour; set them only when you decide.
+## ✅ Deployed (2026-06-26)
+- **functions + hosting×3 + firestore.rules** all live, bundle hash byte-matched at origin, rules == git HEAD. No new composite index needed (DAC7 query = single-field `orders where shopId==X`). No secrets touched. `settings/platform` flags (`refundApplicationFee`, `reverseDisputeOnCreated`, `defaultCommissionBps`) default to current behaviour — set them only when you decide (no global-default UI yet).
+
+## 💸 Platform fee — full chain (Platform → Shop → Checkout → Stripe → Split)
+Platform sets `shops/{id}.payments.commissionBps` (PlatformShops "Avgift" column, `setShopCommission`/requirePlatform) → checkout `createPaymentIntent` reads it → `resolveCommissionBps` = shop bps **?? platform default** → `computeApplicationFeeOre` = `floor(amount×bps/10000)` → destination charge `application_fee_amount`=platform cut + `transfer_data.destination`=shop's Stripe acct → webhook stamps `order.connect.{commissionBps,applicationFeeAmount,transferId}`. Proven by `connect-params.test.cjs`; runs only once a shop is Connect-active (else plain single-account charge, no split). Input accepts `.` or `,`.
 
 ## ⚠️ Open decisions flagged (don't block deploy, want your call)
 - **Affiliate commission on a chargeback** (Slice A §4c) — not reversed today; recommend yes via a dispute-lost signal.
