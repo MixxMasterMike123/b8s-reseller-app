@@ -13,6 +13,7 @@ export const WAGON_FEATURE_KEY = {
   'dining-wagon': 'dining',
   'campaign-wagon': 'campaigns',
   'writers-wagon': 'writers',
+  'pod-wagon': 'pod',
 };
 
 // The add-on catalog shown in the platform per-shop toggle UI. `key` matches a
@@ -27,6 +28,7 @@ export const ADDON_CATALOG = [
   { key: 'dining', label: 'Dining CRM', description: 'CRM för säljkontakter: kontakter, aktiviteter, uppföljningar och dokument.' },
   { key: 'ambassador', label: 'Ambassadörer', description: 'CRM för influencers/ambassadörer per plattform och följarnivå.' },
   { key: 'writers', label: 'AI-texter', description: 'AI-genererade produktbeskrivningar (Claude). Kräver API-nyckel.' },
+  { key: 'pod', label: 'Print on demand', description: 'Ladda upp tryckoriginal, validera mot tryckspecar och koppla dem till produkter via SKU. Tryckeriet får produktionsfiler per order.' },
 ];
 
 // Default-ON: a feature is enabled unless EXPLICITLY set to false. This keeps the
