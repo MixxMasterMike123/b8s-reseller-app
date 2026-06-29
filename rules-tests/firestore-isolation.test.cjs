@@ -134,6 +134,15 @@ async function seed() {
     // DAC7 identity-correction requests (seller asks, platform resolves).
     await setDoc(doc(db, 'dac7CorrectionRequests/reqA'), { shopId: 'shopA', field: 'taxId', requestedValue: 'x', status: 'pending', requestedBy: 'adminA' });
     await setDoc(doc(db, 'dac7CorrectionRequests/reqB'), { shopId: 'shopB', field: 'taxId', requestedValue: 'y', status: 'pending', requestedBy: 'adminB' });
+
+    // POD add-on: artwork library + SKU→artwork mappings, one per shop. Shop-scoped
+    // like campaigns. The print_shop role has NO rule branch (callable-projection
+    // model), so these prove a SHOP ADMIN cannot cross shops — the only direct-DB
+    // actor for these collections.
+    await setDoc(doc(db, 'podArtwork/artA'), { shopId: 'shopA', label: 'A logo', purpose: 'apparel_dtg', originalUrl: 'gs://x', validation: { tier: 'PASS' } });
+    await setDoc(doc(db, 'podArtwork/artB'), { shopId: 'shopB', label: 'B logo', purpose: 'apparel_dtg', originalUrl: 'gs://y', validation: { tier: 'PASS' } });
+    await setDoc(doc(db, 'podMappings/mapA'), { shopId: 'shopA', sku: 'TSHIRT-A', artworkId: 'artA', placement: 'Brost' });
+    await setDoc(doc(db, 'podMappings/mapB'), { shopId: 'shopB', sku: 'TSHIRT-B', artworkId: 'artB', placement: 'Rygg' });
   });
 }
 
@@ -368,6 +377,36 @@ async function run() {
     setDoc(doc(shopAAdminDb(), 'dac7CorrectionRequests/evilReq2'), { shopId: 'shopA', field: 'taxId', requestedValue: 'x', status: 'approved' })));
   await check('shopA admin CANNOT resolve (approve) own request', assertFails(
     updateDoc(doc(shopAAdminDb(), 'dac7CorrectionRequests/reqA'), { status: 'approved' })));
+
+  // ── POD add-on: podArtwork + podMappings are shop-scoped. The print_shop role
+  //    has NO rule branch (callable-projection model), so the only direct-DB actor
+  //    is the shop admin — these prove it can't cross shops. ──
+  console.log('\n=== POD add-on isolation ===');
+  // LEGIT (no lockout): own-shop admin can read + write own.
+  await check('shopA admin reads OWN podArtwork', assertSucceeds(getDoc(doc(shopAAdminDb(), 'podArtwork/artA'))));
+  await check('shopA admin reads OWN podMapping', assertSucceeds(getDoc(doc(shopAAdminDb(), 'podMappings/mapA'))));
+  await check('shopA admin CREATES own podArtwork', assertSucceeds(
+    setDoc(doc(shopAAdminDb(), 'podArtwork/artA2'), { shopId: 'shopA', label: 'A2', purpose: 'mug_wrap', originalUrl: 'gs://z' })));
+  await check('shopA admin CREATES own podMapping', assertSucceeds(
+    setDoc(doc(shopAAdminDb(), 'podMappings/mapA2'), { shopId: 'shopA', sku: 'MUG-A', artworkId: 'artA2', placement: 'Wrap' })));
+  await check('platform reads ANY podArtwork', assertSucceeds(getDoc(doc(platformDb(), 'podArtwork/artB'))));
+  await check('platform reads ANY podMapping', assertSucceeds(getDoc(doc(platformDb(), 'podMappings/mapB'))));
+  // DENY: cross-shop read + write on both collections.
+  await check('shopA admin CANNOT read shopB podArtwork', assertFails(getDoc(doc(shopAAdminDb(), 'podArtwork/artB'))));
+  await check('shopA admin CANNOT read shopB podMapping', assertFails(getDoc(doc(shopAAdminDb(), 'podMappings/mapB'))));
+  await check('shopA admin CANNOT update shopB podArtwork', assertFails(
+    updateDoc(doc(shopAAdminDb(), 'podArtwork/artB'), { label: 'hacked' })));
+  await check('shopA admin CANNOT delete shopB podArtwork', assertFails(deleteDoc(doc(shopAAdminDb(), 'podArtwork/artB'))));
+  await check('shopA admin CANNOT update shopB podMapping', assertFails(
+    updateDoc(doc(shopAAdminDb(), 'podMappings/mapB'), { placement: 'hacked' })));
+  await check('shopA admin CANNOT delete shopB podMapping', assertFails(deleteDoc(doc(shopAAdminDb(), 'podMappings/mapB'))));
+  await check('shopA admin CANNOT create podArtwork UNDER shopB (forged shopId)', assertFails(
+    setDoc(doc(shopAAdminDb(), 'podArtwork/evilB'), { shopId: 'shopB', label: 'evil', originalUrl: 'gs://e' })));
+  await check('shopA admin CANNOT create podMapping UNDER shopB (forged shopId)', assertFails(
+    setDoc(doc(shopAAdminDb(), 'podMappings/evilMapB'), { shopId: 'shopB', sku: 'X', artworkId: 'artB' })));
+  // A plain customer must not touch POD config at all.
+  await check('plain customer CANNOT read podArtwork', assertFails(getDoc(doc(customerDb('custA'), 'podArtwork/artA'))));
+  await check('plain customer CANNOT read podMapping', assertFails(getDoc(doc(customerDb('custA'), 'podMappings/mapA'))));
 
   console.log(`\n=== RESULT: ${passed} passed, ${failed} failed ===`);
   await env.cleanup();
