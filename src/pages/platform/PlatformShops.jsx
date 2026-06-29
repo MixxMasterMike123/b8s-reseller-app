@@ -11,6 +11,7 @@ import PlatformLayout from '../../components/platform/PlatformLayout';
 import ProvisionShopModal from '../../components/platform/ProvisionShopModal';
 import ImpersonateShopModal from '../../components/platform/ImpersonateShopModal';
 import AddShopUserModal from '../../components/platform/AddShopUserModal';
+import { getLegalReadiness } from '../../utils/legalPageReadiness';
 import toast from 'react-hot-toast';
 import {
   BuildingStorefrontIcon,
@@ -146,6 +147,7 @@ const PlatformShops = () => {
                   <th className="px-5 py-3">Status</th>
                   <th className="px-5 py-3">Betalningar</th>
                   <th className="px-5 py-3">Avgift</th>
+                  <th className="px-5 py-3">Juridik</th>
                   <th className="px-5 py-3 text-right">Produkter</th>
                   <th className="px-5 py-3 text-right">Ordrar</th>
                   <th className="px-5 py-3 text-right">Kunder</th>
@@ -191,6 +193,9 @@ const PlatformShops = () => {
                       <td className="px-5 py-4">
                         <CommissionCell shop={shop} onSaved={(bps) => setShops((prev) => prev.map((s) =>
                           s.id === shop.id ? { ...s, payments: { ...(s.payments || {}), commissionBps: bps } } : s))} />
+                      </td>
+                      <td className="px-5 py-4">
+                        <LegalCell shop={shop} />
                       </td>
                       <td className="px-5 py-4 text-right tabular-nums text-gray-300">{shop.counts?.products ?? '–'}</td>
                       <td className="px-5 py-4 text-right tabular-nums text-gray-300">{shop.counts?.orders ?? '–'}</td>
@@ -277,6 +282,31 @@ const PlatformShops = () => {
         />
       )}
     </PlatformLayout>
+  );
+};
+
+// Legal-pages readiness for the operator. Reads the same gate the seller's
+// AdminSettings + the storefront use (legalPageReadiness.js) against the shop's
+// stored storeIdentity, so the operator sees at a glance whether a shop's
+// auto-generated legal pages are publishable (return address + VAT status set).
+// No extra fetch: storeIdentity already rides on the shop doc loaded above.
+// DARK platform design: emerald = ready, amber = incomplete (mirrors connectLabel).
+const LegalCell = ({ shop }) => {
+  const { ready, blockers } = getLegalReadiness(shop.storeIdentity || {});
+  if (ready) {
+    return (
+      <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-500/15 text-green-300">
+        Klar
+      </span>
+    );
+  }
+  return (
+    <span
+      title={blockers.map((b) => b.label).join('\n')}
+      className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-500/15 text-amber-300"
+    >
+      Ofullständig ({blockers.length})
+    </span>
   );
 };
 

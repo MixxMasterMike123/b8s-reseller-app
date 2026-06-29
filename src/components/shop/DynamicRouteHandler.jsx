@@ -4,6 +4,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useShopId } from '../../contexts/ShopContext';
 import DynamicPage from '../../pages/shop/DynamicPage';
+import { isLegalSlug } from '../../config/legalTemplates';
 
 /**
  * Handles dynamic routing for B2C shop
@@ -27,6 +28,18 @@ const DynamicRouteHandler = ({ children }) => {
       }
 
       const slugPath = pathSegments.slice(1).join('/');
+
+      // Auto-generated legal pages (köpvillkor, ångerrätt & returer,
+      // integritetspolicy) ALWAYS render — even with no CMS page in Firestore —
+      // because their default content is generated from shop data. A CMS page on
+      // the same slug only ADDS appended content (handled in DynamicPage). So we
+      // flag these as CMS pages here regardless of the Firestore lookup below.
+      if (isLegalSlug(slugPath)) {
+        setIsCmsPage(true);
+        setCmsSlug(slugPath);
+        setLoading(false);
+        return;
+      }
 
       // Skip if it's a known (non-CMS) route
       const knownRoutes = [

@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { STORE } from '../../config/store';
 import { loadShopConfig, saveShopConfig } from '../../config/shopConfig';
 import { useShopId } from '../../contexts/ShopContext';
+import { getLegalReadiness } from '../../utils/legalPageReadiness';
 import PickupLocationsEditor from '../../components/admin/PickupLocationsEditor';
 import {
   Page,
@@ -64,6 +65,10 @@ const AdminSettings = () => {
   }, [storeForm, shopId]);
 
 
+
+  // Live legal-page readiness, recomputed from the in-progress form so the
+  // banner updates as the seller fills in the return address / VAT status.
+  const legalReadiness = getLegalReadiness(storeForm);
 
   const labelCls = 'block text-[13px] font-medium text-admin-text mb-1';
   const inputCls =
@@ -284,6 +289,92 @@ const AdminSettings = () => {
                   <p className="mt-1 text-[12px] text-admin-text-muted">
                     Visas i kassan när kunden köper en specialtillverkad produkt. Kunden måste kryssa i en ruta innan betalning.
                   </p>
+                </div>
+
+                {/* Juridik & moms — feeds the auto-genererade juridiska sidorna
+                    (köpvillkor, ångerrätt & returer, integritetspolicy). Returadress
+                    + momsregistrering är HÅRDA krav innan sidorna får publiceras på
+                    en skarp butik (legalPageReadiness.js). */}
+                <div className="border-t border-admin-border pt-5">
+                  <h4 className="mb-1 text-[13px] font-semibold text-admin-text">
+                    Juridik &amp; moms (för automatiska juridiska sidor)
+                  </h4>
+                  <p className="mb-3 text-[12px] text-admin-text-muted">
+                    Dessa uppgifter fyller i butikens juridiska sidor automatiskt: köpvillkor,
+                    ångerrätt &amp; returer och integritetspolicy. Returadress och momsstatus måste
+                    anges innan sidorna kan publiceras på en skarp butik.
+                  </p>
+
+                  {/* Readiness banner — clear "legal pages incomplete" state. */}
+                  {legalReadiness.ready ? (
+                    <div className="mb-4 rounded-[var(--radius-admin-el)] border border-emerald-300 bg-emerald-50 px-3 py-2 text-[12px] text-emerald-800">
+                      ✓ Juridiska sidor är kompletta och kan publiceras.
+                    </div>
+                  ) : (
+                    <div className="mb-4 rounded-[var(--radius-admin-el)] border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] text-amber-800">
+                      <p className="font-medium">⚠️ Juridiska sidor är inte kompletta — visas inte på butiken förrän följande är åtgärdat:</p>
+                      <ul className="mt-1 list-disc pl-5">
+                        {legalReadiness.blockers.map((b) => (
+                          <li key={b.key}>{b.label}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className={labelCls}>Momsregistrerad?</label>
+                      <select
+                        value={
+                          storeForm.vatRegistered === true ? 'yes'
+                          : storeForm.vatRegistered === false ? 'no'
+                          : ''
+                        }
+                        onChange={(e) => setStoreForm(prev => ({
+                          ...prev,
+                          vatRegistered: e.target.value === 'yes' ? true
+                            : e.target.value === 'no' ? false
+                            : null,
+                        }))}
+                        className={inputCls}
+                      >
+                        <option value="">Ej angivet</option>
+                        <option value="yes">Ja – momsregistrerad (priser inkl. moms)</option>
+                        <option value="no">Nej – ej momsregistrerad (ingen moms tillkommer)</option>
+                      </select>
+                      <p className={helpCls}>
+                        Styr momstexten på de juridiska sidorna. Måste matcha vad kassan faktiskt tar ut.
+                      </p>
+                    </div>
+
+                    {storeForm.vatRegistered === true && (
+                      <div>
+                        <label className={labelCls}>Momsregistreringsnummer</label>
+                        <input
+                          type="text"
+                          value={storeForm.vatNumber ?? ''}
+                          placeholder="T.ex. SE556677889901"
+                          onChange={(e) => setStoreForm(prev => ({ ...prev, vatNumber: e.target.value }))}
+                          className={inputCls}
+                        />
+                      </div>
+                    )}
+
+                    <div className="md:col-span-2">
+                      <label className={labelCls}>Returadress (krävs)</label>
+                      <textarea
+                        rows={3}
+                        value={storeForm.returnAddress ?? ''}
+                        placeholder={'Mottagarens namn\nGatuadress\nPostnummer Ort'}
+                        onChange={(e) => setStoreForm(prev => ({ ...prev, returnAddress: e.target.value }))}
+                        className={inputCls}
+                      />
+                      <p className={helpCls}>
+                        Adressen dit kunder skickar returer. Visas i köpvillkoren och på sidan
+                        "Ångerrätt &amp; returer".
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex justify-end border-t border-admin-border pt-4">

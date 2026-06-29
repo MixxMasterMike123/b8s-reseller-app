@@ -123,7 +123,7 @@ const ShopFooter = () => {
                 </Link>
               </li>
               <li>
-                <Link to={getCountryAwareUrl('legal/returpolicy')} className="text-white/70 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('legal/angerratt-och-returer')} className="text-white/70 hover:text-white transition-colors">
                   {t('footer_returns', 'Returer & Ångerrätt')}
                 </Link>
               </li>
@@ -172,13 +172,20 @@ const ShopFooter = () => {
             </ul>
           </div>
 
-          {/* Legal & Compliance */}
+          {/* Legal & Compliance — the three auto-generated per-shop legal pages
+              (köpvillkor, ångerrätt & returer, integritetspolicy) + cookie-policy.
+              Slugs MUST match src/config/legalTemplates.js LEGAL_SLUGS. */}
           <div>
             <h3 className="font-display text-lg font-bold mb-4 tracking-tight">{t('footer_legal', 'Juridiskt')}</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to={getCountryAwareUrl('legal/anvandarvillkor')} className="text-white/70 hover:text-white transition-colors">
-                  {t('footer_terms', 'Användarvillkor')}
+                <Link to={getCountryAwareUrl('legal/kopvillkor')} className="text-white/70 hover:text-white transition-colors">
+                  {t('footer_terms_of_sale', 'Köpvillkor')}
+                </Link>
+              </li>
+              <li>
+                <Link to={getCountryAwareUrl('legal/angerratt-och-returer')} className="text-white/70 hover:text-white transition-colors">
+                  {t('footer_withdrawal_returns', 'Ångerrätt & returer')}
                 </Link>
               </li>
               <li>
@@ -186,16 +193,8 @@ const ShopFooter = () => {
                   {t('footer_privacy', 'Integritetspolicy')}
                 </Link>
               </li>
-              <li>
-                <Link to={getCountryAwareUrl('legal/cookie-policy')} className="text-white/70 hover:text-white transition-colors">
-                  {t('footer_cookies', 'Cookie-policy')}
-                </Link>
-              </li>
-              <li>
-                <Link to={getCountryAwareUrl('legal/returpolicy')} className="text-white/70 hover:text-white transition-colors">
-                  {t('footer_return_policy', 'Returpolicy')}
-                </Link>
-              </li>
+              {/* Cookie info lives in the privacy policy (§9) + the Cookiebot CMP;
+                  no separate auto-page yet, so no standalone link (avoids a dead link). */}
             </ul>
           </div>
         </div>

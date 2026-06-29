@@ -1010,7 +1010,7 @@ const Checkout = () => {
 
                   <p className="text-xs text-center text-ink-faint mt-4">
                     {t('checkout_terms_agreement', 'Genom att slutföra beställningen godkänner du våra')}{' '}
-                                    <a href={getCountryAwareUrl('legal/anvandarvillkor')} className="text-accent hover:underline">{t('checkout_terms_link', 'villkor')}</a>{' '}
+                                    <a href={getCountryAwareUrl('legal/kopvillkor')} className="text-accent hover:underline">{t('checkout_terms_link', 'villkor')}</a>{' '}
                 {t('checkout_terms_and', 'och')}{' '}
                 <a href={getCountryAwareUrl('legal/integritetspolicy')} className="text-accent hover:underline">{t('checkout_privacy_link', 'integritetspolicy')}</a>.
                   </p>

@@ -13,6 +13,10 @@ import { formatFileSize, getFileTypeInfo } from '../../utils/fileUpload';
 import { getLegalSeoTitle, getLegalSeoDescription } from '../../utils/productUrls';
 import { Helmet } from 'react-helmet-async';
 import DOMPurify from 'dompurify';
+import { isLegalSlug, LEGAL_PAGES } from '../../config/legalTemplates';
+import { renderLegalPage } from '../../utils/legalPageRenderer';
+import { getLegalReadiness } from '../../utils/legalPageReadiness';
+import { loadShopConfig } from '../../config/shopConfig';
 
 const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => {
   const { slug: paramSlug } = useParams();
@@ -57,6 +61,32 @@ const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => 
   const [page, setPage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Auto-generated legal page state. When the slug is one of the three legal
+  // pages, we render the generated HTML from shop data (always, even with no CMS
+  // page). `legalReady` gates whether the page is treated as live. A CMS page on
+  // the same slug, if any, is APPENDED below the locked legal block (seller can
+  // add, not remove the mandatory text).
+  const isLegal = isLegalSlug(slug);
+  const [legal, setLegal] = useState(null); // { title, html, ready }
+
+  useEffect(() => {
+    if (!isLegal) { setLegal(null); return; }
+    let cancelled = false;
+    (async () => {
+      let identity = {};
+      try {
+        identity = (await loadShopConfig(shopId)) || {};
+      } catch (e) {
+        console.warn('DynamicPage: could not load shop config for legal page:', e?.message);
+      }
+      if (cancelled) return;
+      const rendered = renderLegalPage(slug, identity);
+      const readiness = getLegalReadiness(identity);
+      setLegal(rendered ? { ...rendered, ready: readiness.ready, blockers: readiness.blockers } : null);
+    })();
+    return () => { cancelled = true; };
+  }, [isLegal, slug, shopId]);
 
   useEffect(() => {
     const fetchPage = async () => {
@@ -115,7 +145,8 @@ const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => 
     }
   }, [page, getContentValue]);
 
-  if (loading) {
+  // On legal slugs also wait for the generated content to be ready.
+  if (loading || (isLegal && !legal)) {
     return (
       <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
         <ShopNavigation />
@@ -130,6 +161,67 @@ const DynamicPage = ({ slug: propSlug, isCmsPage = false, children = null }) => 
   // If not a CMS page, render children (fallback to existing routes)
   if (!isCmsPage) {
     return children;
+  }
+
+  // AUTO-GENERATED LEGAL PAGE. Renders the mandatory legal block from shop data
+  // ALWAYS (even with no CMS page). Any published CMS page on the same slug is
+  // APPENDED below as the seller's extra content — it can ADD, never REMOVE the
+  // mandatory legal text above. SEO/title come from the legal template.
+  if (isLegal && legal) {
+    // Optional seller-appended content (only if a published CMS page exists).
+    const appended = page ? (getContentValue(page.content) || '') : '';
+    const pageType = LEGAL_PAGES[slug]?.pageType || 'privacy';
+    return (
+      <>
+        <Helmet>
+          <title>{getLegalSeoTitle(pageType)}</title>
+          <meta name="description" content={getLegalSeoDescription(pageType)} />
+          <meta property="og:type" content="website" />
+          <meta property="og:title" content={getLegalSeoTitle(pageType)} />
+          <meta property="og:description" content={getLegalSeoDescription(pageType)} />
+          <meta property="og:url" content={window.location.href} />
+          {/* Until a shop completes the legal data, keep the auto-pages out of
+              search indexes — they aren't truthful yet (return address / VAT). */}
+          {!legal.ready && <meta name="robots" content="noindex" />}
+        </Helmet>
+        <div className="min-h-screen bg-canvas">
+          <ShopNavigation />
+          <div className="bg-white shadow-xs border-b border-ink/5">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <div className="max-w-4xl mx-auto">
+                <h1 className="font-display text-4xl font-bold text-ink mb-2 tracking-tight">
+                  {legal.title}
+                </h1>
+                <p className="text-sm text-ink/50">
+                  {t('last_updated', 'Senast uppdaterad')}: {new Date().toLocaleDateString('sv-SE')}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto space-y-6">
+              {/* Mandatory legal block — generated, sanitized, NOT seller-editable. */}
+              <div className="bg-white rounded-tile shadow-xs border border-ink/5 p-8">
+                <div
+                  className="prose prose-lg max-w-none prose-headings:font-display prose-headings:text-ink prose-headings:tracking-tight prose-p:text-ink/80 prose-a:text-accent prose-strong:text-ink prose-li:text-ink/80"
+                  dangerouslySetInnerHTML={{ __html: legal.html }}
+                />
+              </div>
+              {/* Seller's appended extra content, if any (added via CMS). */}
+              {appended && appended.startsWith('<') && (
+                <div className="bg-white rounded-tile shadow-xs border border-ink/5 p-8">
+                  <div
+                    className="prose prose-lg max-w-none prose-headings:font-display prose-headings:text-ink prose-p:text-ink/80 prose-a:text-accent"
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(appended) }}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+          <ShopFooter />
+        </div>
+      </>
+    );
   }
 
   if (error || !page) {

@@ -51,11 +51,25 @@ export const STORE = {
   // HTML allowed (rendered via dangerouslySetInnerHTML in the footer).
   address: 'My Company<br>123 Main Street<br>City',
 
+  // Return address shown to the customer in the legal pages (köpvillkor §8 +
+  // ångerrätt page). HARD-REQUIRED before the auto-generated legal pages may go
+  // live on a real shop (see legalPageReadiness.js). Empty = not yet collected.
+  returnAddress: '',
+
   // Footer company / legal info. Rendered DIRECTLY (not via the translation
   // layer) so saved translations can't override per-shop identity.
   companyDescription: 'Quality products, delivered.',
   orgNumber: '',   // e.g. company/VAT registration number; empty hides the line
   businessInfo: '', // e.g. 'Registered for VAT'; empty hides the line
+  // VAT registration — drives the [[IF vat_registered]] branch in the legal
+  // pages AND must match what checkout charges. THREE states on purpose:
+  //   null  = not yet decided (legal pages NOT ready to go live — see the gate),
+  //   true  = registered (prices incl. moms; VAT shown on receipt),
+  //   false = below threshold / not registered (no VAT added).
+  // NOT inferred from sellerType: a company can be under threshold, an
+  // individual over it (docs/legal-template-files/README.md).
+  vatRegistered: null, // null | true | false
+  vatNumber: '',  // momsreg.nr; disclosed in legal pages only when vatRegistered === true
   // Seller type: a first-class shop attribute (individual privatperson vs
   // company). Drives the contract track + consumer-protection handling + UI,
   // beyond DAC7. Populated from Stripe `business_type` at the DAC7 pull, or set
