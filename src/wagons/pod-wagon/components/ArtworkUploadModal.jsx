@@ -138,6 +138,11 @@ const ArtworkUploadModal = ({ shopId, onClose, onCreated }) => {
           </button>
         </div>
 
+        {/* Provisional-spec note: validation is advisory + the profiles are placeholders. */}
+        <p className="mb-3 text-[12px] text-admin-text-faint">
+          Valideringen är vägledande och trycksparametrarna är preliminära – verifiera med tryckeriet.
+        </p>
+
         {profiles.length === 0 ? (
           <p className="text-[13px] text-admin-text-muted">
             Inga tryckprofiler hittades. Be plattformen att köra seed-pod-profiles innan du laddar upp.
