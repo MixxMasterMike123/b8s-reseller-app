@@ -474,6 +474,34 @@ service cloud.firestore {
     }
 
     // ============================================================
+    // POD (Print on Demand) add-on — shop-scoped (one add-on among many).
+    // ============================================================
+    // podArtwork — the seller's print-artwork library (original + web preview URLs
+    // + validation verdict). Shop-scoped exactly like campaigns/marketingMaterials.
+    // Platform read is allowed so platform tooling / the print-shop CALLABLE (which
+    // runs with Admin SDK, not as the print_shop user) can resolve artwork by id.
+    // There is intentionally NO print_shop role branch here — the print_shop role
+    // gets ZERO direct DB access; it reads production data only through scoped
+    // callables (a whole-doc read can't be field-limited). Originals are the
+    // seller's IP, so read is NOT public (unlike products/branding images).
+    match /podArtwork/{artworkId} {
+      allow read: if isPlatform() || isAdminOfShop(resource.data.shopId);
+      allow create: if isAdminOfShop(request.resource.data.shopId);
+      allow update, delete: if isAdminOfShop(resource.data.shopId);
+    }
+
+    // podMappings — the SKU → artwork mapping (shopId+sku → artworkId + placement).
+    // The order↔artwork bridge: the print-shop callable joins order.items[].sku to
+    // this (scoped to the order's shop) to find the right original. Products are a
+    // SEPARATE entity — this never touches products/{id}. Platform read for the
+    // callable join; same NO-print_shop-branch reasoning as podArtwork.
+    match /podMappings/{mappingId} {
+      allow read: if isPlatform() || isAdminOfShop(resource.data.shopId);
+      allow create: if isAdminOfShop(request.resource.data.shopId);
+      allow update, delete: if isAdminOfShop(resource.data.shopId);
+    }
+
+    // ============================================================
     // B2B / admin tooling — NOT shop-scoped (platform/global admin surface)
     // ============================================================
     match /userWagonSettings/{userId} {
