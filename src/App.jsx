@@ -27,10 +27,14 @@ import CookiebotCMP from './components/shop/CookiebotCMP';
 import PrivateRoute from './components/auth/PrivateRoute';
 import AdminRoute from './components/auth/AdminRoute';
 import PlatformRoute from './components/auth/PlatformRoute';
+import PrintShopRoute from './components/auth/PrintShopRoute';
+import PrintShopQueue from './pages/print/PrintShopQueue';
+import PrintShopOrderDetail from './pages/print/PrintShopOrderDetail';
 import ImpersonationIntake from './components/auth/ImpersonationIntake';
 import PlatformShops from './pages/platform/PlatformShops';
 import PlatformAddons from './pages/platform/PlatformAddons';
 import PlatformDac7 from './pages/platform/PlatformDac7';
+import PlatformPrinters from './pages/platform/PlatformPrinters';
 import LoginPage from './pages/LoginPage';
 import LandingPage from './pages/LandingPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -171,9 +175,18 @@ function App() {
   // a separate, siloed surface from shop admin. (See docs/PLATFORM_ARCHITECTURE.md)
   const isPlatformSubdomain = subdomain === 'platform' || subdomain.startsWith('platform-');
 
-  // Three siloed surfaces: 'platform' (operator), 'shop' (storefront), 'admin'
-  // (shop admin — the default for any non-shop, non-platform host).
-  const appMode = isPlatformSubdomain ? 'platform' : (isShopSubdomain ? 'shop' : 'admin');
+  // Print-shop portal — its own subdomain (print.* / print-*). The POD add-on's
+  // external-printer surface, siloed from shop/admin/platform. The role has NO
+  // direct DB access; the pages call scoped print callables.
+  const isPrintSubdomain = subdomain === 'print' || subdomain.startsWith('print-');
+
+  // Four siloed surfaces: 'platform' (operator), 'print' (external printer),
+  // 'shop' (storefront), 'admin' (shop admin — the default host).
+  const appMode = isPlatformSubdomain
+    ? 'platform'
+    : isPrintSubdomain
+    ? 'print'
+    : (isShopSubdomain ? 'shop' : 'admin');
 
   // 🚂 WAGON SYSTEM: Auto-discover all wagons (ONLY CONNECTION POINT NEEDED!)
   useEffect(() => {
@@ -241,6 +254,24 @@ function App() {
               } />
               <Route path="/dac7" element={
                 <PlatformRoute><PlatformDac7 /></PlatformRoute>
+              } />
+              <Route path="/printers" element={
+                <PlatformRoute><PlatformPrinters /></PlatformRoute>
+              } />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </>
+          ) : appMode === 'print' ? (
+            // Print-shop portal — its own siloed surface (print.* subdomain). The
+            // print_shop role; pages call scoped print callables (zero direct DB
+            // access). Gated by PrintShopRoute (UI) + the callables (enforcement).
+            <>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/__/auth/action" element={<EmailVerificationHandler />} />
+              <Route path="/" element={
+                <PrintShopRoute><PrintShopQueue /></PrintShopRoute>
+              } />
+              <Route path="/orders/:orderId" element={
+                <PrintShopRoute><PrintShopOrderDetail /></PrintShopRoute>
               } />
               <Route path="*" element={<Navigate to="/" replace />} />
             </>

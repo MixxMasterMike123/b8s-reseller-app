@@ -13,6 +13,9 @@
         ],
         "platform": [
           "platform-meteorpr"
+        ],
+        "print": [
+          "print-meteorpr"
         ]
       }
     }

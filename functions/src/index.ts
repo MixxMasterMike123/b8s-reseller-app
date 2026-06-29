@@ -194,6 +194,16 @@ export {
   scrapeWebsiteMeta as scrapeWebsiteMetaV2
 };
 
+// POD print-shop callables (callable-projection model — the print_shop role has NO
+// direct DB/Storage access; these enforce scope off the live user doc + return
+// production-scoped data + signed URLs). createPrintShopUser is platform-only.
+export {
+  getPrintQueue,
+  getPrintJob,
+  getPrintQueueExport,
+  createPrintShopUser,
+} from './print/functions';
+
 // Re-export orchestrator functions with V2 aliases for backward compatibility
 export { confirmPasswordReset as confirmPasswordResetV2 };
 
