@@ -12,6 +12,7 @@ import { httpsCallable, getFunctions } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
+import OrderWithdrawal from '../../components/shop/OrderWithdrawal';
 import CustomerLogin from './CustomerLogin';
 import LoaderOverlay from '../../components/LoaderOverlay';
 import { 
@@ -656,6 +657,13 @@ const CustomerAccount = () => {
                           </div>
                         </div>
                       )}
+
+                      {/* Ångerfunktion — consumer right-of-withdrawal function
+                          (DAL 2 kap. 10 a § / CRD Art. 11a). Surfaces "Ångra köp"
+                          for standard orders, the durable mottagningsbevis once
+                          withdrawn, or the no-withdrawal notice for personalised
+                          (POD) orders. Server (submitWithdrawal) is the SSOT. */}
+                      <OrderWithdrawal order={order} shopId={shopId} />
                     </div>
                   ))}
                 </div>

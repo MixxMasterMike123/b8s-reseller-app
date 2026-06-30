@@ -204,6 +204,12 @@ export {
   createPrintShopUser,
 } from './print/functions';
 
+// Ångerfunktion — consumer right-of-withdrawal function (DAL 2 kap. 10 a § /
+// CRD Art. 11a, in force 19 June 2026). Server-authoritative: stamps the
+// submission time, enforces eligibility (Regime A applies / Regime B exempt),
+// persists a durable acknowledgement of receipt. See memory angerratt_pod.md.
+export { submitWithdrawal } from './withdrawal/functions';
+
 // Re-export orchestrator functions with V2 aliases for backward compatibility
 export { confirmPasswordReset as confirmPasswordResetV2 };
 
