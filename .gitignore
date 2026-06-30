@@ -154,3 +154,6 @@ public/service-account.json
 service-account.json
 functions/merchant-service-account.json
 .gstack/
+
+# Firecrawl local scrape cache (firecrawl scrape/crawl write here)
+.firecrawl/
