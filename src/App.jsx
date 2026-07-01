@@ -88,7 +88,6 @@ import DynamicRouteHandler from './components/shop/DynamicRouteHandler';
 import { DEFAULT_SHOP_ID } from './config/tenancy';
 
 // Legal & Compliance Pages (now handled by CMS)
-import ShippingInfo from './pages/shop/ShippingInfo';
 
 // Dynamic CMS Pages
 import DynamicPage from './pages/shop/DynamicPage';

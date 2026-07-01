@@ -7,7 +7,7 @@ import { db, auth } from '../../firebase/config';
 
 // Initialize Firebase Functions
 const functions = getFunctions();
-import { useCart } from '../../contexts/CartContext';
+import { useCart, cartStorageKey } from '../../contexts/CartContext';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useContentTranslation } from '../../hooks/useContentTranslation';
@@ -141,7 +141,7 @@ const Checkout = () => {
   const [showDebug, setShowDebug] = useState(false);
   const debugAffiliateStatus = () => {
     const affiliateRef = localStorage.getItem('b8s_affiliate_ref');
-    const cartData = localStorage.getItem('b8shield_cart');
+    const cartData = localStorage.getItem(cartStorageKey(shopId));
     
     return {
       localStorage: affiliateRef ? JSON.parse(affiliateRef) : null,
@@ -267,6 +267,13 @@ const Checkout = () => {
       case 'contact':
         if (!contactInfo.email || !contactInfo.email.includes('@')) {
           toast.error(t('checkout_invalid_email', 'Vänligen ange en giltig e-postadress.'));
+          return false;
+        }
+        // Optional account password: if the guest chose to set one, enforce the
+        // same minimum as CustomerRegister (6+ chars) — otherwise a one-char
+        // password creates a weak account on the fly.
+        if (contactInfo.password && contactInfo.password.trim().length > 0 && contactInfo.password.trim().length < 6) {
+          toast.error(t('checkout_password_too_short', 'Lösenordet måste vara minst 6 tecken (eller lämna fältet tomt för att handla utan konto).'));
           return false;
         }
         return true;

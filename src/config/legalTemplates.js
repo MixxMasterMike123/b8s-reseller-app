@@ -45,7 +45,13 @@ export const MERGE_FIELDS = {
   vat_number: { source: 'storeIdentity.vatNumber', vatRegisteredOnly: true },
   return_address: { source: 'storeIdentity.returnAddress', required: true },
   platform_legal_name: { source: 'PLATFORM.legalName' },
-  platform_org_number: { source: 'PLATFORM.orgNumber' },
+  // Renders " (org.nr NNNNNN-NNNN)" when PLATFORM.orgNumber is set, else '' —
+  // so an unregistered platform never prints a broken "(org.nr )" in live text.
+  platform_org_suffix: { source: 'PLATFORM.orgNumber' },
+  // Optional extra bullet "\n- Telefon: …" appended after the e-post line when
+  // storeIdentity.phone is set (Konsumentverket lists phone among trader
+  // contact info); empty string when unset so the list stays intact.
+  seller_phone_item: { source: 'storeIdentity.phone' },
   last_updated: { source: 'render time' },
 };
 
@@ -65,15 +71,15 @@ Säljare och din avtalspart för köp i denna webbshop är:
 - Organisationsnummer: {{org_number}}
 [[IF vat_registered]]- Momsregistreringsnummer: {{vat_number}}[[END]]
 - Adress: {{seller_address}}
-- E-post: {{contact_email}}
+- E-post: {{contact_email}}{{seller_phone_item}}
 [[ELSE]]
 - {{seller_legal_name}}
 - Adress: {{seller_address}}
-- E-post: {{contact_email}}
+- E-post: {{contact_email}}{{seller_phone_item}}
 [[END]]
 
-Webbshoppen drivs på en teknisk plattform som tillhandahålls av {{platform_legal_name}}
-(org.nr {{platform_org_number}}). Plattformen är endast teknisk leverantör och är inte säljare,
+Webbshoppen drivs på en teknisk plattform som tillhandahålls av
+{{platform_legal_name}}{{platform_org_suffix}}. Plattformen är endast teknisk leverantör och är inte säljare,
 avtalspart eller ansvarig för köpet. Allt ansvar för varorna, leveransen och kundrelationen
 ligger hos säljaren ovan.
 
@@ -284,15 +290,15 @@ Personuppgiftsansvarig för behandlingen av dina personuppgifter i denna webbsho
 [[IF company]]
 - {{seller_legal_name}}, org.nr {{org_number}}
 - Adress: {{seller_address}}
-- E-post: {{contact_email}}
+- E-post: {{contact_email}}{{seller_phone_item}}
 [[ELSE]]
 - {{seller_legal_name}}
 - Adress: {{seller_address}}
-- E-post: {{contact_email}}
+- E-post: {{contact_email}}{{seller_phone_item}}
 [[END]]
 
-Webbshoppen drivs på en teknisk plattform som tillhandahålls av {{platform_legal_name}}
-(org.nr {{platform_org_number}}). Plattformen behandlar personuppgifter för säljarens räkning som
+Webbshoppen drivs på en teknisk plattform som tillhandahålls av
+{{platform_legal_name}}{{platform_org_suffix}}. Plattformen behandlar personuppgifter för säljarens räkning som
 personuppgiftsbiträde, enligt ett personuppgiftsbiträdesavtal.
 
 ## 2. Vilka personuppgifter vi behandlar

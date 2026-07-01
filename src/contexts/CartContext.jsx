@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { httpsCallable, getFunctions } from 'firebase/functions';
 import { normalizeAffiliateCode } from '../utils/affiliateCalculations';
 import { getProductImage } from '../utils/productImages';
@@ -16,6 +16,31 @@ export const SHIPPING_COSTS = {
   INTERNATIONAL: {
     cost: 59,
     label: 'Internationellt'
+  }
+};
+
+// Cart persistence is PER SHOP: every storefront shares one origin
+// (shop-meteorpr.web.app/{shopId}), so a shop-agnostic localStorage key would
+// leak one shop's cart into another shop's checkout. Exported so the two other
+// direct cart-storage touchpoints (AffiliateTracker discount-clear, Checkout
+// debug panel) key the same way.
+export const cartStorageKey = (shopId) => `b8shield_cart_${shopId || 'default'}`;
+
+const emptyCart = () => ({
+  items: [],
+  shippingCountry: 'SE',
+  discountCode: null,
+  discountAmount: 0,
+  discountPercentage: 0,
+  affiliateClickId: null,
+});
+
+export const loadStoredCart = (shopId) => {
+  try {
+    const saved = localStorage.getItem(cartStorageKey(shopId));
+    return saved ? JSON.parse(saved) : emptyCart();
+  } catch {
+    return emptyCart();
   }
 };
 
@@ -39,18 +64,12 @@ export const CartProvider = ({ children }) => {
   // to validateDiscountCode so the affiliate-code lookup is scoped to this shop
   // (tenant isolation — codes are unique only within a shop).
   const shopId = useShopId();
-  const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem('b8shield_cart');
-    const initialCart = savedCart ? JSON.parse(savedCart) : { 
-      items: [], 
-      shippingCountry: 'SE',
-      discountCode: null,
-      discountAmount: 0,
-      discountPercentage: 0,
-      affiliateClickId: null,
-    };
-    return initialCart;
-  });
+  const [cart, setCart] = useState(() => loadStoredCart(shopId));
+  // Which shop the in-memory cart belongs to. On an in-SPA navigation to a
+  // DIFFERENT shop we swap state to that shop's saved cart; the ref gates the
+  // save effect during the swap so shop A's cart is never written under shop
+  // B's key (see effect ordering below).
+  const cartShopRef = useRef(shopId);
 
   // Modal state for "Added to Cart" modal
   const [isAddedToCartModalVisible, setIsAddedToCartModalVisible] = useState(false);
@@ -116,9 +135,30 @@ export const CartProvider = ({ children }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cartAllowsHome, cartAllowsPickup, hasDeliveryConflict, deliveryMethod, cart.items.length]);
 
+  // Persist the cart under the ACTIVE shop's key. Declared BEFORE the shop-swap
+  // effect on purpose: when shopId changes, this runs first in the same commit
+  // with the ref still pointing at the OLD shop → the guard skips the write, so
+  // the old cart can't land under the new shop's key. The swap effect then
+  // updates the ref + loads the new shop's cart; the follow-up render re-saves
+  // it to its own key (harmless no-op).
   useEffect(() => {
-    localStorage.setItem('b8shield_cart', JSON.stringify(cart));
-  }, [cart]);
+    if (cartShopRef.current !== shopId) return;
+    localStorage.setItem(cartStorageKey(shopId), JSON.stringify(cart));
+  }, [cart, shopId]);
+
+  // Swap cart state when the active shop changes (per-shop cart isolation).
+  useEffect(() => {
+    if (cartShopRef.current === shopId) return;
+    cartShopRef.current = shopId;
+    setCart(loadStoredCart(shopId));
+  }, [shopId]);
+
+  // One-time cleanup of the pre-fix shop-agnostic key. Intentionally NOT
+  // migrated: a legacy cart can't be attributed to a shop, and mis-assigning it
+  // would recreate the exact cross-shop leak this keying closes.
+  useEffect(() => {
+    localStorage.removeItem('b8shield_cart');
+  }, []);
 
   // Effect to auto-apply affiliate discount and recalculate on cart changes
   useEffect(() => {

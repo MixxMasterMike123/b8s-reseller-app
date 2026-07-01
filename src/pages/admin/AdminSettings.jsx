@@ -112,6 +112,7 @@ const AdminSettings = () => {
                     { key: 'legalName', label: 'Juridiskt företagsnamn', type: 'text', placeholder: STORE.legalName },
                     { key: 'tagline', label: 'Slogan', type: 'text', placeholder: STORE.tagline },
                     { key: 'supportEmail', label: 'Support-e-post', type: 'email', placeholder: STORE.supportEmail },
+                    { key: 'phone', label: 'Telefon (visas i köpvillkor & integritetspolicy)', type: 'tel', placeholder: 'T.ex. 070-123 45 67' },
                     { key: 'logoUrl', label: 'Logotyp-URL', type: 'text', placeholder: STORE.logoUrl },
                     { key: 'currency', label: 'Valuta', type: 'text', placeholder: STORE.currency },
                   ].map((field) => (

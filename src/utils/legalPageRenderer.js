@@ -44,7 +44,13 @@ const buildValues = (identity = {}) => ({
   vat_number: identity.vatNumber || '',
   return_address: stripHtml(identity.returnAddress) || '⚠️ Returadress ej angiven',
   platform_legal_name: PLATFORM.legalName || '',
-  platform_org_number: PLATFORM.orgNumber || '',
+  // Whole parenthetical or nothing — never a broken "(org.nr )" while the
+  // platform company is unregistered (VITE_PLATFORM_ORG_NUMBER unset).
+  platform_org_suffix: PLATFORM.orgNumber ? ` (org.nr ${PLATFORM.orgNumber})` : '',
+  // Optional phone bullet appended to the identity list; whole line or nothing.
+  seller_phone_item: String(identity.phone || '').trim()
+    ? `\n- Telefon: ${String(identity.phone).trim()}`
+    : '',
   last_updated: formatToday(),
 });
 

@@ -39,7 +39,10 @@ export function getLegalReadiness(identity = {}) {
   const missing = [];
   if (!String(identity.legalName || '').trim()) missing.push('legalName');
   if (!String(identity.address || '').trim()) missing.push('address');
-  if (!String(identity.supportEmail || '').trim()) missing.push('supportEmail');
+  // Empty OR an obvious placeholder (hello@example.com etc.) — a placeholder
+  // support email printed in live legal pages is as wrong as a missing one.
+  const supportEmail = String(identity.supportEmail || '').trim();
+  if (!supportEmail || /@example\.(com|org|net|se)$/i.test(supportEmail)) missing.push('supportEmail');
   if (!String(identity.sellerType || '').trim()) missing.push('sellerType');
   // Company sellers must disclose org number.
   if (identity.sellerType === 'company' && !String(identity.orgNumber || '').trim()) {

@@ -11,7 +11,9 @@
  * (VITE_PLATFORM_LEGAL_NAME / VITE_PLATFORM_ORG_NUMBER) without a code change.
  *
  * Consumed by the legal-page renderer (legalPageRenderer.js) to fill
- * {{platform_legal_name}} / {{platform_org_number}}.
+ * {{platform_legal_name}} / {{platform_org_suffix}} (the suffix renders
+ * " (org.nr …)" only when orgNumber is set — no broken parenthesis before
+ * the company is registered).
  */
 const env = (typeof import.meta !== 'undefined' && import.meta.env) || {};
 

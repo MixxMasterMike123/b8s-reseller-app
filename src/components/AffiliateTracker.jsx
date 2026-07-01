@@ -4,11 +4,16 @@ import { httpsCallable } from 'firebase/functions';
 import { functions } from '../firebase/config';
 import { normalizeAffiliateCode } from '../utils/affiliateCalculations';
 import { useShopFeatures } from '../contexts/ShopFeaturesContext';
+import { useShopId } from '../contexts/ShopContext';
+import { cartStorageKey } from '../contexts/CartContext';
 
 const AffiliateTracker = () => {
   const location = useLocation();
   const { isEnabled: isAddonEnabled } = useShopFeatures();
   const affiliateEnabled = isAddonEnabled('affiliate');
+  // Cart storage is keyed per shop (cross-shop cart isolation) — the
+  // discount-clear below must target the ACTIVE shop's cart key.
+  const shopId = useShopId();
 
   useEffect(() => {
     // Affiliate add-on off → don't track ?ref= at all (no localStorage ref
@@ -49,7 +54,7 @@ const AffiliateTracker = () => {
           console.log(`🔄 Replacing existing affiliate code ${existingCode} with ${normalizedRefCode}`);
           
           // Clear cart discount from localStorage to force re-application
-          const existingCart = localStorage.getItem('b8shield_cart');
+          const existingCart = localStorage.getItem(cartStorageKey(shopId));
           if (existingCart) {
             try {
               const cartData = JSON.parse(existingCart);
@@ -57,7 +62,7 @@ const AffiliateTracker = () => {
               cartData.discountAmount = 0;
               cartData.discountPercentage = 0;
               cartData.affiliateClickId = null;
-              localStorage.setItem('b8shield_cart', JSON.stringify(cartData));
+              localStorage.setItem(cartStorageKey(shopId), JSON.stringify(cartData));
               console.log('🧹 Cleared existing cart discount to allow new affiliate code');
             } catch (e) {
               console.warn('Could not clear cart discount, but continuing with new affiliate code');
@@ -111,7 +116,7 @@ const AffiliateTracker = () => {
     };
 
     handleAffiliateLink();
-  }, [location, affiliateEnabled]); // Re-run on location change or when the add-on flag resolves
+  }, [location, affiliateEnabled, shopId]); // Re-run on location change, add-on flag resolve, or shop switch
 
   return null; // This component does not render anything
 };

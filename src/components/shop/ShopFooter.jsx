@@ -117,11 +117,10 @@ const ShopFooter = () => {
           <div>
             <h3 className="font-display text-lg font-bold mb-4 tracking-tight">{t('footer_customer_service', 'Kundservice & Info')}</h3>
             <ul className="space-y-2 text-sm">
-              <li>
-                <Link to={getCountryAwareUrl('leveransinformation')} className="text-white/70 hover:text-white transition-colors">
-                  {t('footer_shipping_info', 'Leveransinformation')}
-                </Link>
-              </li>
+              {/* NOTE: no Leveransinformation link — there is no such route, and
+                  the old ShippingInfo page was hardcoded to another company's
+                  details. Delivery terms live in köpvillkor §5; a shop that wants
+                  a dedicated page can create a CMS page and link it via nav. */}
               <li>
                 <Link to={getCountryAwareUrl('legal/angerratt-och-returer')} className="text-white/70 hover:text-white transition-colors">
                   {t('footer_returns', 'Returer & Ångerrätt')}
