@@ -8,7 +8,10 @@
 
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
-import jsPDF from 'jspdf';
+// jspdf v4 dropped the default-export class — the constructor is the NAMED
+// export only (a default import resolves to the module object and throws
+// "jsPDF is not a constructor" at runtime, invisible to the build).
+import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
 /**
