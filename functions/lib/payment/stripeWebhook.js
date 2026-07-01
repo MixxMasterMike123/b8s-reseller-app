@@ -341,6 +341,22 @@ exports.stripeWebhookV2 = (0, https_1.onRequest)({
                 webhookProcessed: true,
                 webhookEventId: event.id
             };
+            // Reconciliation hardening (2026-07-01 audit): the PI's `amount` is what
+            // the buyer was actually CHARGED — authoritative over the metadata copy
+            // of the server total. Identical by construction today (metadata.total
+            // is set from the same computeOrderTotalsSek result the charge uses);
+            // this guards future drift between the two write points. On mismatch:
+            // alert + stamp the charged amount so refunds/reports reconcile against
+            // money reality, never a stale copy.
+            const chargedSek = paymentIntent.amount / 100;
+            if (Math.abs(chargedSek - orderData.total) > 0.1) {
+                firebase_functions_1.logger.error('⚠️ Order total mismatch vs charged PI amount — stamping charged amount as authoritative', {
+                    paymentIntentId: paymentIntent.id,
+                    metadataTotal: orderData.total,
+                    chargedSek,
+                });
+                orderData.total = chargedSek;
+            }
             // Create order in Firestore with the deterministic ID; a duplicate
             // delivery fails here atomically and is treated as success
             try {

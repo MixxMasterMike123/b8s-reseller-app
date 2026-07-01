@@ -54,6 +54,19 @@ export const refundOrder = onCall<RefundRequest>(
     const paymentIntentId = order.payment?.paymentIntentId;
     if (!paymentIntentId) throw new HttpsError('failed-precondition', 'Order has no payment to refund');
 
+    // Partial-refund guard (2026-07-01 audit): never send Stripe a refund
+    // larger than what was charged — Stripe would reject it anyway, but failing
+    // fast here gives the admin a clear message and keeps a bad amount from
+    // reaching the money API at all. Absent/undefined amount = full refund.
+    const requestedAmount = request.data?.amount;
+    if (requestedAmount !== undefined && requestedAmount !== null) {
+      const chargedSek = Number(order.payment?.amount) || 0;
+      const amt = Number(requestedAmount);
+      if (!Number.isFinite(amt) || amt <= 0 || amt > chargedSek + 0.005) {
+        throw new HttpsError('invalid-argument', `Refund amount must be between 0 and ${chargedSek} SEK`);
+      }
+    }
+
     const key = (process.env.STRIPE_SECRET_KEY || '').trim();
     if (!key) throw new HttpsError('failed-precondition', 'Stripe is not configured');
     const stripe = new Stripe(key, { apiVersion: '2023-10-16' });

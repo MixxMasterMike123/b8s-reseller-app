@@ -404,16 +404,11 @@ async function processOrderCompletion(orderId) {
         console.log(`Order ${orderId} already processed (idempotency guard), skipping.`);
         return { statusCode: 200, body: { success: true, message: 'Order already processed', alreadyProcessed: true } };
     }
-    // DEBUG: Log the actual order data structure to see what items look like
-    console.log('🔍 Order Processing - Full order data:', JSON.stringify(orderData, null, 2));
-    const orderItems = orderData.items;
-    console.log('🔍 Order Processing - Order items:', JSON.stringify(orderItems, null, 2));
-    if (orderItems && orderItems.length > 0) {
-        console.log('🔍 Order Processing - First item details:');
-        console.log('🔍 Order Processing - item.color:', orderItems[0].color);
-        console.log('🔍 Order Processing - item.size:', orderItems[0].size);
-        console.log('🔍 Order Processing - item.name:', orderItems[0].name);
-    }
+    // PII-safe processing log (2026-07-01 audit: the old debug block dumped
+    // the FULL order — customer email, name, shipping address — into Cloud
+    // Logs). Log only non-personal reconciliation facts.
+    const itemCount = Array.isArray(orderData.items) ? orderData.items.length : 0;
+    console.log(`🔍 Order Processing: ${orderId} — ${itemCount} item(s), total ${orderData.total}, shop ${orderData.shopId || 'default'}`);
     // Handle different affiliate data structures (Stripe vs Mock payments)
     const affiliateCode = orderData.affiliateCode || orderData.affiliate?.code;
     const discountCode = orderData.discountCode || orderData.affiliate?.code;

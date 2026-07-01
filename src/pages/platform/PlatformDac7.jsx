@@ -181,9 +181,24 @@ const SellerEditor = ({ shopId, shopName, onClose }) => {
   };
 
   const save = async () => {
+    // Input hardening (2026-07-01 audit): a malformed VAT number breaks the
+    // DAC7 export downstream — validate the EU shape (country code + 2-12
+    // alphanumerics; Swedish = SE + 12 digits) before saving. Empty is fine
+    // (not every seller is VAT-registered). Saved normalized (no spaces,
+    // uppercase).
+    const vat = String(profile?.vatNumber || '').replace(/\s+/g, '').toUpperCase();
+    if (vat && !/^[A-Z]{2}[0-9A-Z]{2,12}$/.test(vat)) {
+      toast.error('Ogiltigt VAT-nummer — landskod + siffror, t.ex. SE556677889901.');
+      return;
+    }
+    if (vat.startsWith('SE') && !/^SE\d{12}$/.test(vat)) {
+      toast.error('Svenskt VAT-nummer ska vara SE + 12 siffror (t.ex. SE556677889901).');
+      return;
+    }
     setBusy('save');
     try {
       const { shopId: _s, updatedAt: _u, ...rest } = profile || {};
+      if (vat) rest.vatNumber = vat;
       await httpsCallable(functions, 'saveDac7SellerProfile')({ shopId, profile: rest });
       toast.success('Sparat.');
       onClose?.();
@@ -249,12 +264,22 @@ const PlatformDac7 = () => {
   const [report, setReport] = useState(null);
 
   const run = useCallback(async (markReported = false) => {
+    // FX-rate sanity (2026-07-01 audit): a typo'd rate silently corrupts the
+    // whole report's EUR figures + de-minimis. SEK→EUR must be a positive
+    // number below 1 (accepts comma or dot); empty = server default.
+    const parsedRate = (rate || '').trim()
+      ? parseFloat(rate.replace(',', '.'))
+      : undefined;
+    if (parsedRate !== undefined && (!Number.isFinite(parsedRate) || parsedRate <= 0 || parsedRate >= 1)) {
+      toast.error('Ogiltig SEK→EUR-kurs — ange ett tal mellan 0 och 1 (t.ex. 0,093).');
+      return;
+    }
     setLoading(true);
     if (!markReported) setReport(null);
     try {
       const res = await httpsCallable(functions, 'exportDac7Report')({
         year: Number(year),
-        sekToEurRate: parseFloat((rate || '').replace(',', '.')) || undefined,
+        sekToEurRate: parsedRate,
         includeBelowDeMinimis: includeBelow,
         ...(markReported && { markReported: true }),
       });

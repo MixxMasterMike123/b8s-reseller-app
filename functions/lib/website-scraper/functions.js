@@ -2,9 +2,65 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.scrapeWebsiteMeta = void 0;
 const https_1 = require("firebase-functions/v2/https");
+const promises_1 = require("node:dns/promises");
+const node_net_1 = require("node:net");
 const cors_handler_1 = require("../protection/cors/cors-handler");
 const rate_limiter_1 = require("../protection/rate-limiting/rate-limiter");
 const app_urls_1 = require("../config/app-urls");
+// ── SSRF guard (2026-07-01 audit) ────────────────────────────────────────────
+// This endpoint fetches a CALLER-SUPPLIED URL from inside Google's network, so
+// it must never reach loopback, RFC1918/private, link-local, or the cloud
+// metadata service (169.254.169.254 = credential theft). Scheme is forced to
+// http(s); the hostname's RESOLVED addresses are checked (an innocent-looking
+// hostname can point anywhere); redirects are followed MANUALLY so every hop is
+// re-validated. Residual DNS-rebinding window (fetch re-resolves after the
+// check) is accepted for this rate-limited internal CRM tool.
+function isPrivateAddress(addr) {
+    if (addr.includes(':')) {
+        const a = addr.toLowerCase();
+        if (a === '::' || a === '::1')
+            return true;
+        if (a.startsWith('fe80:') || a.startsWith('fc') || a.startsWith('fd'))
+            return true;
+        const v4 = a.match(/::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+        return v4 ? isPrivateAddress(v4[1]) : false;
+    }
+    const parts = addr.split('.').map(Number);
+    if (parts.length !== 4 || parts.some((n) => !Number.isInteger(n) || n < 0 || n > 255))
+        return true; // unparseable → refuse
+    const [a, b] = parts;
+    if (a === 0 || a === 10 || a === 127)
+        return true;
+    if (a === 172 && b >= 16 && b <= 31)
+        return true;
+    if (a === 192 && b === 168)
+        return true;
+    if (a === 169 && b === 254)
+        return true; // link-local incl. cloud metadata
+    if (a >= 224)
+        return true; // multicast + reserved
+    return false;
+}
+async function assertPublicHttpUrl(raw) {
+    const u = new URL(raw); // throws on malformed → caller maps to 400
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+        throw new Error('Only http/https URLs are allowed');
+    }
+    const host = u.hostname;
+    if ((0, node_net_1.isIP)(host)) {
+        if (isPrivateAddress(host))
+            throw new Error('URL points to a private address');
+        return;
+    }
+    const bare = host.toLowerCase();
+    if (bare === 'localhost' || bare.endsWith('.local') || bare.endsWith('.internal')) {
+        throw new Error('URL points to a private address');
+    }
+    const addrs = await (0, promises_1.lookup)(bare, { all: true, verbatim: true });
+    if (!addrs.length || addrs.some((r) => isPrivateAddress(r.address))) {
+        throw new Error('URL points to a private address');
+    }
+}
 // Simple language detection patterns
 const LANGUAGE_PATTERNS = {
     'sv': {
@@ -155,7 +211,7 @@ exports.scrapeWebsiteMeta = (0, https_1.onRequest)({
             });
             return;
         }
-        // Validate URL format
+        // Validate URL format + SSRF guard (scheme, private-address resolution)
         let websiteUrl;
         try {
             // Add https if missing
@@ -165,12 +221,14 @@ exports.scrapeWebsiteMeta = (0, https_1.onRequest)({
             else {
                 websiteUrl = url;
             }
-            new URL(websiteUrl); // Validate URL format
+            await assertPublicHttpUrl(websiteUrl);
         }
         catch (error) {
             res.status(400).json({
                 success: false,
-                error: 'Invalid URL format'
+                error: error?.message?.includes('private') || error?.message?.includes('http')
+                    ? error.message
+                    : 'Invalid URL format'
             });
             return;
         }
@@ -179,14 +237,29 @@ exports.scrapeWebsiteMeta = (0, https_1.onRequest)({
         let response;
         let html;
         try {
-            response = await fetch(websiteUrl, {
-                method: 'GET',
-                headers: {
-                    'User-Agent': `${app_urls_1.commerceConfig.shopName}-MetaScraper/1.0 (+${app_urls_1.appUrls.B2B_PORTAL})`
-                },
-                // Timeout after 20 seconds
-                signal: AbortSignal.timeout(20000)
-            });
+            // Follow redirects MANUALLY, re-validating every hop — a public URL
+            // must not be able to bounce the fetch to an internal address.
+            let currentUrl = websiteUrl;
+            response = undefined;
+            for (let hop = 0; hop < 4; hop++) {
+                if (hop > 0)
+                    await assertPublicHttpUrl(currentUrl);
+                response = await fetch(currentUrl, {
+                    method: 'GET',
+                    headers: {
+                        'User-Agent': `${app_urls_1.commerceConfig.shopName}-MetaScraper/1.0 (+${app_urls_1.appUrls.B2B_PORTAL})`
+                    },
+                    redirect: 'manual',
+                    // Timeout after 20 seconds
+                    signal: AbortSignal.timeout(20000)
+                });
+                const location = response.headers.get('location');
+                if (response.status >= 300 && response.status < 400 && location) {
+                    currentUrl = new URL(location, currentUrl).toString();
+                    continue;
+                }
+                break;
+            }
             if (!response.ok) {
                 res.status(400).json({
                     success: false,
