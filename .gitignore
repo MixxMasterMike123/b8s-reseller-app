@@ -157,3 +157,6 @@ functions/merchant-service-account.json
 
 # Firecrawl local scrape cache (firecrawl scrape/crawl write here)
 .firecrawl/
+
+# Archived one-off scripts / superseded plan docs / stale logs (2026-07-02 cleanup)
+OBSOLETE/
