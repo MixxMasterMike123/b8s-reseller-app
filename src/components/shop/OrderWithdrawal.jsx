@@ -49,6 +49,10 @@ const OrderWithdrawal = ({ order, shopId }) => {
       const res = await submitWithdrawal({
         shopId,
         orderId: order.id,
+        // Also send the order number: the server accepts orderNumber + matching
+        // purchase email as ownership proof, which covers account holders whose
+        // token email is not (yet) verified — uid-owned orders pass either way.
+        orderNumber: order.orderNumber || '',
         statement: { name, contactEmail },
       });
       const data = res?.data || {};
@@ -56,7 +60,7 @@ const OrderWithdrawal = ({ order, shopId }) => {
         if (data.reason === 'personalized_exempt') {
           setExemptReason('personalized_exempt');
         } else if (data.reason === 'window_passed') {
-          toast.error(t('order_withdrawal_window_passed', 'Ångerfristen har gått ut för den här beställningen.'));
+          toast.error(t('order_withdrawal_window_passed', 'Det har gått för lång tid sedan beställningen för att den ska kunna ångras här.'));
         } else {
           toast.error(t('order_withdrawal_not_eligible', 'Den här beställningen kan inte ångras.'));
         }
@@ -120,8 +124,8 @@ const OrderWithdrawal = ({ order, shopId }) => {
           onClick={() => setOpen(true)}
           className="text-sm font-medium text-blue-600 hover:text-blue-700 underline"
         >
-          {/* Statutory label (Art. 11a): "withdraw from contract here" */}
-          {t('order_withdrawal_button', 'Ångra köp')}
+          {/* Statutory label (DAL 2 kap. 10 a § / Art. 11a): "ångra avtalet här" */}
+          {t('order_withdrawal_button', 'Ångra avtalet här')}
         </button>
       ) : (
         <div className="rounded-md bg-gray-50 border border-gray-200 p-3 space-y-3">

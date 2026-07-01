@@ -662,6 +662,42 @@ const AdminOrderDetail = () => {
                 </Card>
               )}
 
+              {/* Ångeranmälan — the consumer exercised the withdrawal function
+                  (DAL 2 kap. 10 a §). The refund clock is statutory: repay
+                  within 14 days of this timestamp. Use Återbetala above. */}
+              {order.withdrawalRequest?.status === 'received' && (
+                <Card>
+                  <div className="flex items-center gap-2 border-b border-admin-border px-4 py-3">
+                    <h3 className="text-[14px] font-semibold text-admin-text">Ångeranmälan</h3>
+                    <StatusPill tone={order.status === 'refunded' ? 'success' : 'warning'}>
+                      {order.status === 'refunded' ? 'Återbetald' : 'Mottagen — återbetala inom 14 dagar'}
+                    </StatusPill>
+                  </div>
+                  <div className="px-4 py-3">
+                    <Row
+                      label="Mottagen"
+                      value={order.withdrawalRequest.submittedAtIso
+                        ? new Date(order.withdrawalRequest.submittedAtIso).toLocaleString('sv-SE')
+                        : '—'}
+                    />
+                    {order.withdrawalRequest.name && <Row label="Namn" value={order.withdrawalRequest.name} />}
+                    {order.withdrawalRequest.contactEmail && <Row label="E-post" value={order.withdrawalRequest.contactEmail} />}
+                    {Number.isFinite(order.withdrawalRequest.orderAgeDaysAtSubmission) && (
+                      <Row label="Orderålder vid anmälan" value={`${order.withdrawalRequest.orderAgeDaysAtSubmission} dagar`} />
+                    )}
+                    {order.withdrawalRequest.channel && (
+                      <Row
+                        label="Kanal"
+                        value={order.withdrawalRequest.channel === 'account' ? 'Kundkonto' : 'Ångerfunktionen (publik)'}
+                      />
+                    )}
+                    {order.withdrawalRequest.statementContent && (
+                      <p className="mt-2 text-[12px] text-admin-text-muted">{order.withdrawalRequest.statementContent}</p>
+                    )}
+                  </div>
+                </Card>
+              )}
+
               {/* Dispute / chargeback (shown only when a dispute exists).
                   For a destination charge the platform balance is debited; the
                   webhook reverses the transfer to recover from the shop and

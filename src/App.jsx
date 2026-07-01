@@ -108,6 +108,7 @@ import ScrollToTop from './components/ScrollToTop';
 // Order Confirmation
 import OrderConfirmation from './pages/shop/OrderConfirmation';
 import OrderReturn from './pages/shop/OrderReturn';
+import WithdrawalPage from './pages/shop/WithdrawalPage';
 
 import { Toaster } from 'react-hot-toast';
 
@@ -305,6 +306,9 @@ function App() {
               <Route path="/:shopId/order-return" element={<ShopGate><OrderReturn /></ShopGate>} />
               <Route path="/:shopId/order-confirmation/:orderId" element={<ShopGate><OrderConfirmation /></ShopGate>} />
               <Route path="/:shopId/account" element={<ShopGate><CustomerAccount /></ShopGate>} />
+              {/* Ångerfunktionen (DAL 2 kap. 10 a §) — public, guest-capable,
+                  linked from the footer on every page (continuous availability). */}
+              <Route path="/:shopId/angra" element={<ShopGate><WithdrawalPage /></ShopGate>} />
               <Route path="/:shopId/affiliate-registration" element={<ShopGate><AddonGate feature="affiliate" redirectTo="shop-home"><AffiliateRegistration /></AddonGate></ShopGate>} />
               <Route path="/:shopId/affiliate-portal" element={<ShopGate><AddonGate feature="affiliate" redirectTo="shop-home"><AffiliatePortal /></AddonGate></ShopGate>} />
               {/* B2B Wholesale add-on: per-shop wholesale self-registration.

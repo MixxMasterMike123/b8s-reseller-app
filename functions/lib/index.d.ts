@@ -24,5 +24,7 @@ export { createPaymentIntentV2, stripeWebhookV2 };
 export { createConnectAccount, createConnectAccountLink, refreshConnectStatus, createConnectLoginLink, setShopCommission, getConnectBalance, setConnectPayoutDelay, refundOrder };
 export { saveDac7SellerProfile, getDac7SellerProfile, pullDac7FromStripe, aggregateDac7Year, exportDac7Report, getOwnDac7, correctOwnDac7Contact, requestDac7Correction, resolveDac7Correction };
 export { scrapeWebsiteMeta as scrapeWebsiteMetaV2 };
+export { getPrintQueue, getPrintJob, getPrintQueueExport, createPrintShopUser, } from './print/functions';
+export { submitWithdrawal } from './withdrawal/functions';
 export { confirmPasswordReset as confirmPasswordResetV2 };
 export { confirmPasswordReset };

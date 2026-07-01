@@ -128,10 +128,11 @@ på produktsidan och i kassan att ångerrätt inte gäller, och du får bekräft
 Väljer du däremot enbart bland de standardalternativ som erbjuds (till exempel storlek eller färg
 på en befintlig produkt) har du full ångerrätt, även om varan tillverkas efter beställning.
 
-**Så här ångrar du köpet.** Meddela oss inom 14 dagar att du vill ångra köpet, via e-post till
-{{contact_email}}. Du kan använda Konsumentverkets standardblankett för ånger, men det är inte
-ett krav. När du ångrat ska du skicka tillbaka varan utan onödigt dröjsmål och senast 14 dagar
-efter att du meddelat oss.
+**Så här ångrar du köpet.** Enklast ångrar du dig via funktionen "Ångra avtalet här", som du
+hittar i sidfoten på alla sidor i webbshoppen — där bekräftar du ångret och får ett
+mottagningsbevis direkt. Du kan också meddela oss via e-post till {{contact_email}} eller använda
+Konsumentverkets standardblankett för ånger; inget särskilt format krävs. När du ångrat ska du
+skicka tillbaka varan utan onödigt dröjsmål och senast 14 dagar efter att du meddelat oss.
 
 **Återbetalning.** När du utnyttjat ångerrätten betalar vi tillbaka vad du betalat, inklusive
 ordinarie fraktkostnad, senast 14 dagar efter att vi tagit emot ditt meddelande. Vi kan vänta med
@@ -217,8 +218,10 @@ beställning.
 
 ### Så ångrar du
 
-1. Meddela oss inom 14 dagar via e-post till {{contact_email}} att du vill ångra köpet. Du kan
-   använda Konsumentverkets ångerblankett, men det är inte ett krav.
+1. Meddela oss inom 14 dagar att du vill ångra köpet. Enklast använder du funktionen
+   "Ångra avtalet här" i sidfoten på alla sidor i webbshoppen – du får då ett mottagningsbevis
+   direkt. Du kan också mejla {{contact_email}} eller använda Konsumentverkets ångerblankett;
+   inget särskilt format krävs.
 2. Skicka tillbaka varan utan onödigt dröjsmål, senast 14 dagar efter att du meddelat oss.
 3. Du betalar returfrakten.
 

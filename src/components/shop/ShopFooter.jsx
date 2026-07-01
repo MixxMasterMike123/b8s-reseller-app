@@ -127,6 +127,14 @@ const ShopFooter = () => {
                   {t('footer_returns', 'Returer & Ångerrätt')}
                 </Link>
               </li>
+              <li>
+                {/* Ångerfunktionen — statutory label "ångra avtalet här" (DAL
+                    2 kap. 10 a §); footer link = available on every page,
+                    throughout the whole frist. */}
+                <Link to={getCountryAwareUrl('angra')} className="text-white/70 hover:text-white transition-colors">
+                  {t('footer_withdraw_here', 'Ångra avtalet här')}
+                </Link>
+              </li>
               {affiliateEnabled && (
               <li>
                 <Link to={getCountryAwareUrl('affiliate-registration')} className="text-white/70 hover:text-white transition-colors">

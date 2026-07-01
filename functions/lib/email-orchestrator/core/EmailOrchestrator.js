@@ -257,6 +257,33 @@ class EmailOrchestrator {
                     }),
                     text: `New affiliate application from ${data.additionalData.applicantInfo.name} (${data.additionalData.applicantInfo.email}). Application ID: ${data.additionalData.applicationId}`
                 };
+            case 'WITHDRAWAL_ACKNOWLEDGMENT': {
+                // Mottagningsbevis (acknowledgement of receipt) for an exercised right of
+                // withdrawal — DAL 2 kap. 10 a § / CRD Art. 11a. Must include the content
+                // + the date and time of submission. The durable acknowledgement object
+                // is computed server-side in withdrawal/functions.ts and passed through.
+                const ack = data.additionalData?.acknowledgement || data.orderData?.acknowledgement;
+                if (!ack) {
+                    throw new Error('Acknowledgement data is required for withdrawal acknowledgement email');
+                }
+                const itemsHtml = Array.isArray(ack.withdrawnItems) && ack.withdrawnItems.length
+                    ? '<ul>' + ack.withdrawnItems.map((it) => `<li>${(it.name || '').toString()}${it.sku ? ` (${it.sku})` : ''} × ${it.quantity || 1}</li>`).join('') + '</ul>'
+                    : '';
+                return {
+                    subject: `Mottagningsbevis – ångrat köp ${ack.orderNumber || ''}`.trim(),
+                    html: `<p>Hej ${ack.consumerName || ''},</p>` +
+                        `<p>Vi bekräftar att vi har tagit emot ditt meddelande om att du ångrar ditt köp.</p>` +
+                        `<p><strong>Order:</strong> ${ack.orderNumber || ''}<br/>` +
+                        `<strong>Mottaget:</strong> ${ack.submittedAt || ''}</p>` +
+                        (itemsHtml ? `<p><strong>Ångrade varor:</strong></p>${itemsHtml}` : '') +
+                        `<p>${ack.statement || ''}</p>` +
+                        `<p>Spara detta mottagningsbevis. Återbetalning hanteras enligt våra villkor.</p>`,
+                    text: `Mottagningsbevis – ångrat köp ${ack.orderNumber || ''}\n` +
+                        `Mottaget: ${ack.submittedAt || ''}\n` +
+                        `${ack.statement || ''}\n` +
+                        `Spara detta mottagningsbevis. Återbetalning hanteras enligt våra villkor.`
+                };
+            }
             default:
                 throw new Error(`Unknown email type: ${emailType}`);
         }
@@ -278,7 +305,8 @@ class EmailOrchestrator {
             'AFFILIATE_WELCOME': from(`${brand} Affiliate Program`),
             'EMAIL_VERIFICATION': from(`${brand} Shop`),
             'AFFILIATE_APPLICATION_RECEIVED': from(`${brand} Affiliate Program`),
-            'AFFILIATE_APPLICATION_NOTIFICATION_ADMIN': from(`${brand} System`)
+            'AFFILIATE_APPLICATION_NOTIFICATION_ADMIN': from(`${brand} System`),
+            'WITHDRAWAL_ACKNOWLEDGMENT': from(`${brand} Shop`)
         };
         return fromAddresses[emailType] || from(brand);
     }

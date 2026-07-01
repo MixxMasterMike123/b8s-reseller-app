@@ -569,6 +569,20 @@
       ]
     },
     {
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "shopId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "orderNumber",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "affiliates",
       "queryScope": "COLLECTION",
       "fields": [

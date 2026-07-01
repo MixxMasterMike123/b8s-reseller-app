@@ -420,6 +420,20 @@ const OrderConfirmation = () => {
                     {t('order_confirmation_view_orders', 'Visa mina beställningar')}
                   </button>
                 </div>
+
+                {/* Ångerfunktionen (DAL 2 kap. 10 a §): point the buyer to the
+                    statutory "ångra avtalet här" function, prefilled with this
+                    order's number — works for guest purchases too. */}
+                <p className="mt-4 text-center text-xs text-gray-500">
+                  {t('order_confirmation_withdrawal_prefix', 'Du har normalt 14 dagars ångerrätt.')}{' '}
+                  <button
+                    type="button"
+                    onClick={() => navigate(getCountryAwareUrl(`angra?order=${encodeURIComponent(order.orderNumber || '')}`))}
+                    className="underline text-gray-600 hover:text-gray-900"
+                  >
+                    {t('order_confirmation_withdrawal_link', 'Ångra avtalet här')}
+                  </button>
+                </p>
               </div>
             </div>
           </div>

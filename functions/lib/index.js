@@ -2,7 +2,8 @@
 // V2 FUNCTIONS BATCH 4 - Direct imports to avoid circular dependencies
 // EMAIL ORCHESTRATOR SYSTEM - Unified email functions
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.confirmPasswordReset = exports.confirmPasswordResetV2 = exports.scrapeWebsiteMetaV2 = exports.resolveDac7Correction = exports.requestDac7Correction = exports.correctOwnDac7Contact = exports.getOwnDac7 = exports.exportDac7Report = exports.aggregateDac7Year = exports.pullDac7FromStripe = exports.getDac7SellerProfile = exports.saveDac7SellerProfile = exports.refundOrder = exports.setConnectPayoutDelay = exports.getConnectBalance = exports.setShopCommission = exports.createConnectLoginLink = exports.refreshConnectStatus = exports.createConnectAccountLink = exports.createConnectAccount = exports.stripeWebhookV2 = exports.createPaymentIntentV2 = exports.syncAdminClaims = exports.createAdminUserV2 = exports.toggleCustomerActiveStatusV2 = exports.deleteB2CCustomerAccountV2 = exports.deleteCustomerAccountV2 = exports.getGeoDataV2 = exports.syncUserClaimsOnWrite = exports.cancelB2BOrder = exports.createB2BOrder = exports.reverseAffiliateCommissionOnCancel = exports.processB2COrderCompletionHttpV2 = exports.validateDiscountCode = exports.logAffiliateClickV2 = exports.sendAffiliateApplicationEmails = exports.verifyEmailCode = exports.sendCustomEmailVerification = exports.sendEmailVerification = exports.createShopUser = exports.approveAffiliate = exports.sendAffiliateWelcomeEmail = exports.sendLoginCredentialsEmail = exports.sendPasswordResetEmail = exports.sendOrderNotificationAdmin = exports.sendOrderStatusUpdateEmail = exports.sendOrderConfirmationEmail = void 0;
+exports.submitWithdrawal = exports.createPrintShopUser = exports.getPrintQueueExport = exports.getPrintJob = exports.getPrintQueue = exports.scrapeWebsiteMetaV2 = exports.resolveDac7Correction = exports.requestDac7Correction = exports.correctOwnDac7Contact = exports.getOwnDac7 = exports.exportDac7Report = exports.aggregateDac7Year = exports.pullDac7FromStripe = exports.getDac7SellerProfile = exports.saveDac7SellerProfile = exports.refundOrder = exports.setConnectPayoutDelay = exports.getConnectBalance = exports.setShopCommission = exports.createConnectLoginLink = exports.refreshConnectStatus = exports.createConnectAccountLink = exports.createConnectAccount = exports.stripeWebhookV2 = exports.createPaymentIntentV2 = exports.syncAdminClaims = exports.createAdminUserV2 = exports.toggleCustomerActiveStatusV2 = exports.deleteB2CCustomerAccountV2 = exports.deleteCustomerAccountV2 = exports.getGeoDataV2 = exports.syncUserClaimsOnWrite = exports.cancelB2BOrder = exports.createB2BOrder = exports.reverseAffiliateCommissionOnCancel = exports.processB2COrderCompletionHttpV2 = exports.validateDiscountCode = exports.logAffiliateClickV2 = exports.sendAffiliateApplicationEmails = exports.verifyEmailCode = exports.sendCustomEmailVerification = exports.sendEmailVerification = exports.createShopUser = exports.approveAffiliate = exports.sendAffiliateWelcomeEmail = exports.sendLoginCredentialsEmail = exports.sendPasswordResetEmail = exports.sendOrderNotificationAdmin = exports.sendOrderStatusUpdateEmail = exports.sendOrderConfirmationEmail = void 0;
+exports.confirmPasswordReset = exports.confirmPasswordResetV2 = void 0;
 // Initialize Firebase Admin SDK
 const app_1 = require("firebase-admin/app");
 (0, app_1.initializeApp)();
@@ -113,6 +114,20 @@ Object.defineProperty(exports, "resolveDac7Correction", { enumerable: true, get:
 // Import website scraper functions for DiningWagon
 const functions_7 = require("./website-scraper/functions");
 Object.defineProperty(exports, "scrapeWebsiteMetaV2", { enumerable: true, get: function () { return functions_7.scrapeWebsiteMeta; } });
+// POD print-shop callables (callable-projection model — the print_shop role has NO
+// direct DB/Storage access; these enforce scope off the live user doc + return
+// production-scoped data + signed URLs). createPrintShopUser is platform-only.
+var functions_8 = require("./print/functions");
+Object.defineProperty(exports, "getPrintQueue", { enumerable: true, get: function () { return functions_8.getPrintQueue; } });
+Object.defineProperty(exports, "getPrintJob", { enumerable: true, get: function () { return functions_8.getPrintJob; } });
+Object.defineProperty(exports, "getPrintQueueExport", { enumerable: true, get: function () { return functions_8.getPrintQueueExport; } });
+Object.defineProperty(exports, "createPrintShopUser", { enumerable: true, get: function () { return functions_8.createPrintShopUser; } });
+// Ångerfunktion — consumer right-of-withdrawal function (DAL 2 kap. 10 a § /
+// CRD Art. 11a, in force 19 June 2026). Server-authoritative: stamps the
+// submission time, enforces eligibility (Regime A applies / Regime B exempt),
+// persists a durable acknowledgement of receipt. See memory angerratt_pod.md.
+var functions_9 = require("./withdrawal/functions");
+Object.defineProperty(exports, "submitWithdrawal", { enumerable: true, get: function () { return functions_9.submitWithdrawal; } });
 // OLD V1/V2/V3 EMAIL SYSTEM FUNCTIONS - MOVED TO QUARANTINE
 // All old email functions have been migrated to the new Email Orchestrator system
 // Old files moved to: functions/quarantine/old-email-systems/
