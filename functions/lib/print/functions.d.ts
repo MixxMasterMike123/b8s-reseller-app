@@ -1,0 +1,65 @@
+export declare const getPrintQueue: import("firebase-functions/v2/https").CallableFunction<any, Promise<{
+    jobs: any[];
+}>, unknown>;
+export declare const getPrintJob: import("firebase-functions/v2/https").CallableFunction<any, Promise<{
+    order: {
+        orderNumber: any;
+        orderDate: any;
+        status: any;
+        orderRef: string;
+    };
+    shopName: any;
+    shipTo: {
+        name: any;
+        line1: any;
+        line2: any;
+        postalCode: any;
+        city: any;
+        country: any;
+    };
+    lines: ({
+        purpose: any;
+        artwork: {
+            unresolved: boolean;
+            reason: string;
+            tier?: undefined;
+            fileName?: undefined;
+            ext?: undefined;
+            downloadUrl?: undefined;
+            previewUrl?: undefined;
+        };
+        productName: any;
+        sku: any;
+        variantLabel: any;
+        quantity: any;
+        placement: any;
+        profileId: any;
+    } | {
+        purpose: any;
+        artwork: {
+            tier: any;
+            fileName: any;
+            ext: any;
+            downloadUrl: string | null;
+            previewUrl: any;
+            unresolved?: undefined;
+            reason?: undefined;
+        };
+        productName: any;
+        sku: any;
+        variantLabel: any;
+        quantity: any;
+        placement: any;
+        profileId: any;
+    })[];
+}>, unknown>;
+export declare const getPrintQueueExport: import("firebase-functions/v2/https").CallableFunction<any, Promise<{
+    rows: any[];
+}>, unknown>;
+interface CreatePrintShopUserRequest {
+    email: string;
+    name?: string;
+    printShopShops: string[];
+}
+export declare const createPrintShopUser: import("firebase-functions/v2/https").CallableFunction<CreatePrintShopUserRequest, any, unknown>;
+export {};

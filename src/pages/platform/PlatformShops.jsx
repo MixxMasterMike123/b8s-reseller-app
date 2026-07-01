@@ -116,7 +116,7 @@ const PlatformShops = () => {
 
   return (
     <PlatformLayout>
-      <div className="px-6 lg:px-10 py-8 max-w-7xl">
+      <div className="px-6 lg:px-10 py-8 max-w-[1600px]">
         <div className="flex items-start justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-white">Butiker</h1>
@@ -143,15 +143,15 @@ const PlatformShops = () => {
             <table className="min-w-full divide-y divide-white/10 text-sm">
               <thead>
                 <tr className="text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  <th className="px-5 py-3">Butik</th>
-                  <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3">Betalningar</th>
-                  <th className="px-5 py-3">Avgift</th>
-                  <th className="px-5 py-3">Juridik</th>
-                  <th className="px-5 py-3 text-right">Produkter</th>
-                  <th className="px-5 py-3 text-right">Ordrar</th>
-                  <th className="px-5 py-3 text-right">Kunder</th>
-                  <th className="px-5 py-3 text-right">Åtgärder</th>
+                  <th className="px-4 py-3">Butik</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Betalningar</th>
+                  <th className="px-4 py-3">Avgift</th>
+                  <th className="px-4 py-3">Juridik</th>
+                  <th className="px-3 py-3 text-right">Produkter</th>
+                  <th className="px-3 py-3 text-right">Ordrar</th>
+                  <th className="px-3 py-3 text-right">Kunder</th>
+                  <th className="px-4 py-3 text-right">Åtgärder</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -159,11 +159,11 @@ const PlatformShops = () => {
                   const disabled = shop.status === 'disabled';
                   return (
                     <tr key={shop.id} className="hover:bg-white/5">
-                      <td className="px-5 py-4">
+                      <td className="px-4 py-3">
                         <div className="font-medium text-white">{shop.name || shop.id}</div>
                         <div className="text-xs text-gray-500">{shop.id}</div>
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-4 py-3">
                         <span
                           className={
                             'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ' +
@@ -173,7 +173,7 @@ const PlatformShops = () => {
                           {disabled ? 'Inaktiverad' : 'Aktiv'}
                         </span>
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-4 py-3">
                         {(() => { const c = connectLabel(shop); return (
                           <div className="flex items-center gap-2">
                             <span className={'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ' + c.cls}>{c.text}</span>
@@ -190,32 +190,37 @@ const PlatformShops = () => {
                           </div>
                         ); })()}
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-4 py-3">
                         <CommissionCell shop={shop} onSaved={(bps) => setShops((prev) => prev.map((s) =>
                           s.id === shop.id ? { ...s, payments: { ...(s.payments || {}), commissionBps: bps } } : s))} />
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-4 py-3">
                         <LegalCell shop={shop} />
                       </td>
-                      <td className="px-5 py-4 text-right tabular-nums text-gray-300">{shop.counts?.products ?? '–'}</td>
-                      <td className="px-5 py-4 text-right tabular-nums text-gray-300">{shop.counts?.orders ?? '–'}</td>
-                      <td className="px-5 py-4 text-right tabular-nums text-gray-300">{shop.counts?.b2cCustomers ?? '–'}</td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                      <td className="px-3 py-3 text-right tabular-nums text-gray-300">{shop.counts?.products ?? '–'}</td>
+                      <td className="px-3 py-3 text-right tabular-nums text-gray-300">{shop.counts?.orders ?? '–'}</td>
+                      <td className="px-3 py-3 text-right tabular-nums text-gray-300">{shop.counts?.b2cCustomers ?? '–'}</td>
+                      <td className="px-4 py-3">
+                        {/* Table-action buttons follow the platform design-system
+                            compact scale (rounded-lg px-3 py-1 text-xs, per
+                            PlatformDac7): icon-only with tooltips so all four fit
+                            without clipping the row. */}
+                        <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                           <button
                             onClick={() => openStorefront(shop)}
-                            className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium bg-white/5 text-gray-200 hover:bg-white/10"
+                            title="Öppna butikens storefront"
+                            className="inline-flex items-center gap-1 rounded-lg px-3 py-1 text-xs font-medium bg-white/5 text-gray-200 hover:bg-white/10"
                           >
                             <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-                            Butik
+                            <span className="hidden xl:inline">Butik</span>
                           </button>
                           <button
                             onClick={() => setAddUserShop(shop)}
                             title="Lägg till en admin för butiken"
-                            className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium bg-white/5 text-gray-200 hover:bg-indigo-500/15 hover:text-indigo-300"
+                            className="inline-flex items-center gap-1 rounded-lg px-3 py-1 text-xs font-medium bg-white/5 text-gray-200 hover:bg-indigo-500/15 hover:text-indigo-300"
                           >
                             <UserPlusIcon className="h-4 w-4" />
-                            Användare
+                            <span className="hidden xl:inline">Användare</span>
                           </button>
                           <button
                             onClick={() => setImpersonateShop(shop)}
@@ -226,7 +231,7 @@ const PlatformShops = () => {
                                 : 'Öppna butikens admin som plattformsadmin (loggas)'
                             }
                             className={
-                              'inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium ' +
+                              'inline-flex items-center rounded-lg px-3 py-1 text-xs font-medium ' +
                               (disabled
                                 ? 'bg-white/5 text-gray-600 cursor-not-allowed'
                                 : 'bg-white/5 text-gray-200 hover:bg-amber-500/15 hover:text-amber-300')
@@ -238,7 +243,7 @@ const PlatformShops = () => {
                             onClick={() => toggleStatus(shop)}
                             disabled={savingId === shop.id}
                             className={
-                              'inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ' +
+                              'inline-flex items-center rounded-lg px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50 ' +
                               (disabled
                                 ? 'bg-green-600 text-white hover:bg-green-500'
                                 : 'bg-white/5 text-gray-300 hover:bg-red-500/15 hover:text-red-300')
