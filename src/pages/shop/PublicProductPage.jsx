@@ -111,7 +111,10 @@ const PublicProductPage = () => {
     if (p.b2cImageUrl) images.push(p.b2cImageUrl);
     if (p.b2cImageGallery?.length) images.push(...p.b2cImageGallery);
     vs.forEach((v) => {
-      if (v?.image && !images.includes(v.image)) images.push(v.image);
+      const vImages = Array.isArray(v?.images) && v.images.length > 0 ? v.images : (v?.image ? [v.image] : []);
+      vImages.forEach((u) => {
+        if (u && !images.includes(u)) images.push(u);
+      });
     });
     if (images.length === 0) images.push(getProductImage(p));
     return images;
@@ -406,7 +409,9 @@ const PublicProductPage = () => {
                     selectedVariant?.size === size ? 'border-ink bg-ink text-white' : 'border-ink/15 bg-white hover:border-ink/40'
                   }`}
                 >
-                  <div className="text-sm font-medium">{size}</div>
+                  {/* uppercase: sizes are normalized to caps at save, but docs
+                      saved before that (e.g. "m", "xl") still display right */}
+                  <div className="text-sm font-medium uppercase">{size}</div>
                 </button>
               ))}
             </div>

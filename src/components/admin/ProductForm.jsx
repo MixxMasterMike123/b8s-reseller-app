@@ -70,6 +70,9 @@ import { useShopFeatures } from '../../contexts/ShopFeaturesContext';
 import { CardSection, RightRail, Button } from './ui';
 import { skuFromName, uniqueSku } from '../../utils/productUrls';
 import { query, where, getDocs } from 'firebase/firestore';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, useSortable, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -90,7 +93,10 @@ const plainText = (field) => {
 // (group × size), or one row for a sizeless group — so the cart/server money
 // paths keep matching by row sku exactly as before.
 
-// Read persisted variantGroups into edit state (adds file/preview slots).
+// Read persisted variantGroups into edit state. `images` in edit state is an
+// ordered list of { url } (already uploaded) or { file, preview } (pending
+// upload at save). Older docs with a single `image` string normalize to a
+// one-entry list.
 const normalizeGroups = (rawGroups) =>
   (Array.isArray(rawGroups) ? rawGroups : [])
     .filter((g) => g && (g.label || '').trim())
@@ -98,10 +104,10 @@ const normalizeGroups = (rawGroups) =>
       label: g.label,
       sku: g.sku || '',
       price: g.price ?? '',
-      image: g.image || '',
-      file: null,
-      preview: '',
-      sizes: Array.isArray(g.sizes) ? g.sizes.filter((s) => (s || '').trim()) : [],
+      images: Array.isArray(g.images) && g.images.length > 0
+        ? g.images.filter(Boolean).map((url) => ({ url }))
+        : (g.image ? [{ url: g.image }] : []),
+      sizes: Array.isArray(g.sizes) ? g.sizes.filter((s) => (s || '').trim()).map((s) => s.toUpperCase()) : [],
     }));
 
 // Migrate older persisted shapes into rail groups:
@@ -123,13 +129,61 @@ const groupsFromLegacyVariants = (variants) => {
       label,
       sku: v.sku || '',
       price: v.price ?? '',
-      image: v.image || '',
-      file: null,
-      preview: '',
+      images: v.image ? [{ url: v.image }] : [],
       sizes: [],
     });
   }
   return groups;
+};
+
+// A rail entry: click to select, drag by the grip to reorder. Drag listeners
+// sit ONLY on the grip so they never swallow the select click.
+const SortableRailItem = ({ id, selected, thumb, title, subtitle, onSelect }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : undefined }}
+      className={isDragging ? 'z-10' : ''}
+    >
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onSelect}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); } }}
+        className={`flex min-w-[10rem] cursor-pointer items-center gap-1.5 rounded-[var(--radius-admin-el)] border p-2 text-left transition-all sm:min-w-0 ${
+          selected
+            ? 'border-[var(--color-admin-primary)] bg-admin-surface shadow-[var(--shadow-admin)]'
+            : 'border-admin-border bg-admin-surface-2 opacity-60 hover:opacity-100'
+        }`}
+      >
+        <span
+          {...attributes}
+          {...listeners}
+          onClick={(e) => e.stopPropagation()}
+          title="Dra för att ändra ordning"
+          className="cursor-grab touch-none text-admin-text-faint active:cursor-grabbing"
+        >
+          <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M7 4a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm0 6a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm0 6a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm8-12a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm0 6a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm0 6a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
+          </svg>
+        </span>
+        {thumb ? (
+          <img src={thumb} alt="" className="h-10 w-10 shrink-0 rounded-[4px] border border-admin-border bg-white object-cover" />
+        ) : (
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] border border-admin-border bg-admin-surface">
+            <svg className="h-4 w-4 text-admin-text-faint" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A1.5 1.5 0 0 0 21.75 19.5V4.5A1.5 1.5 0 0 0 20.25 3H3.75A1.5 1.5 0 0 0 2.25 4.5v15A1.5 1.5 0 0 0 3.75 21Zm10.5-11.25h.008v.008h-.008V9.75Z" />
+            </svg>
+          </span>
+        )}
+        <span className="min-w-0">
+          <span className="block truncate text-[13px] font-medium text-admin-text">{title}</span>
+          {subtitle && <span className="block truncate text-[11px] text-admin-text-muted">{subtitle}</span>}
+        </span>
+      </div>
+    </div>
+  );
 };
 
 const emptyForm = () => ({
@@ -381,14 +435,65 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
       label: '',
       sku: '',
       price: '',
-      image: '',
-      file: null,
-      preview: '',
+      images: [],
       sizes: prev ? [...prev.sizes] : [],
     };
+    // FIRST variant on a product: the product as already published IS variant
+    // number one. Seed it as "Original" (name editable) with the product's
+    // main image, so the operator only fills in the NEW variant — no
+    // re-entering of the original. Price/sku stay empty = inherit/auto.
+    if (formData.variantGroups.length === 0) {
+      const original = {
+        label: 'Original',
+        sku: '',
+        price: '',
+        images: formData.b2cImageUrl ? [{ url: formData.b2cImageUrl }] : [],
+        sizes: [],
+      };
+      setField('variantGroups', [original, next]);
+      setSelectedGroupIdx(1);
+      setSizeInput('');
+      return;
+    }
     setField('variantGroups', [...formData.variantGroups, next]);
     setSelectedGroupIdx(formData.variantGroups.length);
     setSizeInput('');
+  };
+
+  // Per-variant image list: append device files (uploaded at save) or an
+  // existing gallery URL; remove by position. First image = the variant's
+  // primary (shown in the rail, swapped in on the storefront).
+  const addGroupImageFiles = (idx, files) => {
+    const ok = [];
+    for (const f of files) {
+      if (f.size > MAX_IMAGE_SIZE) {
+        toast.error(`${f.name} är för stor. Max ${MAX_IMAGE_SIZE / (1024 * 1024)}MB`);
+        continue;
+      }
+      ok.push({ file: f, preview: URL.createObjectURL(f) });
+    }
+    if (ok.length === 0) return;
+    const g = formData.variantGroups[idx];
+    if (g) updateGroup(idx, { images: [...g.images, ...ok] });
+  };
+  const addGroupImageUrl = (idx, url) => {
+    const g = formData.variantGroups[idx];
+    if (!g || g.images.some((im) => im.url === url)) return;
+    updateGroup(idx, { images: [...g.images, { url }] });
+  };
+  const removeGroupImage = (idx, imgIdx) => {
+    const g = formData.variantGroups[idx];
+    if (g) updateGroup(idx, { images: g.images.filter((_, i) => i !== imgIdx) });
+  };
+
+  // Rail drag-reorder (grip handle). Selection follows the moved item.
+  const railSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const onRailDragEnd = ({ active, over }) => {
+    if (!over || active.id === over.id) return;
+    const from = Number(active.id);
+    const to = Number(over.id);
+    setFormData((prev) => ({ ...prev, variantGroups: arrayMove(prev.variantGroups, from, to) }));
+    setSelectedGroupIdx((cur) => arrayMove(formData.variantGroups.map((_, i) => i), from, to).indexOf(cur));
   };
 
   const removeGroup = (idx) => {
@@ -399,8 +504,10 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
   };
 
   // Sizes on the SELECTED group. Accepts a pasted comma-list ("S, M, L").
+  // Normalized to UPPERCASE ("xl" → "XL") so the size run reads consistently
+  // in the shop, the cart and on order lines.
   const addSizes = (idx) => {
-    const parts = sizeInput.split(',').map((s) => s.trim()).filter(Boolean);
+    const parts = sizeInput.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean);
     setSizeInput('');
     if (parts.length === 0) return;
     const g = formData.variantGroups[idx];
@@ -533,7 +640,7 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
       // mistake to surface, not to silently drop. A fully empty one (just
       // clicked "+ Lägg till variant") is dropped without fuss.
       const namelessWithData = formData.variantGroups.some(
-        (g) => !(g.label || '').trim() && ((g.sku || '').trim() || g.image || g.file || g.sizes.length > 0 || parseFloat(g.price) > 0)
+        (g) => !(g.label || '').trim() && ((g.sku || '').trim() || g.images.length > 0 || g.sizes.length > 0 || parseFloat(g.price) > 0)
       );
       if (namelessWithData) {
         toast.error('Varje variant behöver ett namn.');
@@ -564,16 +671,23 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
       const cleanVariants = [];
       for (const g of editedGroups) {
         const label = g.label.trim();
-        let image = g.image || '';
-        if (g.file) {
-          image = await uploadImageToStorage(g.file, `products/${shopId}/${productId}`, `variant_${skuFromName(label)}`);
+        // Upload pending files in list order; keep already-uploaded URLs.
+        const images = [];
+        for (let i = 0; i < g.images.length; i++) {
+          const im = g.images[i];
+          if (im.url) {
+            images.push(im.url);
+          } else if (im.file) {
+            images.push(await uploadImageToStorage(im.file, `products/${shopId}/${productId}`, `variant_${skuFromName(label)}_${i}`));
+          }
         }
+        const image = images[0] || '';
         const groupSku = uniqueRowSku((g.sku || '').trim() || `${resolvedSku}-${skuFromName(label)}`);
         const groupPrice = parseFloat(g.price) || price;
-        const sizes = g.sizes.map((s) => s.trim()).filter(Boolean);
-        cleanGroups.push({ label, sku: groupSku, price: groupPrice, image, sizes });
+        const sizes = [...new Set(g.sizes.map((s) => s.trim().toUpperCase()).filter(Boolean))];
+        cleanGroups.push({ label, sku: groupSku, price: groupPrice, image, images, sizes });
         if (sizes.length === 0) {
-          cleanVariants.push({ sku: groupSku, label, price: groupPrice, image, group: label, size: null });
+          cleanVariants.push({ sku: groupSku, label, price: groupPrice, image, images, group: label, size: null });
         } else {
           for (const size of sizes) {
             cleanVariants.push({
@@ -583,6 +697,7 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
               label: `${label} / ${size}`,
               price: groupPrice,
               image,
+              images,
               group: label,
               size,
             });
@@ -763,6 +878,186 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
               </div>
             </CardSection>
 
+            {/* Variants — the rail (v2.2): left = vertical list of the
+                product's variants (thumbnail + name, selected highlighted),
+                right = full editor for the selected variant (name, image,
+                SKU, price, sizes). No toggle: an empty list IS the off state. */}
+            <CardSection title="Varianter" bodyClassName="space-y-4">
+              {formData.variantGroups.length === 0 ? (
+                <div className="space-y-3">
+                  <p className="text-[13px] text-admin-text-muted">
+                    Den här produkten har inga varianter. Lägg till varianter om produkten
+                    finns i flera utföranden — t.ex. färger eller vikter — med egen bild,
+                    eget pris och egna storlekar. Produkten som den ser ut nu blir automatiskt
+                    första varianten (”Original” — byt gärna namn).
+                  </p>
+                  <Button type="button" variant="secondary" onClick={addGroup}>+ Lägg till variant</Button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4 sm:flex-row">
+                  {/* Rail — drag the grip to reorder; order = storefront order */}
+                  <div className="flex shrink-0 flex-row gap-2 overflow-x-auto sm:w-44 sm:flex-col sm:overflow-visible">
+                    <DndContext sensors={railSensors} collisionDetection={closestCenter} onDragEnd={onRailDragEnd}>
+                      <SortableContext items={formData.variantGroups.map((_, i) => String(i))} strategy={rectSortingStrategy}>
+                        {formData.variantGroups.map((g, idx) => (
+                          <SortableRailItem
+                            key={idx}
+                            id={String(idx)}
+                            selected={idx === selectedGroupIdx}
+                            thumb={g.images[0]?.preview || g.images[0]?.url || ''}
+                            title={g.label.trim() || `Variant ${idx + 1}`}
+                            subtitle={g.sizes.length > 0 ? g.sizes.join(' · ') : ''}
+                            onSelect={() => { setSelectedGroupIdx(idx); setSizeInput(''); }}
+                          />
+                        ))}
+                      </SortableContext>
+                    </DndContext>
+                    <Button type="button" variant="secondary" onClick={addGroup} className="shrink-0 sm:w-full">+ Lägg till variant</Button>
+                  </div>
+
+                  {/* Editor for the selected variant */}
+                  {formData.variantGroups[selectedGroupIdx] && (() => {
+                    const idx = selectedGroupIdx;
+                    const g = formData.variantGroups[idx];
+                    const galleryChoices = [formData.b2cImageUrl, ...existingGallery].filter(Boolean);
+                    const autoSku = `${formData.sku || skuFromName(formData.name)}-${skuFromName(g.label || `variant-${idx + 1}`)}`;
+                    return (
+                      <div className="min-w-0 flex-1 space-y-4 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface-2 p-4">
+                        <div>
+                          <label className={labelCls}>Namn</label>
+                          <input
+                            value={g.label}
+                            onChange={(e) => updateGroup(idx, { label: e.target.value })}
+                            placeholder="t.ex. Svart, Vit eller 500g"
+                            className={inputCls}
+                          />
+                        </div>
+
+                        <div>
+                          <label className={labelCls}>Bilder</label>
+                          <div className="space-y-2">
+                            {g.images.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {g.images.map((im, imgIdx) => (
+                                  <div key={im.url || im.preview} className="relative">
+                                    <img src={im.preview || im.url} alt="" className="h-20 w-20 rounded-[var(--radius-admin-el)] border border-admin-border bg-white object-cover" />
+                                    {imgIdx === 0 && (
+                                      <span className="absolute bottom-1 left-1 rounded-[4px] bg-admin-info-bg px-1 text-[10px] font-medium text-admin-info-text">Huvudbild</span>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => removeGroupImage(idx, imgIdx)}
+                                      className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-admin-critical-dot text-[11px] text-white hover:opacity-80"
+                                      aria-label="Ta bort bild"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              onChange={(e) => {
+                                addGroupImageFiles(idx, Array.from(e.target.files || []));
+                                e.target.value = '';
+                              }}
+                              className="block w-full text-[13px] text-admin-text-muted file:mr-4 file:rounded-[var(--radius-admin-el)] file:border-0 file:bg-admin-surface file:px-4 file:py-2 file:text-[13px] file:font-medium file:text-admin-text"
+                            />
+                            {galleryChoices.filter((url) => !g.images.some((im) => im.url === url)).length > 0 && (
+                              <div>
+                                <p className="mb-1 text-[12px] text-admin-text-muted">Eller välj från produktens bilder:</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {galleryChoices.filter((url) => !g.images.some((im) => im.url === url)).map((url) => (
+                                    <button
+                                      key={url}
+                                      type="button"
+                                      onClick={() => addGroupImageUrl(idx, url)}
+                                      className="h-12 w-12 overflow-hidden rounded-[var(--radius-admin-el)] border-2 border-admin-border bg-white hover:border-[var(--color-admin-primary)]"
+                                      title="Lägg till på varianten"
+                                    >
+                                      <img src={url} alt="" className="h-full w-full object-cover" />
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <p className={helpCls}>
+                            Flera bilder per variant. Den första är huvudbilden — den visas i butiken när kunden
+                            väljer varianten; övriga läggs till i produktens bildgalleri.
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                          <div>
+                            <label className={labelCls}>SKU (Artikelnummer)</label>
+                            <input
+                              value={g.sku}
+                              onChange={(e) => updateGroup(idx, { sku: e.target.value })}
+                              placeholder={autoSku}
+                              className={inputCls}
+                            />
+                            <p className={helpCls}>Tomt = skapas automatiskt.</p>
+                          </div>
+                          <div>
+                            <label className={labelCls}>Pris (SEK, inkl. moms)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={g.price}
+                              onChange={(e) => updateGroup(idx, { price: e.target.value })}
+                              placeholder={String(formData.price || 0)}
+                              className={inputCls}
+                            />
+                            <p className={helpCls}>Tomt = produktens pris. Gäller alla storlekar.</p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className={labelCls}>Storlekar (valfritt)</label>
+                          <div className="flex flex-wrap items-center gap-1.5 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2 py-1.5">
+                            {g.sizes.map((size) => (
+                              <span key={size} className="inline-flex items-center gap-1 rounded-[var(--radius-admin-el)] bg-admin-info-bg px-2 py-0.5 text-[12px] font-medium text-admin-info-text">
+                                {size}
+                                <button type="button" onClick={() => removeSize(idx, size)} className="text-admin-info-text hover:opacity-70" aria-label={`Ta bort ${size}`}>×</button>
+                              </span>
+                            ))}
+                            <input
+                              value={sizeInput}
+                              onChange={(e) => setSizeInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addSizes(idx); }
+                                else if (e.key === 'Backspace' && !sizeInput && g.sizes.length) {
+                                  removeSize(idx, g.sizes[g.sizes.length - 1]);
+                                }
+                              }}
+                              onBlur={() => addSizes(idx)}
+                              placeholder={g.sizes.length ? '' : 't.ex. S, M, L, XL'}
+                              className="min-w-[8rem] flex-1 bg-transparent text-[13px] text-admin-text placeholder:text-admin-text-faint focus:outline-none"
+                            />
+                          </div>
+                          <p className={helpCls}>
+                            Enter eller komma för att lägga till. Kunden väljer storlek i butiken och varje
+                            storlek får eget artikelnummer automatiskt. Lämna tomt om varianten saknar storlekar.
+                          </p>
+                        </div>
+
+                        <div className="flex justify-end border-t border-admin-border-soft pt-3">
+                          <Button type="button" variant="plain" onClick={() => removeGroup(idx)} className="text-admin-critical-dot">
+                            Ta bort variant
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </CardSection>
+
             {/* Category — Shopify places this in the main column under Media.
                 Same autocomplete + state as before (moved out of the rail). */}
             <CardSection title="Kategori" bodyClassName="space-y-2">
@@ -902,197 +1197,6 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
                 </div>
                 <p className={helpCls}>Minst ett alternativ måste vara valt. Styr vilka leveranssätt kunden kan välja i kassan.</p>
               </div>
-            </CardSection>
-
-            {/* Variants — the rail (v2.2): left = vertical list of the
-                product's variants (thumbnail + name, selected highlighted),
-                right = full editor for the selected variant (name, image,
-                SKU, price, sizes). No toggle: an empty list IS the off state. */}
-            <CardSection title="Varianter" bodyClassName="space-y-4">
-              {formData.variantGroups.length === 0 ? (
-                <div className="space-y-3">
-                  <p className="text-[13px] text-admin-text-muted">
-                    Den här produkten har inga varianter. Lägg till varianter om produkten
-                    finns i flera utföranden — t.ex. färger eller vikter — med egen bild,
-                    eget pris och egna storlekar.
-                  </p>
-                  <Button type="button" variant="secondary" onClick={addGroup}>+ Lägg till variant</Button>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4 sm:flex-row">
-                  {/* Rail */}
-                  <div className="flex shrink-0 flex-row gap-2 overflow-x-auto sm:w-44 sm:flex-col sm:overflow-visible">
-                    {formData.variantGroups.map((g, idx) => {
-                      const selected = idx === selectedGroupIdx;
-                      const thumb = g.preview || g.image;
-                      return (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => { setSelectedGroupIdx(idx); setSizeInput(''); }}
-                          className={`flex min-w-[10rem] items-center gap-2 rounded-[var(--radius-admin-el)] border p-2 text-left transition-all sm:min-w-0 ${
-                            selected
-                              ? 'border-[var(--color-admin-primary)] bg-admin-surface shadow-[var(--shadow-admin)]'
-                              : 'border-admin-border bg-admin-surface-2 opacity-60 hover:opacity-100'
-                          }`}
-                        >
-                          {thumb ? (
-                            <img src={thumb} alt="" className="h-10 w-10 shrink-0 rounded-[4px] border border-admin-border object-cover" />
-                          ) : (
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] border border-admin-border bg-admin-surface">
-                              <svg className="h-4 w-4 text-admin-text-faint" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A1.5 1.5 0 0 0 21.75 19.5V4.5A1.5 1.5 0 0 0 20.25 3H3.75A1.5 1.5 0 0 0 2.25 4.5v15A1.5 1.5 0 0 0 3.75 21Zm10.5-11.25h.008v.008h-.008V9.75Z" />
-                              </svg>
-                            </span>
-                          )}
-                          <span className="min-w-0">
-                            <span className="block truncate text-[13px] font-medium text-admin-text">{g.label.trim() || `Variant ${idx + 1}`}</span>
-                            {g.sizes.length > 0 && (
-                              <span className="block truncate text-[11px] text-admin-text-muted">{g.sizes.join(' · ')}</span>
-                            )}
-                          </span>
-                        </button>
-                      );
-                    })}
-                    <Button type="button" variant="secondary" onClick={addGroup} className="shrink-0 sm:w-full">+ Lägg till variant</Button>
-                  </div>
-
-                  {/* Editor for the selected variant */}
-                  {formData.variantGroups[selectedGroupIdx] && (() => {
-                    const idx = selectedGroupIdx;
-                    const g = formData.variantGroups[idx];
-                    const galleryChoices = [formData.b2cImageUrl, ...existingGallery].filter(Boolean);
-                    const autoSku = `${formData.sku || skuFromName(formData.name)}-${skuFromName(g.label || `variant-${idx + 1}`)}`;
-                    return (
-                      <div className="min-w-0 flex-1 space-y-4 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface-2 p-4">
-                        <div>
-                          <label className={labelCls}>Namn</label>
-                          <input
-                            value={g.label}
-                            onChange={(e) => updateGroup(idx, { label: e.target.value })}
-                            placeholder="t.ex. Svart, Vit eller 500g"
-                            className={inputCls}
-                          />
-                        </div>
-
-                        <div>
-                          <label className={labelCls}>Bild</label>
-                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                            {(g.preview || g.image) ? (
-                              <img src={g.preview || g.image} alt="" className="h-24 w-24 shrink-0 rounded-[var(--radius-admin-el)] border border-admin-border object-cover" />
-                            ) : (
-                              <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface text-[11px] text-admin-text-faint">
-                                Ingen bild
-                              </div>
-                            )}
-                            <div className="min-w-0 flex-1 space-y-2">
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => {
-                                  const f = e.target.files[0];
-                                  if (!f) return;
-                                  if (f.size > MAX_IMAGE_SIZE) {
-                                    toast.error(`Bilden är för stor. Max ${MAX_IMAGE_SIZE / (1024 * 1024)}MB`);
-                                    return;
-                                  }
-                                  updateGroup(idx, { file: f, preview: URL.createObjectURL(f), image: '' });
-                                }}
-                                className="block w-full text-[13px] text-admin-text-muted file:mr-4 file:rounded-[var(--radius-admin-el)] file:border-0 file:bg-admin-surface file:px-4 file:py-2 file:text-[13px] file:font-medium file:text-admin-text"
-                              />
-                              {galleryChoices.length > 0 && (
-                                <div className="flex flex-wrap gap-2">
-                                  {galleryChoices.map((url) => (
-                                    <button
-                                      key={url}
-                                      type="button"
-                                      onClick={() => updateGroup(idx, { image: url, file: null, preview: '' })}
-                                      className={`h-12 w-12 overflow-hidden rounded-[var(--radius-admin-el)] border-2 ${
-                                        g.image === url && !g.preview
-                                          ? 'border-[var(--color-admin-primary)]'
-                                          : 'border-admin-border hover:border-admin-text-faint'
-                                      }`}
-                                    >
-                                      <img src={url} alt="" className="h-full w-full object-cover" />
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                              {(g.image || g.preview) && (
-                                <Button type="button" variant="plain" onClick={() => updateGroup(idx, { image: '', file: null, preview: '' })} className="text-admin-critical-dot">
-                                  Ta bort bild
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                          <p className={helpCls}>Visas i butiken när kunden väljer varianten. Ladda upp en ny bild eller välj en befintlig.</p>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                          <div>
-                            <label className={labelCls}>SKU (Artikelnummer)</label>
-                            <input
-                              value={g.sku}
-                              onChange={(e) => updateGroup(idx, { sku: e.target.value })}
-                              placeholder={autoSku}
-                              className={inputCls}
-                            />
-                            <p className={helpCls}>Tomt = skapas automatiskt.</p>
-                          </div>
-                          <div>
-                            <label className={labelCls}>Pris (SEK, inkl. moms)</label>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={g.price}
-                              onChange={(e) => updateGroup(idx, { price: e.target.value })}
-                              placeholder={String(formData.price || 0)}
-                              className={inputCls}
-                            />
-                            <p className={helpCls}>Tomt = produktens pris. Gäller alla storlekar.</p>
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className={labelCls}>Storlekar (valfritt)</label>
-                          <div className="flex flex-wrap items-center gap-1.5 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2 py-1.5">
-                            {g.sizes.map((size) => (
-                              <span key={size} className="inline-flex items-center gap-1 rounded-[var(--radius-admin-el)] bg-admin-info-bg px-2 py-0.5 text-[12px] font-medium text-admin-info-text">
-                                {size}
-                                <button type="button" onClick={() => removeSize(idx, size)} className="text-admin-info-text hover:opacity-70" aria-label={`Ta bort ${size}`}>×</button>
-                              </span>
-                            ))}
-                            <input
-                              value={sizeInput}
-                              onChange={(e) => setSizeInput(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addSizes(idx); }
-                                else if (e.key === 'Backspace' && !sizeInput && g.sizes.length) {
-                                  removeSize(idx, g.sizes[g.sizes.length - 1]);
-                                }
-                              }}
-                              onBlur={() => addSizes(idx)}
-                              placeholder={g.sizes.length ? '' : 't.ex. S, M, L, XL'}
-                              className="min-w-[8rem] flex-1 bg-transparent text-[13px] text-admin-text placeholder:text-admin-text-faint focus:outline-none"
-                            />
-                          </div>
-                          <p className={helpCls}>
-                            Enter eller komma för att lägga till. Kunden väljer storlek i butiken och varje
-                            storlek får eget artikelnummer automatiskt. Lämna tomt om varianten saknar storlekar.
-                          </p>
-                        </div>
-
-                        <div className="flex justify-end border-t border-admin-border-soft pt-3">
-                          <Button type="button" variant="plain" onClick={() => removeGroup(idx)} className="text-admin-critical-dot">
-                            Ta bort variant
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
             </CardSection>
 
             {/* Save bar */}
