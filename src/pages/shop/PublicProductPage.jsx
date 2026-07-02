@@ -338,10 +338,82 @@ const PublicProductPage = () => {
   // "8× Standard" bug.
   const showVariantPicker = variants.length > 0;
 
-  // One picker per option (v2.1) or the legacy flat list — shared by the
-  // mobile and desktop layouts, which differ only in grid/padding classes.
+  // Model v2.2 (variant rail): rows carry `group` (the variant's name, e.g.
+  // "Svart") and `size` (nullable). Purely derived — selection state lives in
+  // selectedVariant alone. Only trusted when EVERY row is grouped; otherwise
+  // the v2.1 options path or the legacy flat picker takes over below.
+  const grouped = variants.length > 0 && variants.every((v) => typeof v.group === 'string' && v.group);
+  const groupLabels = grouped ? [...new Set(variants.map((v) => v.group))] : [];
+  const groupImage = (label) => variants.find((v) => v.group === label)?.image || '';
+  const groupSizes = (label) => variants.filter((v) => v.group === label && v.size).map((v) => v.size);
+  const currentSizes = grouped && selectedVariant ? groupSizes(selectedVariant.group) : [];
+
+  // Switch variant, keeping the current size when the new variant has it
+  // (sizes can differ per variant — fall back to its first row).
+  const selectGroup = (label) => {
+    const rows = variants.filter((v) => v.group === label);
+    if (rows.length === 0) return;
+    const sameSize = rows.find((v) => v.size === selectedVariant?.size);
+    setSelectedVariant(sameSize || rows[0]);
+  };
+  const selectSize = (size) => {
+    const row = variants.find((v) => v.group === selectedVariant?.group && v.size === size);
+    if (row) setSelectedVariant(row);
+  };
+
+  // The variant picker, shared by the mobile and desktop layouts (they differ
+  // only in grid/padding classes). Three render paths, newest first:
+  //  1. grouped (v2.2 rail): variant buttons WITH thumbnails + a size row
+  //  2. options (v2.1 matrix): one button group per option axis
+  //  3. legacy flat list
   const renderVariantPicker = (headingCls, gridCls, btnPadCls) =>
-    options.length > 0 ? (
+    grouped ? (
+      <div className="space-y-6">
+        <div>
+          <h3 className={headingCls}>{t('select_variant', 'Välj')}</h3>
+          <div className={gridCls}>
+            {groupLabels.map((label) => {
+              const isSelected = selectedVariant?.group === label;
+              const thumb = groupImage(label);
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => selectGroup(label)}
+                  className={`${btnPadCls} text-center border rounded-el transition-all ${
+                    isSelected ? 'border-ink bg-ink text-white' : 'border-ink/15 bg-white hover:border-ink/40'
+                  }`}
+                >
+                  {thumb && (
+                    <img src={thumb} alt={label} className="mx-auto mb-1.5 h-14 w-14 rounded-el object-cover" />
+                  )}
+                  <div className="text-sm font-medium">{label}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        {currentSizes.length > 0 && (
+          <div>
+            <h3 className={headingCls}>{t('select_size', 'Storlek')}</h3>
+            <div className={gridCls}>
+              {currentSizes.map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => selectSize(size)}
+                  className={`${btnPadCls} text-center border rounded-el transition-all ${
+                    selectedVariant?.size === size ? 'border-ink bg-ink text-white' : 'border-ink/15 bg-white hover:border-ink/40'
+                  }`}
+                >
+                  <div className="text-sm font-medium">{size}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    ) : options.length > 0 ? (
       <div className="space-y-6">
         {options.map((opt, oi) => (
           <div key={opt.name || oi}>

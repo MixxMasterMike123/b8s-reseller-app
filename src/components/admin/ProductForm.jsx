@@ -41,6 +41,19 @@
 //    is opened for edit: one option named "Variant" whose values are the old
 //    labels; skus/prices/images are preserved.
 //
+// Product model v2.2 (variant rail, 2026-07-02 — supersedes the v2.1 admin UI):
+//  • Admin edits `variantGroups`: one rail entry per distinct variant
+//    (colorway/weight) with its own name, image, sku, price and OPTIONAL
+//    per-variant sizes (sizes can differ between colorways).
+//  • Save derives the sellable `variants` rows — one per (group × size), or
+//    one for a sizeless group — with `{sku, label, price, image, group, size}`.
+//    label = "Svart / M", per-size skus auto-append the size slug. The cart
+//    and the server repricing keep matching rows by sku, unchanged.
+//  • `options` is written as [] (the v2.1 matrix UI is retired); the
+//    storefront still renders v2.1 docs until they're re-saved.
+//  • Older products (flat v2.0 rows or v2.1 matrix rows) migrate on edit:
+//    one rail group per row, sku/price/image preserved.
+//
 // Tenancy: create stamps shopId via withShopId(...) and the parent passes
 // shopId from useShopId().
 import React, { useState, useEffect } from 'react';
@@ -69,57 +82,54 @@ const plainText = (field) => {
   return '';
 };
 
-// ----- Shopify-style options → variant-matrix helpers (model v2.1) -----
+// ----- Variant-rail helpers (model v2.2) -----
+//
+// Admin edits `variantGroups` (the rail): one entry per distinct variant
+// (colorway/weight/flavor) with its own image, sku, price and OPTIONAL sizes.
+// Save DERIVES the sellable `variants` rows from the groups — one row per
+// (group × size), or one row for a sizeless group — so the cart/server money
+// paths keep matching by row sku exactly as before.
 
-// Stable identity for a value-combination (['Röd','S'] → '["Röd","S"]').
-const comboKey = (vals) => JSON.stringify(vals || []);
+// Read persisted variantGroups into edit state (adds file/preview slots).
+const normalizeGroups = (rawGroups) =>
+  (Array.isArray(rawGroups) ? rawGroups : [])
+    .filter((g) => g && (g.label || '').trim())
+    .map((g) => ({
+      label: g.label,
+      sku: g.sku || '',
+      price: g.price ?? '',
+      image: g.image || '',
+      file: null,
+      preview: '',
+      sizes: Array.isArray(g.sizes) ? g.sizes.filter((s) => (s || '').trim()) : [],
+    }));
 
-// Read persisted options into edit state: values become objects with a `file`
-// slot for a not-yet-uploaded image. Tolerates plain-string values.
-const normalizeOptions = (rawOptions) =>
-  (Array.isArray(rawOptions) ? rawOptions : [])
-    .filter((o) => o && Array.isArray(o.values))
-    .map((o) => ({
-      name: o.name || '',
-      values: o.values
-        .map((v) => (typeof v === 'string' ? { value: v, image: '' } : { value: v?.value || '', image: v?.image || '' }))
-        .filter((v) => v.value.trim())
-        .map((v) => ({ value: v.value, image: v.image, file: null, preview: '' })),
-    }))
-    .filter((o) => o.values.length > 0);
-
-// Cartesian product of the configured option values → matrix rows. Rows for
-// combos that already exist keep their data (sku/price); new combos start
-// empty (sku + price auto-derive at save). Options without values are treated
-// as not-yet-configured and skipped (they are not persisted either).
-const buildMatrix = (options, prevRows) => {
-  const opts = options.filter((o) => o.values.length > 0);
-  if (opts.length === 0) return [];
-  const combos = opts.reduce((acc, o) => acc.flatMap((c) => o.values.map((v) => [...c, v.value])), [[]]);
-  const prevByKey = new Map((prevRows || []).map((r) => [comboKey(r.optionValues), r]));
-  return combos.map((vals) => {
-    const prev = prevByKey.get(comboKey(vals));
-    return prev ? { ...prev, optionValues: vals } : { optionValues: vals, sku: '', price: '' };
-  });
-};
-
-// Migrate a legacy flat variant list ({sku,label,price,image} without options)
-// into a single "Variant" option whose values carry the old labels + images.
-// Duplicate/empty labels fall back to the sku so every row survives uniquely.
-const migrateLegacyVariants = (variants) => {
+// Migrate older persisted shapes into rail groups:
+//  • v2.0 legacy flat variants ({sku,label,price,image}) → one group per row.
+//  • v2.1 options-matrix variants (rows with optionValues) → one group per
+//    row, flattened (combos become individual rail entries the operator can
+//    restructure). sku/price/image always survive.
+// Duplicate/empty labels fall back to the sku so groups stay uniquely named.
+const groupsFromLegacyVariants = (variants) => {
   const seen = new Set();
-  const values = [];
-  const rows = [];
+  const groups = [];
   for (const v of variants) {
-    let val = (v.label || v.sku || '').trim();
-    if (!val) continue;
-    if (seen.has(val.toLowerCase())) val = `${val} (${v.sku})`;
-    if (seen.has(val.toLowerCase())) continue;
-    seen.add(val.toLowerCase());
-    values.push({ value: val, image: v.image || '', file: null, preview: '' });
-    rows.push({ optionValues: [val], sku: v.sku || '', price: v.price ?? '' });
+    let label = (v.label || v.sku || '').trim();
+    if (!label) continue;
+    if (seen.has(label.toLowerCase())) label = `${label} (${v.sku})`;
+    if (seen.has(label.toLowerCase())) continue;
+    seen.add(label.toLowerCase());
+    groups.push({
+      label,
+      sku: v.sku || '',
+      price: v.price ?? '',
+      image: v.image || '',
+      file: null,
+      preview: '',
+      sizes: [],
+    });
   }
-  return { options: values.length ? [{ name: 'Variant', values }] : [], variants: rows };
+  return groups;
 };
 
 const emptyForm = () => ({
@@ -135,11 +145,12 @@ const emptyForm = () => ({
   // consumer fallback). 0 = no wholesale price set. Only shown/saved when the
   // shop has the `b2b` add-on enabled.
   b2bPrice: 0,
-  // Variants (model v2.1): `options` define the axes (Färg/Storlek/Vikt…),
-  // `variants` is the generated matrix (rows: { optionValues, sku, price }).
-  // Both empty when hasVariants is false.
+  // Variants (model v2.2): the admin edits `variantGroups` (the rail — one
+  // entry per colorway/weight with image/sku/price/sizes). The sellable
+  // `variants` rows are DERIVED from the groups at save. hasVariants is
+  // derived too: groups exist ⇒ true.
   hasVariants: false,
-  options: [],
+  variantGroups: [],
   variants: [],
   isActive: true,
   imageUrl: '',
@@ -177,20 +188,14 @@ const emptyForm = () => ({
   delivery: { shipping: true, pickup: true },
 });
 
-// Build the variant edit state (options + matrix rows) from a product doc.
-// v2.1 products have `options`; legacy products (flat variants, no options)
-// are migrated into a single "Variant" option so the same editor serves both.
+// Build the rail edit state from a product doc. v2.2 products persist
+// `variantGroups`; anything older (flat v2.0 variants or v2.1 options-matrix
+// rows) is migrated into groups so the same editor serves every product.
 const variantStateFromProduct = (p) => {
-  const persisted = Array.isArray(p.variants) ? p.variants : [];
-  const options = normalizeOptions(p.options);
-  if (options.length > 0) {
-    const prevRows = persisted
-      .filter((v) => v && Array.isArray(v.optionValues) && v.optionValues.length > 0)
-      .map((v) => ({ optionValues: v.optionValues, sku: v.sku || '', price: v.price ?? '' }));
-    return { options, variants: buildMatrix(options, prevRows) };
-  }
-  if (persisted.length > 0) return migrateLegacyVariants(persisted);
-  return { options: [], variants: [] };
+  const groups = normalizeGroups(p.variantGroups);
+  if (groups.length > 0) return { variantGroups: groups };
+  const persisted = Array.isArray(p.variants) ? p.variants.filter((v) => v) : [];
+  return { variantGroups: groupsFromLegacyVariants(persisted) };
 };
 
 // Build the form state from an existing product doc (read-compatible).
@@ -358,113 +363,60 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
     setShowCategorySuggestions(false);
   };
 
-  // ----- variants (options → generated matrix, model v2.1) -----
+  // ----- variants (rail of groups, model v2.2) -----
 
-  // Combos removed by the operator ("Ta bort" on a matrix row). Kept OUTSIDE
-  // formData so option edits (which regenerate the matrix) don't resurrect
-  // them. Persisted implicitly: an excluded combo is simply not in `variants`,
-  // so on re-edit it's every derivable combo that has no saved row.
-  const [excludedCombos, setExcludedCombos] = useState(() => {
-    const opts = normalizeOptions(product?.options);
-    if (opts.length === 0 || !Array.isArray(product?.variants)) return new Set();
-    const present = new Set(
-      product.variants
-        .filter((v) => v && Array.isArray(v.optionValues) && v.optionValues.length > 0)
-        .map((v) => comboKey(v.optionValues))
-    );
-    const ex = new Set();
-    buildMatrix(opts, []).forEach((r) => {
-      const k = comboKey(r.optionValues);
-      if (!present.has(k)) ex.add(k);
-    });
-    return ex;
-  });
+  // Which rail entry is open in the editor panel.
+  const [selectedGroupIdx, setSelectedGroupIdx] = useState(0);
+  // Draft text of the selected panel's "add size" input.
+  const [sizeInput, setSizeInput] = useState('');
 
-  // Which option value's image picker is open: { oi, vi } | null.
-  const [imagePickerTarget, setImagePickerTarget] = useState(null);
-  // Draft text of each option's "add value" input, keyed by option index.
-  const [valueInputs, setValueInputs] = useState({});
+  const updateGroup = (idx, patch) =>
+    setField('variantGroups', formData.variantGroups.map((g, i) => (i === idx ? { ...g, ...patch } : g)));
 
-  // Option edits that change the value set regenerate the matrix (rows keep
-  // their sku/price via comboKey). Renames + image changes don't touch rows.
-  const applyOptions = (nextOptions) =>
-    setFormData((prev) => ({ ...prev, options: nextOptions, variants: buildMatrix(nextOptions, prev.variants) }));
-
-  const addOption = () => {
-    if (formData.options.length >= 3) return;
-    setField('options', [...formData.options, { name: '', values: [] }]);
+  const addGroup = () => {
+    // Prefill sizes from the previous variant — the common case is "same size
+    // run for every colorway", so a new variant costs zero extra size clicks.
+    const prev = formData.variantGroups[formData.variantGroups.length - 1];
+    const next = {
+      label: '',
+      sku: '',
+      price: '',
+      image: '',
+      file: null,
+      preview: '',
+      sizes: prev ? [...prev.sizes] : [],
+    };
+    setField('variantGroups', [...formData.variantGroups, next]);
+    setSelectedGroupIdx(formData.variantGroups.length);
+    setSizeInput('');
   };
-  const removeOption = (oi) => {
-    setImagePickerTarget(null);
-    applyOptions(formData.options.filter((_, i) => i !== oi));
-  };
-  const renameOption = (oi, name) =>
-    setField('options', formData.options.map((o, i) => (i === oi ? { ...o, name } : o)));
 
-  const addOptionValue = (oi) => {
-    // Accept a pasted comma-list ("S, M, L") as multiple values in one go.
-    const parts = (valueInputs[oi] || '').split(',').map((s) => s.trim()).filter(Boolean);
-    setValueInputs((prev) => ({ ...prev, [oi]: '' }));
+  const removeGroup = (idx) => {
+    const nextGroups = formData.variantGroups.filter((_, i) => i !== idx);
+    setField('variantGroups', nextGroups);
+    setSelectedGroupIdx((cur) => Math.max(0, Math.min(cur > idx ? cur - 1 : cur, nextGroups.length - 1)));
+    setSizeInput('');
+  };
+
+  // Sizes on the SELECTED group. Accepts a pasted comma-list ("S, M, L").
+  const addSizes = (idx) => {
+    const parts = sizeInput.split(',').map((s) => s.trim()).filter(Boolean);
+    setSizeInput('');
     if (parts.length === 0) return;
-    const opt = formData.options[oi];
-    const taken = new Set(opt.values.map((v) => v.value.toLowerCase()));
+    const g = formData.variantGroups[idx];
+    if (!g) return;
+    const taken = new Set(g.sizes.map((s) => s.toLowerCase()));
     const fresh = [];
-    for (const value of parts) {
-      if (taken.has(value.toLowerCase())) continue;
-      taken.add(value.toLowerCase());
-      fresh.push({ value, image: '', file: null, preview: '' });
+    for (const s of parts) {
+      if (taken.has(s.toLowerCase())) continue;
+      taken.add(s.toLowerCase());
+      fresh.push(s);
     }
-    if (fresh.length === 0) return;
-    applyOptions(
-      formData.options.map((o, i) => (i === oi ? { ...o, values: [...o.values, ...fresh] } : o))
-    );
+    if (fresh.length > 0) updateGroup(idx, { sizes: [...g.sizes, ...fresh] });
   };
-  const removeOptionValue = (oi, vi) => {
-    setImagePickerTarget(null);
-    applyOptions(
-      formData.options.map((o, i) => (i === oi ? { ...o, values: o.values.filter((_, j) => j !== vi) } : o))
-    );
-  };
-  // Image assignment for an option value (URL from the gallery, or a new file
-  // uploaded on save). No matrix rebuild — combos are keyed by values only.
-  const setValueImage = (oi, vi, patch) =>
-    setField(
-      'options',
-      formData.options.map((o, i) =>
-        i === oi ? { ...o, values: o.values.map((v, j) => (j === vi ? { ...v, ...patch } : v)) } : o
-      )
-    );
-
-  const updateVariant = (idx, patch) => setField('variants', formData.variants.map((v, i) => (i === idx ? { ...v, ...patch } : v)));
-  const toggleRowExcluded = (key) =>
-    setExcludedCombos((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-
-  const toggleHasVariants = (on) => {
-    if (on) {
-      setFormData((prev) => ({
-        ...prev,
-        hasVariants: true,
-        options: prev.options.length > 0 ? prev.options : [{ name: '', values: [] }],
-      }));
-    } else {
-      setFormData((prev) => ({ ...prev, hasVariants: false }));
-    }
-  };
-
-  // The image a matrix row would get right now (per-value image, first option
-  // that has one wins) — mirrors the save-time resolution, for row thumbnails.
-  const liveRowImage = (vals) => {
-    const opts = formData.options.filter((o) => o.values.length > 0);
-    for (let i = 0; i < opts.length; i++) {
-      const v = opts[i].values.find((x) => x.value === vals[i]);
-      if (v && (v.preview || v.image)) return v.preview || v.image;
-    }
-    return '';
+  const removeSize = (idx, size) => {
+    const g = formData.variantGroups[idx];
+    if (g) updateGroup(idx, { sizes: g.sizes.filter((s) => s !== size) });
   };
 
   // ----- images -----
@@ -570,61 +522,74 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
       const price = parseFloat(formData.price) || 0;
       const b2bPrice = parseFloat(formData.b2bPrice) || 0;
 
-      // Variants (v2.1): upload any pending per-value images, persist the
-      // cleaned options, then the generated matrix (minus excluded combos).
-      // Row sku/price auto-derive when left empty: sku from product-sku +
-      // value slugs (unique within the product), price from the product price.
-      let cleanOptions = [];
-      let cleanVariants = [];
-      if (formData.hasVariants) {
-        for (const opt of formData.options) {
-          const values = [];
-          for (const val of opt.values) {
-            const value = (val.value || '').trim();
-            if (!value) continue;
-            let img = val.image || '';
-            if (val.file) {
-              img = await uploadImageToStorage(val.file, `products/${shopId}/${productId}`, `variant_${skuFromName(value)}`);
-            }
-            values.push({ value, image: img });
-          }
-          if (values.length > 0) cleanOptions.push({ name: (opt.name || '').trim() || 'Variant', values });
+      // Variants (v2.2): upload any pending per-variant images, persist the
+      // cleaned rail (`variantGroups`), then DERIVE the sellable rows — one
+      // per (group × size), or one for a sizeless group. Empty group sku/price
+      // auto-derive (sku from product-sku + label slug, price from the product
+      // price); per-size row skus append the size slug. All row skus are made
+      // unique within the product (server repricing + cart lineId key on them).
+      const editedGroups = formData.variantGroups.filter((g) => (g.label || '').trim());
+      // A nameless group with ANY data entered (sku/price/image/sizes) is a
+      // mistake to surface, not to silently drop. A fully empty one (just
+      // clicked "+ Lägg till variant") is dropped without fuss.
+      const namelessWithData = formData.variantGroups.some(
+        (g) => !(g.label || '').trim() && ((g.sku || '').trim() || g.image || g.file || g.sizes.length > 0 || parseFloat(g.price) > 0)
+      );
+      if (namelessWithData) {
+        toast.error('Varje variant behöver ett namn.');
+        setSaving(false);
+        return;
+      }
+      const labelSeen = new Set();
+      for (const g of editedGroups) {
+        const key = g.label.trim().toLowerCase();
+        if (labelSeen.has(key)) {
+          toast.error(`Två varianter heter "${g.label.trim()}" — ge dem olika namn.`);
+          setSaving(false);
+          return;
         }
+        labelSeen.add(key);
+      }
 
-        // Per-value image → variant image: first option (in order) whose value
-        // for this combo has an image. (Färg first ⇒ the colour photo wins.)
-        const valueImage = (vals) => {
-          for (let i = 0; i < cleanOptions.length; i++) {
-            const v = cleanOptions[i].values.find((x) => x.value === vals[i]);
-            if (v?.image) return v.image;
+      const takenRowSkus = new Set();
+      const uniqueRowSku = (base) => {
+        const root = base || 'variant';
+        let candidate = root;
+        for (let n = 2; takenRowSkus.has(candidate.toLowerCase()); n++) candidate = `${root}-${n}`;
+        takenRowSkus.add(candidate.toLowerCase());
+        return candidate;
+      };
+
+      const cleanGroups = [];
+      const cleanVariants = [];
+      for (const g of editedGroups) {
+        const label = g.label.trim();
+        let image = g.image || '';
+        if (g.file) {
+          image = await uploadImageToStorage(g.file, `products/${shopId}/${productId}`, `variant_${skuFromName(label)}`);
+        }
+        const groupSku = uniqueRowSku((g.sku || '').trim() || `${resolvedSku}-${skuFromName(label)}`);
+        const groupPrice = parseFloat(g.price) || price;
+        const sizes = g.sizes.map((s) => s.trim()).filter(Boolean);
+        cleanGroups.push({ label, sku: groupSku, price: groupPrice, image, sizes });
+        if (sizes.length === 0) {
+          cleanVariants.push({ sku: groupSku, label, price: groupPrice, image, group: label, size: null });
+        } else {
+          for (const size of sizes) {
+            cleanVariants.push({
+              // The sizeless base sku is already reserved by the group above,
+              // so per-size skus can never collide with it.
+              sku: uniqueRowSku(`${groupSku}-${skuFromName(size)}`),
+              label: `${label} / ${size}`,
+              price: groupPrice,
+              image,
+              group: label,
+              size,
+            });
           }
-          return '';
-        };
-
-        const takenVariantSkus = new Set();
-        const uniqueVariantSku = (base) => {
-          const root = base || 'variant';
-          let candidate = root;
-          for (let n = 2; takenVariantSkus.has(candidate.toLowerCase()); n++) candidate = `${root}-${n}`;
-          takenVariantSkus.add(candidate.toLowerCase());
-          return candidate;
-        };
-
-        cleanVariants = formData.variants
-          .filter((r) => Array.isArray(r.optionValues) && r.optionValues.length > 0 && !excludedCombos.has(comboKey(r.optionValues)))
-          .map((r) => {
-            const autoSku = `${resolvedSku}-${r.optionValues.map((v) => skuFromName(v)).join('-')}`;
-            return {
-              sku: uniqueVariantSku((r.sku || '').trim() || autoSku),
-              label: r.optionValues.join(' / '),
-              price: parseFloat(r.price) || price,
-              image: valueImage(r.optionValues),
-              optionValues: r.optionValues,
-            };
-          });
+        }
       }
       const hasVariants = cleanVariants.length > 0;
-      if (!hasVariants) cleanOptions = [];
 
       // Build the persisted doc. Single price → BOTH consumer-price fields.
       const data = {
@@ -633,7 +598,10 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
         category: formData.category,    // browse taxonomy / URL driver (was `group`)
         tags: formData.tags,
         hasVariants,
-        options: cleanOptions,
+        variantGroups: cleanGroups,
+        // v2.1 options-matrix is superseded by the rail — cleared on save so
+        // the storefront renders the grouped picker for re-saved products.
+        options: [],
         variants: cleanVariants,
         b2cPrice: price,
         basePrice: price,               // keep in sync for the `b2cPrice || basePrice` fallback
@@ -936,103 +904,88 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
               </div>
             </CardSection>
 
-            {/* Variants — Shopify-style: options (Färg/Storlek/Vikt…) generate
-                the variant matrix; images attach per option VALUE. */}
-            <CardSection
-              title="Varianter"
-              actions={
-                <label className="flex items-center gap-2 text-[13px] text-admin-text-muted">
-                  <input type="checkbox" checked={formData.hasVariants} onChange={(e) => toggleHasVariants(e.target.checked)} className={checkboxCls} />
-                  Har varianter
-                </label>
-              }
-              bodyClassName="space-y-4"
-            >
-              {formData.hasVariants ? (
-                <>
-                  {/* Options editor */}
-                  {formData.options.map((opt, oi) => (
-                    <div key={oi} className="space-y-3 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface-2 p-3">
-                      <div className="flex items-end gap-3">
-                        <div className="flex-1">
-                          <label className={labelCls}>Alternativ</label>
+            {/* Variants — the rail (v2.2): left = vertical list of the
+                product's variants (thumbnail + name, selected highlighted),
+                right = full editor for the selected variant (name, image,
+                SKU, price, sizes). No toggle: an empty list IS the off state. */}
+            <CardSection title="Varianter" bodyClassName="space-y-4">
+              {formData.variantGroups.length === 0 ? (
+                <div className="space-y-3">
+                  <p className="text-[13px] text-admin-text-muted">
+                    Den här produkten har inga varianter. Lägg till varianter om produkten
+                    finns i flera utföranden — t.ex. färger eller vikter — med egen bild,
+                    eget pris och egna storlekar.
+                  </p>
+                  <Button type="button" variant="secondary" onClick={addGroup}>+ Lägg till variant</Button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4 sm:flex-row">
+                  {/* Rail */}
+                  <div className="flex shrink-0 flex-row gap-2 overflow-x-auto sm:w-44 sm:flex-col sm:overflow-visible">
+                    {formData.variantGroups.map((g, idx) => {
+                      const selected = idx === selectedGroupIdx;
+                      const thumb = g.preview || g.image;
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => { setSelectedGroupIdx(idx); setSizeInput(''); }}
+                          className={`flex min-w-[10rem] items-center gap-2 rounded-[var(--radius-admin-el)] border p-2 text-left transition-all sm:min-w-0 ${
+                            selected
+                              ? 'border-[var(--color-admin-primary)] bg-admin-surface shadow-[var(--shadow-admin)]'
+                              : 'border-admin-border bg-admin-surface-2 opacity-60 hover:opacity-100'
+                          }`}
+                        >
+                          {thumb ? (
+                            <img src={thumb} alt="" className="h-10 w-10 shrink-0 rounded-[4px] border border-admin-border object-cover" />
+                          ) : (
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] border border-admin-border bg-admin-surface">
+                              <svg className="h-4 w-4 text-admin-text-faint" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A1.5 1.5 0 0 0 21.75 19.5V4.5A1.5 1.5 0 0 0 20.25 3H3.75A1.5 1.5 0 0 0 2.25 4.5v15A1.5 1.5 0 0 0 3.75 21Zm10.5-11.25h.008v.008h-.008V9.75Z" />
+                              </svg>
+                            </span>
+                          )}
+                          <span className="min-w-0">
+                            <span className="block truncate text-[13px] font-medium text-admin-text">{g.label.trim() || `Variant ${idx + 1}`}</span>
+                            {g.sizes.length > 0 && (
+                              <span className="block truncate text-[11px] text-admin-text-muted">{g.sizes.join(' · ')}</span>
+                            )}
+                          </span>
+                        </button>
+                      );
+                    })}
+                    <Button type="button" variant="secondary" onClick={addGroup} className="shrink-0 sm:w-full">+ Lägg till variant</Button>
+                  </div>
+
+                  {/* Editor for the selected variant */}
+                  {formData.variantGroups[selectedGroupIdx] && (() => {
+                    const idx = selectedGroupIdx;
+                    const g = formData.variantGroups[idx];
+                    const galleryChoices = [formData.b2cImageUrl, ...existingGallery].filter(Boolean);
+                    const autoSku = `${formData.sku || skuFromName(formData.name)}-${skuFromName(g.label || `variant-${idx + 1}`)}`;
+                    return (
+                      <div className="min-w-0 flex-1 space-y-4 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface-2 p-4">
+                        <div>
+                          <label className={labelCls}>Namn</label>
                           <input
-                            value={opt.name}
-                            onChange={(e) => renameOption(oi, e.target.value)}
-                            placeholder="t.ex. Färg, Storlek eller Vikt"
+                            value={g.label}
+                            onChange={(e) => updateGroup(idx, { label: e.target.value })}
+                            placeholder="t.ex. Svart, Vit eller 500g"
                             className={inputCls}
                           />
                         </div>
-                        <Button type="button" variant="plain" onClick={() => removeOption(oi)} className="text-admin-critical-dot">
-                          Ta bort
-                        </Button>
-                      </div>
-                      <div>
-                        <label className={labelCls}>Värden</label>
-                        <div className="flex flex-wrap items-center gap-1.5 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2 py-1.5">
-                          {opt.values.map((val, vi) => (
-                            <span key={val.value} className="inline-flex items-center gap-1.5 rounded-[var(--radius-admin-el)] bg-admin-info-bg px-1.5 py-0.5 text-[12px] font-medium text-admin-info-text">
-                              <button
-                                type="button"
-                                onClick={() => setImagePickerTarget((t) => (t && t.oi === oi && t.vi === vi ? null : { oi, vi }))}
-                                title={`Bild för ${val.value}`}
-                                className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-[4px] border border-admin-border bg-admin-surface hover:opacity-80"
-                              >
-                                {val.preview || val.image ? (
-                                  <img src={val.preview || val.image} alt="" className="h-full w-full object-cover" />
-                                ) : (
-                                  <svg className="h-3.5 w-3.5 text-admin-text-faint" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A1.5 1.5 0 0 0 21.75 19.5V4.5A1.5 1.5 0 0 0 20.25 3H3.75A1.5 1.5 0 0 0 2.25 4.5v15A1.5 1.5 0 0 0 3.75 21Zm10.5-11.25h.008v.008h-.008V9.75Z" />
-                                  </svg>
-                                )}
-                              </button>
-                              {val.value}
-                              <button type="button" onClick={() => removeOptionValue(oi, vi)} className="text-admin-info-text hover:opacity-70" aria-label={`Ta bort ${val.value}`}>×</button>
-                            </span>
-                          ))}
-                          <input
-                            value={valueInputs[oi] || ''}
-                            onChange={(e) => setValueInputs((prev) => ({ ...prev, [oi]: e.target.value }))}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addOptionValue(oi); }
-                              else if (e.key === 'Backspace' && !(valueInputs[oi] || '') && opt.values.length) {
-                                removeOptionValue(oi, opt.values.length - 1);
-                              }
-                            }}
-                            onBlur={() => addOptionValue(oi)}
-                            placeholder={opt.values.length ? '' : 't.ex. Svart, Vit eller 500g, 750g'}
-                            className="min-w-[8rem] flex-1 bg-transparent text-[13px] text-admin-text placeholder:text-admin-text-faint focus:outline-none"
-                          />
-                        </div>
-                        <p className={helpCls}>Enter eller komma för att lägga till. Klicka på bildrutan vid ett värde för att koppla en bild (t.ex. per färg).</p>
-                      </div>
 
-                      {/* Per-value image picker */}
-                      {imagePickerTarget?.oi === oi && opt.values[imagePickerTarget.vi] && (() => {
-                        const vi = imagePickerTarget.vi;
-                        const val = opt.values[vi];
-                        const galleryChoices = [formData.b2cImageUrl, ...existingGallery].filter(Boolean);
-                        return (
-                          <div className="space-y-2 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface p-3">
-                            <div className="flex items-center justify-between">
-                              <p className="text-[12px] font-medium text-admin-text">Bild för ”{val.value}”</p>
-                              <button type="button" onClick={() => setImagePickerTarget(null)} className="text-[12px] text-admin-text-muted hover:text-admin-text">Stäng</button>
-                            </div>
-                            {galleryChoices.length > 0 && (
-                              <div className="flex flex-wrap gap-2">
-                                {galleryChoices.map((url) => (
-                                  <button
-                                    key={url}
-                                    type="button"
-                                    onClick={() => setValueImage(oi, vi, { image: url, file: null, preview: '' })}
-                                    className={`h-14 w-14 overflow-hidden rounded-[var(--radius-admin-el)] border-2 ${val.image === url && !val.preview ? 'border-[var(--color-admin-primary)]' : 'border-admin-border hover:border-admin-text-faint'}`}
-                                  >
-                                    <img src={url} alt="" className="h-full w-full object-cover" />
-                                  </button>
-                                ))}
+                        <div>
+                          <label className={labelCls}>Bild</label>
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                            {(g.preview || g.image) ? (
+                              <img src={g.preview || g.image} alt="" className="h-24 w-24 shrink-0 rounded-[var(--radius-admin-el)] border border-admin-border object-cover" />
+                            ) : (
+                              <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface text-[11px] text-admin-text-faint">
+                                Ingen bild
                               </div>
                             )}
-                            <div className="flex items-center gap-3">
+                            <div className="min-w-0 flex-1 space-y-2">
                               <input
                                 type="file"
                                 accept="image/*"
@@ -1043,87 +996,102 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
                                     toast.error(`Bilden är för stor. Max ${MAX_IMAGE_SIZE / (1024 * 1024)}MB`);
                                     return;
                                   }
-                                  setValueImage(oi, vi, { file: f, preview: URL.createObjectURL(f), image: '' });
+                                  updateGroup(idx, { file: f, preview: URL.createObjectURL(f), image: '' });
                                 }}
-                                className="block w-full text-[13px] text-admin-text-muted file:mr-4 file:rounded-[var(--radius-admin-el)] file:border-0 file:bg-admin-surface-2 file:px-4 file:py-2 file:text-[13px] file:font-medium file:text-admin-text"
+                                className="block w-full text-[13px] text-admin-text-muted file:mr-4 file:rounded-[var(--radius-admin-el)] file:border-0 file:bg-admin-surface file:px-4 file:py-2 file:text-[13px] file:font-medium file:text-admin-text"
                               />
-                              {(val.image || val.preview) && (
-                                <Button type="button" variant="plain" onClick={() => setValueImage(oi, vi, { image: '', file: null, preview: '' })} className="shrink-0 text-admin-critical-dot">
-                                  Ingen bild
+                              {galleryChoices.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                  {galleryChoices.map((url) => (
+                                    <button
+                                      key={url}
+                                      type="button"
+                                      onClick={() => updateGroup(idx, { image: url, file: null, preview: '' })}
+                                      className={`h-12 w-12 overflow-hidden rounded-[var(--radius-admin-el)] border-2 ${
+                                        g.image === url && !g.preview
+                                          ? 'border-[var(--color-admin-primary)]'
+                                          : 'border-admin-border hover:border-admin-text-faint'
+                                      }`}
+                                    >
+                                      <img src={url} alt="" className="h-full w-full object-cover" />
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                              {(g.image || g.preview) && (
+                                <Button type="button" variant="plain" onClick={() => updateGroup(idx, { image: '', file: null, preview: '' })} className="text-admin-critical-dot">
+                                  Ta bort bild
                                 </Button>
                               )}
                             </div>
-                            <p className={helpCls}>Välj en befintlig bild eller ladda upp en ny. Bilden visas när kunden väljer ”{val.value}”.</p>
                           </div>
-                        );
-                      })()}
-                    </div>
-                  ))}
-                  {formData.options.length < 3 && (
-                    <Button type="button" variant="plain" onClick={addOption}>+ Lägg till alternativ</Button>
-                  )}
+                          <p className={helpCls}>Visas i butiken när kunden väljer varianten. Ladda upp en ny bild eller välj en befintlig.</p>
+                        </div>
 
-                  {/* Generated variant matrix */}
-                  {formData.variants.length > 0 && (
-                    <div className="space-y-2">
-                      <label className={labelCls}>
-                        Varianter ({formData.variants.filter((r) => !excludedCombos.has(comboKey(r.optionValues))).length} st)
-                      </label>
-                      {formData.variants.map((r, idx) => {
-                        const key = comboKey(r.optionValues);
-                        const off = excludedCombos.has(key);
-                        const thumb = liveRowImage(r.optionValues);
-                        return (
-                          <div key={key} className={`grid grid-cols-12 items-end gap-3 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface-2 p-3 ${off ? 'opacity-50' : ''}`}>
-                            <div className="col-span-12 flex items-center gap-2 sm:col-span-4">
-                              {thumb ? (
-                                <img src={thumb} alt="" className="h-9 w-9 shrink-0 rounded-[var(--radius-admin-el)] border border-admin-border object-cover" />
-                              ) : (
-                                <div className="h-9 w-9 shrink-0 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface" />
-                              )}
-                              <span className={`text-[13px] font-medium text-admin-text ${off ? 'line-through' : ''}`}>{r.optionValues.join(' / ')}</span>
-                            </div>
-                            <div className="col-span-6 sm:col-span-3">
-                              <label className={labelCls}>SKU</label>
-                              <input
-                                value={r.sku}
-                                onChange={(e) => updateVariant(idx, { sku: e.target.value })}
-                                placeholder={`${formData.sku || skuFromName(formData.name)}-${r.optionValues.map((v) => skuFromName(v)).join('-')}`}
-                                disabled={off}
-                                className={inputCls}
-                              />
-                            </div>
-                            <div className="col-span-6 sm:col-span-3">
-                              <label className={labelCls}>Pris (SEK)</label>
-                              <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={r.price}
-                                onChange={(e) => updateVariant(idx, { price: e.target.value })}
-                                placeholder={String(formData.price || 0)}
-                                disabled={off}
-                                className={inputCls}
-                              />
-                            </div>
-                            <div className="col-span-12 flex sm:col-span-2">
-                              <Button type="button" variant="plain" onClick={() => toggleRowExcluded(key)} className={`w-full ${off ? '' : 'text-admin-critical-dot'}`}>
-                                {off ? 'Återställ' : 'Ta bort'}
-                              </Button>
-                            </div>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                          <div>
+                            <label className={labelCls}>SKU (Artikelnummer)</label>
+                            <input
+                              value={g.sku}
+                              onChange={(e) => updateGroup(idx, { sku: e.target.value })}
+                              placeholder={autoSku}
+                              className={inputCls}
+                            />
+                            <p className={helpCls}>Tomt = skapas automatiskt.</p>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                  <p className={helpCls}>
-                    Varianterna skapas automatiskt av alternativens värden (t.ex. Färg × Storlek).
-                    Tomt SKU och pris fylls i automatiskt vid sparande (priset = produktens pris).
-                    En variants bild hämtas från värdets bild — utan värdesbild visas produktens vanliga bilder.
-                  </p>
-                </>
-              ) : (
-                <p className="text-[13px] text-admin-text-muted">Den här produkten har inga varianter. Slå på för att lägga till t.ex. storlek, färg eller vikt.</p>
+                          <div>
+                            <label className={labelCls}>Pris (SEK, inkl. moms)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={g.price}
+                              onChange={(e) => updateGroup(idx, { price: e.target.value })}
+                              placeholder={String(formData.price || 0)}
+                              className={inputCls}
+                            />
+                            <p className={helpCls}>Tomt = produktens pris. Gäller alla storlekar.</p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className={labelCls}>Storlekar (valfritt)</label>
+                          <div className="flex flex-wrap items-center gap-1.5 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2 py-1.5">
+                            {g.sizes.map((size) => (
+                              <span key={size} className="inline-flex items-center gap-1 rounded-[var(--radius-admin-el)] bg-admin-info-bg px-2 py-0.5 text-[12px] font-medium text-admin-info-text">
+                                {size}
+                                <button type="button" onClick={() => removeSize(idx, size)} className="text-admin-info-text hover:opacity-70" aria-label={`Ta bort ${size}`}>×</button>
+                              </span>
+                            ))}
+                            <input
+                              value={sizeInput}
+                              onChange={(e) => setSizeInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addSizes(idx); }
+                                else if (e.key === 'Backspace' && !sizeInput && g.sizes.length) {
+                                  removeSize(idx, g.sizes[g.sizes.length - 1]);
+                                }
+                              }}
+                              onBlur={() => addSizes(idx)}
+                              placeholder={g.sizes.length ? '' : 't.ex. S, M, L, XL'}
+                              className="min-w-[8rem] flex-1 bg-transparent text-[13px] text-admin-text placeholder:text-admin-text-faint focus:outline-none"
+                            />
+                          </div>
+                          <p className={helpCls}>
+                            Enter eller komma för att lägga till. Kunden väljer storlek i butiken och varje
+                            storlek får eget artikelnummer automatiskt. Lämna tomt om varianten saknar storlekar.
+                          </p>
+                        </div>
+
+                        <div className="flex justify-end border-t border-admin-border-soft pt-3">
+                          <Button type="button" variant="plain" onClick={() => removeGroup(idx)} className="text-admin-critical-dot">
+                            Ta bort variant
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
               )}
             </CardSection>
 
