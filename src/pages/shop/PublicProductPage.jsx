@@ -76,6 +76,13 @@ const PublicProductPage = () => {
   // same-group query. `selectedVariant` is null for a product with no variants.
   const [variants, setVariants] = useState([]);
   const [selectedVariant, setSelectedVariant] = useState(null);
+  // Model v2.1 (Shopify-style): `options` are the product's axes (Färg/Storlek/
+  // Vikt…) and each variant carries `optionValues` parallel to them. When a
+  // product has options, one selector group renders PER option and the chosen
+  // combination resolves to a variant; legacy products (no options) keep the
+  // old flat single-list picker. `selections` mirrors selectedVariant.optionValues.
+  const [options, setOptions] = useState([]);
+  const [selections, setSelections] = useState([]);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -84,6 +91,7 @@ const PublicProductPage = () => {
   // Nike mobile UX: Fixed button visibility state
   const [showFixedButton, setShowFixedButton] = useState(true);
   const regularButtonRef = useRef(null);
+  const mobileImageScrollerRef = useRef(null);
   
   const { 
     addToCart,
@@ -94,17 +102,23 @@ const PublicProductPage = () => {
   } = useCart();
 
   // Helper function - declared early to avoid temporal dead zone
-  const getProductImages = (p) => {
+  // Variant images (per option value, uploaded outside the gallery) are
+  // appended so they're browsable in the gallery AND targetable when the
+  // customer selects that variant (the swap effect finds them by index).
+  const getProductImages = (p, vs = []) => {
     if (!p) return [];
     const images = [];
     if (p.b2cImageUrl) images.push(p.b2cImageUrl);
     if (p.b2cImageGallery?.length) images.push(...p.b2cImageGallery);
+    vs.forEach((v) => {
+      if (v?.image && !images.includes(v.image)) images.push(v.image);
+    });
     if (images.length === 0) images.push(getProductImage(p));
     return images;
   };
 
   // Calculate productImages early to avoid temporal dead zone issues
-  const productImages = getProductImages(product);
+  const productImages = getProductImages(product, variants);
   
   // Calculate button state based on launch date
   const buttonState = product ? getButtonState(product, t) : { text: '', disabled: true, isComingSoon: false };
@@ -132,7 +146,7 @@ const PublicProductPage = () => {
   // Nike mobile UX: Track image scroll position
   useEffect(() => {
     const handleImageScroll = () => {
-      const container = document.querySelector('.overflow-x-auto');
+      const container = mobileImageScrollerRef.current;
       if (container) {
         const scrollLeft = container.scrollLeft;
         const containerWidth = container.offsetWidth;
@@ -141,7 +155,7 @@ const PublicProductPage = () => {
       }
     };
 
-    const container = document.querySelector('.overflow-x-auto');
+    const container = mobileImageScrollerRef.current;
     if (container) {
       container.addEventListener('scroll', handleImageScroll);
       return () => container.removeEventListener('scroll', handleImageScroll);
@@ -179,6 +193,24 @@ const PublicProductPage = () => {
       setVariants(embedded);
       setSelectedVariant(embedded.length > 0 ? embedded[0] : null);
 
+      // Options (model v2.1): only trusted when every variant carries a full
+      // optionValues combo — otherwise fall back to the legacy flat picker.
+      const normalizedOptions = (Array.isArray(mainProduct.options) ? mainProduct.options : [])
+        .filter((o) => o && Array.isArray(o.values))
+        .map((o) => ({
+          name: o.name || '',
+          values: o.values
+            .map((v) => (typeof v === 'string' ? { value: v, image: '' } : { value: v?.value || '', image: v?.image || '' }))
+            .filter((v) => v.value),
+        }))
+        .filter((o) => o.values.length > 0);
+      const matrixOk =
+        normalizedOptions.length > 0 &&
+        embedded.length > 0 &&
+        embedded.every((v) => Array.isArray(v.optionValues) && v.optionValues.length === normalizedOptions.length);
+      setOptions(matrixOk ? normalizedOptions : []);
+      setSelections(matrixOk ? embedded[0].optionValues : []);
+
     } catch (error) {
       console.error('Error loading product:', error);
       // Navigation error - handled by redirecting to home
@@ -198,6 +230,30 @@ const PublicProductPage = () => {
     };
     fetchReviewCount();
   }, []);
+
+  // Pick a value for one option. Prefer the exact combination with the other
+  // current selections; if that combo doesn't exist (removed in admin), jump
+  // to the first variant that has this value — same behavior as Shopify.
+  const selectOptionValue = (oi, value) => {
+    const desired = selections.map((s, i) => (i === oi ? value : s));
+    let match = variants.find((v) => v.optionValues.every((x, i) => x === desired[i]));
+    if (!match) match = variants.find((v) => v.optionValues[oi] === value);
+    if (!match) return;
+    setSelections(match.optionValues);
+    setSelectedVariant(match);
+  };
+
+  // When the selected variant has its own image (per-value image from admin),
+  // bring it into view: desktop swaps the main image, mobile scrolls to it.
+  useEffect(() => {
+    if (!selectedVariant?.image) return;
+    const idx = productImages.indexOf(selectedVariant.image);
+    if (idx === -1) return;
+    setActiveImageIndex(idx);
+    const container = mobileImageScrollerRef.current;
+    if (container) container.scrollTo({ left: idx * container.offsetWidth, behavior: 'smooth' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedVariant]);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -282,6 +338,64 @@ const PublicProductPage = () => {
   // "8× Standard" bug.
   const showVariantPicker = variants.length > 0;
 
+  // One picker per option (v2.1) or the legacy flat list — shared by the
+  // mobile and desktop layouts, which differ only in grid/padding classes.
+  const renderVariantPicker = (headingCls, gridCls, btnPadCls) =>
+    options.length > 0 ? (
+      <div className="space-y-6">
+        {options.map((opt, oi) => (
+          <div key={opt.name || oi}>
+            <h3 className={headingCls}>{opt.name || t('select_variant', 'Välj')}</h3>
+            <div className={gridCls}>
+              {opt.values.map((val) => {
+                const isSelected = selections[oi] === val.value;
+                // A value no variant carries (its combos were all removed in
+                // admin) renders disabled instead of silently doing nothing.
+                const available = variants.some((v) => v.optionValues[oi] === val.value);
+                return (
+                  <button
+                    key={val.value}
+                    type="button"
+                    disabled={!available}
+                    onClick={() => selectOptionValue(oi, val.value)}
+                    className={`${btnPadCls} text-center border rounded-el transition-all ${
+                      isSelected
+                        ? 'border-ink bg-ink text-white'
+                        : available
+                          ? 'border-ink/15 bg-white hover:border-ink/40'
+                          : 'border-ink/10 bg-white text-ink/30 line-through cursor-not-allowed'
+                    }`}
+                  >
+                    <div className="text-sm font-medium">{val.value}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div>
+        <h3 className={headingCls}>{t('select_variant', 'Välj')}</h3>
+        <div className={gridCls}>
+          {variants.map((variant) => (
+            <button
+              key={variant.sku}
+              type="button"
+              onClick={() => setSelectedVariant(variant)}
+              className={`${btnPadCls} text-center border rounded-el transition-all ${
+                selectedVariant?.sku === variant.sku
+                  ? 'border-ink bg-ink text-white'
+                  : 'border-ink/15 bg-white hover:border-ink/40'
+              }`}
+            >
+              <div className="text-sm font-medium">{variant.label || variant.sku}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+
   return (
     <>
       <Helmet>
@@ -336,7 +450,7 @@ const PublicProductPage = () => {
 
           {/* Nike Mobile: Touch scrollable images */}
           <div className="w-full">
-            <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+            <div ref={mobileImageScrollerRef} className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide">
               {productImages.map((image, index) => (
                 <div key={index} className="w-full shrink-0 snap-center">
                   <div className="aspect-square bg-white">
@@ -357,8 +471,8 @@ const PublicProductPage = () => {
                   <button
                     key={index}
                     onClick={() => {
-                      const container = document.querySelector('.overflow-x-auto');
-                      container.scrollTo({ left: index * container.offsetWidth, behavior: 'smooth' });
+                      const container = mobileImageScrollerRef.current;
+                      if (container) container.scrollTo({ left: index * container.offsetWidth, behavior: 'smooth' });
                     }}
                     className={`w-2 h-2 rounded-full transition-colors ${
                       index === activeImageIndex ? 'bg-ink' : 'bg-ink/20'
@@ -372,29 +486,8 @@ const PublicProductPage = () => {
           {/* Nike Mobile: Product details below images */}
           <div className="px-4 py-6 space-y-4">
             {/* Variant Selection — only when the product has variants */}
-            {showVariantPicker && (
-            <div>
-              <h3 className="text-base font-semibold text-ink mb-2">
-                {t('select_variant', 'Välj')}
-              </h3>
-              <div className="grid grid-cols-2 gap-2">
-                {variants.map((variant) => (
-                  <button
-                    key={variant.sku}
-                    type="button"
-                    onClick={() => setSelectedVariant(variant)}
-                    className={`py-2 px-3 text-center border rounded-el transition-all ${
-                      selectedVariant?.sku === variant.sku
-                        ? 'border-ink bg-ink text-white'
-                        : 'border-ink/15 bg-white hover:border-ink/40'
-                    }`}
-                  >
-                    <div className="text-sm font-medium">{variant.label || variant.sku}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-            )}
+            {showVariantPicker &&
+              renderVariantPicker('text-base font-semibold text-ink mb-2', 'grid grid-cols-2 gap-2', 'py-2 px-3')}
 
             {/* Nike Mobile: Quantity Selector */}
             <div className="space-y-3">
@@ -553,29 +646,8 @@ const PublicProductPage = () => {
                 </div>
 
                 {/* Variant Selection — only when the product has variants */}
-                {showVariantPicker && (
-                <div>
-                  <h3 className="text-base font-semibold text-ink mb-4">
-                    {t('select_variant', 'Välj')}
-                  </h3>
-                  <div className="grid grid-cols-3 gap-2">
-                    {variants.map((variant) => (
-                      <button
-                        key={variant.sku}
-                        type="button"
-                        onClick={() => setSelectedVariant(variant)}
-                        className={`py-4 px-4 text-center border rounded-el transition-all ${
-                          selectedVariant?.sku === variant.sku
-                            ? 'border-ink bg-ink text-white'
-                            : 'border-ink/15 bg-white hover:border-ink/40'
-                        }`}
-                      >
-                        <div className="text-sm font-medium">{variant.label || variant.sku}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                )}
+                {showVariantPicker &&
+                  renderVariantPicker('text-base font-semibold text-ink mb-4', 'grid grid-cols-3 gap-2', 'py-4 px-4')}
 
                 {/* Quantity Selector */}
                 <div className="space-y-4">
@@ -705,4 +777,4 @@ const PublicProductPage = () => {
   );
 };
 
-export default PublicProductPage; 
+export default PublicProductPage;

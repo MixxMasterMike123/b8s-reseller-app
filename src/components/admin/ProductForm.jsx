@@ -26,6 +26,21 @@
 //    product docs / shared group string. size/color top-level fields removed
 //    (a variant's `label` carries the choice).
 //
+// Product model v2.1 (Shopify-style options, 2026-07-02):
+//  • `options: [{ name, values: [{ value, image }] }]` (1–3 options, e.g.
+//    Färg × Storlek, or a single Vikt for 500g/750g). The variant list is the
+//    GENERATED matrix of all value combinations; each row keeps sku + price.
+//  • Per-VALUE images (Shopify assigns one image per variant from the shared
+//    gallery; we assign per option value — same effect, less repetition: the
+//    red photo attaches to "Röd" once, not to every Röd size row).
+//  • Each generated variant additionally stores `optionValues: ['Röd','S']`
+//    (parallel to `options` order) and a derived `label` = values joined with
+//    ' / ' — so the cart, order lines, e-mails and the server repricing
+//    (createPaymentIntent matches by variant sku) are all unchanged.
+//  • Legacy flat variants (no `options` field) auto-migrate when the product
+//    is opened for edit: one option named "Variant" whose values are the old
+//    labels; skus/prices/images are preserved.
+//
 // Tenancy: create stamps shopId via withShopId(...) and the parent passes
 // shopId from useShopId().
 import React, { useState, useEffect } from 'react';
@@ -54,6 +69,59 @@ const plainText = (field) => {
   return '';
 };
 
+// ----- Shopify-style options → variant-matrix helpers (model v2.1) -----
+
+// Stable identity for a value-combination (['Röd','S'] → '["Röd","S"]').
+const comboKey = (vals) => JSON.stringify(vals || []);
+
+// Read persisted options into edit state: values become objects with a `file`
+// slot for a not-yet-uploaded image. Tolerates plain-string values.
+const normalizeOptions = (rawOptions) =>
+  (Array.isArray(rawOptions) ? rawOptions : [])
+    .filter((o) => o && Array.isArray(o.values))
+    .map((o) => ({
+      name: o.name || '',
+      values: o.values
+        .map((v) => (typeof v === 'string' ? { value: v, image: '' } : { value: v?.value || '', image: v?.image || '' }))
+        .filter((v) => v.value.trim())
+        .map((v) => ({ value: v.value, image: v.image, file: null, preview: '' })),
+    }))
+    .filter((o) => o.values.length > 0);
+
+// Cartesian product of the configured option values → matrix rows. Rows for
+// combos that already exist keep their data (sku/price); new combos start
+// empty (sku + price auto-derive at save). Options without values are treated
+// as not-yet-configured and skipped (they are not persisted either).
+const buildMatrix = (options, prevRows) => {
+  const opts = options.filter((o) => o.values.length > 0);
+  if (opts.length === 0) return [];
+  const combos = opts.reduce((acc, o) => acc.flatMap((c) => o.values.map((v) => [...c, v.value])), [[]]);
+  const prevByKey = new Map((prevRows || []).map((r) => [comboKey(r.optionValues), r]));
+  return combos.map((vals) => {
+    const prev = prevByKey.get(comboKey(vals));
+    return prev ? { ...prev, optionValues: vals } : { optionValues: vals, sku: '', price: '' };
+  });
+};
+
+// Migrate a legacy flat variant list ({sku,label,price,image} without options)
+// into a single "Variant" option whose values carry the old labels + images.
+// Duplicate/empty labels fall back to the sku so every row survives uniquely.
+const migrateLegacyVariants = (variants) => {
+  const seen = new Set();
+  const values = [];
+  const rows = [];
+  for (const v of variants) {
+    let val = (v.label || v.sku || '').trim();
+    if (!val) continue;
+    if (seen.has(val.toLowerCase())) val = `${val} (${v.sku})`;
+    if (seen.has(val.toLowerCase())) continue;
+    seen.add(val.toLowerCase());
+    values.push({ value: val, image: v.image || '', file: null, preview: '' });
+    rows.push({ optionValues: [val], sku: v.sku || '', price: v.price ?? '' });
+  }
+  return { options: values.length ? [{ name: 'Variant', values }] : [], variants: rows };
+};
+
 const emptyForm = () => ({
   id: '',
   name: '',
@@ -67,9 +135,11 @@ const emptyForm = () => ({
   // consumer fallback). 0 = no wholesale price set. Only shown/saved when the
   // shop has the `b2b` add-on enabled.
   b2bPrice: 0,
-  // Variants (sizes/colours of THIS product), optional + off by default.
-  // Each: { sku, label, price, image? }. Empty when hasVariants is false.
+  // Variants (model v2.1): `options` define the axes (Färg/Storlek/Vikt…),
+  // `variants` is the generated matrix (rows: { optionValues, sku, price }).
+  // Both empty when hasVariants is false.
   hasVariants: false,
+  options: [],
   variants: [],
   isActive: true,
   imageUrl: '',
@@ -107,6 +177,22 @@ const emptyForm = () => ({
   delivery: { shipping: true, pickup: true },
 });
 
+// Build the variant edit state (options + matrix rows) from a product doc.
+// v2.1 products have `options`; legacy products (flat variants, no options)
+// are migrated into a single "Variant" option so the same editor serves both.
+const variantStateFromProduct = (p) => {
+  const persisted = Array.isArray(p.variants) ? p.variants : [];
+  const options = normalizeOptions(p.options);
+  if (options.length > 0) {
+    const prevRows = persisted
+      .filter((v) => v && Array.isArray(v.optionValues) && v.optionValues.length > 0)
+      .map((v) => ({ optionValues: v.optionValues, sku: v.sku || '', price: v.price ?? '' }));
+    return { options, variants: buildMatrix(options, prevRows) };
+  }
+  if (persisted.length > 0) return migrateLegacyVariants(persisted);
+  return { options: [], variants: [] };
+};
+
 // Build the form state from an existing product doc (read-compatible).
 const formFromProduct = (p) => ({
   ...emptyForm(),
@@ -122,9 +208,7 @@ const formFromProduct = (p) => ({
   // Wholesale price (B2B add-on). Read straight from b2bPrice; 0 if unset.
   b2bPrice: p.b2bPrice || 0,
   hasVariants: !!p.hasVariants && Array.isArray(p.variants) && p.variants.length > 0,
-  variants: Array.isArray(p.variants)
-    ? p.variants.map((v) => ({ sku: v.sku || '', label: v.label || '', price: v.price || 0, image: v.image || '' }))
-    : [],
+  ...variantStateFromProduct(p),
   isActive: p.isActive ?? true,
   imageUrl: p.imageUrl || '',
   b2cImageUrl: p.b2cImageUrl || '',
@@ -274,17 +358,113 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
     setShowCategorySuggestions(false);
   };
 
-  // ----- variants -----
-  const addVariant = () => setField('variants', [...formData.variants, { sku: '', label: '', price: formData.price || 0, image: '' }]);
+  // ----- variants (options → generated matrix, model v2.1) -----
+
+  // Combos removed by the operator ("Ta bort" on a matrix row). Kept OUTSIDE
+  // formData so option edits (which regenerate the matrix) don't resurrect
+  // them. Persisted implicitly: an excluded combo is simply not in `variants`,
+  // so on re-edit it's every derivable combo that has no saved row.
+  const [excludedCombos, setExcludedCombos] = useState(() => {
+    const opts = normalizeOptions(product?.options);
+    if (opts.length === 0 || !Array.isArray(product?.variants)) return new Set();
+    const present = new Set(
+      product.variants
+        .filter((v) => v && Array.isArray(v.optionValues) && v.optionValues.length > 0)
+        .map((v) => comboKey(v.optionValues))
+    );
+    const ex = new Set();
+    buildMatrix(opts, []).forEach((r) => {
+      const k = comboKey(r.optionValues);
+      if (!present.has(k)) ex.add(k);
+    });
+    return ex;
+  });
+
+  // Which option value's image picker is open: { oi, vi } | null.
+  const [imagePickerTarget, setImagePickerTarget] = useState(null);
+  // Draft text of each option's "add value" input, keyed by option index.
+  const [valueInputs, setValueInputs] = useState({});
+
+  // Option edits that change the value set regenerate the matrix (rows keep
+  // their sku/price via comboKey). Renames + image changes don't touch rows.
+  const applyOptions = (nextOptions) =>
+    setFormData((prev) => ({ ...prev, options: nextOptions, variants: buildMatrix(nextOptions, prev.variants) }));
+
+  const addOption = () => {
+    if (formData.options.length >= 3) return;
+    setField('options', [...formData.options, { name: '', values: [] }]);
+  };
+  const removeOption = (oi) => {
+    setImagePickerTarget(null);
+    applyOptions(formData.options.filter((_, i) => i !== oi));
+  };
+  const renameOption = (oi, name) =>
+    setField('options', formData.options.map((o, i) => (i === oi ? { ...o, name } : o)));
+
+  const addOptionValue = (oi) => {
+    // Accept a pasted comma-list ("S, M, L") as multiple values in one go.
+    const parts = (valueInputs[oi] || '').split(',').map((s) => s.trim()).filter(Boolean);
+    setValueInputs((prev) => ({ ...prev, [oi]: '' }));
+    if (parts.length === 0) return;
+    const opt = formData.options[oi];
+    const taken = new Set(opt.values.map((v) => v.value.toLowerCase()));
+    const fresh = [];
+    for (const value of parts) {
+      if (taken.has(value.toLowerCase())) continue;
+      taken.add(value.toLowerCase());
+      fresh.push({ value, image: '', file: null, preview: '' });
+    }
+    if (fresh.length === 0) return;
+    applyOptions(
+      formData.options.map((o, i) => (i === oi ? { ...o, values: [...o.values, ...fresh] } : o))
+    );
+  };
+  const removeOptionValue = (oi, vi) => {
+    setImagePickerTarget(null);
+    applyOptions(
+      formData.options.map((o, i) => (i === oi ? { ...o, values: o.values.filter((_, j) => j !== vi) } : o))
+    );
+  };
+  // Image assignment for an option value (URL from the gallery, or a new file
+  // uploaded on save). No matrix rebuild — combos are keyed by values only.
+  const setValueImage = (oi, vi, patch) =>
+    setField(
+      'options',
+      formData.options.map((o, i) =>
+        i === oi ? { ...o, values: o.values.map((v, j) => (j === vi ? { ...v, ...patch } : v)) } : o
+      )
+    );
+
   const updateVariant = (idx, patch) => setField('variants', formData.variants.map((v, i) => (i === idx ? { ...v, ...patch } : v)));
-  const removeVariant = (idx) => setField('variants', formData.variants.filter((_, i) => i !== idx));
+  const toggleRowExcluded = (key) =>
+    setExcludedCombos((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+
   const toggleHasVariants = (on) => {
     if (on) {
-      setField('hasVariants', true);
-      if (formData.variants.length === 0) addVariant();
+      setFormData((prev) => ({
+        ...prev,
+        hasVariants: true,
+        options: prev.options.length > 0 ? prev.options : [{ name: '', values: [] }],
+      }));
     } else {
       setFormData((prev) => ({ ...prev, hasVariants: false }));
     }
+  };
+
+  // The image a matrix row would get right now (per-value image, first option
+  // that has one wins) — mirrors the save-time resolution, for row thumbnails.
+  const liveRowImage = (vals) => {
+    const opts = formData.options.filter((o) => o.values.length > 0);
+    for (let i = 0; i < opts.length; i++) {
+      const v = opts[i].values.find((x) => x.value === vals[i]);
+      if (v && (v.preview || v.image)) return v.preview || v.image;
+    }
+    return '';
   };
 
   // ----- images -----
@@ -390,19 +570,61 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
       const price = parseFloat(formData.price) || 0;
       const b2bPrice = parseFloat(formData.b2bPrice) || 0;
 
-      // Variants: only persisted when enabled; keep rows that have a SKU, with a
-      // numeric price (falling back to the product price).
-      const cleanVariants = formData.hasVariants
-        ? formData.variants
-            .filter((v) => (v.sku || '').trim())
-            .map((v) => ({
-              sku: v.sku.trim(),
-              label: (v.label || '').trim(),
-              price: parseFloat(v.price) || price,
-              image: v.image || '',
-            }))
-        : [];
+      // Variants (v2.1): upload any pending per-value images, persist the
+      // cleaned options, then the generated matrix (minus excluded combos).
+      // Row sku/price auto-derive when left empty: sku from product-sku +
+      // value slugs (unique within the product), price from the product price.
+      let cleanOptions = [];
+      let cleanVariants = [];
+      if (formData.hasVariants) {
+        for (const opt of formData.options) {
+          const values = [];
+          for (const val of opt.values) {
+            const value = (val.value || '').trim();
+            if (!value) continue;
+            let img = val.image || '';
+            if (val.file) {
+              img = await uploadImageToStorage(val.file, `products/${shopId}/${productId}`, `variant_${skuFromName(value)}`);
+            }
+            values.push({ value, image: img });
+          }
+          if (values.length > 0) cleanOptions.push({ name: (opt.name || '').trim() || 'Variant', values });
+        }
+
+        // Per-value image → variant image: first option (in order) whose value
+        // for this combo has an image. (Färg first ⇒ the colour photo wins.)
+        const valueImage = (vals) => {
+          for (let i = 0; i < cleanOptions.length; i++) {
+            const v = cleanOptions[i].values.find((x) => x.value === vals[i]);
+            if (v?.image) return v.image;
+          }
+          return '';
+        };
+
+        const takenVariantSkus = new Set();
+        const uniqueVariantSku = (base) => {
+          const root = base || 'variant';
+          let candidate = root;
+          for (let n = 2; takenVariantSkus.has(candidate.toLowerCase()); n++) candidate = `${root}-${n}`;
+          takenVariantSkus.add(candidate.toLowerCase());
+          return candidate;
+        };
+
+        cleanVariants = formData.variants
+          .filter((r) => Array.isArray(r.optionValues) && r.optionValues.length > 0 && !excludedCombos.has(comboKey(r.optionValues)))
+          .map((r) => {
+            const autoSku = `${resolvedSku}-${r.optionValues.map((v) => skuFromName(v)).join('-')}`;
+            return {
+              sku: uniqueVariantSku((r.sku || '').trim() || autoSku),
+              label: r.optionValues.join(' / '),
+              price: parseFloat(r.price) || price,
+              image: valueImage(r.optionValues),
+              optionValues: r.optionValues,
+            };
+          });
+      }
       const hasVariants = cleanVariants.length > 0;
+      if (!hasVariants) cleanOptions = [];
 
       // Build the persisted doc. Single price → BOTH consumer-price fields.
       const data = {
@@ -411,6 +633,7 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
         category: formData.category,    // browse taxonomy / URL driver (was `group`)
         tags: formData.tags,
         hasVariants,
+        options: cleanOptions,
         variants: cleanVariants,
         b2cPrice: price,
         basePrice: price,               // keep in sync for the `b2cPrice || basePrice` fallback
@@ -713,47 +936,194 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
               </div>
             </CardSection>
 
-            {/* Variants */}
+            {/* Variants — Shopify-style: options (Färg/Storlek/Vikt…) generate
+                the variant matrix; images attach per option VALUE. */}
             <CardSection
               title="Varianter"
               actions={
                 <label className="flex items-center gap-2 text-[13px] text-admin-text-muted">
                   <input type="checkbox" checked={formData.hasVariants} onChange={(e) => toggleHasVariants(e.target.checked)} className={checkboxCls} />
-                  Storlek/färg
+                  Har varianter
                 </label>
               }
-              bodyClassName="space-y-3"
+              bodyClassName="space-y-4"
             >
               {formData.hasVariants ? (
                 <>
-                  {formData.variants.map((v, idx) => (
-                    <div key={idx} className="grid grid-cols-12 items-end gap-3 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface-2 p-3">
-                      <div className="col-span-12 sm:col-span-4">
-                        <label className={labelCls}>Variant (etikett)</label>
-                        <input value={v.label} onChange={(e) => updateVariant(idx, { label: e.target.value })} placeholder="t.ex. Small / Röd" className={inputCls} />
-                      </div>
-                      <div className="col-span-6 sm:col-span-3">
-                        <label className={labelCls}>SKU</label>
-                        <input value={v.sku} onChange={(e) => updateVariant(idx, { sku: e.target.value })} placeholder="t.ex. LAX-S" className={inputCls} />
-                      </div>
-                      <div className="col-span-6 sm:col-span-3">
-                        <label className={labelCls}>Pris (SEK)</label>
-                        <input type="number" min="0" step="0.01" value={v.price} onChange={(e) => updateVariant(idx, { price: parseFloat(e.target.value) || 0 })} className={inputCls} />
-                      </div>
-                      <div className="col-span-12 flex sm:col-span-2">
-                        <Button type="button" variant="plain" onClick={() => removeVariant(idx)} className="w-full text-admin-critical-dot">
+                  {/* Options editor */}
+                  {formData.options.map((opt, oi) => (
+                    <div key={oi} className="space-y-3 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface-2 p-3">
+                      <div className="flex items-end gap-3">
+                        <div className="flex-1">
+                          <label className={labelCls}>Alternativ</label>
+                          <input
+                            value={opt.name}
+                            onChange={(e) => renameOption(oi, e.target.value)}
+                            placeholder="t.ex. Färg, Storlek eller Vikt"
+                            className={inputCls}
+                          />
+                        </div>
+                        <Button type="button" variant="plain" onClick={() => removeOption(oi)} className="text-admin-critical-dot">
                           Ta bort
                         </Button>
                       </div>
+                      <div>
+                        <label className={labelCls}>Värden</label>
+                        <div className="flex flex-wrap items-center gap-1.5 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2 py-1.5">
+                          {opt.values.map((val, vi) => (
+                            <span key={val.value} className="inline-flex items-center gap-1.5 rounded-[var(--radius-admin-el)] bg-admin-info-bg px-1.5 py-0.5 text-[12px] font-medium text-admin-info-text">
+                              <button
+                                type="button"
+                                onClick={() => setImagePickerTarget((t) => (t && t.oi === oi && t.vi === vi ? null : { oi, vi }))}
+                                title={`Bild för ${val.value}`}
+                                className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-[4px] border border-admin-border bg-admin-surface hover:opacity-80"
+                              >
+                                {val.preview || val.image ? (
+                                  <img src={val.preview || val.image} alt="" className="h-full w-full object-cover" />
+                                ) : (
+                                  <svg className="h-3.5 w-3.5 text-admin-text-faint" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A1.5 1.5 0 0 0 21.75 19.5V4.5A1.5 1.5 0 0 0 20.25 3H3.75A1.5 1.5 0 0 0 2.25 4.5v15A1.5 1.5 0 0 0 3.75 21Zm10.5-11.25h.008v.008h-.008V9.75Z" />
+                                  </svg>
+                                )}
+                              </button>
+                              {val.value}
+                              <button type="button" onClick={() => removeOptionValue(oi, vi)} className="text-admin-info-text hover:opacity-70" aria-label={`Ta bort ${val.value}`}>×</button>
+                            </span>
+                          ))}
+                          <input
+                            value={valueInputs[oi] || ''}
+                            onChange={(e) => setValueInputs((prev) => ({ ...prev, [oi]: e.target.value }))}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addOptionValue(oi); }
+                              else if (e.key === 'Backspace' && !(valueInputs[oi] || '') && opt.values.length) {
+                                removeOptionValue(oi, opt.values.length - 1);
+                              }
+                            }}
+                            onBlur={() => addOptionValue(oi)}
+                            placeholder={opt.values.length ? '' : 't.ex. Svart, Vit eller 500g, 750g'}
+                            className="min-w-[8rem] flex-1 bg-transparent text-[13px] text-admin-text placeholder:text-admin-text-faint focus:outline-none"
+                          />
+                        </div>
+                        <p className={helpCls}>Enter eller komma för att lägga till. Klicka på bildrutan vid ett värde för att koppla en bild (t.ex. per färg).</p>
+                      </div>
+
+                      {/* Per-value image picker */}
+                      {imagePickerTarget?.oi === oi && opt.values[imagePickerTarget.vi] && (() => {
+                        const vi = imagePickerTarget.vi;
+                        const val = opt.values[vi];
+                        const galleryChoices = [formData.b2cImageUrl, ...existingGallery].filter(Boolean);
+                        return (
+                          <div className="space-y-2 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface p-3">
+                            <div className="flex items-center justify-between">
+                              <p className="text-[12px] font-medium text-admin-text">Bild för ”{val.value}”</p>
+                              <button type="button" onClick={() => setImagePickerTarget(null)} className="text-[12px] text-admin-text-muted hover:text-admin-text">Stäng</button>
+                            </div>
+                            {galleryChoices.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {galleryChoices.map((url) => (
+                                  <button
+                                    key={url}
+                                    type="button"
+                                    onClick={() => setValueImage(oi, vi, { image: url, file: null, preview: '' })}
+                                    className={`h-14 w-14 overflow-hidden rounded-[var(--radius-admin-el)] border-2 ${val.image === url && !val.preview ? 'border-[var(--color-admin-primary)]' : 'border-admin-border hover:border-admin-text-faint'}`}
+                                  >
+                                    <img src={url} alt="" className="h-full w-full object-cover" />
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const f = e.target.files[0];
+                                  if (!f) return;
+                                  if (f.size > MAX_IMAGE_SIZE) {
+                                    toast.error(`Bilden är för stor. Max ${MAX_IMAGE_SIZE / (1024 * 1024)}MB`);
+                                    return;
+                                  }
+                                  setValueImage(oi, vi, { file: f, preview: URL.createObjectURL(f), image: '' });
+                                }}
+                                className="block w-full text-[13px] text-admin-text-muted file:mr-4 file:rounded-[var(--radius-admin-el)] file:border-0 file:bg-admin-surface-2 file:px-4 file:py-2 file:text-[13px] file:font-medium file:text-admin-text"
+                              />
+                              {(val.image || val.preview) && (
+                                <Button type="button" variant="plain" onClick={() => setValueImage(oi, vi, { image: '', file: null, preview: '' })} className="shrink-0 text-admin-critical-dot">
+                                  Ingen bild
+                                </Button>
+                              )}
+                            </div>
+                            <p className={helpCls}>Välj en befintlig bild eller ladda upp en ny. Bilden visas när kunden väljer ”{val.value}”.</p>
+                          </div>
+                        );
+                      })()}
                     </div>
                   ))}
-                  <Button type="button" variant="plain" onClick={addVariant}>+ Lägg till variant</Button>
+                  {formData.options.length < 3 && (
+                    <Button type="button" variant="plain" onClick={addOption}>+ Lägg till alternativ</Button>
+                  )}
+
+                  {/* Generated variant matrix */}
+                  {formData.variants.length > 0 && (
+                    <div className="space-y-2">
+                      <label className={labelCls}>
+                        Varianter ({formData.variants.filter((r) => !excludedCombos.has(comboKey(r.optionValues))).length} st)
+                      </label>
+                      {formData.variants.map((r, idx) => {
+                        const key = comboKey(r.optionValues);
+                        const off = excludedCombos.has(key);
+                        const thumb = liveRowImage(r.optionValues);
+                        return (
+                          <div key={key} className={`grid grid-cols-12 items-end gap-3 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface-2 p-3 ${off ? 'opacity-50' : ''}`}>
+                            <div className="col-span-12 flex items-center gap-2 sm:col-span-4">
+                              {thumb ? (
+                                <img src={thumb} alt="" className="h-9 w-9 shrink-0 rounded-[var(--radius-admin-el)] border border-admin-border object-cover" />
+                              ) : (
+                                <div className="h-9 w-9 shrink-0 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface" />
+                              )}
+                              <span className={`text-[13px] font-medium text-admin-text ${off ? 'line-through' : ''}`}>{r.optionValues.join(' / ')}</span>
+                            </div>
+                            <div className="col-span-6 sm:col-span-3">
+                              <label className={labelCls}>SKU</label>
+                              <input
+                                value={r.sku}
+                                onChange={(e) => updateVariant(idx, { sku: e.target.value })}
+                                placeholder={`${formData.sku || skuFromName(formData.name)}-${r.optionValues.map((v) => skuFromName(v)).join('-')}`}
+                                disabled={off}
+                                className={inputCls}
+                              />
+                            </div>
+                            <div className="col-span-6 sm:col-span-3">
+                              <label className={labelCls}>Pris (SEK)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={r.price}
+                                onChange={(e) => updateVariant(idx, { price: e.target.value })}
+                                placeholder={String(formData.price || 0)}
+                                disabled={off}
+                                className={inputCls}
+                              />
+                            </div>
+                            <div className="col-span-12 flex sm:col-span-2">
+                              <Button type="button" variant="plain" onClick={() => toggleRowExcluded(key)} className={`w-full ${off ? '' : 'text-admin-critical-dot'}`}>
+                                {off ? 'Återställ' : 'Ta bort'}
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                   <p className={helpCls}>
-                    Varje variant behöver minst ett SKU. Pris per variant (tomt = produktens pris). Den första bilden/galleriet delas av alla varianter.
+                    Varianterna skapas automatiskt av alternativens värden (t.ex. Färg × Storlek).
+                    Tomt SKU och pris fylls i automatiskt vid sparande (priset = produktens pris).
+                    En variants bild hämtas från värdets bild — utan värdesbild visas produktens vanliga bilder.
                   </p>
                 </>
               ) : (
-                <p className="text-[13px] text-admin-text-muted">Den här produkten har inga varianter. Slå på för att lägga till storlek/färg.</p>
+                <p className="text-[13px] text-admin-text-muted">Den här produkten har inga varianter. Slå på för att lägga till t.ex. storlek, färg eller vikt.</p>
               )}
             </CardSection>
 
