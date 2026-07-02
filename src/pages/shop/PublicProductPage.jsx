@@ -102,20 +102,20 @@ const PublicProductPage = () => {
   } = useCart();
 
   // Helper function - declared early to avoid temporal dead zone
-  // The gallery = the product's own images + the SELECTED variant's images
-  // (not every variant's — 3 images × 4 colorways would flood the strip).
-  // Switching variant swaps the gallery to that variant's set.
+  // Gallery rule: a variant WITH its own images REPLACES the base set —
+  // showing the original's photos under a RED selection misleads. Variants
+  // without images (and simple products) show the product's base images.
+  // Photos that apply to every colorway are attached to each variant via
+  // the admin's "välj från produktens bilder" picker.
   const getProductImages = (p, activeVariant = null) => {
     if (!p) return [];
+    const vImages = (Array.isArray(activeVariant?.images) && activeVariant.images.length > 0
+      ? activeVariant.images
+      : (activeVariant?.image ? [activeVariant.image] : [])).filter(Boolean);
+    if (vImages.length > 0) return [...new Set(vImages)];
     const images = [];
     if (p.b2cImageUrl) images.push(p.b2cImageUrl);
     if (p.b2cImageGallery?.length) images.push(...p.b2cImageGallery);
-    const vImages = Array.isArray(activeVariant?.images) && activeVariant.images.length > 0
-      ? activeVariant.images
-      : (activeVariant?.image ? [activeVariant.image] : []);
-    vImages.forEach((u) => {
-      if (u && !images.includes(u)) images.push(u);
-    });
     if (images.length === 0) images.push(getProductImage(p));
     return images;
   };
