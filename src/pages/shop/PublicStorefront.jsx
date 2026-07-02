@@ -254,7 +254,7 @@ const PublicStorefront = () => {
                   <img
                     src={store.heroImageUrl}
                     alt=""
-                    className="w-full h-full object-cover scale-x-[-1]"
+                    className="w-full h-full object-cover"
                   />
                 ) : (
                   /* No-photo fallback: accent color field, looks intentional */
