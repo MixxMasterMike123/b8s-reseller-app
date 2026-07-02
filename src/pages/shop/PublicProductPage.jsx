@@ -122,6 +122,9 @@ const PublicProductPage = () => {
 
   // Calculate productImages early to avoid temporal dead zone issues
   const productImages = getProductImages(product, selectedVariant);
+  // Share/crawler image: the product's canonical image, NOT the selected
+  // variant's (og:image must not depend on which variant auto-selected).
+  const shareImage = getProductImages(product, null)[0];
   
   // Calculate button state based on launch date
   const buttonState = product ? getButtonState(product, t) : { text: '', disabled: true, isComingSoon: false };
@@ -189,8 +192,10 @@ const PublicProductPage = () => {
       const mainProduct = { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() };
       setProduct(mainProduct);
 
-      // Variants are embedded on the product. Default-select the first.
-      const embedded = (mainProduct.hasVariants && Array.isArray(mainProduct.variants))
+      // Variants are embedded on the product. Presence is derived from the
+      // ROWS (not the hasVariants bool) — the server sells whatever rows
+      // exist, so a hand-edited doc must render the same way it charges.
+      const embedded = Array.isArray(mainProduct.variants)
         ? mainProduct.variants.filter((v) => v && (v.sku || '').trim())
         : [];
       setVariants(embedded);
@@ -213,6 +218,17 @@ const PublicProductPage = () => {
         embedded.every((v) => Array.isArray(v.optionValues) && v.optionValues.length === normalizedOptions.length);
       setOptions(matrixOk ? normalizedOptions : []);
       setSelections(matrixOk ? embedded[0].optionValues : []);
+
+      // Deep-link: ?v=<variantSku> preselects a variant (shared links keep
+      // "the red one", refresh keeps the choice). Ignored if the sku is gone.
+      const requestedSku = new URLSearchParams(window.location.search).get('v');
+      if (requestedSku) {
+        const requested = embedded.find((v) => v.sku === requestedSku);
+        if (requested) {
+          setSelectedVariant(requested);
+          if (matrixOk && Array.isArray(requested.optionValues)) setSelections(requested.optionValues);
+        }
+      }
 
     } catch (error) {
       console.error('Error loading product:', error);
@@ -257,6 +273,17 @@ const PublicProductPage = () => {
     setActiveImageIndex(idx);
     const container = mobileImageScrollerRef.current;
     if (container) container.scrollTo({ left: idx * container.offsetWidth, behavior: 'smooth' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedVariant]);
+
+  // Mirror the selection into ?v= so the URL is always shareable. replaceState
+  // (not navigate) — no re-render, no history spam, other params preserved.
+  useEffect(() => {
+    if (!product || !selectedVariant?.sku) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('v') === selectedVariant.sku) return;
+    url.searchParams.set('v', selectedVariant.sku);
+    window.history.replaceState({}, '', url);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedVariant]);
 
@@ -483,12 +510,12 @@ const PublicProductPage = () => {
         <meta property="og:type" content="product" />
         <meta property="og:title" content={getProductSeoTitle(product)} />
         <meta property="og:description" content={getProductSeoDescription(product)} />
-        {productImages[0] && <meta property="og:image" content={productImages[0]} />}
+        {shareImage && <meta property="og:image" content={shareImage} />}
         <meta property="og:url" content={window.location.href} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={getProductSeoTitle(product)} />
         <meta name="twitter:description" content={getProductSeoDescription(product)} />
-        {productImages[0] && <meta name="twitter:image" content={productImages[0]} />}
+        {shareImage && <meta name="twitter:image" content={shareImage} />}
         <script type="application/ld+json">{JSON.stringify(generateProductSchema(product))}</script>
       </Helmet>
       <SeoHreflang />

@@ -359,7 +359,15 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, deliveryInfo, customerL
 
       } catch (error) {
         console.error('❌ Error initializing payment:', error);
-        setError(error.message);
+        // A stale cart line (variant renamed/removed since it was added) is
+        // the one failure the customer can fix themselves — say how, instead
+        // of surfacing the raw server message as a dead end.
+        const msg = String(error.message || '');
+        if (/unknown variant|unknown product|invalid cart/i.test(msg)) {
+          setError('Något i varukorgen är inte längre tillgängligt. Gå tillbaka till varukorgen, uppdatera sidan och försök igen.');
+        } else {
+          setError(error.message);
+        }
         toast.error('Kunde inte initiera betalning');
       } finally {
         setIsLoading(false);

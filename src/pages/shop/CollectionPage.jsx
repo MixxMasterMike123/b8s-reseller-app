@@ -15,6 +15,7 @@ import { getProductUrl, slugify } from '../../utils/productUrls';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
 import NordProductCard from '../../components/shop/NordProductCard';
+import { getCardPrice } from '../../utils/productPricing';
 import { getProductImage } from '../../utils/productImages';
 import { Helmet } from 'react-helmet-async';
 
@@ -88,18 +89,23 @@ const CollectionPage = () => {
             <p className="text-ink-muted py-16 text-center">{t('collection_empty', 'Inga produkter i den här samlingen.')}</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
-              {cards.map((p) => (
-                <NordProductCard
-                  key={p.id}
-                  to={getProductUrl(p)}
-                  image={imageOf(p)}
-                  imageAlt={nameOf(p)}
-                  name={nameOf(p)}
-                  description=""
-                  priceSek={p.b2cPrice || p.basePrice}
-                  ctaLabel={t('product_choose_button', 'Välj')}
-                />
-              ))}
+              {cards.map((p) => {
+                const { price, isFrom } = getCardPrice(p);
+                return (
+                  <NordProductCard
+                    key={p.id}
+                    to={getProductUrl(p)}
+                    image={imageOf(p)}
+                    imageAlt={nameOf(p)}
+                    name={nameOf(p)}
+                    description=""
+                    priceSek={price}
+                    isFromPrice={isFrom}
+                    product={p}
+                    ctaLabel={t('product_choose_button', 'Välj')}
+                  />
+                );
+              })}
             </div>
           )}
         </section>

@@ -18,6 +18,7 @@ import SeoHreflang from '../../components/shop/SeoHreflang';
 import SmartPrice from '../../components/shop/SmartPrice';
 import AddedToCartModal from '../../components/shop/AddedToCartModal';
 import NordProductCard from '../../components/shop/NordProductCard';
+import { getCardPrice } from '../../utils/productPricing';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import { useShopId } from '../../contexts/ShopContext';
 import { Helmet } from 'react-helmet-async';
@@ -326,7 +327,15 @@ const PublicStorefront = () => {
                         {getContentValue(bestseller.name)}
                       </div>
                     </div>
-                    <SmartPrice sekPrice={bestseller.b2cPrice || bestseller.basePrice} showOriginal={false} />
+                    {(() => {
+                      const { price, isFrom } = getCardPrice(bestseller);
+                      return (
+                        <div className="flex items-baseline gap-1 shrink-0">
+                          {isFrom && <span className="text-xs text-ink-muted">från</span>}
+                          <SmartPrice sekPrice={price} showOriginal={false} />
+                        </div>
+                      );
+                    })()}
                   </div>
                 </Link>
               ) : (
@@ -459,6 +468,7 @@ const PublicStorefront = () => {
                 const pn = getContentValue(product.name);
                 const name = typeof pn === 'string' && pn ? pn : (product.category || 'Produkt');
                 const descRaw = getB2cProductDescription(product);
+                const { price, isFrom } = getCardPrice(product);
                 return (
                   <NordProductCard
                     key={`featured-${product.id}`}
@@ -467,7 +477,9 @@ const PublicStorefront = () => {
                     imageAlt={name}
                     name={name}
                     description={typeof descRaw === 'string' ? descRaw : ''}
-                    priceSek={product.b2cPrice || product.basePrice}
+                    priceSek={price}
+                    isFromPrice={isFrom}
+                    product={product}
                     ctaLabel={t('product_choose_button', 'Välj')}
                   />
                 );
@@ -535,6 +547,7 @@ const PublicStorefront = () => {
 
                   const descRaw = getB2cProductDescription(product);
                   const description = typeof descRaw === 'string' ? descRaw : '';
+                  const { price, isFrom } = getCardPrice(product);
 
                   return (
                     <NordProductCard
@@ -544,7 +557,9 @@ const PublicStorefront = () => {
                       imageAlt={name}
                       name={name}
                       description={description}
-                      priceSek={product.b2cPrice || product.basePrice}
+                      priceSek={price}
+                      isFromPrice={isFrom}
+                      product={product}
                       ctaLabel={t('product_choose_button', 'Välj')}
                     />
                   );

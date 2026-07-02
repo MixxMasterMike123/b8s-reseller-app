@@ -97,13 +97,14 @@ const formatOrderItems = (items) => {
     const quantity = item.quantity || 0;
     const price = item.price || 0;
     
-    // Include color and size if available
-    const details = [];
-    if (item.color) details.push(item.color);
-    if (item.size) details.push(item.size);
-    
-    const detailsStr = details.length > 0 ? ` (${details.join(', ')})` : '';
-    return `${name}${detailsStr} x ${quantity} (${price} kr)`;
+    // Variant: prefer the pre-composed label, else the legacy color/size combo.
+    const variant = item.label || [item.color, item.size].filter(Boolean).join(', ');
+    // Charged SKU (variant SKU wins) appended in parentheses when present.
+    const chargedSku = item.variantSku || item.sku;
+
+    const detailsStr = variant ? ` (${variant})` : '';
+    const skuStr = chargedSku ? ` (${chargedSku})` : '';
+    return `${name}${detailsStr}${skuStr} x ${quantity} (${price} kr)`;
   }).join('; ');
 };
 

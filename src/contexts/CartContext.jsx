@@ -594,6 +594,49 @@ export const CartProvider = ({ children }) => {
     }));
   };
 
+  // Reconcile persisted cart lines against LIVE product docs. localStorage
+  // carts outlive admin edits: a renamed size or deleted variant leaves a
+  // variantSku the server rejects at payment ("Unknown variant"), dead-ending
+  // checkout. Missing products/variants are dropped; surviving lines refresh
+  // price/label/image so the display matches what the server will charge.
+  // Returns the display names of removed lines (for a toast).
+  const reconcileCart = (productsById) => {
+    const removed = [];
+    let mutated = false;
+    const items = [];
+    for (const item of cart.items) {
+      const product = productsById[item.productId || item.id];
+      if (product === undefined) { items.push(item); continue; } // not fetched — leave untouched
+      const displayName = item.label ? `${typeof item.name === 'string' ? item.name : ''} (${item.label})` : (typeof item.name === 'string' ? item.name : item.sku || '');
+      if (!product || product.isActive === false || product.availability?.b2c === false) {
+        removed.push(displayName);
+        mutated = true;
+        continue;
+      }
+      const row = item.variantSku && Array.isArray(product.variants)
+        ? product.variants.find((v) => v && v.sku === item.variantSku)
+        : null;
+      if (item.variantSku && !row) {
+        removed.push(displayName);
+        mutated = true;
+        continue;
+      }
+      const livePrice = row
+        ? ((row.price ?? null) !== null ? row.price : (product.b2cPrice || product.basePrice))
+        : (product.b2cPrice || product.basePrice);
+      const next = {
+        ...item,
+        price: livePrice > 0 ? livePrice : item.price,
+        label: row ? (row.label || item.label) : item.label,
+        image: (row && row.image) ? row.image : item.image,
+      };
+      if (next.price !== item.price || next.label !== item.label || next.image !== item.image) mutated = true;
+      items.push(next);
+    }
+    if (mutated) setCart((prev) => ({ ...prev, items }));
+    return removed;
+  };
+
   // Update shipping country
   const updateShippingCountry = (country) => {
     setCart(prevCart => ({
@@ -624,6 +667,7 @@ export const CartProvider = ({ children }) => {
     updateQuantity,
     removeFromCart,
     updateShippingCountry,
+    reconcileCart,
     clearCart,
     calculateTotals,
     applyDiscountCode,

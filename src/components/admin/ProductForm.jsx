@@ -103,7 +103,7 @@ const normalizeGroups = (rawGroups) =>
     .map((g) => ({
       label: g.label,
       sku: g.sku || '',
-      price: g.price ?? '',
+      price: g.price ?? '',   // null (inherited) reads back as empty field
       images: Array.isArray(g.images) && g.images.length > 0
         ? g.images.filter(Boolean).map((url) => ({ url }))
         : (g.image ? [{ url: g.image }] : []),
@@ -499,6 +499,13 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
   };
 
   const removeGroup = (idx) => {
+    const doomed = formData.variantGroups[idx];
+    // A configured variant (name/images/sizes) is real work — confirm before
+    // discarding. A freshly added empty row is removed without fuss.
+    const configured = doomed && ((doomed.label || '').trim() || doomed.images.length > 0 || doomed.sizes.length > 0);
+    if (configured && !window.confirm(`Ta bort varianten "${(doomed.label || '').trim() || 'utan namn'}"? Detta går inte att ångra efter att du sparat.`)) {
+      return;
+    }
     const nextGroups = formData.variantGroups.filter((_, i) => i !== idx);
     setField('variantGroups', nextGroups);
     setSelectedGroupIdx((cur) => Math.max(0, Math.min(cur > idx ? cur - 1 : cur, nextGroups.length - 1)));
@@ -613,7 +620,12 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
         const s = (docSnap.data().sku || '').trim();
         if (s) takenSkus.push(s);
       });
+      const requestedSku = resolvedSku;
       resolvedSku = uniqueSku(resolvedSku, takenSkus, product ? (formData.sku || '') : '');
+      if (resolvedSku !== requestedSku) {
+        // Not silent: the operator may rely on the exact SKU externally.
+        toast(`SKU "${requestedSku}" används redan av en annan produkt — sparas som "${resolvedSku}".`, { icon: '⚠️' });
+      }
 
       // Resolve images.
       let mainImageUrl = formData.b2cImageUrl;
@@ -685,9 +697,14 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
         }
         const image = images[0] || '';
         const groupSku = uniqueRowSku((g.sku || '').trim() || `${resolvedSku}-${skuFromName(label)}`);
-        const groupPrice = parseFloat(g.price) || price;
+        // Inherited (empty) price persists as null on the GROUP so it keeps
+        // following the product price on every future save — snapshotting it
+        // made "Original" drift when the product price later changed. The
+        // derived ROWS always get the concrete number (server needs it).
+        const explicitPrice = parseFloat(g.price) > 0;
+        const groupPrice = explicitPrice ? parseFloat(g.price) : price;
         const sizes = [...new Set(g.sizes.map((s) => s.trim().toUpperCase()).filter(Boolean))];
-        cleanGroups.push({ label, sku: groupSku, price: groupPrice, image, images, sizes });
+        cleanGroups.push({ label, sku: groupSku, price: explicitPrice ? groupPrice : null, image, images, sizes });
         if (sizes.length === 0) {
           cleanVariants.push({ sku: groupSku, label, price: groupPrice, image, images, group: label, size: null });
         } else {
@@ -939,24 +956,16 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
                           <label className={labelCls}>Bilder</label>
                           <div className="space-y-2">
                             {g.images.length > 0 && (
-                              <div className="flex flex-wrap gap-2">
-                                {g.images.map((im, imgIdx) => (
-                                  <div key={im.url || im.preview} className="relative">
-                                    <img src={im.preview || im.url} alt="" className="h-20 w-20 rounded-[var(--radius-admin-el)] border border-admin-border bg-white object-cover" />
-                                    {imgIdx === 0 && (
-                                      <span className="absolute bottom-1 left-1 rounded-[4px] bg-admin-info-bg px-1 text-[10px] font-medium text-admin-info-text">Huvudbild</span>
-                                    )}
-                                    <button
-                                      type="button"
-                                      onClick={() => removeGroupImage(idx, imgIdx)}
-                                      className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-admin-critical-dot text-[11px] text-white hover:opacity-80"
-                                      aria-label="Ta bort bild"
-                                    >
-                                      ×
-                                    </button>
-                                  </div>
-                                ))}
-                              </div>
+                              /* Same sortable gallery as the product media —
+                                 drag to reorder; position 0 is the huvudbild. */
+                              <SortableImageGallery
+                                images={g.images.map((im, imgIdx) => ({ id: String(imgIdx), url: im.preview || im.url }))}
+                                onReorder={(reordered) => updateGroup(idx, { images: reordered.map((it) => g.images[Number(it.id)]) })}
+                                onRemove={(id) => removeGroupImage(idx, Number(id))}
+                                label="Dra för att ändra ordning — första bilden är huvudbilden:"
+                                itemLabel=""
+                                className="grid grid-cols-3 gap-3 md:grid-cols-4"
+                              />
                             )}
                             <input
                               type="file"
@@ -1045,6 +1054,8 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
                           <p className={helpCls}>
                             Enter eller komma för att lägga till. Kunden väljer storlek i butiken och varje
                             storlek får eget artikelnummer automatiskt. Lämna tomt om varianten saknar storlekar.
+                            Olika pris per utförande? Skapa en egen variant i stället för en storlek.
+                            Obs: frakten beräknas alltid på produktens vikt — varianter har ingen egen vikt.
                           </p>
                         </div>
 

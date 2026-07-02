@@ -93,7 +93,7 @@ const MobileNikeContent = ({ addedItem, onClose, t, getTotalItems, getContentVal
           <CheckIcon className="w-4 h-4 text-white" />
         </div>
         <h3 className="text-lg font-medium text-gray-900">
-          {t('added_to_cart', 'Added to Cart')}
+          {t('added_to_cart', 'Tillagd i varukorgen')}
         </h3>
       </div>
       
@@ -111,21 +111,21 @@ const MobileNikeContent = ({ addedItem, onClose, t, getTotalItems, getContentVal
         <div className="shrink-0">
           <img
             src={addedItem.image || STORE.logoUrl}
-            alt={getContentValue(addedItem.name) || 'Product'}
+            alt={getContentValue(addedItem.name) || 'Produkt'}
             className="w-20 h-20 object-cover rounded-lg"
           />
         </div>
         
         <div className="flex-1 space-y-2">
           <h4 className="font-medium text-gray-900 text-base leading-tight">
-            {getContentValue(addedItem.name) || 'Product'}
+            {getContentValue(addedItem.name) || 'Produkt'}
           </h4>
           
           <div className="space-y-1 text-sm text-gray-600">
             {addedItem.label && (
               <p>{addedItem.label}</p>
             )}
-            <p>Quantity {addedItem.quantity}</p>
+            <p>{t('quantity', 'Antal')} {addedItem.quantity}</p>
           </div>
           
           <div className="font-medium text-gray-900">
@@ -147,7 +147,7 @@ const MobileNikeContent = ({ addedItem, onClose, t, getTotalItems, getContentVal
         }}
         className="w-full bg-black text-white rounded-full py-4 text-base font-medium hover:bg-gray-800 transition-colors"
       >
-        {t('view_cart_count', 'View Cart ({{count}})', { count: getTotalItems() })}
+        {t('view_cart_count', 'Visa varukorg ({{count}})', { count: getTotalItems() })}
       </button>
     </div>
   </>
@@ -163,7 +163,7 @@ const DesktopNikeContent = ({ addedItem, onClose, t, getTotalItems, getContentVa
           <CheckIcon className="w-3 h-3 text-white" />
         </div>
         <span className="font-medium text-gray-900">
-          {t('added_to_cart', 'Added to Cart')}
+          {t('added_to_cart', 'Tillagd i varukorgen')}
         </span>
       </div>
       
@@ -181,21 +181,21 @@ const DesktopNikeContent = ({ addedItem, onClose, t, getTotalItems, getContentVa
         <div className="shrink-0">
           <img
             src={addedItem.image || STORE.logoUrl}
-            alt={getContentValue(addedItem.name) || 'Product'}
+            alt={getContentValue(addedItem.name) || 'Produkt'}
             className="w-20 h-20 object-cover rounded-lg"
           />
         </div>
         
         <div className="flex-1 space-y-2">
           <h4 className="font-medium text-gray-900 leading-tight">
-            {getContentValue(addedItem.name) || 'Product'}
+            {getContentValue(addedItem.name) || 'Produkt'}
           </h4>
           
           <div className="space-y-1 text-sm text-gray-600">
             {addedItem.label && (
               <p>{addedItem.label}</p>
             )}
-            <p>Quantity {addedItem.quantity}</p>
+            <p>{t('quantity', 'Antal')} {addedItem.quantity}</p>
           </div>
           
           <div className="font-medium text-gray-900">
@@ -217,7 +217,7 @@ const DesktopNikeContent = ({ addedItem, onClose, t, getTotalItems, getContentVa
         }}
         className="w-full border-2 border-gray-200 text-gray-900 rounded-full py-3 text-sm font-medium hover:border-gray-300 transition-colors"
       >
-        {t('view_cart_count', 'View Cart ({{count}})', { count: getTotalItems() })}
+        {t('view_cart_count', 'Visa varukorg ({{count}})', { count: getTotalItems() })}
       </button>
       
       <button
@@ -227,7 +227,7 @@ const DesktopNikeContent = ({ addedItem, onClose, t, getTotalItems, getContentVa
         }}
         className="w-full bg-black text-white rounded-full py-3 text-sm font-medium hover:bg-gray-800 transition-colors"
       >
-        {t('checkout', 'Checkout')}
+        {t('checkout', 'Till kassan')}
       </button>
     </div>
   </>

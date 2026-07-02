@@ -11,7 +11,26 @@ import SmartPrice from './SmartPrice';
  * special editions, clothing) — the optional `tag` pill is the only
  * thing that differs between them.
  */
-const NordProductCard = ({ to, linkState, image, imageAlt, tag, name, description, meta, priceSek, ctaLabel }) => {
+// Unique variant groups (by `group`, falling back to `label`), each with its
+// first available image. Used for the subtle swatch hint under the price.
+const variantGroups = (variants) => {
+  if (!Array.isArray(variants)) return [];
+  const seen = new Map();
+  for (const v of variants) {
+    const key = (v?.group || v?.label || '').trim();
+    if (!key || seen.has(key)) continue;
+    const image = v?.image || (Array.isArray(v?.images) ? v.images[0] : '') || '';
+    seen.set(key, { key, image });
+  }
+  return Array.from(seen.values());
+};
+
+const NordProductCard = ({ to, linkState, image, imageAlt, tag, name, description, meta, priceSek, isFromPrice = false, product, ctaLabel }) => {
+  const groups = variantGroups(product?.variants);
+  const showHint = groups.length >= 2;
+  const thumbs = groups.filter((g) => g.image).slice(0, 4);
+  const extra = groups.length - thumbs.length;
+
   return (
     <Link to={to} state={linkState} className="group block h-full">
       <div className="bg-white h-full flex flex-col rounded-tile shadow-tile overflow-hidden transition-all duration-300 ease-nord group-hover:-translate-y-1 group-hover:shadow-lift">
@@ -44,11 +63,40 @@ const NordProductCard = ({ to, linkState, image, imageAlt, tag, name, descriptio
           )}
 
           <div className="mt-auto pt-4 flex items-center justify-between gap-3">
-            <SmartPrice sekPrice={priceSek} className="font-display" showOriginal={false} />
+            <div className="flex items-baseline gap-1 min-w-0">
+              {isFromPrice && (
+                <span className="text-xs text-ink-muted shrink-0">från</span>
+              )}
+              <SmartPrice sekPrice={priceSek} className="font-display" showOriginal={false} />
+            </div>
             <span className="bg-accent text-white text-sm font-bold px-5 py-2.5 rounded-full whitespace-nowrap transition-transform duration-300 ease-nord group-hover:-translate-y-0.5">
               {ctaLabel}
             </span>
           </div>
+
+          {showHint && (
+            <div className="mt-2.5 flex items-center gap-1.5">
+              {thumbs.length > 0 ? (
+                <>
+                  <div className="flex items-center gap-1">
+                    {thumbs.map((g) => (
+                      <img
+                        key={g.key}
+                        src={g.image}
+                        alt=""
+                        className="h-4 w-4 rounded-full object-cover border border-ink/10"
+                      />
+                    ))}
+                  </div>
+                  {extra > 0 && (
+                    <span className="text-xs text-ink-muted">+{extra}</span>
+                  )}
+                </>
+              ) : (
+                <span className="text-xs text-ink-muted">{groups.length} varianter</span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </Link>

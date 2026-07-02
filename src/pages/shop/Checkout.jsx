@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, getDoc, updateDoc, doc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { httpsCallable, getFunctions } from 'firebase/functions';
 import { db, auth } from '../../firebase/config';
@@ -32,7 +32,7 @@ import { requiresWithdrawalGate, resolveWithdrawalNotice } from '../../utils/wit
 
 const Checkout = () => {
   const {
-    cart, calculateTotals, clearCart, updateShippingCountry,
+    cart, calculateTotals, clearCart, updateShippingCountry, reconcileCart,
     deliveryMethod, pickupLocation, pickupDate, setPickupDate, selectHomeDelivery, selectPickup,
     cartAllowsHome, cartAllowsPickup, hasDeliveryConflict,
   } = useCart();
@@ -156,6 +156,42 @@ const Checkout = () => {
       loadCustomerProfile();
     }
   }, [currentUser]);
+
+  // Reconcile the persisted cart against LIVE products once per checkout
+  // visit. localStorage carts outlive admin edits — a renamed size / deleted
+  // variant / deactivated product would otherwise 400 at payment ("Unknown
+  // variant") with no pointer to the cause. Dropped lines get a toast;
+  // surviving lines refresh price/label so the display matches the charge.
+  useEffect(() => {
+    const ids = [...new Set(cart.items.map((i) => i.productId || i.id).filter(Boolean))];
+    if (ids.length === 0) return;
+    (async () => {
+      try {
+        const entries = await Promise.all(
+          ids.map(async (id) => {
+            const snap = await getDoc(doc(db, 'products', id));
+            return [id, snap.exists() ? snap.data() : null];
+          })
+        );
+        const removed = reconcileCart(Object.fromEntries(entries));
+        if (removed.length > 0) {
+          toast.error(
+            t(
+              'checkout_cart_reconciled',
+              'Följande finns inte längre och togs bort ur varukorgen: {{items}}',
+              { items: removed.filter(Boolean).join(', ') }
+            ),
+            { duration: 8000 }
+          );
+        }
+      } catch (e) {
+        // Fail open — the server still validates every line at payment.
+        console.warn('Cart reconciliation skipped:', e?.message);
+      }
+    })();
+    // Once on mount: re-running on every cart change would loop via setCart.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Save customer and shipping info to localStorage for Klarna return flow
   // (never persist the password — only email/marketing are needed on return)
