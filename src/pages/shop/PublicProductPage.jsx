@@ -102,26 +102,26 @@ const PublicProductPage = () => {
   } = useCart();
 
   // Helper function - declared early to avoid temporal dead zone
-  // Variant images (per option value, uploaded outside the gallery) are
-  // appended so they're browsable in the gallery AND targetable when the
-  // customer selects that variant (the swap effect finds them by index).
-  const getProductImages = (p, vs = []) => {
+  // The gallery = the product's own images + the SELECTED variant's images
+  // (not every variant's — 3 images × 4 colorways would flood the strip).
+  // Switching variant swaps the gallery to that variant's set.
+  const getProductImages = (p, activeVariant = null) => {
     if (!p) return [];
     const images = [];
     if (p.b2cImageUrl) images.push(p.b2cImageUrl);
     if (p.b2cImageGallery?.length) images.push(...p.b2cImageGallery);
-    vs.forEach((v) => {
-      const vImages = Array.isArray(v?.images) && v.images.length > 0 ? v.images : (v?.image ? [v.image] : []);
-      vImages.forEach((u) => {
-        if (u && !images.includes(u)) images.push(u);
-      });
+    const vImages = Array.isArray(activeVariant?.images) && activeVariant.images.length > 0
+      ? activeVariant.images
+      : (activeVariant?.image ? [activeVariant.image] : []);
+    vImages.forEach((u) => {
+      if (u && !images.includes(u)) images.push(u);
     });
     if (images.length === 0) images.push(getProductImage(p));
     return images;
   };
 
   // Calculate productImages early to avoid temporal dead zone issues
-  const productImages = getProductImages(product, variants);
+  const productImages = getProductImages(product, selectedVariant);
   
   // Calculate button state based on launch date
   const buttonState = product ? getButtonState(product, t) : { text: '', disabled: true, isComingSoon: false };
@@ -246,12 +246,14 @@ const PublicProductPage = () => {
     setSelectedVariant(match);
   };
 
-  // When the selected variant has its own image (per-value image from admin),
-  // bring it into view: desktop swaps the main image, mobile scrolls to it.
+  // When the variant changes: show its image (desktop swaps the main image,
+  // mobile scrolls to it). A variant without an image resets to the first
+  // image — also keeps the index in range now that the gallery is per-variant.
   useEffect(() => {
-    if (!selectedVariant?.image) return;
-    const idx = productImages.indexOf(selectedVariant.image);
-    if (idx === -1) return;
+    if (!selectedVariant) return;
+    const imgs = getProductImages(product, selectedVariant);
+    const found = selectedVariant.image ? imgs.indexOf(selectedVariant.image) : -1;
+    const idx = found >= 0 ? found : 0;
     setActiveImageIndex(idx);
     const container = mobileImageScrollerRef.current;
     if (container) container.scrollTo({ left: idx * container.offsetWidth, behavior: 'smooth' });
@@ -371,10 +373,12 @@ const PublicProductPage = () => {
   //  3. legacy flat list
   const renderVariantPicker = (headingCls, gridCls, btnPadCls) =>
     grouped ? (
-      <div className="space-y-6">
+      /* Compact swatch chips — the thumbnail is just a small color cue; the
+         full image shows in the viewer when the variant is selected. */
+      <div className="space-y-5">
         <div>
           <h3 className={headingCls}>{t('select_variant', 'Välj')}</h3>
-          <div className={gridCls}>
+          <div className="flex flex-wrap gap-2">
             {groupLabels.map((label) => {
               const isSelected = selectedVariant?.group === label;
               const thumb = groupImage(label);
@@ -383,14 +387,14 @@ const PublicProductPage = () => {
                   key={label}
                   type="button"
                   onClick={() => selectGroup(label)}
-                  className={`${btnPadCls} text-center border rounded-el transition-all ${
+                  className={`flex items-center gap-2 rounded-el border px-3 py-1.5 transition-all ${
                     isSelected ? 'border-ink bg-ink text-white' : 'border-ink/15 bg-white hover:border-ink/40'
                   }`}
                 >
                   {thumb && (
-                    <img src={thumb} alt={label} className="mx-auto mb-1.5 h-14 w-14 rounded-el object-cover" />
+                    <img src={thumb} alt="" className="h-7 w-7 rounded-[6px] object-cover" />
                   )}
-                  <div className="text-sm font-medium">{label}</div>
+                  <span className="text-sm font-medium">{label}</span>
                 </button>
               );
             })}
@@ -399,19 +403,17 @@ const PublicProductPage = () => {
         {currentSizes.length > 0 && (
           <div>
             <h3 className={headingCls}>{t('select_size', 'Storlek')}</h3>
-            <div className={gridCls}>
+            <div className="flex flex-wrap gap-2">
               {currentSizes.map((size) => (
                 <button
                   key={size}
                   type="button"
                   onClick={() => selectSize(size)}
-                  className={`${btnPadCls} text-center border rounded-el transition-all ${
+                  className={`min-w-[3rem] rounded-el border px-3 py-1.5 text-center text-sm font-medium uppercase transition-all ${
                     selectedVariant?.size === size ? 'border-ink bg-ink text-white' : 'border-ink/15 bg-white hover:border-ink/40'
                   }`}
                 >
-                  {/* uppercase: sizes are normalized to caps at save, but docs
-                      saved before that (e.g. "m", "xl") still display right */}
-                  <div className="text-sm font-medium uppercase">{size}</div>
+                  {size}
                 </button>
               ))}
             </div>
@@ -660,7 +662,7 @@ const PublicProductPage = () => {
                   <div className="flex-1">
                     <div className="aspect-square bg-white rounded-tile shadow-tile overflow-hidden">
                       <img
-                        src={productImages[activeImageIndex]}
+                        src={productImages[Math.min(activeImageIndex, productImages.length - 1)]}
                         alt={getContentValue(product.name)}
                         className="w-full h-full object-cover"
                       />
