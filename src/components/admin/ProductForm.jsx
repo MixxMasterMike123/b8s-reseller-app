@@ -40,6 +40,8 @@ import SortableImageGallery from './SortableImageGallery';
 import { withShopId } from '../../config/withShopId';
 import { useShopFeatures } from '../../contexts/ShopFeaturesContext';
 import { CardSection, RightRail, Button } from './ui';
+import { skuFromName, uniqueSku } from '../../utils/productUrls';
+import { query, where, getDocs } from 'firebase/firestore';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -223,11 +225,33 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
 
   const setField = (name, value) => setFormData((prev) => ({ ...prev, [name]: value }));
 
+  // SKU is the product's lookup key (URL, cart, checkout, POD). We auto-derive
+  // it from the title so a product is never saved unreachable — but only while
+  // the operator hasn't hand-edited SKU (then their value wins). An EXISTING
+  // product that already has a SKU counts as "already set" (never silently
+  // rewrites a live SKU, which would break its URL).
+  const skuTouchedRef = React.useRef(Boolean(product && (formData.sku || '').trim()));
+
   const handleInput = (e) => {
     const { name, value, type, checked } = e.target;
-    if (type === 'checkbox') setField(name, checked);
-    else if (type === 'number') setField(name, parseFloat(value) || 0);
-    else setField(name, value);
+    if (type === 'checkbox') { setField(name, checked); return; }
+    if (type === 'number') { setField(name, parseFloat(value) || 0); return; }
+    if (name === 'sku') {
+      // Any keystroke in SKU = the operator owns it from now on (empty included).
+      skuTouchedRef.current = true;
+      setField('sku', value);
+      return;
+    }
+    if (name === 'name') {
+      // Auto-fill SKU from the title while SKU is still auto-managed.
+      setFormData((prev) => ({
+        ...prev,
+        name: value,
+        sku: skuTouchedRef.current ? prev.sku : skuFromName(value),
+      }));
+      return;
+    }
+    setField(name, value);
   };
 
   // ----- category autocomplete -----
@@ -321,9 +345,34 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
       return;
     }
 
+    // SKU is the lookup key (URL/cart/checkout/POD). Guarantee a non-empty,
+    // per-shop-UNIQUE SKU before saving — auto-derive from the title if the
+    // field is empty; block save only if there's no title to derive from.
+    let resolvedSku = (formData.sku || '').trim();
+    if (!resolvedSku) resolvedSku = skuFromName(formData.name);
+    if (!resolvedSku || resolvedSku === 'produkt') {
+      // skuFromName returns 'produkt' only when the name is empty/unusable.
+      if (!(formData.name || '').trim()) {
+        toast.error('Ange en titel eller ett SKU – produkten behöver ett unikt artikelnummer för sin webbadress.');
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       const productId = product ? (product.documentId || product.id || formData.id) : `prod_${Date.now()}`;
+
+      // Enforce per-shop SKU uniqueness (collision = two products on one URL /
+      // cart line). Load this shop's existing SKUs and de-dupe, excluding this
+      // product's own current SKU when editing.
+      const skuSnap = await getDocs(query(collection(db, 'products'), where('shopId', '==', shopId)));
+      const takenSkus = [];
+      skuSnap.forEach((docSnap) => {
+        if (docSnap.id === productId) return; // ignore self (edit)
+        const s = (docSnap.data().sku || '').trim();
+        if (s) takenSkus.push(s);
+      });
+      resolvedSku = uniqueSku(resolvedSku, takenSkus, product ? (formData.sku || '') : '');
 
       // Resolve images.
       let mainImageUrl = formData.b2cImageUrl;
@@ -358,7 +407,7 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
       // Build the persisted doc. Single price → BOTH consumer-price fields.
       const data = {
         name: formData.name,            // plain string going forward
-        sku: formData.sku,
+        sku: resolvedSku,               // guaranteed non-empty + per-shop-unique
         category: formData.category,    // browse taxonomy / URL driver (was `group`)
         tags: formData.tags,
         hasVariants,
@@ -446,6 +495,9 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
               <div>
                 <label className={labelCls}>SKU (Artikelnummer)</label>
                 <input name="sku" value={formData.sku} onChange={handleInput} placeholder="t.ex. LAX-500" className={inputCls} />
+                <p className="mt-1 text-[12px] text-admin-text-muted">
+                  Skapas automatiskt från titeln. Används i produktens webbadress – måste vara unik. Kan ändras.
+                </p>
               </div>
               <div>
                 <label className={labelCls}>Beskrivning</label>

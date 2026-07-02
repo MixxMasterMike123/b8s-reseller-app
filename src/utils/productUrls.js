@@ -38,6 +38,53 @@ export const slugify = (str) => {
 };
 
 /**
+ * Auto-derive a URL-safe SKU from a product name.
+ *
+ * SKU is the product's lookup KEY everywhere (URL resolution via
+ * getSkuFromSlug, server cart repricing, order line items, POD podMappings).
+ * A product saved without one is unreachable (its URL falls back to the raw
+ * doc id, which getSkuFromSlug can't resolve). This fills the gap from the name.
+ *
+ * ⚠️ MUST contain NO underscore: the variant slug is `[name]_[sku]` and
+ * getSkuFromSlug splits on the LAST '_'. An underscore in the SKU would make
+ * the URL resolve to only the fragment after it. slugify keeps `\w` (incl. `_`),
+ * so we strip underscores explicitly here.
+ *
+ * @param {string} name  the product name (plain string)
+ * @returns {string} e.g. "Vitlökssill (300g)" -> "vitloksill-300g"
+ */
+export const skuFromName = (name) => {
+  const base = slugify(name).replace(/_/g, '-').replace(/\-\-+/g, '-').replace(/^-|-$/g, '');
+  return base || 'produkt';
+};
+
+/**
+ * Ensure a per-shop-UNIQUE SKU. SKU is the lookup key, so a duplicate within a
+ * shop collides two products on one URL / cart line. Given the desired base and
+ * the set of SKUs already taken in this shop (lowercased), returns base, or
+ * base-2, base-3, … until free. Pass the CURRENT product's own SKU as `selfSku`
+ * so editing a product doesn't collide with itself.
+ *
+ * @param {string} base       desired sku (already url-safe)
+ * @param {Set<string>|string[]} takenSkus  existing shop SKUs (any case)
+ * @param {string} [selfSku]  this product's current sku, excluded from the check
+ * @returns {string} a SKU not present in takenSkus
+ */
+export const uniqueSku = (base, takenSkus, selfSku = '') => {
+  const taken = new Set([...(takenSkus || [])].map((s) => String(s || '').trim().toLowerCase()));
+  const self = String(selfSku || '').trim().toLowerCase();
+  if (self) taken.delete(self);
+  const root = (base || 'produkt').toLowerCase();
+  if (!taken.has(root)) return base || 'produkt';
+  for (let n = 2; n < 10000; n++) {
+    const candidate = `${root}-${n}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+  // Practically unreachable; fall back to a timestamped suffix.
+  return `${root}-${Date.now()}`;
+};
+
+/**
  * NEW DYNAMIC SLUG GENERATOR
  * Generates a unique, SEO-friendly slug for a specific product variant.
  * Format: [name-size]_[sku]
