@@ -46,12 +46,17 @@ const SortableImageItem = ({ id, imageUrl, onRemove, label, className = "" }) =>
         {...listeners}
         className="cursor-grab active:cursor-grabbing"
       >
-        <img 
-          src={imageUrl} 
-          alt={`Bild ${id}`} 
-          className="w-full h-24 object-cover border border-gray-300 rounded-md"
+        {/* bg-white behind the image: gallery files are often transparent
+            PNG/WebP with dark artwork — without a light backdrop they read
+            as black boxes. Tailwind v4: opacity via the /N color modifier
+            (the old bg-opacity-* utilities are gone and would render the
+            hover overlay as SOLID black). */}
+        <img
+          src={imageUrl}
+          alt={`Bild ${id}`}
+          className="w-full h-24 object-cover border border-gray-300 rounded-md bg-white"
         />
-        <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-all duration-200 rounded-md flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-all duration-200 rounded-md flex items-center justify-center">
           <div className="text-white opacity-0 hover:opacity-100 transition-opacity duration-200 text-xs font-medium">
             Dra för att ändra ordning
           </div>

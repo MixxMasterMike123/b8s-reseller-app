@@ -322,7 +322,7 @@ const WritersWagonPanel = ({ productData, onContentGenerated, onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="bg-linear-to-r from-blue-600 to-blue-700 text-white px-6 py-4">
@@ -330,7 +330,7 @@ const WritersWagonPanel = ({ productData, onContentGenerated, onClose }) => {
             <div className="flex items-center space-x-3">
               <SparklesIcon className="h-6 w-6" />
               <h2 className="text-xl font-semibold">The Writer's Wagon™</h2>
-              <span className="bg-blue-500 bg-opacity-50 px-2 py-1 rounded-sm text-sm">
+              <span className="bg-blue-500/50 px-2 py-1 rounded-sm text-sm">
                 AI-Powered Content Generation
               </span>
             </div>

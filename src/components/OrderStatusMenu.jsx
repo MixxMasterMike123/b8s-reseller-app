@@ -86,7 +86,7 @@ const OrderStatusMenu = ({ currentStatus, onStatusChange, disabled, className = 
         disabled={disabled}
         className={`inline-flex w-32 justify-center items-center px-4 py-1 text-xs font-medium rounded-md ${
           getStatusStyles(currentStatus)
-        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-opacity-80'}`}
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'}`}
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="mr-1">{getCurrentStatusLabel()}</span>
@@ -105,7 +105,7 @@ const OrderStatusMenu = ({ currentStatus, onStatusChange, disabled, className = 
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-10 mt-1 w-40 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-hidden">
+        <div className="absolute right-0 z-10 mt-1 w-40 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden">
           <div className="py-1">
             {statusOptions.map((option) => (
               <button

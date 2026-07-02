@@ -222,7 +222,7 @@ const DocumentCenter = ({ contactId, contactName, isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="bg-linear-to-r from-orange-600 to-red-600 text-white p-6">
@@ -237,7 +237,7 @@ const DocumentCenter = ({ contactId, contactName, isOpen, onClose }) => {
             
             <button
               onClick={onClose}
-              className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-colors"
+              className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
             >
               <XMarkIcon className="h-6 w-6" />
             </button>

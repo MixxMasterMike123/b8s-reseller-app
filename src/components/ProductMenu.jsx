@@ -56,7 +56,7 @@ const ProductMenu = ({ products, selectedProduct, onProductSelect }) => {
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 z-10 mt-2 max-h-60 overflow-y-auto origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-hidden">
+        <div className="absolute left-0 right-0 z-10 mt-2 max-h-60 overflow-y-auto origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden">
           <div className="py-1">
             {products && products.length > 0 ? (
               products.map((product) => (

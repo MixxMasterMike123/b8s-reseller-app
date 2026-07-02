@@ -35,7 +35,7 @@ const AddedToCartModal = ({ isVisible, onClose, addedItem, cartCount }) => {
     <>
       {/* Mobile: Full backdrop overlay */}
       <div 
-        className="fixed inset-0 bg-black bg-opacity-25 z-50 transition-opacity duration-300 md:hidden"
+        className="fixed inset-0 bg-black/25 z-50 transition-opacity duration-300 md:hidden"
         onClick={onClose}
       />
       

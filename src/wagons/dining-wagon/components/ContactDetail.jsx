@@ -2045,7 +2045,7 @@ const ContactDetail = () => {
 
         {/* Admin Document Modal */}
         {showAdminDocUpload && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
               {/* Header */}
               <div className="bg-linear-to-r from-orange-600 to-red-600 text-white p-6">
@@ -2059,7 +2059,7 @@ const ContactDetail = () => {
                   </div>
                   <button
                     onClick={() => setShowAdminDocUpload(false)}
-                    className="text-white hover:bg-white dark:bg-gray-800 hover:bg-opacity-20 p-2 rounded-lg transition-colors"
+                    className="text-white hover:bg-white/20 dark:bg-gray-800 p-2 rounded-lg transition-colors"
                   >
                     <XMarkIcon className="h-6 w-6" />
                   </button>
@@ -2203,7 +2203,7 @@ const ContactDetail = () => {
 
         {/* ✏️ CONTACT EDIT MODAL */}
         {isEditingContact && (
-          <div className="fixed inset-0 bg-gray-600 dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-75 overflow-y-auto h-full w-full z-50">
+          <div className="fixed inset-0 bg-gray-600/75 dark:bg-gray-900/75 overflow-y-auto h-full w-full z-50">
             <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white dark:bg-gray-800">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
