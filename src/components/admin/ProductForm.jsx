@@ -439,15 +439,17 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
       sizes: prev ? [...prev.sizes] : [],
     };
     // FIRST variant on a product: the product as already published IS variant
-    // number one. Seed it as "Original" (name editable) with the product's
-    // main image, so the operator only fills in the NEW variant — no
-    // re-entering of the original. Price/sku stay empty = inherit/auto.
+    // number one. Seed it as "Original" (name editable) with NO images of its
+    // own — an imageless variant shows the product's base images on the
+    // storefront, so Original stays in sync with the main post's gallery
+    // (adding images to the product later reaches Original automatically).
+    // Price/sku stay empty = inherit/auto.
     if (formData.variantGroups.length === 0) {
       const original = {
         label: 'Original',
         sku: '',
         price: '',
-        images: formData.b2cImageUrl ? [{ url: formData.b2cImageUrl }] : [],
+        images: [],
         sizes: [],
       };
       setField('variantGroups', [original, next]);
@@ -904,7 +906,7 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
                             key={idx}
                             id={String(idx)}
                             selected={idx === selectedGroupIdx}
-                            thumb={g.images[0]?.preview || g.images[0]?.url || ''}
+                            thumb={g.images[0]?.preview || g.images[0]?.url || formData.b2cImageUrl || ''}
                             title={g.label.trim() || `Variant ${idx + 1}`}
                             subtitle={g.sizes.length > 0 ? g.sizes.join(' · ') : ''}
                             onSelect={() => { setSelectedGroupIdx(idx); setSizeInput(''); }}

@@ -349,7 +349,7 @@ const PublicProductPage = () => {
   // the v2.1 options path or the legacy flat picker takes over below.
   const grouped = variants.length > 0 && variants.every((v) => typeof v.group === 'string' && v.group);
   const groupLabels = grouped ? [...new Set(variants.map((v) => v.group))] : [];
-  const groupImage = (label) => variants.find((v) => v.group === label)?.image || '';
+  const groupImage = (label) => variants.find((v) => v.group === label)?.image || product?.b2cImageUrl || '';
   const groupSizes = (label) => variants.filter((v) => v.group === label && v.size).map((v) => v.size);
   const currentSizes = grouped && selectedVariant ? groupSizes(selectedVariant.group) : [];
 
