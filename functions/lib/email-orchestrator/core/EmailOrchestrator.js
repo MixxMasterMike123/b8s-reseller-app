@@ -1,9 +1,14 @@
 "use strict";
 // EmailOrchestrator - Master Email Controller
-// Single entry point for ALL email operations in B8Shield system
+// Single entry point for ALL email operations on the platform.
+// MULTI-TENANT IDENTITY (Option 1, 2026-07-03): callers thread `shopId` in the
+// context; the orchestrator loads that shop's Store Identity and sends as
+// `"{shopName}" <no-reply@platform-domain>` with replyTo = shop supportEmail.
+// Without a shopId the neutral platform defaults apply.
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EmailOrchestrator = void 0;
 const UserResolver_1 = require("../services/UserResolver");
+const database_1 = require("../../config/database");
 const EmailService_1 = require("../services/EmailService");
 const orderConfirmation_1 = require("../templates/orderConfirmation");
 const orderStatusUpdate_1 = require("../templates/orderStatusUpdate");
@@ -46,19 +51,25 @@ class EmailOrchestrator {
             // Step 2: Determine language
             const language = context.language || userData.language || 'sv-SE';
             console.log('🌍 EmailOrchestrator: Language selected:', language);
+            // Step 2b: Resolve the tenant's sender identity (neutral fallback).
+            const shopIdentity = await this.loadShopIdentity(context.shopId);
+            const brandName = shopIdentity?.shopName || config_1.EMAIL_CONFIG.SMTP.FROM_NAME;
             // Step 3: Generate template
             const template = await this.generateTemplate(context.emailType, {
                 userData,
                 language,
                 orderData: context.orderData,
                 additionalData: context.additionalData,
-                context
+                context,
+                brandName
             });
             console.log('📧 EmailOrchestrator: Template generated:', template.subject);
             // Step 4: Prepare email options
             const emailOptions = {
                 to: userData.email,
-                from: this.getFromAddress(context.emailType, userData.type),
+                from: this.getFromAddress(context.emailType, userData.type, shopIdentity?.shopName),
+                // Replies go to the SHOP, not the platform (when the shop has set one).
+                ...(shopIdentity?.supportEmail ? { replyTo: shopIdentity.supportEmail } : {}),
             };
             // Step 5: Send email
             let result;
@@ -103,6 +114,28 @@ class EmailOrchestrator {
     /**
      * Generate email template based on type and context
      */
+    // Load the tenant's Store Identity slice for sender identity. Best-effort:
+    // any failure falls back to the neutral platform defaults (an email must
+    // never fail because a shop doc read did).
+    async loadShopIdentity(shopId) {
+        if (!shopId)
+            return null;
+        try {
+            const snap = await database_1.db.collection('shops').doc(shopId).get();
+            if (!snap.exists)
+                return null;
+            const si = snap.data()?.storeIdentity || {};
+            const shopName = typeof si.shopName === 'string' && si.shopName.trim() ? si.shopName.trim() : undefined;
+            const supportEmail = typeof si.supportEmail === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(si.supportEmail.trim())
+                ? si.supportEmail.trim()
+                : undefined;
+            return { shopName, supportEmail };
+        }
+        catch (error) {
+            console.warn('⚠️ EmailOrchestrator: shop identity load failed (using platform defaults):', error);
+            return null;
+        }
+    }
     async generateTemplate(emailType, data) {
         console.log('📝 EmailOrchestrator: Generating template for:', emailType);
         switch (emailType) {
@@ -119,7 +152,8 @@ class EmailOrchestrator {
                         lastName: data.context.customerInfo?.lastName
                     },
                     orderId: data.context.orderId || '',
-                    orderType: data.userData.type === 'B2B' ? 'B2B' : 'B2C'
+                    orderType: data.userData.type === 'B2B' ? 'B2B' : 'B2C',
+                    brandName: data.brandName
                 };
                 return (0, orderConfirmation_1.generateOrderConfirmationTemplate)(orderConfirmationData, data.language, data.context.orderId);
             case 'ORDER_STATUS_UPDATE':
@@ -199,7 +233,8 @@ class EmailOrchestrator {
                     resetCode: data.additionalData.resetCode,
                     userAgent: data.additionalData.userAgent,
                     timestamp: data.additionalData.timestamp,
-                    userType: data.additionalData.userType || (data.userData.type === 'B2B' ? 'B2B' : 'B2C')
+                    userType: data.additionalData.userType || (data.userData.type === 'B2B' ? 'B2B' : 'B2C'),
+                    brandName: data.brandName
                 };
                 return (0, passwordReset_1.generatePasswordResetTemplate)(passwordResetData, data.language);
             case 'AFFILIATE_WELCOME':
@@ -226,7 +261,8 @@ class EmailOrchestrator {
                     },
                     verificationCode: data.additionalData.verificationCode,
                     language: data.language,
-                    source: data.additionalData.source
+                    source: data.additionalData.source,
+                    brandName: data.brandName
                 };
                 return (0, emailVerification_1.generateEmailVerificationTemplate)(emailVerificationData);
             case 'AFFILIATE_APPLICATION_RECEIVED':
@@ -235,8 +271,8 @@ class EmailOrchestrator {
                 }
                 return {
                     subject: data.language === 'en-GB' || data.language === 'en-US'
-                        ? 'Affiliate Application Received - B8Shield'
-                        : 'Affiliate-ansökan mottagen - B8Shield',
+                        ? `Affiliate Application Received - ${data.brandName}`
+                        : `Affiliate-ansökan mottagen - ${data.brandName}`,
                     html: (0, affiliateApplicationReceived_1.generateAffiliateApplicationReceivedTemplate)({
                         applicantInfo: data.additionalData.applicantInfo,
                         applicationId: data.additionalData.applicationId,
@@ -291,24 +327,15 @@ class EmailOrchestrator {
     /**
      * Get appropriate from address based on email type and user type
      */
-    getFromAddress(emailType, userType) {
-        const brand = config_1.EMAIL_CONFIG.SMTP.FROM_NAME;
+    getFromAddress(emailType, _userType, shopName) {
+        // Customer-facing mail sends as the SHOP (or the neutral platform name);
+        // admin notifications carry a System suffix so they sort visibly.
+        const brand = shopName || config_1.EMAIL_CONFIG.SMTP.FROM_NAME;
         const from = (displayName) => `"${displayName}" <${config_1.EMAIL_CONFIG.SMTP.FROM_EMAIL}>`;
-        const fromAddresses = {
-            'ORDER_CONFIRMATION': userType === 'B2B'
-                ? from(`${brand} Återförsäljarportal`)
-                : from(`${brand} Shop`),
-            'ORDER_STATUS_UPDATE': from(brand),
-            'ORDER_NOTIFICATION_ADMIN': from(`${brand} System`),
-            'LOGIN_CREDENTIALS': from(brand),
-            'PASSWORD_RESET': from(`${brand} Security`),
-            'AFFILIATE_WELCOME': from(`${brand} Affiliate Program`),
-            'EMAIL_VERIFICATION': from(`${brand} Shop`),
-            'AFFILIATE_APPLICATION_RECEIVED': from(`${brand} Affiliate Program`),
-            'AFFILIATE_APPLICATION_NOTIFICATION_ADMIN': from(`${brand} System`),
-            'WITHDRAWAL_ACKNOWLEDGMENT': from(`${brand} Shop`)
-        };
-        return fromAddresses[emailType] || from(brand);
+        if (emailType === 'ORDER_NOTIFICATION_ADMIN' || emailType === 'AFFILIATE_APPLICATION_NOTIFICATION_ADMIN') {
+            return from(`${brand} System`);
+        }
+        return from(brand);
     }
     /**
      * Test the complete email orchestrator system

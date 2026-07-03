@@ -61,6 +61,9 @@ const COMMON = {
   memory: '256MiB' as const,
   timeoutSeconds: 60,
   cors: appUrls.CORS_ORIGINS,
+  // Mottagningsbevis email transport (best-effort send after the withdrawal
+  // is durably recorded).
+  secrets: ['RESEND_API_KEY'],
 };
 
 // Absolute cap after which no ångerfrist can possibly still be running:
@@ -299,6 +302,7 @@ export const submitWithdrawal = onCall(COMMON, async (request) => {
         orderData: { orderNumber: result.acknowledgement.orderNumber, acknowledgement: result.acknowledgement },
         additionalData: { acknowledgement: result.acknowledgement },
         language: 'sv-SE',
+        shopId, // tenant identity: mottagningsbeviset sends as the SHOP
       } as any);
     } catch (err: any) {
       // Log and continue — the withdrawal is already legally recorded.

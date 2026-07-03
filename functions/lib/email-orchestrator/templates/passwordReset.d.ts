@@ -4,6 +4,7 @@ export interface PasswordResetData {
     userAgent?: string;
     timestamp?: string;
     userType: 'B2B' | 'B2C' | 'AFFILIATE';
+    brandName?: string;
 }
 export declare function generatePasswordResetTemplate(data: PasswordResetData, lang?: string): {
     subject: string;

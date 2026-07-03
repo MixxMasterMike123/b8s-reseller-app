@@ -9,6 +9,7 @@ const app_urls_1 = require("../../config/app-urls");
 const EmailOrchestrator_1 = require("../core/EmailOrchestrator");
 exports.sendEmailVerification = (0, https_1.onCall)({
     region: 'us-central1',
+    secrets: ['RESEND_API_KEY'],
     memory: '256MiB',
     timeoutSeconds: 60,
     cors: app_urls_1.appUrls.CORS_ORIGINS

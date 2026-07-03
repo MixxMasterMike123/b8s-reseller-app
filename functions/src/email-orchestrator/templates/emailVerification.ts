@@ -17,10 +17,12 @@ export interface EmailVerificationData {
   verificationCode: string;
   language: string;
   source?: string; // 'registration' | 'checkout'
+  brandName?: string;
 }
 
 export function generateEmailVerificationTemplate(data: EmailVerificationData): { subject: string; html: string } {
   const { customerInfo, verificationCode, language, source } = data;
+  const brand = data.brandName || 'MeteorPR';
   
   // Countryless storefront URLs (i18n deferred).
   const verificationUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/verify-email?oobCode=${verificationCode}`;
@@ -32,16 +34,16 @@ export function generateEmailVerificationTemplate(data: EmailVerificationData): 
 
   const templates = {
     'sv-SE': {
-      subject: 'Verifiera din e-postadress - B8Shield',
-      html: generateSwedishTemplate(customerName, verificationUrl, shopUrl, supportUrl, source)
+      subject: `Verifiera din e-postadress – ${brand}`,
+      html: generateSwedishTemplate(customerName, verificationUrl, shopUrl, supportUrl, brand, source)
     },
     'en-GB': {
-      subject: 'Verify your email address - B8Shield',
-      html: generateEnglishTemplate(customerName, verificationUrl, shopUrl, supportUrl, source, 'programme', 'Kind regards')
+      subject: `Verify your email address – ${brand}`,
+      html: generateEnglishTemplate(customerName, verificationUrl, shopUrl, supportUrl, brand, source, 'programme', 'Kind regards')
     },
     'en-US': {
-      subject: 'Verify your email address - B8Shield',
-      html: generateEnglishTemplate(customerName, verificationUrl, shopUrl, supportUrl, source, 'program', 'Best regards')
+      subject: `Verify your email address – ${brand}`,
+      html: generateEnglishTemplate(customerName, verificationUrl, shopUrl, supportUrl, brand, source, 'program', 'Best regards')
     }
   };
 
@@ -52,21 +54,21 @@ export function generateEmailVerificationTemplate(data: EmailVerificationData): 
   };
 }
 
-function generateSwedishTemplate(customerName: string, verificationUrl: string, shopUrl: string, supportUrl: string, source?: string): string {
+function generateSwedishTemplate(customerName: string, verificationUrl: string, shopUrl: string, supportUrl: string, brand: string, source?: string): string {
   const isCheckout = source === 'checkout';
   
   return `
 <div style="font-family: ${EMAIL_CONFIG.FONTS.PRIMARY}; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px;">
   <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
     <div style="text-align: center; margin-bottom: 30px;">
-      <img src="${EMAIL_CONFIG.URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
+      <h1 style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin: 0; font-size: 24px; font-weight: bold;">${brand}</h1>
     </div>
-    
+
     <h2 style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-bottom: 20px; font-size: 24px; text-align: center;">Hej ${customerName}!</h2>
     <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px; text-align: center;">
       ${isCheckout 
         ? 'Tack för din beställning! För att slutföra din kontoregistrering behöver vi verifiera din e-postadress.' 
-        : 'Välkommen till B8Shield! För att aktivera ditt konto behöver vi verifiera din e-postadress.'}
+        : `Välkommen till ${brand}! För att aktivera ditt konto behöver vi verifiera din e-postadress.`}
     </p>
     
     <div style="background-color: #ecfdf5; padding: 20px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #10b981;">
@@ -114,30 +116,30 @@ function generateSwedishTemplate(customerName: string, verificationUrl: string, 
     </div>
     
     <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px; text-align: center;">
-      <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin: 0;">Med vänliga hälsningar,<br><strong>B8Shield Team</strong><br>JPH Innovation AB</p>
+      <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin: 0;">Med vänliga hälsningar,<br><strong>${brand}</strong></p>
       <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 12px; margin: 10px 0 0 0;">
-        Om du inte har skapat ett konto hos B8Shield kan du ignorera detta e-postmeddelande.
+        Om du inte har skapat ett konto hos ${brand} kan du ignorera detta e-postmeddelande.
       </p>
     </div>
   </div>
 </div>`;
 }
 
-function generateEnglishTemplate(customerName: string, verificationUrl: string, shopUrl: string, supportUrl: string, source?: string, programWord?: string, signOff?: string): string {
+function generateEnglishTemplate(customerName: string, verificationUrl: string, shopUrl: string, supportUrl: string, brand: string, source?: string, programWord?: string, signOff?: string): string {
   const isCheckout = source === 'checkout';
   
   return `
 <div style="font-family: ${EMAIL_CONFIG.FONTS.PRIMARY}; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px;">
   <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
     <div style="text-align: center; margin-bottom: 30px;">
-      <img src="${EMAIL_CONFIG.URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
+      <h1 style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin: 0; font-size: 24px; font-weight: bold;">${brand}</h1>
     </div>
-    
+
     <h2 style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-bottom: 20px; font-size: 24px; text-align: center;">Hello ${customerName}!</h2>
     <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px; text-align: center;">
       ${isCheckout 
         ? 'Thank you for your order! To complete your account registration, we need to verify your email address.' 
-        : 'Welcome to B8Shield! To activate your account, we need to verify your email address.'}
+        : `Welcome to ${brand}! To activate your account, we need to verify your email address.`}
     </p>
     
     <div style="background-color: #ecfdf5; padding: 20px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #10b981;">
@@ -185,9 +187,9 @@ function generateEnglishTemplate(customerName: string, verificationUrl: string, 
     </div>
     
     <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px; text-align: center;">
-      <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin: 0;">${signOff || 'Best regards'},<br><strong>The B8Shield Team</strong><br>JPH Innovation AB</p>
+      <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin: 0;">${signOff || 'Best regards'},<br><strong>${brand}</strong></p>
       <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 12px; margin: 10px 0 0 0;">
-        If you didn't create an account with B8Shield, you can safely ignore this email.
+        If you didn't create an account with ${brand}, you can safely ignore this email.
       </p>
     </div>
   </div>

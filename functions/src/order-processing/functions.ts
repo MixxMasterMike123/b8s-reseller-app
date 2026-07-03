@@ -411,7 +411,8 @@ export const processB2COrderCompletionHttp = onRequest(
   {
     timeoutSeconds: 60,
     memory: '256MiB',
-    region: 'us-central1'
+    region: 'us-central1',
+    secrets: ['RESEND_API_KEY']
   },
   async (req, res) => {
     // 🛡️ ENHANCED ORDER PROTECTION: Smart rate limiting with bulk detection
@@ -573,7 +574,8 @@ export async function processOrderCompletion(
               orderId: orderId,
               source: 'b2c',
               language: orderData.customerInfo?.preferredLang || 'sv-SE',
-              orderData: orderData
+              orderData: orderData,
+              shopId: orderData.shopId // tenant identity: send as the SHOP
             });
             console.log(`✅ Orchestrator Customer confirmation email sent to ${customerEmail}`);
           } catch (customerEmailError) {
@@ -593,7 +595,8 @@ export async function processOrderCompletion(
               source: 'b2c',
               language: 'sv-SE',
               orderData: orderData,
-              adminEmail: true
+              adminEmail: true,
+              shopId: orderData.shopId // so the admin mail names the shop
             });
             console.log(`✅ Orchestrator Admin notification email sent for order ${orderData.orderNumber}`);
           } catch (adminEmailError) {

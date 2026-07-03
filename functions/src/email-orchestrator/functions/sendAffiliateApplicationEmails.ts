@@ -31,6 +31,7 @@ interface AffiliateApplicationEmailsRequest {
 export const sendAffiliateApplicationEmails = onCall<AffiliateApplicationEmailsRequest>(
   {
     region: 'us-central1',
+    secrets: ['RESEND_API_KEY'],
     memory: '256MiB',
     timeoutSeconds: 60,
     cors: appUrls.CORS_ORIGINS

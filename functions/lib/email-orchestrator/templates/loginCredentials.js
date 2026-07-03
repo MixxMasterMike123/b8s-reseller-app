@@ -23,15 +23,13 @@ function generateLoginCredentialsTemplate(data, lang = 'sv-SE') {
     const templates = {
         'sv-SE': {
             subject: accountType === 'AFFILIATE'
-                ? (wasExistingAuthUser ? 'B8Shield Affiliate-uppgifter uppdaterade' : 'Välkommen till B8Shield Affiliate Program - Dina inloggningsuppgifter')
-                : 'Välkommen till B8Shield Återförsäljarportalen - Dina inloggningsuppgifter',
+                ? (wasExistingAuthUser ? 'Affiliate-uppgifter uppdaterade' : 'Välkommen till vårt affiliateprogram - Dina inloggningsuppgifter')
+                : 'Välkommen till återförsäljarportalen - Dina inloggningsuppgifter',
             html: `<div style="font-family: ${config_1.EMAIL_CONFIG.TEMPLATES.FONT_FAMILY}; max-width: ${config_1.EMAIL_CONFIG.TEMPLATES.MAX_WIDTH}; margin: 0 auto; background-color: ${config_1.EMAIL_CONFIG.COLORS.BACKGROUND}; padding: 15px;">
   <div style="background-color: white; border-radius: ${config_1.EMAIL_CONFIG.TEMPLATES.BORDER_RADIUS}; padding: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
     
     <!-- Header with gradient background -->
-    <div style="background: linear-gradient(135deg, #459CA8 0%, #357a8a 100%); padding: 30px 20px; text-align: center; border-radius: 6px; margin: -25px -25px 25px -25px;">
-      <img src="${config_1.EMAIL_CONFIG.URLS.LOGO_URL}" alt="B8Shield" style="max-width: 180px; height: auto; display: block; margin: 0 auto;">
-    </div>
+    <div style="background: linear-gradient(135deg, #459CA8 0%, #357a8a 100%); padding: 30px 20px; text-align: center; border-radius: 6px; margin: -25px -25px 25px -25px;"></div>
     
     <!-- Welcome Section -->
     <div style="text-align: center; margin-bottom: 25px;">
@@ -43,13 +41,13 @@ function generateLoginCredentialsTemplate(data, lang = 'sv-SE') {
         ${wasExistingAuthUser ?
                 `Dina ${accountType === 'AFFILIATE' ? 'affiliate' : 'återförsäljar'}uppgifter har uppdaterats.` :
                 accountType === 'AFFILIATE' ?
-                    'Din ansökan till B8Shields affiliate-program har blivit godkänd!' :
-                    `Välkommen till B8Shield ${portalName}!`}
+                    'Din ansökan till vårt affiliateprogram har blivit godkänd!' :
+                    `Välkommen till ${portalName}!`}
       </p>
     </div>
 
     ${!wasExistingAuthUser && accountType === 'AFFILIATE' ? `
-    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px; font-size: 15px;">Du är nu en officiell B8Shield-affiliate och kan börja tjäna provision på alla försäljningar.</p>
+    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px; font-size: 15px;">Du är nu en officiell affiliate och kan börja tjäna provision på alla försäljningar.</p>
     ` : ''}
 
     ${!wasExistingAuthUser && accountType === 'B2B' ? `
@@ -86,7 +84,7 @@ function generateLoginCredentialsTemplate(data, lang = 'sv-SE') {
         ${wasExistingAuthUser ? '[BEFINTLIGT KONTO]' : '[VIKTIGT]'} VIKTIG INFORMATION:
       </h4>
       ${wasExistingAuthUser ? `
-      <p style="color: #78350f; margin: 5px 0; font-size: 13px; line-height: 1.4;">Du hade redan ett konto hos B8Shield, så du kan fortsätta använda ditt befintliga lösenord. Om du har glömt det kan du återställa det med länken nedan.</p>
+      <p style="color: #78350f; margin: 5px 0; font-size: 13px; line-height: 1.4;">Du hade redan ett konto, så du kan fortsätta använda ditt befintliga lösenord. Om du har glömt det kan du återställa det med länken nedan.</p>
       ` : `
       <ul style="color: #92400e; margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.4;">
         <li style="margin-bottom: 4px;">Du måste ändra ditt lösenord vid första inloggningen</li>
@@ -148,21 +146,21 @@ function generateLoginCredentialsTemplate(data, lang = 'sv-SE') {
     
     <!-- Footer -->
     <div style="border-top: 1px solid ${config_1.EMAIL_CONFIG.COLORS.BORDER}; padding-top: 15px; margin-top: 25px;">
-      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 13px; margin: 0; line-height: 1.4;">Med vänliga hälsningar,<br><strong>B8Shield Team</strong><br>JPH Innovation AB</p>
+      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 13px; margin: 0; line-height: 1.4;">Med vänliga hälsningar</p>
     </div>
   </div>
 </div>`
         },
         'en-GB': {
             subject: accountType === 'AFFILIATE'
-                ? (wasExistingAuthUser ? 'B8Shield Affiliate Credentials Updated' : 'Welcome to B8Shield Affiliate Program - Your Credentials')
-                : 'Welcome to B8Shield Reseller Portal - Your Login Credentials',
+                ? (wasExistingAuthUser ? 'Affiliate Credentials Updated' : 'Welcome to the affiliate programme - Your Credentials')
+                : 'Welcome to the Reseller Portal - Your Login Credentials',
             html: `<div>English B2B/Affiliate Credentials Template</div>`
         },
         'en-US': {
             subject: accountType === 'AFFILIATE'
-                ? (wasExistingAuthUser ? 'B8Shield Affiliate Credentials Updated' : 'Welcome to B8Shield Affiliate Program - Your Credentials')
-                : 'Welcome to B8Shield Reseller Portal - Your Login Credentials',
+                ? (wasExistingAuthUser ? 'Affiliate Credentials Updated' : 'Welcome to the affiliate program - Your Credentials')
+                : 'Welcome to the Reseller Portal - Your Login Credentials',
             html: `<div>US English B2B/Affiliate Credentials Template</div>`
         }
     };

@@ -6,6 +6,8 @@ export interface EmailContext extends OrderContext {
     additionalData?: any;
     language?: string;
     adminEmail?: boolean;
+    /** Tenant whose identity the email is sent under (from-name + reply-to). */
+    shopId?: string;
 }
 export declare class EmailOrchestrator {
     private userResolver;
@@ -24,6 +26,7 @@ export declare class EmailOrchestrator {
     /**
      * Generate email template based on type and context
      */
+    private loadShopIdentity;
     private generateTemplate;
     /**
      * Get appropriate from address based on email type and user type

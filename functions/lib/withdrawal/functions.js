@@ -85,6 +85,9 @@ const COMMON = {
     memory: '256MiB',
     timeoutSeconds: 60,
     cors: app_urls_1.appUrls.CORS_ORIGINS,
+    // Mottagningsbevis email transport (best-effort send after the withdrawal
+    // is durably recorded).
+    secrets: ['RESEND_API_KEY'],
 };
 // Absolute cap after which no ångerfrist can possibly still be running:
 // 14 days (frist) + 365 days (max extension when the right was not properly
@@ -295,6 +298,7 @@ exports.submitWithdrawal = (0, https_1.onCall)(COMMON, async (request) => {
                 orderData: { orderNumber: result.acknowledgement.orderNumber, acknowledgement: result.acknowledgement },
                 additionalData: { acknowledgement: result.acknowledgement },
                 language: 'sv-SE',
+                shopId, // tenant identity: mottagningsbeviset sends as the SHOP
             });
         }
         catch (err) {

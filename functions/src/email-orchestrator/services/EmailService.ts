@@ -1,7 +1,9 @@
-// EmailService - Unified SMTP Service
-// Extracted from V3 EmailService with Gmail SMTP configuration
+// EmailService — transport layer. Sends via the Resend HTTP API (native fetch,
+// Node 20; no SDK dependency). Replaced the dead one.com/nodemailer SMTP
+// transport 2026-07-03. The public interface is unchanged so the orchestrator
+// and templates are untouched: sendEmail(template, options) → { success, ... }.
+// Auth: RESEND_API_KEY from Secret Manager (declared per sending function).
 
-import * as nodemailer from 'nodemailer';
 import { EMAIL_CONFIG } from '../core/config';
 
 export interface EmailTemplate {
@@ -18,40 +20,31 @@ export interface EmailOptions {
   bcc?: string;
 }
 
+const RESEND_API = 'https://api.resend.com';
+
+// Comma-separated address string → clean array (Resend takes arrays).
+const toList = (s: string): string[] => s.split(',').map((e) => e.trim()).filter(Boolean);
+
 export class EmailService {
-  private transporter: nodemailer.Transporter;
+  private apiKey: string;
 
   constructor() {
-    // SMTP credentials come from the runtime environment
-    // (functions/.env.<project-id> or deployed secrets) — never hardcode them.
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-
-    if (!smtpUser || !smtpPass) {
-      throw new Error('EmailService: SMTP_USER and SMTP_PASS must be set in the environment');
+    // The API key comes from the runtime environment (Secret Manager in prod,
+    // functions/.env.local under the emulator) — never hardcoded.
+    const key = (process.env.RESEND_API_KEY || '').trim();
+    if (!key) {
+      throw new Error('EmailService: RESEND_API_KEY must be set in the environment');
     }
-
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587', 10),
-      secure: false, // Use STARTTLS
-      auth: {
-        user: smtpUser,
-        pass: smtpPass
-      }
-    });
-
-    console.log('📧 EmailService: Initialized with SMTP host', process.env.SMTP_HOST || 'smtp.gmail.com');
+    this.apiKey = key;
+    console.log('📧 EmailService: Initialized (Resend transport)');
   }
 
   /**
-   * Send email using unified SMTP service
+   * Send email via the Resend API.
    */
   async sendEmail(template: EmailTemplate, options: EmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
-      console.log('📧 EmailService: Preparing to send email');
-      console.log('📧 EmailService: To:', options.to);
-      console.log('📧 EmailService: Subject:', template.subject);
+      console.log('📧 EmailService: To:', options.to, '| Subject:', template.subject);
 
       // Validate template
       if (!template.subject || !template.html) {
@@ -66,36 +59,46 @@ export class EmailService {
       // Convert HTML to text if not provided
       const textContent = template.text || this.htmlToText(template.html);
 
-      // Prepare email
-      const mailOptions = {
+      const replyTo = options.replyTo || EMAIL_CONFIG.SMTP.REPLY_TO;
+      const payload: Record<string, unknown> = {
         from: options.from || EMAIL_CONFIG.SMTP.FROM_EMAIL,
-        to: options.to,
+        to: toList(options.to),
         subject: template.subject,
         html: template.html,
         text: textContent,
-        replyTo: options.replyTo || EMAIL_CONFIG.SMTP.REPLY_TO,
-        cc: options.cc,
-        bcc: options.bcc
+        // Empty reply-to is OMITTED (Resend rejects empty strings).
+        ...(replyTo ? { reply_to: replyTo } : {}),
+        ...(options.cc ? { cc: toList(options.cc) } : {}),
+        ...(options.bcc ? { bcc: toList(options.bcc) } : {}),
       };
 
-      console.log('📧 EmailService: Sending email via Gmail SMTP...');
-      
-      // Send email
-      const result = await this.transporter.sendMail(mailOptions);
-      
-      console.log('✅ EmailService: Email sent successfully');
-      console.log('📧 EmailService: Message ID:', result.messageId);
+      const res = await fetch(`${RESEND_API}/emails`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        // Surface Resend's error message (truncated) without ever logging the key.
+        const errBody = await res.text().catch(() => '');
+        throw new Error(`Resend API ${res.status}: ${errBody.slice(0, 300)}`);
+      }
+
+      const data = (await res.json()) as { id?: string };
+      console.log('✅ EmailService: Email sent, id:', data.id);
 
       return {
         success: true,
-        messageId: result.messageId
+        messageId: data.id,
       };
-
     } catch (error) {
       console.error('❌ EmailService: Failed to send email:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown email error'
+        error: error instanceof Error ? error.message : 'Unknown email error',
       };
     }
   }
@@ -108,7 +111,7 @@ export class EmailService {
 
     return this.sendEmail(template, {
       ...options,
-      to: adminEmails.join(', ')
+      to: adminEmails.join(', '),
     });
   }
 
@@ -119,13 +122,13 @@ export class EmailService {
     if (!email || email.trim() === '') {
       return false;
     }
-    
+
     // Handle comma-separated emails
-    const emails = email.split(',').map(e => e.trim());
+    const emails = email.split(',').map((e) => e.trim());
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
+
     // All emails must be valid
-    return emails.every(e => emailRegex.test(e));
+    return emails.every((e) => emailRegex.test(e));
   }
 
   /**
@@ -150,19 +153,24 @@ export class EmailService {
   }
 
   /**
-   * Test SMTP connection
+   * Test the transport: verifies the API key against Resend (lists domains).
    */
   async testConnection(): Promise<{ success: boolean; error?: string }> {
     try {
-      console.log('🧪 EmailService: Testing SMTP connection...');
-      await this.transporter.verify();
-      console.log('✅ EmailService: SMTP connection successful');
+      console.log('🧪 EmailService: Testing Resend API access...');
+      const res = await fetch(`${RESEND_API}/domains`, {
+        headers: { Authorization: `Bearer ${this.apiKey}` },
+      });
+      if (!res.ok) {
+        throw new Error(`Resend API ${res.status}`);
+      }
+      console.log('✅ EmailService: Resend API access OK');
       return { success: true };
     } catch (error) {
-      console.error('❌ EmailService: SMTP connection failed:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Connection test failed' 
+      console.error('❌ EmailService: Resend connection test failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Connection test failed',
       };
     }
   }

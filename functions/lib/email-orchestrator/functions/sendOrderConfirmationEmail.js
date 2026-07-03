@@ -10,6 +10,7 @@ const authGuard_1 = require("./authGuard");
 const database_1 = require("../../config/database");
 exports.sendOrderConfirmationEmail = (0, https_1.onCall)({
     region: 'us-central1',
+    secrets: ['RESEND_API_KEY'],
     memory: '256MiB',
     timeoutSeconds: 60,
     cors: app_urls_1.appUrls.CORS_ORIGINS
@@ -59,7 +60,8 @@ exports.sendOrderConfirmationEmail = (0, https_1.onCall)({
             source: request.data.source,
             language: request.data.language,
             orderData: request.data.orderData,
-            adminEmail: false
+            adminEmail: false,
+            shopId: orderData?.shopId // tenant identity from the ORDER (trustworthy)
         });
         if (result.success) {
             console.log('✅ sendOrderConfirmationEmail: Success');

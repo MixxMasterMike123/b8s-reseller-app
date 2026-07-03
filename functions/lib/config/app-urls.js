@@ -10,16 +10,18 @@ exports.commerceConfig = exports.adminSeedConfig = exports.appUrls = void 0;
 const projectId = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || 'b8shield-reseller-app';
 exports.appUrls = {
     // Primary domains
-    B2B_PORTAL: process.env.APP_PORTAL_URL || 'https://partner.b8shield.com',
-    B2C_SHOP: process.env.APP_SHOP_URL || 'https://shop.b8shield.com',
+    // "Portal" = where provisioned admins log in — the admin console. (The old
+    // partner.b8shield.com default leaked a dead brand domain into emails.)
+    B2B_PORTAL: process.env.APP_PORTAL_URL || 'https://meteorpr.web.app',
+    B2C_SHOP: process.env.APP_SHOP_URL || 'https://shop-meteorpr.web.app',
     // Hosting default domain for this project (works on any deploy)
     B2B_LEGACY: `https://${projectId}.web.app`,
     // Admin console base URL — used for Stripe Connect Account Link return/refresh
     // redirects (shop owner returns here after Stripe-hosted onboarding).
     ADMIN_BASE: process.env.ADMIN_BASE_URL || 'https://meteorpr.web.app',
-    // Asset URLs
-    LOGO_URL: process.env.EMAIL_LOGO_URL ||
-        `${process.env.APP_PORTAL_URL || 'https://partner.b8shield.com'}/images/B8S_logo.png`,
+    // Asset URLs. Empty default = emails render a text brand header instead of
+    // an <img> (there is no platform logo; per-shop logos are a later slice).
+    LOGO_URL: process.env.EMAIL_LOGO_URL || '',
     // CORS allowed origins (shop + portal + project hosting + local dev,
     // plus any comma-separated extras from CORS_EXTRA_ORIGINS)
     get CORS_ORIGINS() {

@@ -33,6 +33,7 @@ interface AffiliateApprovalRequest {
 export const approveAffiliate = onCall<AffiliateApprovalRequest>(
   {
     region: 'us-central1',
+    secrets: ['RESEND_API_KEY'],
     memory: '256MiB',
     timeoutSeconds: 120,
     cors: appUrls.CORS_ORIGINS

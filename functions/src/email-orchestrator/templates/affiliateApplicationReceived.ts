@@ -20,10 +20,10 @@ export function generateAffiliateApplicationReceivedTemplate(data: AffiliateAppl
   // Multi-language content
   const content = {
     'sv-SE': {
-      subject: 'Affiliate-ansökan mottagen - B8Shield',
+      subject: 'Affiliate-ansökan mottagen',
       title: 'Tack för din affiliate-ansökan!',
       greeting: `Hej ${applicantInfo.name}!`,
-      receivedMessage: 'Vi har mottagit din ansökan till B8Shields affiliate-program.',
+      receivedMessage: 'Vi har mottagit din ansökan till vårt affiliateprogram.',
       applicationIdLabel: 'Ansöknings-ID',
       reviewProcess: 'Vad händer nu?',
       reviewSteps: [
@@ -33,14 +33,14 @@ export function generateAffiliateApplicationReceivedTemplate(data: AffiliateAppl
         'Vid godkännande får du dina inloggningsuppgifter och affiliate-länk'
       ],
       contactInfo: `Har du frågor? Kontakta oss på ${EMAIL_CONFIG.SMTP.REPLY_TO}`,
-      thanks: 'Tack för ditt intresse för B8Shield!',
-      teamSignature: 'Vänliga hälsningar,<br/>B8Shield Affiliate Team'
+      thanks: 'Tack för ditt intresse!',
+      teamSignature: 'Vänliga hälsningar'
     },
     'en-GB': {
-      subject: 'Affiliate Application Received - B8Shield',
+      subject: 'Affiliate Application Received',
       title: 'Thank you for your affiliate application!',
       greeting: `Hello ${applicantInfo.name}!`,
-      receivedMessage: 'We have received your application to join the B8Shield affiliate programme.',
+      receivedMessage: 'We have received your application to join the affiliate programme.',
       applicationIdLabel: 'Application ID',
       reviewProcess: 'What happens next?',
       reviewSteps: [
@@ -50,14 +50,14 @@ export function generateAffiliateApplicationReceivedTemplate(data: AffiliateAppl
         'If approved, you will receive your login credentials and affiliate link'
       ],
       contactInfo: `Have questions? Contact us at ${EMAIL_CONFIG.SMTP.REPLY_TO}`,
-      thanks: 'Thank you for your interest in B8Shield!',
-      teamSignature: 'Best regards,<br/>B8Shield Affiliate Team'
+      thanks: 'Thank you for your interest!',
+      teamSignature: 'Best regards'
     },
     'en-US': {
-      subject: 'Affiliate Application Received - B8Shield',
+      subject: 'Affiliate Application Received',
       title: 'Thank you for your affiliate application!',
       greeting: `Hello ${applicantInfo.name}!`,
-      receivedMessage: 'We have received your application to join the B8Shield affiliate program.',
+      receivedMessage: 'We have received your application to join the affiliate program.',
       applicationIdLabel: 'Application ID',
       reviewProcess: 'What happens next?',
       reviewSteps: [
@@ -67,8 +67,8 @@ export function generateAffiliateApplicationReceivedTemplate(data: AffiliateAppl
         'If approved, you will receive your login credentials and affiliate link'
       ],
       contactInfo: `Have questions? Contact us at ${EMAIL_CONFIG.SMTP.REPLY_TO}`,
-      thanks: 'Thank you for your interest in B8Shield!',
-      teamSignature: 'Best regards,<br/>B8Shield Affiliate Team'
+      thanks: 'Thank you for your interest!',
+      teamSignature: 'Best regards'
     }
   };
 
@@ -258,7 +258,6 @@ export function generateAffiliateApplicationReceivedTemplate(data: AffiliateAppl
 <body>
   <div class="container">
     <div class="header">
-      <div class="logo">B8Shield</div>
       <h1 style="margin: 0; font-size: 24px; font-weight: 600;">${t.title}</h1>
     </div>
     
@@ -298,8 +297,6 @@ export function generateAffiliateApplicationReceivedTemplate(data: AffiliateAppl
     <div class="footer">
       <div class="signature">${t.teamSignature}</div>
       <div class="company-info">
-        <strong>JPH Innovation AB</strong><br>
-        B8Shield Affiliate Program<br>
         ${EMAIL_CONFIG.URLS.B2C_SHOP}
       </div>
     </div>

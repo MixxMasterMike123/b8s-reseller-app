@@ -23,6 +23,7 @@ const authGuard_1 = require("./authGuard");
 const auth = (0, auth_1.getAuth)();
 exports.createShopUser = (0, https_1.onCall)({
     region: 'us-central1',
+    secrets: ['RESEND_API_KEY'],
     memory: '256MiB',
     timeoutSeconds: 120,
     cors: app_urls_1.appUrls.CORS_ORIGINS,

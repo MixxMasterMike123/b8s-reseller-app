@@ -10,6 +10,7 @@ const authGuard_1 = require("./authGuard");
 const database_1 = require("../../config/database");
 exports.sendOrderNotificationAdmin = (0, https_1.onCall)({
     region: 'us-central1',
+    secrets: ['RESEND_API_KEY'],
     memory: '256MiB',
     timeoutSeconds: 60,
     cors: app_urls_1.appUrls.CORS_ORIGINS

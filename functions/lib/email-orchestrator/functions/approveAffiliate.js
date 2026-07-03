@@ -17,6 +17,7 @@ const db = (0, firestore_1.getFirestore)('b8s-reseller-db');
 const auth = (0, auth_1.getAuth)();
 exports.approveAffiliate = (0, https_1.onCall)({
     region: 'us-central1',
+    secrets: ['RESEND_API_KEY'],
     memory: '256MiB',
     timeoutSeconds: 120,
     cors: app_urls_1.appUrls.CORS_ORIGINS

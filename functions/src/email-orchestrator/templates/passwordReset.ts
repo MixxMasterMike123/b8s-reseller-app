@@ -8,10 +8,12 @@ export interface PasswordResetData {
   userAgent?: string;
   timestamp?: string;
   userType: 'B2B' | 'B2C' | 'AFFILIATE';
+  brandName?: string;
 }
 
 export function generatePasswordResetTemplate(data: PasswordResetData, lang: string = 'sv-SE') {
   const { email, resetCode, userAgent, timestamp, userType } = data;
+  const brand = data.brandName || 'MeteorPR';
   
   // Countryless storefront URLs (i18n deferred).
   let resetUrl: string;
@@ -28,16 +30,16 @@ export function generatePasswordResetTemplate(data: PasswordResetData, lang: str
 
   const templates = {
     'sv-SE': {
-      subject: 'Återställ ditt B8Shield-lösenord',
+      subject: `Återställ ditt lösenord – ${brand}`,
       html: `<div style="font-family: ${EMAIL_CONFIG.TEMPLATES.FONT_FAMILY}; max-width: ${EMAIL_CONFIG.TEMPLATES.MAX_WIDTH}; margin: 0 auto; background-color: ${EMAIL_CONFIG.COLORS.BACKGROUND}; padding: 15px;">
   <div style="background-color: white; border-radius: ${EMAIL_CONFIG.TEMPLATES.BORDER_RADIUS}; padding: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
     <div style="text-align: center; margin-bottom: 25px;">
-      <img src="${EMAIL_CONFIG.URLS.LOGO_URL}" alt="B8Shield" style="max-width: 180px; height: auto; display: block; margin: 0 auto;">
+      <h1 style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin: 0; font-size: 24px; font-weight: bold;">${brand}</h1>
     </div>
-    
+
     <h2 style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-bottom: 18px; font-size: 20px; line-height: 1.3;">Återställ ditt lösenord</h2>
     <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 18px; font-size: 15px;">Hej!</p>
-    <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px; font-size: 15px;">Vi fick en begäran om att återställa lösenordet för ditt B8Shield-konto som är kopplat till <strong>${email}</strong>.</p>
+    <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px; font-size: 15px;">Vi fick en begäran om att återställa lösenordet för ditt konto hos ${brand} som är kopplat till <strong>${email}</strong>.</p>
     
     <div style="background-color: #fef3c7; border-left: 4px solid ${EMAIL_CONFIG.COLORS.WARNING}; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
       <h4 style="color: #92400e; margin-top: 0; margin-bottom: 10px; font-size: 15px;">[SÄKERHET] VIKTIG INFORMATION:</h4>
@@ -71,7 +73,7 @@ export function generatePasswordResetTemplate(data: PasswordResetData, lang: str
     
     <div style="text-align: center; margin: 25px 0;">
       <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 12px; font-size: 14px;">Efter att du har återställt ditt lösenord kan du logga in här:</p>
-      <a href="${loginUrl}" style="display: inline-block; background-color: transparent; color: ${EMAIL_CONFIG.COLORS.PRIMARY}; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-size: 14px; border: 2px solid ${EMAIL_CONFIG.COLORS.PRIMARY};">Logga in på B8Shield</a>
+      <a href="${loginUrl}" style="display: inline-block; background-color: transparent; color: ${EMAIL_CONFIG.COLORS.PRIMARY}; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-size: 14px; border: 2px solid ${EMAIL_CONFIG.COLORS.PRIMARY};">Logga in på ${brand}</a>
     </div>
 
     ${userAgent || timestamp ? `
@@ -86,23 +88,23 @@ export function generatePasswordResetTemplate(data: PasswordResetData, lang: str
     ` : ''}
     
     <div style="border-top: 1px solid ${EMAIL_CONFIG.COLORS.BORDER}; padding-top: 15px; margin-top: 25px;">
-      <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 13px; margin: 0; line-height: 1.4;">Med vänliga hälsningar,<br><strong>B8Shield Team</strong><br>JPH Innovation AB</p>
+      <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 13px; margin: 0; line-height: 1.4;">Med vänliga hälsningar,<br><strong>${brand}</strong></p>
     </div>
   </div>
 </div>`
     },
     'en-GB': {
-      subject: 'Reset your B8Shield password',
+      subject: `Reset your password – ${brand}`,
       html: `<div style="font-family: ${EMAIL_CONFIG.TEMPLATES.FONT_FAMILY}; max-width: ${EMAIL_CONFIG.TEMPLATES.MAX_WIDTH}; margin: 0 auto; background-color: ${EMAIL_CONFIG.COLORS.BACKGROUND}; padding: 15px;">
   <div style="background-color: white; border-radius: ${EMAIL_CONFIG.TEMPLATES.BORDER_RADIUS}; padding: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
     <div style="text-align: center; margin-bottom: 25px;">
-      <img src="${EMAIL_CONFIG.URLS.LOGO_URL}" alt="B8Shield" style="max-width: 180px; height: auto; display: block; margin: 0 auto;">
+      <h1 style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin: 0; font-size: 24px; font-weight: bold;">${brand}</h1>
     </div>
-    
+
     <h2 style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-bottom: 18px; font-size: 20px; line-height: 1.3;">Reset your password</h2>
     <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 18px; font-size: 15px;">Hello!</p>
-    <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px; font-size: 15px;">We received a request to reset the password for your B8Shield account associated with <strong>${email}</strong>.</p>
-    
+    <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px; font-size: 15px;">We received a request to reset the password for your ${brand} account associated with <strong>${email}</strong>.</p>
+
     <div style="background-color: #fef3c7; border-left: 4px solid ${EMAIL_CONFIG.COLORS.WARNING}; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
       <h4 style="color: #92400e; margin-top: 0; margin-bottom: 10px; font-size: 15px;">[SECURITY] IMPORTANT INFORMATION:</h4>
       <ul style="color: #92400e; margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.4;">
@@ -111,7 +113,7 @@ export function generatePasswordResetTemplate(data: PasswordResetData, lang: str
         <li>If you didn't request this reset, please ignore this email</li>
       </ul>
     </div>
-    
+
     <div style="background-color: #eff6ff; padding: 18px; border-radius: 6px; margin-bottom: 20px;">
       <h4 style="color: #1e40af; margin-top: 0; margin-bottom: 12px; font-size: 15px;">[RESET] CLICK HERE TO RESET:</h4>
       <div style="text-align: center; margin: 18px 0;">
@@ -122,7 +124,7 @@ export function generatePasswordResetTemplate(data: PasswordResetData, lang: str
         <a href="${resetUrl}" style="color: #1e40af; text-decoration: none;">${resetUrl}</a>
       </div>
     </div>
-    
+
     <div style="background-color: #ecfdf5; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
       <h4 style="color: #065f46; margin-top: 0; margin-bottom: 12px; font-size: 15px;">[NEXT STEPS] AFTER RESET:</h4>
       <ol style="color: #065f46; margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.4;">
@@ -132,10 +134,10 @@ export function generatePasswordResetTemplate(data: PasswordResetData, lang: str
         <li>Start using your account again</li>
       </ol>
     </div>
-    
+
     <div style="text-align: center; margin: 25px 0;">
       <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 12px; font-size: 14px;">After resetting your password, you can log in here:</p>
-      <a href="${loginUrl}" style="display: inline-block; background-color: transparent; color: ${EMAIL_CONFIG.COLORS.PRIMARY}; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-size: 14px; border: 2px solid ${EMAIL_CONFIG.COLORS.PRIMARY};">Log in to B8Shield</a>
+      <a href="${loginUrl}" style="display: inline-block; background-color: transparent; color: ${EMAIL_CONFIG.COLORS.PRIMARY}; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-size: 14px; border: 2px solid ${EMAIL_CONFIG.COLORS.PRIMARY};">Log in to ${brand}</a>
     </div>
 
     ${userAgent || timestamp ? `
@@ -148,24 +150,24 @@ export function generatePasswordResetTemplate(data: PasswordResetData, lang: str
       </p>
     </div>
     ` : ''}
-    
+
     <div style="border-top: 1px solid ${EMAIL_CONFIG.COLORS.BORDER}; padding-top: 15px; margin-top: 25px;">
-      <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 13px; margin: 0; line-height: 1.4;">Best regards,<br><strong>B8Shield Team</strong><br>JPH Innovation AB</p>
+      <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 13px; margin: 0; line-height: 1.4;">Best regards,<br><strong>${brand}</strong></p>
     </div>
   </div>
 </div>`
     },
     'en-US': {
-      subject: 'Reset your B8Shield password',
+      subject: `Reset your password – ${brand}`,
       html: `<div style="font-family: ${EMAIL_CONFIG.TEMPLATES.FONT_FAMILY}; max-width: ${EMAIL_CONFIG.TEMPLATES.MAX_WIDTH}; margin: 0 auto; background-color: ${EMAIL_CONFIG.COLORS.BACKGROUND}; padding: 15px;">
   <div style="background-color: white; border-radius: ${EMAIL_CONFIG.TEMPLATES.BORDER_RADIUS}; padding: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
     <div style="text-align: center; margin-bottom: 25px;">
-      <img src="${EMAIL_CONFIG.URLS.LOGO_URL}" alt="B8Shield" style="max-width: 180px; height: auto; display: block; margin: 0 auto;">
+      <h1 style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin: 0; font-size: 24px; font-weight: bold;">${brand}</h1>
     </div>
-    
+
     <h2 style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-bottom: 18px; font-size: 20px; line-height: 1.3;">Reset your password</h2>
     <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 18px; font-size: 15px;">Hello!</p>
-    <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px; font-size: 15px;">We received a request to reset the password for your B8Shield account associated with <strong>${email}</strong>.</p>
+    <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px; font-size: 15px;">We received a request to reset the password for your ${brand} account associated with <strong>${email}</strong>.</p>
     
     <div style="background-color: #fef3c7; border-left: 4px solid ${EMAIL_CONFIG.COLORS.WARNING}; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
       <h4 style="color: #92400e; margin-top: 0; margin-bottom: 10px; font-size: 15px;">[SECURITY] IMPORTANT INFORMATION:</h4>
@@ -199,7 +201,7 @@ export function generatePasswordResetTemplate(data: PasswordResetData, lang: str
     
     <div style="text-align: center; margin: 25px 0;">
       <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 12px; font-size: 14px;">After resetting your password, you can log in here:</p>
-      <a href="${loginUrl}" style="display: inline-block; background-color: transparent; color: ${EMAIL_CONFIG.COLORS.PRIMARY}; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-size: 14px; border: 2px solid ${EMAIL_CONFIG.COLORS.PRIMARY};">Log in to B8Shield</a>
+      <a href="${loginUrl}" style="display: inline-block; background-color: transparent; color: ${EMAIL_CONFIG.COLORS.PRIMARY}; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-size: 14px; border: 2px solid ${EMAIL_CONFIG.COLORS.PRIMARY};">Log in to ${brand}</a>
     </div>
 
     ${userAgent || timestamp ? `
@@ -214,7 +216,7 @@ export function generatePasswordResetTemplate(data: PasswordResetData, lang: str
     ` : ''}
     
     <div style="border-top: 1px solid ${EMAIL_CONFIG.COLORS.BORDER}; padding-top: 15px; margin-top: 25px;">
-      <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 13px; margin: 0; line-height: 1.4;">Best regards,<br><strong>B8Shield Team</strong><br>JPH Innovation AB</p>
+      <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 13px; margin: 0; line-height: 1.4;">Best regards,<br><strong>${brand}</strong></p>
     </div>
   </div>
 </div>`

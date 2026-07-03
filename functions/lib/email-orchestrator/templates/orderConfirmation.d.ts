@@ -29,6 +29,7 @@ export interface OrderConfirmationData {
     };
     orderId: string;
     orderType: 'B2B' | 'B2C';
+    brandName?: string;
 }
 export declare function generateOrderConfirmationTemplate(data: OrderConfirmationData, lang?: string, orderId?: string): {
     subject: string;

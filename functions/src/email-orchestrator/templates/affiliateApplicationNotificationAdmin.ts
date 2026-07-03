@@ -307,8 +307,8 @@ export function generateAffiliateApplicationNotificationAdminTemplate(data: Affi
     
     <div class="footer">
       <p class="footer-text">
-        Detta meddelande skickades automatiskt från B8Shield Affiliate System.<br>
-        <strong>JPH Innovation AB</strong> | B8Shield Admin
+        Detta meddelande skickades automatiskt från affiliatesystemet.<br>
+        Admin
       </p>
     </div>
   </div>

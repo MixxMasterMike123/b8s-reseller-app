@@ -27,6 +27,7 @@ interface AffiliateWelcomeRequest {
 export const sendAffiliateWelcomeEmail = onCall<AffiliateWelcomeRequest>(
   {
     region: 'us-central1',
+    secrets: ['RESEND_API_KEY'],
     memory: '256MiB',
     timeoutSeconds: 60,
     cors: appUrls.CORS_ORIGINS

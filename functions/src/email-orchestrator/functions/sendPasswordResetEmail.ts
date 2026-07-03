@@ -21,6 +21,7 @@ interface PasswordResetRequest {
 export const sendPasswordResetEmail = onCall<PasswordResetRequest>(
   {
     region: 'us-central1',
+    secrets: ['RESEND_API_KEY'],
     memory: '256MiB',
     timeoutSeconds: 60,
     cors: appUrls.CORS_ORIGINS
@@ -82,7 +83,8 @@ export const sendPasswordResetEmail = onCall<PasswordResetRequest>(
           timestamp: request.data.timestamp,
           userType: request.data.userType || 'B2C'
         },
-        adminEmail: false
+        adminEmail: false,
+        shopId // tenant identity: reset mail sends as the user's shop
       });
 
       if (result.success) {

@@ -42,6 +42,7 @@ interface OrderConfirmationRequest {
 export const sendOrderConfirmationEmail = onCall<OrderConfirmationRequest>(
   {
     region: 'us-central1',
+    secrets: ['RESEND_API_KEY'],
     memory: '256MiB',
     timeoutSeconds: 60,
     cors: appUrls.CORS_ORIGINS
@@ -99,7 +100,8 @@ export const sendOrderConfirmationEmail = onCall<OrderConfirmationRequest>(
         source: request.data.source,
         language: request.data.language,
         orderData: request.data.orderData,
-        adminEmail: false
+        adminEmail: false,
+        shopId: orderData?.shopId // tenant identity from the ORDER (trustworthy)
       });
 
       if (result.success) {

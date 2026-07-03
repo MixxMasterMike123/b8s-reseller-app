@@ -103,10 +103,6 @@ function generateB2CAdminTemplate(data, lang, adminPortalUrl, paymentMethod, pay
             subject: `Ny B2C-beställning mottagen: ${orderData.orderNumber}`,
             html: `<div style="font-family: ${config_1.EMAIL_CONFIG.TEMPLATES.FONT_FAMILY}; max-width: ${config_1.EMAIL_CONFIG.TEMPLATES.MAX_WIDTH}; margin: 0 auto; background-color: ${config_1.EMAIL_CONFIG.COLORS.BACKGROUND}; padding: 15px;">
   <div style="background-color: white; border-radius: ${config_1.EMAIL_CONFIG.TEMPLATES.BORDER_RADIUS}; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <div style="text-align: center; margin-bottom: 25px;">
-      <img src="${config_1.EMAIL_CONFIG.URLS.LOGO_URL}" alt="B8Shield" style="max-width: 180px; height: auto; display: block; margin: 0 auto;">
-    </div>
-    
     <h2 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-bottom: 20px; font-size: 22px; line-height: 1.3;">Ny B2C ${orderData.source === 'b2c' ? 'Gäst' : ''} Beställning Mottagen</h2>
     
     <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
@@ -180,7 +176,7 @@ function generateB2CAdminTemplate(data, lang, adminPortalUrl, paymentMethod, pay
     </div>
     
     <div style="border-top: 1px solid ${config_1.EMAIL_CONFIG.COLORS.BORDER}; padding-top: 15px; margin-top: 25px; text-align: center;">
-      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 13px; margin: 0;">Denna beställning gjordes på B2C-butiken på ${config_1.EMAIL_CONFIG.URLS.B2C_SHOP.replace(/^https?:\/\//, '')}<br><strong>B8Shield Admin Notification</strong></p>
+      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 13px; margin: 0;">Denna beställning gjordes på B2C-butiken på ${config_1.EMAIL_CONFIG.URLS.B2C_SHOP.replace(/^https?:\/\//, '')}<br><strong>Admin Notification</strong></p>
     </div>
   </div>
 </div>`
@@ -208,10 +204,6 @@ function generateB2BAdminTemplate(data, lang, adminPortalUrl, orderSummary) {
             subject: `Ny B2B-beställning: ${orderData.orderNumber} från ${orderData.customerInfo.companyName || orderData.customerInfo.name}`,
             html: `<div style="font-family: ${config_1.EMAIL_CONFIG.TEMPLATES.FONT_FAMILY}; max-width: ${config_1.EMAIL_CONFIG.TEMPLATES.MAX_WIDTH}; margin: 0 auto; background-color: ${config_1.EMAIL_CONFIG.COLORS.BACKGROUND}; padding: 15px;">
   <div style="background-color: white; border-radius: ${config_1.EMAIL_CONFIG.TEMPLATES.BORDER_RADIUS}; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <div style="text-align: center; margin-bottom: 25px;">
-      <img src="${config_1.EMAIL_CONFIG.URLS.LOGO_URL}" alt="B8Shield" style="max-width: 180px; height: auto; display: block; margin: 0 auto;">
-    </div>
-    
     <h2 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-bottom: 20px; font-size: 22px; line-height: 1.3;">Ny B2B-beställning mottagen</h2>
     <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px; font-size: 14px;">En ny beställning har skapats i B2B-portalen och behöver behandling.</p>
     
@@ -269,7 +261,7 @@ function generateB2BAdminTemplate(data, lang, adminPortalUrl, orderSummary) {
     </div>
     
     <div style="border-top: 1px solid ${config_1.EMAIL_CONFIG.COLORS.BORDER}; padding-top: 15px; margin-top: 25px; text-align: center;">
-      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 13px; margin: 0;">B8Shield Admin Notification<br><strong>B2B Orderhantering</strong><br>JPH Innovation AB</p>
+      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 13px; margin: 0;">Admin Notification<br><strong>B2B Orderhantering</strong></p>
     </div>
   </div>
 </div>`

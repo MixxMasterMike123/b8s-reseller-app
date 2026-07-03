@@ -17,15 +17,15 @@ function generateAffiliateWelcomeTemplate(data) {
         : getNewUserInstructions(language, credentials.email, credentials.temporaryPassword);
     const templates = {
         'sv-SE': {
-            subject: 'Välkommen till B8Shield Affiliate Program! - Dina inloggningsuppgifter',
+            subject: 'Välkommen till vårt affiliateprogram! - Dina inloggningsuppgifter',
             html: generateSwedishTemplate(affiliateInfo, loginInstructions, portalUrl, referralUrl, supportUrl)
         },
         'en-GB': {
-            subject: 'Welcome to the B8Shield Affiliate Programme! - Your Login Credentials',
+            subject: 'Welcome to the affiliate programme! - Your Login Credentials',
             html: generateEnglishTemplate(affiliateInfo, loginInstructions, portalUrl, referralUrl, supportUrl, 'programme', 'Kind regards')
         },
         'en-US': {
-            subject: 'Welcome to the B8Shield Affiliate Program! - Your Login Credentials',
+            subject: 'Welcome to the affiliate program! - Your Login Credentials',
             html: generateEnglishTemplate(affiliateInfo, loginInstructions, portalUrl, referralUrl, supportUrl, 'program', 'Best regards')
         }
     };
@@ -38,11 +38,11 @@ function generateAffiliateWelcomeTemplate(data) {
 exports.generateAffiliateWelcomeTemplate = generateAffiliateWelcomeTemplate;
 function getExistingUserInstructions(language, email) {
     const instructions = {
-        'sv-SE': `<p style="color: #374151; margin: 0;">Du hade redan ett konto hos B8Shield, så du kan logga in med ditt befintliga lösenord. Om du har glömt det kan du återställa det på inloggningssidan.</p>
+        'sv-SE': `<p style="color: #374151; margin: 0;">Du hade redan ett konto, så du kan logga in med ditt befintliga lösenord. Om du har glömt det kan du återställa det på inloggningssidan.</p>
               <p style="color: #374151; margin: 10px 0 0 0;"><strong>E-post:</strong> ${email}</p>`,
-        'en-GB': `<p style="color: #374151; margin: 0;">You already had an account with B8Shield, so you can log in with your existing password. If you've forgotten it, you can reset it on the login page.</p>
+        'en-GB': `<p style="color: #374151; margin: 0;">You already had an account, so you can log in with your existing password. If you've forgotten it, you can reset it on the login page.</p>
               <p style="color: #374151; margin: 10px 0 0 0;"><strong>Email:</strong> ${email}</p>`,
-        'en-US': `<p style="color: #374151; margin: 0;">You already had an account with B8Shield, so you can log in with your existing password. If you've forgotten it, you can reset it on the login page.</p>
+        'en-US': `<p style="color: #374151; margin: 0;">You already had an account, so you can log in with your existing password. If you've forgotten it, you can reset it on the login page.</p>
               <p style="color: #374151; margin: 10px 0 0 0;"><strong>Email:</strong> ${email}</p>`
     };
     return instructions[language] || instructions['sv-SE'];
@@ -71,13 +71,9 @@ function generateSwedishTemplate(affiliateInfo, loginInstructions, portalUrl, re
     return `
 <div style="font-family: ${config_1.EMAIL_CONFIG.FONTS.PRIMARY}; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px;">
   <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <div style="text-align: center; margin-bottom: 30px;">
-      <img src="${config_1.EMAIL_CONFIG.URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
-    </div>
-    
     <h2 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-bottom: 20px; font-size: 24px;">Grattis, ${affiliateInfo.name}!</h2>
-    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">Din ansökan till B8Shields affiliate-program har blivit godkänd!</p>
-    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 25px;">Du är nu en officiell B8Shield-affiliate och kan börja tjäna provision på alla försäljningar.</p>
+    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">Din ansökan till vårt affiliateprogram har blivit godkänd!</p>
+    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 25px;">Du är nu en officiell affiliate och kan börja tjäna provision på alla försäljningar.</p>
     
     <div style="background-color: #f3f4f6; border-radius: 6px; padding: 20px; margin-bottom: 25px;">
       <h3 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-top: 0; margin-bottom: 15px; font-size: 18px;">[INLOGGNING] DINA INLOGGNINGSUPPGIFTER:</h3>
@@ -125,7 +121,7 @@ function generateSwedishTemplate(affiliateInfo, loginInstructions, portalUrl, re
     <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">Vi ser fram emot ett framgångsrikt samarbete!</p>
     
     <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
-      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin: 0;">Med vänliga hälsningar,<br><strong>B8Shield Team</strong><br>JPH Innovation AB</p>
+      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin: 0;">Med vänliga hälsningar</p>
     </div>
   </div>
 </div>`;
@@ -134,13 +130,9 @@ function generateEnglishTemplate(affiliateInfo, loginInstructions, portalUrl, re
     return `
 <div style="font-family: ${config_1.EMAIL_CONFIG.FONTS.PRIMARY}; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px;">
   <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <div style="text-align: center; margin-bottom: 30px;">
-      <img src="${config_1.EMAIL_CONFIG.URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
-    </div>
-    
     <h2 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-bottom: 20px; font-size: 24px;">Congratulations, ${affiliateInfo.name}!</h2>
-    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">Your application to the B8Shield affiliate ${programWord} has been approved!</p>
-    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 25px;">You are now an official B8Shield affiliate and can start earning commission on all sales.</p>
+    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">Your application to join the affiliate ${programWord} has been approved!</p>
+    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 25px;">You are now an official affiliate and can start earning commission on all sales.</p>
     
     <div style="background-color: #f3f4f6; border-radius: 6px; padding: 20px; margin-bottom: 25px;">
       <h3 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-top: 0; margin-bottom: 15px; font-size: 18px;">[LOGIN] YOUR LOGIN CREDENTIALS:</h3>
@@ -188,7 +180,7 @@ function generateEnglishTemplate(affiliateInfo, loginInstructions, portalUrl, re
     <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">We look forward to a successful partnership!</p>
     
     <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
-      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin: 0;">${signOff},<br><strong>The B8Shield Team</strong><br>JPH Innovation AB</p>
+      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin: 0;">${signOff}</p>
     </div>
   </div>
 </div>`;

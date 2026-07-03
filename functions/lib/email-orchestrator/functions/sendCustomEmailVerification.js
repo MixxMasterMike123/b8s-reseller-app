@@ -13,6 +13,7 @@ const authGuard_1 = require("./authGuard");
 const db = (0, firestore_1.getFirestore)('b8s-reseller-db');
 exports.sendCustomEmailVerification = (0, https_1.onCall)({
     region: 'us-central1',
+    secrets: ['RESEND_API_KEY'],
     memory: '256MiB',
     timeoutSeconds: 60,
     cors: app_urls_1.appUrls.CORS_ORIGINS
@@ -85,7 +86,8 @@ exports.sendCustomEmailVerification = (0, https_1.onCall)({
             additionalData: {
                 verificationCode: verificationCode,
                 source: request.data.source || 'registration'
-            }
+            },
+            shopId // tenant identity: verification mail sends as the shop
         });
         if (emailResult.success) {
             console.log('✅ Custom verification email sent successfully');

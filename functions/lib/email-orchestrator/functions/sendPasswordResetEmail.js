@@ -11,6 +11,7 @@ const database_1 = require("../../config/database");
 const authGuard_1 = require("./authGuard");
 exports.sendPasswordResetEmail = (0, https_1.onCall)({
     region: 'us-central1',
+    secrets: ['RESEND_API_KEY'],
     memory: '256MiB',
     timeoutSeconds: 60,
     cors: app_urls_1.appUrls.CORS_ORIGINS
@@ -63,7 +64,8 @@ exports.sendPasswordResetEmail = (0, https_1.onCall)({
                 timestamp: request.data.timestamp,
                 userType: request.data.userType || 'B2C'
             },
-            adminEmail: false
+            adminEmail: false,
+            shopId // tenant identity: reset mail sends as the user's shop
         });
         if (result.success) {
             console.log('✅ sendPasswordResetEmail: Success');

@@ -15,15 +15,20 @@ exports.EMAIL_CONFIG = {
         B2B_LEGACY: app_urls_1.appUrls.B2B_LEGACY,
         LOGO_URL: app_urls_1.appUrls.LOGO_URL,
     },
-    // Email identity
+    // Email identity — PLATFORM defaults only. Per-shop emails override the
+    // display name (shopName) and reply-to (supportEmail) via the orchestrator's
+    // shopId threading; these values are the neutral fallback. The from ADDRESS
+    // is always the platform's verified Resend sending domain.
     SMTP: {
-        FROM_NAME: process.env.EMAIL_FROM_NAME || 'B8Shield',
-        FROM_EMAIL: process.env.EMAIL_FROM_EMAIL || process.env.SMTP_USER || 'b8shield.reseller@gmail.com',
-        REPLY_TO: process.env.EMAIL_REPLY_TO || 'info@jphinnovation.se',
+        FROM_NAME: process.env.EMAIL_FROM_NAME || 'MeteorPR',
+        FROM_EMAIL: process.env.EMAIL_FROM_EMAIL || 'no-reply@send.mohlenmedia.com',
+        // Empty default = no reply-to header unless a shop supplies supportEmail
+        // (or the env overrides). Never a brand-specific mailbox.
+        REPLY_TO: process.env.EMAIL_REPLY_TO || '',
     },
     // Where admin notifications (new orders, affiliate applications) go.
     // Comma-separated list in ADMIN_NOTIFICATION_EMAILS.
-    ADMIN_RECIPIENTS: (process.env.ADMIN_NOTIFICATION_EMAILS || 'info@jphinnovation.se,micke.ohlen@gmail.com')
+    ADMIN_RECIPIENTS: (process.env.ADMIN_NOTIFICATION_EMAILS || 'micke.ohlen@gmail.com')
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean),

@@ -93,6 +93,7 @@ exports.generateOrderConfirmationTemplate = generateOrderConfirmationTemplate;
 // B2C Template (Consumer-focused)
 function generateB2CTemplate(data, lang, customerName, orderUrl, supportUrl, affiliateCode) {
     const { orderData, customerInfo } = data;
+    const brand = data.brandName || 'MeteorPR';
     const { orderNumber, items, subtotal, shipping, vat, total, discountAmount = 0 } = orderData;
     const templates = {
         'sv-SE': {
@@ -100,10 +101,10 @@ function generateB2CTemplate(data, lang, customerName, orderUrl, supportUrl, aff
             html: `<div style="font-family: ${config_1.EMAIL_CONFIG.TEMPLATES.FONT_FAMILY}; max-width: ${config_1.EMAIL_CONFIG.TEMPLATES.MAX_WIDTH}; margin: 0 auto; background-color: ${config_1.EMAIL_CONFIG.COLORS.BACKGROUND}; padding: 15px;">
   <div style="background-color: white; border-radius: ${config_1.EMAIL_CONFIG.TEMPLATES.BORDER_RADIUS}; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
     <div style="text-align: center; margin-bottom: 25px;">
-      <img src="${config_1.EMAIL_CONFIG.URLS.LOGO_URL}" alt="B8Shield" style="max-width: 180px; height: auto; display: block; margin: 0 auto;">
+      <h1 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin: 0; font-size: 24px; font-weight: bold;">${brand}</h1>
     </div>
     <h2 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-bottom: 20px; font-size: 20px; line-height: 1.3;">Hej ${customerName},</h2>
-    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">Tack för din beställning från B8Shield! Vi har mottagit din order och kommer att behandla den snarast.</p>
+    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">Tack för din beställning från ${brand}! Vi har mottagit din order och kommer att behandla den snarast.</p>
     <div style="background-color: #f3f4f6; border-radius: 6px; padding: 20px; margin-bottom: 25px;">
       <h3 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-top: 0; margin-bottom: 15px;">[ORDER] ORDERDETALJER:</h3>
       <p style="margin: 8px 0; color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Ordernummer:</strong> ${orderNumber}</p>
@@ -151,7 +152,7 @@ function generateB2CTemplate(data, lang, customerName, orderUrl, supportUrl, aff
       <a href="${orderUrl}" style="display: inline-block; background-color: ${config_1.EMAIL_CONFIG.COLORS.PRIMARY}; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; border: 2px solid ${config_1.EMAIL_CONFIG.COLORS.PRIMARY};">Följ din order</a>
     </div>
     <div style="border-top: 1px solid ${config_1.EMAIL_CONFIG.COLORS.BORDER}; padding-top: 20px; margin-top: 30px;">
-      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin: 0;">Med vänliga hälsningar,<br><strong>B8Shield Team</strong><br>JPH Innovation AB</p>
+      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin: 0;">Med vänliga hälsningar,<br><strong>${brand}</strong></p>
     </div>
   </div>
 </div>`
@@ -174,6 +175,7 @@ function generateB2CTemplate(data, lang, customerName, orderUrl, supportUrl, aff
 // B2B Template (Business-focused)
 function generateB2BTemplate(data, lang, customerName, orderUrl, supportUrl) {
     const { orderData } = data;
+    const brand = data.brandName || 'MeteorPR';
     const { orderNumber, total } = orderData;
     const templates = {
         'sv-SE': {
@@ -181,7 +183,7 @@ function generateB2BTemplate(data, lang, customerName, orderUrl, supportUrl) {
             html: `<div style="font-family: ${config_1.EMAIL_CONFIG.TEMPLATES.FONT_FAMILY}; max-width: ${config_1.EMAIL_CONFIG.TEMPLATES.MAX_WIDTH}; margin: 0 auto; background-color: ${config_1.EMAIL_CONFIG.COLORS.BACKGROUND}; padding: 20px;">
   <div style="background-color: white; border-radius: ${config_1.EMAIL_CONFIG.TEMPLATES.BORDER_RADIUS}; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
     <div style="text-align: center; margin-bottom: 30px;">
-      <img src="${config_1.EMAIL_CONFIG.URLS.LOGO_URL}" alt="B8Shield" style="max-width: 200px; height: auto;">
+      <h1 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin: 0; font-size: 24px; font-weight: bold;">${brand}</h1>
     </div>
     <h2 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-bottom: 20px;">Orderbekräftelse</h2>
     <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">Hej ${customerName},</p>
@@ -204,7 +206,7 @@ function generateB2BTemplate(data, lang, customerName, orderUrl, supportUrl) {
       <a href="${config_1.EMAIL_CONFIG.URLS.B2B_PORTAL}" style="display: inline-block; background-color: ${config_1.EMAIL_CONFIG.COLORS.PRIMARY}; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; border: 2px solid ${config_1.EMAIL_CONFIG.COLORS.PRIMARY};">Gå till portalen</a>
     </div>
     <div style="border-top: 1px solid ${config_1.EMAIL_CONFIG.COLORS.BORDER}; padding-top: 20px; margin-top: 30px;">
-      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin: 0;">Med vänliga hälsningar,<br><strong>B8Shield Team</strong><br>JPH Innovation AB</p>
+      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin: 0;">Med vänliga hälsningar,<br><strong>${brand}</strong></p>
     </div>
   </div>
 </div>`

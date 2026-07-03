@@ -28,6 +28,7 @@ interface LoginCredentialsRequest {
 export const sendLoginCredentialsEmail = onCall<LoginCredentialsRequest>(
   {
     region: 'us-central1',
+    secrets: ['RESEND_API_KEY'],
     memory: '256MiB',
     timeoutSeconds: 60,
     cors: appUrls.CORS_ORIGINS

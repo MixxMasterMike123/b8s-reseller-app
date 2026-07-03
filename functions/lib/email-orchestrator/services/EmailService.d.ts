@@ -11,10 +11,10 @@ export interface EmailOptions {
     bcc?: string;
 }
 export declare class EmailService {
-    private transporter;
+    private apiKey;
     constructor();
     /**
-     * Send email using unified SMTP service
+     * Send email via the Resend API.
      */
     sendEmail(template: EmailTemplate, options: EmailOptions): Promise<{
         success: boolean;
@@ -38,7 +38,7 @@ export declare class EmailService {
      */
     private htmlToText;
     /**
-     * Test SMTP connection
+     * Test the transport: verifies the API key against Resend (lists domains).
      */
     testConnection(): Promise<{
         success: boolean;

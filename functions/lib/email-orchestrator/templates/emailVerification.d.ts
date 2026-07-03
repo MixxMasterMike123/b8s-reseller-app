@@ -8,6 +8,7 @@ export interface EmailVerificationData {
     verificationCode: string;
     language: string;
     source?: string;
+    brandName?: string;
 }
 export declare function generateEmailVerificationTemplate(data: EmailVerificationData): {
     subject: string;

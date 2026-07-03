@@ -9,6 +9,7 @@ const EmailOrchestrator_1 = require("../core/EmailOrchestrator");
 const config_1 = require("../core/config");
 exports.sendAffiliateApplicationEmails = (0, https_1.onCall)({
     region: 'us-central1',
+    secrets: ['RESEND_API_KEY'],
     memory: '256MiB',
     timeoutSeconds: 60,
     cors: app_urls_1.appUrls.CORS_ORIGINS
