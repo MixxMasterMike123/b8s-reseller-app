@@ -16,6 +16,7 @@ import { loadShopConfig, saveShopConfig } from '../../config/shopConfig';
 import { uploadStoreImage } from '../../utils/imageUpload';
 import { evaluateAccentContrast } from '../../utils/colorContrast';
 import { Page, Card, CardSection, RightRail, Button } from '../../components/admin/ui';
+import { FRONTPAGE_FEATURED } from '../../utils/productSorting';
 import {
   PhotoIcon,
   ArrowUpTrayIcon,
@@ -413,19 +414,22 @@ const AdminStorefront = () => {
               {/* Startsida — frontpage showcase category + section headings */}
               <CardSection title="Startsida" bodyClassName="space-y-4">
                 <div>
-                  <label className={labelCls}>Utvald kategori på startsidan</label>
+                  <label className={labelCls}>Sortiment på startsidan</label>
                   <select
                     value={form.frontpageCategory ?? ''}
                     onChange={(e) => setField('frontpageCategory', e.target.value)}
                     className={inputCls}
                   >
-                    <option value="">Visa alla produkter</option>
+                    <option value="">Alla produkter</option>
+                    <option value={FRONTPAGE_FEATURED}>⭐ Endast utvalda produkter</option>
                     {availableCategories.map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
+                      <option key={cat} value={cat}>Kategori: {cat}</option>
                     ))}
                   </select>
                   <p className="mt-1 text-[12px] text-admin-text-muted">
-                    Välj en kategori att lyfta fram på startsidan (med en länk till alla produkter). Lämna på "Visa alla produkter" för att visa hela sortimentet.
+                    Vad produktrutnätet på startsidan visar. "Endast utvalda" = produkterna du
+                    stjärnmärkt i produktlistan (alla, i din valda ordning — Utvalt-raden ovanför
+                    döljs då). Besökare når alltid hela sortimentet via sidan Alla produkter.
                   </p>
                 </div>
 

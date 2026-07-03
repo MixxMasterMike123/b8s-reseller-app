@@ -96,6 +96,11 @@ const ShopFooter = () => {
                 </Link>
               </li>
               <li>
+                <Link to={getCountryAwareUrl('produkter')} className="text-white/70 hover:text-white transition-colors">
+                  {t('footer_all_products', 'Alla produkter')}
+                </Link>
+              </li>
+              <li>
                 <Link to={getCountryAwareUrl('cart')} className="text-white/70 hover:text-white transition-colors">
                   {t('footer_cart', 'Varukorg')}
                 </Link>

@@ -3,6 +3,11 @@
 // (product list star column, drag-sort mode). Keep these together so every
 // surface agrees on what "featured" and "storefront order" mean.
 
+// Sentinel stored in storeIdentity.frontpageCategory when the shop chose
+// "Endast utvalda produkter" as its frontpage mode (instead of a category
+// name or '' = all). Underscored so it can never collide with a real category.
+export const FRONTPAGE_FEATURED = '__utvalda__';
+
 // A product is featured when its `featured` boolean says so. Legacy fallback:
 // products saved before the boolean existed used the reserved tag `featured`;
 // that tag only counts while the boolean is still UNSET — an explicit

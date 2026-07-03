@@ -147,6 +147,10 @@ export const getCountryAwareUrl = (path) => {
 // getCategoryUrl('Rökt') -> /{shopId}/kategori/rokt
 export const getCategoryUrl = (category) => `${currentShopPrefix()}/kategori/${slugify(category)}`;
 
+// All-products catalog URL — shop-prefixed. The full-assortment browse page
+// (Shopify's /collections/all equivalent): /{shopId}/produkter
+export const getAllProductsUrl = () => `${currentShopPrefix()}/produkter`;
+
 
 /**
  * DYNAMIC SEO TITLE GENERATOR

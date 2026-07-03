@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getProductImage } from '../../utils/productImages';
-import { getProductUrl, getCategoryUrl, getCountryAwareUrl, getShopSeoTitle, getShopSeoDescription, generateShopStructuredData } from '../../utils/productUrls';
+import { getProductUrl, getCategoryUrl, getAllProductsUrl, getShopSeoTitle, getShopSeoDescription, generateShopStructuredData } from '../../utils/productUrls';
 import { useNavigate } from 'react-router-dom';
 import { translateColor } from '../../utils/colorTranslations';
 // Toast notifications removed - using AddedToCartModal for user feedback
@@ -21,7 +21,7 @@ import NordProductCard from '../../components/shop/NordProductCard';
 import { getCardPrice } from '../../utils/productPricing';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import { useShopId } from '../../contexts/ShopContext';
-import { isProductFeatured, sortProductsForDisplay } from '../../utils/productSorting';
+import { isProductFeatured, sortProductsForDisplay, FRONTPAGE_FEATURED } from '../../utils/productSorting';
 import { Helmet } from 'react-helmet-async';
 
 const PublicStorefront = () => {
@@ -198,14 +198,22 @@ const PublicStorefront = () => {
 
   // v2: one product = one card (variants are embedded, no group-collapse). Every
   // card links to its own product page.
-  // Frontpage showcase: when the shop picked a `frontpageCategory`, the homepage
-  // grid features ONLY that category (with a "show all" link); empty = all
-  // products (default). Matched against the same category/group taxonomy.
-  // Active only when a category is configured AND the visitor hasn't asked for all.
-  const showcaseCategory = showAll ? '' : (store.frontpageCategory || '').trim();
-  const displayCards = showcaseCategory
-    ? products.filter((p) => (p.category || p.group || '').trim() === showcaseCategory)
-    : products;
+  // Frontpage mode (storeIdentity.frontpageCategory): '' = all products
+  // (default), a category name = showcase that category, or the
+  // FRONTPAGE_FEATURED sentinel = only starred products. Curated modes get a
+  // "Visa alla produkter" link to /produkter. ?alla=1 bypasses curation (legacy
+  // links). Featured mode falls back to ALL products while nothing is starred,
+  // so a misconfigured shop never renders an empty frontpage.
+  const frontpageSetting = showAll ? '' : (store.frontpageCategory || '').trim();
+  const starredProducts = products.filter(isProductFeatured);
+  const featuredOnlyMode = frontpageSetting === FRONTPAGE_FEATURED && starredProducts.length > 0;
+  const showcaseCategory = frontpageSetting && frontpageSetting !== FRONTPAGE_FEATURED ? frontpageSetting : '';
+  const displayCards = featuredOnlyMode
+    ? starredProducts
+    : showcaseCategory
+      ? products.filter((p) => (p.category || p.group || '').trim() === showcaseCategory)
+      : products;
+  const curatedFrontpage = featuredOnlyMode || !!showcaseCategory;
 
   return (
     <>
@@ -228,7 +236,7 @@ const PublicStorefront = () => {
       <div className="min-h-screen bg-canvas font-body text-ink">
         <ShopNavigation
           tags={allCategories}
-          onSelectTag={(cat) => navigate(cat ? getCategoryUrl(cat) : getCountryAwareUrl(''))}
+          onSelectTag={(cat) => navigate(cat ? getCategoryUrl(cat) : getAllProductsUrl())}
         />
 
         {/* ===== Bento hero (NORD, DESIGN.md §4) ===== */}
@@ -443,8 +451,9 @@ const PublicStorefront = () => {
           </section>
         )}
 
-        {/* ===== Featured ===== */}
-        {!loading && featuredProducts.length > 0 && (
+        {/* ===== Featured (hidden in featured-only mode — the main grid IS the
+            starred selection there, a strip above it would duplicate) ===== */}
+        {!loading && !featuredOnlyMode && featuredProducts.length > 0 && (
           <section id="featured" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 lg:pt-20">
             <h2 className="font-display font-bold text-2xl lg:text-3xl tracking-tight text-ink mb-6">
               {store.featuredTitle || 'Utvalt'}
@@ -479,7 +488,9 @@ const PublicStorefront = () => {
           <div className="mb-6 flex items-end justify-between gap-4 flex-wrap">
             <div>
               <h2 className="font-display font-bold text-3xl lg:text-4xl tracking-tight text-ink">
-                {showcaseCategory || store.productsTitle || 'Våra produkter'}
+                {featuredOnlyMode
+                  ? (store.featuredTitle || 'Utvalt')
+                  : (showcaseCategory || store.productsTitle || 'Våra produkter')}
               </h2>
               {store.productsSubtitle && (
                 <p className="text-ink-muted mt-2 max-w-2xl">
@@ -487,11 +498,11 @@ const PublicStorefront = () => {
                 </p>
               )}
             </div>
-            {/* When a category is showcased, link to the full assortment
-                (the frontpage itself, showcase bypassed via ?alla=1). */}
-            {showcaseCategory && (
+            {/* Curated frontpage (showcase category or featured-only) → link to
+                the full catalog page. */}
+            {curatedFrontpage && (
               <Link
-                to={`${getCountryAwareUrl('')}?alla=1#products`}
+                to={getAllProductsUrl()}
                 className="text-sm font-semibold text-accent hover:opacity-80 transition-opacity shrink-0"
               >
                 {t('view_all_products', 'Visa alla produkter')} →
@@ -503,6 +514,12 @@ const PublicStorefront = () => {
               here too since the nav links are md-only. */}
           {!loading && allCategories.length > 0 && (
             <div className="flex md:hidden flex-wrap gap-2 mb-8">
+              <Link
+                to={getAllProductsUrl()}
+                className="px-3 py-1.5 rounded-full text-sm font-medium bg-white text-ink-muted shadow-tile hover:text-ink transition-colors"
+              >
+                {t('nav_all', 'Alla')}
+              </Link>
               {allCategories.map((cat) => (
                 <Link
                   key={cat}

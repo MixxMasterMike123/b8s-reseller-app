@@ -84,6 +84,7 @@ import ResetPassword from './pages/shop/ResetPassword';
 import EmailVerificationHandler from './pages/shop/EmailVerificationHandler';
 import ShopGate from './components/shop/ShopGate';
 import CollectionPage from './pages/shop/CollectionPage';
+import AllProductsPage from './pages/shop/AllProductsPage';
 import DynamicRouteHandler from './components/shop/DynamicRouteHandler';
 import { DEFAULT_SHOP_ID } from './config/tenancy';
 
@@ -332,6 +333,10 @@ function App() {
               {/* Category browse pages (the primary taxonomy). Specific path so
                   it matches before the CMS catch-all below. */}
               <Route path="/:shopId/kategori/:category" element={<ShopGate><CollectionPage /></ShopGate>} />
+
+              {/* Full-catalog browse page (Shopify's /collections/all). Where
+                  "Visa alla produkter" lands when the frontpage is curated. */}
+              <Route path="/:shopId/produkter" element={<ShopGate><AllProductsPage /></ShopGate>} />
 
               {/* Per-shop CMS pages: /{shopId}/{slug} — DynamicRouteHandler reads
                   the slug after the shopId. Falls back to the shop home. */}
