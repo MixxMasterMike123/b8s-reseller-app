@@ -60,9 +60,11 @@ export const adminSeedConfig = {
 
 // Commerce defaults — per-shop, env-overridable
 export const commerceConfig = {
-  shopName: process.env.SHOP_NAME || 'B8Shield',
-  // Prefix for human-readable order numbers, e.g. B8S-123456-AB12
-  orderNumberPrefix: process.env.ORDER_NUMBER_PREFIX || 'B8S',
+  shopName: process.env.SHOP_NAME || 'MeteorPR',
+  // Prefix for human-readable order numbers, e.g. ORD-123456-AB12. Changing
+  // it only affects NEW orders; lookups (withdrawal etc.) match the stored
+  // string, so old B8S-… numbers keep resolving.
+  orderNumberPrefix: process.env.ORDER_NUMBER_PREFIX || 'ORD',
   // VAT rate as a fraction (0.25 = 25%)
   vatRate: parseFloat(process.env.VAT_RATE || '0.25'),
   // ISO currency code for charges

@@ -182,7 +182,7 @@ const WithdrawalPage = () => {
                 type="text"
                 value={orderNumber}
                 onChange={(e) => setOrderNumber(e.target.value)}
-                placeholder={t('withdrawal_page_order_placeholder', 'T.ex. B8S-123456-AB1C')}
+                placeholder={t('withdrawal_page_order_placeholder', 'T.ex. ORD-123456-AB1C')}
                 className={inputCls}
               />
               <p className="text-xs text-ink/50 mt-1.5">

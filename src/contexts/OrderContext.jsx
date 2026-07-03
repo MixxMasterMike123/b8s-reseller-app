@@ -572,7 +572,7 @@ export const OrderProvider = ({ children }) => {
           
           // Ensure all string fields are properly defined to avoid Firebase serialization errors
           const safeOrderData = {
-            orderNumber: String(orderData.orderNumber || `B8S-${orderId}`),
+            orderNumber: String(orderData.orderNumber || `ORD-${orderId}`),
             status: String(newStatus),
             totalAmount: orderData.totalAmount || 0,
             items: orderData.items || []

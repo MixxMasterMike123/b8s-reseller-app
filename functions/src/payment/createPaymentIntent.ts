@@ -284,6 +284,25 @@ export const createPaymentIntentV2 = onRequest(
         return;
       }
 
+      // Tenant display name for Stripe-visible strings (description, card-
+      // statement suffix). Buyers know the SHOP, never the platform brand.
+      const tenantName = String(shopSnap.data()?.storeIdentity?.shopName || resolvedShopId);
+      // statement_descriptor_suffix is appended to the account's descriptor
+      // prefix on card statements (e.g. "METEORPR* SILLMANS"). Stripe allows
+      // letters/digits/spaces (no <>\'"*), requires at least one letter, and
+      // truncates the concatenation at 22 chars — keep the suffix short and
+      // OMIT it when sanitizing leaves nothing usable (an invalid suffix
+      // would fail the whole charge).
+      const statementSuffix = tenantName
+        .normalize('NFKD')
+        .replace(/[̀-ͯ]/g, '') // decomposed diacritics (å→a, ö→o)
+        .replace(/[^A-Za-z0-9 ]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 12)
+        .trim()
+        .toUpperCase();
+
       // Validate required fields
       if (!cartItems || cartItems.length === 0 || cartItems.length > 100) {
         response.status(400).json({ error: 'Cart items are required' });
@@ -477,7 +496,7 @@ export const createPaymentIntentV2 = onRequest(
 
             // System identifiers
             source: 'b2c_shop',
-            platform: 'b8shield',
+            platform: 'meteorpr',
             shopId: resolvedShopId, // tenant id — webhook stamps it on the order
             version: 'enhanced_v2', // server-priced metadata
 
@@ -488,7 +507,9 @@ export const createPaymentIntentV2 = onRequest(
             ...connectMeta
           },
           receipt_email: customerInfo.email,
-          description: `${commerceConfig.shopName} Order - ${cartItems.length} item${cartItems.length > 1 ? 's' : ''}`,
+          description: `${tenantName} Order - ${cartItems.length} item${cartItems.length > 1 ? 's' : ''}`,
+          // Per-shop card-statement suffix (omitted when unusable — see above).
+          ...(/[A-Za-z]/.test(statementSuffix) ? { statement_descriptor_suffix: statementSuffix } : {}),
 
           // Stripe Connect destination-charge params (empty {} for legacy shops)
           ...connectParams

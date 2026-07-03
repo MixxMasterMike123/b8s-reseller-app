@@ -1,6 +1,6 @@
 /**
  * Stripe Payment Form Component
- * Integrates Stripe Elements with B8Shield checkout flow
+ * Integrates Stripe Elements with the storefront checkout flow
  */
 
 import React, { useState, useEffect } from 'react';
