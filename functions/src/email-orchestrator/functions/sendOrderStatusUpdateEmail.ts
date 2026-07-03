@@ -23,6 +23,7 @@ interface OrderStatusUpdateRequest {
   trackingNumber?: string;
   estimatedDelivery?: string;
   notes?: string;
+  pickupLocationName?: string;
   userId?: string;
   b2cCustomerId?: string;
   orderId?: string;
@@ -85,7 +86,8 @@ export const sendOrderStatusUpdateEmail = onCall<OrderStatusUpdateRequest>(
           previousStatus: request.data.previousStatus,
           trackingNumber: request.data.trackingNumber,
           estimatedDelivery: request.data.estimatedDelivery,
-          notes: request.data.notes
+          notes: request.data.notes,
+          pickupLocationName: request.data.pickupLocationName
         },
         adminEmail: false
       };

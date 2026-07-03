@@ -17,6 +17,7 @@
 //    (the client-sent quantities are honored; client-sent prices are ignored);
 //  - every product must belong to the SAME shop and be B2B-available.
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '../config/database';
 import { appUrls, commerceConfig } from '../config/app-urls';
 import { requireAdminOfShop } from '../email-orchestrator/functions/authGuard';
@@ -48,7 +49,7 @@ function plainName(n: unknown): string {
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 export const createB2BOrder = onCall<CreateB2BOrderRequest>(
-  { region: 'us-central1', memory: '256MiB', timeoutSeconds: 60, cors: appUrls.CORS_ORIGINS },
+  { region: 'us-central1', memory: '256MiB', timeoutSeconds: 60, cors: appUrls.CORS_ORIGINS, secrets: ['RESEND_API_KEY'] },
   async (request) => {
     const authUid = request.auth?.uid;
     if (!authUid) throw new HttpsError('unauthenticated', 'Authentication required');
@@ -188,6 +189,58 @@ export const createB2BOrder = onCall<CreateB2BOrderRequest>(
     };
 
     await orderRef.create(orderDoc);
+
+    // --- Order emails (best-effort — never abort a written order on email) ---
+    // Mirrors the B2C completion pattern: buyer confirmation + admin notification,
+    // each in its own try/catch. On failure the order doc is stamped with an
+    // emailFailures entry so the miss is visible on the order (cheap observability),
+    // not only in Cloud Logging.
+    const stampEmailFailure = async (type: string, err: unknown) => {
+      const msg = err instanceof Error ? err.message : String(err);
+      try {
+        await orderRef.update({
+          emailFailures: FieldValue.arrayUnion({ type, error: msg.slice(0, 200), at: new Date().toISOString() }),
+        });
+      } catch (stampErr) {
+        console.error('❌ createB2BOrder: failed to stamp emailFailures', stampErr);
+      }
+    };
+
+    const emailContextBase = {
+      customerInfo: orderDoc.customerInfo,
+      userId: orderDoc.userId,
+      orderId: orderRef.id,
+      source: 'b2b',
+      orderData: { ...orderDoc, id: orderRef.id, orderNumber },
+      shopId, // tenant identity: send as the SHOP
+    };
+
+    // Send one email best-effort. The orchestrator returns { success:false }
+    // on a SOFT failure (bad/missing recipient, Resend error) rather than
+    // throwing, so we must inspect the result AND catch a hard throw — both
+    // paths stamp the order so the miss is visible, not just in the logs.
+    const sendOrderEmail = async (type: string, ctx: Record<string, unknown>) => {
+      try {
+        const { EmailOrchestrator } = require('../email-orchestrator/core/EmailOrchestrator');
+        const orchestrator = new EmailOrchestrator();
+        const res = await orchestrator.sendEmail({ ...emailContextBase, ...ctx, emailType: type });
+        if (!res?.success) {
+          console.error(`❌ createB2BOrder: ${type} email not sent:`, res?.error);
+          await stampEmailFailure(type, res?.error || 'sendEmail returned success:false');
+        }
+      } catch (err) {
+        console.error(`❌ createB2BOrder: ${type} email threw:`, err);
+        await stampEmailFailure(type, err);
+      }
+    };
+
+    await sendOrderEmail('ORDER_CONFIRMATION', {
+      language: orderDoc.customerInfo?.preferredLang || 'sv-SE',
+    });
+    await sendOrderEmail('ORDER_NOTIFICATION_ADMIN', {
+      language: 'sv-SE',
+      adminEmail: true,
+    });
 
     return { success: true, orderId: orderRef.id, orderNumber, total };
   }

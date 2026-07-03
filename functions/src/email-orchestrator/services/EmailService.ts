@@ -18,6 +18,12 @@ export interface EmailOptions {
   replyTo?: string;
   cc?: string;
   bcc?: string;
+  /**
+   * Extra admin recipients merged with (and deduped against) the global
+   * ADMIN_RECIPIENTS by sendAdminEmail — used to route tenant admin mail to the
+   * shop's own supportEmail as well as the platform. Ignored by sendEmail.
+   */
+  extraAdminRecipients?: string[];
 }
 
 const RESEND_API = 'https://api.resend.com';
@@ -107,11 +113,23 @@ export class EmailService {
    * Send email to admin addresses
    */
   async sendAdminEmail(template: EmailTemplate, options: Omit<EmailOptions, 'to'>): Promise<{ success: boolean; messageId?: string; error?: string }> {
-    const adminEmails = EMAIL_CONFIG.ADMIN_RECIPIENTS;
+    // Multi-tenant recipients: any shop-specific address (e.g. the tenant's
+    // supportEmail) is merged AHEAD of the platform admins, then deduped
+    // case-insensitively so a shop that shares the platform inbox isn't mailed
+    // twice. Falls back to just ADMIN_RECIPIENTS when none supplied.
+    const extras = (options.extraAdminRecipients || []).filter(Boolean);
+    const seen = new Set<string>();
+    const recipients: string[] = [];
+    for (const addr of [...extras, ...EMAIL_CONFIG.ADMIN_RECIPIENTS]) {
+      const key = addr.trim().toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      recipients.push(addr.trim());
+    }
 
     return this.sendEmail(template, {
       ...options,
-      to: adminEmails.join(', '),
+      to: recipients.join(', '),
     });
   }
 

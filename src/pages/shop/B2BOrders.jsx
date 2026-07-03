@@ -29,6 +29,7 @@ const STATUS_LABEL = {
   invoiced: 'Fakturerad',
   paid: 'Betald',
   shipped: 'Skickad',
+  ready_for_pickup: 'Redo att hämtas',
   completed: 'Slutförd',
   cancelled: 'Avbruten',
 };

@@ -500,6 +500,7 @@ const AdminOrders = () => {
             onStatusChange={(newStatus) => handleStatusUpdate(order.id, newStatus)}
             disabled={isLoading}
             source={order.source}
+            isPickup={order.deliveryMethod === 'pickup'}
           />
         </div>
       ),

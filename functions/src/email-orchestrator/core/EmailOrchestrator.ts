@@ -17,6 +17,9 @@ import { generateAffiliateWelcomeTemplate, AffiliateWelcomeData } from '../templ
 import { generateEmailVerificationTemplate, EmailVerificationData } from '../templates/emailVerification';
 import { generateAffiliateApplicationReceivedTemplate } from '../templates/affiliateApplicationReceived';
 import { generateAffiliateApplicationNotificationAdminTemplate } from '../templates/affiliateApplicationNotificationAdmin';
+import { generateRefundConfirmationTemplate } from '../templates/refundConfirmation';
+import { generateDisputeAlertAdminTemplate } from '../templates/disputeAlertAdmin';
+import { generateConnectStatusChangeTemplate } from '../templates/connectStatusChange';
 import {
   renderEmailShell,
   renderHeading,
@@ -27,6 +30,7 @@ import {
   esc,
 } from '../templates/emailLayout';
 import { EMAIL_CONFIG } from './config';
+import { appUrls } from '../../config/app-urls';
 
 export type EmailType = 
   | 'ORDER_CONFIRMATION'
@@ -38,7 +42,10 @@ export type EmailType =
   | 'EMAIL_VERIFICATION'
   | 'AFFILIATE_APPLICATION_RECEIVED'
   | 'AFFILIATE_APPLICATION_NOTIFICATION_ADMIN'
-  | 'WITHDRAWAL_ACKNOWLEDGMENT';
+  | 'WITHDRAWAL_ACKNOWLEDGMENT'
+  | 'REFUND_CONFIRMATION'
+  | 'DISPUTE_ALERT_ADMIN'
+  | 'CONNECT_STATUS_CHANGE';
 
 export interface EmailContext extends OrderContext {
   emailType: EmailType;
@@ -121,7 +128,11 @@ export class EmailOrchestrator {
       let result;
       if (context.adminEmail) {
         console.log('📧 EmailOrchestrator: Sending admin email');
-        result = await this.emailService.sendAdminEmail(template, emailOptions);
+        // Multi-tenant admin routing: when this shop resolved a valid
+        // supportEmail, the shop gets the notification alongside the platform
+        // (deduped in sendAdminEmail). No shopId / no supportEmail → platform only.
+        const extraAdminRecipients = shopIdentity?.supportEmail ? [shopIdentity.supportEmail] : [];
+        result = await this.emailService.sendAdminEmail(template, { ...emailOptions, extraAdminRecipients });
       } else {
         console.log('📧 EmailOrchestrator: Sending customer email');
         result = await this.emailService.sendEmail(template, emailOptions);
@@ -228,6 +239,9 @@ export class EmailOrchestrator {
           trackingNumber: data.additionalData?.trackingNumber,
           estimatedDelivery: data.additionalData?.estimatedDelivery,
           notes: data.additionalData?.notes,
+          // Click & Collect: pickup location name for the ready_for_pickup step.
+          // Prefer an explicit additionalData value, else read the order doc.
+          pickupLocationName: data.additionalData?.pickupLocationName || data.orderData?.pickupLocation?.name,
           userType: data.userData.type,
           brandName: data.brandName
         };
@@ -424,6 +438,54 @@ export class EmailOrchestrator {
         };
       }
 
+      case 'REFUND_CONFIRMATION': {
+        // Buyer-facing refund receipt. Fired from connectRefund.ts after the
+        // refund succeeds. `refundAmountSek` = amount actually refunded (partial
+        // or full); `isFullRefund` distinguishes the copy; `hasWithdrawal` adds
+        // the ångerrätt-completion line when the order carried a withdrawalRequest.
+        const ad = data.additionalData || {};
+        return generateRefundConfirmationTemplate({
+          orderNumber: String(ad.orderNumber || data.orderData?.orderNumber || data.context.orderId || ''),
+          refundAmountSek: Number(ad.refundAmountSek || 0),
+          currency: ad.currency || 'SEK',
+          isFullRefund: ad.isFullRefund !== false,
+          hasWithdrawal: !!ad.hasWithdrawal,
+          customerName: data.userData.name,
+          brandName: data.brandName,
+        });
+      }
+
+      case 'DISPUTE_ALERT_ADMIN': {
+        // Platform-admin alert for a chargeback / shortfall. Best-effort from the
+        // Stripe webhook. Names the shop so a multi-shop platform inbox can triage.
+        const ad = data.additionalData || {};
+        return generateDisputeAlertAdminTemplate({
+          shopId: ad.shopId,
+          shopName: ad.shopName,
+          orderId: ad.orderId,
+          orderNumber: ad.orderNumber,
+          disputeId: ad.disputeId,
+          reason: ad.reason,
+          amount: ad.amount,
+          status: ad.status,
+          alertKind: ad.alertKind === 'shortfall' ? 'shortfall' : 'dispute',
+          recoveryStatus: ad.recoveryStatus,
+          brandName: data.brandName,
+        });
+      }
+
+      case 'CONNECT_STATUS_CHANGE': {
+        // Shop-owner alert: their Stripe Connect account status changed in a way
+        // that can block payouts. Fired from the account.updated webhook only on
+        // meaningful transitions. CTA → the admin payments page.
+        const ad = data.additionalData || {};
+        return generateConnectStatusChangeTemplate({
+          changes: Array.isArray(ad.changes) ? ad.changes : [],
+          paymentsUrl: `${appUrls.ADMIN_BASE.replace(/\/$/, '')}/admin/payments`,
+          brandName: data.brandName,
+        });
+      }
+
       default:
         throw new Error(`Unknown email type: ${emailType}`);
     }
@@ -438,7 +500,11 @@ export class EmailOrchestrator {
     const brand = shopName || EMAIL_CONFIG.SMTP.FROM_NAME;
     const from = (displayName: string) => `"${displayName}" <${EMAIL_CONFIG.SMTP.FROM_EMAIL}>`;
 
-    if (emailType === 'ORDER_NOTIFICATION_ADMIN' || emailType === 'AFFILIATE_APPLICATION_NOTIFICATION_ADMIN') {
+    if (
+      emailType === 'ORDER_NOTIFICATION_ADMIN' ||
+      emailType === 'AFFILIATE_APPLICATION_NOTIFICATION_ADMIN' ||
+      emailType === 'DISPUTE_ALERT_ADMIN'
+    ) {
       return from(`${brand} System`);
     }
     return from(brand);

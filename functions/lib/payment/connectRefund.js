@@ -34,7 +34,7 @@ exports.refundOrder = (0, https_1.onCall)({
     memory: '256MiB',
     timeoutSeconds: 60,
     cors: app_urls_1.appUrls.CORS_ORIGINS,
-    secrets: ['STRIPE_SECRET_KEY'],
+    secrets: ['STRIPE_SECRET_KEY', 'RESEND_API_KEY'],
 }, async (request) => {
     const orderId = (request.data?.orderId || '').trim();
     if (!orderId)
@@ -94,6 +94,37 @@ exports.refundOrder = (0, https_1.onCall)({
         patch['connect.refundApplicationFee'] = refundApplicationFee === true;
     }
     await orderRef.update(patch);
+    // Buyer refund receipt (best-effort — a refund must NEVER fail on email).
+    // refund.amount is in öre; the buyer-facing amount is SEK. A partial refund
+    // is detected by comparing against the charged amount.
+    try {
+        const refundedSek = (refund.amount || 0) / 100;
+        const chargedSek = Number(order.payment?.amount) || 0;
+        const isFullRefund = !(chargedSek > 0) || Math.abs(refundedSek - chargedSek) < 0.005;
+        const { EmailOrchestrator } = require('../email-orchestrator/core/EmailOrchestrator');
+        const orchestrator = new EmailOrchestrator();
+        await orchestrator.sendEmail({
+            emailType: 'REFUND_CONFIRMATION',
+            customerInfo: order.customerInfo,
+            userId: order.userId,
+            b2cCustomerId: order.b2cCustomerId,
+            orderId,
+            source: order.source,
+            language: order.customerInfo?.preferredLang || 'sv-SE',
+            orderData: order,
+            shopId: order.shopId,
+            additionalData: {
+                orderNumber: order.orderNumber,
+                refundAmountSek: refundedSek,
+                currency: (order.currency || 'SEK'),
+                isFullRefund,
+                hasWithdrawal: !!order.withdrawalRequest,
+            },
+        });
+    }
+    catch (emailError) {
+        console.error('❌ refundOrder: refund confirmation email failed (refund succeeded):', emailError);
+    }
     return { refundId: refund.id, isConnect, amount: refund.amount, refundApplicationFee };
 });
 //# sourceMappingURL=connectRefund.js.map

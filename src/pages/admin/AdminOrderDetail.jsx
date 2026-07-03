@@ -242,6 +242,8 @@ const AdminOrderDetail = () => {
         return { text: 'Skickad', color: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' };
       case 'delivered':
         return { text: 'Levererad', color: 'bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-300' };
+      case 'ready_for_pickup':
+        return { text: 'Redo att hämtas', color: 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300' };
       // B2B Faktura lifecycle (pending → invoiced → paid → shipped → completed)
       case 'invoiced':
         return { text: 'Fakturerad', color: 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-300' };
@@ -256,12 +258,18 @@ const AdminOrderDetail = () => {
     }
   };
 
-  const handleStatusUpdate = async (newStatus) => {
+  // Tracking-number capture for the shipped transition. When the admin selects
+  // 'shipped' we reveal an input first (instead of firing immediately) so the
+  // tracking number reaches the status-update email + gets persisted on the order.
+  const [pendingShip, setPendingShip] = useState(false);
+  const [trackingNumber, setTrackingNumber] = useState('');
+
+  const performStatusUpdate = async (newStatus, additionalData = {}) => {
     setUpdateStatusLoading(true);
     try {
-      await updateOrderStatus(orderId, newStatus);
+      await updateOrderStatus(orderId, newStatus, additionalData);
       toast.success('Order status updated successfully');
-      
+
       // Refresh order data
       setFetchAttempted(false);
       await fetchOrder();
@@ -271,6 +279,25 @@ const AdminOrderDetail = () => {
     } finally {
       setUpdateStatusLoading(false);
     }
+  };
+
+  const handleStatusUpdate = async (newStatus) => {
+    // Shipping: capture a tracking number first (optional) so the email + order
+    // doc carry it. Selecting 'shipped' opens the input; the confirm button fires.
+    if (newStatus === 'shipped') {
+      setTrackingNumber(order?.trackingNumber || '');
+      setPendingShip(true);
+      return;
+    }
+    await performStatusUpdate(newStatus);
+  };
+
+  const handleConfirmShip = async () => {
+    const tn = (trackingNumber || '').trim();
+    // Persist the tracking number onto the order doc AND pass it to the
+    // status-update email via additionalData (the template supports it).
+    await performStatusUpdate('shipped', tn ? { trackingNumber: tn } : {});
+    setPendingShip(false);
   };
 
   const [refundLoading, setRefundLoading] = useState(false);
@@ -576,7 +603,7 @@ const AdminOrderDetail = () => {
                     {updateStatusLoading ? (
                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-admin-text-muted border-r-transparent" />
                     ) : (
-                      <OrderStatusMenu currentStatus={order.status} onStatusChange={handleStatusUpdate} source={order.source} />
+                      <OrderStatusMenu currentStatus={order.status} onStatusChange={handleStatusUpdate} source={order.source} isPickup={isPickup} />
                     )}
                     {paid && order.status !== 'refunded' && (
                       <Button variant="plain" disabled={refundLoading} onClick={handleRefund}>
@@ -585,6 +612,30 @@ const AdminOrderDetail = () => {
                     )}
                   </div>
                 </div>
+                {pendingShip && (
+                  <div className="border-b border-admin-border-soft px-4 py-3">
+                    <label htmlFor="trackingNumber" className="mb-1 block text-[12px] font-medium text-admin-text-muted">
+                      Spårningsnummer (valfritt)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        id="trackingNumber"
+                        type="text"
+                        value={trackingNumber}
+                        onChange={(e) => setTrackingNumber(e.target.value)}
+                        placeholder="t.ex. SE123456789"
+                        className="min-w-0 flex-1 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-3 py-1.5 text-[13px] text-admin-text placeholder:text-admin-text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-admin-primary)]"
+                        disabled={updateStatusLoading}
+                      />
+                      <Button variant="primary" disabled={updateStatusLoading} onClick={handleConfirmShip}>
+                        {updateStatusLoading ? 'Skickar…' : 'Markera skickad'}
+                      </Button>
+                      <Button variant="plain" disabled={updateStatusLoading} onClick={() => setPendingShip(false)}>
+                        Avbryt
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 {isPickup && (order.pickupLocation?.address || order.pickupLocation?.date) && (
                   <div className="border-b border-admin-border-soft px-4 py-2 text-[13px] text-admin-text-muted">
                     {order.pickupLocation?.address && <div>{order.pickupLocation.address}</div>}

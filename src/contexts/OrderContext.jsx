@@ -592,6 +592,8 @@ export const OrderProvider = ({ children }) => {
             trackingNumber: additionalData.trackingNumber ? String(additionalData.trackingNumber) : null,
             estimatedDelivery: additionalData.estimatedDelivery ? String(additionalData.estimatedDelivery) : null,
             notes: additionalData.notes ? String(additionalData.notes) : null,
+            // Click & Collect: name the pickup location in the ready_for_pickup email.
+            pickupLocationName: orderData.pickupLocation?.name ? String(orderData.pickupLocation.name) : null,
             userId: orderData.userId,
             b2cCustomerId: orderData.b2cCustomerId,
             orderId: orderId
@@ -817,7 +819,70 @@ export const OrderProvider = ({ children }) => {
         
         // Update in named database only
         await updateDoc(doc(db, "orders", orderId), updates);
-        
+
+        // Send the cancellation email via the same path as updateOrderStatus
+        // (best-effort — a failed email must not fail the cancellation).
+        try {
+          const previousStatus = orderData.status || 'unknown';
+          let userData = { email: 'unknown@example.com', companyName: 'Unknown Company', contactPerson: 'Unknown' };
+          if (orderData.source === 'b2b' && orderData.customerInfo?.email) {
+            userData = {
+              email: orderData.customerInfo.email,
+              companyName: orderData.customerInfo.companyName || orderData.customerInfo.name || 'B2B Customer',
+              contactPerson: orderData.customerInfo.contactPerson || orderData.customerInfo.name || 'Customer'
+            };
+          } else if (orderData.userId) {
+            const userDoc = await getDoc(doc(db, "users", orderData.userId));
+            if (userDoc.exists()) {
+              userData = userDoc.data();
+            } else {
+              const b2cDoc = await getDoc(doc(db, "b2cCustomers", orderData.b2cCustomerId || orderData.userId));
+              if (b2cDoc.exists()) {
+                const b2cData = b2cDoc.data();
+                userData = { email: b2cData.email, companyName: b2cData.name || 'B2C Customer', contactPerson: b2cData.name || 'Customer' };
+              }
+            }
+          } else if (orderData.b2cCustomerId) {
+            const b2cDoc = await getDoc(doc(db, "b2cCustomers", orderData.b2cCustomerId));
+            if (b2cDoc.exists()) {
+              const b2cData = b2cDoc.data();
+              userData = { email: b2cData.email, companyName: b2cData.name || 'B2C Customer', contactPerson: b2cData.name || 'Customer' };
+            }
+          } else if (orderData.customerInfo?.email) {
+            userData = {
+              email: orderData.customerInfo.email,
+              companyName: orderData.customerInfo.name || 'Guest Customer',
+              contactPerson: orderData.customerInfo.name || 'Guest'
+            };
+          }
+
+          if (userData.email && userData.email !== 'unknown@example.com') {
+            const functions = getFunctions();
+            const sendOrderStatusUpdateEmail = httpsCallable(functions, 'sendOrderStatusUpdateEmail');
+            await sendOrderStatusUpdateEmail({
+              orderData: {
+                orderNumber: String(orderData.orderNumber || `ORD-${orderId}`),
+                status: 'cancelled',
+                totalAmount: orderData.totalAmount || orderData.total || 0,
+                items: orderData.items || []
+              },
+              userData: {
+                email: String(userData.email),
+                companyName: String(userData.companyName || 'Unknown Company'),
+                contactPerson: String(userData.contactPerson || userData.companyName || 'Unknown Contact')
+              },
+              newStatus: 'cancelled',
+              previousStatus: String(previousStatus),
+              userId: orderData.userId,
+              b2cCustomerId: orderData.b2cCustomerId,
+              orderId
+            });
+          }
+        } catch (emailError) {
+          console.error('❌ Error sending cancellation email:', emailError);
+          // Don't fail the cancellation if email fails
+        }
+
         toast.success('Order cancelled successfully');
         return true;
       }

@@ -28,6 +28,7 @@ export const ORDER_STATUS_TONE = {
   pending: 'warning',
   confirmed: 'info',
   processing: 'attention',
+  ready_for_pickup: 'info',
   shipped: 'success',
   delivered: 'positive',
   cancelled: 'danger',

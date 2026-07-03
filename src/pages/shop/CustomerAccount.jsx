@@ -265,6 +265,7 @@ const CustomerAccount = () => {
     switch (status) {
       case 'completed': return 'text-green-600 bg-green-50';
       case 'processing': return 'text-blue-600 bg-blue-50';
+      case 'ready_for_pickup': return 'text-purple-600 bg-purple-50';
       case 'pending': return 'text-yellow-600 bg-yellow-50';
       case 'cancelled': return 'text-red-600 bg-red-50';
       default: return 'text-gray-600 bg-gray-50';
@@ -275,6 +276,7 @@ const CustomerAccount = () => {
     switch (status) {
       case 'completed': return t('order_status_completed', 'Slutförd');
       case 'processing': return t('order_status_processing', 'Bearbetas');
+      case 'ready_for_pickup': return t('order_status_ready_for_pickup', 'Redo att hämtas');
       case 'pending': return t('order_status_pending', 'Väntar');
       case 'cancelled': return t('order_status_cancelled', 'Avbruten');
       default: return status;

@@ -21,6 +21,8 @@ export interface OrderStatusUpdateData {
     trackingNumber?: string;
     estimatedDelivery?: string;
     notes?: string;
+    /** Pickup location name for the 'ready_for_pickup' status (Click & Collect). */
+    pickupLocationName?: string;
     userType: 'B2B' | 'B2C' | 'GUEST';
     brandName?: string;
 }

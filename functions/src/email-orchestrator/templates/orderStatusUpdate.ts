@@ -33,6 +33,8 @@ export interface OrderStatusUpdateData {
   trackingNumber?: string;
   estimatedDelivery?: string;
   notes?: string;
+  /** Pickup location name for the 'ready_for_pickup' status (Click & Collect). */
+  pickupLocationName?: string;
   userType: 'B2B' | 'B2C' | 'GUEST';
   brandName?: string;
 }
@@ -44,6 +46,7 @@ function getStatusName(status: string, lang: string): string {
       pending: 'Väntande',
       confirmed: 'Bekräftad',
       processing: 'Behandlas',
+      ready_for_pickup: 'Redo att hämtas',
       shipped: 'Skickad',
       delivered: 'Levererad',
       cancelled: 'Avbruten',
@@ -52,6 +55,7 @@ function getStatusName(status: string, lang: string): string {
       pending: 'Pending',
       confirmed: 'Confirmed',
       processing: 'Processing',
+      ready_for_pickup: 'Ready for pickup',
       shipped: 'Shipped',
       delivered: 'Delivered',
       cancelled: 'Cancelled',
@@ -60,6 +64,7 @@ function getStatusName(status: string, lang: string): string {
       pending: 'Pending',
       confirmed: 'Confirmed',
       processing: 'Processing',
+      ready_for_pickup: 'Ready for pickup',
       shipped: 'Shipped',
       delivered: 'Delivered',
       cancelled: 'Canceled',
@@ -70,7 +75,10 @@ function getStatusName(status: string, lang: string): string {
 }
 
 // Helper function to get next steps based on status
-function getNextSteps(status: string, lang: string): string[] {
+function getNextSteps(status: string, lang: string, pickupLocationName?: string): string[] {
+  const pickupLine = pickupLocationName
+    ? (lang.startsWith('en') ? `Pickup location: ${pickupLocationName}` : `Upphämtningsställe: ${pickupLocationName}`)
+    : '';
   const nextStepsMap: Record<string, Record<string, string[]>> = {
     'sv-SE': {
       confirmed: [
@@ -81,6 +89,11 @@ function getNextSteps(status: string, lang: string): string[] {
       processing: [
         'Din order behandlas och förbereds för leverans',
         'Alla produkter kontrolleras och packas noggrant',
+      ],
+      ready_for_pickup: [
+        'Din beställning är redo att hämtas',
+        ...(pickupLine ? [pickupLine] : []),
+        'Ta med ditt ordernummer vid upphämtning',
       ],
       shipped: [
         'Din order är nu på väg till dig',
@@ -109,6 +122,11 @@ function getNextSteps(status: string, lang: string): string[] {
         'All products are checked and carefully packed',
         'You will receive tracking information once it ships',
       ],
+      ready_for_pickup: [
+        'Your order is ready for pickup',
+        ...(pickupLine ? [pickupLine] : []),
+        'Bring your order number when you collect it',
+      ],
       shipped: [
         'Your order is now on its way to you',
         'Use the tracking number to follow your delivery',
@@ -131,7 +149,7 @@ function getNextSteps(status: string, lang: string): string[] {
 }
 
 export function generateOrderStatusUpdateTemplate(data: OrderStatusUpdateData, lang: string = 'sv-SE', orderId?: string) {
-  const { orderData, userData, newStatus, previousStatus, trackingNumber, estimatedDelivery, notes } = data;
+  const { orderData, userData, newStatus, previousStatus, trackingNumber, estimatedDelivery, notes, pickupLocationName } = data;
   const { orderNumber } = orderData;
   const brand = data.brandName || 'MeteorPR';
 
@@ -142,7 +160,7 @@ export function generateOrderStatusUpdateTemplate(data: OrderStatusUpdateData, l
 
   const contactPerson = userData.contactPerson || userData.companyName || '';
   const statusName = getStatusName(newStatus, lang);
-  const nextSteps = getNextSteps(newStatus, lang);
+  const nextSteps = getNextSteps(newStatus, lang, pickupLocationName);
   const supportUrl = getSupportUrl(lang);
   const orderUrl = getOrderTrackingUrl(orderId || orderNumber, lang);
   const en = lang.startsWith('en');

@@ -93,11 +93,79 @@ async function recoverDisputedTransfer(stripe, order, disputeId) {
         };
     }
 }
+// Load a shop's name for naming it in platform alert emails (best-effort).
+async function loadShopName(shopId) {
+    if (!shopId)
+        return undefined;
+    try {
+        const snap = await db.collection('shops').doc(shopId).get();
+        const si = snap.data()?.storeIdentity || {};
+        return typeof si.shopName === 'string' && si.shopName.trim() ? si.shopName.trim() : undefined;
+    }
+    catch {
+        return undefined;
+    }
+}
+// Platform-admin alert for a dispute / shortfall. Best-effort: any failure is
+// swallowed so it can NEVER crash the webhook (Stripe would retry-storm).
+async function sendDisputeAlert(params) {
+    try {
+        const shopName = await loadShopName(params.shopId);
+        const { EmailOrchestrator } = require('../email-orchestrator/core/EmailOrchestrator');
+        const orchestrator = new EmailOrchestrator();
+        await orchestrator.sendEmail({
+            emailType: 'DISPUTE_ALERT_ADMIN',
+            // Admin-only mail: `to` is overridden by the platform recipients; supply a
+            // synthetic customerInfo so the user resolver succeeds.
+            customerInfo: { email: 'platform@internal', name: 'Platform' },
+            language: 'sv-SE',
+            adminEmail: true,
+            shopId: params.shopId,
+            additionalData: {
+                shopId: params.shopId,
+                shopName,
+                orderId: params.order?.payment?.paymentIntentId || params.order?.orderNumber,
+                orderNumber: params.order?.orderNumber,
+                disputeId: params.disputeId,
+                reason: params.reason,
+                amount: params.amount,
+                status: params.status,
+                alertKind: params.alertKind,
+                recoveryStatus: params.recoveryStatus,
+            },
+        });
+    }
+    catch (e) {
+        firebase_functions_1.logger.warn('⚠️ dispute alert email failed (best-effort)', { error: e?.message });
+    }
+}
+// Shop-owner alert: their Connect account status changed meaningfully. Recipient
+// is the shop's supportEmail (via the orchestrator's admin path with shopId).
+// Best-effort — never crashes the webhook.
+async function sendConnectStatusChange(shopId, changes) {
+    try {
+        const { EmailOrchestrator } = require('../email-orchestrator/core/EmailOrchestrator');
+        const orchestrator = new EmailOrchestrator();
+        await orchestrator.sendEmail({
+            emailType: 'CONNECT_STATUS_CHANGE',
+            // Route to the shop's supportEmail via the admin path (FIX 4). Synthetic
+            // customerInfo satisfies the resolver; `to` is replaced by the recipients.
+            customerInfo: { email: 'platform@internal', name: 'Platform' },
+            language: 'sv-SE',
+            adminEmail: true,
+            shopId,
+            additionalData: { changes },
+        });
+    }
+    catch (e) {
+        firebase_functions_1.logger.warn('⚠️ connect status-change email failed (best-effort)', { shopId, error: e?.message });
+    }
+}
 exports.stripeWebhookV2 = (0, https_1.onRequest)({
     region: 'us-central1',
     memory: '256MiB',
     timeoutSeconds: 60,
-    secrets: ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'],
+    secrets: ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'RESEND_API_KEY'],
     invoker: 'public', // Allow Stripe to call this webhook
 }, async (request, response) => {
     try {
@@ -423,8 +491,30 @@ exports.stripeWebhookV2 = (0, https_1.onRequest)({
                 try {
                     const snap = await db.collection('shops').doc(shopId).get();
                     const existing = snap.data()?.payments || {};
-                    await db.collection('shops').doc(shopId).update((0, connectOnboarding_1.statusPatch)(acct, existing));
+                    const patch = (0, connectOnboarding_1.statusPatch)(acct, existing);
+                    await db.collection('shops').doc(shopId).update(patch);
                     firebase_functions_1.logger.info('💸 account.updated synced', { shopId, chargesEnabled: acct.charges_enabled });
+                    // FIX 9: notify the shop owner ONLY on meaningful transitions —
+                    // payouts turned off, status became 'restricted', or requirements
+                    // newly appeared. Compared against the shop's PREVIOUS values.
+                    const prevPayoutsEnabled = existing.payoutsEnabled === true;
+                    const newPayoutsEnabled = patch['payments.payoutsEnabled'] === true;
+                    const newStatus = patch['payments.connectStatus'];
+                    const prevReqDue = Array.isArray(existing.requirementsDue) ? existing.requirementsDue : [];
+                    const newReqDue = patch['payments.requirementsDue'] || [];
+                    const changes = [];
+                    if (prevPayoutsEnabled && !newPayoutsEnabled) {
+                        changes.push('Utbetalningar har pausats för ditt konto.');
+                    }
+                    if (newStatus === 'restricted' && existing.connectStatus !== 'restricted') {
+                        changes.push('Ditt konto har begränsats och kräver åtgärd.');
+                    }
+                    if (prevReqDue.length === 0 && newReqDue.length > 0) {
+                        changes.push('Stripe behöver ytterligare uppgifter från dig för att fortsätta.');
+                    }
+                    if (changes.length > 0) {
+                        await sendConnectStatusChange(shopId, changes);
+                    }
                 }
                 catch (e) {
                     firebase_functions_1.logger.warn('⚠️ account.updated sync failed', { shopId, error: e?.message });
@@ -463,6 +553,19 @@ exports.stripeWebhookV2 = (0, https_1.onRequest)({
                     }
                     await found.ref.update(patch);
                     firebase_functions_1.logger.info('💸 dispute stamped on order', { orderId: found.ref.id, status: dispute.status });
+                    // Platform-admin alert (best-effort). If the recovery hit a
+                    // shortfall, flag that; otherwise it's a plain new-dispute alert.
+                    const recStatus = patch['connect.disputeRecoveryStatus'] || undefined;
+                    await sendDisputeAlert({
+                        order: found.order,
+                        shopId: found.order?.shopId,
+                        disputeId: dispute.id,
+                        reason: dispute.reason,
+                        amount: dispute.amount,
+                        status: dispute.status,
+                        alertKind: recStatus === 'shortfall' ? 'shortfall' : 'dispute',
+                        recoveryStatus: recStatus,
+                    });
                 }
             }
             catch (e) {
@@ -525,6 +628,18 @@ exports.stripeWebhookV2 = (0, https_1.onRequest)({
                         }
                         patch['connect.disputeRecoveryStatus'] = patch['connect.disputeRecoveryStatus'] || 'lost_final';
                         firebase_functions_1.logger.info('💸 dispute LOST: finalized', { orderId: found.ref.id });
+                        // Platform-admin alert on the terminal-lost / shortfall path.
+                        const recStatus = patch['connect.disputeRecoveryStatus'] || undefined;
+                        await sendDisputeAlert({
+                            order: found.order,
+                            shopId: found.order?.shopId,
+                            disputeId: dispute.id,
+                            reason: dispute.reason,
+                            amount: dispute.amount,
+                            status: dispute.status,
+                            alertKind: recStatus === 'shortfall' ? 'shortfall' : 'dispute',
+                            recoveryStatus: recStatus,
+                        });
                     }
                     await found.ref.update(patch);
                 }

@@ -81,6 +81,7 @@ import B2BPortalLayout from './components/shop/B2BPortalLayout';
 import { B2BCustomerProvider } from './contexts/B2BCustomerContext';
 import ForgotPassword from './pages/shop/ForgotPassword';
 import ResetPassword from './pages/shop/ResetPassword';
+import VerifyEmailPage from './pages/shop/VerifyEmailPage';
 import EmailVerificationHandler from './pages/shop/EmailVerificationHandler';
 import ShopGate from './components/shop/ShopGate';
 import CollectionPage from './pages/shop/CollectionPage';
@@ -293,6 +294,7 @@ function App() {
               <Route path="/register" element={<CustomerRegister />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
               <Route path="/affiliate-login" element={<AffiliateLogin />} />
               <Route path="/__/auth/action" element={<EmailVerificationHandler />} />
 

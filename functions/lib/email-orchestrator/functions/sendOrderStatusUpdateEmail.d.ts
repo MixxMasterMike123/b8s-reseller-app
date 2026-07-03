@@ -15,6 +15,7 @@ interface OrderStatusUpdateRequest {
     trackingNumber?: string;
     estimatedDelivery?: string;
     notes?: string;
+    pickupLocationName?: string;
     userId?: string;
     b2cCustomerId?: string;
     orderId?: string;

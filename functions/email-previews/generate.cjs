@@ -31,6 +31,9 @@ const { generateLoginCredentialsTemplate } = req('templates/loginCredentials.js'
 const { generateAffiliateWelcomeTemplate } = req('templates/affiliateWelcome.js');
 const { generateAffiliateApplicationReceivedTemplate } = req('templates/affiliateApplicationReceived.js');
 const { generateAffiliateApplicationNotificationAdminTemplate } = req('templates/affiliateApplicationNotificationAdmin.js');
+const { generateRefundConfirmationTemplate } = req('templates/refundConfirmation.js');
+const { generateDisputeAlertAdminTemplate } = req('templates/disputeAlertAdmin.js');
+const { generateConnectStatusChangeTemplate } = req('templates/connectStatusChange.js');
 
 const BRAND = 'Sillmans';
 
@@ -90,6 +93,19 @@ write('orderConfirmation.b2b.en.html', generateOrderConfirmationTemplate({ order
 // orderStatusUpdate: sv + en
 write('orderStatusUpdate.sv.html', generateOrderStatusUpdateTemplate({ orderData: { orderNumber: orderData.orderNumber, status: 'shipped', totalAmount: orderData.total }, userData: { email: customerInfo.email, contactPerson: 'Anna Karlsson' }, newStatus: 'shipped', previousStatus: 'processing', trackingNumber: 'SE123456789', estimatedDelivery: '2026-07-05', notes: 'Vi packade extra noga.', userType: 'B2C', brandName: BRAND }, 'sv-SE', 'dbid123').html);
 write('orderStatusUpdate.en.html', generateOrderStatusUpdateTemplate({ orderData: { orderNumber: orderData.orderNumber, status: 'shipped', totalAmount: orderData.total }, userData: { email: customerInfo.email, contactPerson: 'Anna Karlsson' }, newStatus: 'shipped', previousStatus: 'processing', trackingNumber: 'SE123456789', estimatedDelivery: '2026-07-05', userType: 'B2C', brandName: BRAND }, 'en-GB', 'dbid123').html);
+// orderStatusUpdate: Click & Collect ready-for-pickup (sv)
+write('orderStatusUpdate.pickup.sv.html', generateOrderStatusUpdateTemplate({ orderData: { orderNumber: orderData.orderNumber, status: 'ready_for_pickup', totalAmount: orderData.total }, userData: { email: customerInfo.email, contactPerson: 'Anna Karlsson' }, newStatus: 'ready_for_pickup', previousStatus: 'processing', pickupLocationName: 'Sillmans Fiskebutik, Storgatan 12', userType: 'B2C', brandName: BRAND }, 'sv-SE', 'dbid123').html);
+
+// refundConfirmation: full + partial (with ångerrätt)
+write('refundConfirmation.full.sv.html', generateRefundConfirmationTemplate({ orderNumber: orderData.orderNumber, refundAmountSek: 2057, currency: 'SEK', isFullRefund: true, hasWithdrawal: false, customerName: 'Anna Karlsson', brandName: BRAND }).html);
+write('refundConfirmation.partial.sv.html', generateRefundConfirmationTemplate({ orderNumber: orderData.orderNumber, refundAmountSek: 899, currency: 'SEK', isFullRefund: false, hasWithdrawal: true, customerName: 'Anna Karlsson', brandName: BRAND }).html);
+
+// disputeAlertAdmin: new dispute + shortfall
+write('disputeAlertAdmin.dispute.sv.html', generateDisputeAlertAdminTemplate({ shopId: 'sillmans', shopName: 'Sillmans', orderId: 'pi_3Ptest123', orderNumber: orderData.orderNumber, disputeId: 'dp_1Ptest', reason: 'fraudulent', amount: 205750, status: 'needs_response', alertKind: 'dispute', brandName: BRAND }).html);
+write('disputeAlertAdmin.shortfall.sv.html', generateDisputeAlertAdminTemplate({ shopId: 'sillmans', shopName: 'Sillmans', orderId: 'pi_3Ptest123', orderNumber: orderData.orderNumber, disputeId: 'dp_1Ptest', reason: 'product_not_received', amount: 205750, status: 'lost', alertKind: 'shortfall', recoveryStatus: 'shortfall', brandName: BRAND }).html);
+
+// connectStatusChange: shop-owner payout alert
+write('connectStatusChange.sv.html', generateConnectStatusChangeTemplate({ changes: ['Utbetalningar har pausats för ditt konto.', 'Stripe behöver ytterligare uppgifter från dig för att fortsätta.'], paymentsUrl: 'https://meteorpr.web.app/admin/payments', brandName: BRAND }).html);
 
 // orderNotificationAdmin: B2C sv + B2B sv (admin = Swedish internal)
 write('orderNotificationAdmin.b2c.sv.html', generateOrderNotificationAdminTemplate({ orderData, orderType: 'B2C', brandName: BRAND }, 'sv-SE').html);

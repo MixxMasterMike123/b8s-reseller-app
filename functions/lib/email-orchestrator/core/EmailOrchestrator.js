@@ -19,8 +19,12 @@ const affiliateWelcome_1 = require("../templates/affiliateWelcome");
 const emailVerification_1 = require("../templates/emailVerification");
 const affiliateApplicationReceived_1 = require("../templates/affiliateApplicationReceived");
 const affiliateApplicationNotificationAdmin_1 = require("../templates/affiliateApplicationNotificationAdmin");
+const refundConfirmation_1 = require("../templates/refundConfirmation");
+const disputeAlertAdmin_1 = require("../templates/disputeAlertAdmin");
+const connectStatusChange_1 = require("../templates/connectStatusChange");
 const emailLayout_1 = require("../templates/emailLayout");
 const config_1 = require("./config");
+const app_urls_1 = require("../../config/app-urls");
 class EmailOrchestrator {
     constructor() {
         this.userResolver = new UserResolver_1.UserResolver();
@@ -76,7 +80,11 @@ class EmailOrchestrator {
             let result;
             if (context.adminEmail) {
                 console.log('📧 EmailOrchestrator: Sending admin email');
-                result = await this.emailService.sendAdminEmail(template, emailOptions);
+                // Multi-tenant admin routing: when this shop resolved a valid
+                // supportEmail, the shop gets the notification alongside the platform
+                // (deduped in sendAdminEmail). No shopId / no supportEmail → platform only.
+                const extraAdminRecipients = shopIdentity?.supportEmail ? [shopIdentity.supportEmail] : [];
+                result = await this.emailService.sendAdminEmail(template, { ...emailOptions, extraAdminRecipients });
             }
             else {
                 console.log('📧 EmailOrchestrator: Sending customer email');
@@ -169,6 +177,9 @@ class EmailOrchestrator {
                     trackingNumber: data.additionalData?.trackingNumber,
                     estimatedDelivery: data.additionalData?.estimatedDelivery,
                     notes: data.additionalData?.notes,
+                    // Click & Collect: pickup location name for the ready_for_pickup step.
+                    // Prefer an explicit additionalData value, else read the order doc.
+                    pickupLocationName: data.additionalData?.pickupLocationName || data.orderData?.pickupLocation?.name,
                     userType: data.userData.type,
                     brandName: data.brandName
                 };
@@ -340,6 +351,51 @@ class EmailOrchestrator {
                         `Spara detta mottagningsbevis. Återbetalning hanteras enligt våra villkor.`
                 };
             }
+            case 'REFUND_CONFIRMATION': {
+                // Buyer-facing refund receipt. Fired from connectRefund.ts after the
+                // refund succeeds. `refundAmountSek` = amount actually refunded (partial
+                // or full); `isFullRefund` distinguishes the copy; `hasWithdrawal` adds
+                // the ångerrätt-completion line when the order carried a withdrawalRequest.
+                const ad = data.additionalData || {};
+                return (0, refundConfirmation_1.generateRefundConfirmationTemplate)({
+                    orderNumber: String(ad.orderNumber || data.orderData?.orderNumber || data.context.orderId || ''),
+                    refundAmountSek: Number(ad.refundAmountSek || 0),
+                    currency: ad.currency || 'SEK',
+                    isFullRefund: ad.isFullRefund !== false,
+                    hasWithdrawal: !!ad.hasWithdrawal,
+                    customerName: data.userData.name,
+                    brandName: data.brandName,
+                });
+            }
+            case 'DISPUTE_ALERT_ADMIN': {
+                // Platform-admin alert for a chargeback / shortfall. Best-effort from the
+                // Stripe webhook. Names the shop so a multi-shop platform inbox can triage.
+                const ad = data.additionalData || {};
+                return (0, disputeAlertAdmin_1.generateDisputeAlertAdminTemplate)({
+                    shopId: ad.shopId,
+                    shopName: ad.shopName,
+                    orderId: ad.orderId,
+                    orderNumber: ad.orderNumber,
+                    disputeId: ad.disputeId,
+                    reason: ad.reason,
+                    amount: ad.amount,
+                    status: ad.status,
+                    alertKind: ad.alertKind === 'shortfall' ? 'shortfall' : 'dispute',
+                    recoveryStatus: ad.recoveryStatus,
+                    brandName: data.brandName,
+                });
+            }
+            case 'CONNECT_STATUS_CHANGE': {
+                // Shop-owner alert: their Stripe Connect account status changed in a way
+                // that can block payouts. Fired from the account.updated webhook only on
+                // meaningful transitions. CTA → the admin payments page.
+                const ad = data.additionalData || {};
+                return (0, connectStatusChange_1.generateConnectStatusChangeTemplate)({
+                    changes: Array.isArray(ad.changes) ? ad.changes : [],
+                    paymentsUrl: `${app_urls_1.appUrls.ADMIN_BASE.replace(/\/$/, '')}/admin/payments`,
+                    brandName: data.brandName,
+                });
+            }
             default:
                 throw new Error(`Unknown email type: ${emailType}`);
         }
@@ -352,7 +408,9 @@ class EmailOrchestrator {
         // admin notifications carry a System suffix so they sort visibly.
         const brand = shopName || config_1.EMAIL_CONFIG.SMTP.FROM_NAME;
         const from = (displayName) => `"${displayName}" <${config_1.EMAIL_CONFIG.SMTP.FROM_EMAIL}>`;
-        if (emailType === 'ORDER_NOTIFICATION_ADMIN' || emailType === 'AFFILIATE_APPLICATION_NOTIFICATION_ADMIN') {
+        if (emailType === 'ORDER_NOTIFICATION_ADMIN' ||
+            emailType === 'AFFILIATE_APPLICATION_NOTIFICATION_ADMIN' ||
+            emailType === 'DISPUTE_ALERT_ADMIN') {
             return from(`${brand} System`);
         }
         return from(brand);

@@ -55,7 +55,8 @@ exports.sendOrderStatusUpdateEmail = (0, https_1.onCall)({
                 previousStatus: request.data.previousStatus,
                 trackingNumber: request.data.trackingNumber,
                 estimatedDelivery: request.data.estimatedDelivery,
-                notes: request.data.notes
+                notes: request.data.notes,
+                pickupLocationName: request.data.pickupLocationName
             },
             adminEmail: false
         };

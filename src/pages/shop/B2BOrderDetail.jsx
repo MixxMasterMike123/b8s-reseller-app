@@ -30,7 +30,8 @@ const orderDate = (v) => {
 
 const STATUS_LABEL = {
   pending: 'Väntar', invoiced: 'Fakturerad', paid: 'Betald',
-  shipped: 'Skickad', completed: 'Slutförd', cancelled: 'Avbruten',
+  shipped: 'Skickad', ready_for_pickup: 'Redo att hämtas',
+  completed: 'Slutförd', cancelled: 'Avbruten',
 };
 
 export default function B2BOrderDetail() {

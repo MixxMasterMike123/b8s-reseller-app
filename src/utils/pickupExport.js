@@ -44,6 +44,7 @@ const STATUS_LABELS = {
   confirmed: 'Bekräftad',
   processing: 'Behandlas',
   shipped: 'Skickad',
+  ready_for_pickup: 'Redo att hämtas',
   delivered: 'Levererad',
   cancelled: 'Avbruten',
 };

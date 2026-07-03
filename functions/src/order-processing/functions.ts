@@ -580,6 +580,15 @@ export async function processOrderCompletion(
             console.log(`✅ Orchestrator Customer confirmation email sent to ${customerEmail}`);
           } catch (customerEmailError) {
             console.error(`❌ Orchestrator Customer email failed for ${customerEmail}:`, customerEmailError);
+            // Cheap observability: stamp the miss on the order (best-effort).
+            try {
+              const msg = customerEmailError instanceof Error ? customerEmailError.message : String(customerEmailError);
+              await orderRef.update({
+                emailFailures: FieldValue.arrayUnion({ type: 'ORDER_CONFIRMATION', error: msg.slice(0, 200), at: new Date().toISOString() }),
+              });
+            } catch (stampErr) {
+              console.error('❌ Failed to stamp emailFailures (customer):', stampErr);
+            }
           }
           
           try {
@@ -601,6 +610,15 @@ export async function processOrderCompletion(
             console.log(`✅ Orchestrator Admin notification email sent for order ${orderData.orderNumber}`);
           } catch (adminEmailError) {
             console.error(`❌ Orchestrator Admin email failed for order ${orderId}:`, adminEmailError);
+            // Cheap observability: stamp the miss on the order (best-effort).
+            try {
+              const msg = adminEmailError instanceof Error ? adminEmailError.message : String(adminEmailError);
+              await orderRef.update({
+                emailFailures: FieldValue.arrayUnion({ type: 'ORDER_NOTIFICATION_ADMIN', error: msg.slice(0, 200), at: new Date().toISOString() }),
+              });
+            } catch (stampErr) {
+              console.error('❌ Failed to stamp emailFailures (admin):', stampErr);
+            }
           }
           
         } else {

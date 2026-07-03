@@ -9,6 +9,12 @@ export interface EmailOptions {
     replyTo?: string;
     cc?: string;
     bcc?: string;
+    /**
+     * Extra admin recipients merged with (and deduped against) the global
+     * ADMIN_RECIPIENTS by sendAdminEmail — used to route tenant admin mail to the
+     * shop's own supportEmail as well as the platform. Ignored by sendEmail.
+     */
+    extraAdminRecipients?: string[];
 }
 export declare class EmailService {
     private apiKey;

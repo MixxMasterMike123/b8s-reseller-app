@@ -13,6 +13,8 @@ const getStatusStyles = (status) => {
       return 'bg-green-100 text-green-800 border-green-200'; // Shipped - GREEN for quick visual identification
     case 'delivered':
       return 'bg-emerald-100 text-emerald-800 border-emerald-200'; // Delivered - Darker green
+    case 'ready_for_pickup':
+      return 'bg-purple-100 text-purple-800 border-purple-200'; // Click & Collect: ready to be picked up
     // B2B Faktura lifecycle (additive — B2C orders simply never use these)
     case 'invoiced':
       return 'bg-indigo-100 text-indigo-800 border-indigo-200'; // Invoice sent by the shop
@@ -27,7 +29,7 @@ const getStatusStyles = (status) => {
   }
 };
 
-const OrderStatusMenu = ({ currentStatus, onStatusChange, disabled, className = '', source }) => {
+const OrderStatusMenu = ({ currentStatus, onStatusChange, disabled, className = '', source, isPickup = false }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
@@ -35,11 +37,13 @@ const OrderStatusMenu = ({ currentStatus, onStatusChange, disabled, className = 
   // Status options with shorter labels. B2B Faktura orders use the invoice
   // lifecycle (pending → invoiced → paid → shipped → completed); everything else
   // uses the consumer lifecycle. Source-aware so each surface shows the right set.
+  // Click & Collect orders additionally expose 'ready_for_pickup'.
   const statusOptions = source === 'b2b'
     ? [
         { value: 'pending', label: t('order_status.pending', 'Väntar') },
         { value: 'invoiced', label: t('order_status.invoiced', 'Fakturerad') },
         { value: 'paid', label: t('order_status.paid', 'Betald') },
+        ...(isPickup ? [{ value: 'ready_for_pickup', label: t('order_status.ready_for_pickup', 'Redo att hämtas') }] : []),
         { value: 'shipped', label: t('order_status.shipped', 'Skickad') },
         { value: 'completed', label: t('order_status.completed', 'Slutförd') },
         { value: 'cancelled', label: t('order_status.cancelled', 'Avbruten') }
@@ -48,6 +52,7 @@ const OrderStatusMenu = ({ currentStatus, onStatusChange, disabled, className = 
         { value: 'pending', label: t('order_status.pending', 'Väntar') },
         { value: 'confirmed', label: t('order_status.confirmed', 'Bekräftad') },
         { value: 'processing', label: t('order_status.processing', 'Behandlas') },
+        ...(isPickup ? [{ value: 'ready_for_pickup', label: t('order_status.ready_for_pickup', 'Redo att hämtas') }] : []),
         { value: 'shipped', label: t('order_status.shipped', 'Skickad') },
         { value: 'delivered', label: t('order_status.delivered', 'Levererad') },
         { value: 'cancelled', label: t('order_status.cancelled', 'Avbruten') }
