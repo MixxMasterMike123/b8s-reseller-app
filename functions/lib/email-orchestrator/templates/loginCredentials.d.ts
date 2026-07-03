@@ -12,6 +12,7 @@ export interface LoginCredentialsData {
     };
     accountType: 'B2B' | 'AFFILIATE';
     wasExistingAuthUser: boolean;
+    brandName?: string;
 }
 export declare function generateLoginCredentialsTemplate(data: LoginCredentialsData, lang?: string): {
     subject: string;

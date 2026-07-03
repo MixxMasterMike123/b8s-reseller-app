@@ -1,6 +1,19 @@
-// Admin Order Notification Email Template
-// Extracted from V3 Admin Templates - DESIGN PRESERVED + MOBILE OPTIMIZED
+// Admin Order Notification Email Template — NORD-aligned, per-shop branded.
+// Internal notification (Swedish); English variants kept as light stubs.
 import { EMAIL_CONFIG, formatPrice } from '../core/config';
+import {
+  renderEmailShell,
+  renderHeading,
+  renderParagraph,
+  renderButton,
+  renderPanel,
+  renderKeyValueRows,
+  renderOrderRows,
+  renderTotals,
+  renderList,
+  esc,
+  emailTokens,
+} from './emailLayout';
 
 export interface AdminOrderNotificationData {
   orderData: {
@@ -50,80 +63,48 @@ export interface AdminOrderNotificationData {
   };
   orderSummary?: string; // For B2B orders
   orderType: 'B2B' | 'B2C';
+  brandName?: string;
 }
 
-// Helper function to format size for display (replicates frontend getDisplaySize logic)
 function getDisplaySize(size: any): string {
   if (!size) return '-';
   if (typeof size === 'string') return size;
-  if (typeof size === 'object') {
-    return size['sv-SE'] || size['en-GB'] || size['en-US'] || Object.values(size)[0] || '-';
-  }
+  if (typeof size === 'object') return size['sv-SE'] || size['en-GB'] || size['en-US'] || Object.values(size)[0] || '-';
   return String(size);
 }
 
-// Helper function to format color for display (replicates frontend getDisplayColor logic)
 function getDisplayColor(color: any): string {
   if (!color) return '-';
   if (typeof color === 'string') return color;
-  if (typeof color === 'object') {
-    return color['sv-SE'] || color['en-GB'] || color['en-US'] || Object.values(color)[0] || '-';
-  }
+  if (typeof color === 'object') return color['sv-SE'] || color['en-GB'] || color['en-US'] || Object.values(color)[0] || '-';
   return String(color);
 }
 
-// Helper function to get clean product name without color/size (for pill design)
 function getCleanProductNameAdmin(item: any): string {
-  return typeof item.name === 'object' 
-    ? (item.name['sv-SE'] || item.name['en-GB'] || item.name['en-US'] || JSON.stringify(item.name))
+  return typeof item.name === 'object'
+    ? item.name['sv-SE'] || item.name['en-GB'] || item.name['en-US'] || JSON.stringify(item.name)
     : item.name || 'Unknown Product';
 }
 
-// Helper function to generate the variant/color pill HTML for admin emails.
-// v2: a variant `label` carries the choice; old orders fall back to color.
-function getColorPillAdmin(item: any): string {
-  if (item.label) {
-    return `<span style="display: inline-block; background-color: #f3f4f6; color: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; margin-right: 6px; border: 1px solid #d1d5db;">${item.label}</span>`;
-  }
-  const color = getDisplayColor(item.color);
-  if (!color || color === '-' || color === 'Blandade färger' || color === 'Mixed colors') {
-    return '';
-  }
-
-  return `<span style="display: inline-block; background-color: #f3f4f6; color: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; margin-right: 6px; border: 1px solid #d1d5db;">Färg: ${color}</span>`;
+function pill(text: string): string {
+  return `<span style="display:inline-block;background-color:${emailTokens.panel};color:${emailTokens.ink};padding:3px 10px;border-radius:999px;font-size:12px;font-weight:500;margin-right:6px;border:1px solid ${emailTokens.border};">${esc(text)}</span>`;
 }
 
-// Helper function to generate size pill HTML for admin emails
-function getSizePillAdmin(item: any): string {
-  const size = getDisplaySize(item.size);
-  if (!size || size === '-' || size === 'Blandade storlekar' || size === 'Mixed sizes') {
-    return '';
-  }
-  
-  return `<span style="display: inline-block; background-color: #f3f4f6; color: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; margin-right: 6px; border: 1px solid #d1d5db;">Storlek: ${size}</span>`;
-}
-
-// Helper function to generate pills row HTML for admin emails
 function getPillsRowAdmin(item: any): string {
-  const colorPill = getColorPillAdmin(item);
-  const sizePill = getSizePillAdmin(item);
-  
-  if (!colorPill && !sizePill) {
-    return '';
+  let out = '';
+  if (item.label) {
+    out += pill(item.label);
+  } else {
+    const color = getDisplayColor(item.color);
+    if (color && color !== '-' && color !== 'Blandade färger' && color !== 'Mixed colors') out += pill(`Färg: ${color}`);
   }
-  
-  return `<div style="margin-top: 6px; margin-bottom: 4px;">${colorPill}${sizePill}</div>`;
+  const size = getDisplaySize(item.size);
+  if (size && size !== '-' && size !== 'Blandade storlekar' && size !== 'Mixed sizes') out += pill(`Storlek: ${size}`);
+  return out;
 }
 
-// DEPRECATED: Keep for backward compatibility but use pill design instead
-// Helper function for admin product display names (currently unused but kept for future use)
-// function getProductDisplayNameAdmin(item: any): string {
-//   return getCleanProductNameAdmin(item);
-// }
-
-// Format payment method display
 function formatPaymentMethod(method: string): string {
-  switch(method) {
+  switch (method) {
     case 'stripe': return 'Stripe (Card/Klarna/Google Pay)';
     case 'mock_payment': return 'Test Payment';
     case 'swish': return 'Swish';
@@ -134,30 +115,25 @@ function formatPaymentMethod(method: string): string {
 
 export function generateOrderNotificationAdminTemplate(data: AdminOrderNotificationData, lang: string = 'sv-SE') {
   const { orderData, orderType, orderSummary } = data;
-  
-  // Extract payment method information
+  const brand = data.brandName || 'MeteorPR';
+
   const paymentMethod = orderData.payment?.method || 'unknown';
   const paymentStatus = orderData.payment?.status || 'unknown';
   const paymentIntentId = orderData.payment?.paymentIntentId || '';
-  
-  // Handle different affiliate data structures
   const affiliateCode = orderData.affiliateCode || orderData.affiliate?.code;
-  
-  // Admin portal URL
   const adminPortalUrl = `${EMAIL_CONFIG.URLS.B2B_PORTAL}/admin/orders`;
 
-  // Choose template based on order type
   if (orderType === 'B2B') {
-    return generateB2BAdminTemplate(data, lang, adminPortalUrl, orderSummary);
-  } else {
-    return generateB2CAdminTemplate(data, lang, adminPortalUrl, paymentMethod, paymentStatus, paymentIntentId, affiliateCode);
+    return generateB2BAdminTemplate(data, lang, brand, adminPortalUrl, orderSummary);
   }
+  return generateB2CAdminTemplate(data, lang, brand, adminPortalUrl, paymentMethod, paymentStatus, paymentIntentId, affiliateCode);
 }
 
 // B2C Admin Template (Consumer order notification)
 function generateB2CAdminTemplate(
   data: AdminOrderNotificationData,
   lang: string,
+  brand: string,
   adminPortalUrl: string,
   paymentMethod: string,
   paymentStatus: string,
@@ -165,104 +141,89 @@ function generateB2CAdminTemplate(
   affiliateCode?: string
 ) {
   const { orderData } = data;
+  const ci = orderData.customerInfo;
 
-  const templates = {
-    'sv-SE': {
-      subject: `Ny B2C-beställning mottagen: ${orderData.orderNumber}`,
-      html: `<div style="font-family: ${EMAIL_CONFIG.TEMPLATES.FONT_FAMILY}; max-width: ${EMAIL_CONFIG.TEMPLATES.MAX_WIDTH}; margin: 0 auto; background-color: ${EMAIL_CONFIG.COLORS.BACKGROUND}; padding: 15px;">
-  <div style="background-color: white; border-radius: ${EMAIL_CONFIG.TEMPLATES.BORDER_RADIUS}; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <h2 style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-bottom: 20px; font-size: 22px; line-height: 1.3;">Ny B2C ${orderData.source === 'b2c' ? 'Gäst' : ''} Beställning Mottagen</h2>
-    
-    <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
-      <h3 style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; margin-top: 0; margin-bottom: 12px; font-size: 16px;">[KUND] KUNDINFORMATION:</h3>
-      <div style="font-size: 14px;">
-        <p style="margin: 6px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Ordernummer:</strong> ${orderData.orderNumber}</p>
-        <p style="margin: 6px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Kund:</strong> ${orderData.customerInfo.firstName || ''} ${orderData.customerInfo.lastName || ''}</p>
-        <p style="margin: 6px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>E-post:</strong> <a href="mailto:${orderData.customerInfo.email}" style="color: #2563eb; text-decoration: none;">${orderData.customerInfo.email}</a></p>
-        ${orderData.shippingInfo ? `
-        <p style="margin: 6px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Leveransadress:</strong><br>
-        ${orderData.shippingInfo.address}${orderData.shippingInfo.apartment ? ', ' + orderData.shippingInfo.apartment : ''}<br>
-        ${orderData.shippingInfo.postalCode} ${orderData.shippingInfo.city}<br>
-        ${orderData.shippingInfo.country}</p>
-        ` : ''}
-      </div>
-    </div>
+  const shippingValue = orderData.shippingInfo
+    ? `${esc(orderData.shippingInfo.address)}${orderData.shippingInfo.apartment ? ', ' + esc(orderData.shippingInfo.apartment) : ''}<br>${esc(orderData.shippingInfo.postalCode)} ${esc(orderData.shippingInfo.city)}<br>${esc(orderData.shippingInfo.country)}`
+    : '';
 
-    <div style="background-color: #ecfdf5; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
-      <h3 style="color: #065f46; margin-top: 0; margin-bottom: 12px; font-size: 16px;">[PRODUKTER] ORDERDETALJER:</h3>
-      <div style="background-color: white; border-radius: 4px; padding: 10px;">
-        ${orderData.items.map(item => `
-          <div style="display: block; padding: 10px 0; border-bottom: 1px solid #d1fae5;">
-            <div style="margin-bottom: 8px;">
-              <div style="font-weight: bold; color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; font-size: 15px; margin-bottom: 2px;">${getCleanProductNameAdmin(item)}</div>
-              ${getPillsRowAdmin(item)}
-              <div style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 13px;">${item.quantity} st × ${formatPrice(item.price)}</div>
-            </div>
-            <div style="text-align: right;">
-              <div style="font-weight: bold; color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; font-size: 16px;">${formatPrice(item.price * item.quantity)}</div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    </div>
+  const customerPanel = renderPanel(
+    renderKeyValueRows(
+      [
+        { label: 'Ordernummer', value: esc(orderData.orderNumber) },
+        { label: 'Kund', value: esc(`${ci.firstName || ''} ${ci.lastName || ''}`.trim()) || '-' },
+        { label: 'E-post', value: `<a href="mailto:${esc(ci.email)}" style="color:${emailTokens.ink};text-decoration:underline;">${esc(ci.email)}</a>` },
+        ...(shippingValue ? [{ label: 'Leveransadress', value: shippingValue }] : []),
+      ],
+      { rawHtml: true }
+    ),
+    'Kundinformation'
+  );
 
-    <div style="background-color: #fef3c7; border-left: 4px solid ${EMAIL_CONFIG.COLORS.WARNING}; padding: 15px; margin-bottom: 20px;">
-      <h3 style="color: #92400e; margin-top: 0; margin-bottom: 12px; font-size: 16px;">[SAMMANFATTNING] ORDERSAMMANFATTNING:</h3>
-      <div style="background-color: white; border-radius: 4px; padding: 12px;">
-        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-          <tr><td style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; padding: 3px 0;">Delsumma:</td><td style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; font-weight: bold; text-align: right; padding: 3px 0;">${formatPrice(orderData.subtotal || 0)}</td></tr>
-          <tr><td style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; padding: 3px 0;">Frakt:</td><td style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; font-weight: bold; text-align: right; padding: 3px 0;">${formatPrice(orderData.shipping || 0)}</td></tr>
-          ${orderData.discountAmount && orderData.discountAmount > 0 ? `<tr><td style="color: ${EMAIL_CONFIG.COLORS.SUCCESS}; padding: 3px 0;">Rabatt:</td><td style="color: ${EMAIL_CONFIG.COLORS.SUCCESS}; font-weight: bold; text-align: right; padding: 3px 0;">-${formatPrice(orderData.discountAmount)}</td></tr>` : ''}
-          <tr><td style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; padding: 3px 0;">Moms (25%):</td><td style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; font-weight: bold; text-align: right; padding: 3px 0;">${formatPrice(orderData.vat || 0)}</td></tr>
-          <tr><td colspan="2" style="border-top: 2px solid ${EMAIL_CONFIG.COLORS.WARNING}; padding: 10px 0 0 0;"></td></tr>
-          <tr><td style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; font-size: 16px; font-weight: bold; padding: 3px 0;">TOTALT:</td><td style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; font-size: 16px; font-weight: bold; text-align: right; padding: 3px 0;">${formatPrice(orderData.total || 0)}</td></tr>
-        </table>
-      </div>
-    </div>
+  const itemsPanel = renderPanel(
+    renderOrderRows(
+      orderData.items.map((item) => ({
+        name: getCleanProductNameAdmin(item),
+        meta: getPillsRowAdmin(item) || undefined,
+        qtyLine: `${item.quantity} st × ${formatPrice(item.price)}`,
+        amount: formatPrice(item.price * item.quantity),
+      }))
+    ),
+    'Orderdetaljer'
+  );
 
-    <div style="background-color: #eff6ff; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
-      <h3 style="color: #1e40af; margin-top: 0; margin-bottom: 12px; font-size: 16px;">[BETALNING] BETALNINGSINFORMATION:</h3>
-      <div style="font-size: 14px;">
-        <p style="margin: 6px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Betalningsmetod:</strong> ${formatPaymentMethod(paymentMethod)}</p>
-        <p style="margin: 6px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Betalningsstatus:</strong> ${paymentStatus}</p>
-        ${paymentIntentId ? `<p style="margin: 6px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Payment Intent ID:</strong> ${paymentIntentId}</p>` : ''}
-      </div>
-    </div>
+  const totalsPanel = renderPanel(
+    renderTotals([
+      { label: 'Delsumma', value: formatPrice(orderData.subtotal || 0) },
+      { label: 'Frakt', value: formatPrice(orderData.shipping || 0) },
+      ...(orderData.discountAmount && orderData.discountAmount > 0
+        ? [{ label: 'Rabatt', value: `-${formatPrice(orderData.discountAmount)}`, positive: true }]
+        : []),
+      { label: 'Moms (25%)', value: formatPrice(orderData.vat || 0) },
+      { label: 'Totalt', value: formatPrice(orderData.total || 0), emphasis: true },
+    ]),
+    'Ordersammanfattning'
+  );
 
-    ${affiliateCode ? `
-    <div style="background-color: #f0f9ff; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
-      <h3 style="color: #0369a1; margin-top: 0; margin-bottom: 12px; font-size: 16px;">[AFFILIATE] AFFILIATE-INFORMATION:</h3>
-      <div style="font-size: 14px;">
-        <p style="margin: 6px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Affiliate-kod:</strong> ${affiliateCode}</p>
-        ${orderData.discountAmount && orderData.discountAmount > 0 ? `<p style="margin: 6px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Rabatt tillämpad:</strong> ${formatPrice(orderData.discountAmount)}</p>` : ''}
-      </div>
-    </div>
-    ` : ''}
-    
-    <div style="text-align: center; margin: 25px 0;">
-      <a href="${adminPortalUrl}" style="display: inline-block; background-color: ${EMAIL_CONFIG.COLORS.PRIMARY}; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 15px; border: 2px solid ${EMAIL_CONFIG.COLORS.PRIMARY};">Hantera order</a>
-    </div>
-    
-    <div style="border-top: 1px solid ${EMAIL_CONFIG.COLORS.BORDER}; padding-top: 15px; margin-top: 25px; text-align: center;">
-      <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 13px; margin: 0;">Denna beställning gjordes på B2C-butiken på ${EMAIL_CONFIG.URLS.B2C_SHOP.replace(/^https?:\/\//, '')}<br><strong>Admin Notification</strong></p>
-    </div>
-  </div>
-</div>`
-    },
-    'en-GB': {
-      subject: `New B2C Order Received: ${orderData.orderNumber}`,
-      html: `<div>English B2C Admin Template</div>`
-    },
-    'en-US': {
-      subject: `New B2C Order Received: ${orderData.orderNumber}`,
-      html: `<div>US English B2C Admin Template</div>`
-    }
-  };
+  const paymentPanel = renderPanel(
+    renderKeyValueRows([
+      { label: 'Betalningsmetod', value: formatPaymentMethod(paymentMethod) },
+      { label: 'Betalningsstatus', value: paymentStatus },
+      ...(paymentIntentId ? [{ label: 'Payment Intent ID', value: paymentIntentId }] : []),
+    ]),
+    'Betalningsinformation'
+  );
 
-  const template = templates[lang as keyof typeof templates] || templates['sv-SE'];
+  const affiliatePanel = affiliateCode
+    ? renderPanel(
+        renderKeyValueRows([
+          { label: 'Affiliate-kod', value: affiliateCode },
+          ...(orderData.discountAmount && orderData.discountAmount > 0 ? [{ label: 'Rabatt tillämpad', value: formatPrice(orderData.discountAmount) }] : []),
+        ]),
+        'Affiliate-information'
+      )
+    : '';
+
+  const body =
+    renderHeading(`Ny B2C-beställning${orderData.source === 'b2c' ? ' (gäst)' : ''}`) +
+    renderParagraph('En ny beställning har kommit in i butiken.', { muted: true }) +
+    customerPanel +
+    itemsPanel +
+    totalsPanel +
+    paymentPanel +
+    affiliatePanel +
+    renderButton(adminPortalUrl, 'Hantera order');
+
+  const shopDomain = EMAIL_CONFIG.URLS.B2C_SHOP.replace(/^https?:\/\//, '');
+
   return {
-    subject: template.subject,
-    html: template.html
+    subject: `Ny B2C-beställning mottagen: ${orderData.orderNumber}`,
+    html: renderEmailShell({
+      brandName: `${brand} System`,
+      bodyHtml: body,
+      footerNote: `Beställningen gjordes i butiken på ${esc(shopDomain)}.`,
+      preheader: `Ny B2C-beställning: ${esc(orderData.orderNumber)}`,
+    }),
   };
 }
 
@@ -270,91 +231,75 @@ function generateB2CAdminTemplate(
 function generateB2BAdminTemplate(
   data: AdminOrderNotificationData,
   lang: string,
+  brand: string,
   adminPortalUrl: string,
   orderSummary?: string
 ) {
   const { orderData } = data;
+  const ci = orderData.customerInfo;
 
-  const templates = {
-    'sv-SE': {
-      subject: `Ny B2B-beställning: ${orderData.orderNumber} från ${orderData.customerInfo.companyName || orderData.customerInfo.name}`,
-      html: `<div style="font-family: ${EMAIL_CONFIG.TEMPLATES.FONT_FAMILY}; max-width: ${EMAIL_CONFIG.TEMPLATES.MAX_WIDTH}; margin: 0 auto; background-color: ${EMAIL_CONFIG.COLORS.BACKGROUND}; padding: 15px;">
-  <div style="background-color: white; border-radius: ${EMAIL_CONFIG.TEMPLATES.BORDER_RADIUS}; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <h2 style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-bottom: 20px; font-size: 22px; line-height: 1.3;">Ny B2B-beställning mottagen</h2>
-    <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px; font-size: 14px;">En ny beställning har skapats i B2B-portalen och behöver behandling.</p>
-    
-    <div style="background-color: #f3f4f6; border-radius: 6px; padding: 15px; margin-bottom: 20px;">
-      <h3 style="color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-top: 0; margin-bottom: 12px; font-size: 16px;">[ORDER] ORDERINFORMATION:</h3>
-      <div style="font-size: 14px;">
-        <p style="margin: 6px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Ordernummer:</strong> ${orderData.orderNumber}</p>
-        <p style="margin: 6px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Skapad:</strong> ${orderData.createdAt || 'Just nu'}</p>
-        <p style="margin: 6px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Status:</strong> <span style="color: #2563eb; font-weight: bold;">Ny - Behöver behandling</span></p>
-      </div>
-    </div>
-    
-    <div style="background-color: #ecfdf5; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
-      <h3 style="color: #065f46; margin-top: 0; margin-bottom: 12px; font-size: 16px;">[KUND] KUNDINFORMATION:</h3>
-      <div style="background-color: white; border-radius: 4px; padding: 12px; font-size: 14px;">
-        <p style="margin: 6px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Företag:</strong> ${orderData.customerInfo.companyName || orderData.customerInfo.name}</p>
-        <p style="margin: 6px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>E-post:</strong> <a href="mailto:${orderData.customerInfo.email}" style="color: #2563eb; text-decoration: none;">${orderData.customerInfo.email}</a></p>
-        <p style="margin: 6px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Kontaktperson:</strong> ${orderData.customerInfo.contactPerson || 'Ej angiven'}</p>
-        ${orderData.customerInfo.phone ? `<p style="margin: 6px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Telefon:</strong> <a href="tel:${orderData.customerInfo.phone}" style="color: #2563eb; text-decoration: none;">${orderData.customerInfo.phone}</a></p>` : ''}
-        ${orderData.customerInfo.address ? `<p style="margin: 6px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Adress:</strong> ${orderData.customerInfo.address}${orderData.customerInfo.postalCode && orderData.customerInfo.city ? `, ${orderData.customerInfo.postalCode} ${orderData.customerInfo.city}` : ''}</p>` : ''}
-        ${orderData.customerInfo.marginal ? `<p style="margin: 6px 0; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY};"><strong>Kundmarginal:</strong> ${orderData.customerInfo.marginal}%</p>` : ''}
-      </div>
-    </div>
-    
-    <div style="background-color: #eff6ff; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
-      <h3 style="color: #1e40af; margin-top: 0; margin-bottom: 12px; font-size: 16px;">[BESTÄLLNING] ORDERDETALJER:</h3>
-      <div style="background-color: white; border-radius: 4px; padding: 12px;">
-        <div style="white-space: pre-line; color: ${EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.5; font-family: monospace; font-size: 13px;">${orderSummary || 'Orderdetaljer saknas'}</div>
-      </div>
-    </div>
-    
-    <div style="background-color: #fef3c7; border-left: 4px solid ${EMAIL_CONFIG.COLORS.WARNING}; padding: 15px; margin-bottom: 20px;">
-      <h3 style="color: #92400e; margin-top: 0; margin-bottom: 12px; font-size: 16px;">[TOTALT] ORDERSAMMANFATTNING:</h3>
-      <div style="background-color: white; border-radius: 4px; padding: 12px;">
-        <div style="text-align: right;">
-          <div style="font-size: 20px; font-weight: bold; color: ${EMAIL_CONFIG.COLORS.TEXT_PRIMARY};">${formatPrice(orderData.total)}</div>
-          <div style="font-size: 13px; color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; margin-top: 4px;">Inklusive kundens återförsäljarmarginal</div>
-        </div>
-      </div>
-    </div>
-    
-    <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin-bottom: 20px;">
-      <h3 style="color: #dc2626; margin-top: 0; margin-bottom: 12px; font-size: 16px;">[ÅTGÄRD] ÅTGÄRDER BEHÖVS:</h3>
-      <ol style="color: #dc2626; margin: 0; padding-left: 18px; line-height: 1.5; font-size: 14px;">
-        <li>Granska orderdetaljer och kunduppgifter</li>
-        <li>Bekräfta lagerstatus för alla produkter</li>
-        <li>Uppdatera orderstatus till "Bekräftad" eller "Behandlas"</li>
-        <li>Skicka orderbekräftelse till kunden</li>
-        <li>Planera leverans och packning</li>
-      </ol>
-    </div>
-    
-    <div style="text-align: center; margin: 25px 0;">
-      <a href="${adminPortalUrl}" style="display: inline-block; background-color: ${EMAIL_CONFIG.COLORS.PRIMARY}; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 15px; border: 2px solid ${EMAIL_CONFIG.COLORS.PRIMARY};">Hantera order</a>
-    </div>
-    
-    <div style="border-top: 1px solid ${EMAIL_CONFIG.COLORS.BORDER}; padding-top: 15px; margin-top: 25px; text-align: center;">
-      <p style="color: ${EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 13px; margin: 0;">Admin Notification<br><strong>B2B Orderhantering</strong></p>
-    </div>
-  </div>
-</div>`
-    },
-    'en-GB': {
-      subject: `New B2B Order: ${orderData.orderNumber} from ${orderData.customerInfo.companyName || orderData.customerInfo.name}`,
-      html: `<div>English B2B Admin Template</div>`
-    },
-    'en-US': {
-      subject: `New B2B Order: ${orderData.orderNumber} from ${orderData.customerInfo.companyName || orderData.customerInfo.name}`,
-      html: `<div>US English B2B Admin Template</div>`
-    }
-  };
+  const orderInfoPanel = renderPanel(
+    renderKeyValueRows([
+      { label: 'Ordernummer', value: orderData.orderNumber },
+      { label: 'Skapad', value: orderData.createdAt || 'Just nu' },
+      { label: 'Status', value: 'Ny – behöver behandling' },
+    ]),
+    'Orderinformation'
+  );
 
-  const template = templates[lang as keyof typeof templates] || templates['sv-SE'];
+  const customerPanel = renderPanel(
+    renderKeyValueRows(
+      [
+        { label: 'Företag', value: esc(ci.companyName || ci.name || '-') },
+        { label: 'E-post', value: `<a href="mailto:${esc(ci.email)}" style="color:${emailTokens.ink};text-decoration:underline;">${esc(ci.email)}</a>` },
+        { label: 'Kontaktperson', value: esc(ci.contactPerson || 'Ej angiven') },
+        ...(ci.phone ? [{ label: 'Telefon', value: `<a href="tel:${esc(ci.phone)}" style="color:${emailTokens.ink};text-decoration:underline;">${esc(ci.phone)}</a>` }] : []),
+        ...(ci.address ? [{ label: 'Adress', value: esc(`${ci.address}${ci.postalCode && ci.city ? `, ${ci.postalCode} ${ci.city}` : ''}`) }] : []),
+        ...(ci.marginal ? [{ label: 'Kundmarginal', value: `${ci.marginal}%` }] : []),
+      ],
+      { rawHtml: true }
+    ),
+    'Kundinformation'
+  );
+
+  const summaryPanel = renderPanel(
+    `<div style="white-space:pre-line;color:${emailTokens.ink};line-height:1.5;font-family:'Courier New',monospace;font-size:13px;">${esc(orderSummary || 'Orderdetaljer saknas')}</div>`,
+    'Orderdetaljer'
+  );
+
+  const totalPanel = renderPanel(
+    `<div style="text-align:right;"><div style="font-size:20px;font-weight:700;color:${emailTokens.ink};font-variant-numeric:tabular-nums;">${esc(formatPrice(orderData.total))}</div><div style="font-size:13px;color:${emailTokens.muted};margin-top:4px;">Inklusive kundens återförsäljarmarginal</div></div>`,
+    'Ordersammanfattning'
+  );
+
+  const actionsPanel = renderPanel(
+    renderList([
+      'Granska orderdetaljer och kunduppgifter',
+      'Bekräfta lagerstatus för alla produkter',
+      'Uppdatera orderstatus till "Bekräftad" eller "Behandlas"',
+      'Skicka orderbekräftelse till kunden',
+      'Planera leverans och packning',
+    ]),
+    'Åtgärder som behövs'
+  );
+
+  const body =
+    renderHeading('Ny B2B-beställning') +
+    renderParagraph('En ny beställning har skapats i portalen och behöver behandling.', { muted: true }) +
+    orderInfoPanel +
+    customerPanel +
+    summaryPanel +
+    totalPanel +
+    actionsPanel +
+    renderButton(adminPortalUrl, 'Hantera order');
+
   return {
-    subject: template.subject,
-    html: template.html
+    subject: `Ny B2B-beställning: ${orderData.orderNumber} från ${ci.companyName || ci.name}`,
+    html: renderEmailShell({
+      brandName: `${brand} System`,
+      bodyHtml: body,
+      footerNote: 'Detta meddelande skickades automatiskt från orderhanteringen.',
+      preheader: `Ny B2B-beställning: ${esc(orderData.orderNumber)}`,
+    }),
   };
 }

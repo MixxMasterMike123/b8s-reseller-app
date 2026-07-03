@@ -12,6 +12,7 @@ export interface AffiliateWelcomeData {
     };
     wasExistingAuthUser: boolean;
     language: string;
+    brandName?: string;
 }
 export declare function generateAffiliateWelcomeTemplate(data: AffiliateWelcomeData): {
     subject: string;

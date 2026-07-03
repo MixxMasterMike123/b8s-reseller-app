@@ -1,188 +1,60 @@
 "use strict";
-// Affiliate Welcome Email Template - New Affiliate Onboarding
-// Extracted from V3 affiliateWelcome.ts with orchestrator integration
-// Used for: New affiliate approval and welcome (different from login credentials)
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateAffiliateWelcomeTemplate = void 0;
+// Affiliate Welcome Email Template — NORD-aligned, per-shop branded.
+// New affiliate approval + welcome (distinct from login credentials).
 const config_1 = require("../core/config");
+const emailLayout_1 = require("./emailLayout");
+function chip(value) {
+    return `<span style="font-family:'Courier New',monospace;background-color:${emailLayout_1.emailTokens.card};border:1px solid ${emailLayout_1.emailTokens.border};padding:4px 10px;border-radius:6px;font-size:13px;color:${emailLayout_1.emailTokens.ink};">${(0, emailLayout_1.esc)(value)}</span>`;
+}
 function generateAffiliateWelcomeTemplate(data) {
     const { affiliateInfo, credentials, wasExistingAuthUser, language } = data;
-    // Countryless storefront URLs (i18n deferred).
+    const brand = data.brandName || 'MeteorPR';
+    const en = language.startsWith('en');
     const portalUrl = `${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/affiliate-portal`;
     const referralUrl = `${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/?ref=${affiliateInfo.affiliateCode}`;
     const supportUrl = `${config_1.EMAIL_CONFIG.URLS.B2B_PORTAL}/contact`;
-    // Generate login instructions based on user type
-    const loginInstructions = wasExistingAuthUser
-        ? getExistingUserInstructions(language, credentials.email)
-        : getNewUserInstructions(language, credentials.email, credentials.temporaryPassword);
-    const templates = {
-        'sv-SE': {
-            subject: 'Välkommen till vårt affiliateprogram! - Dina inloggningsuppgifter',
-            html: generateSwedishTemplate(affiliateInfo, loginInstructions, portalUrl, referralUrl, supportUrl)
-        },
-        'en-GB': {
-            subject: 'Welcome to the affiliate programme! - Your Login Credentials',
-            html: generateEnglishTemplate(affiliateInfo, loginInstructions, portalUrl, referralUrl, supportUrl, 'programme', 'Kind regards')
-        },
-        'en-US': {
-            subject: 'Welcome to the affiliate program! - Your Login Credentials',
-            html: generateEnglishTemplate(affiliateInfo, loginInstructions, portalUrl, referralUrl, supportUrl, 'program', 'Best regards')
-        }
-    };
-    const template = templates[language] || templates['sv-SE'];
+    // Login block
+    const loginBlock = wasExistingAuthUser
+        ? (0, emailLayout_1.renderParagraph)(en
+            ? `You already had an account, so log in with your existing password. Forgotten it? Reset it on the login page. Email: <strong>${(0, emailLayout_1.esc)(credentials.email)}</strong>.`
+            : `Du hade redan ett konto, så logga in med ditt befintliga lösenord. Har du glömt det? Återställ det på inloggningssidan. E-post: <strong>${(0, emailLayout_1.esc)(credentials.email)}</strong>.`, { html: true, muted: true })
+        : (0, emailLayout_1.renderPanel)(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+          <tr><td style="padding:6px 0;font-size:13px;color:${emailLayout_1.emailTokens.muted};">${en ? 'Username' : 'Användarnamn'}</td><td style="padding:6px 0 6px 12px;text-align:right;">${chip(credentials.email)}</td></tr>
+          <tr><td style="padding:6px 0;font-size:13px;color:${emailLayout_1.emailTokens.muted};">${en ? 'Temporary password' : 'Tillfälligt lösenord'}</td><td style="padding:6px 0 6px 12px;text-align:right;">${chip(credentials.temporaryPassword || (en ? '[generated]' : '[genereras]'))}</td></tr>
+        </table>
+        <div style="margin-top:12px;font-size:14px;color:${emailLayout_1.emailTokens.muted};line-height:1.6;">${en ? 'We strongly recommend changing your password after your first login.' : 'Vi rekommenderar starkt att du byter lösenord efter din första inloggning.'}</div>`, en ? 'Your login details' : 'Dina inloggningsuppgifter');
+    // Referral panel
+    const referralPanel = (0, emailLayout_1.renderPanel)((0, emailLayout_1.renderParagraph)(en ? 'Use this link to earn commission on every purchase:' : 'Använd den här länken för att tjäna provision på varje köp:', { muted: true }) +
+        (0, emailLayout_1.renderParagraph)(`<a href="${(0, emailLayout_1.esc)(referralUrl)}" style="color:${emailLayout_1.emailTokens.ink};text-decoration:underline;word-break:break-all;font-weight:600;">${(0, emailLayout_1.esc)(referralUrl)}</a>`, { html: true }) +
+        (affiliateInfo.commissionRate
+            ? (0, emailLayout_1.renderParagraph)(`${en ? 'Your commission' : 'Din provision'}: <strong>${affiliateInfo.commissionRate}%</strong> ${en ? 'on all sales' : 'på alla försäljningar'}.`, { html: true, muted: true })
+            : ''), en ? 'Your unique affiliate link' : 'Din unika affiliate-länk');
+    const featuresPanel = (0, emailLayout_1.renderPanel)((0, emailLayout_1.renderList)(en
+        ? ['See your sales stats and earnings', 'Track clicks and conversions', 'Download marketing materials', 'Manage your payouts', 'Get support']
+        : ['Se din försäljningsstatistik och dina intäkter', 'Spåra klick och konverteringar', 'Ladda ner marknadsföringsmaterial', 'Hantera dina utbetalningar', 'Få support']), en ? 'What you can do in the affiliate portal' : 'Vad du kan göra i affiliate-portalen');
+    const body = (0, emailLayout_1.renderHeading)(en ? `Congratulations, ${(0, emailLayout_1.esc)(affiliateInfo.name)}!` : `Grattis, ${(0, emailLayout_1.esc)(affiliateInfo.name)}!`) +
+        (0, emailLayout_1.renderParagraph)(en
+            ? 'Your application to our affiliate programme has been approved. You’re now an official affiliate and can start earning commission on all sales.'
+            : 'Din ansökan till vårt affiliateprogram har godkänts. Du är nu en officiell affiliate och kan börja tjäna provision på alla försäljningar.') +
+        loginBlock +
+        referralPanel +
+        featuresPanel +
+        (0, emailLayout_1.renderButton)(portalUrl, en ? 'Log in to the affiliate portal' : 'Logga in på affiliate-portalen') +
+        (0, emailLayout_1.renderParagraph)(en ? 'We look forward to a great partnership!' : 'Vi ser fram emot ett fint samarbete!', { muted: true });
+    const subject = en
+        ? 'Welcome to the affiliate programme! – your login details'
+        : 'Välkommen till affiliateprogrammet! – dina inloggningsuppgifter';
     return {
-        subject: template.subject,
-        html: template.html
+        subject,
+        html: (0, emailLayout_1.renderEmailShell)({
+            brandName: brand,
+            bodyHtml: body,
+            footerExtraHtml: (0, emailLayout_1.renderFooterSupport)(supportUrl, language),
+            preheader: en ? 'Your affiliate application was approved' : 'Din affiliate-ansökan blev godkänd',
+        }),
     };
 }
 exports.generateAffiliateWelcomeTemplate = generateAffiliateWelcomeTemplate;
-function getExistingUserInstructions(language, email) {
-    const instructions = {
-        'sv-SE': `<p style="color: #374151; margin: 0;">Du hade redan ett konto, så du kan logga in med ditt befintliga lösenord. Om du har glömt det kan du återställa det på inloggningssidan.</p>
-              <p style="color: #374151; margin: 10px 0 0 0;"><strong>E-post:</strong> ${email}</p>`,
-        'en-GB': `<p style="color: #374151; margin: 0;">You already had an account, so you can log in with your existing password. If you've forgotten it, you can reset it on the login page.</p>
-              <p style="color: #374151; margin: 10px 0 0 0;"><strong>Email:</strong> ${email}</p>`,
-        'en-US': `<p style="color: #374151; margin: 0;">You already had an account, so you can log in with your existing password. If you've forgotten it, you can reset it on the login page.</p>
-              <p style="color: #374151; margin: 10px 0 0 0;"><strong>Email:</strong> ${email}</p>`
-    };
-    return instructions[language] || instructions['sv-SE'];
-}
-function getNewUserInstructions(language, email, temporaryPassword) {
-    const instructions = {
-        'sv-SE': `<ul style="color: #374151; margin: 0; padding-left: 20px;">
-                <li><strong>Användarnamn:</strong> ${email}</li>
-                <li><strong>Tillfälligt lösenord:</strong> ${temporaryPassword || '[GENERERAS]'}</li>
-              </ul>
-              <p style="color: #374151; margin: 10px 0 0 0;">Vi rekommenderar starkt att du byter ditt lösenord efter första inloggningen.</p>`,
-        'en-GB': `<ul style="color: #374151; margin: 0; padding-left: 20px;">
-                <li><strong>Username:</strong> ${email}</li>
-                <li><strong>Temporary password:</strong> ${temporaryPassword || '[GENERATED]'}</li>
-              </ul>
-              <p style="color: #374151; margin: 10px 0 0 0;">We strongly recommend that you change your password after your first login.</p>`,
-        'en-US': `<ul style="color: #374151; margin: 0; padding-left: 20px;">
-                <li><strong>Username:</strong> ${email}</li>
-                <li><strong>Temporary password:</strong> ${temporaryPassword || '[GENERATED]'}</li>
-              </ul>
-              <p style="color: #374151; margin: 10px 0 0 0;">We strongly recommend that you change your password after your first login.</p>`
-    };
-    return instructions[language] || instructions['sv-SE'];
-}
-function generateSwedishTemplate(affiliateInfo, loginInstructions, portalUrl, referralUrl, supportUrl) {
-    return `
-<div style="font-family: ${config_1.EMAIL_CONFIG.FONTS.PRIMARY}; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px;">
-  <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <h2 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-bottom: 20px; font-size: 24px;">Grattis, ${affiliateInfo.name}!</h2>
-    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">Din ansökan till vårt affiliateprogram har blivit godkänd!</p>
-    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 25px;">Du är nu en officiell affiliate och kan börja tjäna provision på alla försäljningar.</p>
-    
-    <div style="background-color: #f3f4f6; border-radius: 6px; padding: 20px; margin-bottom: 25px;">
-      <h3 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-top: 0; margin-bottom: 15px; font-size: 18px;">[INLOGGNING] DINA INLOGGNINGSUPPGIFTER:</h3>
-      ${loginInstructions}
-    </div>
-    
-    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 25px;">
-      <h4 style="color: #92400e; margin-top: 0; margin-bottom: 10px; font-size: 16px;">[VIKTIGT] VIKTIG INFORMATION:</h4>
-      <ul style="color: #92400e; margin: 0; padding-left: 20px;">
-        <li>Du måste ändra ditt lösenord vid första inloggningen</li>
-        <li>Affiliate-portalen finns på: <a href="${portalUrl}" style="color: ${config_1.EMAIL_CONFIG.COLORS.LINK}; font-weight: bold;">${portalUrl}</a></li>
-        <li>Ditt konto har aktiverats och du har nu tillgång till alla affiliate-funktioner</li>
-      </ul>
-    </div>
-    
-    <div style="background-color: #ecfdf5; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
-      <h4 style="color: #065f46; margin-top: 0; margin-bottom: 15px; font-size: 16px;">[AFFILIATE] DIN UNIKA AFFILIATE-LÄNK:</h4>
-      <p style="color: #065f46; margin-bottom: 15px;">Använd denna länk för att tjäna provision på alla köp:</p>
-      <div style="background-color: #d1fae5; padding: 12px; border-radius: 4px; border-left: 4px solid #10b981;">
-        <a href="${referralUrl}" style="color: #065f46; text-decoration: none; font-weight: bold; word-break: break-all; font-size: 14px;">${referralUrl}</a>
-      </div>
-      ${affiliateInfo.commissionRate ? `<p style="color: #065f46; margin-top: 10px; font-size: 14px;"><strong>Din provision:</strong> ${affiliateInfo.commissionRate}% på alla försäljningar</p>` : ''}
-    </div>
-    
-    <div style="background-color: #eff6ff; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
-      <h4 style="color: #1e40af; margin-top: 0; margin-bottom: 15px; font-size: 16px;">[FUNKTIONER] VAD KAN DU GÖRA I AFFILIATE-PORTALEN:</h4>
-      <ul style="color: #1e40af; margin: 0; padding-left: 20px;">
-        <li>Se dina försäljningsstatistik och intäkter</li>
-        <li>Spåra klick och konverteringar</li>
-        <li>Ladda ner marknadsföringsmaterial</li>
-        <li>Hantera dina utbetalningar</li>
-        <li>Få support och hjälp</li>
-      </ul>
-    </div>
-    
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="${portalUrl}" style="display: inline-block; background-color: ${config_1.EMAIL_CONFIG.COLORS.PRIMARY}; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; border: 2px solid ${config_1.EMAIL_CONFIG.COLORS.PRIMARY};">Logga in på affiliate-portalen</a>
-    </div>
-    
-    <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 25px;">
-      <h4 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; margin-top: 0; margin-bottom: 10px; font-size: 16px;">[SUPPORT] BEHÖVER DU HJÄLP?</h4>
-      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; margin: 0; font-size: 14px;">Om du har några frågor eller behöver hjälp, kontakta vår support på <a href="${supportUrl}" style="color: ${config_1.EMAIL_CONFIG.COLORS.LINK};">${supportUrl}</a></p>
-    </div>
-    
-    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">Vi ser fram emot ett framgångsrikt samarbete!</p>
-    
-    <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
-      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin: 0;">Med vänliga hälsningar</p>
-    </div>
-  </div>
-</div>`;
-}
-function generateEnglishTemplate(affiliateInfo, loginInstructions, portalUrl, referralUrl, supportUrl, programWord, signOff) {
-    return `
-<div style="font-family: ${config_1.EMAIL_CONFIG.FONTS.PRIMARY}; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px;">
-  <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <h2 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-bottom: 20px; font-size: 24px;">Congratulations, ${affiliateInfo.name}!</h2>
-    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">Your application to join the affiliate ${programWord} has been approved!</p>
-    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 25px;">You are now an official affiliate and can start earning commission on all sales.</p>
-    
-    <div style="background-color: #f3f4f6; border-radius: 6px; padding: 20px; margin-bottom: 25px;">
-      <h3 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_PRIMARY}; margin-top: 0; margin-bottom: 15px; font-size: 18px;">[LOGIN] YOUR LOGIN CREDENTIALS:</h3>
-      ${loginInstructions}
-    </div>
-    
-    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 25px;">
-      <h4 style="color: #92400e; margin-top: 0; margin-bottom: 10px; font-size: 16px;">[IMPORTANT] IMPORTANT INFORMATION:</h4>
-      <ul style="color: #92400e; margin: 0; padding-left: 20px;">
-        <li>You must change your password on first login</li>
-        <li>The Affiliate Portal is available at: <a href="${portalUrl}" style="color: ${config_1.EMAIL_CONFIG.COLORS.LINK}; font-weight: bold;">${portalUrl}</a></li>
-        <li>Your account has been activated and you now have access to all affiliate functions</li>
-      </ul>
-    </div>
-    
-    <div style="background-color: #ecfdf5; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
-      <h4 style="color: #065f46; margin-top: 0; margin-bottom: 15px; font-size: 16px;">[AFFILIATE] YOUR UNIQUE AFFILIATE LINK:</h4>
-      <p style="color: #065f46; margin-bottom: 15px;">Use this link to earn commission on ${programWord === 'programme' ? 'every' : 'all'} purchase${programWord === 'programme' ? '' : 's'}:</p>
-      <div style="background-color: #d1fae5; padding: 12px; border-radius: 4px; border-left: 4px solid #10b981;">
-        <a href="${referralUrl}" style="color: #065f46; text-decoration: none; font-weight: bold; word-break: break-all; font-size: 14px;">${referralUrl}</a>
-      </div>
-      ${affiliateInfo.commissionRate ? `<p style="color: #065f46; margin-top: 10px; font-size: 14px;"><strong>Your commission:</strong> ${affiliateInfo.commissionRate}% on all sales</p>` : ''}
-    </div>
-    
-    <div style="background-color: #eff6ff; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
-      <h4 style="color: #1e40af; margin-top: 0; margin-bottom: 15px; font-size: 16px;">[FUNCTIONS] WHAT YOU CAN DO IN THE AFFILIATE PORTAL:</h4>
-      <ul style="color: #1e40af; margin: 0; padding-left: 20px;">
-        <li>View your sales statistics and earnings</li>
-        <li>Track clicks and conversions</li>
-        <li>Download marketing materials</li>
-        <li>Manage your payouts</li>
-        <li>Get support and help</li>
-      </ul>
-    </div>
-    
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="${portalUrl}" style="display: inline-block; background-color: ${config_1.EMAIL_CONFIG.COLORS.PRIMARY}; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; border: 2px solid ${config_1.EMAIL_CONFIG.COLORS.PRIMARY};">Login to Affiliate Portal</a>
-    </div>
-    
-    <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 25px;">
-      <h4 style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; margin-top: 0; margin-bottom: 10px; font-size: 16px;">[SUPPORT] NEED HELP?</h4>
-      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; margin: 0; font-size: 14px;">If you have any questions or need assistance, please contact our support at <a href="${supportUrl}" style="color: ${config_1.EMAIL_CONFIG.COLORS.LINK};">${supportUrl}</a></p>
-    </div>
-    
-    <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_SECONDARY}; line-height: 1.6; margin-bottom: 20px;">We look forward to a successful partnership!</p>
-    
-    <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
-      <p style="color: ${config_1.EMAIL_CONFIG.COLORS.TEXT_MUTED}; font-size: 14px; margin: 0;">${signOff}</p>
-    </div>
-  </div>
-</div>`;
-}
 //# sourceMappingURL=affiliateWelcome.js.map

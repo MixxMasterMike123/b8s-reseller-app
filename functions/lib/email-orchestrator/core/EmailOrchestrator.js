@@ -19,6 +19,7 @@ const affiliateWelcome_1 = require("../templates/affiliateWelcome");
 const emailVerification_1 = require("../templates/emailVerification");
 const affiliateApplicationReceived_1 = require("../templates/affiliateApplicationReceived");
 const affiliateApplicationNotificationAdmin_1 = require("../templates/affiliateApplicationNotificationAdmin");
+const emailLayout_1 = require("../templates/emailLayout");
 const config_1 = require("./config");
 class EmailOrchestrator {
     constructor() {
@@ -168,7 +169,8 @@ class EmailOrchestrator {
                     trackingNumber: data.additionalData?.trackingNumber,
                     estimatedDelivery: data.additionalData?.estimatedDelivery,
                     notes: data.additionalData?.notes,
-                    userType: data.userData.type
+                    userType: data.userData.type,
+                    brandName: data.brandName
                 };
                 return (0, orderStatusUpdate_1.generateOrderStatusUpdateTemplate)(orderStatusData, data.language, data.context.orderId);
             case 'ORDER_NOTIFICATION_ADMIN':
@@ -205,7 +207,8 @@ class EmailOrchestrator {
                         createdAt: data.orderData.createdAt,
                     },
                     orderSummary: data.additionalData?.orderSummary,
-                    orderType: data.userData.type === 'B2B' ? 'B2B' : 'B2C'
+                    orderType: data.userData.type === 'B2B' ? 'B2B' : 'B2C',
+                    brandName: data.brandName
                 };
                 return (0, orderNotificationAdmin_1.generateOrderNotificationAdminTemplate)(adminNotificationData, data.language);
             case 'LOGIN_CREDENTIALS':
@@ -221,7 +224,8 @@ class EmailOrchestrator {
                     },
                     credentials: data.additionalData.credentials,
                     accountType: (data.additionalData.accountType === 'AFFILIATE') ? 'AFFILIATE' : 'B2B',
-                    wasExistingAuthUser: data.additionalData.wasExistingAuthUser || false
+                    wasExistingAuthUser: data.additionalData.wasExistingAuthUser || false,
+                    brandName: data.brandName
                 };
                 return (0, loginCredentials_1.generateLoginCredentialsTemplate)(loginCredentialsData, data.language);
             case 'PASSWORD_RESET':
@@ -245,7 +249,8 @@ class EmailOrchestrator {
                     affiliateInfo: data.additionalData.affiliateInfo,
                     credentials: data.additionalData.credentials,
                     wasExistingAuthUser: data.additionalData.wasExistingAuthUser || false,
-                    language: data.language
+                    language: data.language,
+                    brandName: data.brandName
                 };
                 return (0, affiliateWelcome_1.generateAffiliateWelcomeTemplate)(affiliateWelcomeData);
             case 'EMAIL_VERIFICATION':
@@ -276,7 +281,8 @@ class EmailOrchestrator {
                     html: (0, affiliateApplicationReceived_1.generateAffiliateApplicationReceivedTemplate)({
                         applicantInfo: data.additionalData.applicantInfo,
                         applicationId: data.additionalData.applicationId,
-                        language: data.language
+                        language: data.language,
+                        brandName: data.brandName
                     }),
                     text: `Thank you for your affiliate application! Your application ID: ${data.additionalData.applicationId}`
                 };
@@ -289,7 +295,8 @@ class EmailOrchestrator {
                     html: (0, affiliateApplicationNotificationAdmin_1.generateAffiliateApplicationNotificationAdminTemplate)({
                         applicantInfo: data.additionalData.applicantInfo,
                         applicationId: data.additionalData.applicationId,
-                        adminPortalUrl: data.additionalData.adminPortalUrl || config_1.EMAIL_CONFIG.URLS.B2B_PORTAL
+                        adminPortalUrl: data.additionalData.adminPortalUrl || config_1.EMAIL_CONFIG.URLS.B2B_PORTAL,
+                        brandName: data.brandName
                     }),
                     text: `New affiliate application from ${data.additionalData.applicantInfo.name} (${data.additionalData.applicantInfo.email}). Application ID: ${data.additionalData.applicationId}`
                 };
@@ -302,18 +309,31 @@ class EmailOrchestrator {
                 if (!ack) {
                     throw new Error('Acknowledgement data is required for withdrawal acknowledgement email');
                 }
-                const itemsHtml = Array.isArray(ack.withdrawnItems) && ack.withdrawnItems.length
-                    ? '<ul>' + ack.withdrawnItems.map((it) => `<li>${(it.name || '').toString()}${it.sku ? ` (${it.sku})` : ''} × ${it.quantity || 1}</li>`).join('') + '</ul>'
-                    : '';
+                // Legal content (order number, submittedAt, withdrawn items, statement,
+                // "spara detta mottagningsbevis" instruction) is preserved verbatim — only
+                // the presentation is restyled onto the shared NORD shell.
+                const withdrawnItems = Array.isArray(ack.withdrawnItems) && ack.withdrawnItems.length
+                    ? ack.withdrawnItems.map((it) => `${(0, emailLayout_1.esc)(it.name || '')}${it.sku ? ` (${(0, emailLayout_1.esc)(it.sku)})` : ''} × ${(0, emailLayout_1.esc)(it.quantity || 1)}`)
+                    : [];
+                const ackBody = (0, emailLayout_1.renderHeading)('Mottagningsbevis – ångrat köp') +
+                    (0, emailLayout_1.renderParagraph)(`Hej ${(0, emailLayout_1.esc)(ack.consumerName || '')},`) +
+                    (0, emailLayout_1.renderParagraph)('Vi bekräftar att vi har tagit emot ditt meddelande om att du ångrar ditt köp.') +
+                    (0, emailLayout_1.renderKeyValueRows)([
+                        { label: 'Order', value: String(ack.orderNumber || '') },
+                        { label: 'Mottaget', value: String(ack.submittedAt || '') },
+                    ]) +
+                    (withdrawnItems.length
+                        ? (0, emailLayout_1.renderPanel)((0, emailLayout_1.renderList)(withdrawnItems), 'Ångrade varor')
+                        : '') +
+                    (ack.statement ? (0, emailLayout_1.renderParagraph)(String(ack.statement)) : '') +
+                    (0, emailLayout_1.renderParagraph)('Spara detta mottagningsbevis. Återbetalning hanteras enligt våra villkor.', { muted: true });
                 return {
                     subject: `Mottagningsbevis – ångrat köp ${ack.orderNumber || ''}`.trim(),
-                    html: `<p>Hej ${ack.consumerName || ''},</p>` +
-                        `<p>Vi bekräftar att vi har tagit emot ditt meddelande om att du ångrar ditt köp.</p>` +
-                        `<p><strong>Order:</strong> ${ack.orderNumber || ''}<br/>` +
-                        `<strong>Mottaget:</strong> ${ack.submittedAt || ''}</p>` +
-                        (itemsHtml ? `<p><strong>Ångrade varor:</strong></p>${itemsHtml}` : '') +
-                        `<p>${ack.statement || ''}</p>` +
-                        `<p>Spara detta mottagningsbevis. Återbetalning hanteras enligt våra villkor.</p>`,
+                    html: (0, emailLayout_1.renderEmailShell)({
+                        brandName: data.brandName,
+                        bodyHtml: ackBody,
+                        preheader: `Mottagningsbevis – ångrat köp ${ack.orderNumber || ''}`.trim(),
+                    }),
                     text: `Mottagningsbevis – ångrat köp ${ack.orderNumber || ''}\n` +
                         `Mottaget: ${ack.submittedAt || ''}\n` +
                         `${ack.statement || ''}\n` +

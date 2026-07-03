@@ -7,6 +7,7 @@ interface AffiliateApplicationReceivedData {
     };
     applicationId: string;
     language: string;
+    brandName?: string;
 }
 export declare function generateAffiliateApplicationReceivedTemplate(data: AffiliateApplicationReceivedData): string;
 export {};

@@ -50,6 +50,7 @@ export interface AdminOrderNotificationData {
     };
     orderSummary?: string;
     orderType: 'B2B' | 'B2C';
+    brandName?: string;
 }
 export declare function generateOrderNotificationAdminTemplate(data: AdminOrderNotificationData, lang?: string): {
     subject: string;

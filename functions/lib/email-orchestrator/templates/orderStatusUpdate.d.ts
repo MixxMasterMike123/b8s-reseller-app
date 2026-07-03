@@ -22,6 +22,7 @@ export interface OrderStatusUpdateData {
     estimatedDelivery?: string;
     notes?: string;
     userType: 'B2B' | 'B2C' | 'GUEST';
+    brandName?: string;
 }
 export declare function generateOrderStatusUpdateTemplate(data: OrderStatusUpdateData, lang?: string, orderId?: string): {
     subject: string;

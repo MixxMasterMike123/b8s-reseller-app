@@ -18,6 +18,7 @@ interface AffiliateApplicationAdminData {
     };
     applicationId: string;
     adminPortalUrl: string;
+    brandName?: string;
 }
 export declare function generateAffiliateApplicationNotificationAdminTemplate(data: AffiliateApplicationAdminData): string;
 export {};
