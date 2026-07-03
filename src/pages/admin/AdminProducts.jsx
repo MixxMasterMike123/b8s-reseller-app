@@ -1,10 +1,12 @@
 // AdminProducts — the product LIST for a shop. The create/edit form lives in
 // components/admin/ProductForm.jsx (extracted 2026-06-15: de-B2B, single tab, no
 // translations, single price). This page owns: load (shop-scoped), the list
-// table, open/edit/delete, and group-name collection for the form's autocomplete.
+// table, open/edit/delete, the featured star (frontpage "Utvalt"), the
+// storefront drag-sort mode (persists per-product sortOrder), and group-name
+// collection for the form's autocomplete.
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, getDocs, doc, deleteDoc, query, where } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc, updateDoc, writeBatch, serverTimestamp, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import { useShopId } from '../../contexts/ShopContext';
@@ -13,7 +15,12 @@ import ProductMenu from '../../components/ProductMenu';
 import AppLayout from '../../components/layout/AppLayout';
 import ProductForm from '../../components/admin/ProductForm';
 import { Page, DataTable, StatusPill, Button } from '../../components/admin/ui';
-import { TrashIcon } from '@heroicons/react/24/outline';
+import { TrashIcon, StarIcon } from '@heroicons/react/24/outline';
+import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { isProductFeatured, sortProductsForDisplay } from '../../utils/productSorting';
 
 // Read a product name that may be a legacy per-locale object or a plain string.
 const productName = (name) => {
@@ -22,6 +29,54 @@ const productName = (name) => {
     return name['sv-SE'] || Object.values(name).find((v) => typeof v === 'string') || '';
   }
   return '';
+};
+
+// One draggable row in sort mode. Drag listeners sit ONLY on the grip (same
+// idiom as the variants rail in ProductForm) so text selection etc. stays sane.
+const SortableProductRow = ({ product, position }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: product.id });
+  const img = product.imageUrl || product.b2cImageUrl;
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : undefined }}
+      className={`flex items-center gap-3 border-b border-admin-border-soft bg-admin-surface px-3 py-2 last:border-b-0 ${isDragging ? 'relative z-10 shadow-[var(--shadow-admin)]' : ''}`}
+    >
+      <span
+        {...attributes}
+        {...listeners}
+        title="Dra för att ändra ordning"
+        className="cursor-grab touch-none text-admin-text-faint active:cursor-grabbing"
+      >
+        <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M7 4a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm0 6a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm0 6a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm8-12a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm0 6a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm0 6a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
+        </svg>
+      </span>
+      <span className="w-6 shrink-0 text-right text-[12px] tabular-nums text-admin-text-faint">{position}</span>
+      {img ? (
+        <img src={img} alt="" className="h-9 w-9 shrink-0 rounded-[6px] border border-admin-border object-cover" />
+      ) : (
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-[6px] border border-admin-border bg-admin-surface-2 text-[10px] text-admin-text-faint">
+          —
+        </div>
+      )}
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[13px] font-medium text-admin-text">
+          {productName(product.name) || 'Namnlös'}
+        </span>
+        {product.sku && <span className="block truncate text-[12px] text-admin-text-faint">{product.sku}</span>}
+      </span>
+      <span className="hidden truncate text-[12px] text-admin-text-muted sm:block sm:max-w-[10rem]">
+        {product.category || product.group || ''}
+      </span>
+      {isProductFeatured(product) && (
+        <span title="Utvald på startsidan" className="shrink-0">
+          <StarSolidIcon className="h-4 w-4 text-amber-400" />
+        </span>
+      )}
+      {!product.isActive && <StatusPill tone="neutral">Utkast</StatusPill>}
+    </div>
+  );
 };
 
 const AdminProducts = () => {
@@ -39,6 +94,13 @@ const AdminProducts = () => {
 
   // List filter (ProductMenu).
   const [filteredProduct, setFilteredProduct] = useState(null);
+
+  // Sort mode: drag products into the storefront display order. orderDraft is
+  // the working copy; nothing is persisted until "Spara ordning".
+  const [sortMode, setSortMode] = useState(false);
+  const [orderDraft, setOrderDraft] = useState([]);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const sortSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const fetchProducts = async () => {
     try {
@@ -98,6 +160,61 @@ const AdminProducts = () => {
     }
   };
 
+  // Star toggle: optimistic flip, revert on write failure. Writes the explicit
+  // boolean (which supersedes the legacy `featured` tag — see isProductFeatured).
+  const toggleFeatured = async (p) => {
+    const next = !isProductFeatured(p);
+    setProducts((prev) => prev.map((x) => (x.id === p.id ? { ...x, featured: next } : x)));
+    try {
+      await updateDoc(doc(db, 'products', p.id), { featured: next, updatedAt: serverTimestamp() });
+    } catch (err) {
+      console.error('Error toggling featured:', err);
+      setProducts((prev) => prev.map((x) => (x.id === p.id ? { ...x, featured: p.featured } : x)));
+      toast.error('Kunde inte uppdatera Utvald');
+    }
+  };
+
+  const enterSortMode = () => {
+    // Start from the CURRENT storefront order so a drag session tweaks what
+    // shoppers actually see, not the admin list's alphabetical order.
+    setOrderDraft(sortProductsForDisplay(products, (p) => productName(p.name), 'sv'));
+    setSortMode(true);
+  };
+
+  const onSortDragEnd = ({ active, over }) => {
+    if (!over || active.id === over.id) return;
+    setOrderDraft((prev) => {
+      const from = prev.findIndex((p) => p.id === active.id);
+      const to = prev.findIndex((p) => p.id === over.id);
+      if (from < 0 || to < 0) return prev;
+      return arrayMove(prev, from, to);
+    });
+  };
+
+  const saveOrder = async () => {
+    try {
+      setSavingOrder(true);
+      // Positions are just the draft index. Batched writes, chunked well under
+      // Firestore's 500-op batch limit.
+      for (let i = 0; i < orderDraft.length; i += 400) {
+        const batch = writeBatch(db);
+        orderDraft.slice(i, i + 400).forEach((p, j) => {
+          batch.update(doc(db, 'products', p.id), { sortOrder: i + j, updatedAt: serverTimestamp() });
+        });
+        await batch.commit();
+      }
+      const orderIdx = new Map(orderDraft.map((p, i) => [p.id, i]));
+      setProducts((prev) => prev.map((p) => (orderIdx.has(p.id) ? { ...p, sortOrder: orderIdx.get(p.id) } : p)));
+      setSortMode(false);
+      toast.success('Ordningen sparad');
+    } catch (err) {
+      console.error('Error saving product order:', err);
+      toast.error('Kunde inte spara ordningen: ' + (err.message || 'Okänt fel'));
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
   if (!isAdmin) {
     return (
       <AppLayout>
@@ -144,6 +261,36 @@ const AdminProducts = () => {
               {p.sku && <span className="block truncate text-[12px] text-admin-text-faint">{p.sku}</span>}
             </span>
           </div>
+        );
+      },
+    },
+    {
+      // WooCommerce/BigCommerce-style featured star: click = show/hide the
+      // product in the storefront's "Utvalt" frontpage section.
+      key: 'featured',
+      header: 'Utvald',
+      align: 'center',
+      className: 'w-16',
+      render: (p) => {
+        const on = isProductFeatured(p);
+        return (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFeatured(p);
+            }}
+            title={on ? 'Ta bort från Utvalt på startsidan' : 'Visa i Utvalt på startsidan'}
+            aria-label={on ? 'Ta bort från Utvalt på startsidan' : 'Visa i Utvalt på startsidan'}
+            aria-pressed={on}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-admin-el)] hover:bg-admin-surface-2"
+          >
+            {on ? (
+              <StarSolidIcon className="h-5 w-5 text-amber-400" />
+            ) : (
+              <StarIcon className="h-5 w-5 text-admin-text-faint" />
+            )}
+          </button>
         );
       },
     },
@@ -221,14 +368,59 @@ const AdminProducts = () => {
     );
   }
 
+  // ── Sort mode: drag rows into the storefront display order. ──
+  if (sortMode) {
+    return (
+      <AppLayout>
+        <Page
+          title="Ändra ordning"
+          actions={
+            <>
+              <Button variant="secondary" onClick={() => setSortMode(false)} disabled={savingOrder}>
+                Avbryt
+              </Button>
+              <Button variant="primary" onClick={saveOrder} disabled={savingOrder}>
+                {savingOrder ? 'Sparar…' : 'Spara ordning'}
+              </Button>
+            </>
+          }
+        >
+          <p className="mb-3 text-[13px] text-admin-text-muted">
+            Dra produkterna i den ordning de ska visas i butiken. Ordningen gäller startsidan,
+            Utvalt-sektionen och kategorisidorna. Utkast har en plats i ordningen men visas inte
+            förrän de aktiveras.
+          </p>
+          <div className="overflow-hidden rounded-[var(--radius-admin)] border border-admin-border bg-admin-surface">
+            {orderDraft.length === 0 ? (
+              <p className="px-3 py-10 text-center text-[13px] text-admin-text-muted">Inga produkter att sortera.</p>
+            ) : (
+              <DndContext sensors={sortSensors} collisionDetection={closestCenter} onDragEnd={onSortDragEnd}>
+                <SortableContext items={orderDraft.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+                  {orderDraft.map((p, i) => (
+                    <SortableProductRow key={p.id} product={p} position={i + 1} />
+                  ))}
+                </SortableContext>
+              </DndContext>
+            )}
+          </div>
+        </Page>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <Page
         title="Produkter"
         actions={
-          <Button variant="primary" onClick={() => setEditing({ product: null })}>
-            Lägg till produkt
-          </Button>
+          <>
+            <Button variant="secondary" onClick={enterSortMode} disabled={loading || products.length < 2}>
+              Ändra ordning
+            </Button>
+            <Button variant="primary" onClick={() => setEditing({ product: null })}>
+              Lägg till produkt
+            </Button>
+          </>
         }
       >
         {error && (

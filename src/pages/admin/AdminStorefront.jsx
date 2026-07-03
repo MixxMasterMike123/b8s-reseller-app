@@ -45,6 +45,7 @@ const BRANDING_KEYS = [
   'gallery',
   'blocks',
   'frontpageCategory',
+  'featuredLimit',
   // Section headings/subtitles (close the rendered-but-uncontrollable gap).
   'featuredTitle',
   'productsTitle',
@@ -425,6 +426,23 @@ const AdminStorefront = () => {
                   </select>
                   <p className="mt-1 text-[12px] text-admin-text-muted">
                     Välj en kategori att lyfta fram på startsidan (med en länk till alla produkter). Lämna på "Visa alla produkter" för att visa hela sortimentet.
+                  </p>
+                </div>
+
+                <div>
+                  <label className={labelCls}>Antal produkter i Utvalt</label>
+                  <select
+                    value={String(Math.min(12, Math.max(1, parseInt(form.featuredLimit, 10) || 4)))}
+                    onChange={(e) => setField('featuredLimit', parseInt(e.target.value, 10))}
+                    className={inputCls}
+                  >
+                    {[2, 3, 4, 6, 8, 12].map((n) => (
+                      <option key={n} value={String(n)}>{n}</option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-[12px] text-admin-text-muted">
+                    Max antal produkter i Utvalt-sektionen. Vilka som visas styr du med stjärnan i
+                    produktlistan; ordningen med "Ändra ordning" under Produkter.
                   </p>
                 </div>
 

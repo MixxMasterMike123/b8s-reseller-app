@@ -73,6 +73,7 @@ import { query, where, getDocs } from 'firebase/firestore';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { isProductFeatured } from '../../utils/productSorting';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -207,6 +208,9 @@ const emptyForm = () => ({
   variantGroups: [],
   variants: [],
   isActive: true,
+  // Frontpage "Utvalt" flag (the star in the product list). Boolean going
+  // forward; legacy products used the reserved tag `featured` instead.
+  featured: false,
   imageUrl: '',
   b2cImageUrl: '',
   b2cImageGallery: [],
@@ -269,6 +273,8 @@ const formFromProduct = (p) => ({
   hasVariants: !!p.hasVariants && Array.isArray(p.variants) && p.variants.length > 0,
   ...variantStateFromProduct(p),
   isActive: p.isActive ?? true,
+  // Boolean wins; the legacy `featured` tag only counts while it's unset.
+  featured: isProductFeatured(p),
   imageUrl: p.imageUrl || '',
   b2cImageUrl: p.b2cImageUrl || '',
   b2cImageGallery: Array.isArray(p.b2cImageGallery) ? p.b2cImageGallery : [],
@@ -743,6 +749,8 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
         // products never gain the field). NOT folded into base/b2cPrice.
         ...(b2bEnabled ? { b2bPrice } : {}),
         isActive: formData.isActive,
+        // Always written so the boolean supersedes the legacy `featured` tag.
+        featured: formData.featured === true,
         imageUrl: mainImageUrl || formData.imageUrl || '',
         b2cImageUrl: mainImageUrl || '',
         b2cImageGallery: gallery,
@@ -1229,6 +1237,11 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
                 <input id="isActive" type="checkbox" name="isActive" checked={formData.isActive} onChange={handleInput} className={checkboxCls} />
                 Aktiv (synlig i butiken)
               </label>
+              <label className="flex items-center gap-2 text-[13px] text-admin-text">
+                <input id="featured" type="checkbox" checked={formData.featured} onChange={(e) => setField('featured', e.target.checked)} className={checkboxCls} />
+                Utvald på startsidan
+              </label>
+              <p className={helpCls}>Visas i Utvalt-sektionen högst upp på butikens startsida. Kan även slås på med stjärnan i produktlistan.</p>
             </CardSection>
 
             {/* Publishing — per-channel availability gates. MERGE into the
@@ -1295,7 +1308,7 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
                         removeTag(formData.tags[formData.tags.length - 1]);
                       }
                     }}
-                    placeholder={formData.tags.length ? '' : 't.ex. Lax, featured'}
+                    placeholder={formData.tags.length ? '' : 't.ex. Lax, Nyhet'}
                     className="min-w-[6rem] flex-1 bg-transparent text-[13px] text-admin-text placeholder:text-admin-text-faint focus:outline-none"
                   />
                 </div>
@@ -1311,7 +1324,8 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
                   </ul>
                 )}
                 <p className={helpCls}>
-                  Enter eller komma för att lägga till. Taggen <span className="font-mono">featured</span> visar produkten i utvalt-rutan.
+                  Enter eller komma för att lägga till. Taggar är fria etiketter för din egen
+                  organisation — Utvalt på startsidan styrs av kryssrutan under Status.
                 </p>
               </div>
             </CardSection>

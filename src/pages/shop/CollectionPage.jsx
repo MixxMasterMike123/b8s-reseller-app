@@ -17,6 +17,7 @@ import ShopFooter from '../../components/shop/ShopFooter';
 import NordProductCard from '../../components/shop/NordProductCard';
 import { getCardPrice } from '../../utils/productPricing';
 import { getProductImage } from '../../utils/productImages';
+import { sortProductsForDisplay } from '../../utils/productSorting';
 import { Helmet } from 'react-helmet-async';
 
 const CollectionPage = () => {
@@ -62,7 +63,12 @@ const CollectionPage = () => {
   const imageOf = (p) => p.b2cImageUrl || p.imageUrl || getProductImage(p) || '';
 
   // Every product in this category (slug-matched). Lists ALL — no collapse.
-  const cards = products.filter((p) => slugify(categoryOf(p)) === slug);
+  // Display order = the admin's drag order (sortOrder), then name.
+  const cards = sortProductsForDisplay(
+    products.filter((p) => slugify(categoryOf(p)) === slug),
+    nameOf,
+    currentLanguage || 'sv'
+  );
 
   // Human title from the first match's real category value, else the slug.
   const title = cards.length ? (categoryOf(cards[0]) || slug) : slug;

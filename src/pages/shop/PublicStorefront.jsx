@@ -21,6 +21,7 @@ import NordProductCard from '../../components/shop/NordProductCard';
 import { getCardPrice } from '../../utils/productPricing';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import { useShopId } from '../../contexts/ShopContext';
+import { isProductFeatured, sortProductsForDisplay } from '../../utils/productSorting';
 import { Helmet } from 'react-helmet-async';
 
 const PublicStorefront = () => {
@@ -85,27 +86,17 @@ const PublicStorefront = () => {
         });
       });
       
-      // Sort products alphabetically using the translated name
-      productList.sort((a, b) => {
-        // Use current language for content retrieval, with multiple fallbacks
-        let nameA, nameB;
-        
+      // Storefront display order: the admin's drag order (sortOrder) first,
+      // then alphabetically by translated name (the pre-sortOrder behavior).
+      const nameOf = (p) => {
         try {
-          nameA = getContentValue(a.name, currentLanguage) || getContentValue(a.name) || getContentValue(a.name || '') || '';
-          nameB = getContentValue(b.name, currentLanguage) || getContentValue(b.name) || getContentValue(b.name || '') || '';
-        } catch (error) {
-          // If getContentValue fails, use safe string conversion
-          nameA = String(a.name || '');
-          nameB = String(b.name || '');
+          const n = getContentValue(p.name, currentLanguage) || getContentValue(p.name) || '';
+          return typeof n === 'string' ? n : String(n || '');
+        } catch {
+          return String(p.name || '');
         }
-        
-        // Ensure we have strings for comparison
-        const safeNameA = typeof nameA === 'string' ? nameA : String(nameA || '');
-        const safeNameB = typeof nameB === 'string' ? nameB : String(nameB || '');
-        
-        return safeNameA.localeCompare(safeNameB, currentLanguage || 'en');
-      });
-      setProducts(productList);
+      };
+      setProducts(sortProductsForDisplay(productList, nameOf, currentLanguage || 'en'));
 
     } catch (error) {
       console.error('Error loading products:', error);
@@ -188,9 +179,8 @@ const PublicStorefront = () => {
 
   const scrollToProducts = () => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
 
-  // ===== Tag + group/featured derivation (all client-side; products are
+  // ===== Category/featured derivation (all client-side; products are
   // already fully loaded into state). =====
-  const productTags = (p) => (Array.isArray(p.tags) ? p.tags : []);
 
   // Product model v2: CATEGORIES drive the top-nav browse links (the primary
   // taxonomy → /kategori/{slug} pages). The category field replaced `group`;
@@ -199,16 +189,12 @@ const PublicStorefront = () => {
     new Set(products.map((p) => (p.category || p.group || '').trim()).filter(Boolean))
   ).sort();
 
-  // Featured grid: products tagged 'featured' (the reserved tag), newest first,
-  // capped at 4. Tags are now a light filter; 'featured' is their main use.
-  const featuredProducts = products
-    .filter((p) => productTags(p).some((t) => t.toLowerCase() === 'featured'))
-    .sort((a, b) => {
-      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-      return tb - ta;
-    })
-    .slice(0, 4);
+  // Featured grid: products the admin starred (featured boolean; legacy
+  // `featured` tag still counts while the boolean is unset). Products are
+  // already in display order (sortOrder → name), so filtering preserves the
+  // admin's drag order. Cap is shop-configurable (default 4).
+  const featuredLimit = Math.min(12, Math.max(1, parseInt(store.featuredLimit, 10) || 4));
+  const featuredProducts = products.filter(isProductFeatured).slice(0, featuredLimit);
 
   // v2: one product = one card (variants are embedded, no group-collapse). Every
   // card links to its own product page.
