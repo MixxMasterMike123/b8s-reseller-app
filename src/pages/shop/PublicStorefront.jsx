@@ -218,19 +218,19 @@ const PublicStorefront = () => {
   return (
     <>
       <Helmet>
-        <title>{getShopSeoTitle(currentLanguage)}</title>
-        <meta name="description" content={getShopSeoDescription(currentLanguage)} />
+        <title>{getShopSeoTitle(currentLanguage, store)}</title>
+        <meta name="description" content={getShopSeoDescription(currentLanguage, store)} />
         <meta name="google-site-verification" content="VdZaHTh4JwiHjxpsc_h3u8TMRxLZ1Tg2jU62SN-5fLo" />
         <meta property="og:type" content="website" />
-        <meta property="og:title" content={getShopSeoTitle(currentLanguage)} />
-        <meta property="og:description" content={getShopSeoDescription(currentLanguage)} />
+        <meta property="og:title" content={getShopSeoTitle(currentLanguage, store)} />
+        <meta property="og:description" content={getShopSeoDescription(currentLanguage, store)} />
         {(store.heroImageUrl || store.logoUrl) && <meta property="og:image" content={store.heroImageUrl || store.logoUrl} />}
         <meta property="og:url" content={window.location.href} />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={getShopSeoTitle(currentLanguage)} />
-        <meta name="twitter:description" content={getShopSeoDescription(currentLanguage)} />
+        <meta name="twitter:title" content={getShopSeoTitle(currentLanguage, store)} />
+        <meta name="twitter:description" content={getShopSeoDescription(currentLanguage, store)} />
         {(store.heroImageUrl || store.logoUrl) && <meta name="twitter:image" content={store.heroImageUrl || store.logoUrl} />}
-        <script type="application/ld+json">{JSON.stringify(generateShopStructuredData(currentLanguage))}</script>
+        <script type="application/ld+json">{JSON.stringify(generateShopStructuredData(currentLanguage, store))}</script>
       </Helmet>
       <SeoHreflang />
       <div className="min-h-screen bg-canvas font-body text-ink">

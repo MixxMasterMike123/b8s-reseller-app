@@ -211,17 +211,20 @@ export const generateAffiliateLink = (affiliateCode, preferredLang, productPath 
 /**
  * Generate SEO title for shop homepage/storefront
  */
-export const getShopSeoTitle = (language = 'sv-SE') => {
-  // Generic, brand-driven title. Per-shop SEO override is a later slice.
-  const tagline = STORE.tagline ? ` - ${STORE.tagline}` : '';
-  return `${STORE.shopName}${tagline}`;
+export const getShopSeoTitle = (language = 'sv-SE', store = STORE) => {
+  // store = the live per-shop settings (useStoreSettings) so the browser tab
+  // shows the real shop name, not the static 'My Shop' default. Falls back to
+  // STORE for callers without the live context.
+  const name = store.shopName || STORE.shopName;
+  const tagline = store.tagline || STORE.tagline;
+  return tagline ? `${name} - ${tagline}` : name;
 };
 
 /**
  * Generate SEO description for shop homepage/storefront
  */
-export const getShopSeoDescription = (language = 'sv-SE') => {
-  return STORE.companyDescription || STORE.tagline || STORE.shopName;
+export const getShopSeoDescription = (language = 'sv-SE', store = STORE) => {
+  return store.companyDescription || store.tagline || store.shopName || STORE.shopName;
 };
 
 /**
@@ -266,27 +269,28 @@ export const getLegalSeoDescription = (pageType = 'privacy') => {
 /**
  * Generate structured data for shop homepage
  */
-export const generateShopStructuredData = (language = 'sv-SE') => {
+export const generateShopStructuredData = (language = 'sv-SE', store = STORE) => {
   // Structured data must reflect the actual serving domain.
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : APP_URLS.B2C_SHOP;
 
   // Social profiles from store config (empty values are hidden).
-  const sameAs = Object.values(STORE.social || {}).filter(Boolean);
+  const sameAs = Object.values(store.social || {}).filter(Boolean);
+  const logoUrl = store.logoUrl || STORE.logoUrl;
 
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": STORE.shopName,
+    "name": store.shopName || STORE.shopName,
     "url": baseUrl,
-    "logo": STORE.logoUrl?.startsWith('http') ? STORE.logoUrl : `${baseUrl}${STORE.logoUrl}`,
-    "description": getShopSeoDescription(language),
+    "logo": logoUrl?.startsWith('http') ? logoUrl : `${baseUrl}${logoUrl}`,
+    "description": getShopSeoDescription(language, store),
     // NOTE: STORE has no structured postal-address or phone fields, so the
     // PostalAddress block and telephone are intentionally omitted rather
     // than inventing data.
     "contactPoint": {
       "@type": "ContactPoint",
       "contactType": "customer service",
-      "email": STORE.supportEmail
+      "email": store.supportEmail || STORE.supportEmail
     },
     ...(sameAs.length > 0 && { "sameAs": sameAs })
   };
