@@ -83,15 +83,28 @@ export function StoreSettingsProvider({ children }) {
     if (!settings.__loaded) return;
     if (settings.shopName) document.title = settings.shopName;
     if (settings.faviconUrl) {
-      // Reuse one managed <link> so repeated shop switches don't stack tags.
-      let link = document.querySelector("link[rel='icon'][data-shop-favicon]");
+      // Browsers pick a "best" icon among ALL <link rel~=icon> tags by their own
+      // size/type heuristics — appending one more does NOT reliably beat the
+      // static index.html .ico/.png links (Chrome often keeps the .ico). So to
+      // actually take over the tab icon we REMOVE every existing icon link the
+      // first time, then own one managed link and just update its href on shop
+      // switch. `rel="icon"` includes shortcut/apple-touch variants via rel~=.
+      let link = document.querySelector("link[rel~='icon'][data-shop-favicon]");
       if (!link) {
+        document
+          .querySelectorAll("link[rel~='icon'], link[rel='shortcut icon'], link[rel='apple-touch-icon']")
+          .forEach((el) => el.parentNode?.removeChild(el));
         link = document.createElement('link');
         link.rel = 'icon';
         link.setAttribute('data-shop-favicon', '');
         document.head.appendChild(link);
       }
-      link.href = settings.faviconUrl;
+      // Set type from the extension so the browser trusts an SVG favicon.
+      const url = settings.faviconUrl;
+      if (/\.svg(\?|$)/i.test(url)) link.type = 'image/svg+xml';
+      else if (/\.png(\?|$)/i.test(url)) link.type = 'image/png';
+      else link.removeAttribute('type');
+      link.href = url;
     }
   }, [settings.__loaded, settings.shopName, settings.faviconUrl]);
 
