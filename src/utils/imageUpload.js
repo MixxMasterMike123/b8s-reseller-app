@@ -94,5 +94,17 @@ export const uploadImageToStorage = async (file, pathPrefix, imageType) => {
 // isolation — the path is shopId-partitioned so the storage rule
 // isAdminOfShop(shopId) can scope writes to the owning shop). Callers MUST
 // pass the active shopId (from useShopId()).
-export const uploadStoreImage = (file, kind, shopId) =>
-  uploadImageToStorage(file, `branding/${shopId}`, kind);
+//
+// Favicons take the RAW path (no canvas re-encode): compression pipes through
+// canvas.toBlob('image/webp'), which would rasterize an .svg and flatten a
+// multi-size .ico. A favicon must stay the bytes the shop uploaded so browsers
+// get a real .ico/.png/.svg. ponytail: raw upload, add server resize only if a
+// shop uploads a 4MB photo and the small-icon render suffers.
+export const uploadStoreImage = (file, kind, shopId) => {
+  if (kind === 'favicon') {
+    const timestamp = Date.now();
+    const storageRef = ref(storage, `branding/${shopId}/favicon_${timestamp}_${file.name}`);
+    return uploadBytes(storageRef, file).then((snap) => getDownloadURL(snap.ref));
+  }
+  return uploadImageToStorage(file, `branding/${shopId}`, kind);
+};

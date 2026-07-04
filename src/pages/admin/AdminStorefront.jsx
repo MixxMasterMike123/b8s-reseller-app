@@ -34,6 +34,7 @@ import {
 const BRANDING_KEYS = [
   'accent',
   'logoUrl',
+  'faviconUrl',
   'heroImageUrl',
   'heroHeadline',
   'heroSubtitle',
@@ -126,17 +127,26 @@ const AdminStorefront = () => {
     }
   }, [form, shopId]);
 
+  const UPLOAD_META = {
+    logo: { field: 'logoUrl', label: 'Logotyp' },
+    hero: { field: 'heroImageUrl', label: 'Hero-bild' },
+    favicon: { field: 'faviconUrl', label: 'Favicon' },
+  };
+
   const handleImageUpload = async (kind, file) => {
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      toast.error('Välj en bildfil.');
+    // .ico often reports an empty or vendor MIME type, so allow it by extension.
+    const isImage = file.type.startsWith('image/') || /\.(ico|png|svg)$/i.test(file.name);
+    if (!isImage) {
+      toast.error(kind === 'favicon' ? 'Välj en .ico, .png eller .svg-fil.' : 'Välj en bildfil.');
       return;
     }
+    const meta = UPLOAD_META[kind];
     try {
       setUploading((u) => ({ ...u, [kind]: true }));
       const url = await uploadStoreImage(file, kind, shopId);
-      setField(kind === 'logo' ? 'logoUrl' : 'heroImageUrl', url);
-      toast.success(`${kind === 'logo' ? 'Logotyp' : 'Hero-bild'} uppladdad. Glöm inte att spara.`);
+      setField(meta.field, url);
+      toast.success(`${meta.label} uppladdad. Glöm inte att spara.`);
     } catch (error) {
       console.error(`Error uploading ${kind}:`, error);
       toast.error('Uppladdning misslyckades.');
@@ -334,6 +344,35 @@ const AdminStorefront = () => {
                       />
                     </label>
                   </div>
+                </div>
+
+                {/* Favicon */}
+                <div className="border-t border-admin-border-soft pt-5">
+                  <label className={labelCls}>Favicon (webbläsarfliken)</label>
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface-2">
+                      {form.faviconUrl ? (
+                        <img src={form.faviconUrl} alt="Favicon" className="h-8 w-8 object-contain" />
+                      ) : (
+                        <PhotoIcon className="h-6 w-6 text-admin-text-faint" />
+                      )}
+                    </div>
+                    <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-3 py-1.5 text-[13px] font-medium text-admin-text shadow-[var(--shadow-admin)] hover:bg-admin-surface-2">
+                      <ArrowUpTrayIcon className="h-4 w-4" />
+                      {uploading.favicon ? 'Laddar upp…' : 'Ladda upp favicon'}
+                      <input
+                        type="file"
+                        accept=".ico,.png,.svg,image/png,image/svg+xml,image/x-icon"
+                        className="hidden"
+                        disabled={uploading.favicon}
+                        onChange={(e) => handleImageUpload('favicon', e.target.files?.[0])}
+                      />
+                    </label>
+                  </div>
+                  <p className={helpCls}>
+                    Ikonen som visas i webbläsarfliken. Använd en kvadratisk .png, .svg eller .ico
+                    (minst 32×32 px). Lämna tom för att använda standardikonen.
+                  </p>
                 </div>
 
                 {/* Hero image */}

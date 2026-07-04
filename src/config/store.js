@@ -19,6 +19,11 @@ export const STORE = {
   // Generic placeholder logo. Admins can override via the Store Identity form.
   logoUrl: '/images/logo.svg',
 
+  // Per-shop browser-tab favicon. Empty = the static neutral /favicon.ico from
+  // index.html is used. Set via the admin Butik → Varumärke upload; applied at
+  // runtime (StoreSettingsContext) on both storefront and admin tabs.
+  faviconUrl: '',
+
   // NORD design system (see DESIGN.md) — per-shop visual identity.
   // accent: the single brand color, used ONLY on actions and live signals.
   // Must pass WCAG AA as a button background with white text.
