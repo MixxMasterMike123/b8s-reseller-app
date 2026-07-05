@@ -94,6 +94,18 @@ const Checkout = () => {
   const selectedOptionKey = pickupLocation?.id
     ? (pickupDate ? `${pickupLocation.id}::${pickupDate}` : pickupLocation.id)
     : '';
+  // UX: when pickup is the active method and there is exactly ONE selectable
+  // pickup occasion, preselect it — the customer shouldn't have to click the
+  // only card. With several occasions (e.g. one location, many dates) the
+  // choice is real and stays unselected.
+  const selectableOptions = pickupOptions.filter((o) => !o.past);
+  const onlyOption = selectableOptions.length === 1 ? selectableOptions[0] : null;
+  useEffect(() => {
+    if (isPickup && !pickupLocation?.id && onlyOption) {
+      selectPickup(onlyOption.loc);
+      setPickupDate(onlyOption.date || '');
+    }
+  }, [isPickup, pickupLocation?.id, onlyOption?.key]); // eslint-disable-line react-hooks/exhaustive-deps
   const shopId = useShopId();
   const { currentUser, login } = useSimpleAuth();
   const { t, currentLanguage } = useTranslation();
