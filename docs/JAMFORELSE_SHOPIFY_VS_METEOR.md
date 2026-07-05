@@ -1,6 +1,6 @@
 # Jämförelse: Shopify vs Meteor-plattformen
 
-*Internt underlag, 2026-07-05. Rått och osminkat — inklusive där Shopify vinner. Shopify-fakta källbelagda per 2026-07-05 (shopify.com/se/pricing, help.shopify.com, apps.shopify.com). Uppdatera innan publikt bruk.*
+*Internt underlag, uppdaterat 2026-07-06. Rått och osminkat — inklusive där Shopify vinner. Shopify-fakta källbelagda per 2026-07-05 (shopify.com/se/pricing, help.shopify.com, apps.shopify.com). Uppdatera innan publikt bruk.*
 
 ## 1. Pris
 
@@ -27,13 +27,13 @@
 | **Click & Collect med upphämtningsdatum** | ❌ app: Zapiet $29,99/mån | ✅ **inbyggd** |
 | **Print-on-demand med lokalt tryckeri** | Printful/Printify (produktion utomlands, per-styck-kostnad) | 🔜 planerad — lokala tryckerier, unik modell |
 | **B2B/grossistportal** | ✅ grundläggande sedan april 2026 (max 3 kataloger) | ✅ **inbyggd** (add-on): grossistpriser per produkt, återförsäljarlogin, fakturaorder med serversatta priser |
-| **Kampanjmodul** (affiliate-kampanjer, banners, tävlingar) | ❌ app | ✅ inbyggd (add-on) — OBS: marknadsföringsverktyg, ger inte prisrabatter i kassan |
+| **Kampanjmodul** (affiliate-kampanjer, banners, tävlingar) | ❌ app | ✅ inbyggd (add-on) — OBS: marknadsföringsverktyg; prisrabatter i kassan sköts av Rabattkoder-add-on:et |
 | **Ambassadörs-CRM** (influencers per plattform/följarnivå) | ❌ app | ✅ inbyggd (add-on) |
 | **Sälj-CRM** (kontakter, aktiviteter, uppföljningar) | ❌ app | ✅ inbyggd (add-on) |
 | **AI-produkttexter** | ❌ app | ✅ inbyggd (add-on, Claude-driven) |
 | Produktrecensioner | ❌ app: Judge.me $15/mån | ⚠️ grundläggande (Trustpilot-widget per butik; manuell CSV-inläsning, ingen egen insamling) |
-| E-postmarknadsföring | ❌ app: Klaviyo ~$45/mån | ❌ saknas (samtycke samlas in men används ej) |
-| Övergiven kassa-påminnelse | ✅ | ✅ **inbyggd** (add-on, 2026-07-06): en påminnelse per övergiven kassa, återställningslänk som återskapar varukorgen, samtyckesstyrd enligt marknadsföringslagen (kryssruta i kassan), avregistrering med ett klick |
+| E-postmarknadsföring | ❌ app: Klaviyo ~$45/mån | ❌ saknas (nyhetsbrev/kampanjutskick; samtycket i kassan finns och driver idag övergiven kassa-påminnelsen, men ingen utskicksmodul) |
+| **Övergiven kassa-påminnelse** | ✅ (1 mejl, 10 h fördröjning som standard, endast till marknadsföringsprenumeranter) | ✅ **inbyggd** (add-on, 2026-07-06): en påminnelse per övergiven kassa med butikens varumärke, återställningslänk som återskapar varukorgen på valfri enhet, fördröjning per butik (1–24 h, standard 1 h), samtyckesstyrd enligt marknadsföringslagen (kryssruta i kassan), avregistrering med ett klick, ingen rabatt-lockelse |
 | **Rabattkoder/kampanjkoder** | ✅ | ✅ **inbyggd** (add-on, 2026-07-05): procent/fast belopp, hela varukorgen eller valda produkter, datumfönster, användningsgräns, lägsta ordervärde |
 | Presentkort | ✅ | ❌ saknas |
 | Flerspråk | ✅ | ⚠️ infrastrukturen klar (3 språk, admin-redigerbar); butiken medvetet svensk-låst ännu |
@@ -92,7 +92,7 @@ Jämnt. Ingen seriös skillnad att sälja på åt något håll — påstå inte 
 - **Målgrupp vi ska lämna ifred:** etablerade butiker > 300 tkr/år online (Shopify är billigare) och säsongsoptimerare à la Sillmans (~2 % effektiv kostnad — under vårt kostnadsgolv).
 - **Add-on-intäkter (Kents tes):** rätt tanke, men det finns idag **ingen betalmekanism för add-ons** — de är gratis funktionsflaggor. Prissätt modulerna i Plattformsvillkoren nu och ta betalt via provisionspåslag per butik (spaken finns redan), annars blir de gratis för alltid för de första kunderna.
 - **Luckor att stänga innan tabellen används publikt:** egen domän, native Swish, egen recensionsinsamling (widgeten finns, insamlingen är manuell), produkt-/kundexport, presentkort, EUR-debitering (visningen finns), engelsk butik (infran finns).
-- **Add-on-arsenalen är större än Shopify-jämförelsen antydde:** affiliate, B2B-grossistportal med fakturaorder, kampanjer, ambassadörs-CRM, sälj-CRM, AI-produkttexter, POD med lokalt tryckeri (serversäkrad produktionspipeline). Hos Shopify är varje rad en app à $15–50/mån. Detta är Kents add-on-tes i siffror — det som saknas är fortfarande betalmekanismen för modulerna.
+- **Add-on-arsenalen är större än Shopify-jämförelsen antydde:** affiliate, B2B-grossistportal med fakturaorder, kampanjer, ambassadörs-CRM, sälj-CRM, AI-produkttexter, rabattkoder/kampanjkoder (2026-07-05), övergiven kassa-påminnelse (2026-07-06), POD med lokalt tryckeri (serversäkrad produktionspipeline, planerad). Hos Shopify är varje rad en app à $15–50/mån — utom rabattkoder och övergiven kassa som ingår i Basic, där vi nu har paritet i stället för lucka. Detta är Kents add-on-tes i siffror — det som saknas är fortfarande betalmekanismen för modulerna.
 
 ## 8. Djupdykning: Affiliatemodulen vs UpPromote (Kents fråga 2026-07-05)
 
