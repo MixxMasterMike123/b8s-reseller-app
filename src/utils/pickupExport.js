@@ -47,6 +47,7 @@ const STATUS_LABELS = {
   ready_for_pickup: 'Redo att hämtas',
   delivered: 'Levererad',
   cancelled: 'Avbruten',
+  refunded: 'Återbetald',
 };
 const statusLabel = (s) => STATUS_LABELS[s] || s || 'Okänd';
 

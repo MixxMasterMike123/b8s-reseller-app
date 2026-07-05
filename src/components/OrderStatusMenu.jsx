@@ -24,6 +24,8 @@ const getStatusStyles = (status) => {
       return 'bg-emerald-100 text-emerald-800 border-emerald-200'; // Done
     case 'cancelled':
       return 'bg-red-100 text-red-800 border-red-200'; // Cancelled
+    case 'refunded':
+      return 'bg-rose-100 text-rose-800 border-rose-200'; // Refunded (set by the refund flow, not selectable)
     default:
       return 'bg-gray-100 text-gray-800 border-gray-200'; // Unknown status
   }
@@ -58,8 +60,11 @@ const OrderStatusMenu = ({ currentStatus, onStatusChange, disabled, className = 
         { value: 'cancelled', label: t('order_status.cancelled', 'Avbruten') }
       ];
 
-  // Get current status label
+  // Get current status label. 'refunded' is display-only: it's set by the
+  // refund flow (which moves real money) and deliberately NOT offered as a
+  // selectable option in the menu.
   const getCurrentStatusLabel = () => {
+    if (currentStatus === 'refunded') return t('order_status.refunded', 'Återbetald');
     const status = statusOptions.find(option => option.value === currentStatus);
     return status ? status.label : t('order_status.unknown', 'Okänd');
   };

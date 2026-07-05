@@ -50,7 +50,8 @@ const getStatusLabel = (status) => {
     'processing': 'Behandlas',
     'shipped': 'Skickad',
     'delivered': 'Levererad',
-    'cancelled': 'Avbruten'
+    'cancelled': 'Avbruten',
+    'refunded': 'Återbetald'
   };
   return statusMap[status] || status || 'Okänd';
 };
