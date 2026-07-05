@@ -204,6 +204,10 @@ export {
   createPrintShopUser,
 } from './print/functions';
 
+// Landing-page lead form ("Vill du ha en egen butik?") — public callable that
+// writes a platform-level `leads` doc + best-effort admin notification email.
+export { submitLead } from './leads/submitLead';
+
 // Ångerfunktion — consumer right-of-withdrawal function (DAL 2 kap. 10 a § /
 // CRD Art. 11a, in force 19 June 2026). Server-authoritative: stamps the
 // submission time, enforces eligibility (Regime A applies / Regime B exempt),

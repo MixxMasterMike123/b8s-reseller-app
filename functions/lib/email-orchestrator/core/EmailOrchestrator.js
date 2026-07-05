@@ -311,6 +311,37 @@ class EmailOrchestrator {
                     }),
                     text: `New affiliate application from ${data.additionalData.applicantInfo.name} (${data.additionalData.applicantInfo.email}). Application ID: ${data.additionalData.applicationId}`
                 };
+            case 'LEAD_NOTIFICATION_ADMIN': {
+                // Platform-admin alert: a prospective merchant submitted the landing-
+                // page lead form ("Vill du ha en egen butik?"). Fired best-effort from
+                // leads/submitLead.ts AFTER the lead doc is written. Platform-level —
+                // no shop identity involved.
+                const lead = data.additionalData?.lead;
+                if (!lead) {
+                    throw new Error('Lead data is required for lead admin notification');
+                }
+                const leadBody = (0, emailLayout_1.renderHeading)('Ny intresseanmälan — egen butik') +
+                    (0, emailLayout_1.renderParagraph)('Någon har skickat in lead-formuläret på landningssidan.') +
+                    (0, emailLayout_1.renderKeyValueRows)([
+                        { label: 'Namn', value: String(lead.name || '') },
+                        { label: 'Företag', value: String(lead.company || '—') },
+                        { label: 'E-post', value: String(lead.email || '') },
+                        { label: 'Lead-ID', value: String(data.additionalData?.leadId || '') },
+                    ]) +
+                    (lead.message ? (0, emailLayout_1.renderPanel)((0, emailLayout_1.renderParagraph)(String(lead.message)), 'Meddelande') : '') +
+                    (0, emailLayout_1.renderParagraph)('Leaden är sparad i `leads` med status "new".', { muted: true });
+                return {
+                    subject: `Ny intresseanmälan: ${lead.name || lead.email}`,
+                    html: (0, emailLayout_1.renderEmailShell)({
+                        brandName: data.brandName,
+                        bodyHtml: leadBody,
+                        preheader: `Ny intresseanmälan från ${lead.name || lead.email}`,
+                    }),
+                    text: `Ny intresseanmälan — egen butik\n` +
+                        `Namn: ${lead.name || ''}\nFöretag: ${lead.company || ''}\n` +
+                        `E-post: ${lead.email || ''}\n\n${lead.message || ''}`
+                };
+            }
             case 'WITHDRAWAL_ACKNOWLEDGMENT': {
                 // Mottagningsbevis (acknowledgement of receipt) for an exercised right of
                 // withdrawal — DAL 2 kap. 10 a § / CRD Art. 11a. Must include the content
@@ -410,6 +441,7 @@ class EmailOrchestrator {
         const from = (displayName) => `"${displayName}" <${config_1.EMAIL_CONFIG.SMTP.FROM_EMAIL}>`;
         if (emailType === 'ORDER_NOTIFICATION_ADMIN' ||
             emailType === 'AFFILIATE_APPLICATION_NOTIFICATION_ADMIN' ||
+            emailType === 'LEAD_NOTIFICATION_ADMIN' ||
             emailType === 'DISPUTE_ALERT_ADMIN') {
             return from(`${brand} System`);
         }

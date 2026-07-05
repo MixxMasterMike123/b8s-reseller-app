@@ -578,6 +578,14 @@ service cloud.firestore {
       allow read, write: if isPlatform();
     }
 
+    // leads — landing-page sales leads (prospective merchants; PLATFORM-level,
+    // no shopId). Created ONLY by the submitLead Cloud Function via the Admin
+    // SDK (bypasses rules); never client-writable. Platform-only read.
+    match /leads/{leadId} {
+      allow read: if isPlatform();
+      allow write: if false;
+    }
+
     // Default deny for everything else (incl. server-only collections:
     // passwordResets, emailVerifications, campaignParticipants,
     // campaignRevenueTracking)

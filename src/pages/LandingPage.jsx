@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { httpsCallable, getFunctions } from 'firebase/functions';
 
 /**
  * LandingPage — the public front door on the admin domain (route "/").
@@ -180,28 +181,38 @@ const LandingPage = () => {
   );
 };
 
-/* Contact-sales section + form. FRONTEND ONLY for now — on submit it shows a
-   success state and logs the payload. TODO: wire a backend (Cloud Function /
-   email) to actually deliver the lead. No real submission happens yet. */
+/* Contact-sales section + form. Submits through the `submitLead` callable,
+   which writes a platform-level `leads` doc and notifies sales by email.
+   `website` is a honeypot: visually hidden, humans leave it empty. */
 const ContactSection = () => {
-  const [form, setForm] = useState({ name: '', company: '', email: '', message: '' });
+  const [form, setForm] = useState({ name: '', company: '', email: '', message: '', website: '' });
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
+    if (sending) return;
     if (!form.name.trim() || !form.email.trim()) {
       setError('Fyll i namn och e-post.');
       return;
     }
     setError('');
-    // TODO(backend): POST `form` to a Cloud Function that emails sales / writes
-    // a `leads` doc. Until then we just acknowledge locally.
-    // eslint-disable-next-line no-console
-    console.log('[meteorpr] sales lead (no backend yet):', form);
-    setSent(true);
+    setSending(true);
+    try {
+      const functions = getFunctions(undefined, 'us-central1');
+      const submitLead = httpsCallable(functions, 'submitLead');
+      await submitLead(form);
+      setSent(true);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[meteorpr] sales lead submit failed:', err);
+      setError('Något gick fel — försök igen om en stund, eller mejla oss direkt.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -245,9 +256,21 @@ const ContactSection = () => {
                 className="mpr-input"
               />
             </Field>
+            {/* Honeypot — hidden from humans (off-screen + untabbable); bots
+                that fill it get rejected server-side. */}
+            <input
+              type="text"
+              name="website"
+              value={form.website}
+              onChange={set('website')}
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+            />
             {error && <div style={cStyles.error}>{error}</div>}
-            <button type="submit" style={cStyles.submit} className="mpr-cta">
-              Skicka <Arrow />
+            <button type="submit" style={cStyles.submit} className="mpr-cta" disabled={sending}>
+              {sending ? 'Skickar…' : <>Skicka <Arrow /></>}
             </button>
             <p style={cStyles.formNote}>Vi använder bara dina uppgifter för att kontakta dig.</p>
           </form>

@@ -42,6 +42,7 @@ export type EmailType =
   | 'EMAIL_VERIFICATION'
   | 'AFFILIATE_APPLICATION_RECEIVED'
   | 'AFFILIATE_APPLICATION_NOTIFICATION_ADMIN'
+  | 'LEAD_NOTIFICATION_ADMIN'
   | 'WITHDRAWAL_ACKNOWLEDGMENT'
   | 'REFUND_CONFIRMATION'
   | 'DISPUTE_ALERT_ADMIN'
@@ -394,6 +395,40 @@ export class EmailOrchestrator {
           text: `New affiliate application from ${data.additionalData.applicantInfo.name} (${data.additionalData.applicantInfo.email}). Application ID: ${data.additionalData.applicationId}`
         };
 
+      case 'LEAD_NOTIFICATION_ADMIN': {
+        // Platform-admin alert: a prospective merchant submitted the landing-
+        // page lead form ("Vill du ha en egen butik?"). Fired best-effort from
+        // leads/submitLead.ts AFTER the lead doc is written. Platform-level —
+        // no shop identity involved.
+        const lead = data.additionalData?.lead;
+        if (!lead) {
+          throw new Error('Lead data is required for lead admin notification');
+        }
+        const leadBody =
+          renderHeading('Ny intresseanmälan — egen butik') +
+          renderParagraph('Någon har skickat in lead-formuläret på landningssidan.') +
+          renderKeyValueRows([
+            { label: 'Namn', value: String(lead.name || '') },
+            { label: 'Företag', value: String(lead.company || '—') },
+            { label: 'E-post', value: String(lead.email || '') },
+            { label: 'Lead-ID', value: String(data.additionalData?.leadId || '') },
+          ]) +
+          (lead.message ? renderPanel(renderParagraph(String(lead.message)), 'Meddelande') : '') +
+          renderParagraph('Leaden är sparad i `leads` med status "new".', { muted: true });
+        return {
+          subject: `Ny intresseanmälan: ${lead.name || lead.email}`,
+          html: renderEmailShell({
+            brandName: data.brandName,
+            bodyHtml: leadBody,
+            preheader: `Ny intresseanmälan från ${lead.name || lead.email}`,
+          }),
+          text:
+            `Ny intresseanmälan — egen butik\n` +
+            `Namn: ${lead.name || ''}\nFöretag: ${lead.company || ''}\n` +
+            `E-post: ${lead.email || ''}\n\n${lead.message || ''}`
+        };
+      }
+
       case 'WITHDRAWAL_ACKNOWLEDGMENT': {
         // Mottagningsbevis (acknowledgement of receipt) for an exercised right of
         // withdrawal — DAL 2 kap. 10 a § / CRD Art. 11a. Must include the content
@@ -503,6 +538,7 @@ export class EmailOrchestrator {
     if (
       emailType === 'ORDER_NOTIFICATION_ADMIN' ||
       emailType === 'AFFILIATE_APPLICATION_NOTIFICATION_ADMIN' ||
+      emailType === 'LEAD_NOTIFICATION_ADMIN' ||
       emailType === 'DISPUTE_ALERT_ADMIN'
     ) {
       return from(`${brand} System`);
