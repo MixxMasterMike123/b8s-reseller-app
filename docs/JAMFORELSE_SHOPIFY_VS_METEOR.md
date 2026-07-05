@@ -93,3 +93,15 @@ Jämnt. Ingen seriös skillnad att sälja på åt något håll — påstå inte 
 - **Add-on-intäkter (Kents tes):** rätt tanke, men det finns idag **ingen betalmekanism för add-ons** — de är gratis funktionsflaggor. Prissätt modulerna i Plattformsvillkoren nu och ta betalt via provisionspåslag per butik (spaken finns redan), annars blir de gratis för alltid för de första kunderna.
 - **Luckor att stänga innan tabellen används publikt:** egen domän, native Swish, egen recensionsinsamling (widgeten finns, insamlingen är manuell), produkt-/kundexport, presentkort/generella rabattkoder, EUR-debitering (visningen finns), engelsk butik (infran finns).
 - **Add-on-arsenalen är större än Shopify-jämförelsen antydde:** affiliate, B2B-grossistportal med fakturaorder, kampanjer, ambassadörs-CRM, sälj-CRM, AI-produkttexter, POD med lokalt tryckeri (serversäkrad produktionspipeline). Hos Shopify är varje rad en app à $15–50/mån. Detta är Kents add-on-tes i siffror — det som saknas är fortfarande betalmekanismen för modulerna.
+
+## 8. Djupdykning: Affiliatemodulen vs UpPromote (Kents fråga 2026-07-05)
+
+**Kort:** UpPromote $29,99/mån + 2 % av ordervärdet (ovanpå affiliatens provision!) är INTE mer omfattande än vår modul i kärnan — deras avancerade funktioner (PayPal-autoutbetalning, MLM, anti-leak, obegränsade provisionsnivåer, skatteblanketter) kräver $89,99-nivån.
+
+**Paritet med deras $29,99:** ansökan→godkännande→konto+välkomstmejl, affiliateportal (statistik/länkar/QR/material), 30-dagars spårning, rabattkod per affiliate, provisionsåterföring vid retur, admin-analys med leaderboard.
+
+**Vi är bättre:** separata rattar kundrabatt (10 %) vs provision (15 %) per affiliate; kampanjmodul (tävlingar/lotteri, banners, revenue-share); ambassadörs-CRM med ett-klicks-konvertering till affiliate; transaktionssäker refund-återföring.
+
+**De är bättre (ärligt):** utbetalningar (vår = manuell liggare med fakturaunderlag; deras autoutbetalning dock $89,99+), robustare cross-device-attribution (vår = localStorage 30 dagar), samt MLM/e-postautomatisering/provision-per-produkt/marketplace som vi saknar helt.
+
+**Slutsats:** vår modul ≈ UpPromote Growth + delar av Professional, inbyggd. Räkneexempel: butik med 10 tkr/mån affiliate-försäljning betalar UpPromote ~575 kr/mån. Starkt prissättningsstöd för add-on-avgift. Intern att-göra: utbetalningsautomatik är vår svagaste punkt (Stripe Connect-rälsen finns).
