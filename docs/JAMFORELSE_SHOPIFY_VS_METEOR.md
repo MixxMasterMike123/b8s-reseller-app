@@ -27,7 +27,7 @@
 | **Click & Collect med upphämtningsdatum** | ❌ app: Zapiet $29,99/mån | ✅ **inbyggd** |
 | **Print-on-demand med lokalt tryckeri** | Printful/Printify (produktion utomlands, per-styck-kostnad) | 🔜 planerad — lokala tryckerier, unik modell |
 | **B2B/grossistportal** | ✅ grundläggande sedan april 2026 (max 3 kataloger) | ✅ **inbyggd** (add-on): grossistpriser per produkt, återförsäljarlogin, fakturaorder med serversatta priser |
-| **Kampanjmodul** (affiliate-kampanjer, banners, tävlingar) | ❌ app | ✅ inbyggd (add-on) — OBS: marknadsföringsverktyg; prisrabatter i kassan sköts av Rabattkoder-add-on:et |
+| **Kampanjmodul** (affiliate-kampanjer, banners, tävlingar) | ❌ app | ✅ inbyggd (add-on) — OBS: organiserar marknadsföringen; själva prisrabatterna i kassan kommer från två andra add-ons: Rabattkoder (butiksövergripande kampanjkoder) och Affiliate (personliga affiliatekoder med kundrabatt + provision) |
 | **Ambassadörs-CRM** (influencers per plattform/följarnivå) | ❌ app | ✅ inbyggd (add-on) |
 | **Sälj-CRM** (kontakter, aktiviteter, uppföljningar) | ❌ app | ✅ inbyggd (add-on) |
 | **AI-produkttexter** | ❌ app | ✅ inbyggd (add-on, Claude-driven) |
