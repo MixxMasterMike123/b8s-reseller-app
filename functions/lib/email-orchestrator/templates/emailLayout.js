@@ -55,7 +55,10 @@ function renderEmailShell(opts) {
     const logoUrl = (opts.logoUrl ?? currentShopLogoUrl).trim();
     const useLogo = /^https?:\/\//i.test(logoUrl);
     const header = useLogo
-        ? `<div style="margin-bottom:24px;"><img src="${esc(logoUrl)}" alt="${brand}" height="40" style="height:40px;width:auto;border:0;display:block;" /></div>`
+        // Explicit light background behind the logo: several mail clients
+        // (Outlook/dark-mode variants) fill PNG transparency with black, which
+        // turns a dark-on-transparent wordmark into a solid black box.
+        ? `<div style="margin-bottom:24px;"><img src="${esc(logoUrl)}" alt="${brand}" height="40" style="height:40px;width:auto;border:0;display:block;background-color:#ffffff;border-radius:6px;padding:6px 10px;" /></div>`
         : `<div style="font-weight:700;font-size:20px;color:${T.ink};line-height:1.2;margin-bottom:24px;">${brand}</div>`;
     return `<div style="background-color:${T.canvas};margin:0;padding:24px 12px;font-family:${T.font};">
   ${preheader}
