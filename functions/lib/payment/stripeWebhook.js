@@ -372,6 +372,17 @@ exports.stripeWebhookV2 = (0, https_1.onRequest)({
                     discountPercentage: parseFloat(metadata.discountPercentage || '0'),
                     clickId: metadata.affiliateClickId || ''
                 } : null,
+                // Campaign discount code ("Rabattkoder" add-on). Stamped only when the
+                // applied code was a campaign code (metadata.discountSource==='campaign').
+                // The flat discountAmount field above already carries the SEK amount;
+                // this records WHICH code applied (for reporting + the usedCount bump).
+                ...(metadata.discountSource === 'campaign' && metadata.discountCode && {
+                    discount: {
+                        source: 'campaign',
+                        code: metadata.discountCode,
+                        codeId: metadata.discountCodeId || ''
+                    }
+                }),
                 // 📝 Right-of-withdrawal (POD) proof — stamped only when the cart had a
                 // personalized item (server set withdrawalRequired in PI metadata).
                 // Records what the buyer accepted: the notice version + a fingerprint
@@ -455,6 +466,26 @@ exports.stripeWebhookV2 = (0, https_1.onRequest)({
                 total: metadata.total,
                 hasAffiliate: !!metadata.affiliateCode
             });
+            // Campaign discount code usage: bump usedCount by 1 on the PAID order,
+            // exactly once (this runs after orderRef.create SUCCEEDED — a duplicate
+            // webhook delivery hits the ALREADY_EXISTS path above and returns before
+            // here, so it never double-counts). Best-effort: an increment failure
+            // must NOT fail the webhook (the order is already created). usedCount is
+            // written ONLY here (server, Admin SDK) — never client-side.
+            if (metadata.discountSource === 'campaign' && metadata.discountCodeId) {
+                try {
+                    await db.collection('discountCodes').doc(metadata.discountCodeId).update({
+                        usedCount: firestore_1.FieldValue.increment(1)
+                    });
+                }
+                catch (incrError) {
+                    firebase_functions_1.logger.error('⚠️ Failed to increment discount code usedCount (order already created)', {
+                        paymentIntentId: paymentIntent.id,
+                        discountCodeId: metadata.discountCodeId,
+                        error: incrError?.message
+                    });
+                }
+            }
             // ⚠️ CRITICAL: Do NOT process affiliate commission here!
             // The processB2COrderCompletionHttp function handles ALL affiliate processing
             // to avoid duplicate commission credits. The order data contains the affiliate

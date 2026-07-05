@@ -37,6 +37,9 @@ export const validateDiscountCode = onCall<ValidateDiscountCodeRequest>(
       throw new HttpsError('invalid-argument', 'A shopId is required');
     }
 
+    // 1) Affiliate codes FIRST (preserve existing behavior). An affiliate code
+    // and a campaign code can never collide in practice; if they somehow do, the
+    // affiliate discount wins (unchanged from before this add-on shipped).
     const snapshot = await db
       .collection('affiliates')
       .where('shopId', '==', shopId)
@@ -45,23 +48,77 @@ export const validateDiscountCode = onCall<ValidateDiscountCodeRequest>(
       .limit(1)
       .get();
 
-    if (snapshot.empty) {
+    if (!snapshot.empty) {
+      const affiliate = snapshot.docs[0].data();
+
+      // Defense-in-depth: if the affiliate's shop has the affiliate add-on
+      // disabled, the code is not valid here either (matches the createPaymentIntent
+      // gate + the client). Default-ON, so existing shops are unaffected.
+      if (!(await isShopFeatureEnabled(affiliate.shopId, 'affiliate'))) {
+        return { valid: false };
+      }
+
+      return {
+        valid: true,
+        source: 'affiliate',
+        code: rawCode,
+        checkoutDiscount: affiliate.checkoutDiscount || 0
+      };
+    }
+
+    // 2) Campaign discount codes ("Rabattkoder" add-on). Gated on the
+    // discountCodes feature (default-ON). This is validation only — the discount
+    // MATH is recomputed server-side in createPaymentIntent.computeOrderTotalsSek
+    // (never trusts these numbers). minSpend is NOT checked here (the callable
+    // has no cart) — it is enforced on BOTH parity sides where the cart is known.
+    if (!(await isShopFeatureEnabled(shopId, 'discountCodes'))) {
       return { valid: false };
     }
 
-    const affiliate = snapshot.docs[0].data();
+    const campaignSnap = await db
+      .collection('discountCodes')
+      .where('shopId', '==', shopId)
+      .where('code', '==', rawCode)
+      .where('active', '==', true)
+      .limit(1)
+      .get();
 
-    // Defense-in-depth: if the affiliate's shop has the affiliate add-on
-    // disabled, the code is not valid here either (matches the createPaymentIntent
-    // gate + the client). Default-ON, so existing shops are unaffected.
-    if (!(await isShopFeatureEnabled(affiliate.shopId, 'affiliate'))) {
+    if (campaignSnap.empty) {
+      return { valid: false };
+    }
+
+    const campaign = campaignSnap.docs[0].data();
+
+    // Validity window (best-effort; re-checked at recompute). startsAt/endsAt are
+    // Firestore Timestamps or null (no bound).
+    const now = Date.now();
+    const startsAtMs = campaign.startsAt?.toMillis ? campaign.startsAt.toMillis() : null;
+    const endsAtMs = campaign.endsAt?.toMillis ? campaign.endsAt.toMillis() : null;
+    if (startsAtMs !== null && now < startsAtMs) {
+      return { valid: false };
+    }
+    if (endsAtMs !== null && now > endsAtMs) {
+      return { valid: false };
+    }
+
+    // Usage cap (best-effort; the webhook increments usedCount, and the recompute
+    // re-checks → a filled-up code yields 0 discount server-side, so parity holds
+    // even under a race).
+    const maxUses = typeof campaign.maxUses === 'number' ? campaign.maxUses : null;
+    const usedCount = typeof campaign.usedCount === 'number' ? campaign.usedCount : 0;
+    if (maxUses !== null && usedCount >= maxUses) {
       return { valid: false };
     }
 
     return {
       valid: true,
+      source: 'campaign',
       code: rawCode,
-      checkoutDiscount: affiliate.checkoutDiscount || 0
+      type: campaign.type === 'fixed' ? 'fixed' : 'percent',
+      value: Number(campaign.value) || 0,
+      scope: campaign.scope === 'products' ? 'products' : 'all',
+      productIds: Array.isArray(campaign.productIds) ? campaign.productIds : [],
+      minSpend: typeof campaign.minSpend === 'number' ? campaign.minSpend : null
     };
   }
 );

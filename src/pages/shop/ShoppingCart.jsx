@@ -22,7 +22,7 @@ const ShoppingCart = () => {
 
   console.log('[ShoppingCart] Rendering with cart items:', cart.items);
 
-  const { subtotal, vat, shipping, total, discountAmount, discountCode, discountPercentage } = calculateTotals();
+  const { subtotal, vat, shipping, total, discountAmount, discountCode, discountPercentage, discountSource } = calculateTotals();
   
   // Pre-fill discount input if a code is applied to the cart from context
   useEffect(() => {
@@ -275,7 +275,11 @@ const ShoppingCart = () => {
                     {discountAmount > 0 && (
                        <div className="flex justify-between items-center">
                          <span className="bg-accent/10 text-accent text-xs font-semibold px-2.5 py-1 rounded-full">
-                           {t('affiliate_discount_label', 'Affiliate rabatt, {{percentage}}%', { percentage: discountPercentage })}
+                           {discountSource === 'campaign'
+                             ? (discountPercentage > 0
+                                 ? t('discount_label_percent', 'Rabatt, {{percentage}}%', { percentage: discountPercentage })
+                                 : t('discount_label', 'Rabatt'))
+                             : t('affiliate_discount_label', 'Affiliate rabatt, {{percentage}}%', { percentage: discountPercentage })}
                          </span>
                          <span className="text-green-600 font-semibold text-sm sm:text-base">
                            - <SmartPrice 

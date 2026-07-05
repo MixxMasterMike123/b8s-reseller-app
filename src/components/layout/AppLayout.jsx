@@ -29,7 +29,8 @@ import {
   MegaphoneIcon,
   SparklesIcon,
   DocumentTextIcon,
-  BuildingStorefrontIcon
+  BuildingStorefrontIcon,
+  TagIcon
 } from '@heroicons/react/24/outline';
 
 const AppLayout = ({ children }) => {
@@ -208,8 +209,17 @@ const AppLayout = ({ children }) => {
     icon: UsersIcon,
     description: t('nav.admin_b2b_customers_desc', 'Hantera grossistkunder'),
   };
+  // The native "Rabattkoder" add-on link (campaign discount codes). Gated on the
+  // discountCodes feature flag, same pattern as affiliate/b2b.
+  const discountCodesEnabled = isAddonEnabled('discountCodes');
+  const discountCodesNavItem = {
+    name: t('nav.admin_discount_codes', 'Rabattkoder'),
+    path: '/admin/discount-codes',
+    icon: TagIcon,
+    description: t('nav.admin_discount_codes_desc', 'Hantera kampanjkoder'),
+  };
   // Whether the add-on section (divider + items) has anything to show.
-  const hasAddonItems = affiliateEnabled || b2bEnabled || wagonMenuItems.length > 0;
+  const hasAddonItems = affiliateEnabled || b2bEnabled || discountCodesEnabled || wagonMenuItems.length > 0;
   
   const navItemClass = (active) =>
     `group flex h-8 items-center gap-2 rounded-[var(--radius-admin-el)] pl-2 pr-1.5 text-[13px] transition-colors ${
@@ -334,6 +344,16 @@ const AppLayout = ({ children }) => {
                   <span className="flex-1">{b2bNavItem.name}</span>
                 </Link>
               )}
+              {discountCodesEnabled && (
+                <Link
+                  to={discountCodesNavItem.path}
+                  title={discountCodesNavItem.description}
+                  className={navItemClass(isActive(discountCodesNavItem.path))}
+                >
+                  <discountCodesNavItem.icon className={navIconClass(isActive(discountCodesNavItem.path))} aria-hidden="true" />
+                  <span className="flex-1">{discountCodesNavItem.name}</span>
+                </Link>
+              )}
               {wagonMenuItems.map((item) => {
                 const active = isActive(item.path);
                 return (
@@ -416,6 +436,18 @@ const AppLayout = ({ children }) => {
                       >
                         <b2bNavItem.icon className={navIconClass(isActive(b2bNavItem.path))} aria-hidden="true" />
                         <span className="flex-1">{b2bNavItem.name}</span>
+                      </Link>
+                    )}
+                    {discountCodesEnabled && (
+                      <Link
+                        to={discountCodesNavItem.path}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`group flex h-10 items-center gap-2 rounded-[var(--radius-admin-el)] pl-2 pr-1.5 text-[13px] ${
+                          isActive(discountCodesNavItem.path) ? 'bg-black/[0.08] font-semibold text-admin-text' : 'font-medium text-admin-text hover:bg-black/[0.06]'
+                        }`}
+                      >
+                        <discountCodesNavItem.icon className={navIconClass(isActive(discountCodesNavItem.path))} aria-hidden="true" />
+                        <span className="flex-1">{discountCodesNavItem.name}</span>
                       </Link>
                     )}
                     {wagonMenuItems.map((item) => {

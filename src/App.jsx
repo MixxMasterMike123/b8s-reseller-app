@@ -105,6 +105,7 @@ import AdminAffiliateEdit from './pages/admin/AdminAffiliateEdit';
 import AdminAffiliateCreate from './pages/admin/AdminAffiliateCreate';
 import AdminAffiliateAnalytics from './pages/admin/AdminAffiliateAnalytics';
 import AdminAffiliatePayout from './pages/admin/AdminAffiliatePayout';
+import AdminDiscountCodes from './pages/admin/AdminDiscountCodes';
 import AffiliateTracker from './components/AffiliateTracker';
 import ScrollToTop from './components/ScrollToTop';
 
@@ -517,6 +518,16 @@ function App() {
               <Route path="/admin/affiliates/payout/:affiliateId" element={
                 <AddonGate feature="affiliate"><AdminRoute>
                   <AdminAffiliatePayout />
+                </AdminRoute></AddonGate>
+              } />
+
+              {/* Rabattkoder (campaign discount codes) is an add-on: its admin
+                  route is gated on the `discountCodes` feature flag. Default-ON
+                  keeps existing shops working (harmless — no codes exist until a
+                  merchant creates one). */}
+              <Route path="/admin/discount-codes" element={
+                <AddonGate feature="discountCodes"><AdminRoute>
+                  <AdminDiscountCodes />
                 </AdminRoute></AddonGate>
               } />
 

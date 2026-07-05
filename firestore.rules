@@ -446,6 +446,17 @@ service cloud.firestore {
       allow update, delete: if isAdminOfShop(resource.data.shopId);
     }
 
+    // Campaign discount codes ("Rabattkoder" add-on; shop-scoped). Only shop
+    // admins read/manage. There is NO public read: anonymous checkout validates
+    // a code through the validateDiscountCode callable (Admin SDK), never a
+    // direct query — a public read would leak every code + its discount. The
+    // `usedCount` field is written ONLY server-side (webhook, Admin SDK).
+    match /discountCodes/{codeId} {
+      allow read: if isAdminOfShop(resource.data.shopId);
+      allow create: if isAdminOfShop(request.resource.data.shopId);
+      allow update, delete: if isAdminOfShop(resource.data.shopId);
+    }
+
     // ============================================================
     // Marketing materials (shop-scoped top-level collection)
     // ============================================================

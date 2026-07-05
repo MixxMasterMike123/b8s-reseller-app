@@ -147,7 +147,7 @@ const Checkout = () => {
 
 
 
-  const { subtotal, vat, shipping, total, discountAmount, discountCode, discountPercentage, appliedAffiliate } = calculateTotals();
+  const { subtotal, vat, shipping, total, discountAmount, discountCode, discountPercentage, discountSource } = calculateTotals();
 
   // Debug: Show current affiliate status
   const [showDebug, setShowDebug] = useState(false);
@@ -1142,7 +1142,11 @@ const Checkout = () => {
                   {discountAmount > 0 && (
                     <div className="flex justify-between text-xs sm:text-sm">
                       <span className="text-accent text-xs bg-accent/10 px-2 py-1 rounded-full font-semibold">
-                        {t('checkout_affiliate_discount', 'Affiliate rabatt, {{discountPercentage}}%', { discountPercentage })}
+                        {discountSource === 'campaign'
+                          ? (discountPercentage > 0
+                              ? t('checkout_discount_percent', 'Rabatt, {{discountPercentage}}%', { discountPercentage })
+                              : t('checkout_discount', 'Rabatt'))
+                          : t('checkout_affiliate_discount', 'Affiliate rabatt, {{discountPercentage}}%', { discountPercentage })}
                       </span>
                       <span className="font-medium text-green-600">
                         - <SmartPrice 
@@ -1185,17 +1189,35 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                {/* Affiliate Info */}
-                {appliedAffiliate && (
+                {/* Applied-discount confirmation. Source-aware: a campaign
+                    ("Rabattkoder") code shows a generic "Rabatt aktiverad"
+                    message (a fixed-amount code has no percentage); an affiliate
+                    code keeps the affiliate wording. Driven by discountSource +
+                    an applied code (calculateTotals now returns discountSource;
+                    the old appliedAffiliate field was never populated). */}
+                {discountAmount > 0 && discountCode && (
                   <div className="mt-3 sm:mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                     <div className="text-xs sm:text-sm text-green-800">
-                      <div className="font-medium">{t('checkout_affiliate_activated', '🎉 Affiliate-rabatt aktiverad!')}</div>
-                      <div className="text-xs mt-1">
-                        {t('checkout_affiliate_code', 'Kod: {{code}} • {{discountPercentage}}% rabatt', { 
-                          code: appliedAffiliate.code, 
-                          discountPercentage 
-                        })}
-                      </div>
+                      {discountSource === 'campaign' ? (
+                        <>
+                          <div className="font-medium">{t('checkout_discount_activated', '🎉 Rabatt aktiverad!')}</div>
+                          <div className="text-xs mt-1">
+                            {discountPercentage > 0
+                              ? t('checkout_discount_code_percent', 'Kod: {{code}} • {{discountPercentage}}% rabatt', { code: discountCode, discountPercentage })
+                              : t('checkout_discount_code', 'Kod: {{code}}', { code: discountCode })}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="font-medium">{t('checkout_affiliate_activated', '🎉 Affiliate-rabatt aktiverad!')}</div>
+                          <div className="text-xs mt-1">
+                            {t('checkout_affiliate_code', 'Kod: {{code}} • {{discountPercentage}}% rabatt', {
+                              code: discountCode,
+                              discountPercentage
+                            })}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}

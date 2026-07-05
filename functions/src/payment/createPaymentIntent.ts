@@ -33,7 +33,7 @@ async function computeOrderTotalsSek(
   discountCode: string | undefined,
   shopId: string,
   deliveryMethod: string
-): Promise<{ subtotal: number; discountAmount: number; discountPercentage: number; shipping: number; vat: number; total: number; serverPrices: Record<string, number>; hasPersonalizedItem: boolean }> {
+): Promise<{ subtotal: number; discountAmount: number; discountPercentage: number; discountSource: 'affiliate' | 'campaign' | null; discountCodeId: string | null; shipping: number; vat: number; total: number; serverPrices: Record<string, number>; hasPersonalizedItem: boolean }> {
   // Product model v2: line items reference the PARENT product by productId plus
   // an optional variantSku. We load the parent doc and resolve the variant's
   // price from the embedded variants array — never trusting the client price.
@@ -99,6 +99,8 @@ async function computeOrderTotalsSek(
   // total (total-parity). Default-ON (existing shops unaffected).
   let discountAmount = 0;
   let discountPercentage = 0;
+  let discountSource: 'affiliate' | 'campaign' | null = null;
+  let discountCodeId: string | null = null;
   if (discountCode && await isShopFeatureEnabled(shopId, 'affiliate')) {
     const affSnap = await db.collection('affiliates')
       .where('shopId', '==', shopId)
@@ -110,6 +112,62 @@ async function computeOrderTotalsSek(
       discountPercentage = affSnap.docs[0].data().checkoutDiscount || 0;
       // Math.ceil matches the client-side CartContext rounding
       discountAmount = Math.ceil(subtotal * (discountPercentage / 100));
+      discountSource = 'affiliate';
+    }
+  }
+
+  // Campaign discount codes ("Rabattkoder" add-on). Only tried when the code did
+  // NOT match an affiliate (affiliate wins — mirrors the validateDiscountCode
+  // callable ordering). GATED on the discountCodes add-on (default-ON). The math
+  // here MUST be byte-equivalent to the client in
+  // CartContext.applyDiscountCode (campaign branch), or the charge diverges from
+  // the displayed total (total-parity). The server recomputes from the
+  // discountCodes doc — it NEVER trusts client discount numbers.
+  if (discountCode && discountSource === null && await isShopFeatureEnabled(shopId, 'discountCodes')) {
+    const dcSnap = await db.collection('discountCodes')
+      .where('shopId', '==', shopId)
+      .where('code', '==', discountCode.toUpperCase())
+      .where('active', '==', true)
+      .limit(1)
+      .get();
+    if (!dcSnap.empty) {
+      const dc = dcSnap.docs[0].data() as any;
+      // Defense-in-depth window + usage re-check (a code that expired or filled
+      // up between validate and pay yields 0 discount — parity holds because the
+      // client will have shown it too, and the server override is authoritative).
+      const now = Date.now();
+      const startsAtMs = dc.startsAt?.toMillis ? dc.startsAt.toMillis() : null;
+      const endsAtMs = dc.endsAt?.toMillis ? dc.endsAt.toMillis() : null;
+      const maxUses = typeof dc.maxUses === 'number' ? dc.maxUses : null;
+      const usedCount = typeof dc.usedCount === 'number' ? dc.usedCount : 0;
+      const windowOk = (startsAtMs === null || now >= startsAtMs) && (endsAtMs === null || now <= endsAtMs);
+      const usesOk = maxUses === null || usedCount < maxUses;
+      // Minimum purchase amount: compared against the FULL cart subtotal (not the
+      // scoped base). Matches the client CartContext campaign branch.
+      const minSpend = typeof dc.minSpend === 'number' ? dc.minSpend : null;
+      const minSpendOk = minSpend === null || subtotal >= minSpend;
+      if (windowOk && usesOk && minSpendOk) {
+        // Scope-aware discountable BASE — MUST match the client exactly:
+        //   scope 'all'      → whole subtotal
+        //   scope 'products' → sum of lines whose productId ∈ productIds
+        const scope = dc.scope === 'products' ? 'products' : 'all';
+        const productIds: string[] = Array.isArray(dc.productIds) ? dc.productIds : [];
+        const base = scope === 'products'
+          ? loaded.reduce((sum, { productId, price, quantity }) =>
+              sum + (productIds.includes(productId) ? price * quantity : 0), 0)
+          : subtotal;
+        const value = Number(dc.value) || 0;
+        if (dc.type === 'fixed') {
+          // Math.min(value, base) clamps the fixed discount to the base — matches client
+          discountAmount = Math.min(value, base);
+        } else {
+          // Math.ceil(base * value/100) matches the client-side rounding
+          discountAmount = Math.ceil(base * (value / 100));
+          discountPercentage = value; // percent only; fixed leaves this 0
+        }
+        discountSource = 'campaign';
+        discountCodeId = dcSnap.docs[0].id;
+      }
     }
   }
 
@@ -137,7 +195,7 @@ async function computeOrderTotalsSek(
   // consent gate was required at checkout.
   const hasPersonalizedItem = loaded.some(({ product }) => product?.isPersonalized === true);
 
-  return { subtotal, discountAmount, discountPercentage, shipping, vat, total, serverPrices, hasPersonalizedItem };
+  return { subtotal, discountAmount, discountPercentage, discountSource, discountCodeId, shipping, vat, total, serverPrices, hasPersonalizedItem };
 }
 
 interface CreatePaymentIntentRequest {
@@ -473,10 +531,16 @@ export const createPaymentIntentV2 = onRequest(
             discountAmount: totals.discountAmount.toString(),
             total: totals.total.toString(),
 
-            // Discount Information (server-validated)
+            // Discount Information (server-validated). discountSource tells the
+            // webhook which kind of code applied ('affiliate' | 'campaign'); for
+            // campaign codes discountCodeId lets the webhook bump usedCount.
             ...(discountCode && totals.discountAmount > 0 && {
               discountCode: discountCode.toUpperCase(),
               discountPercentage: totals.discountPercentage.toString(),
+              ...(totals.discountSource && { discountSource: totals.discountSource }),
+              ...(totals.discountSource === 'campaign' && totals.discountCodeId && {
+                discountCodeId: totals.discountCodeId,
+              }),
             }),
             
             // Affiliate Information (enhanced)

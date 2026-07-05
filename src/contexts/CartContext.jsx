@@ -200,9 +200,10 @@ export const CartProvider = ({ children }) => {
             removeDiscount();
           }
         }
-      } else if (cart.discountCode && cart.discountSource !== 'manual') {
-        // No affiliate ref but an auto-applied discount remains - clear it.
-        // Manually entered codes are kept; they don't depend on the affiliate ref.
+      } else if (cart.discountCode && cart.discountSource !== 'manual' && cart.discountSource !== 'campaign') {
+        // No affiliate ref but an auto-applied affiliate discount remains - clear
+        // it. Manually entered codes AND campaign ("Rabattkoder") codes are kept;
+        // neither depends on the affiliate ref in localStorage.
         console.log('🧹 No affiliate ref found but auto-applied discount remains, clearing');
         removeDiscount();
       }
@@ -410,6 +411,10 @@ export const CartProvider = ({ children }) => {
       discountAmount,
       discountCode: cart.discountCode,
       discountPercentage: cart.discountPercentage || 0,
+      // Which add-on the applied code belongs to ('affiliate' | 'campaign' |
+      // 'manual' | 'link' | null) — drives source-aware UI labels in the cart +
+      // checkout summaries. No math change.
+      discountSource: cart.discountSource || null,
       // Include affiliate data if present
       ...(cart.discountCode && {
         affiliateCode: cart.discountCode,
@@ -419,11 +424,13 @@ export const CartProvider = ({ children }) => {
   };
 
   const applyDiscountCode = async (code, options = {}) => {
-    // Affiliate add-on OFF for this shop → never apply a discount. Clear any
+    // BOTH discount add-ons OFF for this shop → never apply a discount. Clear any
     // stale discount fields so the client total is full price, matching the
-    // server (which also ignores the code when affiliate is off). This is the
-    // single client chokepoint — manual entry + both auto-apply paths route here.
-    if (!isAddonEnabled('affiliate')) {
+    // server (which also ignores the code when both are off). This is the single
+    // client chokepoint — manual entry + both auto-apply paths route here. The
+    // callable itself decides WHICH add-on a code belongs to (affiliate vs
+    // campaign) and only validates it if that add-on is enabled server-side.
+    if (!isAddonEnabled('affiliate') && !isAddonEnabled('discountCodes')) {
       setCart(prev => (
         prev.discountCode || prev.discountAmount
           ? { ...prev, discountCode: null, discountAmount: 0, discountPercentage: 0, affiliateClickId: null, discountSource: null }
@@ -438,8 +445,10 @@ export const CartProvider = ({ children }) => {
     }
 
     try {
-      // Validate server-side: anonymous visitors must not read affiliate
-      // docs directly (they contain PII and earnings data)
+      // Validate server-side: anonymous visitors must not read affiliate or
+      // discountCode docs directly (affiliate docs contain PII/earnings; the
+      // discountCodes collection has no public read). The callable returns a
+      // discriminated result (source: 'affiliate' | 'campaign').
       const validate = httpsCallable(getFunctions(), 'validateDiscountCode');
       const { data: validation } = await validate({ code: normalizedCode, shopId });
 
@@ -448,9 +457,63 @@ export const CartProvider = ({ children }) => {
         return { success: false, message: 'Ogiltig rabattkod.' };
       }
 
-      const discountPercentage = validation.checkoutDiscount || 0;
-      
       const subtotal = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+      // ── Campaign discount code ("Rabattkoder" add-on) ──────────────────────
+      // The discount MATH here MUST be byte-equivalent to the server in
+      // createPaymentIntent.computeOrderTotalsSek (campaign branch), or the
+      // displayed total diverges from the Stripe charge (total-parity).
+      if (validation.source === 'campaign') {
+        // Minimum purchase amount: compared against the FULL cart subtotal (not
+        // the scoped base). Matches the server computeOrderTotalsSek check.
+        const minSpend = typeof validation.minSpend === 'number' ? validation.minSpend : null;
+        if (minSpend !== null && subtotal < minSpend) {
+          setCart(prev => ({ ...prev, discountCode: null, discountAmount: 0, discountPercentage: 0, affiliateClickId: null, discountSource: null }));
+          if (!options.silent) {
+            return { success: false, message: `Koden gäller vid köp över ${minSpend} kr.` };
+          }
+          return { success: false };
+        }
+
+        // Scope-aware discountable BASE — MUST match the server exactly:
+        //   scope 'all'      → whole subtotal
+        //   scope 'products' → sum of lines whose productId ∈ productIds
+        const scope = validation.scope === 'products' ? 'products' : 'all';
+        const productIds = Array.isArray(validation.productIds) ? validation.productIds : [];
+        const base = scope === 'products'
+          ? cart.items.reduce((sum, item) =>
+              sum + (productIds.includes(item.productId || item.id) ? item.price * item.quantity : 0), 0)
+          : subtotal;
+        const value = Number(validation.value) || 0;
+        let discountAmount = 0;
+        let discountPercentage = 0;
+        if (validation.type === 'fixed') {
+          // Math.min(value, base) clamps the fixed discount to the base — matches server
+          discountAmount = Math.min(value, base);
+        } else {
+          // Math.ceil(base * value/100) matches the server-side rounding
+          discountAmount = Math.ceil(base * (value / 100));
+          discountPercentage = value; // percent only; fixed leaves this 0
+        }
+
+        setCart(prev => ({
+          ...prev,
+          discountCode: normalizedCode,
+          discountAmount,
+          discountPercentage,
+          affiliateClickId: null, // campaign codes carry no affiliate attribution
+          discountSource: 'campaign',
+        }));
+
+        if (!options.silent) {
+          const label = validation.type === 'fixed' ? `${value} kr` : `${value}%`;
+          return { success: true, message: `Rabatt på ${label} tillämpad!` };
+        }
+        return { success: true };
+      }
+
+      // ── Affiliate code (existing path) ─────────────────────────────────────
+      const discountPercentage = validation.checkoutDiscount || 0;
       const discountValue = subtotal * (discountPercentage / 100);
 
       // Use Math.ceil to ensure small discounts (like 0.2 SEK) are not rounded to 0
@@ -479,7 +542,7 @@ export const CartProvider = ({ children }) => {
         affiliateClickId: affiliateClickId,
         discountSource: options.source || 'manual',
       }));
-      
+
       if (!options.silent) {
         return { success: true, message: `Rabatt på ${discountPercentage}% tillämpad!` };
       }
