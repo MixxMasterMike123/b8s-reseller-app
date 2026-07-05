@@ -10,6 +10,7 @@ import { useShopFeatures } from '../../contexts/ShopFeaturesContext';
 import { useShopId } from '../../contexts/ShopContext';
 import { WAGON_FEATURE_KEY } from '../../config/addons';
 import ImpersonationBanner from '../auth/ImpersonationBanner';
+import { getImpersonation } from '../../config/impersonation';
 
 // 🚂 WAGON SYSTEM: Import wagon registry for menu items
 import wagonRegistry from '../../wagons/WagonRegistry.js';
@@ -292,8 +293,12 @@ const AppLayout = ({ children }) => {
         <ImpersonationBanner />
       </div>
 
-      {/* ── Left nav (Polaris): fixed, 232px, on the canvas, below the top bar. ── */}
-      <nav className="fixed bottom-0 left-0 top-14 z-30 hidden w-[232px] flex-col bg-admin-bg px-3 py-3 md:flex">
+      {/* ── Left nav (Polaris): fixed, 232px, on the canvas, below the top bar.
+          During an impersonation session the amber banner (h-10, in flow above)
+          also overlays the canvas, so the nav starts 40px lower — otherwise the
+          banner covers the first nav item. Session changes end in a full reload
+          (see ImpersonationBanner.endSession), so a mount-time check is safe. ── */}
+      <nav className={`fixed bottom-0 left-0 ${getImpersonation() ? 'top-24' : 'top-14'} z-30 hidden w-[232px] flex-col bg-admin-bg px-3 py-3 md:flex`}>
         <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto">
           {adminNavLinks.map((item) => {
             const active = isActive(item.path);

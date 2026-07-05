@@ -63,8 +63,10 @@ const ImpersonationBanner = () => {
   const remaining = session.expiresAt - Date.now();
 
   return (
-    <div className="sticky top-0 z-50 bg-amber-500 text-amber-950 shadow-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2 sm:px-6 md:px-8">
+    // h-10 is load-bearing: AppLayout offsets the fixed left nav by exactly
+    // this height (top-24 = 56px bar + 40px banner) while a session is active.
+    <div className="sticky top-0 z-50 h-10 bg-amber-500 text-amber-950 shadow-md">
+      <div className="mx-auto flex h-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 md:px-8">
         <div className="flex items-center gap-2 min-w-0">
           <ShieldExclamationIcon className="h-5 w-5 shrink-0" />
           <p className="truncate text-sm font-medium">
