@@ -48,6 +48,8 @@ class EmailService {
                 ...(replyTo ? { reply_to: replyTo } : {}),
                 ...(options.cc ? { cc: toList(options.cc) } : {}),
                 ...(options.bcc ? { bcc: toList(options.bcc) } : {}),
+                // Extra transport headers (e.g. List-Unsubscribe). Omitted when empty.
+                ...(options.headers && Object.keys(options.headers).length ? { headers: options.headers } : {}),
             };
             const res = await fetch(`${RESEND_API}/emails`, {
                 method: 'POST',

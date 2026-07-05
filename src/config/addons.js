@@ -30,6 +30,7 @@ export const ADDON_CATALOG = [
   { key: 'ambassador', label: 'Ambassadörer', description: 'CRM för influencers/ambassadörer per plattform och följarnivå.' },
   { key: 'writers', label: 'AI-texter', description: 'AI-genererade produktbeskrivningar (Claude). Kräver API-nyckel.' },
   { key: 'pod', label: 'Print on demand', description: 'Ladda upp tryckoriginal, validera mot tryckspecar och koppla dem till produkter via SKU. Tryckeriet får produktionsfiler per order.' },
+  { key: 'abandonedCheckout', label: 'Övergiven kassa', description: 'Påminner kunder via e-post om kassor de inte slutförde. En påminnelse per kassa, med återställningslänk och avregistrering.' },
 ];
 
 // Default-ON: a feature is enabled unless EXPLICITLY set to false. This keeps the

@@ -24,6 +24,11 @@ export interface EmailOptions {
    * shop's own supportEmail as well as the platform. Ignored by sendEmail.
    */
   extraAdminRecipients?: string[];
+  /**
+   * Extra transport headers (e.g. List-Unsubscribe for the abandoned-checkout
+   * reminder). Passed straight through to Resend.
+   */
+  headers?: Record<string, string>;
 }
 
 const RESEND_API = 'https://api.resend.com';
@@ -76,6 +81,8 @@ export class EmailService {
         ...(replyTo ? { reply_to: replyTo } : {}),
         ...(options.cc ? { cc: toList(options.cc) } : {}),
         ...(options.bcc ? { bcc: toList(options.bcc) } : {}),
+        // Extra transport headers (e.g. List-Unsubscribe). Omitted when empty.
+        ...(options.headers && Object.keys(options.headers).length ? { headers: options.headers } : {}),
       };
 
       const res = await fetch(`${RESEND_API}/emails`, {

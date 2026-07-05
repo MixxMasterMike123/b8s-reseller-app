@@ -466,6 +466,20 @@ exports.stripeWebhookV2 = (0, https_1.onRequest)({
                 total: metadata.total,
                 hasAffiliate: !!metadata.affiliateCode
             });
+            // Abandoned-checkout recovery: the checkout completed → mark its
+            // checkouts/{piId} doc so the sweep never sends a reminder for a paid
+            // order. Best-effort — a failure here must not fail the webhook (the
+            // order is already created; the sweep's own race guard re-checks the
+            // order anyway).
+            try {
+                await db.collection('checkouts').doc(paymentIntent.id).set({ status: 'completed', completedAt: new Date() }, { merge: true });
+            }
+            catch (recoveryError) {
+                firebase_functions_1.logger.warn('⚠️ checkout-recovery: failed to mark checkout completed', {
+                    paymentIntentId: paymentIntent.id,
+                    error: recoveryError?.message,
+                });
+            }
             // Campaign discount code usage: bump usedCount by 1 on the PAID order,
             // exactly once (this runs after orderRef.create SUCCEEDED — a duplicate
             // webhook delivery hits the ALREADY_EXISTS path above and returns before
@@ -517,6 +531,26 @@ exports.stripeWebhookV2 = (0, https_1.onRequest)({
                 orderNumber,
                 emailsTriggered: true
             });
+        }
+        else if (event.type === 'payment_intent.payment_failed') {
+            // Abandoned-checkout recovery: a B2C payment attempt failed. Mark the
+            // checkouts/{piId} doc 'failed' so the sweep skips it (a failed attempt
+            // is not an abandoned-but-recoverable cart in the reminder sense). Only
+            // our own storefront intents carry source==='b2c_shop'. Best-effort,
+            // always returns 200 so Stripe doesn't retry-storm.
+            const failedPi = event.data.object;
+            if (failedPi.metadata?.source === 'b2c_shop') {
+                try {
+                    await db.collection('checkouts').doc(failedPi.id).set({ status: 'failed', failedAt: new Date() }, { merge: true });
+                }
+                catch (recoveryError) {
+                    firebase_functions_1.logger.warn('⚠️ checkout-recovery: failed to mark checkout failed', {
+                        paymentIntentId: failedPi.id,
+                        error: recoveryError?.message,
+                    });
+                }
+            }
+            response.status(200).json({ received: true, paymentFailed: true });
         }
         else if (event.type === 'account.updated') {
             // 💸 Stripe Connect: a connected account's KYC/capabilities changed

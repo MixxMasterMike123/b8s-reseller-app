@@ -22,6 +22,7 @@ const affiliateApplicationNotificationAdmin_1 = require("../templates/affiliateA
 const refundConfirmation_1 = require("../templates/refundConfirmation");
 const disputeAlertAdmin_1 = require("../templates/disputeAlertAdmin");
 const connectStatusChange_1 = require("../templates/connectStatusChange");
+const abandonedCheckoutReminder_1 = require("../templates/abandonedCheckoutReminder");
 const emailLayout_1 = require("../templates/emailLayout");
 const config_1 = require("./config");
 const app_urls_1 = require("../../config/app-urls");
@@ -82,11 +83,21 @@ class EmailOrchestrator {
             }
             console.log('📧 EmailOrchestrator: Template generated:', template.subject);
             // Step 4: Prepare email options
+            // One-click List-Unsubscribe (RFC 8058) — set ONLY for the marketing-ish
+            // abandoned-checkout reminder, whose unsubscribe URL comes in additionalData.
+            const unsubscribeUrl = context.additionalData?.unsubscribeUrl;
+            const listUnsubHeaders = context.emailType === 'ABANDONED_CHECKOUT_REMINDER' && unsubscribeUrl
+                ? {
+                    'List-Unsubscribe': `<${unsubscribeUrl}>`,
+                    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+                }
+                : undefined;
             const emailOptions = {
                 to: userData.email,
                 from: this.getFromAddress(context.emailType, userData.type, shopIdentity?.shopName),
                 // Replies go to the SHOP, not the platform (when the shop has set one).
                 ...(shopIdentity?.supportEmail ? { replyTo: shopIdentity.supportEmail } : {}),
+                ...(listUnsubHeaders ? { headers: listUnsubHeaders } : {}),
             };
             // Step 5: Send email
             let result;
@@ -452,6 +463,22 @@ class EmailOrchestrator {
                     paymentsUrl,
                     brandName: data.brandName,
                 });
+            }
+            case 'ABANDONED_CHECKOUT_REMINDER': {
+                // Abandoned-checkout reminder — fired best-effort from the recovery sweep
+                // (checkout-recovery/sweep.ts). Sends under the SHOP's identity (from-name
+                // + logo + reply-to), so shopId must be threaded by the caller. The
+                // one-click unsubscribe link is in additionalData; the List-Unsubscribe
+                // header is set at send time (see below).
+                const ad = data.additionalData || {};
+                return (0, abandonedCheckoutReminder_1.generateAbandonedCheckoutReminderTemplate)({
+                    brandName: data.brandName,
+                    customerFirstName: ad.customerFirstName || data.context.customerInfo?.firstName,
+                    items: Array.isArray(ad.items) ? ad.items : [],
+                    totals: ad.totals,
+                    recoveryUrl: ad.recoveryUrl,
+                    unsubscribeUrl: ad.unsubscribeUrl,
+                }, data.language);
             }
             default:
                 throw new Error(`Unknown email type: ${emailType}`);

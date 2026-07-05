@@ -113,6 +113,8 @@ import ScrollToTop from './components/ScrollToTop';
 import OrderConfirmation from './pages/shop/OrderConfirmation';
 import OrderReturn from './pages/shop/OrderReturn';
 import WithdrawalPage from './pages/shop/WithdrawalPage';
+import CheckoutRecoveryPage from './pages/shop/CheckoutRecoveryPage';
+import CheckoutUnsubscribePage from './pages/shop/CheckoutUnsubscribePage';
 
 import { Toaster } from 'react-hot-toast';
 
@@ -319,6 +321,12 @@ function App() {
               {/* Ångerfunktionen (DAL 2 kap. 10 a §) — public, guest-capable,
                   linked from the footer on every page (continuous availability). */}
               <Route path="/:shopId/angra" element={<ShopGate><WithdrawalPage /></ShopGate>} />
+              {/* Abandoned-checkout recovery ("Övergiven kassa" add-on): guest
+                  pages reached from the reminder email. NO AddonGate — the
+                  recovery + unsubscribe links must work even if the add-on is
+                  later disabled. Declared BEFORE the /:shopId/* CMS catch-all. */}
+              <Route path="/:shopId/aterta/:token" element={<ShopGate><CheckoutRecoveryPage /></ShopGate>} />
+              <Route path="/:shopId/avregistrera/:token" element={<ShopGate><CheckoutUnsubscribePage /></ShopGate>} />
               <Route path="/:shopId/affiliate-registration" element={<ShopGate><AddonGate feature="affiliate" redirectTo="shop-home"><AffiliateRegistration /></AddonGate></ShopGate>} />
               <Route path="/:shopId/affiliate-portal" element={<ShopGate><AddonGate feature="affiliate" redirectTo="shop-home"><AffiliatePortal /></AddonGate></ShopGate>} />
               {/* B2B Wholesale add-on: per-shop wholesale self-registration.

@@ -95,3 +95,42 @@ export const saveShopConfig = async (patch, shopId) => {
   // loadShopConfig in this session reads the tenant doc, not the legacy fallback.
   tenantProbe.delete(id);
 };
+
+// ── Cart-recovery (abandoned-checkout "Övergiven kassa" add-on) config ──
+// A dedicated `cartRecovery` field on shops/{shopId} (NOT under storeIdentity):
+//   { delayHours: number }   // hours after checkout before the reminder fires
+// Mirrors the same tenant-doc seam + legacy fallback as loadShopConfig above so
+// the default shop keeps working before the seed has run.
+
+// Read the saved cartRecovery object (or {} if missing).
+export const loadCartRecovery = async (shopId) => {
+  const probed = await probeTenantDoc(shopId);
+  if (probed) {
+    const cr = probed.data()?.cartRecovery;
+    return cr && typeof cr === 'object' ? cr : {};
+  }
+  const legacy = await getDoc(legacyRef());
+  if (!legacy.exists()) return {};
+  const cr = legacy.data()?.cartRecovery;
+  return cr && typeof cr === 'object' ? cr : {};
+};
+
+// Merge-write a partial cartRecovery patch. Same target-resolution rules as
+// saveShopConfig (default shop → tenant doc if it exists, else legacy; non-default
+// → own tenant doc, create-on-merge, never the shared legacy doc).
+export const saveCartRecovery = async (patch, shopId) => {
+  const id = shopId || DEFAULT_SHOP_ID;
+  let ref;
+  if (id === DEFAULT_SHOP_ID) {
+    const exists = await probeTenantDoc(id);
+    ref = exists ? tenantRef(id) : legacyRef();
+  } else {
+    ref = tenantRef(id);
+  }
+  await setDoc(
+    ref,
+    { cartRecovery: patch, updatedAt: new Date().toISOString() },
+    { merge: true }
+  );
+  tenantProbe.delete(id);
+};

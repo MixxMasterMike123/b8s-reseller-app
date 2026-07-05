@@ -13,6 +13,7 @@ import { DEFAULT_SHOP_ID } from '../config/tenancy';
 import { isShopFeatureEnabled } from '../config/shopFeatures';
 import { buildConnectChargeParams } from './connectParams';
 import { readPlatformConfig } from './platformConfig';
+import { writeAbandonedCheckoutDoc } from '../checkout-recovery/writeCheckoutDoc';
 
 /**
  * Server-side price computation. NEVER trust client-supplied amounts:
@@ -221,6 +222,7 @@ interface CreatePaymentIntentRequest {
     firstName?: string; // For enhanced metadata
     lastName?: string;  // For enhanced metadata
     marketing?: boolean; // Marketing consent
+    remindMe?: boolean; // Abandoned-checkout reminder consent (opt-in)
     preferredLang?: string; // Language preference
   };
   shippingInfo: {
@@ -503,6 +505,7 @@ export const createPaymentIntentV2 = onRequest(
             customerFirstName: customerInfo.firstName || shippingInfo.firstName || '',
             customerLastName: customerInfo.lastName || shippingInfo.lastName || '',
             customerMarketing: (customerInfo.marketing || false).toString(),
+            customerRemind: (customerInfo.remindMe || false).toString(),
             customerLang: customerInfo.preferredLang || 'sv-SE',
             
             // Shipping Information (complete address)
@@ -630,6 +633,32 @@ export const createPaymentIntentV2 = onRequest(
         currency: paymentIntent.currency,
         status: paymentIntent.status
       });
+
+      // Abandoned-checkout recovery: record a checkouts/{piId} doc so the sweep
+      // can remind the buyer if no order materializes. STRICTLY best-effort — a
+      // failure here must NEVER affect the payment response (which is the whole
+      // point of the charge). Uses the same server-priced item snapshot the
+      // charge is built from (buildItemDetailsJson(false), image-less).
+      try {
+        await writeAbandonedCheckoutDoc({
+          paymentIntentId: paymentIntent.id,
+          shopId: resolvedShopId,
+          customerInfo,
+          itemsJson: buildItemDetailsJson(false),
+          totals: {
+            subtotal: totals.subtotal,
+            vat: totals.vat,
+            shipping: totals.shipping,
+            discountAmount: totals.discountAmount,
+            total: totals.total,
+          },
+        });
+      } catch (recoveryError: any) {
+        logger.warn('⚠️ checkout-recovery: failed to write checkout doc (payment unaffected)', {
+          paymentIntentId: paymentIntent.id,
+          error: recoveryError?.message,
+        });
+      }
 
       response.status(200).json({
         success: true,

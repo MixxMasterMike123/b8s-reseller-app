@@ -128,6 +128,10 @@ const Checkout = () => {
   const [contactInfo, setContactInfo] = useState({
     email: currentUser?.email || '',
     marketing: false,
+    // Abandoned-checkout reminder opt-in ("Övergiven kassa" add-on). Pre-unticked;
+    // persisted (minus password) with the rest of contactInfo for the Klarna
+    // return flow.
+    remindMe: false,
     password: ''  // Add password field to state
   });
 
@@ -735,6 +739,19 @@ const Checkout = () => {
                         {t('checkout_marketing_opt_in', 'Skicka mig nyheter och erbjudanden via e-post')}
                       </label>
                     </div>
+
+                    <div className="flex items-start space-x-3">
+                      <input
+                        type="checkbox"
+                        id="remindMe"
+                        checked={contactInfo.remindMe}
+                        onChange={(e) => setContactInfo({...contactInfo, remindMe: e.target.checked})}
+                        className="h-4 w-4 text-accent accent-[var(--color-accent)] focus:ring-accent/30 border-ink/20 rounded-sm mt-0.5 shrink-0"
+                      />
+                      <label htmlFor="remindMe" className="text-sm text-ink-muted leading-relaxed">
+                        {t('checkout_remind_me', 'Påminn mig via e-post om jag inte slutför köpet')}
+                      </label>
+                    </div>
                   </div>
                   <button
                     onClick={handleNextStep}
@@ -1060,6 +1077,7 @@ const Checkout = () => {
                       firstName: shippingInfo.firstName,
                       lastName: shippingInfo.lastName,
                       marketing: contactInfo.marketing,
+                      remindMe: contactInfo.remindMe,
                       preferredLang: currentLanguage
                     }}
                     shippingInfo={{

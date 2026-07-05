@@ -26,6 +26,8 @@ export { saveDac7SellerProfile, getDac7SellerProfile, pullDac7FromStripe, aggreg
 export { scrapeWebsiteMeta as scrapeWebsiteMetaV2 };
 export { getPrintQueue, getPrintJob, getPrintQueueExport, createPrintShopUser, } from './print/functions';
 export { submitLead } from './leads/submitLead';
+export { sweepAbandonedCheckouts } from './checkout-recovery/sweep';
+export { resolveCheckoutRecovery, unsubscribeCheckout } from './checkout-recovery/callables';
 export { submitWithdrawal } from './withdrawal/functions';
 export { confirmPasswordReset as confirmPasswordResetV2 };
 export { confirmPasswordReset };

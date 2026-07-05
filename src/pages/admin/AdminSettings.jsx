@@ -5,8 +5,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import AppLayout from '../../components/layout/AppLayout';
 import toast from 'react-hot-toast';
 import { STORE } from '../../config/store';
-import { loadShopConfig, saveShopConfig } from '../../config/shopConfig';
+import { loadShopConfig, saveShopConfig, loadCartRecovery, saveCartRecovery } from '../../config/shopConfig';
 import { useShopId } from '../../contexts/ShopContext';
+import { useShopFeatures } from '../../contexts/ShopFeaturesContext';
 import { getLegalReadiness } from '../../utils/legalPageReadiness';
 import PickupLocationsEditor from '../../components/admin/PickupLocationsEditor';
 import {
@@ -30,6 +31,13 @@ const AdminSettings = () => {
   // (e.g. 'sillmans') would save to 'b8shield' and the storefront, which reads
   // its own shopId, would never see the change (pickup locations, branding…).
   const shopId = useShopId();
+  const { isEnabled } = useShopFeatures();
+  const abandonedCheckoutEnabled = isEnabled('abandonedCheckout');
+
+  // Cart-recovery ("Övergiven kassa") reminder delay (hours). Loaded/saved via
+  // the dedicated cartRecovery seam. Default 1h, clamped 1–24.
+  const [cartRecoveryDelay, setCartRecoveryDelay] = useState(1);
+  const [savingRecovery, setSavingRecovery] = useState(false);
 
   // Seed the store-identity form from the shopConfig SEAM for THIS shop.
   useEffect(() => {
@@ -49,6 +57,38 @@ const AdminSettings = () => {
     })();
     return () => { cancelled = true; };
   }, [shopId]);
+
+  // Load the cart-recovery reminder delay for THIS shop (default 1h).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const cr = (await loadCartRecovery(shopId)) || {};
+        const n = Number(cr.delayHours);
+        if (!cancelled) {
+          setCartRecoveryDelay(Number.isFinite(n) ? Math.min(24, Math.max(1, Math.round(n))) : 1);
+        }
+      } catch (e) {
+        console.warn('AdminSettings: could not load cart recovery config:', e?.message);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [shopId]);
+
+  const saveCartRecoverySettings = useCallback(async () => {
+    try {
+      setSavingRecovery(true);
+      const clamped = Math.min(24, Math.max(1, Math.round(Number(cartRecoveryDelay) || 1)));
+      await saveCartRecovery({ delayHours: clamped }, shopId);
+      setCartRecoveryDelay(clamped);
+      toast.success('Inställningar för övergiven kassa sparade.');
+    } catch (error) {
+      console.error('Error saving cart recovery settings:', error);
+      toast.error('Fel vid sparande av inställningar för övergiven kassa');
+    } finally {
+      setSavingRecovery(false);
+    }
+  }, [cartRecoveryDelay, shopId]);
 
   // Save store identity via the shopConfig seam for THIS shop.
   const saveStoreIdentity = useCallback(async () => {
@@ -389,6 +429,41 @@ const AdminSettings = () => {
                   </Button>
                 </div>
               </CardSection>
+
+              {/* Övergiven kassa (abandoned-checkout reminder) — only when the
+                  add-on is enabled for this shop (platform-controlled). */}
+              {abandonedCheckoutEnabled && (
+                <CardSection title="Övergiven kassa" bodyClassName="space-y-4">
+                  <p className="text-[13px] text-admin-text-muted">
+                    Skicka en påminnelse via e-post till kunder som påbörjade en betalning men inte
+                    slutförde köpet. En påminnelse per kassa. Kunden måste ha kryssat i påminnelserutan
+                    i kassan.
+                  </p>
+                  <div className="max-w-xs">
+                    <label className={labelCls}>Fördröjning innan påminnelse (timmar)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="24"
+                      step="1"
+                      value={cartRecoveryDelay}
+                      onChange={(e) => setCartRecoveryDelay(e.target.value)}
+                      className={inputCls}
+                    />
+                    <p className={helpCls}>Mellan 1 och 24 timmar. Standard: 1 timme.</p>
+                  </div>
+                  <div className="flex justify-end border-t border-admin-border pt-4">
+                    <Button variant="primary" onClick={saveCartRecoverySettings} disabled={savingRecovery}>
+                      {savingRecovery ? (
+                        <span className="h-4 w-4 animate-spin rounded-full border-b-2 border-current" />
+                      ) : (
+                        <CheckIcon className="h-4 w-4" />
+                      )}
+                      {savingRecovery ? 'Sparar…' : 'Spara'}
+                    </Button>
+                  </div>
+                </CardSection>
+              )}
         </div>
       </Page>
     </AppLayout>

@@ -18,6 +18,7 @@ const tenancy_1 = require("../config/tenancy");
 const shopFeatures_1 = require("../config/shopFeatures");
 const connectParams_1 = require("./connectParams");
 const platformConfig_1 = require("./platformConfig");
+const writeCheckoutDoc_1 = require("../checkout-recovery/writeCheckoutDoc");
 /**
  * Server-side price computation. NEVER trust client-supplied amounts:
  * prices come from the products collection, the discount from the affiliate
@@ -388,6 +389,7 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
             customerFirstName: customerInfo.firstName || shippingInfo.firstName || '',
             customerLastName: customerInfo.lastName || shippingInfo.lastName || '',
             customerMarketing: (customerInfo.marketing || false).toString(),
+            customerRemind: (customerInfo.remindMe || false).toString(),
             customerLang: customerInfo.preferredLang || 'sv-SE',
             // Shipping Information (complete address)
             shippingFirstName: shippingInfo.firstName || '',
@@ -501,6 +503,32 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
             currency: paymentIntent.currency,
             status: paymentIntent.status
         });
+        // Abandoned-checkout recovery: record a checkouts/{piId} doc so the sweep
+        // can remind the buyer if no order materializes. STRICTLY best-effort — a
+        // failure here must NEVER affect the payment response (which is the whole
+        // point of the charge). Uses the same server-priced item snapshot the
+        // charge is built from (buildItemDetailsJson(false), image-less).
+        try {
+            await (0, writeCheckoutDoc_1.writeAbandonedCheckoutDoc)({
+                paymentIntentId: paymentIntent.id,
+                shopId: resolvedShopId,
+                customerInfo,
+                itemsJson: buildItemDetailsJson(false),
+                totals: {
+                    subtotal: totals.subtotal,
+                    vat: totals.vat,
+                    shipping: totals.shipping,
+                    discountAmount: totals.discountAmount,
+                    total: totals.total,
+                },
+            });
+        }
+        catch (recoveryError) {
+            firebase_functions_1.logger.warn('⚠️ checkout-recovery: failed to write checkout doc (payment unaffected)', {
+                paymentIntentId: paymentIntent.id,
+                error: recoveryError?.message,
+            });
+        }
         response.status(200).json({
             success: true,
             paymentIntent: {

@@ -208,6 +208,12 @@ export {
 // writes a platform-level `leads` doc + best-effort admin notification email.
 export { submitLead } from './leads/submitLead';
 
+// Abandoned-checkout recovery ("Övergiven kassa" add-on): a scheduled sweep that
+// reminds buyers who created a PaymentIntent but never completed the order, plus
+// two public callables the storefront recovery/unsubscribe pages call.
+export { sweepAbandonedCheckouts } from './checkout-recovery/sweep';
+export { resolveCheckoutRecovery, unsubscribeCheckout } from './checkout-recovery/callables';
+
 // Ångerfunktion — consumer right-of-withdrawal function (DAL 2 kap. 10 a § /
 // CRD Art. 11a, in force 19 June 2026). Server-authoritative: stamps the
 // submission time, enforces eligibility (Regime A applies / Regime B exempt),

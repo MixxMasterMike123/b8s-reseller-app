@@ -601,6 +601,19 @@ service cloud.firestore {
       allow create, delete: if false;
     }
 
+    // checkouts / checkoutSuppressions — abandoned-checkout recovery ("Övergiven
+    // kassa" add-on). Written ONLY by Cloud Functions (createPaymentIntent doc
+    // write, the sweep, and the recovery/unsubscribe callables) via the Admin SDK
+    // (bypasses rules). They hold email + items, so they are function-only — never
+    // client-readable/writable. The storefront reaches them ONLY through the
+    // scoped callables (resolveCheckoutRecovery / unsubscribeCheckout).
+    match /checkouts/{checkoutId} {
+      allow read, write: if false;
+    }
+    match /checkoutSuppressions/{suppressionId} {
+      allow read, write: if false;
+    }
+
     // Default deny for everything else (incl. server-only collections:
     // passwordResets, emailVerifications, campaignParticipants,
     // campaignRevenueTracking)
