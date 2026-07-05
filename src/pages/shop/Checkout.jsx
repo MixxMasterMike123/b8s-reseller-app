@@ -635,7 +635,23 @@ const Checkout = () => {
             
             {/* Left Column - Forms */}
             <div className="space-y-8">
-              
+
+              {/* Escape hatch back to the storefront — visible on every step so
+                  the customer is never trapped in checkout. The cart persists
+                  (localStorage) so nothing is lost by leaving. Hidden while a
+                  payment is being finalized (that state also replaces this whole
+                  view with the processing screen — belt and braces). */}
+              {!processingPayment && (
+                <button
+                  type="button"
+                  onClick={() => navigate(getCountryAwareUrl(''))}
+                  className="flex items-center text-sm text-ink-muted hover:text-ink font-medium transition-colors -mb-4"
+                >
+                  <ChevronLeftIcon className="h-4 w-4 mr-1" />
+                  {t('checkout_continue_shopping', 'Fortsätt handla')}
+                </button>
+              )}
+
               {/* Progress Steps */}
               <div className="flex items-center justify-between mb-6 sm:mb-8 px-2">
                 <div className={`flex flex-col items-center space-y-1 ${step === 'contact' ? 'text-accent' : 'text-ink-faint'}`}>

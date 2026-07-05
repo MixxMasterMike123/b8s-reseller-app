@@ -13,7 +13,7 @@ import { getCountryAwareUrl } from '../../utils/productUrls';
 import { functionUrl } from '../../config/urls';
 import toast from 'react-hot-toast';
 
-const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentError, clientSecret, gateBlocked }) => {
+const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentError, clientSecret, gateBlocked, onResetPaymentMethods }) => {
   const stripe = useStripe();
   const elements = useElements();
   const { cart, calculateTotals, clearCart } = useCart();
@@ -89,7 +89,9 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
         } else if (paymentIntent.status === 'requires_action' || paymentIntent.status === 'requires_source_action') {
           // Payment requires additional action (Klarna, 3D Secure, etc.)
           console.log('🔄 Payment requires action, redirecting...', paymentIntent.status);
-          toast.info(t('stripe_redirecting_to_provider', 'Omdirigerar till betalningsleverantör...'));
+          // react-hot-toast has no toast.info — plain toast() (was a TypeError
+          // that would have crashed this redirect path).
+          toast(t('stripe_redirecting_to_provider', 'Omdirigerar till betalningsleverantör...'));
           
           // User will be redirected to complete payment, then return to return_url
           // The order creation will happen on the return page
@@ -97,12 +99,12 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
         } else if (paymentIntent.status === 'processing') {
           // Payment is being processed (some payment methods)
           console.log('⏳ Payment processing...', paymentIntent);
-          toast.info(t('stripe_payment_processing', 'Betalning behandlas...'));
+          toast(t('stripe_payment_processing', 'Betalning behandlas...'));
           
         } else {
           // Other statuses
           console.log('❓ Unexpected payment status:', paymentIntent.status);
-          toast.warning(t('stripe_unexpected_payment_status', 'Oväntat betalningsstatus. Kontakta support om problemet kvarstår.'));
+          toast(t('stripe_unexpected_payment_status', 'Oväntat betalningsstatus. Kontakta support om problemet kvarstår.'));
         }
       }
 
@@ -129,17 +131,40 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Payment Element */}
       <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          {t('payment_method', 'Betalningsmetod')}
-        </h3>
-        
-        <PaymentElement 
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">
+            {t('payment_method', 'Betalningsmetod')}
+          </h3>
+          {/* Always-available escape hatch: remounts the Payment Element with a
+              fresh key so the full method list (tabs) returns even if Stripe
+              Link's saved-card UI has taken over the element. */}
+          {onResetPaymentMethods && (
+            <button
+              type="button"
+              onClick={onResetPaymentMethods}
+              disabled={isProcessing}
+              className="text-sm font-medium text-gray-600 hover:text-gray-900 underline underline-offset-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {t('checkout_switch_payment_method', 'Byt betalningssätt')}
+            </button>
+          )}
+        </div>
+
+        <PaymentElement
           options={{
-            layout: 'tabs',
+            // Tabs: every available method (kort, Klarna, wallets…) stays
+            // visible and switchable at all times — no collapsed accordion.
+            layout: { type: 'tabs' },
             defaultValues: {
               billingDetails: {
+                // Deliberately NO email here: a prefilled email makes the
+                // Payment Element look up the address with Stripe Link and, for
+                // returning Link users, auto-render their saved card — hiding
+                // the other payment methods. stripe-js 4.7.0 has no client
+                // option to disable Link outright (wallets covers only
+                // applePay/googlePay), so we avoid the trigger instead. The
+                // email still reaches Stripe via receipt_email at confirm.
                 name: customerInfo.name,
-                email: customerInfo.email,
               }
             }
           }}
@@ -181,6 +206,19 @@ const PaymentForm = ({ customerInfo, shippingInfo, onPaymentSuccess, onPaymentEr
               <div className="mt-2 text-sm text-red-700">
                 {paymentError}
               </div>
+              <p className="mt-2 text-sm text-red-700">
+                {t('checkout_payment_retry_hint', 'Inga pengar har dragits. Försök igen eller välj ett annat betalningssätt.')}
+              </p>
+              {onResetPaymentMethods && (
+                <button
+                  type="button"
+                  onClick={onResetPaymentMethods}
+                  disabled={isProcessing}
+                  className="mt-2 text-sm font-semibold text-red-800 hover:text-red-900 underline underline-offset-4 disabled:opacity-50"
+                >
+                  {t('checkout_switch_payment_method', 'Byt betalningssätt')}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -236,6 +274,13 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, deliveryInfo, customerL
   const [clientSecret, setClientSecret] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Bumping this key remounts the Elements provider (same clientSecret — a
+  // PaymentIntent awaiting a payment method is reusable), which resets the
+  // Payment Element to the full method-tab view. This is the guaranteed way
+  // out of Stripe Link's saved-card takeover UI, and restores every method
+  // after a failed attempt if the element collapsed to one.
+  const [elementsKey, setElementsKey] = useState(0);
+  const resetPaymentMethods = () => setElementsKey((k) => k + 1);
 
   useEffect(() => {
     // Defer creating the PaymentIntent until the no-withdrawal notice is
@@ -431,7 +476,7 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, deliveryInfo, customerL
   };
 
   return (
-    <Elements stripe={getStripe()} options={options}>
+    <Elements key={elementsKey} stripe={getStripe()} options={options}>
       <PaymentForm
         customerInfo={customerInfo}
         shippingInfo={shippingInfo}
@@ -439,6 +484,7 @@ const StripePaymentForm = ({ customerInfo, shippingInfo, deliveryInfo, customerL
         onPaymentError={onPaymentError}
         clientSecret={clientSecret} // Pass clientSecret to form for validation
         gateBlocked={gateBlocked}
+        onResetPaymentMethods={resetPaymentMethods}
       />
     </Elements>
   );
