@@ -642,14 +642,16 @@ const Checkout = () => {
                   payment is being finalized (that state also replaces this whole
                   view with the processing screen — belt and braces). */}
               {!processingPayment && (
-                <button
-                  type="button"
-                  onClick={() => navigate(getCountryAwareUrl(''))}
-                  className="flex items-center text-sm text-ink-muted hover:text-ink font-medium transition-colors -mb-4"
-                >
-                  <ChevronLeftIcon className="h-4 w-4 mr-1" />
-                  {t('checkout_continue_shopping', 'Fortsätt handla')}
-                </button>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => navigate(getCountryAwareUrl(''))}
+                    className="inline-flex items-center bg-white border border-ink/15 hover:border-ink/40 text-ink px-4 py-2 rounded-full text-sm font-semibold shadow-tile transition-colors"
+                  >
+                    <ChevronLeftIcon className="h-4 w-4 mr-1.5" />
+                    {t('checkout_continue_shopping', 'Fortsätt handla')}
+                  </button>
+                </div>
               )}
 
               {/* Progress Steps */}
