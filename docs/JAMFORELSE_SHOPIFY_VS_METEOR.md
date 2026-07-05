@@ -33,7 +33,7 @@
 | **AI-produkttexter** | ❌ app | ✅ inbyggd (add-on, Claude-driven) |
 | Produktrecensioner | ❌ app: Judge.me $15/mån | ⚠️ grundläggande (Trustpilot-widget per butik; manuell CSV-inläsning, ingen egen insamling) |
 | E-postmarknadsföring | ❌ app: Klaviyo ~$45/mån | ❌ saknas (samtycke samlas in men används ej) |
-| Övergiven varukorg-påminnelse | ✅ | ❌ saknas |
+| Övergiven kassa-påminnelse | ✅ | ✅ **inbyggd** (add-on, 2026-07-06): en påminnelse per övergiven kassa, återställningslänk som återskapar varukorgen, samtyckesstyrd enligt marknadsföringslagen (kryssruta i kassan), avregistrering med ett klick |
 | **Rabattkoder/kampanjkoder** | ✅ | ✅ **inbyggd** (add-on, 2026-07-05): procent/fast belopp, hela varukorgen eller valda produkter, datumfönster, användningsgräns, lägsta ordervärde |
 | Presentkort | ✅ | ❌ saknas |
 | Flerspråk | ✅ | ⚠️ infrastrukturen klar (3 språk, admin-redigerbar); butiken medvetet svensk-låst ännu |
@@ -91,7 +91,7 @@ Jämnt. Ingen seriös skillnad att sälja på åt något håll — påstå inte 
 - **Målgrupp där vi vinner allt:** analog verksamhet med bra omsättning som aldrig sålt online (Kents segment), plus småbutiker < ~200 tkr/år online. Argument: 0 kr fast, allt ingår som kostar 1 000+ kr/mån i appar hos Shopify, och **vi gör jobbet åt dem**.
 - **Målgrupp vi ska lämna ifred:** etablerade butiker > 300 tkr/år online (Shopify är billigare) och säsongsoptimerare à la Sillmans (~2 % effektiv kostnad — under vårt kostnadsgolv).
 - **Add-on-intäkter (Kents tes):** rätt tanke, men det finns idag **ingen betalmekanism för add-ons** — de är gratis funktionsflaggor. Prissätt modulerna i Plattformsvillkoren nu och ta betalt via provisionspåslag per butik (spaken finns redan), annars blir de gratis för alltid för de första kunderna.
-- **Luckor att stänga innan tabellen används publikt:** egen domän, native Swish, egen recensionsinsamling (widgeten finns, insamlingen är manuell), produkt-/kundexport, presentkort, övergiven varukorg-påminnelse (byggs härnäst), EUR-debitering (visningen finns), engelsk butik (infran finns).
+- **Luckor att stänga innan tabellen används publikt:** egen domän, native Swish, egen recensionsinsamling (widgeten finns, insamlingen är manuell), produkt-/kundexport, presentkort, EUR-debitering (visningen finns), engelsk butik (infran finns).
 - **Add-on-arsenalen är större än Shopify-jämförelsen antydde:** affiliate, B2B-grossistportal med fakturaorder, kampanjer, ambassadörs-CRM, sälj-CRM, AI-produkttexter, POD med lokalt tryckeri (serversäkrad produktionspipeline). Hos Shopify är varje rad en app à $15–50/mån. Detta är Kents add-on-tes i siffror — det som saknas är fortfarande betalmekanismen för modulerna.
 
 ## 8. Djupdykning: Affiliatemodulen vs UpPromote (Kents fråga 2026-07-05)
