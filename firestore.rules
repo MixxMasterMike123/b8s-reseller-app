@@ -580,10 +580,14 @@ service cloud.firestore {
 
     // leads — landing-page sales leads (prospective merchants; PLATFORM-level,
     // no shopId). Created ONLY by the submitLead Cloud Function via the Admin
-    // SDK (bypasses rules); never client-writable. Platform-only read.
+    // SDK (bypasses rules); never client-creatable/deletable. Platform-only
+    // read; platform may update ONLY the status field (follow-up pipeline).
     match /leads/{leadId} {
       allow read: if isPlatform();
-      allow write: if false;
+      allow update: if isPlatform()
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+                    && request.resource.data.status in ['new', 'contacted', 'won', 'lost'];
+      allow create, delete: if false;
     }
 
     // Default deny for everything else (incl. server-only collections:

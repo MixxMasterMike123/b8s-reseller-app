@@ -35,6 +35,7 @@ import PlatformShops from './pages/platform/PlatformShops';
 import PlatformAddons from './pages/platform/PlatformAddons';
 import PlatformDac7 from './pages/platform/PlatformDac7';
 import PlatformPrinters from './pages/platform/PlatformPrinters';
+import PlatformLeads from './pages/platform/PlatformLeads';
 import LoginPage from './pages/LoginPage';
 import LandingPage from './pages/LandingPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -259,6 +260,9 @@ function App() {
               } />
               <Route path="/printers" element={
                 <PlatformRoute><PlatformPrinters /></PlatformRoute>
+              } />
+              <Route path="/leads" element={
+                <PlatformRoute><PlatformLeads /></PlatformRoute>
               } />
               <Route path="*" element={<Navigate to="/" replace />} />
             </>
