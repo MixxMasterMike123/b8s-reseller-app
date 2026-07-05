@@ -249,18 +249,25 @@ exports.stripeWebhookV2 = (0, https_1.onRequest)({
             }
             // Extract order data from enhanced metadata
             const metadata = paymentIntent.metadata;
+            // itemDetails may be chunked across itemDetails, itemDetails1… by
+            // createPaymentIntent (Stripe's 500-char metadata-value cap) —
+            // reassemble before parsing.
+            let itemDetailsJson = metadata.itemDetails || '';
+            for (let i = 1; metadata[`itemDetails${i}`]; i++) {
+                itemDetailsJson += metadata[`itemDetails${i}`];
+            }
             // Log metadata sizes to detect Stripe truncation issues
             firebase_functions_1.logger.info('📊 Webhook: Metadata size check', {
                 paymentIntentId: paymentIntent.id,
-                itemDetailsLength: metadata.itemDetails?.length || 0,
+                itemDetailsLength: itemDetailsJson.length,
                 totalMetadataKeys: Object.keys(metadata).length,
                 largeFields: Object.entries(metadata)
                     .filter(([_, value]) => value && value.length > 400)
                     .map(([key, value]) => ({ key, length: value?.length || 0 })),
-                possibleTruncation: metadata.itemDetails && metadata.itemDetails.length >= 490
+                possibleTruncation: false
             });
             // Validate required metadata
-            if (!metadata.customerEmail || !metadata.itemDetails) {
+            if (!metadata.customerEmail || !itemDetailsJson) {
                 firebase_functions_1.logger.error('❌ Missing required metadata for order creation', {
                     paymentIntentId: paymentIntent.id,
                     hasEmail: !!metadata.customerEmail,
@@ -273,12 +280,12 @@ exports.stripeWebhookV2 = (0, https_1.onRequest)({
             // Parse item details from JSON
             let cartItems;
             try {
-                cartItems = JSON.parse(metadata.itemDetails);
+                cartItems = JSON.parse(itemDetailsJson);
             }
             catch (err) {
                 firebase_functions_1.logger.error('❌ Failed to parse itemDetails JSON', {
                     paymentIntentId: paymentIntent.id,
-                    itemDetails: metadata.itemDetails
+                    itemDetails: itemDetailsJson
                 });
                 response.status(400).json({ error: 'Invalid itemDetails format' });
                 return;

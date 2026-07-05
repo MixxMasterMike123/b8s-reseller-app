@@ -289,6 +289,112 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
         if (connectBuild.useConnect) {
             firebase_functions_1.logger.info('💸 Destination charge', { shopId: resolvedShopId, connectedAccountId: pay.stripeAccountId, fee: connectParams.application_fee_amount });
         }
+        // Item snapshot for the webhook's order creation. Stripe caps each
+        // metadata VALUE at 500 chars, so the JSON is chunked across
+        // itemDetails, itemDetails1, itemDetails2… (webhook reassembles).
+        // If even the image-less variant exceeds the chunk budget, we fail
+        // loudly rather than let Stripe truncate mid-JSON.
+        const buildItemDetailsJson = (withImages) => JSON.stringify(cartItems.map(item => {
+            const productId = item.productId || item.id;
+            const variantSku = item.variantSku || '';
+            const lineKey = `${productId}::${variantSku}`;
+            return {
+                productId,
+                variantSku,
+                sku: item.sku,
+                name: typeof item.name === 'string' ? item.name : item.name?.['sv-SE'] || item.name?.['en-US'] || 'Product',
+                label: item.label || '',
+                price: totals.serverPrices[lineKey] ?? item.price,
+                quantity: item.quantity,
+                image: withImages ? (item.image || '') : ''
+            };
+        }));
+        const META_VALUE_MAX = 500;
+        const META_TOTAL_KEYS = 50; // Stripe's hard cap on metadata key count
+        const chunkItemDetails = (json, maxChunks) => {
+            if (Math.ceil(json.length / META_VALUE_MAX) > maxChunks)
+                return null;
+            const out = {};
+            for (let i = 0; i * META_VALUE_MAX < json.length; i++) {
+                out[i === 0 ? 'itemDetails' : `itemDetails${i}`] = json.slice(i * META_VALUE_MAX, (i + 1) * META_VALUE_MAX);
+            }
+            return out;
+        };
+        // Base metadata (everything except the chunked item snapshot) is
+        // assembled first so the chunk budget can be derived from the real
+        // key count — Stripe hard-caps metadata at 50 keys total.
+        const baseMetadata = {
+            // ✅ ENHANCED METADATA FOR COMPLETE ORDER RECOVERY
+            // Customer Information (enhanced)
+            customerEmail: customerInfo.email,
+            customerName: customerInfo.name || '',
+            customerFirstName: customerInfo.firstName || shippingInfo.firstName || '',
+            customerLastName: customerInfo.lastName || shippingInfo.lastName || '',
+            customerMarketing: (customerInfo.marketing || false).toString(),
+            customerLang: customerInfo.preferredLang || 'sv-SE',
+            // Shipping Information (complete address)
+            shippingFirstName: shippingInfo.firstName || '',
+            shippingLastName: shippingInfo.lastName || '',
+            shippingAddress: shippingInfo.address || '',
+            shippingApartment: shippingInfo.apartment || '',
+            shippingCity: shippingInfo.city || '',
+            shippingPostalCode: shippingInfo.postalCode || '',
+            shippingCountry: shippingInfo.country || 'SE',
+            shippingCost: (shippingInfo.cost || 0).toString(),
+            // Delivery method (Click & Collect) — carried to the order by the webhook.
+            deliveryMethod,
+            ...(deliveryMethod === 'pickup' && {
+                pickupLocationId: deliveryInfo?.pickupLocationId || '',
+                pickupLocationName: deliveryInfo?.pickupLocationName || '',
+                pickupLocationAddress: deliveryInfo?.pickupLocationAddress || '',
+                pickupLocationDate: deliveryInfo?.pickupLocationDate || '',
+            }),
+            // Order Totals (server-computed breakdown — single source of truth)
+            subtotal: totals.subtotal.toString(),
+            vat: totals.vat.toFixed(2),
+            shipping: totals.shipping.toString(),
+            discountAmount: totals.discountAmount.toString(),
+            total: totals.total.toString(),
+            // Discount Information (server-validated)
+            ...(discountCode && totals.discountAmount > 0 && {
+                discountCode: discountCode.toUpperCase(),
+                discountPercentage: totals.discountPercentage.toString(),
+            }),
+            // Affiliate Information (enhanced)
+            ...(affiliateInfo && {
+                affiliateCode: affiliateInfo.code,
+                affiliateClickId: affiliateInfo.clickId,
+            }),
+            // Cart Items (detailed for recovery)
+            itemCount: cartItems.length.toString(),
+            totalItems: cartItems.reduce((sum, item) => sum + item.quantity, 0).toString(),
+            // Legacy compatibility (keep existing fields)
+            itemIds: cartItems.map(item => String(item.productId || item.id || '').substring(0, 8)).join(','),
+            cartSummary: cartItems.map(item => `${item.quantity}x${item.sku}`).join(','),
+            // B2C customer account linkage (set when the buyer has/creates an account)
+            ...(request.body.b2cCustomerId && {
+                b2cCustomerId: request.body.b2cCustomerId,
+                b2cCustomerAuthId: request.body.b2cCustomerAuthId || ''
+            }),
+            // System identifiers
+            source: 'b2c_shop',
+            platform: 'meteorpr',
+            shopId: resolvedShopId,
+            version: 'enhanced_v2',
+            // Right-of-withdrawal proof (empty {} for standard-options carts)
+            ...withdrawalMeta,
+            // Stripe Connect (empty for legacy shops → metadata unchanged)
+            ...connectMeta
+        };
+        const chunkBudget = Math.max(1, META_TOTAL_KEYS - Object.keys(baseMetadata).length);
+        // Item snapshot chunked across itemDetails, itemDetails1… within the
+        // remaining key budget; images dropped first if the cart outgrows it.
+        const itemDetailsMeta = chunkItemDetails(buildItemDetailsJson(true), chunkBudget)
+            ?? chunkItemDetails(buildItemDetailsJson(false), chunkBudget);
+        if (!itemDetailsMeta) {
+            response.status(400).json({ error: 'Cart too large for payment metadata' });
+            return;
+        }
         // Create Payment Intent with simplified configuration for live mode
         let paymentIntent;
         try {
@@ -298,87 +404,7 @@ exports.createPaymentIntentV2 = (0, https_1.onRequest)({
                 automatic_payment_methods: {
                     enabled: true,
                 },
-                metadata: {
-                    // ✅ ENHANCED METADATA FOR COMPLETE ORDER RECOVERY
-                    // Customer Information (enhanced)
-                    customerEmail: customerInfo.email,
-                    customerName: customerInfo.name || '',
-                    customerFirstName: customerInfo.firstName || shippingInfo.firstName || '',
-                    customerLastName: customerInfo.lastName || shippingInfo.lastName || '',
-                    customerMarketing: (customerInfo.marketing || false).toString(),
-                    customerLang: customerInfo.preferredLang || 'sv-SE',
-                    // Shipping Information (complete address)
-                    shippingFirstName: shippingInfo.firstName || '',
-                    shippingLastName: shippingInfo.lastName || '',
-                    shippingAddress: shippingInfo.address || '',
-                    shippingApartment: shippingInfo.apartment || '',
-                    shippingCity: shippingInfo.city || '',
-                    shippingPostalCode: shippingInfo.postalCode || '',
-                    shippingCountry: shippingInfo.country || 'SE',
-                    shippingCost: (shippingInfo.cost || 0).toString(),
-                    // Delivery method (Click & Collect) — carried to the order by the webhook.
-                    deliveryMethod,
-                    ...(deliveryMethod === 'pickup' && {
-                        pickupLocationId: deliveryInfo?.pickupLocationId || '',
-                        pickupLocationName: deliveryInfo?.pickupLocationName || '',
-                        pickupLocationAddress: deliveryInfo?.pickupLocationAddress || '',
-                        pickupLocationDate: deliveryInfo?.pickupLocationDate || '',
-                    }),
-                    // Order Totals (server-computed breakdown — single source of truth)
-                    subtotal: totals.subtotal.toString(),
-                    vat: totals.vat.toFixed(2),
-                    shipping: totals.shipping.toString(),
-                    discountAmount: totals.discountAmount.toString(),
-                    total: totals.total.toString(),
-                    // Discount Information (server-validated)
-                    ...(discountCode && totals.discountAmount > 0 && {
-                        discountCode: discountCode.toUpperCase(),
-                        discountPercentage: totals.discountPercentage.toString(),
-                    }),
-                    // Affiliate Information (enhanced)
-                    ...(affiliateInfo && {
-                        affiliateCode: affiliateInfo.code,
-                        affiliateClickId: affiliateInfo.clickId,
-                    }),
-                    // Cart Items (detailed for recovery)
-                    itemCount: cartItems.length.toString(),
-                    totalItems: cartItems.reduce((sum, item) => sum + item.quantity, 0).toString(),
-                    // Store complete item details as JSON (within Stripe limits).
-                    // Prices come from the server-side computation, not the client.
-                    // v2: productId + variantSku + label snapshot.
-                    itemDetails: JSON.stringify(cartItems.map(item => {
-                        const productId = item.productId || item.id;
-                        const variantSku = item.variantSku || '';
-                        const lineKey = `${productId}::${variantSku}`;
-                        return {
-                            productId,
-                            variantSku,
-                            sku: item.sku,
-                            name: typeof item.name === 'string' ? item.name : item.name?.['sv-SE'] || item.name?.['en-US'] || 'Product',
-                            label: item.label || '',
-                            price: totals.serverPrices[lineKey] ?? item.price,
-                            quantity: item.quantity,
-                            image: item.image || ''
-                        };
-                    })),
-                    // Legacy compatibility (keep existing fields)
-                    itemIds: cartItems.map(item => String(item.productId || item.id || '').substring(0, 8)).join(','),
-                    cartSummary: cartItems.map(item => `${item.quantity}x${item.sku}`).join(','),
-                    // B2C customer account linkage (set when the buyer has/creates an account)
-                    ...(request.body.b2cCustomerId && {
-                        b2cCustomerId: request.body.b2cCustomerId,
-                        b2cCustomerAuthId: request.body.b2cCustomerAuthId || ''
-                    }),
-                    // System identifiers
-                    source: 'b2c_shop',
-                    platform: 'meteorpr',
-                    shopId: resolvedShopId,
-                    version: 'enhanced_v2',
-                    // Right-of-withdrawal proof (empty {} for standard-options carts)
-                    ...withdrawalMeta,
-                    // Stripe Connect (empty for legacy shops → metadata unchanged)
-                    ...connectMeta
-                },
+                metadata: { ...baseMetadata, ...itemDetailsMeta },
                 receipt_email: customerInfo.email,
                 description: `${tenantName} Order - ${cartItems.length} item${cartItems.length > 1 ? 's' : ''}`,
                 // Per-shop card-statement suffix (omitted when unusable — see above).
