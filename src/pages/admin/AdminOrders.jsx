@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import { printMultipleShippingLabels } from '../../utils/labelPrinter';
 import { exportOrdersToCSV } from '../../utils/orderExport';
 import { exportPickupOrdersToCSV } from '../../utils/pickupExport';
+import { formatPickupDayShort } from '../../utils/pickupDates';
 import { exportSingleOrderVerification, exportAllOrderVerifications } from '../../utils/orderVerification';
 import { getEnhancedOrderDistribution } from '../../utils/orderUtils';
 import { ArrowDownTrayIcon, DocumentTextIcon, PrinterIcon, TruckIcon, MapPinIcon } from '@heroicons/react/24/outline';
@@ -458,8 +459,15 @@ const AdminOrders = () => {
             {isPickup ? (
               <>
                 <MapPinIcon className="h-4 w-4 shrink-0" />
-                <span className="truncate max-w-[160px]" title={order.pickupLocation?.name || 'Upphämtning'}>
-                  {order.pickupLocation?.name || 'Upphämtning'}
+                <span className="flex flex-col leading-tight">
+                  <span className="truncate max-w-[160px]" title={order.pickupLocation?.name || 'Upphämtning'}>
+                    {order.pickupLocation?.name || 'Upphämtning'}
+                  </span>
+                  {order.pickupLocation?.date && (
+                    <span className="text-[11px] text-admin-text-faint">
+                      {formatPickupDayShort(order.pickupLocation.date)}
+                    </span>
+                  )}
                 </span>
               </>
             ) : (

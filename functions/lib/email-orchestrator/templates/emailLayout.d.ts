@@ -8,6 +8,7 @@ export declare const emailTokens: {
     readonly font: "'Segoe UI', Arial, sans-serif";
     readonly maxWidth: "600px";
 };
+export declare function setShellLogoUrl(url?: string): void;
 /** Escape a value for safe interpolation into HTML text/attributes. */
 export declare function esc(value: unknown): string;
 /**
@@ -18,6 +19,8 @@ export declare function esc(value: unknown): string;
 export declare function renderEmailShell(opts: {
     brandName: string;
     bodyHtml: string;
+    /** Absolute http(s) logo URL — rendered as an <img> header instead of the text brand. */
+    logoUrl?: string;
     /** Extra footer HTML (e.g. a support link) appended after the brand line. */
     footerExtraHtml?: string;
     /** Override the whole footer note (defaults to "Detta meddelande skickades av {brandName}."). */
@@ -65,6 +68,7 @@ export declare function renderOrderRows(rows: Array<{
     meta?: string;
     qtyLine?: string;
     amount: string;
+    image?: string;
 }>): string;
 /**
  * Totals table (delsumma/frakt/rabatt/moms/totalt). Rows are {label, value,

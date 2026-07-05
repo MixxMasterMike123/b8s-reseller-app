@@ -19,6 +19,15 @@ const T = {
 
 export const emailTokens = T;
 
+// Per-shop logo for the shell header. Set synchronously by the orchestrator
+// right before a template is generated (no awaits in between), so every
+// template picks it up through the shared shell without threading a new
+// argument through all 13 generators. Cleared to '' when no absolute logo.
+let currentShopLogoUrl = '';
+export function setShellLogoUrl(url?: string): void {
+  currentShopLogoUrl = typeof url === 'string' ? url : '';
+}
+
 /** Escape a value for safe interpolation into HTML text/attributes. */
 export function esc(value: unknown): string {
   return String(value ?? '')
@@ -37,6 +46,8 @@ export function esc(value: unknown): string {
 export function renderEmailShell(opts: {
   brandName: string;
   bodyHtml: string;
+  /** Absolute http(s) logo URL — rendered as an <img> header instead of the text brand. */
+  logoUrl?: string;
   /** Extra footer HTML (e.g. a support link) appended after the brand line. */
   footerExtraHtml?: string;
   /** Override the whole footer note (defaults to "Detta meddelande skickades av {brandName}."). */
@@ -50,6 +61,14 @@ export function renderEmailShell(opts: {
     ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${T.canvas};font-size:1px;line-height:1px;">${esc(opts.preheader)}</div>`
     : '';
 
+  // Per-shop logo overrides the text brand header, but only for absolute http(s)
+  // URLs (relative legacy paths like /images/logo.svg won't load in mail clients).
+  const logoUrl = (opts.logoUrl ?? currentShopLogoUrl).trim();
+  const useLogo = /^https?:\/\//i.test(logoUrl);
+  const header = useLogo
+    ? `<div style="margin-bottom:24px;"><img src="${esc(logoUrl)}" alt="${brand}" height="40" style="height:40px;width:auto;border:0;display:block;" /></div>`
+    : `<div style="font-weight:700;font-size:20px;color:${T.ink};line-height:1.2;margin-bottom:24px;">${brand}</div>`;
+
   return `<div style="background-color:${T.canvas};margin:0;padding:24px 12px;font-family:${T.font};">
   ${preheader}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
@@ -58,7 +77,7 @@ export function renderEmailShell(opts: {
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;max-width:${T.maxWidth};margin:0 auto;">
           <tr>
             <td style="background-color:${T.card};border:1px solid ${T.border};border-radius:12px;padding:32px;">
-              <div style="font-weight:700;font-size:20px;color:${T.ink};line-height:1.2;margin-bottom:24px;">${brand}</div>
+              ${header}
               ${opts.bodyHtml}
             </td>
           </tr>
@@ -148,18 +167,27 @@ export function renderList(items: string[], opts: { rawHtml?: boolean; muted?: b
  * amount, separated by hairlines. `rows[].meta` is raw HTML (pills etc.).
  */
 export function renderOrderRows(
-  rows: Array<{ name: string; meta?: string; qtyLine?: string; amount: string }>
+  rows: Array<{ name: string; meta?: string; qtyLine?: string; amount: string; image?: string }>
 ): string {
   const body = rows
     .map(
-      (r) => `<tr>
+      (r) => {
+        // Optional thumbnail — only for absolute http(s) URLs (metadata drops
+        // images for very large carts, so '' must render with no broken icon).
+        const hasImg = typeof r.image === 'string' && /^https?:\/\//i.test(r.image.trim());
+        const thumb = hasImg
+          ? `<td width="48" style="padding:14px 12px 14px 0;border-bottom:1px solid ${T.border};vertical-align:top;"><img src="${esc(r.image!.trim())}" alt="" width="48" height="48" style="width:48px;height:48px;border-radius:8px;object-fit:cover;border:1px solid ${T.border};display:block;" /></td>`
+          : '';
+        return `<tr>
+      ${thumb}
       <td style="padding:14px 0;border-bottom:1px solid ${T.border};vertical-align:top;">
         <div style="font-size:15px;font-weight:600;color:${T.ink};line-height:1.4;">${esc(r.name)}</div>
         ${r.meta ? `<div style="margin-top:4px;">${r.meta}</div>` : ''}
         ${r.qtyLine ? `<div style="margin-top:4px;font-size:13px;color:${T.muted};">${esc(r.qtyLine)}</div>` : ''}
       </td>
       <td style="padding:14px 0;border-bottom:1px solid ${T.border};text-align:right;vertical-align:top;font-size:15px;font-weight:600;color:${T.ink};white-space:nowrap;font-variant-numeric:tabular-nums;">${esc(r.amount)}</td>
-    </tr>`
+    </tr>`;
+      }
     )
     .join('');
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:8px 0 20px 0;">${body}</table>`;

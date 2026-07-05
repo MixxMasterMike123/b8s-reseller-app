@@ -2,6 +2,15 @@ export interface AdminOrderNotificationData {
     orderData: {
         orderNumber: string;
         source?: string;
+        shopId?: string;
+        orderId?: string;
+        deliveryMethod?: string;
+        pickupLocation?: {
+            id?: string;
+            name?: string;
+            address?: string;
+            date?: string;
+        };
         customerInfo: {
             firstName?: string;
             lastName?: string;

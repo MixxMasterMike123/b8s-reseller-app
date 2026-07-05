@@ -31,6 +31,7 @@ import PrintShopRoute from './components/auth/PrintShopRoute';
 import PrintShopQueue from './pages/print/PrintShopQueue';
 import PrintShopOrderDetail from './pages/print/PrintShopOrderDetail';
 import ImpersonationIntake from './components/auth/ImpersonationIntake';
+import AdminShopIdIntake from './components/auth/AdminShopIdIntake';
 import PlatformShops from './pages/platform/PlatformShops';
 import PlatformAddons from './pages/platform/PlatformAddons';
 import PlatformDac7 from './pages/platform/PlatformDac7';
@@ -225,6 +226,8 @@ function App() {
       {appMode === 'shop' && <CookiebotCMP />}
       {/* P4.3: consume ?impersonate=&audit= on the admin host (platform-gated). */}
       {appMode === 'admin' && <ImpersonationIntake />}
+      {/* Deep-link shop switching: consume ?shopId= on the admin host (email links). */}
+      {appMode === 'admin' && <AdminShopIdIntake />}
       <AffiliateTracker />
       <ConditionalTranslationProvider appMode={appMode}>
         <div className="min-h-screen bg-gray-50">

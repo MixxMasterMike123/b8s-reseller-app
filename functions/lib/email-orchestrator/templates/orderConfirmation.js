@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateOrderConfirmationTemplate = void 0;
 // Order Confirmation Email Template — NORD-aligned, per-shop branded.
 const config_1 = require("../core/config");
+const app_urls_1 = require("../../config/app-urls");
 const emailLayout_1 = require("./emailLayout");
 // Helper function to get product name from multilingual object
 function getProductName(item, lang) {
@@ -61,7 +62,14 @@ function generateOrderConfirmationTemplate(data, lang = 'sv-SE', orderId) {
         (lang.startsWith('en') ? 'there' : 'Kund');
     // USE ORDER DB ID NOT ORDER NUMBER (same pattern as status update)
     const finalOrderId = orderId || data.orderId;
-    const orderUrl = (0, config_1.getOrderTrackingUrl)(finalOrderId, lang);
+    // "Visa order" must land on the storefront's shop-scoped order-confirmation
+    // route: /{shopId}/order-confirmation/{paymentIntentId}. The bare
+    // getOrderTrackingUrl (no shopId segment) misses the route → homepage redirect.
+    const shopId = orderData.shopId;
+    const paymentIntentId = orderData.payment?.paymentIntentId;
+    const orderUrl = shopId && paymentIntentId
+        ? `${app_urls_1.appUrls.B2C_SHOP}/${encodeURIComponent(shopId)}/order-confirmation/${encodeURIComponent(paymentIntentId)}`
+        : (0, config_1.getOrderTrackingUrl)(finalOrderId, lang);
     const supportUrl = (0, config_1.getSupportUrl)(lang);
     if (orderType === 'B2B') {
         return generateB2BTemplate(data, lang, customerName, supportUrl);
@@ -75,15 +83,20 @@ function generateB2CTemplate(data, lang, customerName, orderUrl, supportUrl, aff
     const brand = data.brandName || 'MeteorPR';
     const { orderNumber, items, subtotal, shipping, vat, total, discountAmount = 0 } = orderData;
     const en = lang.startsWith('en');
+    // Click & Collect: pickup orders show an "Upphämtning" cost row + section
+    // instead of shipping language. Non-pickup orders render exactly as before.
+    const isPickup = orderData.deliveryMethod === 'pickup' && !!orderData.pickupLocation;
+    const pu = orderData.pickupLocation;
     const rows = (0, emailLayout_1.renderOrderRows)(items.map((item) => ({
         name: getProductName(item, lang),
         meta: getPillsRow(item, lang) || undefined,
         qtyLine: `${item.quantity} ${en ? 'pcs' : 'st'} × ${(0, config_1.formatPrice)(item.price)}`,
         amount: (0, config_1.formatPrice)(item.price * item.quantity),
+        image: item.image,
     })));
     const totals = (0, emailLayout_1.renderTotals)([
         { label: en ? 'Subtotal' : 'Delsumma', value: (0, config_1.formatPrice)(subtotal) },
-        { label: en ? 'Shipping' : 'Frakt', value: (0, config_1.formatPrice)(shipping) },
+        { label: isPickup ? (en ? 'Pickup' : 'Upphämtning') : (en ? 'Shipping' : 'Frakt'), value: (0, config_1.formatPrice)(shipping) },
         ...(discountAmount > 0
             ? [{
                     label: `${en ? 'Discount' : 'Rabatt'}${affiliateCode ? ' (' + affiliateCode + ')' : ''}`,
@@ -99,11 +112,19 @@ function generateB2CTemplate(data, lang, customerName, orderUrl, supportUrl, aff
         { label: en ? 'Status' : 'Status', value: en ? 'Received' : 'Mottagen' },
         { label: en ? 'Email' : 'E-post', value: customerInfo.email },
     ]);
+    const pickupSection = isPickup
+        ? (0, emailLayout_1.renderPanel)((0, emailLayout_1.renderKeyValueRows)([
+            { label: en ? 'Location' : 'Plats', value: (0, emailLayout_1.esc)(pu?.name || '') },
+            { label: en ? 'Address' : 'Adress', value: (0, emailLayout_1.esc)(pu?.address || '') },
+            ...(pu?.date ? [{ label: en ? 'Pickup date' : 'Upphämtningsdatum', value: (0, emailLayout_1.esc)(pu.date) }] : []),
+        ], { rawHtml: true }), en ? 'Pickup' : 'Upphämtning')
+        : '';
     const body = (0, emailLayout_1.renderHeading)(en ? `Thank you, ${(0, emailLayout_1.esc)(customerName)}!` : `Tack, ${(0, emailLayout_1.esc)(customerName)}!`) +
         (0, emailLayout_1.renderParagraph)(en
             ? `We’ve received your order and will start processing it right away.`
             : `Vi har tagit emot din beställning och börjar behandla den direkt.`) +
         detailRows +
+        pickupSection +
         rows +
         totals +
         (0, emailLayout_1.renderButton)(orderUrl, en ? 'View order' : 'Visa order');

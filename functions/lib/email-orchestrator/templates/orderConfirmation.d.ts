@@ -20,6 +20,17 @@ export interface OrderConfirmationData {
         affiliate?: {
             code: string;
         };
+        shopId?: string;
+        deliveryMethod?: string;
+        pickupLocation?: {
+            id?: string;
+            name?: string;
+            address?: string;
+            date?: string;
+        };
+        payment?: {
+            paymentIntentId?: string;
+        };
     };
     customerInfo: {
         firstName?: string;

@@ -27,6 +27,7 @@ import {
   renderKeyValueRows,
   renderList,
   renderPanel,
+  setShellLogoUrl,
   esc,
 } from '../templates/emailLayout';
 import { EMAIL_CONFIG } from './config';
@@ -62,6 +63,7 @@ export interface EmailContext extends OrderContext {
 interface ShopEmailIdentity {
   shopName?: string;
   supportEmail?: string;
+  logoUrl?: string;
 }
 
 export class EmailOrchestrator {
@@ -106,15 +108,26 @@ export class EmailOrchestrator {
       const shopIdentity = await this.loadShopIdentity(context.shopId);
       const brandName = shopIdentity?.shopName || EMAIL_CONFIG.SMTP.FROM_NAME;
 
-      // Step 3: Generate template
-      const template = await this.generateTemplate(context.emailType, {
-        userData,
-        language,
-        orderData: context.orderData,
-        additionalData: context.additionalData,
-        context,
-        brandName
-      });
+      // Step 3: Generate template. Set the per-shop logo for the shared shell
+      // header synchronously right before generation (templates read it via the
+      // shell); always clear it afterwards so nothing bleeds into a later send.
+      // ⚠️ INVARIANT: concurrency-safe ONLY because every template generator is
+      // fully synchronous (no await between set and read). If a generator ever
+      // needs async work, thread logoUrl as an argument instead.
+      setShellLogoUrl(shopIdentity?.logoUrl);
+      let template: EmailTemplate;
+      try {
+        template = await this.generateTemplate(context.emailType, {
+          userData,
+          language,
+          orderData: context.orderData,
+          additionalData: context.additionalData,
+          context,
+          brandName
+        });
+      } finally {
+        setShellLogoUrl(undefined);
+      }
       console.log('📧 EmailOrchestrator: Template generated:', template.subject);
 
       // Step 4: Prepare email options
@@ -185,7 +198,12 @@ export class EmailOrchestrator {
       const supportEmail = typeof si.supportEmail === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(si.supportEmail.trim())
         ? si.supportEmail.trim()
         : undefined;
-      return { shopName, supportEmail };
+      // Only absolute http(s) logos are usable in email (client default is a
+      // relative /images/logo.svg the shell must ignore).
+      const logoUrl = typeof si.logoUrl === 'string' && /^https?:\/\//i.test(si.logoUrl.trim())
+        ? si.logoUrl.trim()
+        : undefined;
+      return { shopName, supportEmail, logoUrl };
     } catch (error) {
       console.warn('⚠️ EmailOrchestrator: shop identity load failed (using platform defaults):', error);
       return null;
@@ -258,6 +276,8 @@ export class EmailOrchestrator {
           orderData: {
             orderNumber: data.orderData.orderNumber || data.context.orderId || '',
             source: data.context.source,
+            shopId: data.orderData.shopId || data.context.shopId,
+            orderId: data.context.orderId,
             customerInfo: {
               firstName: data.context.customerInfo?.firstName,
               lastName: data.context.customerInfo?.lastName,
@@ -272,6 +292,10 @@ export class EmailOrchestrator {
               marginal: (data.userData as any).marginal,
             },
             shippingInfo: data.orderData.shippingInfo,
+            // Click & Collect: carry pickup fields so the admin mail shows an
+            // "Upphämtning" section instead of a "SE"-only shipping address.
+            deliveryMethod: data.orderData.deliveryMethod,
+            pickupLocation: data.orderData.pickupLocation,
             items: data.orderData.items || [],
             subtotal: data.orderData.subtotal || 0,
             shipping: data.orderData.shipping || 0,
@@ -514,9 +538,12 @@ export class EmailOrchestrator {
         // that can block payouts. Fired from the account.updated webhook only on
         // meaningful transitions. CTA → the admin payments page.
         const ad = data.additionalData || {};
+        // Deep-link into the MANAGED shop's admin (?shopId= handled by the SPA).
+        const connectShopId = ad.shopId || data.context.shopId;
+        const paymentsUrl = `${appUrls.ADMIN_BASE.replace(/\/$/, '')}/admin/payments${connectShopId ? `?shopId=${encodeURIComponent(connectShopId)}` : ''}`;
         return generateConnectStatusChangeTemplate({
           changes: Array.isArray(ad.changes) ? ad.changes : [],
-          paymentsUrl: `${appUrls.ADMIN_BASE.replace(/\/$/, '')}/admin/payments`,
+          paymentsUrl,
           brandName: data.brandName,
         });
       }

@@ -1,6 +1,7 @@
 // Admin Order Notification Email Template — NORD-aligned, per-shop branded.
 // Internal notification (Swedish); English variants kept as light stubs.
 import { EMAIL_CONFIG, formatPrice } from '../core/config';
+import { appUrls } from '../../config/app-urls';
 import {
   renderEmailShell,
   renderHeading,
@@ -19,6 +20,12 @@ export interface AdminOrderNotificationData {
   orderData: {
     orderNumber: string;
     source?: string;
+    // Tenant + DB id for the shop-scoped "Hantera order" deep-link.
+    shopId?: string;
+    orderId?: string;
+    // Click & Collect: pickup replaces the shipping-address block.
+    deliveryMethod?: string;
+    pickupLocation?: { id?: string; name?: string; address?: string; date?: string };
     customerInfo: {
       firstName?: string;
       lastName?: string;
@@ -121,7 +128,13 @@ export function generateOrderNotificationAdminTemplate(data: AdminOrderNotificat
   const paymentStatus = orderData.payment?.status || 'unknown';
   const paymentIntentId = orderData.payment?.paymentIntentId || '';
   const affiliateCode = orderData.affiliateCode || orderData.affiliate?.code;
-  const adminPortalUrl = `${EMAIL_CONFIG.URLS.B2B_PORTAL}/admin/orders`;
+  // "Hantera order" deep-links into the MANAGED shop's admin order page
+  // (?shopId= handled by the SPA), falling back to the orders list when the
+  // ids are missing.
+  const adminBase = appUrls.ADMIN_BASE.replace(/\/$/, '');
+  const adminPortalUrl = orderData.orderId && orderData.shopId
+    ? `${adminBase}/admin/orders/${encodeURIComponent(orderData.orderId)}?shopId=${encodeURIComponent(orderData.shopId)}`
+    : `${adminBase}/admin/orders`;
 
   if (orderType === 'B2B') {
     return generateB2BAdminTemplate(data, lang, brand, adminPortalUrl, orderSummary);
@@ -143,8 +156,17 @@ function generateB2CAdminTemplate(
   const { orderData } = data;
   const ci = orderData.customerInfo;
 
+  // Click & Collect: a pickup order shows "Upphämtning" (location + address +
+  // date) instead of a shipping address that would otherwise read as bare "SE".
+  const isPickup = orderData.deliveryMethod === 'pickup' && !!orderData.pickupLocation;
+  const pu = orderData.pickupLocation;
+
   const shippingValue = orderData.shippingInfo
     ? `${esc(orderData.shippingInfo.address)}${orderData.shippingInfo.apartment ? ', ' + esc(orderData.shippingInfo.apartment) : ''}<br>${esc(orderData.shippingInfo.postalCode)} ${esc(orderData.shippingInfo.city)}<br>${esc(orderData.shippingInfo.country)}`
+    : '';
+
+  const pickupValue = isPickup
+    ? `${esc(pu?.name || '')}${pu?.address ? '<br>' + esc(pu.address) : ''}${pu?.date ? '<br>Datum: ' + esc(pu.date) : ''}`
     : '';
 
   const customerPanel = renderPanel(
@@ -153,7 +175,9 @@ function generateB2CAdminTemplate(
         { label: 'Ordernummer', value: esc(orderData.orderNumber) },
         { label: 'Kund', value: esc(`${ci.firstName || ''} ${ci.lastName || ''}`.trim()) || '-' },
         { label: 'E-post', value: `<a href="mailto:${esc(ci.email)}" style="color:${emailTokens.ink};text-decoration:underline;">${esc(ci.email)}</a>` },
-        ...(shippingValue ? [{ label: 'Leveransadress', value: shippingValue }] : []),
+        ...(isPickup
+          ? [{ label: 'Upphämtning', value: pickupValue }]
+          : shippingValue ? [{ label: 'Leveransadress', value: shippingValue }] : []),
       ],
       { rawHtml: true }
     ),
@@ -175,7 +199,7 @@ function generateB2CAdminTemplate(
   const totalsPanel = renderPanel(
     renderTotals([
       { label: 'Delsumma', value: formatPrice(orderData.subtotal || 0) },
-      { label: 'Frakt', value: formatPrice(orderData.shipping || 0) },
+      { label: isPickup ? 'Upphämtning' : 'Frakt', value: formatPrice(orderData.shipping || 0) },
       ...(orderData.discountAmount && orderData.discountAmount > 0
         ? [{ label: 'Rabatt', value: `-${formatPrice(orderData.discountAmount)}`, positive: true }]
         : []),
@@ -205,7 +229,7 @@ function generateB2CAdminTemplate(
     : '';
 
   const body =
-    renderHeading(`Ny B2C-beställning${orderData.source === 'b2c' ? ' (gäst)' : ''}`) +
+    renderHeading(`Ny beställning${orderData.source === 'b2c' ? ' (gäst)' : ''}`) +
     renderParagraph('En ny beställning har kommit in i butiken.', { muted: true }) +
     customerPanel +
     itemsPanel +
@@ -217,12 +241,12 @@ function generateB2CAdminTemplate(
   const shopDomain = EMAIL_CONFIG.URLS.B2C_SHOP.replace(/^https?:\/\//, '');
 
   return {
-    subject: `Ny B2C-beställning mottagen: ${orderData.orderNumber}`,
+    subject: `Ny beställning mottagen: ${orderData.orderNumber}`,
     html: renderEmailShell({
       brandName: `${brand} System`,
       bodyHtml: body,
       footerNote: `Beställningen gjordes i butiken på ${esc(shopDomain)}.`,
-      preheader: `Ny B2C-beställning: ${esc(orderData.orderNumber)}`,
+      preheader: `Ny beställning: ${esc(orderData.orderNumber)}`,
     }),
   };
 }
@@ -284,7 +308,7 @@ function generateB2BAdminTemplate(
   );
 
   const body =
-    renderHeading('Ny B2B-beställning') +
+    renderHeading('Ny företagsbeställning') +
     renderParagraph('En ny beställning har skapats i portalen och behöver behandling.', { muted: true }) +
     orderInfoPanel +
     customerPanel +
@@ -294,12 +318,12 @@ function generateB2BAdminTemplate(
     renderButton(adminPortalUrl, 'Hantera order');
 
   return {
-    subject: `Ny B2B-beställning: ${orderData.orderNumber} från ${ci.companyName || ci.name}`,
+    subject: `Ny företagsbeställning: ${orderData.orderNumber} från ${ci.companyName || ci.name}`,
     html: renderEmailShell({
       brandName: `${brand} System`,
       bodyHtml: body,
       footerNote: 'Detta meddelande skickades automatiskt från orderhanteringen.',
-      preheader: `Ny B2B-beställning: ${esc(orderData.orderNumber)}`,
+      preheader: `Ny företagsbeställning: ${esc(orderData.orderNumber)}`,
     }),
   };
 }

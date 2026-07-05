@@ -4,6 +4,7 @@ exports.generateOrderNotificationAdminTemplate = void 0;
 // Admin Order Notification Email Template — NORD-aligned, per-shop branded.
 // Internal notification (Swedish); English variants kept as light stubs.
 const config_1 = require("../core/config");
+const app_urls_1 = require("../../config/app-urls");
 const emailLayout_1 = require("./emailLayout");
 function getDisplaySize(size) {
     if (!size)
@@ -62,7 +63,13 @@ function generateOrderNotificationAdminTemplate(data, lang = 'sv-SE') {
     const paymentStatus = orderData.payment?.status || 'unknown';
     const paymentIntentId = orderData.payment?.paymentIntentId || '';
     const affiliateCode = orderData.affiliateCode || orderData.affiliate?.code;
-    const adminPortalUrl = `${config_1.EMAIL_CONFIG.URLS.B2B_PORTAL}/admin/orders`;
+    // "Hantera order" deep-links into the MANAGED shop's admin order page
+    // (?shopId= handled by the SPA), falling back to the orders list when the
+    // ids are missing.
+    const adminBase = app_urls_1.appUrls.ADMIN_BASE.replace(/\/$/, '');
+    const adminPortalUrl = orderData.orderId && orderData.shopId
+        ? `${adminBase}/admin/orders/${encodeURIComponent(orderData.orderId)}?shopId=${encodeURIComponent(orderData.shopId)}`
+        : `${adminBase}/admin/orders`;
     if (orderType === 'B2B') {
         return generateB2BAdminTemplate(data, lang, brand, adminPortalUrl, orderSummary);
     }
@@ -73,14 +80,23 @@ exports.generateOrderNotificationAdminTemplate = generateOrderNotificationAdminT
 function generateB2CAdminTemplate(data, lang, brand, adminPortalUrl, paymentMethod, paymentStatus, paymentIntentId, affiliateCode) {
     const { orderData } = data;
     const ci = orderData.customerInfo;
+    // Click & Collect: a pickup order shows "Upphämtning" (location + address +
+    // date) instead of a shipping address that would otherwise read as bare "SE".
+    const isPickup = orderData.deliveryMethod === 'pickup' && !!orderData.pickupLocation;
+    const pu = orderData.pickupLocation;
     const shippingValue = orderData.shippingInfo
         ? `${(0, emailLayout_1.esc)(orderData.shippingInfo.address)}${orderData.shippingInfo.apartment ? ', ' + (0, emailLayout_1.esc)(orderData.shippingInfo.apartment) : ''}<br>${(0, emailLayout_1.esc)(orderData.shippingInfo.postalCode)} ${(0, emailLayout_1.esc)(orderData.shippingInfo.city)}<br>${(0, emailLayout_1.esc)(orderData.shippingInfo.country)}`
+        : '';
+    const pickupValue = isPickup
+        ? `${(0, emailLayout_1.esc)(pu?.name || '')}${pu?.address ? '<br>' + (0, emailLayout_1.esc)(pu.address) : ''}${pu?.date ? '<br>Datum: ' + (0, emailLayout_1.esc)(pu.date) : ''}`
         : '';
     const customerPanel = (0, emailLayout_1.renderPanel)((0, emailLayout_1.renderKeyValueRows)([
         { label: 'Ordernummer', value: (0, emailLayout_1.esc)(orderData.orderNumber) },
         { label: 'Kund', value: (0, emailLayout_1.esc)(`${ci.firstName || ''} ${ci.lastName || ''}`.trim()) || '-' },
         { label: 'E-post', value: `<a href="mailto:${(0, emailLayout_1.esc)(ci.email)}" style="color:${emailLayout_1.emailTokens.ink};text-decoration:underline;">${(0, emailLayout_1.esc)(ci.email)}</a>` },
-        ...(shippingValue ? [{ label: 'Leveransadress', value: shippingValue }] : []),
+        ...(isPickup
+            ? [{ label: 'Upphämtning', value: pickupValue }]
+            : shippingValue ? [{ label: 'Leveransadress', value: shippingValue }] : []),
     ], { rawHtml: true }), 'Kundinformation');
     const itemsPanel = (0, emailLayout_1.renderPanel)((0, emailLayout_1.renderOrderRows)(orderData.items.map((item) => ({
         name: getCleanProductNameAdmin(item),
@@ -90,7 +106,7 @@ function generateB2CAdminTemplate(data, lang, brand, adminPortalUrl, paymentMeth
     }))), 'Orderdetaljer');
     const totalsPanel = (0, emailLayout_1.renderPanel)((0, emailLayout_1.renderTotals)([
         { label: 'Delsumma', value: (0, config_1.formatPrice)(orderData.subtotal || 0) },
-        { label: 'Frakt', value: (0, config_1.formatPrice)(orderData.shipping || 0) },
+        { label: isPickup ? 'Upphämtning' : 'Frakt', value: (0, config_1.formatPrice)(orderData.shipping || 0) },
         ...(orderData.discountAmount && orderData.discountAmount > 0
             ? [{ label: 'Rabatt', value: `-${(0, config_1.formatPrice)(orderData.discountAmount)}`, positive: true }]
             : []),
@@ -108,7 +124,7 @@ function generateB2CAdminTemplate(data, lang, brand, adminPortalUrl, paymentMeth
             ...(orderData.discountAmount && orderData.discountAmount > 0 ? [{ label: 'Rabatt tillämpad', value: (0, config_1.formatPrice)(orderData.discountAmount) }] : []),
         ]), 'Affiliate-information')
         : '';
-    const body = (0, emailLayout_1.renderHeading)(`Ny B2C-beställning${orderData.source === 'b2c' ? ' (gäst)' : ''}`) +
+    const body = (0, emailLayout_1.renderHeading)(`Ny beställning${orderData.source === 'b2c' ? ' (gäst)' : ''}`) +
         (0, emailLayout_1.renderParagraph)('En ny beställning har kommit in i butiken.', { muted: true }) +
         customerPanel +
         itemsPanel +
@@ -118,12 +134,12 @@ function generateB2CAdminTemplate(data, lang, brand, adminPortalUrl, paymentMeth
         (0, emailLayout_1.renderButton)(adminPortalUrl, 'Hantera order');
     const shopDomain = config_1.EMAIL_CONFIG.URLS.B2C_SHOP.replace(/^https?:\/\//, '');
     return {
-        subject: `Ny B2C-beställning mottagen: ${orderData.orderNumber}`,
+        subject: `Ny beställning mottagen: ${orderData.orderNumber}`,
         html: (0, emailLayout_1.renderEmailShell)({
             brandName: `${brand} System`,
             bodyHtml: body,
             footerNote: `Beställningen gjordes i butiken på ${(0, emailLayout_1.esc)(shopDomain)}.`,
-            preheader: `Ny B2C-beställning: ${(0, emailLayout_1.esc)(orderData.orderNumber)}`,
+            preheader: `Ny beställning: ${(0, emailLayout_1.esc)(orderData.orderNumber)}`,
         }),
     };
 }
@@ -153,7 +169,7 @@ function generateB2BAdminTemplate(data, lang, brand, adminPortalUrl, orderSummar
         'Skicka orderbekräftelse till kunden',
         'Planera leverans och packning',
     ]), 'Åtgärder som behövs');
-    const body = (0, emailLayout_1.renderHeading)('Ny B2B-beställning') +
+    const body = (0, emailLayout_1.renderHeading)('Ny företagsbeställning') +
         (0, emailLayout_1.renderParagraph)('En ny beställning har skapats i portalen och behöver behandling.', { muted: true }) +
         orderInfoPanel +
         customerPanel +
@@ -162,12 +178,12 @@ function generateB2BAdminTemplate(data, lang, brand, adminPortalUrl, orderSummar
         actionsPanel +
         (0, emailLayout_1.renderButton)(adminPortalUrl, 'Hantera order');
     return {
-        subject: `Ny B2B-beställning: ${orderData.orderNumber} från ${ci.companyName || ci.name}`,
+        subject: `Ny företagsbeställning: ${orderData.orderNumber} från ${ci.companyName || ci.name}`,
         html: (0, emailLayout_1.renderEmailShell)({
             brandName: `${brand} System`,
             bodyHtml: body,
             footerNote: 'Detta meddelande skickades automatiskt från orderhanteringen.',
-            preheader: `Ny B2B-beställning: ${(0, emailLayout_1.esc)(orderData.orderNumber)}`,
+            preheader: `Ny företagsbeställning: ${(0, emailLayout_1.esc)(orderData.orderNumber)}`,
         }),
     };
 }

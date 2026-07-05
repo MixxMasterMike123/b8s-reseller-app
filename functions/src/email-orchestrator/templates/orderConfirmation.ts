@@ -1,5 +1,6 @@
 // Order Confirmation Email Template — NORD-aligned, per-shop branded.
 import { EMAIL_CONFIG, formatPrice, getSupportUrl, getOrderTrackingUrl } from '../core/config';
+import { appUrls } from '../../config/app-urls';
 import {
   renderEmailShell,
   renderHeading,
@@ -8,6 +9,7 @@ import {
   renderOrderRows,
   renderTotals,
   renderKeyValueRows,
+  renderPanel,
   renderFooterSupport,
   esc,
   emailTokens,
@@ -31,6 +33,11 @@ export interface OrderConfirmationData {
     discountAmount?: number;
     affiliateCode?: string;
     affiliate?: { code: string };
+    // Multi-tenant + Click & Collect + deep-link fields carried from the order doc.
+    shopId?: string;
+    deliveryMethod?: string;
+    pickupLocation?: { id?: string; name?: string; address?: string; date?: string };
+    payment?: { paymentIntentId?: string };
   };
   customerInfo: {
     firstName?: string;
@@ -103,7 +110,14 @@ export function generateOrderConfirmationTemplate(data: OrderConfirmationData, l
 
   // USE ORDER DB ID NOT ORDER NUMBER (same pattern as status update)
   const finalOrderId = orderId || data.orderId;
-  const orderUrl = getOrderTrackingUrl(finalOrderId, lang);
+  // "Visa order" must land on the storefront's shop-scoped order-confirmation
+  // route: /{shopId}/order-confirmation/{paymentIntentId}. The bare
+  // getOrderTrackingUrl (no shopId segment) misses the route → homepage redirect.
+  const shopId = orderData.shopId;
+  const paymentIntentId = orderData.payment?.paymentIntentId;
+  const orderUrl = shopId && paymentIntentId
+    ? `${appUrls.B2C_SHOP}/${encodeURIComponent(shopId)}/order-confirmation/${encodeURIComponent(paymentIntentId)}`
+    : getOrderTrackingUrl(finalOrderId, lang);
   const supportUrl = getSupportUrl(lang);
 
   if (orderType === 'B2B') {
@@ -126,18 +140,24 @@ function generateB2CTemplate(
   const { orderNumber, items, subtotal, shipping, vat, total, discountAmount = 0 } = orderData;
   const en = lang.startsWith('en');
 
+  // Click & Collect: pickup orders show an "Upphämtning" cost row + section
+  // instead of shipping language. Non-pickup orders render exactly as before.
+  const isPickup = orderData.deliveryMethod === 'pickup' && !!orderData.pickupLocation;
+  const pu = orderData.pickupLocation;
+
   const rows = renderOrderRows(
     items.map((item) => ({
       name: getProductName(item, lang),
       meta: getPillsRow(item, lang) || undefined,
       qtyLine: `${item.quantity} ${en ? 'pcs' : 'st'} × ${formatPrice(item.price)}`,
       amount: formatPrice(item.price * item.quantity),
+      image: item.image,
     }))
   );
 
   const totals = renderTotals([
     { label: en ? 'Subtotal' : 'Delsumma', value: formatPrice(subtotal) },
-    { label: en ? 'Shipping' : 'Frakt', value: formatPrice(shipping) },
+    { label: isPickup ? (en ? 'Pickup' : 'Upphämtning') : (en ? 'Shipping' : 'Frakt'), value: formatPrice(shipping) },
     ...(discountAmount > 0
       ? [{
           label: `${en ? 'Discount' : 'Rabatt'}${affiliateCode ? ' (' + affiliateCode + ')' : ''}`,
@@ -155,6 +175,17 @@ function generateB2CTemplate(
     { label: en ? 'Email' : 'E-post', value: customerInfo.email },
   ]);
 
+  const pickupSection = isPickup
+    ? renderPanel(
+        renderKeyValueRows([
+          { label: en ? 'Location' : 'Plats', value: esc(pu?.name || '') },
+          { label: en ? 'Address' : 'Adress', value: esc(pu?.address || '') },
+          ...(pu?.date ? [{ label: en ? 'Pickup date' : 'Upphämtningsdatum', value: esc(pu.date) }] : []),
+        ], { rawHtml: true }),
+        en ? 'Pickup' : 'Upphämtning'
+      )
+    : '';
+
   const body =
     renderHeading(en ? `Thank you, ${esc(customerName)}!` : `Tack, ${esc(customerName)}!`) +
     renderParagraph(
@@ -163,6 +194,7 @@ function generateB2CTemplate(
         : `Vi har tagit emot din beställning och börjar behandla den direkt.`
     ) +
     detailRows +
+    pickupSection +
     rows +
     totals +
     renderButton(orderUrl, en ? 'View order' : 'Visa order');

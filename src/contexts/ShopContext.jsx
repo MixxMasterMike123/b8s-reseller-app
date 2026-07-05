@@ -2,7 +2,12 @@ import React, { createContext, useContext, useMemo, useSyncExternalStore } from 
 import { useLocation } from 'react-router-dom';
 import { resolveShopId, DEFAULT_SHOP_ID } from '../config/tenancy';
 import { getImpersonationShopId } from '../config/impersonation';
-import { getActiveShopId, subscribeActiveShopId } from '../config/activeShop';
+import {
+  getActiveShopId,
+  subscribeActiveShopId,
+  getDeepLinkShopId,
+  subscribeDeepLinkShopId,
+} from '../config/activeShop';
 
 /**
  * ShopContext — provides the current tenant's shopId to the whole app.
@@ -43,19 +48,23 @@ export function ShopProvider({ children, impersonationEnabled = false }) {
   // Subscribe to the published shop-admin shopId so a real shop admin's surface
   // re-resolves the moment their user doc loads (admin mode only, below).
   const activeShopId = useSyncExternalStore(subscribeActiveShopId, getActiveShopId);
+  // Deep-link override (?shopId= on the admin host, stashed by AdminShopIdIntake).
+  const deepLinkShopId = useSyncExternalStore(subscribeDeepLinkShopId, getDeepLinkShopId);
   const shopId = useMemo(
     () => {
-      // Admin surface precedence: impersonation > shop-admin's own shop > path.
+      // Admin surface precedence:
+      //   impersonation > deep-link (?shopId=) > shop-admin's own shop > path.
       if (impersonationEnabled) {
         const impersonated = getImpersonationShopId();
         if (impersonated) return impersonated;
+        if (deepLinkShopId) return deepLinkShopId;
         if (activeShopId) return activeShopId;
       }
       return resolveShopId(location.pathname);
     },
-    // location.search is included so stripping the ?impersonate= param after
-    // intake (a same-document nav) re-evaluates the resolved shop.
-    [location.pathname, location.search, impersonationEnabled, activeShopId]
+    // location.search is included so stripping the ?impersonate=/?shopId= param
+    // after intake (a same-document nav) re-evaluates the resolved shop.
+    [location.pathname, location.search, impersonationEnabled, activeShopId, deepLinkShopId]
   );
 
   return (

@@ -46,3 +46,54 @@ export function subscribeActiveShopId(fn) {
   listeners.add(fn);
   return () => listeners.delete(fn);
 }
+
+// ── Deep-link managed-shop override ──────────────────────────────────────────
+// Admin emails link to /admin/orders/{id}?shopId={shopId}. AdminShopIdIntake
+// consumes that param on the admin host and stashes the shopId HERE, so the
+// admin surface resolves the emailed shop on a cold navigation (email click)
+// even for a platform operator (whose auth-published activeShopId is null and
+// would otherwise leave them on the path-default shop).
+//
+// Precedence in ShopProvider (admin surface): impersonation session > THIS
+// deep-link override > auth-published activeShopId > path default. It is stored
+// separately from `activeShopId` so AuthContext's setActiveShopId(...) on user-
+// doc load never clobbers it. sessionStorage keeps it alive across the param-
+// strip navigation and any in-tab reloads, and per-tab siloed to the admin host.
+//
+// UI-only, like activeShopId itself: the Firestore/function rules stay the hard
+// gate. A shopId the caller can't administer just yields permission-denied reads
+// (the same failure mode as navigating there any other way) — no new auth check.
+const DEEPLINK_KEY = '__admin_deeplink_shopId';
+const deepLinkListeners = new Set();
+
+/** The deep-linked managed shopId (from ?shopId=), or null. */
+export function getDeepLinkShopId() {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.sessionStorage.getItem(DEEPLINK_KEY) || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Stash (or clear, with null) the deep-linked managed shopId; notifies subscribers. */
+export function setDeepLinkShopId(shopId) {
+  if (typeof window === 'undefined') return;
+  const next = shopId || null;
+  if (next === getDeepLinkShopId()) return;
+  try {
+    if (next) window.sessionStorage.setItem(DEEPLINK_KEY, next);
+    else window.sessionStorage.removeItem(DEEPLINK_KEY);
+  } catch {
+    /* sessionStorage unavailable (private mode edge) → override simply won't apply */
+  }
+  deepLinkListeners.forEach((fn) => {
+    try { fn(next); } catch { /* ignore subscriber errors */ }
+  });
+}
+
+/** Subscribe to deep-link override changes; returns an unsubscribe fn. */
+export function subscribeDeepLinkShopId(fn) {
+  deepLinkListeners.add(fn);
+  return () => deepLinkListeners.delete(fn);
+}
