@@ -134,3 +134,40 @@ export const saveCartRecovery = async (patch, shopId) => {
   );
   tenantProbe.delete(id);
 };
+
+// ── Product-reviews ("Recensioner" add-on) config ──
+// A dedicated `productReviews` field on shops/{shopId} (NOT under storeIdentity):
+//   { requestDelayDays: number }   // days after fulfillment before the request
+// Mirrors the same tenant-doc seam + legacy fallback as loadCartRecovery above.
+
+// Read the saved productReviews settings object (or {} if missing).
+export const loadReviewSettings = async (shopId) => {
+  const probed = await probeTenantDoc(shopId);
+  if (probed) {
+    const pr = probed.data()?.productReviews;
+    return pr && typeof pr === 'object' ? pr : {};
+  }
+  const legacy = await getDoc(legacyRef());
+  if (!legacy.exists()) return {};
+  const pr = legacy.data()?.productReviews;
+  return pr && typeof pr === 'object' ? pr : {};
+};
+
+// Merge-write a partial productReviews patch. Same target-resolution rules as
+// saveCartRecovery.
+export const saveReviewSettings = async (patch, shopId) => {
+  const id = shopId || DEFAULT_SHOP_ID;
+  let ref;
+  if (id === DEFAULT_SHOP_ID) {
+    const exists = await probeTenantDoc(id);
+    ref = exists ? tenantRef(id) : legacyRef();
+  } else {
+    ref = tenantRef(id);
+  }
+  await setDoc(
+    ref,
+    { productReviews: patch, updatedAt: new Date().toISOString() },
+    { merge: true }
+  );
+  tenantProbe.delete(id);
+};

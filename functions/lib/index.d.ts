@@ -28,6 +28,9 @@ export { getPrintQueue, getPrintJob, getPrintQueueExport, createPrintShopUser, }
 export { submitLead } from './leads/submitLead';
 export { sweepAbandonedCheckouts } from './checkout-recovery/sweep';
 export { resolveCheckoutRecovery, unsubscribeCheckout } from './checkout-recovery/callables';
+export { onOrderReviewQualify } from './product-reviews/writeReviewRequest';
+export { sweepReviewRequests } from './product-reviews/sweep';
+export { resolveReviewRequest, submitReview, unsubscribeReviews, moderateReview, } from './product-reviews/callables';
 export { submitWithdrawal } from './withdrawal/functions';
 export { confirmPasswordReset as confirmPasswordResetV2 };
 export { confirmPasswordReset };

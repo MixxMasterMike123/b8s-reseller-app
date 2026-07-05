@@ -19,6 +19,7 @@ import { useContentTranslation } from '../../hooks/useContentTranslation';
 import ShopNavigation from '../../components/shop/ShopNavigation';
 import ShopFooter from '../../components/shop/ShopFooter';
 import ReviewsSection from '../../components/ReviewsSection';
+import ProductReviews from '../../components/shop/ProductReviews';
 import { getReviewStats } from '../../utils/trustpilotAPI';
 import SeoHreflang from '../../components/shop/SeoHreflang';
 import { Helmet } from 'react-helmet-async';
@@ -835,14 +836,23 @@ const PublicProductPage = () => {
                   </div>
                 </div>
 
-                {/* Reviews Section */}
-                <div className="border-t pt-6">
-                  <ReviewsSection 
-                    productId={product.id}
-                    productName={getContentValue(product.name)}
-                    reviewCount={reviewCount}
-                  />
-                </div>
+                {/* Reviews Section — native product reviews take precedence once
+                    this product has any approved review; otherwise fall back to
+                    the legacy Trustpilot section (only when a domain is set); else
+                    render nothing (no brand leak / no empty placeholder). */}
+                {(product.reviewCount > 0) ? (
+                  <div className="border-t pt-6">
+                    <ProductReviews shopId={shopId} productId={product.id} product={product} />
+                  </div>
+                ) : store?.trustpilot?.domain ? (
+                  <div className="border-t pt-6">
+                    <ReviewsSection
+                      productId={product.id}
+                      productName={getContentValue(product.name)}
+                      reviewCount={reviewCount}
+                    />
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>

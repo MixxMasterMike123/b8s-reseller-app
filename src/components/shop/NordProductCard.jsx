@@ -61,6 +61,21 @@ const NordProductCard = ({ to, linkState, image, imageAlt, tag, name, descriptio
               {meta}
             </p>
           )}
+          {product?.reviewCount > 0 && (() => {
+            const avg = product.ratingSum > 0
+              ? Math.round(product.ratingSum / product.reviewCount)
+              : 0;
+            return (
+              <div className="flex items-center gap-1 mt-2" aria-hidden="true">
+                <span className="text-sm leading-none">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <span key={n} className={n <= avg ? 'text-accent' : 'text-ink/20'}>★</span>
+                  ))}
+                </span>
+                <span className="text-xs text-ink-faint">({product.reviewCount})</span>
+              </div>
+            );
+          })()}
 
           <div className="mt-auto pt-4 flex items-center justify-between gap-3">
             <div className="flex items-baseline gap-1 min-w-0">

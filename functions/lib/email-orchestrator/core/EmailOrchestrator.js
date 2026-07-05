@@ -23,6 +23,7 @@ const refundConfirmation_1 = require("../templates/refundConfirmation");
 const disputeAlertAdmin_1 = require("../templates/disputeAlertAdmin");
 const connectStatusChange_1 = require("../templates/connectStatusChange");
 const abandonedCheckoutReminder_1 = require("../templates/abandonedCheckoutReminder");
+const reviewRequest_1 = require("../templates/reviewRequest");
 const emailLayout_1 = require("../templates/emailLayout");
 const config_1 = require("./config");
 const app_urls_1 = require("../../config/app-urls");
@@ -86,7 +87,8 @@ class EmailOrchestrator {
             // One-click List-Unsubscribe (RFC 8058) — set ONLY for the marketing-ish
             // abandoned-checkout reminder, whose unsubscribe URL comes in additionalData.
             const unsubscribeUrl = context.additionalData?.unsubscribeUrl;
-            const listUnsubHeaders = context.emailType === 'ABANDONED_CHECKOUT_REMINDER' && unsubscribeUrl
+            const listUnsubHeaders = (context.emailType === 'ABANDONED_CHECKOUT_REMINDER' ||
+                context.emailType === 'REVIEW_REQUEST') && unsubscribeUrl
                 ? {
                     'List-Unsubscribe': `<${unsubscribeUrl}>`,
                     'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
@@ -477,6 +479,21 @@ class EmailOrchestrator {
                     items: Array.isArray(ad.items) ? ad.items : [],
                     totals: ad.totals,
                     recoveryUrl: ad.recoveryUrl,
+                    unsubscribeUrl: ad.unsubscribeUrl,
+                }, data.language);
+            }
+            case 'REVIEW_REQUEST': {
+                // Review-request email — fired best-effort from the review sweep
+                // (product-reviews/sweep.ts). Sends under the SHOP's identity (from-name
+                // + logo + reply-to), so shopId must be threaded by the caller. The
+                // one-click unsubscribe link is in additionalData; the List-Unsubscribe
+                // header is set at send time (see above).
+                const ad = data.additionalData || {};
+                return (0, reviewRequest_1.generateReviewRequestTemplate)({
+                    brandName: data.brandName,
+                    customerFirstName: ad.customerFirstName || data.context.customerInfo?.firstName,
+                    items: Array.isArray(ad.items) ? ad.items : [],
+                    reviewUrl: ad.reviewUrl,
                     unsubscribeUrl: ad.unsubscribeUrl,
                 }, data.language);
             }

@@ -614,6 +614,27 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // productReviews / reviewRequests / reviewSuppressions — native product
+    // reviews ("Recensioner" add-on). reviewRequests + reviewSuppressions hold
+    // email + item data and are function-only (never client-readable/writable);
+    // the storefront reaches them only through the scoped callables
+    // (resolveReviewRequest / submitReview / unsubscribeReviews). productReviews
+    // are PUBLICLY READABLE only when approved (the storefront lists them); all
+    // writes go through the callables / moderateReview (Admin SDK bypasses rules).
+    match /productReviews/{reviewId} {
+      // Public sees approved only; shop admins must also read pending/rejected
+      // to moderate them (AdminReviews lists via the client SDK).
+      allow read: if resource.data.status == 'approved'
+                  || isAdminOfShop(resource.data.shopId);
+      allow write: if false;
+    }
+    match /reviewRequests/{requestId} {
+      allow read, write: if false;
+    }
+    match /reviewSuppressions/{suppressionId} {
+      allow read, write: if false;
+    }
+
     // Default deny for everything else (incl. server-only collections:
     // passwordResets, emailVerifications, campaignParticipants,
     // campaignRevenueTracking)

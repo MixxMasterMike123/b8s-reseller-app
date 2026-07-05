@@ -88,6 +88,15 @@ export const generateProductSchema = (product) => {
       ...(product.b2cImageGallery || [])
     ],
     ...(product.brand ? { "brand": { "@type": "Brand", "name": product.brand } } : {}),
+    ...(product.reviewCount > 0
+      ? {
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": (product.ratingSum / product.reviewCount).toFixed(1),
+            "reviewCount": product.reviewCount
+          }
+        }
+      : {}),
     "offers": offers,
     "sku": product.sku || product.id,
     "gtin13": product.eanCode || undefined,

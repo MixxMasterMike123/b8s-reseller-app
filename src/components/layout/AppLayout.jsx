@@ -30,7 +30,8 @@ import {
   SparklesIcon,
   DocumentTextIcon,
   BuildingStorefrontIcon,
-  TagIcon
+  TagIcon,
+  StarIcon
 } from '@heroicons/react/24/outline';
 
 const AppLayout = ({ children }) => {
@@ -218,8 +219,17 @@ const AppLayout = ({ children }) => {
     icon: TagIcon,
     description: t('nav.admin_discount_codes_desc', 'Hantera kampanjkoder'),
   };
+  // The native "Recensioner" add-on link (product reviews). Gated on the
+  // productReviews feature flag, same pattern as discountCodes.
+  const reviewsEnabled = isAddonEnabled('productReviews');
+  const reviewsNavItem = {
+    name: t('nav.admin_reviews', 'Recensioner'),
+    path: '/admin/reviews',
+    icon: StarIcon,
+    description: t('nav.admin_reviews_desc', 'Moderera produktomdömen'),
+  };
   // Whether the add-on section (divider + items) has anything to show.
-  const hasAddonItems = affiliateEnabled || b2bEnabled || discountCodesEnabled || wagonMenuItems.length > 0;
+  const hasAddonItems = affiliateEnabled || b2bEnabled || discountCodesEnabled || reviewsEnabled || wagonMenuItems.length > 0;
   
   const navItemClass = (active) =>
     `group flex h-8 items-center gap-2 rounded-[var(--radius-admin-el)] pl-2 pr-1.5 text-[13px] transition-colors ${
@@ -354,6 +364,16 @@ const AppLayout = ({ children }) => {
                   <span className="flex-1">{discountCodesNavItem.name}</span>
                 </Link>
               )}
+              {reviewsEnabled && (
+                <Link
+                  to={reviewsNavItem.path}
+                  title={reviewsNavItem.description}
+                  className={navItemClass(isActive(reviewsNavItem.path))}
+                >
+                  <reviewsNavItem.icon className={navIconClass(isActive(reviewsNavItem.path))} aria-hidden="true" />
+                  <span className="flex-1">{reviewsNavItem.name}</span>
+                </Link>
+              )}
               {wagonMenuItems.map((item) => {
                 const active = isActive(item.path);
                 return (
@@ -448,6 +468,18 @@ const AppLayout = ({ children }) => {
                       >
                         <discountCodesNavItem.icon className={navIconClass(isActive(discountCodesNavItem.path))} aria-hidden="true" />
                         <span className="flex-1">{discountCodesNavItem.name}</span>
+                      </Link>
+                    )}
+                    {reviewsEnabled && (
+                      <Link
+                        to={reviewsNavItem.path}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`group flex h-10 items-center gap-2 rounded-[var(--radius-admin-el)] pl-2 pr-1.5 text-[13px] ${
+                          isActive(reviewsNavItem.path) ? 'bg-black/[0.08] font-semibold text-admin-text' : 'font-medium text-admin-text hover:bg-black/[0.06]'
+                        }`}
+                      >
+                        <reviewsNavItem.icon className={navIconClass(isActive(reviewsNavItem.path))} aria-hidden="true" />
+                        <span className="flex-1">{reviewsNavItem.name}</span>
                       </Link>
                     )}
                     {wagonMenuItems.map((item) => {

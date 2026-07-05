@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import AppLayout from '../../components/layout/AppLayout';
 import toast from 'react-hot-toast';
 import { STORE } from '../../config/store';
-import { loadShopConfig, saveShopConfig, loadCartRecovery, saveCartRecovery } from '../../config/shopConfig';
+import { loadShopConfig, saveShopConfig, loadCartRecovery, saveCartRecovery, loadReviewSettings, saveReviewSettings } from '../../config/shopConfig';
 import { useShopId } from '../../contexts/ShopContext';
 import { useShopFeatures } from '../../contexts/ShopFeaturesContext';
 import { getLegalReadiness } from '../../utils/legalPageReadiness';
@@ -33,11 +33,17 @@ const AdminSettings = () => {
   const shopId = useShopId();
   const { isEnabled } = useShopFeatures();
   const abandonedCheckoutEnabled = isEnabled('abandonedCheckout');
+  const productReviewsEnabled = isEnabled('productReviews');
 
   // Cart-recovery ("Övergiven kassa") reminder delay (hours). Loaded/saved via
   // the dedicated cartRecovery seam. Default 1h, clamped 1–24.
   const [cartRecoveryDelay, setCartRecoveryDelay] = useState(1);
   const [savingRecovery, setSavingRecovery] = useState(false);
+
+  // Product-reviews ("Recensioner") request delay (days). Loaded/saved via the
+  // dedicated productReviews seam. Default 7d, clamped 3–21.
+  const [reviewDelayDays, setReviewDelayDays] = useState(7);
+  const [savingReviews, setSavingReviews] = useState(false);
 
   // Seed the store-identity form from the shopConfig SEAM for THIS shop.
   useEffect(() => {
@@ -74,6 +80,38 @@ const AdminSettings = () => {
     })();
     return () => { cancelled = true; };
   }, [shopId]);
+
+  // Load the product-reviews request delay for THIS shop (default 7d).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const pr = (await loadReviewSettings(shopId)) || {};
+        const n = Number(pr.requestDelayDays);
+        if (!cancelled) {
+          setReviewDelayDays(Number.isFinite(n) ? Math.min(21, Math.max(3, Math.round(n))) : 7);
+        }
+      } catch (e) {
+        console.warn('AdminSettings: could not load review settings:', e?.message);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [shopId]);
+
+  const saveReviewSettingsHandler = useCallback(async () => {
+    try {
+      setSavingReviews(true);
+      const clamped = Math.min(21, Math.max(3, Math.round(Number(reviewDelayDays) || 7)));
+      await saveReviewSettings({ requestDelayDays: clamped }, shopId);
+      setReviewDelayDays(clamped);
+      toast.success('Inställningar för recensioner sparade.');
+    } catch (error) {
+      console.error('Error saving review settings:', error);
+      toast.error('Fel vid sparande av inställningar för recensioner');
+    } finally {
+      setSavingReviews(false);
+    }
+  }, [reviewDelayDays, shopId]);
 
   const saveCartRecoverySettings = useCallback(async () => {
     try {
@@ -460,6 +498,40 @@ const AdminSettings = () => {
                         <CheckIcon className="h-4 w-4" />
                       )}
                       {savingRecovery ? 'Sparar…' : 'Spara'}
+                    </Button>
+                  </div>
+                </CardSection>
+              )}
+
+              {/* Recensioner (product reviews) — only when the add-on is enabled
+                  for this shop (platform-controlled). */}
+              {productReviewsEnabled && (
+                <CardSection title="Recensioner" bodyClassName="space-y-4">
+                  <p className="text-[13px] text-admin-text-muted">
+                    Skicka automatiskt en e-postförfrågan till kunden efter att en order har
+                    levererats och be dem lämna ett omdöme. Godkända omdömen visas på produktsidan.
+                  </p>
+                  <div className="max-w-xs">
+                    <label className={labelCls}>Dagar efter leverans innan förfrågan skickas</label>
+                    <input
+                      type="number"
+                      min="3"
+                      max="21"
+                      step="1"
+                      value={reviewDelayDays}
+                      onChange={(e) => setReviewDelayDays(e.target.value)}
+                      className={inputCls}
+                    />
+                    <p className={helpCls}>Mellan 3 och 21 dagar. Standard: 7 dagar.</p>
+                  </div>
+                  <div className="flex justify-end border-t border-admin-border pt-4">
+                    <Button variant="primary" onClick={saveReviewSettingsHandler} disabled={savingReviews}>
+                      {savingReviews ? (
+                        <span className="h-4 w-4 animate-spin rounded-full border-b-2 border-current" />
+                      ) : (
+                        <CheckIcon className="h-4 w-4" />
+                      )}
+                      {savingReviews ? 'Sparar…' : 'Spara'}
                     </Button>
                   </div>
                 </CardSection>

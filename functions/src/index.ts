@@ -214,6 +214,18 @@ export { submitLead } from './leads/submitLead';
 export { sweepAbandonedCheckouts } from './checkout-recovery/sweep';
 export { resolveCheckoutRecovery, unsubscribeCheckout } from './checkout-recovery/callables';
 
+// Native product reviews ("Recensioner" add-on): an order trigger that schedules
+// a review request when a B2C order is fulfilled, a scheduled sweep that emails
+// the request, and the public/admin callables the storefront + admin pages call.
+export { onOrderReviewQualify } from './product-reviews/writeReviewRequest';
+export { sweepReviewRequests } from './product-reviews/sweep';
+export {
+  resolveReviewRequest,
+  submitReview,
+  unsubscribeReviews,
+  moderateReview,
+} from './product-reviews/callables';
+
 // Ångerfunktion — consumer right-of-withdrawal function (DAL 2 kap. 10 a § /
 // CRD Art. 11a, in force 19 June 2026). Server-authoritative: stamps the
 // submission time, enforces eligibility (Regime A applies / Regime B exempt),

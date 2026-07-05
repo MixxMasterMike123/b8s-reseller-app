@@ -21,6 +21,7 @@ import { generateRefundConfirmationTemplate } from '../templates/refundConfirmat
 import { generateDisputeAlertAdminTemplate } from '../templates/disputeAlertAdmin';
 import { generateConnectStatusChangeTemplate } from '../templates/connectStatusChange';
 import { generateAbandonedCheckoutReminderTemplate } from '../templates/abandonedCheckoutReminder';
+import { generateReviewRequestTemplate } from '../templates/reviewRequest';
 import {
   renderEmailShell,
   renderHeading,
@@ -49,7 +50,8 @@ export type EmailType =
   | 'REFUND_CONFIRMATION'
   | 'DISPUTE_ALERT_ADMIN'
   | 'CONNECT_STATUS_CHANGE'
-  | 'ABANDONED_CHECKOUT_REMINDER';
+  | 'ABANDONED_CHECKOUT_REMINDER'
+  | 'REVIEW_REQUEST';
 
 export interface EmailContext extends OrderContext {
   emailType: EmailType;
@@ -137,7 +139,8 @@ export class EmailOrchestrator {
       // abandoned-checkout reminder, whose unsubscribe URL comes in additionalData.
       const unsubscribeUrl = context.additionalData?.unsubscribeUrl;
       const listUnsubHeaders =
-        context.emailType === 'ABANDONED_CHECKOUT_REMINDER' && unsubscribeUrl
+        (context.emailType === 'ABANDONED_CHECKOUT_REMINDER' ||
+          context.emailType === 'REVIEW_REQUEST') && unsubscribeUrl
           ? {
               'List-Unsubscribe': `<${unsubscribeUrl}>`,
               'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
@@ -575,6 +578,22 @@ export class EmailOrchestrator {
           items: Array.isArray(ad.items) ? ad.items : [],
           totals: ad.totals,
           recoveryUrl: ad.recoveryUrl,
+          unsubscribeUrl: ad.unsubscribeUrl,
+        }, data.language);
+      }
+
+      case 'REVIEW_REQUEST': {
+        // Review-request email — fired best-effort from the review sweep
+        // (product-reviews/sweep.ts). Sends under the SHOP's identity (from-name
+        // + logo + reply-to), so shopId must be threaded by the caller. The
+        // one-click unsubscribe link is in additionalData; the List-Unsubscribe
+        // header is set at send time (see above).
+        const ad = data.additionalData || {};
+        return generateReviewRequestTemplate({
+          brandName: data.brandName,
+          customerFirstName: ad.customerFirstName || data.context.customerInfo?.firstName,
+          items: Array.isArray(ad.items) ? ad.items : [],
+          reviewUrl: ad.reviewUrl,
           unsubscribeUrl: ad.unsubscribeUrl,
         }, data.language);
       }

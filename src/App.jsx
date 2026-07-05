@@ -106,6 +106,7 @@ import AdminAffiliateCreate from './pages/admin/AdminAffiliateCreate';
 import AdminAffiliateAnalytics from './pages/admin/AdminAffiliateAnalytics';
 import AdminAffiliatePayout from './pages/admin/AdminAffiliatePayout';
 import AdminDiscountCodes from './pages/admin/AdminDiscountCodes';
+import AdminReviews from './pages/admin/AdminReviews';
 import AffiliateTracker from './components/AffiliateTracker';
 import ScrollToTop from './components/ScrollToTop';
 
@@ -115,6 +116,8 @@ import OrderReturn from './pages/shop/OrderReturn';
 import WithdrawalPage from './pages/shop/WithdrawalPage';
 import CheckoutRecoveryPage from './pages/shop/CheckoutRecoveryPage';
 import CheckoutUnsubscribePage from './pages/shop/CheckoutUnsubscribePage';
+import ReviewSubmitPage from './pages/shop/ReviewSubmitPage';
+import ReviewUnsubscribePage from './pages/shop/ReviewUnsubscribePage';
 
 import { Toaster } from 'react-hot-toast';
 
@@ -327,6 +330,12 @@ function App() {
                   later disabled. Declared BEFORE the /:shopId/* CMS catch-all. */}
               <Route path="/:shopId/aterta/:token" element={<ShopGate><CheckoutRecoveryPage /></ShopGate>} />
               <Route path="/:shopId/avregistrera/:token" element={<ShopGate><CheckoutUnsubscribePage /></ShopGate>} />
+              {/* Native product reviews ("Recensioner" add-on): the public pages
+                  reached from the review-request email. NO AddonGate — the link
+                  must resolve even if the add-on was later disabled. Declared
+                  BEFORE the /:shopId/* CMS catch-all. */}
+              <Route path="/:shopId/recensera/:token" element={<ShopGate><ReviewSubmitPage /></ShopGate>} />
+              <Route path="/:shopId/avregistrera-recensioner/:token" element={<ShopGate><ReviewUnsubscribePage /></ShopGate>} />
               <Route path="/:shopId/affiliate-registration" element={<ShopGate><AddonGate feature="affiliate" redirectTo="shop-home"><AffiliateRegistration /></AddonGate></ShopGate>} />
               <Route path="/:shopId/affiliate-portal" element={<ShopGate><AddonGate feature="affiliate" redirectTo="shop-home"><AffiliatePortal /></AddonGate></ShopGate>} />
               {/* B2B Wholesale add-on: per-shop wholesale self-registration.
@@ -536,6 +545,15 @@ function App() {
               <Route path="/admin/discount-codes" element={
                 <AddonGate feature="discountCodes"><AdminRoute>
                   <AdminDiscountCodes />
+                </AdminRoute></AddonGate>
+              } />
+
+              {/* Recensioner (native product reviews) is an add-on: its admin
+                  route is gated on the `productReviews` feature flag. Default-ON
+                  keeps existing shops working. */}
+              <Route path="/admin/reviews" element={
+                <AddonGate feature="productReviews"><AdminRoute>
+                  <AdminReviews />
                 </AdminRoute></AddonGate>
               } />
 
