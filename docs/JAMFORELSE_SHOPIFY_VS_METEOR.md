@@ -26,13 +26,18 @@
 | **Affiliate-/influencermodul** | ❌ app: UpPromote $29,99/mån + 2 % | ✅ **inbyggd** (add-on) |
 | **Click & Collect med upphämtningsdatum** | ❌ app: Zapiet $29,99/mån | ✅ **inbyggd** |
 | **Print-on-demand med lokalt tryckeri** | Printful/Printify (produktion utomlands, per-styck-kostnad) | 🔜 planerad — lokala tryckerier, unik modell |
-| B2B/grossist | ✅ grundläggande sedan april 2026 (max 3 kataloger) | ⚠️ under avveckling/omarbetning |
-| Produktrecensioner | ❌ app: Judge.me $15/mån | ❌ saknas |
-| E-postmarknadsföring | ❌ app: Klaviyo ~$45/mån | ❌ saknas |
+| **B2B/grossistportal** | ✅ grundläggande sedan april 2026 (max 3 kataloger) | ✅ **inbyggd** (add-on): grossistpriser per produkt, återförsäljarlogin, fakturaorder med serversatta priser |
+| **Kampanjmodul** (affiliate-kampanjer, banners, tävlingar) | ❌ app | ✅ inbyggd (add-on) — OBS: marknadsföringsverktyg, ger inte prisrabatter i kassan |
+| **Ambassadörs-CRM** (influencers per plattform/följarnivå) | ❌ app | ✅ inbyggd (add-on) |
+| **Sälj-CRM** (kontakter, aktiviteter, uppföljningar) | ❌ app | ✅ inbyggd (add-on) |
+| **AI-produkttexter** | ❌ app | ✅ inbyggd (add-on, Claude-driven) |
+| Produktrecensioner | ❌ app: Judge.me $15/mån | ⚠️ grundläggande (Trustpilot-widget per butik; manuell CSV-inläsning, ingen egen insamling) |
+| E-postmarknadsföring | ❌ app: Klaviyo ~$45/mån | ❌ saknas (samtycke samlas in men används ej) |
 | Övergiven varukorg-påminnelse | ✅ | ❌ saknas |
-| Rabattkoder | ✅ | ⚠️ endast via affiliate-koder |
+| Rabattkoder | ✅ | ⚠️ endast via affiliate-koder (ingen generell kampanjkod) |
 | Presentkort | ✅ | ❌ saknas |
-| Flerspråk/flervaluta | ✅ (Markets, 1,5 % växlingsavgift) | ❌ svenska/SEK |
+| Flerspråk | ✅ | ⚠️ infrastrukturen klar (3 språk, admin-redigerbar); butiken medvetet svensk-låst ännu |
+| Flervaluta | ✅ (Markets, 1,5 % växlingsavgift) | ⚠️ visning i EUR/USD m.fl. klar — men debitering är SEK-låst (kan ej sälja i EUR idag) |
 | Kassa/POS i fysisk butik | ✅ grundläggande (POS Pro $89/mån) | ❌ |
 | Ordermejl med butikens varumärke | ✅ | ✅ (logga, färger, per butik) |
 | Ångerrätt/konsumenträtt (svensk lag) | ⚠️ gör-det-själv | ✅ **inbyggd** (ångerblankett, villkorsmallar, DAC7) |
@@ -79,11 +84,12 @@ Jämnt. Ingen seriös skillnad att sälja på åt något håll — påstå inte 
 
 **Shopify:** proprietärt temaspråk (Liquid), 6–12 appar vars data inte följer med vid flytt, 2 % straffavgift för externa betallösningar, historik av prishöjningar (+34 % på Basic 2023), långsam dataexport i skräpformat. Inlåsningen är affärsmodellen.
 
-**Vi:** butikens data ligger hos oss (ingen självbetjäningsexport ännu — måste byggas och skrivas in i Plattformsvillkoren), men ingen fast avgift = inget som tickar när man vill tänka. Rå sanning: vi är också en inlåsning, bara en billigare. Bygg dataexport innan någon frågar.
+**Vi:** order- och upphämtningsexport (CSV) finns i admin idag; produkt- och kundexport saknas ännu (bygg + skriv in i Plattformsvillkoren). Ingen fast avgift = inget som tickar när man vill tänka. Rå sanning: vi är också en inlåsning, bara en billigare.
 
 ## 7. Slutsats för säljet
 
 - **Målgrupp där vi vinner allt:** analog verksamhet med bra omsättning som aldrig sålt online (Kents segment), plus småbutiker < ~200 tkr/år online. Argument: 0 kr fast, allt ingår som kostar 1 000+ kr/mån i appar hos Shopify, och **vi gör jobbet åt dem**.
 - **Målgrupp vi ska lämna ifred:** etablerade butiker > 300 tkr/år online (Shopify är billigare) och säsongsoptimerare à la Sillmans (~2 % effektiv kostnad — under vårt kostnadsgolv).
 - **Add-on-intäkter (Kents tes):** rätt tanke, men det finns idag **ingen betalmekanism för add-ons** — de är gratis funktionsflaggor. Prissätt modulerna i Plattformsvillkoren nu och ta betalt via provisionspåslag per butik (spaken finns redan), annars blir de gratis för alltid för de första kunderna.
-- **Luckor att stänga innan tabellen används publikt:** egen domän, native Swish, produktrecensioner, dataexport, presentkort/rabattkoder.
+- **Luckor att stänga innan tabellen används publikt:** egen domän, native Swish, egen recensionsinsamling (widgeten finns, insamlingen är manuell), produkt-/kundexport, presentkort/generella rabattkoder, EUR-debitering (visningen finns), engelsk butik (infran finns).
+- **Add-on-arsenalen är större än Shopify-jämförelsen antydde:** affiliate, B2B-grossistportal med fakturaorder, kampanjer, ambassadörs-CRM, sälj-CRM, AI-produkttexter, POD med lokalt tryckeri (serversäkrad produktionspipeline). Hos Shopify är varje rad en app à $15–50/mån. Detta är Kents add-on-tes i siffror — det som saknas är fortfarande betalmekanismen för modulerna.
