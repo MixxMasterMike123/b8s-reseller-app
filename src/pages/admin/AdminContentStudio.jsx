@@ -817,14 +817,32 @@ const AdminContentStudio = () => {
                       )}
                     </div>
 
-                    {/* Phone-frame preview (neutral, 9:16) */}
+                    {/* Phone-frame preview (9:16) — backed by the first selected
+                        image so the admin sees their own material, not a gray box;
+                        gradient is the no-image fallback. */}
                     <div className="mx-auto w-full max-w-[220px]">
                       <div className="relative aspect-[9/16] overflow-hidden rounded-[20px] border border-admin-border bg-gradient-to-b from-gray-200 via-gray-300 to-gray-400 shadow-[var(--shadow-admin)]">
+                        {(() => {
+                          const previewImg = selectedAssets.find((a) => a.type === 'image' && a.url);
+                          return previewImg ? (
+                            <img
+                              src={previewImg.url}
+                              alt=""
+                              className="absolute inset-0 h-full w-full object-cover"
+                            />
+                          ) : null;
+                        })()}
                         <div className="absolute inset-x-0 top-0 flex justify-center pt-2">
                           <span className="h-1 w-10 rounded-full bg-black/20" />
                         </div>
                         <div className="absolute inset-0 flex items-center justify-center p-4">
-                          <p className="text-center text-[13px] font-semibold leading-snug text-gray-800">
+                          <p
+                            className={
+                              selectedAssets.some((a) => a.type === 'image' && a.url)
+                                ? 'text-center text-[13px] font-semibold leading-snug text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]'
+                                : 'text-center text-[13px] font-semibold leading-snug text-gray-800'
+                            }
+                          >
                             {activeCopy?.hook || ''}
                           </p>
                         </div>
