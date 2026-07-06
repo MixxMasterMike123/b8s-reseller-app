@@ -1,4 +1,5 @@
 export declare function loadShopMappings(shopId: string): Promise<Map<string, any>>;
+export declare function resolveMapping(sku: string, mappingsBySku: Map<string, any>): any | null;
 export declare function orderHasPodLine(order: any, mappingsBySku: Map<string, any>): boolean;
 export declare function toQueueRow(orderId: string, order: any, shopName: string, mappingsBySku: Map<string, any>): {
     orderId: string;

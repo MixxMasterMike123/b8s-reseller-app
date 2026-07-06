@@ -38,16 +38,36 @@ export async function loadShopMappings(shopId: string): Promise<Map<string, any>
   return bySku;
 }
 
+// Resolve a mapping for an order-line SKU. Variant SKUs are derived from the
+// parent as `${parentSku}-${color}-${size}` (variant rail), so a mapping on the
+// parent covers every variant. Exact match wins; otherwise the LONGEST mapping
+// key that is a '-'-boundary prefix of the line SKU wins (a per-colorway mapping
+// `north-01-svart` beats the parent `north-01` for `north-01-svart-l`). The
+// '-' boundary prevents `north-01` matching `north-012-...`.
+export function resolveMapping(sku: string, mappingsBySku: Map<string, any>): any | null {
+  if (!sku) return null;
+  if (mappingsBySku.has(sku)) return mappingsBySku.get(sku);
+  let best: any = null;
+  let bestLen = -1;
+  for (const [key, mapping] of mappingsBySku) {
+    if (key.length > bestLen && sku.startsWith(key + '-')) {
+      best = mapping;
+      bestLen = key.length;
+    }
+  }
+  return best;
+}
+
 // Is this order a POD order for the given shop? (any line's sku is mapped)
 export function orderHasPodLine(order: any, mappingsBySku: Map<string, any>): boolean {
   const items = Array.isArray(order.items) ? order.items : [];
-  return items.some((it: any) => it && it.sku && mappingsBySku.has(it.sku));
+  return items.some((it: any) => it && it.sku && resolveMapping(it.sku, mappingsBySku));
 }
 
 // Minimal LIST row — no address, no contact, no money.
 export function toQueueRow(orderId: string, order: any, shopName: string, mappingsBySku: Map<string, any>) {
   const items = Array.isArray(order.items) ? order.items : [];
-  const podLineCount = items.filter((it: any) => it && it.sku && mappingsBySku.has(it.sku)).length;
+  const podLineCount = items.filter((it: any) => it && it.sku && resolveMapping(it.sku, mappingsBySku)).length;
   const ship = order.shippingInfo || {};
   return {
     orderId,
@@ -71,8 +91,8 @@ export async function toPrintJob(orderId: string, order: any, shopName: string, 
 
   const lines = [];
   for (const it of items) {
-    if (!it || !it.sku || !mappingsBySku.has(it.sku)) continue; // non-POD line — skip
-    const mapping = mappingsBySku.get(it.sku);
+    const mapping = it && it.sku ? resolveMapping(it.sku, mappingsBySku) : null;
+    if (!mapping) continue; // non-POD line — skip
     const base = {
       productName: typeof it.name === 'string' ? it.name : (it.name?.['sv-SE'] || it.sku),
       sku: it.sku,

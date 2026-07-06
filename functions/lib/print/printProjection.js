@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toPrintJob = exports.toQueueRow = exports.orderHasPodLine = exports.loadShopMappings = void 0;
+exports.toPrintJob = exports.toQueueRow = exports.orderHasPodLine = exports.resolveMapping = exports.loadShopMappings = void 0;
 // printProjection.ts — builds the FIELD-MINIMISED production view of a POD order
 // for the print shop. This is the data-minimisation boundary: the printer (an
 // external sub-processor) gets ship-to + production fields ONLY — never customer
@@ -41,16 +41,38 @@ async function loadShopMappings(shopId) {
     return bySku;
 }
 exports.loadShopMappings = loadShopMappings;
+// Resolve a mapping for an order-line SKU. Variant SKUs are derived from the
+// parent as `${parentSku}-${color}-${size}` (variant rail), so a mapping on the
+// parent covers every variant. Exact match wins; otherwise the LONGEST mapping
+// key that is a '-'-boundary prefix of the line SKU wins (a per-colorway mapping
+// `north-01-svart` beats the parent `north-01` for `north-01-svart-l`). The
+// '-' boundary prevents `north-01` matching `north-012-...`.
+function resolveMapping(sku, mappingsBySku) {
+    if (!sku)
+        return null;
+    if (mappingsBySku.has(sku))
+        return mappingsBySku.get(sku);
+    let best = null;
+    let bestLen = -1;
+    for (const [key, mapping] of mappingsBySku) {
+        if (key.length > bestLen && sku.startsWith(key + '-')) {
+            best = mapping;
+            bestLen = key.length;
+        }
+    }
+    return best;
+}
+exports.resolveMapping = resolveMapping;
 // Is this order a POD order for the given shop? (any line's sku is mapped)
 function orderHasPodLine(order, mappingsBySku) {
     const items = Array.isArray(order.items) ? order.items : [];
-    return items.some((it) => it && it.sku && mappingsBySku.has(it.sku));
+    return items.some((it) => it && it.sku && resolveMapping(it.sku, mappingsBySku));
 }
 exports.orderHasPodLine = orderHasPodLine;
 // Minimal LIST row — no address, no contact, no money.
 function toQueueRow(orderId, order, shopName, mappingsBySku) {
     const items = Array.isArray(order.items) ? order.items : [];
-    const podLineCount = items.filter((it) => it && it.sku && mappingsBySku.has(it.sku)).length;
+    const podLineCount = items.filter((it) => it && it.sku && resolveMapping(it.sku, mappingsBySku)).length;
     const ship = order.shippingInfo || {};
     return {
         orderId,
@@ -73,9 +95,9 @@ async function toPrintJob(orderId, order, shopName, mappingsBySku) {
     const ship = order.shippingInfo || {};
     const lines = [];
     for (const it of items) {
-        if (!it || !it.sku || !mappingsBySku.has(it.sku))
+        const mapping = it && it.sku ? resolveMapping(it.sku, mappingsBySku) : null;
+        if (!mapping)
             continue; // non-POD line — skip
-        const mapping = mappingsBySku.get(it.sku);
         const base = {
             productName: typeof it.name === 'string' ? it.name : (it.name?.['sv-SE'] || it.sku),
             sku: it.sku,
