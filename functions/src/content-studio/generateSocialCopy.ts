@@ -21,7 +21,7 @@ import ffmpegPath from 'ffmpeg-static';
 import ffprobeStatic from 'ffprobe-static';
 import Anthropic from '@anthropic-ai/sdk';
 import { appUrls } from '../config/app-urls';
-import { requireContentStudio, shopBrandName } from './gate';
+import { requireContentStudio, shopBrandName, isShopMediaPath } from './gate';
 
 // 1GiB/300s: video keyframe extraction downloads clips to /tmp (memory-backed)
 // and runs ffmpeg before the Claude call.
@@ -100,8 +100,8 @@ async function buildImageBlocks(shopId: string, imagePaths: string[]): Promise<a
   const paths = imagePaths.slice(0, MAX_IMAGES);
   const blocks: any[] = [];
   for (const path of paths) {
-    // Tenant isolation: only this shop's uploads may be analyzed.
-    if (!path.startsWith(`content-studio/${shopId}/`)) {
+    // Tenant isolation: only this shop's library or quick uploads.
+    if (!isShopMediaPath(shopId, path)) {
       throw new HttpsError(
         'permission-denied',
         `Bilden "${path}" ligger utanför butikens mapp.`
@@ -174,7 +174,7 @@ async function buildVideoFrameBlocks(
 
   for (let v = 0; v < Math.min(videoPaths.length, MAX_VIDEOS); v++) {
     const p = videoPaths[v];
-    if (!p.startsWith(`content-studio/${shopId}/`)) {
+    if (!isShopMediaPath(shopId, p)) {
       throw new HttpsError('permission-denied', `Filen "${p}" ligger utanför butikens mapp.`);
     }
     const file = bucket.file(p);

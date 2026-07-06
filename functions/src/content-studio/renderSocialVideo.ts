@@ -23,7 +23,7 @@ import * as path from 'path';
 import ffmpegPath from 'ffmpeg-static';
 import ffprobeStatic from 'ffprobe-static';
 import { appUrls } from '../config/app-urls';
-import { requireContentStudio } from './gate';
+import { requireContentStudio, isShopMediaPath } from './gate';
 
 const COMMON = {
   region: 'us-central1' as const,
@@ -144,8 +144,8 @@ export const renderSocialVideo = onCall<RenderRequest>(COMMON, async (request) =
   const { shopId } = await requireContentStudio(d.shopId, request.auth?.uid);
 
   // ── Input validation (readable Swedish errors) ──────────────────────────
-  const uploadPrefix = `content-studio/${shopId}/uploads/`;
-
+  // Sources may come from the persistent library OR the disposable
+  // quick-upload area — isShopMediaPath enforces tenant isolation for both.
   const assetPaths = Array.isArray(d.assetPaths)
     ? d.assetPaths.map((p) => String(p).trim()).filter(Boolean)
     : [];
@@ -156,7 +156,7 @@ export const renderSocialVideo = onCall<RenderRequest>(COMMON, async (request) =
     );
   }
   for (const p of assetPaths) {
-    if (!p.startsWith(uploadPrefix)) {
+    if (!isShopMediaPath(shopId, p)) {
       throw new HttpsError(
         'permission-denied',
         `Filen "${p}" ligger utanför butikens mapp.`
@@ -165,7 +165,7 @@ export const renderSocialVideo = onCall<RenderRequest>(COMMON, async (request) =
   }
 
   const audioPath = (d.audioPath || '').trim();
-  if (audioPath && !audioPath.startsWith(uploadPrefix)) {
+  if (audioPath && !isShopMediaPath(shopId, audioPath)) {
     throw new HttpsError(
       'permission-denied',
       `Ljudfilen "${audioPath}" ligger utanför butikens mapp.`

@@ -141,6 +141,156 @@ const copyToClipboard = async (text, okMessage = 'Kopierat!') => {
 
 const toneMeta = (value) => TONES.find((t) => t.value === value) || { label: value };
 
+// Per-type visual metadata for the grouped media library + type badges.
+const TYPE_META = {
+  video: { icon: FilmIcon, label: 'VIDEO', badge: 'bg-purple-100 text-purple-700', noun: 'video' },
+  image: { icon: PhotoIcon, label: 'BILD', badge: 'bg-sky-100 text-sky-700', noun: 'bild' },
+  audio: { icon: MusicalNoteIcon, label: 'LJUD', badge: 'bg-amber-100 text-amber-700', noun: 'ljud' },
+};
+
+// "3 valda: 1 video, 1 bild, 1 ljud" — breaks down by type when mixed.
+const selectionSummary = (selectedAssets) => {
+  const total = selectedAssets.length;
+  const word = total === 1 ? 'vald' : 'valda';
+  const counts = ['video', 'image', 'audio'].map((t) => ({
+    t,
+    n: selectedAssets.filter((a) => a.type === t).length,
+  })).filter((c) => c.n > 0);
+  if (counts.length <= 1) {
+    // Single type (or none) — keep it simple.
+    const noun = counts.length === 1 ? TYPE_META[counts[0].t].noun : 'fil';
+    return `${total} ${counts.length === 1 && total !== 1 ? `${TYPE_META[counts[0].t].noun}er` : noun} ${word}`;
+  }
+  const parts = counts.map((c) => `${c.n} ${c.n === 1 ? TYPE_META[c.t].noun : `${TYPE_META[c.t].noun}er`}`);
+  return `${total} ${word}: ${parts.join(', ')}`;
+};
+
+/**
+ * MediaTile — one selectable asset tile (shared by the grouped library and the
+ * quick-upload group). Renders a corner type-badge, image thumbnail or a
+ * type-distinct icon treatment, selection order badge and a delete button.
+ */
+const MediaTile = ({ asset, orderIdx, onToggle, onDelete, temporary = false }) => {
+  const isSelected = orderIdx !== -1;
+  const meta = TYPE_META[asset.type] || TYPE_META.video;
+  const TypeIcon = meta.icon;
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onToggle(asset.path)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onToggle(asset.path);
+        }
+      }}
+      className={`group relative cursor-pointer overflow-hidden rounded-[var(--radius-admin-el)] border transition-colors ${
+        isSelected
+          ? 'border-[var(--color-admin-primary)] ring-2 ring-[var(--color-admin-primary)]'
+          : temporary
+          ? 'border-dashed border-amber-300 hover:border-amber-400'
+          : 'border-admin-border hover:border-admin-text-faint'
+      }`}
+      title={asset.name}
+    >
+      {/* Media area — image thumb, or a type-distinct icon treatment. */}
+      {asset.type === 'image' && asset.url ? (
+        <div className="flex h-24 items-center justify-center bg-admin-surface-2">
+          <img src={asset.url} alt={asset.name} className="h-full w-full object-cover" />
+        </div>
+      ) : asset.type === 'audio' ? (
+        <div className="flex h-24 flex-col items-center justify-center gap-1.5 bg-amber-50">
+          <MusicalNoteIcon className="h-8 w-8 text-amber-500" aria-hidden="true" />
+          {/* Waveform hint */}
+          <div className="flex items-end gap-0.5" aria-hidden="true">
+            {[6, 12, 8, 16, 10, 14, 7].map((h, i) => (
+              <span key={i} className="w-0.5 rounded-full bg-amber-300" style={{ height: `${h}px` }} />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="relative flex h-24 items-center justify-center bg-gray-900">
+          {/* Filmstrip perforations */}
+          <div className="absolute inset-y-0 left-0 flex w-2 flex-col justify-around" aria-hidden="true">
+            {[0, 1, 2, 3].map((i) => (
+              <span key={i} className="mx-auto h-1.5 w-1 rounded-[1px] bg-gray-600" />
+            ))}
+          </div>
+          <div className="absolute inset-y-0 right-0 flex w-2 flex-col justify-around" aria-hidden="true">
+            {[0, 1, 2, 3].map((i) => (
+              <span key={i} className="mx-auto h-1.5 w-1 rounded-[1px] bg-gray-600" />
+            ))}
+          </div>
+          <FilmIcon className="h-8 w-8 text-gray-300" aria-hidden="true" />
+        </div>
+      )}
+
+      {/* Type badge (top-left, above/beside the selection badge). */}
+      <span
+        className={`absolute left-1.5 ${isSelected ? 'top-9' : 'top-1.5'} rounded px-1.5 py-0.5 text-[11px] font-medium ${meta.badge}`}
+      >
+        {meta.label}
+      </span>
+
+      {/* Selection order badge (top-left). */}
+      {isSelected && (
+        <span className="absolute left-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-[var(--color-admin-primary)] text-[12px] font-semibold text-white shadow">
+          {orderIdx + 1}
+        </span>
+      )}
+
+      {/* Temporary marker for quick uploads. */}
+      {temporary && (
+        <span className="absolute right-1.5 top-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-medium text-amber-700 shadow-sm group-hover:opacity-0">
+          Tillfällig
+        </span>
+      )}
+
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(asset);
+        }}
+        title={temporary ? 'Ta bort' : 'Radera fil'}
+        aria-label={`Radera ${asset.name}`}
+        className="absolute bottom-9 right-1.5 grid h-6 w-6 place-items-center rounded-full bg-admin-surface/90 text-admin-text-faint opacity-0 shadow transition-opacity hover:text-red-600 focus:opacity-100 group-hover:opacity-100"
+      >
+        <TrashIcon className="h-3.5 w-3.5" />
+      </button>
+
+      <div className="flex items-center gap-1 border-t border-admin-border bg-admin-surface px-2 py-1">
+        <TypeIcon className="h-3.5 w-3.5 shrink-0 text-admin-text-faint" aria-hidden="true" />
+        <span className="truncate text-[11px] text-admin-text-muted">{asset.name}</span>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * MediaGroup — a titled, counted group of MediaTiles for one media type.
+ * Omitted entirely by the caller when empty.
+ */
+const MediaGroup = ({ title, items, selected, onToggle, onDelete }) => (
+  <div>
+    <h4 className="mb-2 text-[13px] font-semibold text-admin-text">
+      {title} ({items.length})
+    </h4>
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+      {items.map((asset) => (
+        <MediaTile
+          key={asset.path}
+          asset={asset}
+          orderIdx={selected.indexOf(asset.path)}
+          onToggle={onToggle}
+          onDelete={onDelete}
+        />
+      ))}
+    </div>
+  </div>
+);
+
 const AdminContentStudio = () => {
   const shopId = useShopId();
   const { currentUser, isPlatform } = useAuth();
@@ -157,6 +307,11 @@ const AdminContentStudio = () => {
   const [uploadError, setUploadError] = useState('');
   const [selected, setSelected] = useState([]); // ordered asset paths — order = cut order
   const fileInputRef = useRef(null);
+  // Session-only quick uploads — never from listAll, vanish on reload,
+  // storage objects purged server-side after ~1 day. Same shape as assets.
+  const [quickAssets, setQuickAssets] = useState([]); // [{ path, name, type, url|null }]
+  const [quickUploading, setQuickUploading] = useState(false);
+  const quickFileInputRef = useRef(null);
 
   // ── Section 2: Skapa inlägg ──
   const [description, setDescription] = useState('');
@@ -306,6 +461,67 @@ const AdminContentStudio = () => {
     }
   };
 
+  // ── Quick upload (session-only, auto-purged server-side) ──
+  const handleQuickFilesChosen = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (quickFileInputRef.current) quickFileInputRef.current.value = '';
+    if (files.length === 0) return;
+    setUploadError('');
+
+    const tooBig = files.filter((f) => f.size > MAX_FILE_BYTES);
+    if (tooBig.length > 0) {
+      setUploadError(
+        `${tooBig
+          .map((f) => `"${f.name}" är för stor (${(f.size / 1024 / 1024).toFixed(1)} MB)`)
+          .join(', ')}. Max ${MAX_FILE_MB} MB per fil.`
+      );
+      return;
+    }
+
+    setQuickUploading(true);
+    let failed = 0;
+    const newPaths = []; // uploaded-order → auto-select order
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      setUploadNote(`Snabbladdar ${i + 1} av ${files.length}: ${file.name}…`);
+      try {
+        // Quick path: content-studio-quick/{shopId}/{Date.now()}_{safeName}
+        const path = `content-studio-quick/${shopId}/${Date.now()}_${sanitizeFileName(file.name)}`;
+        const snap = await uploadBytes(ref(storage, path), file);
+        const type = typeOf(file.name);
+        let url = null;
+        if (type === 'image') {
+          try {
+            url = await getDownloadURL(snap.ref);
+          } catch (err) { /* icon fallback */ }
+        }
+        setQuickAssets((prev) => [{ path, name: snap.ref.name, type, url }, ...prev]);
+        newPaths.push(path);
+      } catch (error) {
+        console.error('Quick upload failed:', error);
+        failed++;
+      }
+    }
+    setQuickUploading(false);
+    setUploadNote('');
+    // Auto-select the fresh uploads (in upload order) — upload → generate direkt.
+    if (newPaths.length > 0) {
+      setSelected((prev) => [...prev, ...newPaths.filter((p) => !prev.includes(p))]);
+    }
+    if (failed > 0) {
+      setUploadError(`${failed} av ${files.length} filer kunde inte laddas upp. Försök igen.`);
+    } else {
+      toast.success(files.length === 1 ? 'Filen redo att använda.' : `${files.length} filer redo att använda.`);
+    }
+  };
+
+  const handleDeleteQuickAsset = async (asset) => {
+    setQuickAssets((prev) => prev.filter((a) => a.path !== asset.path));
+    setSelected((prev) => prev.filter((p) => p !== asset.path));
+    // Best-effort delete; the lifecycle rule purges it anyway.
+    deleteObject(ref(storage, asset.path)).catch(() => {});
+  };
+
   const handleDeleteAsset = async (asset) => {
     if (!window.confirm(`Radera "${asset.name}" från biblioteket?`)) return;
     const toastId = toast.loading('Raderar…');
@@ -326,9 +542,16 @@ const AdminContentStudio = () => {
   };
 
   const selectedAssets = useMemo(
-    () => selected.map((p) => assets.find((a) => a.path === p)).filter(Boolean),
-    [selected, assets]
+    () =>
+      selected
+        .map((p) => assets.find((a) => a.path === p) || quickAssets.find((a) => a.path === p))
+        .filter(Boolean),
+    [selected, assets, quickAssets]
   );
+  // Library grouped by media type (order preserved: newest-first from loadAssets).
+  const libraryVideos = useMemo(() => assets.filter((a) => a.type === 'video'), [assets]);
+  const libraryImages = useMemo(() => assets.filter((a) => a.type === 'image'), [assets]);
+  const libraryAudio = useMemo(() => assets.filter((a) => a.type === 'audio'), [assets]);
   const selectedVisual = useMemo(
     () => selectedAssets.filter((a) => a.type === 'image' || a.type === 'video'),
     [selectedAssets]
@@ -538,7 +761,7 @@ const AdminContentStudio = () => {
           <CardSection
             title="Material"
             actions={
-              <>
+              <div className="flex flex-wrap items-center gap-2">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -547,14 +770,29 @@ const AdminContentStudio = () => {
                   className="hidden"
                   onChange={handleFilesChosen}
                 />
+                <input
+                  ref={quickFileInputRef}
+                  type="file"
+                  accept="video/*,image/*,audio/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleQuickFilesChosen}
+                />
+                <Button
+                  variant="secondary"
+                  onClick={() => quickFileInputRef.current?.click()}
+                  disabled={quickUploading}
+                >
+                  {quickUploading ? 'Snabbladdar…' : '⚡ Snabbuppladdning'}
+                </Button>
                 <Button
                   variant="primary"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
                 >
-                  {uploading ? 'Laddar upp…' : 'Ladda upp filer'}
+                  {uploading ? 'Laddar upp…' : 'Ladda upp till biblioteket'}
                 </Button>
-              </>
+              </div>
             }
           >
             <p className="mb-3 text-[13px] text-admin-text-muted">
@@ -562,7 +800,7 @@ const AdminContentStudio = () => {
               den till ditt inlägg – <strong>ordningen du klickar i blir klippordningen i videon</strong>.
             </p>
 
-            {uploading && uploadNote && (
+            {(uploading || quickUploading) && uploadNote && (
               <div className="mb-3 rounded-md bg-sky-50 border-l-4 border-sky-400 p-3 text-[13px] text-sky-700">
                 {uploadNote}
               </div>
@@ -570,6 +808,37 @@ const AdminContentStudio = () => {
             {uploadError && (
               <div className="mb-3 rounded-md bg-red-50 border-l-4 border-red-400 p-3 text-[13px] text-red-700">
                 {uploadError}
+              </div>
+            )}
+
+            {/* ⚡ Quick uploads — session-only, auto-purged. Shown first so a
+                fresh upload → generate flow is right at the top. */}
+            {(quickAssets.length > 0 || quickUploading) && (
+              <div className="mb-4 rounded-[var(--radius-admin-el)] border border-dashed border-amber-300 bg-amber-50/40 p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <h4 className="text-[13px] font-semibold text-amber-800">
+                    ⚡ Snabbuppladdat (tillfälligt)
+                  </h4>
+                </div>
+                <p className="mb-3 text-[12px] text-amber-700">
+                  Sparas inte i biblioteket – används direkt och rensas automatiskt.
+                </p>
+                {quickAssets.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                    {quickAssets.map((asset) => (
+                      <MediaTile
+                        key={asset.path}
+                        asset={asset}
+                        orderIdx={selected.indexOf(asset.path)}
+                        onToggle={toggleSelect}
+                        onDelete={handleDeleteQuickAsset}
+                        temporary
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[13px] text-amber-700">Snabbladdar…</p>
+                )}
               </div>
             )}
 
@@ -582,69 +851,41 @@ const AdminContentStudio = () => {
                 Inget material ännu. Ladda upp dina första klipp, bilder eller låtar.
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                {assets.map((asset) => {
-                  const orderIdx = selected.indexOf(asset.path);
-                  const isSelected = orderIdx !== -1;
-                  const TypeIcon =
-                    asset.type === 'image' ? PhotoIcon : asset.type === 'audio' ? MusicalNoteIcon : FilmIcon;
-                  return (
-                    <div
-                      key={asset.path}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => toggleSelect(asset.path)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          toggleSelect(asset.path);
-                        }
-                      }}
-                      className={`group relative cursor-pointer overflow-hidden rounded-[var(--radius-admin-el)] border transition-colors ${
-                        isSelected
-                          ? 'border-[var(--color-admin-primary)] ring-2 ring-[var(--color-admin-primary)]'
-                          : 'border-admin-border hover:border-admin-text-faint'
-                      }`}
-                      title={asset.name}
-                    >
-                      <div className="flex h-24 items-center justify-center bg-admin-surface-2">
-                        {asset.type === 'image' && asset.url ? (
-                          <img src={asset.url} alt={asset.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <TypeIcon className="h-8 w-8 text-admin-text-faint" aria-hidden="true" />
-                        )}
-                      </div>
-                      {isSelected && (
-                        <span className="absolute left-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-[var(--color-admin-primary)] text-[12px] font-semibold text-white shadow">
-                          {orderIdx + 1}
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteAsset(asset);
-                        }}
-                        title="Radera fil"
-                        aria-label={`Radera ${asset.name}`}
-                        className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-admin-surface/90 text-admin-text-faint opacity-0 shadow transition-opacity hover:text-red-600 focus:opacity-100 group-hover:opacity-100"
-                      >
-                        <TrashIcon className="h-3.5 w-3.5" />
-                      </button>
-                      <div className="flex items-center gap-1 border-t border-admin-border bg-admin-surface px-2 py-1">
-                        <TypeIcon className="h-3.5 w-3.5 shrink-0 text-admin-text-faint" aria-hidden="true" />
-                        <span className="truncate text-[11px] text-admin-text-muted">{asset.name}</span>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="space-y-5">
+                {libraryVideos.length > 0 && (
+                  <MediaGroup
+                    title="🎬 Videoklipp"
+                    items={libraryVideos}
+                    selected={selected}
+                    onToggle={toggleSelect}
+                    onDelete={handleDeleteAsset}
+                  />
+                )}
+                {libraryImages.length > 0 && (
+                  <MediaGroup
+                    title="🖼️ Bilder"
+                    items={libraryImages}
+                    selected={selected}
+                    onToggle={toggleSelect}
+                    onDelete={handleDeleteAsset}
+                  />
+                )}
+                {libraryAudio.length > 0 && (
+                  <MediaGroup
+                    title="🎵 Ljudfiler"
+                    items={libraryAudio}
+                    selected={selected}
+                    onToggle={toggleSelect}
+                    onDelete={handleDeleteAsset}
+                  />
+                )}
               </div>
             )}
 
             {selected.length > 0 && (
               <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] text-admin-text-muted">
                 <span>
-                  {selected.length} {selected.length === 1 ? 'fil vald' : 'filer valda'}
+                  {selectionSummary(selectedAssets)}
                   {selectedAudio.length > 0 && ' (ljudfilen används som musik i videon)'}
                 </span>
                 <button

@@ -52,3 +52,14 @@ export function shopBrandName(shopId: string, data: Record<string, any>): string
     shopId
   );
 }
+
+// A media path belongs to this shop if it lives under the persistent library
+// (content-studio/{shopId}/) or the disposable quick-upload area
+// (content-studio-quick/{shopId}/ — auto-purged by a bucket lifecycle rule,
+// never listed in the library). Both callables validate against this.
+export function isShopMediaPath(shopId: string, p: string): boolean {
+  return (
+    p.startsWith(`content-studio/${shopId}/`) ||
+    p.startsWith(`content-studio-quick/${shopId}/`)
+  );
+}

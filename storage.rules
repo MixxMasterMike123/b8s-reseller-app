@@ -137,6 +137,22 @@ service firebase.storage {
         );
     }
 
+    // Content Studio QUICK uploads — disposable on-the-fly material that is
+    // never part of the library (the UI lists only content-studio/…/uploads).
+    // A bucket lifecycle rule auto-deletes objects under this prefix after
+    // 1 day, so nothing accumulates. Same access gates as the library.
+    match /content-studio-quick/{shopId}/{allPaths=**} {
+      allow read: if isAdminOfShop(shopId);
+      allow delete: if isAdminOfShop(shopId);
+      allow create, update: if isAdminOfShop(shopId)
+        && request.resource.size < 100 * 1024 * 1024
+        && (
+          request.resource.contentType.matches('image/.*') ||
+          request.resource.contentType.matches('video/.*') ||
+          request.resource.contentType.matches('audio/.*')
+        );
+    }
+
     // Marketing materials — generic (PARTITIONED by shopId).
     // Any authenticated user of the shop can read; write gated to shop admin.
     match /marketing-materials/{shopId}/generic/{fileName} {
