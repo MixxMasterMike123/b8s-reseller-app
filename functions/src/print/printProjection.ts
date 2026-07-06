@@ -69,6 +69,7 @@ export function toQueueRow(orderId: string, order: any, shopName: string, mappin
   const items = Array.isArray(order.items) ? order.items : [];
   const podLineCount = items.filter((it: any) => it && it.sku && resolveMapping(it.sku, mappingsBySku)).length;
   const ship = order.shippingInfo || {};
+  const isPickup = order.deliveryMethod === 'pickup';
   return {
     orderId,
     orderNumber: order.orderNumber || orderId,
@@ -77,8 +78,10 @@ export function toQueueRow(orderId: string, order: any, shopName: string, mappin
     shopName: shopName || order.shopId || '',
     status: order.status || '',
     podLineCount,
-    shipToCity: ship.city || '',
-    shipToCountry: ship.country || '',
+    deliveryMethod: isPickup ? 'pickup' : 'home',
+    // Pickup rows show the pickup location, not a customer city.
+    shipToCity: isPickup ? (order.pickupLocation?.name || '') : (ship.city || ''),
+    shipToCountry: isPickup ? '' : (ship.country || ''),
   };
 }
 
@@ -126,6 +129,7 @@ export async function toPrintJob(orderId: string, order: any, shopName: string, 
     });
   }
 
+  const deliveryMethod = order.deliveryMethod === 'pickup' ? 'pickup' : 'home';
   return {
     order: {
       orderNumber: order.orderNumber || orderId,
@@ -134,15 +138,29 @@ export async function toPrintJob(orderId: string, order: any, shopName: string, 
       orderRef: orderId,
     },
     shopName: shopName || order.shopId || '',
+    deliveryMethod,
+    // Pickup orders: the printer delivers to the SHOP's pickup location and the
+    // shop hands over to the customer — so no customer ship-to at all (data
+    // minimisation: the printer doesn't even need the customer's name; the order
+    // number identifies the parcel).
+    pickup: deliveryMethod === 'pickup'
+      ? {
+          name: order.pickupLocation?.name || '',
+          address: order.pickupLocation?.address || '',
+          date: order.pickupLocation?.date || '',
+        }
+      : null,
     // ship-to ONLY — name + address, needed to fulfil. NO email/phone.
-    shipTo: {
-      name: order.customerInfo?.name || '',
-      line1: ship.address || '',
-      line2: ship.apartment || '',
-      postalCode: ship.postalCode || '',
-      city: ship.city || '',
-      country: ship.country || '',
-    },
+    shipTo: deliveryMethod === 'pickup'
+      ? null
+      : {
+          name: order.customerInfo?.name || '',
+          line1: ship.address || '',
+          line2: ship.apartment || '',
+          postalCode: ship.postalCode || '',
+          city: ship.city || '',
+          country: ship.country || '',
+        },
     lines,
   };
 }

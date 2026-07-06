@@ -9,6 +9,7 @@ export declare function toQueueRow(orderId: string, order: any, shopName: string
     shopName: any;
     status: any;
     podLineCount: any;
+    deliveryMethod: string;
     shipToCity: any;
     shipToCountry: any;
 };
@@ -20,6 +21,12 @@ export declare function toPrintJob(orderId: string, order: any, shopName: string
         orderRef: string;
     };
     shopName: any;
+    deliveryMethod: string;
+    pickup: {
+        name: any;
+        address: any;
+        date: any;
+    } | null;
     shipTo: {
         name: any;
         line1: any;
@@ -27,7 +34,7 @@ export declare function toPrintJob(orderId: string, order: any, shopName: string
         postalCode: any;
         city: any;
         country: any;
-    };
+    } | null;
     lines: ({
         purpose: any;
         artwork: {

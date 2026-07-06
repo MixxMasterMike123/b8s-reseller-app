@@ -109,8 +109,12 @@ export const getPrintQueueExport = onCall(COMMON, async (request) => {
           purpose: ln.purpose || '',
           fileName: ln.artwork?.fileName || (ln.artwork?.unresolved ? `OLÖST: ${ln.artwork.reason}` : ''),
           tier: ln.artwork?.tier || '',
-          shipToCity: job.shipTo.city,
-          shipToCountry: job.shipTo.country,
+          // Pickup orders have NO customer ship-to (shipTo is null) — the row
+          // shows the shop's pickup location instead.
+          shipToCity: job.deliveryMethod === 'pickup'
+            ? `Upphämtning: ${job.pickup?.name || ''}`.replace(/: $/, '')
+            : (job.shipTo?.city || ''),
+          shipToCountry: job.shipTo?.country || '',
         });
       });
     }

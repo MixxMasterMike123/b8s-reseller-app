@@ -96,6 +96,9 @@ const PrintShopOrderDetail = () => {
   const status = job?.order?.status || '';
   const isTerminal = TERMINAL.includes(status);
   const canPrint = !isTerminal && status !== 'printed';
+  // Pickup orders are handed over by the shop — the printer never "ships" them
+  // (the server rejects it too); their journey here ends at "tryckt".
+  const isPickup = job?.deliveryMethod === 'pickup';
 
   return (
     <PrintShopLayout>
@@ -170,13 +173,20 @@ const PrintShopOrderDetail = () => {
                   >
                     {busy ? 'Uppdaterar…' : 'Markera som tryckt'}
                   </button>
-                  <button
-                    onClick={() => setPendingShip(true)}
-                    disabled={busy}
-                    className="rounded-lg bg-emerald-500/20 px-3 py-1.5 text-sm font-medium text-emerald-200 hover:bg-emerald-500/30 disabled:opacity-50"
-                  >
-                    Markera som skickad
-                  </button>
+                  {!isPickup && (
+                    <button
+                      onClick={() => setPendingShip(true)}
+                      disabled={busy}
+                      className="rounded-lg bg-emerald-500/20 px-3 py-1.5 text-sm font-medium text-emerald-200 hover:bg-emerald-500/30 disabled:opacity-50"
+                    >
+                      Markera som skickad
+                    </button>
+                  )}
+                  {isPickup && (
+                    <span className="self-center text-sm text-gray-400">
+                      Upphämtningsorder — butiken lämnar ut till kunden. Markera som tryckt när den är klar.
+                    </span>
+                  )}
                 </div>
               )}
               {actionError && (
@@ -184,16 +194,31 @@ const PrintShopOrderDetail = () => {
               )}
             </div>
 
-            {/* Ship-to (production-scoped — no email/phone) */}
-            <div className="mb-6 rounded-xl border border-white/10 bg-white/5 p-4">
-              <h2 className="mb-1 text-xs uppercase tracking-wide text-gray-400">Leveransadress</h2>
-              <p className="text-sm text-gray-200">
-                {job.shipTo.name}<br />
-                {job.shipTo.line1}{job.shipTo.line2 ? `, ${job.shipTo.line2}` : ''}<br />
-                {job.shipTo.postalCode} {job.shipTo.city}<br />
-                {job.shipTo.country}
-              </p>
-            </div>
+            {/* Delivery block: pickup orders go to the SHOP's pickup location (no
+                customer ship-to at all); home orders show the ship-to address
+                (production-scoped — no email/phone). */}
+            {isPickup ? (
+              <div className="mb-6 rounded-xl border border-white/10 bg-white/5 p-4">
+                <h2 className="mb-1 text-xs uppercase tracking-wide text-gray-400">Upphämtning — ingen frakt till kund</h2>
+                <p className="text-sm text-gray-200">
+                  Levereras till butikens utlämningsställe{job.pickup?.name ? ':' : '.'}<br />
+                  {job.pickup?.name && <span className="font-medium">{job.pickup.name}</span>}
+                  {job.pickup?.address && <><br />{job.pickup.address}</>}
+                  {job.pickup?.date && <><br /><span className="text-gray-400">Utlämningsdatum: {job.pickup.date}</span></>}
+                </p>
+                <p className="mt-2 text-xs text-gray-500">Märk paketet med ordernumret {job.order.orderNumber}.</p>
+              </div>
+            ) : job.shipTo ? (
+              <div className="mb-6 rounded-xl border border-white/10 bg-white/5 p-4">
+                <h2 className="mb-1 text-xs uppercase tracking-wide text-gray-400">Leveransadress</h2>
+                <p className="text-sm text-gray-200">
+                  {job.shipTo.name}<br />
+                  {job.shipTo.line1}{job.shipTo.line2 ? `, ${job.shipTo.line2}` : ''}<br />
+                  {job.shipTo.postalCode} {job.shipTo.city}<br />
+                  {job.shipTo.country}
+                </p>
+              </div>
+            ) : null}
 
             {/* Production lines */}
             <h2 className="mb-2 text-xs uppercase tracking-wide text-gray-400">Produktionsrader</h2>

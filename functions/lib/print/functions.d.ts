@@ -9,6 +9,12 @@ export declare const getPrintJob: import("firebase-functions/v2/https").Callable
         orderRef: string;
     };
     shopName: any;
+    deliveryMethod: string;
+    pickup: {
+        name: any;
+        address: any;
+        date: any;
+    } | null;
     shipTo: {
         name: any;
         line1: any;
@@ -16,7 +22,7 @@ export declare const getPrintJob: import("firebase-functions/v2/https").Callable
         postalCode: any;
         city: any;
         country: any;
-    };
+    } | null;
     lines: ({
         purpose: any;
         artwork: {

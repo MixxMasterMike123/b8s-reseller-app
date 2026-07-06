@@ -124,7 +124,15 @@ const PrintShopQueue = () => {
                       )}
                     </td>
                     <td className="px-4 py-2.5 text-gray-300">{j.podLineCount}</td>
-                    <td className="px-4 py-2.5 text-gray-400">{[j.shipToCity, j.shipToCountry].filter(Boolean).join(', ')}</td>
+                    <td className="px-4 py-2.5 text-gray-400">
+                      {j.deliveryMethod === 'pickup' ? (
+                        <span className="rounded bg-sky-500/15 px-1.5 py-0.5 text-xs text-sky-300">
+                          Upphämtning{j.shipToCity ? ` · ${j.shipToCity}` : ''}
+                        </span>
+                      ) : (
+                        [j.shipToCity, j.shipToCountry].filter(Boolean).join(', ')
+                      )}
+                    </td>
                     <td className="px-4 py-2.5 text-right">
                       <Link to={`/orders/${j.orderId}`} className="text-indigo-300 hover:text-indigo-200">Öppna →</Link>
                     </td>
