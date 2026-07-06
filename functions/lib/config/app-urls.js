@@ -40,6 +40,9 @@ exports.appUrls = {
             'https://meteorpr.web.app',
             'https://shop-meteorpr.web.app',
             'https://platform-meteorpr.web.app',
+            // print-shop portal — its callables (getPrintQueue/getPrintJob/…) are
+            // CORS-rejected without this origin.
+            'https://print-meteorpr.web.app',
             'http://localhost:5173',
             'http://localhost:3000',
             ...extras
