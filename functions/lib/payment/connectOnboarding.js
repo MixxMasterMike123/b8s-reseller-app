@@ -101,11 +101,16 @@ async function loadShopForAdmin(shopId, uid) {
         throw new https_1.HttpsError('not-found', `Shop "${trimmed}" does not exist`);
     return { shopId: trimmed, ctx, snap, data: snap.data() || {} };
 }
-function accountLinkUrls() {
+function accountLinkUrls(shopId) {
     const base = app_urls_1.appUrls.ADMIN_BASE.replace(/\/$/, '');
+    // shopId MUST ride along: a platform operator's managed-shop context does not
+    // survive the round-trip through Stripe's hosted onboarding (it falls back to
+    // the default shop), and the return-side status refresh writes to whatever
+    // shop the page resolves. The deep-link param re-pins it.
+    const shop = encodeURIComponent(shopId);
     return {
-        refresh_url: `${base}/admin/payments?refresh=1`,
-        return_url: `${base}/admin/payments?return=1`,
+        refresh_url: `${base}/admin/payments?refresh=1&shopId=${shop}`,
+        return_url: `${base}/admin/payments?return=1&shopId=${shop}`,
     };
 }
 exports.createConnectAccount = (0, https_1.onCall)(COMMON, async (request) => {
@@ -143,7 +148,7 @@ exports.createConnectAccount = (0, https_1.onCall)(COMMON, async (request) => {
     }
     const link = await stripeCall(() => stripe.accountLinks.create({
         account: accountId,
-        ...accountLinkUrls(),
+        ...accountLinkUrls(shopId),
         type: 'account_onboarding',
     }));
     return { url: link.url, accountId };
@@ -152,7 +157,7 @@ exports.createConnectAccount = (0, https_1.onCall)(COMMON, async (request) => {
 // Resume/refresh an onboarding link (the prior link expired, or the shop hit
 // the refresh_url). No account creation.
 exports.createConnectAccountLink = (0, https_1.onCall)(COMMON, async (request) => {
-    const { data } = await loadShopForAdmin(request.data?.shopId, request.auth?.uid);
+    const { shopId, data } = await loadShopForAdmin(request.data?.shopId, request.auth?.uid);
     const accountId = (data.payments || {}).stripeAccountId;
     if (!accountId) {
         throw new https_1.HttpsError('failed-precondition', 'No connected account yet — start onboarding first');
@@ -160,7 +165,7 @@ exports.createConnectAccountLink = (0, https_1.onCall)(COMMON, async (request) =
     const stripe = getStripe();
     const link = await stripeCall(() => stripe.accountLinks.create({
         account: accountId,
-        ...accountLinkUrls(),
+        ...accountLinkUrls(shopId),
         type: 'account_onboarding',
     }));
     return { url: link.url };

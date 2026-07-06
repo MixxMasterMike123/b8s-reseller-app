@@ -94,11 +94,16 @@ async function loadShopForAdmin(shopId: string, uid?: string) {
   return { shopId: trimmed, ctx, snap, data: snap.data() || {} };
 }
 
-function accountLinkUrls() {
+function accountLinkUrls(shopId: string) {
   const base = appUrls.ADMIN_BASE.replace(/\/$/, '');
+  // shopId MUST ride along: a platform operator's managed-shop context does not
+  // survive the round-trip through Stripe's hosted onboarding (it falls back to
+  // the default shop), and the return-side status refresh writes to whatever
+  // shop the page resolves. The deep-link param re-pins it.
+  const shop = encodeURIComponent(shopId);
   return {
-    refresh_url: `${base}/admin/payments?refresh=1`,
-    return_url: `${base}/admin/payments?return=1`,
+    refresh_url: `${base}/admin/payments?refresh=1&shopId=${shop}`,
+    return_url: `${base}/admin/payments?return=1&shopId=${shop}`,
   };
 }
 
@@ -150,7 +155,7 @@ export const createConnectAccount = onCall<ShopIdRequest>(COMMON, async (request
 
   const link = await stripeCall(() => stripe.accountLinks.create({
     account: accountId,
-    ...accountLinkUrls(),
+    ...accountLinkUrls(shopId),
     type: 'account_onboarding',
   }));
   return { url: link.url, accountId };
@@ -160,7 +165,7 @@ export const createConnectAccount = onCall<ShopIdRequest>(COMMON, async (request
 // Resume/refresh an onboarding link (the prior link expired, or the shop hit
 // the refresh_url). No account creation.
 export const createConnectAccountLink = onCall<ShopIdRequest>(COMMON, async (request) => {
-  const { data } = await loadShopForAdmin(request.data?.shopId, request.auth?.uid);
+  const { shopId, data } = await loadShopForAdmin(request.data?.shopId, request.auth?.uid);
   const accountId = (data.payments || {}).stripeAccountId;
   if (!accountId) {
     throw new HttpsError('failed-precondition', 'No connected account yet — start onboarding first');
@@ -168,7 +173,7 @@ export const createConnectAccountLink = onCall<ShopIdRequest>(COMMON, async (req
   const stripe = getStripe();
   const link = await stripeCall(() => stripe.accountLinks.create({
     account: accountId,
-    ...accountLinkUrls(),
+    ...accountLinkUrls(shopId),
     type: 'account_onboarding',
   }));
   return { url: link.url };

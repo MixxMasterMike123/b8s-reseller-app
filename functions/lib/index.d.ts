@@ -32,5 +32,8 @@ export { onOrderReviewQualify } from './product-reviews/writeReviewRequest';
 export { sweepReviewRequests } from './product-reviews/sweep';
 export { resolveReviewRequest, submitReview, unsubscribeReviews, moderateReview, } from './product-reviews/callables';
 export { submitWithdrawal } from './withdrawal/functions';
+export { generateSocialCopy } from './content-studio/generateSocialCopy';
+export { renderSocialVideo } from './content-studio/renderSocialVideo';
+export { getHandoffPackage } from './content-studio/getHandoffPackage';
 export { confirmPasswordReset as confirmPasswordResetV2 };
 export { confirmPasswordReset };

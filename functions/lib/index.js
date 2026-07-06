@@ -3,7 +3,7 @@
 // EMAIL ORCHESTRATOR SYSTEM - Unified email functions
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.submitLead = exports.createPrintShopUser = exports.getPrintQueueExport = exports.getPrintJob = exports.getPrintQueue = exports.scrapeWebsiteMetaV2 = exports.resolveDac7Correction = exports.requestDac7Correction = exports.correctOwnDac7Contact = exports.getOwnDac7 = exports.exportDac7Report = exports.aggregateDac7Year = exports.pullDac7FromStripe = exports.getDac7SellerProfile = exports.saveDac7SellerProfile = exports.refundOrder = exports.setConnectPayoutDelay = exports.getConnectBalance = exports.setShopCommission = exports.createConnectLoginLink = exports.refreshConnectStatus = exports.createConnectAccountLink = exports.createConnectAccount = exports.stripeWebhookV2 = exports.createPaymentIntentV2 = exports.syncAdminClaims = exports.createAdminUserV2 = exports.toggleCustomerActiveStatusV2 = exports.deleteB2CCustomerAccountV2 = exports.deleteCustomerAccountV2 = exports.getGeoDataV2 = exports.syncUserClaimsOnWrite = exports.cancelB2BOrder = exports.createB2BOrder = exports.reverseAffiliateCommissionOnCancel = exports.processB2COrderCompletionHttpV2 = exports.validateDiscountCode = exports.logAffiliateClickV2 = exports.sendAffiliateApplicationEmails = exports.verifyEmailCode = exports.sendCustomEmailVerification = exports.sendEmailVerification = exports.createShopUser = exports.approveAffiliate = exports.sendAffiliateWelcomeEmail = exports.sendLoginCredentialsEmail = exports.sendPasswordResetEmail = exports.sendOrderNotificationAdmin = exports.sendOrderStatusUpdateEmail = exports.sendOrderConfirmationEmail = void 0;
-exports.confirmPasswordReset = exports.confirmPasswordResetV2 = exports.submitWithdrawal = exports.moderateReview = exports.unsubscribeReviews = exports.submitReview = exports.resolveReviewRequest = exports.sweepReviewRequests = exports.onOrderReviewQualify = exports.unsubscribeCheckout = exports.resolveCheckoutRecovery = exports.sweepAbandonedCheckouts = void 0;
+exports.confirmPasswordReset = exports.confirmPasswordResetV2 = exports.getHandoffPackage = exports.renderSocialVideo = exports.generateSocialCopy = exports.submitWithdrawal = exports.moderateReview = exports.unsubscribeReviews = exports.submitReview = exports.resolveReviewRequest = exports.sweepReviewRequests = exports.onOrderReviewQualify = exports.unsubscribeCheckout = exports.resolveCheckoutRecovery = exports.sweepAbandonedCheckouts = void 0;
 // Initialize Firebase Admin SDK
 const app_1 = require("firebase-admin/app");
 (0, app_1.initializeApp)();
@@ -152,6 +152,19 @@ Object.defineProperty(exports, "moderateReview", { enumerable: true, get: functi
 // persists a durable acknowledgement of receipt. See memory angerratt_pod.md.
 var functions_9 = require("./withdrawal/functions");
 Object.defineProperty(exports, "submitWithdrawal", { enumerable: true, get: function () { return functions_9.submitWithdrawal; } });
+// Content Studio ("Innehållsstudio" add-on): two PURE-COMPUTE callables. Both
+// are auth+opt-in gated (requireContentStudio) and never write Firestore — the
+// client persists results onto socialPosts docs. generateSocialCopy turns a
+// description into per-channel social copy; renderSocialVideo assembles a
+// vertical beat-cut clip from the shop's uploads and returns a download URL.
+var generateSocialCopy_1 = require("./content-studio/generateSocialCopy");
+Object.defineProperty(exports, "generateSocialCopy", { enumerable: true, get: function () { return generateSocialCopy_1.generateSocialCopy; } });
+var renderSocialVideo_1 = require("./content-studio/renderSocialVideo");
+Object.defineProperty(exports, "renderSocialVideo", { enumerable: true, get: function () { return renderSocialVideo_1.renderSocialVideo; } });
+// getHandoffPackage: token-guarded PUBLIC projection for the "Skicka till
+// mobilen" QR flow — the phone is not logged in and gets only copy + video URL.
+var getHandoffPackage_1 = require("./content-studio/getHandoffPackage");
+Object.defineProperty(exports, "getHandoffPackage", { enumerable: true, get: function () { return getHandoffPackage_1.getHandoffPackage; } });
 // OLD V1/V2/V3 EMAIL SYSTEM FUNCTIONS - MOVED TO QUARANTINE
 // All old email functions have been migrated to the new Email Orchestrator system
 // Old files moved to: functions/quarantine/old-email-systems/

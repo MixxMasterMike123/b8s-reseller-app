@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../firebase/config';
@@ -96,6 +97,8 @@ const Steps = ({ status }) => (
 
 const AdminPayments = () => {
   const shopId = useShopId();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { isPlatform } = useAuth();
 
   const [pay, setPay] = useState(null);       // shops/{id}.payments
@@ -126,9 +129,16 @@ const AdminPayments = () => {
   }, [shopId]);
 
   // On return from Stripe onboarding, re-poll the real status (don't trust ?return).
+  // The return_url carries ?shopId= (set server-side) so the managed-shop context
+  // survives the Stripe round-trip. While that param is still present,
+  // AdminShopIdIntake hasn't pinned the managed shop yet — refreshing now would
+  // hit whatever shop the context defaulted to (the original wrong-shop-binding
+  // bug), so wait for the intake to strip it; this effect re-runs on that
+  // navigation via location.search.
   useEffect(() => {
-    const q = new URLSearchParams(window.location.search);
+    const q = new URLSearchParams(location.search);
     if (!shopId) return;
+    if (q.get('shopId')) return;
     if (q.get('return') === '1' || q.get('refresh') === '1') {
       (async () => {
         try {
@@ -146,12 +156,14 @@ const AdminPayments = () => {
           setError(e.message || 'Kunde inte uppdatera status.');
         } finally {
           setBusy('');
-          // Strip the query params so a reload doesn't re-trigger.
-          window.history.replaceState({}, '', '/admin/payments');
+          // Strip the query params so a reload doesn't re-trigger. Via the
+          // router (not history.replaceState) so location.search stays in sync
+          // and this effect doesn't re-fire on a later managed-shop switch.
+          navigate('/admin/payments', { replace: true });
         }
       })();
     }
-  }, [shopId, call]);
+  }, [shopId, call, location.search, navigate]);
 
   const run = async (name, action) => {
     setError(''); setNotice(''); setBusy(action);
