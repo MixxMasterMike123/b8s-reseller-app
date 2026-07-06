@@ -62,13 +62,29 @@ export const deleteMapping = async (id) => {
   await deleteDoc(doc(db, COL, id));
 };
 
-/** Read-only product lookup (by shop) for the mapping UI's SKU picker + orphan check. */
+/**
+ * Read-only product lookup (by shop) for the mapping UI's SKU picker + orphan check.
+ * NEVER writes products — POD owns mappings, products stay untouched (locked arch).
+ *
+ * Returns:
+ *   • skus     — Set of every mappable SKU (parent + variant), for orphan-flagging.
+ *   • rows     — flat [{ sku, name, label }] (kept for existing callers).
+ *   • products — [{ sku, name, image, hasSku }] one row per PRODUCT (parent SKU),
+ *                for the picker. A parent mapping covers all variants (print
+ *                projection resolves variant lines to the parent SKU), so the
+ *                picker lists products by their huvud-SKU; variant-specific SKUs
+ *                are the manual-entry escape hatch. Products lacking a SKU are
+ *                still listed (hasSku:false) so the seller sees them, disabled.
+ */
 export const listShopProductSkus = async (shopId) => {
   const snap = await getDocs(query(collection(db, 'products'), where('shopId', '==', shopId || DEFAULT_SHOP_ID)));
   const skus = new Set();
   const rows = [];
+  const products = [];
   snap.docs.forEach((d) => {
     const p = d.data();
+    const image = p.imageUrl || p.b2cImageUrl || null;
+    products.push({ id: d.id, sku: p.sku || '', name: p.name || '', image, hasSku: !!p.sku });
     if (p.sku) { skus.add(p.sku); rows.push({ sku: p.sku, name: p.name, label: null }); }
     // include variant SKUs too (a mapping can target a variant)
     if (Array.isArray(p.variants)) {
@@ -77,5 +93,7 @@ export const listShopProductSkus = async (shopId) => {
       });
     }
   });
-  return { skus, rows };
+  // Stable, human-friendly order: named products first, alphabetical.
+  products.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'sv'));
+  return { skus, rows, products };
 };

@@ -16,10 +16,12 @@ import { loadPodProfiles, getProfileById, getPodProfilesMeta } from '../../../co
 import { readImageDimensions, generatePodPreview, uploadPodOriginal, extOf } from '../../../utils/podUpload';
 import { validateArtwork } from '../../../utils/podValidation';
 import { createArtwork } from '../../../utils/podArtwork';
+import { setMapping } from '../../../utils/podMappings';
 import { auth } from '../../../firebase/config';
 import { tierTone, tierLabel } from './podTier';
+import PodProductPicker from './PodProductPicker';
 
-const ArtworkUploadModal = ({ shopId, onClose, onCreated }) => {
+const ArtworkUploadModal = ({ shopId, products = [], onClose, onCreated }) => {
   const [profiles, setProfiles] = useState([]);
   const [profileId, setProfileId] = useState('');
   const [label, setLabel] = useState('');
@@ -28,6 +30,14 @@ const ArtworkUploadModal = ({ shopId, onClose, onCreated }) => {
   const [measured, setMeasured] = useState(null); // { widthPx, heightPx, hasAlphaChannel, transparentPixelRatio, previewObjUrl }
   const [verdict, setVerdict] = useState(null);    // { tier, effectiveDpi, reasons }
   const [saving, setSaving] = useState(false);
+
+  // Post-upload "koppla nu?" step. NEVER blocks — the artwork is already saved; the
+  // mapping is optional here (an unmapped original stays flagged in the library).
+  const [createdArtworkId, setCreatedArtworkId] = useState(null);
+  const [mapSku, setMapSku] = useState('');
+  const [mapPlacement, setMapPlacement] = useState('');
+  const [manualSku, setManualSku] = useState(false);
+  const [mapping, setMappingSaving] = useState(false);
 
   useEffect(() => {
     loadPodProfiles().then((p) => {
@@ -114,14 +124,33 @@ const ArtworkUploadModal = ({ shopId, onClose, onCreated }) => {
         },
         createdBy: auth.currentUser?.uid || null,
       };
-      await createArtwork(docData, shopId);
+      const newId = await createArtwork(docData, shopId);
       toast.success('Original uppladdat');
+      // Advance to the (optional) "koppla nu?" step instead of closing. The library
+      // refreshes now so the new original appears (flagged unmapped until coupled).
       onCreated?.();
-      onClose?.();
+      setCreatedArtworkId(newId);
+      setSaving(false);
     } catch (err) {
       console.error('POD upload failed:', err);
       toast.error(err?.message || 'Uppladdningen misslyckades.');
       setSaving(false);
+    }
+  };
+
+  const handleMap = async () => {
+    if (mapping) return;
+    const cleanSku = mapSku.trim();
+    if (!cleanSku) { toast.error('Välj en produkt eller ange en SKU.'); return; }
+    setMappingSaving(true);
+    try {
+      await setMapping({ shopId, sku: cleanSku, artworkId: createdArtworkId, profileId: profile?.id || null, placement: mapPlacement });
+      toast.success('Koppling sparad');
+      onCreated?.();
+      onClose?.();
+    } catch (e) {
+      toast.error(e?.message || 'Kunde inte spara kopplingen.');
+      setMappingSaving(false);
     }
   };
 
@@ -132,12 +161,55 @@ const ArtworkUploadModal = ({ shopId, onClose, onCreated }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-[15px] font-semibold">Ladda upp original</h2>
+          <h2 className="text-[15px] font-semibold">
+            {createdArtworkId ? 'Koppla till en produkt nu?' : 'Ladda upp original'}
+          </h2>
           <button onClick={onClose} className="text-admin-text-faint hover:text-admin-text">
             <XMarkIcon className="h-5 w-5" />
           </button>
         </div>
 
+        {createdArtworkId ? (
+          /* Post-upload prompt — OPTIONAL. Artwork is already saved; coupling now
+             just means fewer unmapped-flag surprises later. Never blocks. */
+          products.length === 0 ? (
+            <div className="space-y-4">
+              <p className="text-[13px] text-admin-text-muted">
+                Du har inga produkter ännu — koppla originalet senare under Produktkoppling.
+              </p>
+              <div className="flex justify-end">
+                <Button variant="primary" onClick={onClose}>Stäng</Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-[13px] text-admin-text-muted">
+                Ett original måste kopplas till en produkt innan ordrar kan nå tryckeriet.
+                Du kan göra det nu eller senare under Produktkoppling.
+              </p>
+              <Field label="Produkt" htmlFor="pod-map-pick-product">
+                <PodProductPicker
+                  products={products}
+                  value={mapSku}
+                  onChange={setMapSku}
+                  manual={manualSku}
+                  onToggleManual={setManualSku}
+                  idPrefix="pod-map-pick"
+                />
+              </Field>
+              <Field label="Placering" htmlFor="pod-map-place">
+                <Input id="pod-map-place" value={mapPlacement} onChange={(e) => setMapPlacement(e.target.value)} placeholder="t.ex. Centrerat på bröstet, 25 cm" />
+              </Field>
+              <div className="flex justify-end gap-2 pt-1">
+                <Button variant="secondary" onClick={onClose}>Senare</Button>
+                <Button variant="primary" onClick={handleMap} disabled={mapping}>
+                  {mapping ? 'Kopplar…' : 'Koppla'}
+                </Button>
+              </div>
+            </div>
+          )
+        ) : (
+        <>
         {/* Provisional-spec note: validation is advisory + the profiles are placeholders. */}
         <p className="mb-3 text-[12px] text-admin-text-faint">
           Valideringen är vägledande och trycksparametrarna är preliminära – verifiera med tryckeriet.
@@ -210,6 +282,8 @@ const ArtworkUploadModal = ({ shopId, onClose, onCreated }) => {
               </Button>
             </div>
           </div>
+        )}
+        </>
         )}
       </div>
     </div>

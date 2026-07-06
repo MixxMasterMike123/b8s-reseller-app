@@ -3,51 +3,45 @@
 // renames — surface breakage): a mapping whose SKU no longer matches any current
 // product, or whose artworkId no longer resolves, is flagged so the seller fixes it
 // before an order silently arrives with no file.
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { TrashIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { CardSection, Button, Field, Input, Select } from '../../../components/admin/ui';
 import StatusPill from '../../../components/admin/ui/StatusPill';
-import { listMappings, setMapping, deleteMapping, listShopProductSkus } from '../../../utils/podMappings';
-import { listArtwork } from '../../../utils/podArtwork';
-import { loadPodProfiles, getProfileById } from '../../../config/podProfiles';
+import { setMapping, deleteMapping } from '../../../utils/podMappings';
+import { getProfileById } from '../../../config/podProfiles';
 import { tierTone, tierLabel } from './podTier';
+import PodProductPicker from './PodProductPicker';
 
-const ProductMapping = ({ shopId }) => {
-  const [mappings, setMappings] = useState([]);
-  const [artwork, setArtwork] = useState([]);
-  const [profiles, setProfiles] = useState([]);
-  const [productSkus, setProductSkus] = useState(new Set());
-  const [loading, setLoading] = useState(true);
+// Data (mappings/artwork/profiles/products) comes from the shared usePodLibrary
+// load lifted to PodAdminPage — one fetch feeds the banner + both tabs (no
+// duplicate per-tab reads). onChanged() re-runs that shared load after a write.
+const ProductMapping = ({
+  shopId,
+  mappings = [],
+  artwork = [],
+  profiles = [],
+  products = [],
+  productSkus = new Set(),
+  loading = false,
+  onChanged,
+  prefillArtworkId,
+}) => {
   const [saving, setSaving] = useState(false);
 
   // add-row form state
   const [sku, setSku] = useState('');
   const [artworkId, setArtworkId] = useState('');
   const [placement, setPlacement] = useState('');
+  const [manualSku, setManualSku] = useState(false); // freetext escape hatch (variant SKUs)
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [maps, arts, profs, prods] = await Promise.all([
-        listMappings(shopId),
-        listArtwork(shopId),
-        loadPodProfiles(),
-        listShopProductSkus(shopId),
-      ]);
-      setMappings(maps);
-      setArtwork(arts);
-      setProfiles(profs);
-      setProductSkus(prods.skus);
-    } catch (e) {
-      console.error('ProductMapping load failed:', e);
-      toast.error('Kunde inte ladda kopplingar.');
-    } finally {
-      setLoading(false);
-    }
-  }, [shopId]);
+  const refresh = () => onChanged?.();
 
-  useEffect(() => { refresh(); }, [refresh]);
+  // When jumped here from the library's "Koppla…" action, preselect that original
+  // so the seller lands with the add-row primed (they just pick the product).
+  useEffect(() => {
+    if (prefillArtworkId) setArtworkId(prefillArtworkId);
+  }, [prefillArtworkId]);
 
   const artworkById = (id) => artwork.find((a) => a.id === id) || null;
   const purposeLabel = (id) => getProfileById(profiles, id)?.label || id;
@@ -95,8 +89,15 @@ const ProductMapping = ({ shopId }) => {
 
       {/* Add-row form */}
       <div className="mb-4 grid gap-3 rounded-[var(--radius-admin)] border border-admin-border-soft bg-admin-surface-2 p-3 sm:grid-cols-4">
-        <Field label="Produkt-SKU" htmlFor="map-sku">
-          <Input id="map-sku" value={sku} onChange={(e) => setSku(e.target.value)} placeholder="t.ex. TSHIRT-RED-M" />
+        <Field label="Produkt" htmlFor="map-pick-product">
+          <PodProductPicker
+            products={products}
+            value={sku}
+            onChange={setSku}
+            manual={manualSku}
+            onToggleManual={setManualSku}
+            idPrefix="map-pick"
+          />
         </Field>
         <Field label="Original" htmlFor="map-art">
           <Select id="map-art" value={artworkId} onChange={(e) => setArtworkId(e.target.value)}>

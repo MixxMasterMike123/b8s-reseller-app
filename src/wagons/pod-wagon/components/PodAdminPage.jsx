@@ -11,12 +11,14 @@
 // (App.jsx), so reaching here implies the shop is entitled. We still read
 // useShopFeatures() defensively and useShopId() to scope all data to the shop.
 import React, { useState } from 'react';
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import AppLayout from '../../../components/layout/AppLayout';
 import { Page, CardSection, Button } from '../../../components/admin/ui';
 import { useShopId } from '../../../contexts/ShopContext';
 import { useShopFeatures } from '../../../contexts/ShopFeaturesContext';
 import ArtworkLibrary from './ArtworkLibrary';
 import ProductMapping from './ProductMapping';
+import usePodLibrary from './usePodLibrary';
 
 // Provisional-spec banner: the seeded print profiles are industry-typical
 // PLACEHOLDERS until the real print shop delivers its specs. Surfaced here and in
@@ -35,10 +37,38 @@ const TABS = [
   { key: 'mapping', label: 'Produktkoppling' },
 ];
 
+// UnmappedBanner — LOUD page-level alert (visible on ANY tab). An unmapped original
+// means orders for it never reach the print queue, so this must be impossible to
+// miss. Reuses the provisional-banner amber pattern. Hidden when count is 0.
+const UnmappedBanner = ({ count, onFix }) => {
+  if (!count) return null;
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[var(--radius-admin)] border border-admin-caution-dot/30 bg-admin-caution-bg px-4 py-3 text-[13px] text-admin-caution-text">
+      <ExclamationTriangleIcon className="h-5 w-5 shrink-0" />
+      <span className="min-w-0 flex-1">
+        <span className="font-semibold">{count} original</span> är inte kopplade till någon
+        produkt — de skickas <span className="font-semibold">ALDRIG</span> till tryckeriet
+        förrän de kopplas.
+      </span>
+      <Button variant="secondary" onClick={onFix}>Koppla nu</Button>
+    </div>
+  );
+};
+
 const PodAdminPage = () => {
   const shopId = useShopId();
   const { isEnabled } = useShopFeatures();
   const [tab, setTab] = useState('library');
+  // When set, the mapping tab preselects this original in its add-row.
+  const [prefillArtworkId, setPrefillArtworkId] = useState(null);
+
+  // ONE shared load for the banner + both tabs (no per-tab duplicate reads).
+  const lib = usePodLibrary(shopId);
+
+  const jumpToMapping = (artworkId = null) => {
+    setPrefillArtworkId(artworkId);
+    setTab('mapping');
+  };
 
   // Defensive: the route guard already blocks a non-entitled shop, but never
   // render the tooling if the add-on is off (belt-and-suspenders).
@@ -60,6 +90,8 @@ const PodAdminPage = () => {
     <AppLayout>
       <Page title="Print on demand">
         <ProvisionalBanner />
+
+        <UnmappedBanner count={lib.unmappedArtwork.length} onFix={() => jumpToMapping(null)} />
 
         {/* Tab switch */}
         <div className="mb-4 flex gap-1">
@@ -83,9 +115,29 @@ const PodAdminPage = () => {
         </div>
 
         {tab === 'library' ? (
-          <ArtworkLibrary shopId={shopId} />
+          <ArtworkLibrary
+            shopId={shopId}
+            artwork={lib.artwork}
+            profiles={lib.profiles}
+            products={lib.products}
+            mappings={lib.mappings}
+            mappedArtworkIds={lib.mappedArtworkIds}
+            loading={lib.loading}
+            onChanged={lib.refresh}
+            onMapArtwork={(artworkId) => jumpToMapping(artworkId)}
+          />
         ) : (
-          <ProductMapping shopId={shopId} />
+          <ProductMapping
+            shopId={shopId}
+            mappings={lib.mappings}
+            artwork={lib.artwork}
+            profiles={lib.profiles}
+            products={lib.products}
+            productSkus={lib.productSkus}
+            loading={lib.loading}
+            onChanged={lib.refresh}
+            prefillArtworkId={prefillArtworkId}
+          />
         )}
       </Page>
     </AppLayout>

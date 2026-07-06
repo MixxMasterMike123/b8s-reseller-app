@@ -1,38 +1,51 @@
 // ArtworkLibrary — the seller's print-artwork library: upload + validate + list +
-// delete. Shop-scoped (listArtwork queries where shopId). Admin-Neutral design.
-import React, { useState, useEffect, useCallback } from 'react';
+// delete. Shop-scoped. Admin-Neutral design.
+//
+// UNMAPPED VISIBILITY: an unmapped artwork means orders never reach the print queue
+// — this state MUST be loud. Each row shows either an amber "Inte kopplad till
+// produkt" chip + a "Koppla…" action (jumps to Produktkoppling prefilled), or the
+// SKU(s) it's mapped to as small chips. The mapping data comes from the shared
+// usePodLibrary load (ONE listMappings call, not N).
+import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import { TrashIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import { TrashIcon, PhotoIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { CardSection, Button } from '../../../components/admin/ui';
 import StatusPill from '../../../components/admin/ui/StatusPill';
-import { listArtwork, deleteArtwork } from '../../../utils/podArtwork';
-import { loadPodProfiles, getProfileById } from '../../../config/podProfiles';
+import { deleteArtwork } from '../../../utils/podArtwork';
+import { getProfileById } from '../../../config/podProfiles';
 import { tierTone, tierLabel } from './podTier';
 import ArtworkUploadModal from './ArtworkUploadModal';
 
 const formatBytes = (b) => (b ? `${(b / 1024 / 1024).toFixed(1)} MB` : '');
 
-const ArtworkLibrary = ({ shopId }) => {
-  const [items, setItems] = useState([]);
-  const [profiles, setProfiles] = useState([]);
-  const [loading, setLoading] = useState(true);
+// Data comes from the shared usePodLibrary load (lifted to PodAdminPage) so the
+// mapped/unmapped chips + the page banner all agree from a single fetch.
+const ArtworkLibrary = ({
+  shopId,
+  artwork = [],
+  profiles = [],
+  products = [],
+  mappings = [],
+  loading = false,
+  onChanged,
+  onMapArtwork,
+}) => {
   const [uploadOpen, setUploadOpen] = useState(false);
+  const items = artwork;
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [list, profs] = await Promise.all([listArtwork(shopId), loadPodProfiles()]);
-      setItems(list);
-      setProfiles(profs);
-    } catch (e) {
-      console.error('ArtworkLibrary load failed:', e);
-      toast.error('Kunde inte ladda originalen.');
-    } finally {
-      setLoading(false);
-    }
-  }, [shopId]);
+  const refresh = () => onChanged?.();
 
-  useEffect(() => { refresh(); }, [refresh]);
+  // Map artworkId → the SKUs that reference it (built once from the shared mappings).
+  const skusByArtwork = React.useMemo(() => {
+    const m = new Map();
+    mappings.forEach((mp) => {
+      if (!mp.artworkId || !mp.sku) return;
+      const arr = m.get(mp.artworkId) || [];
+      arr.push(mp.sku);
+      m.set(mp.artworkId, arr);
+    });
+    return m;
+  }, [mappings]);
 
   const handleDelete = async (art) => {
     if (!window.confirm(`Ta bort "${art.label || art.fileName}"?`)) return;
@@ -61,7 +74,10 @@ const ArtworkLibrary = ({ shopId }) => {
         </p>
       ) : (
         <ul className="divide-y divide-admin-border-soft">
-          {items.map((art) => (
+          {items.map((art) => {
+            const mappedSkus = skusByArtwork.get(art.id) || [];
+            const isMapped = mappedSkus.length > 0;
+            return (
             <li key={art.id} className="flex items-center gap-3 py-2.5">
               {/* thumbnail (preview is null for PDF/SVG/TIFF → placeholder) */}
               {art.previewUrl ? (
@@ -72,9 +88,20 @@ const ArtworkLibrary = ({ shopId }) => {
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="truncate text-[13px] font-medium text-admin-text">{art.label || art.fileName}</span>
                   <StatusPill tone={tierTone(art.validation?.tier)}>{tierLabel(art.validation?.tier)}</StatusPill>
+                  {isMapped ? (
+                    mappedSkus.map((s) => (
+                      <span key={s} className="inline-flex items-center rounded-full border border-admin-border-soft bg-admin-surface-2 px-2 py-0.5 font-mono text-[11px] text-admin-text-muted">
+                        {s}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-admin-caution-dot/30 bg-admin-caution-bg px-2 py-0.5 text-[11px] font-medium text-admin-caution-text">
+                      <ExclamationTriangleIcon className="h-3 w-3" /> Inte kopplad till produkt
+                    </span>
+                  )}
                 </div>
                 <div className="truncate text-[12px] text-admin-text-faint">
                   {purposeLabel(art.purpose)}
@@ -84,6 +111,14 @@ const ArtworkLibrary = ({ shopId }) => {
                   {art.fileSizeBytes ? ` · ${formatBytes(art.fileSizeBytes)}` : ''}
                 </div>
               </div>
+              {!isMapped && onMapArtwork && (
+                <button
+                  onClick={() => onMapArtwork(art.id)}
+                  className="shrink-0 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2.5 py-1 text-[12px] font-medium text-admin-text hover:bg-admin-surface-2"
+                >
+                  Koppla…
+                </button>
+              )}
               <a
                 href={art.originalUrl}
                 target="_blank"
@@ -100,13 +135,15 @@ const ArtworkLibrary = ({ shopId }) => {
                 <TrashIcon className="h-4 w-4" />
               </button>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
 
       {uploadOpen && (
         <ArtworkUploadModal
           shopId={shopId}
+          products={products}
           onClose={() => setUploadOpen(false)}
           onCreated={refresh}
         />
