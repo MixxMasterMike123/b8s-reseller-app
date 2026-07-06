@@ -111,6 +111,11 @@ import AdminContentStudio from './pages/admin/AdminContentStudio';
 import AffiliateTracker from './components/AffiliateTracker';
 import ScrollToTop from './components/ScrollToTop';
 
+// 📱 Innehållsstudio mobile hand-off — a PUBLIC page (token-authed, no login).
+// Opened on a phone via QR from the admin. Mounted on every surface so it
+// resolves regardless of which host the admin's origin was.
+import HandoffPage from './pages/HandoffPage';
+
 // Order Confirmation
 import OrderConfirmation from './pages/shop/OrderConfirmation';
 import OrderReturn from './pages/shop/OrderReturn';
@@ -250,6 +255,11 @@ function App() {
           />
           
           <Routes>
+          {/* 📱 Public mobile hand-off (Innehållsstudio QR). Declared BEFORE the
+              appMode branches so it resolves on any host — the QR is minted from
+              window.location.origin (the admin host), but keeping it host-agnostic
+              is safe and future-proof. Token-authed; no login, no shop context. */}
+          <Route path="/handoff/:postId" element={<HandoffPage />} />
           {appMode === 'platform' ? (
             // Platform operator console — its own siloed surface. Distinct
             // PlatformLayout (NOT the shop-admin shell). Gated to platform users.

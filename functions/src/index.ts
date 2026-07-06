@@ -239,6 +239,9 @@ export { submitWithdrawal } from './withdrawal/functions';
 // vertical beat-cut clip from the shop's uploads and returns a download URL.
 export { generateSocialCopy } from './content-studio/generateSocialCopy';
 export { renderSocialVideo } from './content-studio/renderSocialVideo';
+// getHandoffPackage: token-guarded PUBLIC projection for the "Skicka till
+// mobilen" QR flow — the phone is not logged in and gets only copy + video URL.
+export { getHandoffPackage } from './content-studio/getHandoffPackage';
 
 // Re-export orchestrator functions with V2 aliases for backward compatibility
 export { confirmPasswordReset as confirmPasswordResetV2 };

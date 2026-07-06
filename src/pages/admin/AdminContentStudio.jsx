@@ -41,7 +41,10 @@ import {
   DocumentDuplicateIcon,
   PlayIcon,
   SparklesIcon,
+  DevicePhoneMobileIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
+import { QRCodeSVG } from 'qrcode.react';
 
 /**
  * AdminContentStudio — the "Innehållsstudio" add-on (AI social-media studio).
@@ -140,6 +143,76 @@ const copyToClipboard = async (text, okMessage = 'Kopierat!') => {
 };
 
 const toneMeta = (value) => TONES.find((t) => t.value === value) || { label: value };
+
+// 24h from now — the handoff link's lifetime.
+const HANDOFF_TTL_MS = 24 * 60 * 60 * 1000;
+
+// QR / mobile hand-off URL. Token lives in the FRAGMENT (never the query) so it
+// isn't sent to the server or logged in access logs — the getHandoffPackage
+// callable receives it in the request body from the client instead.
+const handoffUrl = (postId, token) =>
+  `${window.location.origin}/handoff/${postId}#${token}`;
+
+/**
+ * HandoffModal — the "📱 Skicka till mobilen" QR overlay. Admin-Neutral styling;
+ * a simple fixed-inset overlay (no shared modal kit in this file). Shows a QR
+ * the artist scans with their phone camera to open the public HandoffPage.
+ */
+const HandoffModal = ({ url, onClose }) => (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Skicka till mobilen"
+    onClick={onClose}
+  >
+    <div
+      className="w-full max-w-sm rounded-[var(--radius-admin-card)] bg-admin-surface shadow-[var(--shadow-admin)]"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="flex items-center justify-between border-b border-admin-border px-4 py-3">
+        <h3 className="text-[14px] font-semibold text-admin-text">Skicka till mobilen</h3>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Stäng"
+          className="grid h-8 w-8 place-items-center rounded-[var(--radius-admin-el)] text-admin-text-faint hover:bg-admin-surface-2 hover:text-admin-text"
+        >
+          <XMarkIcon className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="space-y-3 px-4 py-4">
+        <div className="mx-auto w-fit rounded-[var(--radius-admin-el)] bg-white p-4 shadow-sm">
+          <QRCodeSVG value={url} size={200} />
+        </div>
+        <p className="text-center text-[13px] text-admin-text">
+          Skanna med mobilkameran – videon och alla texter följer med.
+        </p>
+        <p className="text-center text-[12px] text-admin-text-muted">Länken gäller i 24 timmar.</p>
+
+        <div className="flex items-center gap-2 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface-2 px-2 py-1.5">
+          <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-admin-text-muted" title={url}>
+            {url}
+          </span>
+          <button
+            type="button"
+            onClick={() => copyToClipboard(url, 'Länk kopierad!')}
+            className="shrink-0 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2 py-1 text-[12px] font-medium text-admin-text hover:bg-admin-surface-2"
+          >
+            Kopiera
+          </button>
+        </div>
+      </div>
+
+      <div className="flex justify-end border-t border-admin-border px-4 py-3">
+        <Button variant="secondary" onClick={onClose}>
+          Stäng
+        </Button>
+      </div>
+    </div>
+  </div>
+);
 
 // Per-type visual metadata for the grouped media library + type badges.
 const TYPE_META = {
@@ -329,6 +402,13 @@ const AdminContentStudio = () => {
   const [video, setVideo] = useState(null); // { path, url, durationSec, renderedAt: Date }
   const [scheduleInput, setScheduleInput] = useState('');
   const [savingDraft, setSavingDraft] = useState(false);
+  // The doc id of the draft this in-progress content was last saved as, so the
+  // "Skicka till mobilen" flow can re-use it instead of creating duplicate
+  // drafts. Reset to null whenever the underlying content changes (see below).
+  const [lastSavedPostId, setLastSavedPostId] = useState(null);
+  const [handoffBusy, setHandoffBusy] = useState(false);
+  // The QR modal's URL — set to open the modal, null to close it.
+  const [handoffModalUrl, setHandoffModalUrl] = useState(null);
 
   // ── Section 3: Planner ──
   const [posts, setPosts] = useState([]);
@@ -596,6 +676,8 @@ const AdminContentStudio = () => {
       const res = await httpsCallable(functions, 'generateSocialCopy', { timeout: 300000 })(payload);
       setCopy(res.data?.copy || null);
       setActiveChannel('tiktok');
+      // New copy → the stale draft id must not be re-used for a hand-off.
+      setLastSavedPostId(null);
       toast.success('Innehåll genererat!');
     } catch (error) {
       console.error('generateSocialCopy failed:', error);
@@ -631,6 +713,8 @@ const AdminContentStudio = () => {
       const { path, url, durationSec } = res.data || {};
       if (!url) throw new Error('Videon kunde inte skapas. Försök igen.');
       setVideo({ path, url, durationSec, renderedAt: new Date() });
+      // New video → the stale draft id must not be re-used for a hand-off.
+      setLastSavedPostId(null);
       toast.success('Video klar!');
     } catch (error) {
       console.error('renderSocialVideo failed:', error);
@@ -641,6 +725,41 @@ const AdminContentStudio = () => {
   };
 
   // ── Save draft ──
+  // Shared draft-creation: builds the socialPosts doc shape and returns the new
+  // doc id. Used by both "Spara som utkast" and the "Skicka till mobilen" flow
+  // (which needs a persisted doc to stamp a hand-off token onto). Single source
+  // of the doc shape — do NOT duplicate it.
+  const createDraft = async () => {
+    const ref = await addDoc(
+      collection(db, 'socialPosts'),
+      withShopId(
+        {
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          createdBy: currentUser?.uid || null,
+          description: description.trim(),
+          tone,
+          includeTags,
+          channels: CHANNELS.map((c) => c.key),
+          copy,
+          assets: selectedAssets.map((a) => ({ path: a.path, name: a.name, type: a.type })),
+          video: video
+            ? {
+                path: video.path,
+                url: video.url,
+                durationSec: video.durationSec ?? null,
+                renderedAt: Timestamp.fromDate(video.renderedAt),
+              }
+            : null,
+          status: 'draft',
+          scheduledAt: localInputToTs(scheduleInput),
+        },
+        shopId
+      )
+    );
+    return ref.id;
+  };
+
   const handleSaveDraft = async () => {
     if (!copy) {
       toast.error('Generera innehåll först.');
@@ -649,33 +768,8 @@ const AdminContentStudio = () => {
     setSavingDraft(true);
     const toastId = toast.loading('Sparar utkast…');
     try {
-      await addDoc(
-        collection(db, 'socialPosts'),
-        withShopId(
-          {
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-            createdBy: currentUser?.uid || null,
-            description: description.trim(),
-            tone,
-            includeTags,
-            channels: CHANNELS.map((c) => c.key),
-            copy,
-            assets: selectedAssets.map((a) => ({ path: a.path, name: a.name, type: a.type })),
-            video: video
-              ? {
-                  path: video.path,
-                  url: video.url,
-                  durationSec: video.durationSec ?? null,
-                  renderedAt: Timestamp.fromDate(video.renderedAt),
-                }
-              : null,
-            status: 'draft',
-            scheduledAt: localInputToTs(scheduleInput),
-          },
-          shopId
-        )
-      );
+      const id = await createDraft();
+      setLastSavedPostId(id);
       toast.success('Utkast sparat.', { id: toastId });
       setScheduleInput('');
     } catch (error) {
@@ -683,6 +777,54 @@ const AdminContentStudio = () => {
       toast.error('Kunde inte spara utkastet.', { id: toastId });
     } finally {
       setSavingDraft(false);
+    }
+  };
+
+  // Stamp a fresh 24h hand-off token onto a socialPosts doc, then return the
+  // QR/mobile URL. Shared by the rendered-video button (creates a draft first if
+  // needed) and the per-row Planner buttons.
+  const stampHandoffToken = async (postId) => {
+    const token = crypto.randomUUID();
+    await updateDoc(doc(db, 'socialPosts', postId), {
+      handoffToken: token,
+      handoffExpiresAt: Timestamp.fromDate(new Date(Date.now() + HANDOFF_TTL_MS)),
+      updatedAt: serverTimestamp(),
+    });
+    return handoffUrl(postId, token);
+  };
+
+  // "📱 Skicka till mobilen" from the freshly-rendered video: reuse the last
+  // saved draft id, or create one on the fly, then stamp a token + open the QR.
+  const handleHandoffFromEditor = async () => {
+    setHandoffBusy(true);
+    const toastId = toast.loading('Skapar länk…');
+    try {
+      let id = lastSavedPostId;
+      if (!id) {
+        id = await createDraft();
+        setLastSavedPostId(id);
+      }
+      const url = await stampHandoffToken(id);
+      toast.dismiss(toastId);
+      setHandoffModalUrl(url);
+    } catch (error) {
+      console.error('Handoff (editor) failed:', error);
+      toast.error('Kunde inte skapa länken. Försök igen.', { id: toastId });
+    } finally {
+      setHandoffBusy(false);
+    }
+  };
+
+  // "📱 Skicka till mobilen" from a saved Planner row.
+  const handleHandoffFromPost = async (post) => {
+    const toastId = toast.loading('Skapar länk…');
+    try {
+      const url = await stampHandoffToken(post.id);
+      toast.dismiss(toastId);
+      setHandoffModalUrl(url);
+    } catch (error) {
+      console.error('Handoff (post) failed:', error);
+      toast.error('Kunde inte skapa länken. Försök igen.', { id: toastId });
     }
   };
 
@@ -1158,16 +1300,26 @@ const AdminContentStudio = () => {
                       src={video.url}
                       className="max-h-[480px] rounded-[var(--radius-admin-el)] border border-admin-border bg-black [aspect-ratio:9/16]"
                     />
-                    <a
-                      href={video.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download
-                      className="inline-flex items-center gap-1 text-[13px] font-medium text-admin-text underline-offset-2 hover:underline"
-                    >
-                      <ArrowDownTrayIcon className="h-4 w-4" aria-hidden="true" />
-                      Ladda ner
-                    </a>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <a
+                        href={video.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download
+                        className="inline-flex items-center gap-1 text-[13px] font-medium text-admin-text underline-offset-2 hover:underline"
+                      >
+                        <ArrowDownTrayIcon className="h-4 w-4" aria-hidden="true" />
+                        Ladda ner
+                      </a>
+                      <Button
+                        variant="secondary"
+                        onClick={handleHandoffFromEditor}
+                        disabled={handoffBusy}
+                      >
+                        <DevicePhoneMobileIcon className="mr-1 h-4 w-4" aria-hidden="true" />
+                        {handoffBusy ? 'Skapar länk…' : '📱 Skicka till mobilen'}
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1216,6 +1368,7 @@ const AdminContentStudio = () => {
                     post={post}
                     onDelete={() => handleDeletePost(post)}
                     onSaveSchedule={(value) => handleSaveSchedule(post, value)}
+                    onHandoff={() => handleHandoffFromPost(post)}
                   />
                 ))}
               </div>
@@ -1226,6 +1379,10 @@ const AdminContentStudio = () => {
           </CardSection>
         </div>
       </Page>
+
+      {handoffModalUrl && (
+        <HandoffModal url={handoffModalUrl} onClose={() => setHandoffModalUrl(null)} />
+      )}
     </AppLayout>
   );
 };
@@ -1234,9 +1391,19 @@ const AdminContentStudio = () => {
  * PlannerRow — one saved draft. Owns its inline datetime-local edit state so a
  * live onSnapshot refresh doesn't stomp on unrelated rows being edited.
  */
-const PlannerRow = ({ post, onDelete, onSaveSchedule }) => {
+const PlannerRow = ({ post, onDelete, onSaveSchedule, onHandoff }) => {
   const savedValue = tsToLocalInput(post.scheduledAt);
   const [scheduleValue, setScheduleValue] = useState(savedValue);
+  const [handoffBusy, setHandoffBusy] = useState(false);
+
+  const handleHandoff = async () => {
+    setHandoffBusy(true);
+    try {
+      await onHandoff();
+    } finally {
+      setHandoffBusy(false);
+    }
+  };
 
   // Re-sync when the doc changes remotely (e.g. saved from another tab).
   useEffect(() => {
@@ -1271,6 +1438,18 @@ const PlannerRow = ({ post, onDelete, onSaveSchedule }) => {
             >
               <PlayIcon className="h-4 w-4" aria-hidden="true" />
             </a>
+          )}
+          {post.video?.url && (
+            <button
+              type="button"
+              onClick={handleHandoff}
+              disabled={handoffBusy}
+              title="Skicka till mobilen"
+              aria-label="Skicka till mobilen"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-admin-el)] text-admin-text-faint hover:bg-admin-surface-2 hover:text-admin-text disabled:opacity-50"
+            >
+              <DevicePhoneMobileIcon className="h-4 w-4" aria-hidden="true" />
+            </button>
           )}
           <button
             type="button"
