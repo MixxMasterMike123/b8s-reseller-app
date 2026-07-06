@@ -35,7 +35,7 @@ export const COUNTRY_PREFIXES = ['se', 'gb', 'us'];
 // DEFAULT_SHOP_ID — the shop it manages — which is also the baseline an operator
 // reverts to when ending impersonation (P4.3). 'platform' is reserved for the
 // same reason (its surface is a separate host, but defensive).
-const NON_SHOP_FIRST_SEGMENTS = new Set([
+export const NON_SHOP_FIRST_SEGMENTS = new Set([
   ...COUNTRY_PREFIXES,
   'login', 'register', 'forgot-password', 'reset-password',
   'affiliate-login', '__', 'account', 'admin', 'platform',

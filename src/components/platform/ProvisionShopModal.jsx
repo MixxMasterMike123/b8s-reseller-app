@@ -11,8 +11,15 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import toast from 'react-hot-toast';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { NON_SHOP_FIRST_SEGMENTS } from '../../config/tenancy';
 
-const SHOP_ID_RE = /^[a-z0-9-]{3,30}$/;
+// 3-30 chars, a-z 0-9 and single hyphens BETWEEN characters (no edge/double
+// hyphens — the id is a URL segment and, one day, a subdomain label).
+const SHOP_ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+// Ids that can never be shops: URL-grammar reserved segments (a shop named
+// "admin" would be unreachable) + infra hostnames reserved by architecture.
+const RESERVED_IDS = new Set([...NON_SHOP_FIRST_SEGMENTS, 'api', 'www', 'shop', 'print']);
 
 // Default add-ons for a new shop (manual toggles; plans come later). All five
 // add-on keys are explicit so a new shop's defaults are unambiguous (writers is
@@ -52,8 +59,11 @@ const ProvisionShopModal = ({ onClose, onCreated }) => {
 
     const id = shopId.trim();
     if (!name.trim()) return setError('Ange ett butiksnamn.');
-    if (!SHOP_ID_RE.test(id)) {
-      return setError('Butiks-ID: 3–30 tecken, endast a–z, 0–9 och bindestreck.');
+    if (id.length < 3 || id.length > 30 || !SHOP_ID_RE.test(id)) {
+      return setError('Butiks-ID: 3–30 tecken, a–z, 0–9 och enkla bindestreck mellan tecken (t.ex. "melodie-mc").');
+    }
+    if (RESERVED_IDS.has(id)) {
+      return setError(`Butiks-ID "${id}" är reserverat av plattformen. Välj ett annat.`);
     }
 
     try {
