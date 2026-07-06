@@ -238,6 +238,9 @@ const AdminOrderDetail = () => {
         return { text: 'Bekräftad', color: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300' };
       case 'processing':
         return { text: 'Behandlas', color: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300' };
+      // POD: printer marked the order as printed (internal milestone, pre-ship).
+      case 'printed':
+        return { text: 'Tryckt', color: 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300' };
       case 'shipped':
         return { text: 'Skickad', color: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' };
       case 'delivered':

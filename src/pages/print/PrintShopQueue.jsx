@@ -11,6 +11,29 @@ import { exportPrintQueueToCSV } from '../../utils/podExport';
 
 const fmtDate = (iso) => { try { return iso ? new Date(iso).toLocaleDateString('sv-SE') : ''; } catch { return iso || ''; } };
 
+// Swedish status labels + chip tones for the queue (dark surface). Statuses the
+// printer drives (printed/shipped) are highlighted so the queue reads at a glance.
+const STATUS_LABEL = {
+  pending: 'Väntar',
+  confirmed: 'Bekräftad',
+  processing: 'Behandlas',
+  printed: 'Tryckt',
+  shipped: 'Skickad',
+  delivered: 'Levererad',
+  ready_for_pickup: 'Redo att hämtas',
+  cancelled: 'Avbruten',
+  refunded: 'Återbetald',
+  completed: 'Slutförd',
+};
+const STATUS_CHIP = {
+  printed: 'bg-purple-500/15 text-purple-300',
+  shipped: 'bg-emerald-500/15 text-emerald-300',
+  delivered: 'bg-emerald-500/15 text-emerald-300',
+  completed: 'bg-emerald-500/15 text-emerald-300',
+  cancelled: 'bg-red-500/15 text-red-300',
+  refunded: 'bg-red-500/15 text-red-300',
+};
+
 const PrintShopQueue = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -79,6 +102,7 @@ const PrintShopQueue = () => {
                   <th className="px-4 py-2.5">Order</th>
                   <th className="px-4 py-2.5">Datum</th>
                   <th className="px-4 py-2.5">Butik</th>
+                  <th className="px-4 py-2.5">Status</th>
                   <th className="px-4 py-2.5">Rader</th>
                   <th className="px-4 py-2.5">Leverans</th>
                   <th className="px-4 py-2.5"></th>
@@ -90,6 +114,15 @@ const PrintShopQueue = () => {
                     <td className="px-4 py-2.5 font-medium text-white">{j.orderNumber}</td>
                     <td className="px-4 py-2.5 text-gray-300">{fmtDate(j.orderDate)}</td>
                     <td className="px-4 py-2.5 text-gray-300">{j.shopName}</td>
+                    <td className="px-4 py-2.5">
+                      {j.status ? (
+                        <span className={`rounded px-2 py-0.5 text-xs font-medium ${STATUS_CHIP[j.status] || 'bg-white/10 text-gray-300'}`}>
+                          {STATUS_LABEL[j.status] || j.status}
+                        </span>
+                      ) : (
+                        <span className="text-gray-500">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-2.5 text-gray-300">{j.podLineCount}</td>
                     <td className="px-4 py-2.5 text-gray-400">{[j.shipToCity, j.shipToCountry].filter(Boolean).join(', ')}</td>
                     <td className="px-4 py-2.5 text-right">

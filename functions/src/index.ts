@@ -204,6 +204,12 @@ export {
   createPrintShopUser,
 } from './print/functions';
 
+// setPrintJobStatus — the printer advances a POD order ('printed' internal
+// milestone / 'shipped' fulfilment → customer email + reviews trigger). Same
+// callable-projection auth as the print queue callables; lives in its own file
+// because it declares the RESEND_API_KEY secret for the server-side status email.
+export { setPrintJobStatus } from './print/setPrintJobStatus';
+
 // Landing-page lead form ("Vill du ha en egen butik?") — public callable that
 // writes a platform-level `leads` doc + best-effort admin notification email.
 export { submitLead } from './leads/submitLead';

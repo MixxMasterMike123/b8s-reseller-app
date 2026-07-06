@@ -5,6 +5,7 @@
 // artwork) show a visible problem, never a silent gap.
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../firebase/config';
 import PrintShopLayout from '../../components/print/PrintShopLayout';
@@ -17,28 +18,84 @@ const TIER_BADGE = {
   FAIL: 'bg-red-500/15 text-red-300',
 };
 
+// Swedish labels for the status pill on the print surface (dark aesthetic).
+const STATUS_LABEL = {
+  pending: 'Väntar',
+  confirmed: 'Bekräftad',
+  processing: 'Behandlas',
+  printed: 'Tryckt',
+  shipped: 'Skickad',
+  delivered: 'Levererad',
+  ready_for_pickup: 'Redo att hämtas',
+  cancelled: 'Avbruten',
+  refunded: 'Återbetald',
+  completed: 'Slutförd',
+};
+const STATUS_CHIP = {
+  printed: 'bg-purple-500/15 text-purple-300',
+  shipped: 'bg-emerald-500/15 text-emerald-300',
+  delivered: 'bg-emerald-500/15 text-emerald-300',
+  completed: 'bg-emerald-500/15 text-emerald-300',
+  cancelled: 'bg-red-500/15 text-red-300',
+  refunded: 'bg-red-500/15 text-red-300',
+};
+// Statuses past which the printer can no longer advance (mirrors the callable).
+const TERMINAL = ['shipped', 'delivered', 'cancelled', 'refunded', 'completed'];
+
 const PrintShopOrderDetail = () => {
   const { orderId } = useParams();
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true); setError('');
-      try {
-        const res = await httpsCallable(functions, 'getPrintJob')({ orderId });
-        if (!cancelled) setJob(res.data);
-      } catch (e) {
-        console.error('getPrintJob failed:', e);
-        if (!cancelled) setError(e?.message || 'Kunde inte ladda ordern.');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
+  // Status-action state (mirrors the admin's pendingShip pattern: the "shipped"
+  // action reveals a tracking-number input first, then confirms).
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState('');
+  const [pendingShip, setPendingShip] = useState(false);
+  const [trackingNumber, setTrackingNumber] = useState('');
+
+  const loadJob = React.useCallback(async () => {
+    setLoading(true); setError('');
+    try {
+      const res = await httpsCallable(functions, 'getPrintJob')({ orderId });
+      setJob(res.data);
+    } catch (e) {
+      console.error('getPrintJob failed:', e);
+      setError(e?.message || 'Kunde inte ladda ordern.');
+    } finally {
+      setLoading(false);
+    }
   }, [orderId]);
+
+  useEffect(() => { loadJob(); }, [loadJob]);
+
+  const runAction = async (action, extra = {}) => {
+    setBusy(true); setActionError('');
+    try {
+      await httpsCallable(functions, 'setPrintJobStatus')({ orderId, action, ...extra });
+      toast.success(action === 'shipped' ? 'Markerad som skickad — kunden aviseras.' : 'Markerad som tryckt.');
+      setPendingShip(false);
+      setTrackingNumber('');
+      await loadJob(); // reflect the new status
+    } catch (e) {
+      console.error('setPrintJobStatus failed:', e);
+      const msg = e?.message || 'Kunde inte uppdatera status.';
+      setActionError(msg);
+      toast.error(msg);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleShipConfirm = () => {
+    const tn = (trackingNumber || '').trim();
+    runAction('shipped', tn ? { trackingNumber: tn } : {});
+  };
+
+  const status = job?.order?.status || '';
+  const isTerminal = TERMINAL.includes(status);
+  const canPrint = !isTerminal && status !== 'printed';
 
   return (
     <PrintShopLayout>
@@ -52,10 +109,79 @@ const PrintShopOrderDetail = () => {
         ) : job ? (
           <>
             <div className="mt-3 mb-5">
-              <h1 className="text-lg font-bold">Order {job.order.orderNumber}</h1>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-lg font-bold">Order {job.order.orderNumber}</h1>
+                {status && (
+                  <span className={`rounded px-2 py-0.5 text-xs font-medium ${STATUS_CHIP[status] || 'bg-white/10 text-gray-300'}`}>
+                    {STATUS_LABEL[status] || status}
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-gray-400">
-                {job.shopName} · {fmtDate(job.order.orderDate)} · status: {job.order.status || '—'}
+                {job.shopName} · {fmtDate(job.order.orderDate)}
               </p>
+            </div>
+
+            {/* Status actions — the printer pushes the order forward. "Tryckt" is an
+                internal milestone (no customer mail); "Skickad" avises the customer
+                (reveals an optional tracking-number field first, like the admin). */}
+            <div className="mb-6 rounded-xl border border-white/10 bg-white/5 p-4">
+              <h2 className="mb-2 text-xs uppercase tracking-wide text-gray-400">Produktionsstatus</h2>
+              {isTerminal ? (
+                <p className="text-sm text-gray-400">
+                  Ordern har status <span className="text-gray-200">{STATUS_LABEL[status] || status}</span> och kan inte ändras här.
+                </p>
+              ) : pendingShip ? (
+                <div className="space-y-3">
+                  <label className="block text-sm text-gray-300">
+                    Spårningsnummer <span className="text-gray-500">(valfritt)</span>
+                    <input
+                      type="text"
+                      value={trackingNumber}
+                      onChange={(e) => setTrackingNumber(e.target.value)}
+                      placeholder="t.ex. PostNord-kolli-ID"
+                      className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:border-indigo-400 focus:outline-none"
+                    />
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={handleShipConfirm}
+                      disabled={busy}
+                      className="rounded-lg bg-emerald-500/20 px-3 py-1.5 text-sm font-medium text-emerald-200 hover:bg-emerald-500/30 disabled:opacity-50"
+                    >
+                      {busy ? 'Skickar…' : 'Bekräfta skickad'}
+                    </button>
+                    <button
+                      onClick={() => { setPendingShip(false); setTrackingNumber(''); }}
+                      disabled={busy}
+                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-gray-300 hover:bg-white/10 disabled:opacity-50"
+                    >
+                      Avbryt
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => runAction('printed')}
+                    disabled={busy || !canPrint}
+                    title={!canPrint ? 'Ordern är redan markerad som tryckt' : undefined}
+                    className="rounded-lg bg-purple-500/20 px-3 py-1.5 text-sm font-medium text-purple-200 hover:bg-purple-500/30 disabled:opacity-50"
+                  >
+                    {busy ? 'Uppdaterar…' : 'Markera som tryckt'}
+                  </button>
+                  <button
+                    onClick={() => setPendingShip(true)}
+                    disabled={busy}
+                    className="rounded-lg bg-emerald-500/20 px-3 py-1.5 text-sm font-medium text-emerald-200 hover:bg-emerald-500/30 disabled:opacity-50"
+                  >
+                    Markera som skickad
+                  </button>
+                </div>
+              )}
+              {actionError && (
+                <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{actionError}</div>
+              )}
             </div>
 
             {/* Ship-to (production-scoped — no email/phone) */}

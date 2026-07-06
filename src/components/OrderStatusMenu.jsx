@@ -9,6 +9,8 @@ const getStatusStyles = (status) => {
       return 'bg-blue-100 text-blue-800 border-blue-200'; // Confirmed
     case 'processing':
       return 'bg-orange-100 text-orange-800 border-orange-200'; // Processing
+    case 'printed':
+      return 'bg-purple-100 text-purple-800 border-purple-200'; // POD: printer marked as printed (display-only, set by the print shop)
     case 'shipped':
       return 'bg-green-100 text-green-800 border-green-200'; // Shipped - GREEN for quick visual identification
     case 'delivered':
@@ -65,6 +67,9 @@ const OrderStatusMenu = ({ currentStatus, onStatusChange, disabled, className = 
   // selectable option in the menu.
   const getCurrentStatusLabel = () => {
     if (currentStatus === 'refunded') return t('order_status.refunded', 'Återbetald');
+    // 'printed' is set by the print shop, not selectable in the admin menu — show
+    // its label so the pill reads "Tryckt" instead of falling through to "Okänd".
+    if (currentStatus === 'printed') return t('order_status.printed', 'Tryckt');
     const status = statusOptions.find(option => option.value === currentStatus);
     return status ? status.label : t('order_status.unknown', 'Okänd');
   };

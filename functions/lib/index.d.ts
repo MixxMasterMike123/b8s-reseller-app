@@ -25,6 +25,7 @@ export { createConnectAccount, createConnectAccountLink, refreshConnectStatus, c
 export { saveDac7SellerProfile, getDac7SellerProfile, pullDac7FromStripe, aggregateDac7Year, exportDac7Report, getOwnDac7, correctOwnDac7Contact, requestDac7Correction, resolveDac7Correction };
 export { scrapeWebsiteMeta as scrapeWebsiteMetaV2 };
 export { getPrintQueue, getPrintJob, getPrintQueueExport, createPrintShopUser, } from './print/functions';
+export { setPrintJobStatus } from './print/setPrintJobStatus';
 export { submitLead } from './leads/submitLead';
 export { sweepAbandonedCheckouts } from './checkout-recovery/sweep';
 export { resolveCheckoutRecovery, unsubscribeCheckout } from './checkout-recovery/callables';
