@@ -27,10 +27,13 @@ import { requireContentStudio, isShopMediaPath } from './gate';
 
 const COMMON = {
   region: 'us-central1' as const,
-  memory: '2GiB' as const,
+  // 4GiB/2cpu: 4K phone clips need decode headroom even with the sequential
+  // per-segment pipeline (one decoder at a time), and /tmp is memory-backed.
+  memory: '4GiB' as const,
+  cpu: 2,
   timeoutSeconds: 540,
   cors: appUrls.CORS_ORIGINS,
-  // 2 GiB instances are expensive — cap concurrency so an enthusiastic admin
+  // Big instances are expensive — cap concurrency so an enthusiastic admin
   // (or a bug) can't fan out a fleet of renderers.
   maxInstances: 3,
 };
@@ -330,61 +333,74 @@ export const renderSocialVideo = onCall<RenderRequest>(COMMON, async (request) =
       }
     }
 
-    // ── 5. One ffmpeg invocation ──────────────────────────────────────────
-    const args: string[] = ['-y'];
-
-    // Segment inputs.
-    for (const inp of inputs) {
+    // ── 5. Encode each segment SEQUENTIALLY, then concat ─────────────────
+    // One ffmpeg invocation with one input per segment OOMs: N concurrent
+    // decoders × 4K phone footage blew the memory limit in live testing.
+    // Sequential per-segment encodes keep memory bounded (one decoder at a
+    // time) regardless of segment count or source resolution; the segments
+    // are then stitched with the concat demuxer WITHOUT re-encoding.
+    const segFiles: string[] = [];
+    for (let s = 0; s < inputs.length; s++) {
+      const inp = inputs[s];
+      const segOut = path.join(workDir, `seg_${s}.mp4`);
+      const segArgs: string[] = ['-y'];
       if (inp.kind === 'video') {
-        args.push('-ss', inp.ss.toFixed(3), '-t', segDur.toFixed(3), '-i', inp.file);
+        segArgs.push('-ss', inp.ss.toFixed(3), '-t', segDur.toFixed(3), '-i', inp.file);
       } else {
-        args.push('-loop', '1', '-t', segDur.toFixed(3), '-i', inp.file);
+        segArgs.push('-loop', '1', '-t', segDur.toFixed(3), '-i', inp.file);
       }
-    }
-    // Audio input goes LAST so its index is inputs.length.
-    const audioIdx = inputs.length;
-    args.push('-i', audioFile);
-
-    // filter_complex: normalize each video segment, then concat.
-    const filterParts: string[] = [];
-    const concatLabels: string[] = [];
-    for (let i = 0; i < inputs.length; i++) {
-      filterParts.push(
-        `[${i}:v]scale=1080:1920:force_original_aspect_ratio=increase,` +
-        `crop=1080:1920,fps=30,setsar=1[v${i}]`
+      segArgs.push(
+        '-vf',
+        'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,setsar=1',
+        '-an',
+        '-c:v', 'libx264',
+        '-preset', 'veryfast',
+        '-crf', '23',
+        '-pix_fmt', 'yuv420p',
+        // Uniform timescale so the concat demuxer can stream-copy seamlessly.
+        '-video_track_timescale', '15360',
+        segOut
       );
-      concatLabels.push(`[v${i}]`);
+      try {
+        await run(ffmpeg, segArgs);
+      } catch (e: any) {
+        throw new HttpsError(
+          'internal',
+          `Videoproduktion misslyckades (klipp ${s + 1}/${inputs.length}): ${e?.message || 'okänt fel'}`
+        );
+      }
+      segFiles.push(segOut);
     }
-    filterParts.push(`${concatLabels.join('')}concat=n=${inputs.length}:v=1:a=0[vout]`);
 
+    // Concat list (workDir contains no quotes/spaces — tmpdir + uuid).
+    const listFile = path.join(workDir, 'segments.txt');
+    fs.writeFileSync(listFile, segFiles.map((f) => `file '${f}'`).join('\n'));
+
+    // Final pass: stream-copy the stitched video, add the audio track.
     // Audio: trim to total duration, pad with silence if the source is SHORTER
     // than the target (otherwise -shortest would truncate the whole video to
     // the audio length), then fade out the last second.
     const fadeStart = Math.max(0, totalDur - 1);
-    filterParts.push(
-      `[${audioIdx}:a]atrim=0:${totalDur.toFixed(3)},asetpts=PTS-STARTPTS,` +
+    const outFile = path.join(workDir, 'out.mp4');
+    const concatArgs: string[] = [
+      '-y',
+      '-f', 'concat', '-safe', '0', '-i', listFile,
+      '-i', audioFile,
+      '-filter_complex',
+      `[1:a]atrim=0:${totalDur.toFixed(3)},asetpts=PTS-STARTPTS,` +
       `apad=whole_dur=${totalDur.toFixed(3)},` +
-      `afade=t=out:st=${fadeStart.toFixed(3)}:d=1[aout]`
-    );
-
-    args.push('-filter_complex', filterParts.join(';'));
-    args.push('-map', '[vout]', '-map', '[aout]');
-    args.push(
-      '-c:v', 'libx264',
-      '-preset', 'veryfast',
-      '-crf', '23',
-      '-pix_fmt', 'yuv420p',
+      `afade=t=out:st=${fadeStart.toFixed(3)}:d=1[aout]`,
+      '-map', '0:v', '-map', '[aout]',
+      '-c:v', 'copy',
       '-c:a', 'aac',
       '-b:a', '128k',
       '-movflags', '+faststart',
-      '-shortest'
-    );
-
-    const outFile = path.join(workDir, 'out.mp4');
-    args.push(outFile);
+      '-shortest',
+      outFile,
+    ];
 
     try {
-      await run(ffmpeg, args);
+      await run(ffmpeg, concatArgs);
     } catch (e: any) {
       throw new HttpsError('internal', `Videoproduktion misslyckades: ${e?.message || 'okänt fel'}`);
     }
