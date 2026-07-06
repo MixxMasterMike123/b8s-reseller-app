@@ -12,14 +12,23 @@
 
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getStorage } from 'firebase-admin/storage';
+import { spawn } from 'child_process';
+import { randomUUID } from 'crypto';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import ffmpegPath from 'ffmpeg-static';
+import ffprobeStatic from 'ffprobe-static';
 import Anthropic from '@anthropic-ai/sdk';
 import { appUrls } from '../config/app-urls';
 import { requireContentStudio, shopBrandName } from './gate';
 
+// 1GiB/300s: video keyframe extraction downloads clips to /tmp (memory-backed)
+// and runs ffmpeg before the Claude call.
 const COMMON = {
   region: 'us-central1' as const,
-  memory: '512MiB' as const,
-  timeoutSeconds: 120,
+  memory: '1GiB' as const,
+  timeoutSeconds: 300,
   cors: appUrls.CORS_ORIGINS,
   secrets: ['ANTHROPIC_API_KEY'],
 };
@@ -39,6 +48,7 @@ interface GenerateRequest {
   includeTags: boolean;
   artistTags?: string[];
   imagePaths?: string[];
+  videoPaths?: string[];
 }
 
 // Per-channel schema block: hook, caption, hashtags[]. No length constraints
@@ -73,6 +83,13 @@ const IMAGE_MEDIA_TYPES = new Set([
 ]);
 const MAX_IMAGES = 3;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB per image
+
+// Video analysis: keyframes are extracted server-side with ffmpeg and sent to
+// Claude as ordinary images — "watching" the clip without any video-capable
+// third-party API. Frames at 10/35/60/85% cover intro, build-up, and climax.
+const MAX_VIDEOS = 2;
+const MAX_VIDEO_BYTES = 80 * 1024 * 1024; // 80 MB per clip (matches render cap)
+const FRAME_POSITIONS = [0.1, 0.35, 0.6, 0.85];
 
 // Download up to MAX_IMAGES reference images from Storage and turn them into
 // Anthropic image content blocks. Non-image / oversized / unreadable files are
@@ -123,6 +140,110 @@ async function buildImageBlocks(shopId: string, imagePaths: string[]): Promise<a
   return blocks;
 }
 
+// Run a binary, rejecting with a stderr tail so failures are debuggable.
+function run(bin: string, args: string[]): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(bin, args);
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (c) => (stdout += c.toString()));
+    child.stderr.on('data', (c) => {
+      stderr += c.toString();
+      if (stderr.length > 2000) stderr = stderr.slice(-2000);
+    });
+    child.on('error', (err) => reject(err));
+    child.on('close', (code) => {
+      if (code === 0) return resolve(stdout);
+      reject(new Error(stderr.slice(-300).trim() || `avslutades med kod ${code}`));
+    });
+  });
+}
+
+// Download up to MAX_VIDEOS clips and extract FRAME_POSITIONS keyframes from
+// each (scaled to 800px wide JPEGs) as Anthropic image blocks.
+async function buildVideoFrameBlocks(
+  shopId: string,
+  videoPaths: string[],
+  workDir: string
+): Promise<any[]> {
+  if (!ffmpegPath || !fs.existsSync(ffmpegPath)) {
+    throw new HttpsError('failed-precondition', 'Videoverktyget är inte konfigurerat.');
+  }
+  const bucket = getStorage().bucket();
+  const blocks: any[] = [];
+
+  for (let v = 0; v < Math.min(videoPaths.length, MAX_VIDEOS); v++) {
+    const p = videoPaths[v];
+    if (!p.startsWith(`content-studio/${shopId}/`)) {
+      throw new HttpsError('permission-denied', `Filen "${p}" ligger utanför butikens mapp.`);
+    }
+    const file = bucket.file(p);
+    let contentType = '';
+    try {
+      const [meta] = await file.getMetadata();
+      contentType = (meta.contentType || '').toLowerCase();
+      const size = parseInt(String(meta.size || '0'), 10);
+      if (Number.isFinite(size) && size > MAX_VIDEO_BYTES) {
+        throw new HttpsError('invalid-argument', `Videon "${p}" är för stor (max 80 MB).`);
+      }
+    } catch (e: any) {
+      if (e instanceof HttpsError) throw e;
+      throw new HttpsError('not-found', `Kunde inte läsa videon "${p}".`);
+    }
+    if (!contentType.startsWith('video/')) continue;
+
+    const local = path.join(workDir, `vid_${v}`);
+    try {
+      await file.download({ destination: local });
+    } catch {
+      throw new HttpsError('not-found', `Kunde inte hämta videon "${p}".`);
+    }
+
+    let duration = 0;
+    try {
+      const out = await run(ffprobeStatic.path, [
+        '-v', 'error',
+        '-show_entries', 'format=duration',
+        '-of', 'default=noprint_wrappers=1:nokey=1',
+        local,
+      ]);
+      duration = parseFloat(out.trim());
+    } catch {
+      // Unreadable clip — skip it rather than failing the whole generation.
+      continue;
+    }
+    if (!Number.isFinite(duration) || duration <= 0) continue;
+
+    for (let i = 0; i < FRAME_POSITIONS.length; i++) {
+      const ts = duration * FRAME_POSITIONS[i];
+      const frame = path.join(workDir, `vid_${v}_f${i}.jpg`);
+      try {
+        await run(ffmpegPath, [
+          '-y',
+          '-ss', ts.toFixed(2),
+          '-i', local,
+          '-frames:v', '1',
+          '-vf', 'scale=800:-2',
+          '-q:v', '5',
+          frame,
+        ]);
+      } catch {
+        continue; // one bad frame shouldn't kill the rest
+      }
+      if (!fs.existsSync(frame)) continue;
+      blocks.push({
+        type: 'image',
+        source: {
+          type: 'base64',
+          media_type: 'image/jpeg',
+          data: fs.readFileSync(frame).toString('base64'),
+        },
+      });
+    }
+  }
+  return blocks;
+}
+
 // Surface Anthropic failures as readable Swedish HttpsErrors instead of a bare
 // INTERNAL. Auth/validation HttpsErrors pass through untouched.
 function toHttpsError(e: any): HttpsError {
@@ -139,9 +260,6 @@ export const generateSocialCopy = onCall<GenerateRequest>(COMMON, async (request
 
   // ── Input validation (readable Swedish errors) ──────────────────────────
   const description = (d.description || '').trim();
-  if (!description) {
-    throw new HttpsError('invalid-argument', 'Beskriv vad inlägget ska handla om.');
-  }
   if (!TONE_GUIDES[d.tone]) {
     throw new HttpsError('invalid-argument', 'Ogiltig ton.');
   }
@@ -154,6 +272,20 @@ export const generateSocialCopy = onCall<GenerateRequest>(COMMON, async (request
     : [];
   if (imagePaths.length > MAX_IMAGES) {
     throw new HttpsError('invalid-argument', `Max ${MAX_IMAGES} bilder kan analyseras.`);
+  }
+  const videoPaths = Array.isArray(d.videoPaths)
+    ? d.videoPaths.map((p) => String(p).trim()).filter(Boolean)
+    : [];
+  if (videoPaths.length > MAX_VIDEOS) {
+    throw new HttpsError('invalid-argument', `Max ${MAX_VIDEOS} videoklipp kan analyseras.`);
+  }
+  // A typed description is optional as long as there is material to analyze —
+  // the whole point is copy generated FROM the uploaded content.
+  if (!description && imagePaths.length === 0 && videoPaths.length === 0) {
+    throw new HttpsError(
+      'invalid-argument',
+      'Välj material att analysera eller skriv en beskrivning.'
+    );
   }
 
   const apiKey = (process.env.ANTHROPIC_API_KEY || '').trim();
@@ -181,16 +313,51 @@ export const generateSocialCopy = onCall<GenerateRequest>(COMMON, async (request
       : `Inga särskilda artist-taggar ska tvingas in.`,
   ].join('\n');
 
-  // Image blocks go BEFORE the text block in the user message.
+  // Media blocks go BEFORE the text block in the user message. Video keyframes
+  // are extracted to /tmp (memory-backed — cleaned up in finally).
   const imageBlocks = imagePaths.length
     ? await buildImageBlocks(shopId, imagePaths)
     : [];
 
+  let frameBlocks: any[] = [];
+  const workDir = path.join(os.tmpdir(), `cs-frames-${randomUUID()}`);
+  try {
+    if (videoPaths.length) {
+      fs.mkdirSync(workDir, { recursive: true });
+      frameBlocks = await buildVideoFrameBlocks(shopId, videoPaths, workDir);
+    }
+
+  const mediaNotes: string[] = [];
+  if (imageBlocks.length) {
+    mediaNotes.push(`${imageBlocks.length} uppladdade bilder från materialet.`);
+  }
+  if (frameBlocks.length) {
+    mediaNotes.push(
+      `${frameBlocks.length} stillbilder (keyframes) i kronologisk ordning ur ` +
+      `${Math.min(videoPaths.length, MAX_VIDEOS)} uppladdade videoklipp — beskriv det ` +
+      `som händer i klippen utifrån dessa.`
+    );
+  }
+
+  const textParts: string[] = [];
+  if (mediaNotes.length) {
+    textParts.push(`Bifogat material: ${mediaNotes.join(' ')}`);
+    textParts.push(
+      'Basera innehållet på vad du faktiskt SER i materialet (plats, stämning, publik, detaljer).'
+    );
+  }
+  textParts.push(
+    description
+      ? `Beskrivning av inlägget:\n${description}`
+      : 'Ingen beskrivning angiven — utgå helt från materialet.'
+  );
+
   const userContent: any[] = [
     ...imageBlocks,
+    ...frameBlocks,
     {
       type: 'text',
-      text: `Beskrivning av inlägget:\n${description}`,
+      text: textParts.join('\n\n'),
     },
   ];
 
@@ -238,4 +405,12 @@ export const generateSocialCopy = onCall<GenerateRequest>(COMMON, async (request
   }
 
   return { copy };
+  } finally {
+    // /tmp is memory-backed — always release extracted frames.
+    try {
+      fs.rmSync(workDir, { recursive: true, force: true });
+    } catch {
+      // best-effort cleanup
+    }
+  }
 });

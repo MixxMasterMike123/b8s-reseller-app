@@ -340,8 +340,17 @@ const AdminContentStudio = () => {
 
   // ── Generate copy ──
   const handleGenerate = async () => {
-    if (!description.trim()) {
-      setGenerateError('Skriv en beskrivning av materialet först.');
+    const imagePaths = selectedAssets
+      .filter((a) => a.type === 'image')
+      .slice(0, MAX_IMAGE_PATHS)
+      .map((a) => a.path);
+    // Videos are analyzed server-side (keyframes → AI) — max 2 clips.
+    const videoPaths = selectedAssets
+      .filter((a) => a.type === 'video')
+      .slice(0, 2)
+      .map((a) => a.path);
+    if (!description.trim() && imagePaths.length === 0 && videoPaths.length === 0) {
+      setGenerateError('Välj material i biblioteket eller skriv en beskrivning.');
       return;
     }
     setGenerateError('');
@@ -350,10 +359,6 @@ const AdminContentStudio = () => {
       const tags = includeTags
         ? artistTags.split(',').map((t) => t.trim()).filter(Boolean)
         : [];
-      const imagePaths = selectedAssets
-        .filter((a) => a.type === 'image')
-        .slice(0, MAX_IMAGE_PATHS)
-        .map((a) => a.path);
       const payload = {
         shopId,
         description: description.trim(),
@@ -361,8 +366,11 @@ const AdminContentStudio = () => {
         includeTags,
         ...(tags.length > 0 ? { artistTags: tags } : {}),
         ...(imagePaths.length > 0 ? { imagePaths } : {}),
+        ...(videoPaths.length > 0 ? { videoPaths } : {}),
       };
-      const res = await httpsCallable(functions, 'generateSocialCopy')(payload);
+      // Video analysis (download + keyframes + AI) can take a couple of minutes
+      // — the default 70s callable timeout would abort it.
+      const res = await httpsCallable(functions, 'generateSocialCopy', { timeout: 300000 })(payload);
       setCopy(res.data?.copy || null);
       setActiveChannel('tiktok');
       toast.success('Innehåll genererat!');
@@ -654,16 +662,16 @@ const AdminContentStudio = () => {
           <CardSection title="Skapa inlägg">
             <div className="space-y-4">
               <Field
-                label="Beskrivning"
+                label="Beskrivning (valfritt)"
                 htmlFor="cs-description"
-                help="Ju mer känsla och detaljer, desto bättre inlägg."
+                help="AI:n analyserar valt material (bilder och video) automatiskt — beskrivningen är ett komplement för sånt som inte syns, t.ex. plats, datum eller releaser."
               >
                 <Textarea
                   id="cs-description"
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Beskriv materialet/känslan – t.ex. 'Livespelning på Vi älskar 90-talet, publiken sjöng med i Dum Da Dum'"
+                  placeholder="T.ex. 'Vi älskar 90-talet i Kalmar – ny singel släpps på fredag'"
                 />
               </Field>
 
@@ -751,7 +759,11 @@ const AdminContentStudio = () => {
 
               <div>
                 <Button variant="primary" onClick={handleGenerate} disabled={generating}>
-                  {generating ? 'Genererar…' : '✨ Generera innehåll'}
+                  {generating
+                    ? selectedAssets.some((a) => a.type === 'video')
+                      ? 'Analyserar material och genererar…'
+                      : 'Genererar…'
+                    : '✨ Generera innehåll'}
                 </Button>
               </div>
 
