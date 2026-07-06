@@ -115,6 +115,28 @@ service firebase.storage {
       allow write: if isAdminOfShop(shopId);
     }
 
+    // Content Studio ("Innehållsstudio" add-on) — PARTITIONED by shopId. Holds
+    // the admin's own uploaded source images/video/audio (…/uploads/…) and the
+    // rendered clips written back by renderSocialVideo (…/renders/…). Read + write
+    // are both scoped to the shop's own admin (isAdminOfShop includes the
+    // isPlatform() bypass) — these are the shop's private working assets, so read
+    // is GATED (not public). Greenfield path — no legacy flat block. Writes are
+    // capped at 100 MB and limited to image/video/audio content types (the render
+    // callable enforces its own tighter per-file limits server-side).
+    // NOTE: size/contentType checks must NOT apply to delete (request.resource
+    // is null there), so create/update and delete are granted separately.
+    match /content-studio/{shopId}/{allPaths=**} {
+      allow read: if isAdminOfShop(shopId);
+      allow delete: if isAdminOfShop(shopId);
+      allow create, update: if isAdminOfShop(shopId)
+        && request.resource.size < 100 * 1024 * 1024
+        && (
+          request.resource.contentType.matches('image/.*') ||
+          request.resource.contentType.matches('video/.*') ||
+          request.resource.contentType.matches('audio/.*')
+        );
+    }
+
     // Marketing materials — generic (PARTITIONED by shopId).
     // Any authenticated user of the shop can read; write gated to shop admin.
     match /marketing-materials/{shopId}/generic/{fileName} {

@@ -107,6 +107,7 @@ import AdminAffiliateAnalytics from './pages/admin/AdminAffiliateAnalytics';
 import AdminAffiliatePayout from './pages/admin/AdminAffiliatePayout';
 import AdminDiscountCodes from './pages/admin/AdminDiscountCodes';
 import AdminReviews from './pages/admin/AdminReviews';
+import AdminContentStudio from './pages/admin/AdminContentStudio';
 import AffiliateTracker from './components/AffiliateTracker';
 import ScrollToTop from './components/ScrollToTop';
 
@@ -555,6 +556,17 @@ function App() {
                 <AddonGate feature="productReviews"><AdminRoute>
                   <AdminReviews />
                 </AdminRoute></AddonGate>
+              } />
+
+              {/* Innehållsstudio (AI social-media studio) is an EXPLICIT OPT-IN
+                  add-on — the ONLY one that is off unless features.contentStudio
+                  === true. No AddonGate here (it is default-ON); the page itself
+                  checks the flag (platform users always pass) and shows a
+                  friendly "not activated" card on deep links. */}
+              <Route path="/admin/content-studio" element={
+                <AdminRoute>
+                  <AdminContentStudio />
+                </AdminRoute>
               } />
 
               <Route path="/admin/settings" element={

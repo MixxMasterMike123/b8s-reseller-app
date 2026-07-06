@@ -25,7 +25,9 @@ const RESERVED_IDS = new Set([...NON_SHOP_FIRST_SEGMENTS, 'api', 'www', 'shop', 
 // add-on keys are explicit so a new shop's defaults are unambiguous (writers is
 // also off — it's manifest-disabled globally too). Existing shops with no
 // `features` field default-ON for everything (see config/addons.js isFeatureEnabled).
-const DEFAULT_FEATURES = { affiliate: true, campaigns: true, dining: false, ambassador: false, writers: false, pod: false };
+// contentStudio is EXPLICIT OPT-IN (gated on features.contentStudio === true,
+// not the default-ON helper) — new shops start with it off.
+const DEFAULT_FEATURES = { affiliate: true, campaigns: true, dining: false, ambassador: false, writers: false, pod: false, contentStudio: false };
 
 const slugifyId = (s) =>
   (s || '')

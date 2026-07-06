@@ -35,10 +35,10 @@ import {
 } from '@heroicons/react/24/outline';
 
 const AppLayout = ({ children }) => {
-  const { currentUser, userProfile, logout } = useAuth();
+  const { currentUser, userProfile, logout, isPlatform } = useAuth();
   const { t } = useTranslation();
   const store = useStoreSettings();
-  const { isEnabled: isAddonEnabled } = useShopFeatures();
+  const { features, isEnabled: isAddonEnabled } = useShopFeatures();
   // The shop this admin session is managing (impersonation > own shop > default).
   // Surfaced in the top bar so "which shop am I editing?" is always explicit —
   // every admin shares the /admin URL, so the name alone wasn't enough.
@@ -228,8 +228,19 @@ const AppLayout = ({ children }) => {
     icon: StarIcon,
     description: t('nav.admin_reviews_desc', 'Moderera produktomdömen'),
   };
+  // The "Innehållsstudio" add-on link (AI social-media studio). UNLIKE the
+  // default-ON add-ons above, this one is EXPLICIT OPT-IN: it only shows when
+  // features.contentStudio === true (NOT via isAddonEnabled, which defaults
+  // missing flags to on). Platform users always see it.
+  const contentStudioEnabled = features?.contentStudio === true || isPlatform;
+  const contentStudioNavItem = {
+    name: t('nav.admin_content_studio', 'Innehållsstudio'),
+    path: '/admin/content-studio',
+    icon: SparklesIcon,
+    description: t('nav.admin_content_studio_desc', 'AI-inlägg och video för sociala medier'),
+  };
   // Whether the add-on section (divider + items) has anything to show.
-  const hasAddonItems = affiliateEnabled || b2bEnabled || discountCodesEnabled || reviewsEnabled || wagonMenuItems.length > 0;
+  const hasAddonItems = affiliateEnabled || b2bEnabled || discountCodesEnabled || reviewsEnabled || contentStudioEnabled || wagonMenuItems.length > 0;
   
   const navItemClass = (active) =>
     `group flex h-8 items-center gap-2 rounded-[var(--radius-admin-el)] pl-2 pr-1.5 text-[13px] transition-colors ${
@@ -374,6 +385,16 @@ const AppLayout = ({ children }) => {
                   <span className="flex-1">{reviewsNavItem.name}</span>
                 </Link>
               )}
+              {contentStudioEnabled && (
+                <Link
+                  to={contentStudioNavItem.path}
+                  title={contentStudioNavItem.description}
+                  className={navItemClass(isActive(contentStudioNavItem.path))}
+                >
+                  <contentStudioNavItem.icon className={navIconClass(isActive(contentStudioNavItem.path))} aria-hidden="true" />
+                  <span className="flex-1">{contentStudioNavItem.name}</span>
+                </Link>
+              )}
               {wagonMenuItems.map((item) => {
                 const active = isActive(item.path);
                 return (
@@ -480,6 +501,18 @@ const AppLayout = ({ children }) => {
                       >
                         <reviewsNavItem.icon className={navIconClass(isActive(reviewsNavItem.path))} aria-hidden="true" />
                         <span className="flex-1">{reviewsNavItem.name}</span>
+                      </Link>
+                    )}
+                    {contentStudioEnabled && (
+                      <Link
+                        to={contentStudioNavItem.path}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`group flex h-10 items-center gap-2 rounded-[var(--radius-admin-el)] pl-2 pr-1.5 text-[13px] ${
+                          isActive(contentStudioNavItem.path) ? 'bg-black/[0.08] font-semibold text-admin-text' : 'font-medium text-admin-text hover:bg-black/[0.06]'
+                        }`}
+                      >
+                        <contentStudioNavItem.icon className={navIconClass(isActive(contentStudioNavItem.path))} aria-hidden="true" />
+                        <span className="flex-1">{contentStudioNavItem.name}</span>
                       </Link>
                     )}
                     {wagonMenuItems.map((item) => {

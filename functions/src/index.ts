@@ -232,6 +232,14 @@ export {
 // persists a durable acknowledgement of receipt. See memory angerratt_pod.md.
 export { submitWithdrawal } from './withdrawal/functions';
 
+// Content Studio ("Innehållsstudio" add-on): two PURE-COMPUTE callables. Both
+// are auth+opt-in gated (requireContentStudio) and never write Firestore — the
+// client persists results onto socialPosts docs. generateSocialCopy turns a
+// description into per-channel social copy; renderSocialVideo assembles a
+// vertical beat-cut clip from the shop's uploads and returns a download URL.
+export { generateSocialCopy } from './content-studio/generateSocialCopy';
+export { renderSocialVideo } from './content-studio/renderSocialVideo';
+
 // Re-export orchestrator functions with V2 aliases for backward compatibility
 export { confirmPasswordReset as confirmPasswordResetV2 };
 

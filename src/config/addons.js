@@ -32,6 +32,11 @@ export const ADDON_CATALOG = [
   { key: 'pod', label: 'Print on demand', description: 'Ladda upp tryckoriginal, validera mot tryckspecar och koppla dem till produkter via SKU. Tryckeriet får produktionsfiler per order.' },
   { key: 'abandonedCheckout', label: 'Övergiven kassa', description: 'Påminner kunder via e-post om kassor de inte slutförde. En påminnelse per kassa, med återställningslänk och avregistrering.' },
   { key: 'productReviews', label: 'Recensioner', description: 'Egna produktrecensioner från verifierade köp. Automatisk e-postförfrågan efter leverans, auto-publicering med innehållsfilter och aggregerat betyg på produktsidan.' },
+  // NOTE: contentStudio is EXPLICIT OPT-IN (features.contentStudio === true),
+  // unlike the default-ON legacy keys above — nav + page gate on the explicit
+  // flag (not isFeatureEnabled), so it stays hidden until the platform turns
+  // it on per shop.
+  { key: 'contentStudio', label: 'Innehållsstudio', description: 'AI-studio för sociala medier: ladda upp råmaterial, få färdiga inlägg (hook, caption, hashtags) för TikTok/Reels/Shorts och automatiskt ihopklippt vertikal video i takt med musiken.' },
 ];
 
 // Default-ON: a feature is enabled unless EXPLICITLY set to false. This keeps the

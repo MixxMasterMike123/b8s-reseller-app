@@ -457,6 +457,17 @@ service cloud.firestore {
       allow update, delete: if isAdminOfShop(resource.data.shopId);
     }
 
+    // Content Studio drafts ("Innehållsstudio" add-on; shop-scoped). The admin
+    // does client-SDK CRUD on these (generated copy, chosen assets, rendered
+    // video). Only the shop's own admin (or platform) may read/manage them; a
+    // create must stamp their OWN shopId. The AI/render callables are PURE
+    // COMPUTE and never touch this collection — every write here is client-side.
+    match /socialPosts/{postId} {
+      allow read: if isAdminOfShop(resource.data.shopId);
+      allow create: if isAdminOfShop(request.resource.data.shopId);
+      allow update, delete: if isAdminOfShop(resource.data.shopId);
+    }
+
     // ============================================================
     // Marketing materials (shop-scoped top-level collection)
     // ============================================================
