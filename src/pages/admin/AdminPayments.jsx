@@ -24,11 +24,75 @@ import { Page, Card, CardSection, Button, StatusPill } from '../../components/ad
 
 const STATUS_UI = {
   none:       { tone: 'neutral',  label: 'Ej aktiverat' },
-  onboarding: { tone: 'info',     label: 'Onboarding påbörjad' },
+  onboarding: { tone: 'info',     label: 'Påbörjad' },
   pending:    { tone: 'warning',  label: 'Granskas av Stripe' },
   restricted: { tone: 'danger',   label: 'Åtgärd krävs' },
   active:     { tone: 'success',  label: 'Aktivt' },
 };
+
+// Stripe requirement codes → plain Swedish. The shop owner should never see
+// raw codes like "individual.verification.document"; anything unmapped folds
+// into one generic line. Order matters — most specific prefix first.
+const REQUIREMENT_LABELS = [
+  { match: (c) => c.includes('verification'),          label: 'ID-handling / verifiering' },
+  { match: (c) => c.startsWith('external_account'),    label: 'Bankkonto för utbetalningar' },
+  { match: (c) => c.startsWith('tos_acceptance'),      label: 'Godkännande av Stripes villkor' },
+  { match: (c) => c.startsWith('business_profile'),    label: 'Uppgifter om verksamheten' },
+  { match: (c) => c.startsWith('company'),             label: 'Företagsuppgifter' },
+  { match: (c) => c.startsWith('individual') || c.startsWith('person_') || c.startsWith('representative'),
+                                                       label: 'Personuppgifter' },
+  { match: (c) => c.startsWith('directors') || c.startsWith('owners') || c.startsWith('relationship'),
+                                                       label: 'Uppgifter om ägare/företrädare' },
+];
+
+const humanizeRequirements = (codes) => {
+  const labels = [];
+  let hasUnknown = false;
+  for (const code of codes) {
+    const hit = REQUIREMENT_LABELS.find((r) => r.match(code));
+    if (hit) {
+      if (!labels.includes(hit.label)) labels.push(hit.label);
+    } else {
+      hasUnknown = true;
+    }
+  }
+  if (hasUnknown) labels.push('Övriga uppgifter (visas hos Stripe)');
+  return labels;
+};
+
+// The whole journey in three steps, so the owner always knows where they are.
+const stepsForStatus = (status) => {
+  const idx = { none: 0, onboarding: 1, restricted: 1, pending: 2, active: 3 }[status] ?? 0;
+  return [
+    { label: 'Starta' },
+    { label: 'Fyll i uppgifter hos Stripe' },
+    { label: 'Utbetalningar aktiva' },
+  ].map((s, i) => ({ ...s, state: i < idx ? 'done' : i === idx ? 'current' : 'upcoming' }));
+};
+
+const Steps = ({ status }) => (
+  <ol className="flex flex-wrap items-center gap-x-2 gap-y-2 mb-4">
+    {stepsForStatus(status).map((s, i) => (
+      <li key={s.label} className="flex items-center gap-2">
+        {i > 0 && <span className="w-5 h-px bg-admin-border" aria-hidden="true" />}
+        <span
+          className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-semibold ${
+            s.state === 'done'
+              ? 'bg-[var(--color-admin-primary)] text-white dark:text-admin-bg'
+              : s.state === 'current'
+                ? 'border border-[var(--color-admin-primary)] text-admin-text'
+                : 'border border-admin-border text-admin-text-muted'
+          }`}
+        >
+          {s.state === 'done' ? '✓' : i + 1}
+        </span>
+        <span className={`text-[13px] ${s.state === 'upcoming' ? 'text-admin-text-muted' : 'text-admin-text'}`}>
+          {s.label}
+        </span>
+      </li>
+    ))}
+  </ol>
+);
 
 const AdminPayments = () => {
   const shopId = useShopId();
@@ -39,6 +103,7 @@ const AdminPayments = () => {
   const [busy, setBusy] = useState('');        // which action is running
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [noticeTone, setNoticeTone] = useState('info'); // 'info' | 'success'
 
   // Live subscription to the shop's payments map.
   useEffect(() => {
@@ -68,8 +133,15 @@ const AdminPayments = () => {
       (async () => {
         try {
           setBusy('refresh');
-          await call('refreshConnectStatus');
-          setNotice('Status uppdaterad från Stripe.');
+          setError('');
+          const res = await call('refreshConnectStatus');
+          if (res?.chargesEnabled) {
+            setNoticeTone('success');
+            setNotice('Klart! Utbetalningar är nu aktiverade för din butik.');
+          } else {
+            setNoticeTone('info');
+            setNotice('Status uppdaterad från Stripe.');
+          }
         } catch (e) {
           setError(e.message || 'Kunde inte uppdatera status.');
         } finally {
@@ -86,7 +158,15 @@ const AdminPayments = () => {
     try {
       const data = await call(name);
       if (data?.url) { window.location.href = data.url; return; }
-      if (name === 'refreshConnectStatus') setNotice('Status uppdaterad.');
+      if (name === 'refreshConnectStatus') {
+        if (data?.chargesEnabled) {
+          setNoticeTone('success');
+          setNotice('Klart! Utbetalningar är nu aktiverade för din butik.');
+        } else {
+          setNoticeTone('info');
+          setNotice('Status uppdaterad.');
+        }
+      }
     } catch (e) {
       setError(e.message || 'Något gick fel.');
     } finally {
@@ -112,6 +192,7 @@ const AdminPayments = () => {
   const hasAccount = !!pay?.stripeAccountId;
   const chargesEnabled = pay?.chargesEnabled === true;
   const requirementsDue = Array.isArray(pay?.requirementsDue) ? pay.requirementsDue : [];
+  const requirementLabels = humanizeRequirements(requirementsDue);
 
   return (
     <AppLayout>
@@ -124,7 +205,11 @@ const AdminPayments = () => {
           <div className="rounded-md bg-red-50 border-l-4 border-red-400 p-3 text-[13px] text-red-700">{error}</div>
         )}
         {notice && (
-          <div className="rounded-md bg-sky-50 border-l-4 border-sky-400 p-3 text-[13px] text-sky-700">{notice}</div>
+          <div className={`rounded-md border-l-4 p-3 text-[13px] ${
+            noticeTone === 'success'
+              ? 'bg-emerald-50 border-emerald-400 text-emerald-700'
+              : 'bg-sky-50 border-sky-400 text-sky-700'
+          }`}>{notice}</div>
         )}
 
         <CardSection title="Status">
@@ -133,39 +218,53 @@ const AdminPayments = () => {
             {chargesEnabled && <span className="text-[13px] text-admin-text-muted">Du kan ta emot betalningar.</span>}
           </div>
 
-          {!connectEnabled && (
+          {connectEnabled && <Steps status={status} />}
+
+          {/* A live account keeps charging via Connect regardless of the
+              connectEnabled invite flag (the money path keys on chargesEnabled),
+              so never show "not enabled" once charges are enabled. */}
+          {!connectEnabled && !chargesEnabled && (
             <p className="text-[13px] text-admin-text-muted">
               Utbetalningar är inte aktiverade för din butik ännu. Kontakta oss för att komma igång.
             </p>
           )}
 
-          {connectEnabled && status === 'none' && (
+          {connectEnabled && !hasAccount && status === 'none' && (
             <>
-              <p className="text-[13px] text-admin-text-muted mb-4">
-                Aktivera utbetalningar för att ta emot pengar från dina försäljningar.
-                Stripe sköter onboarding och utbetalningar till ditt bankkonto.
+              <p className="text-[13px] text-admin-text-muted mb-2">
+                Koppla din butik till Stripe för att ta emot betalningar och få pengarna
+                utbetalda direkt till ditt bankkonto. Det tar ungefär 5–10 minuter.
               </p>
+              <p className="text-[13px] text-admin-text-muted mb-1">Bra att ha till hands:</p>
+              <ul className="mb-4 text-[13px] text-admin-text-muted list-disc pl-5">
+                <li>Organisationsnummer eller personnummer</li>
+                <li>Bankkontonummer (dit pengarna ska betalas ut)</li>
+                <li>ID-handling (t.ex. pass eller körkort)</li>
+              </ul>
               <Button variant="primary" disabled={busy === 'start'} onClick={() => run('createConnectAccount', 'start')}>
                 {busy === 'start' ? 'Öppnar…' : 'Aktivera utbetalningar'}
               </Button>
             </>
           )}
 
-          {connectEnabled && hasAccount && !chargesEnabled && (
+          {connectEnabled && hasAccount && !chargesEnabled && status !== 'pending' && (
             <>
               <p className="text-[13px] text-admin-text-muted mb-3">
                 {status === 'restricted'
                   ? 'Stripe behöver mer information innan du kan ta emot betalningar.'
-                  : 'Slutför onboardingen hos Stripe för att aktivera utbetalningar.'}
+                  : 'Du har påbörjat aktiveringen men allt är inte klart ännu. Fortsätt där du slutade — det du redan fyllt i är sparat.'}
               </p>
-              {requirementsDue.length > 0 && (
-                <ul className="mb-3 text-[12px] text-admin-text-muted list-disc pl-5">
-                  {requirementsDue.slice(0, 8).map((r) => <li key={r}>{r}</li>)}
-                </ul>
+              {requirementLabels.length > 0 && (
+                <>
+                  <p className="text-[12px] text-admin-text-muted mb-1">Det här saknas:</p>
+                  <ul className="mb-3 text-[12px] text-admin-text-muted list-disc pl-5">
+                    {requirementLabels.map((r) => <li key={r}>{r}</li>)}
+                  </ul>
+                </>
               )}
               <div className="flex items-center gap-3">
                 <Button variant="primary" disabled={busy === 'continue'} onClick={() => run('createConnectAccountLink', 'continue')}>
-                  {busy === 'continue' ? 'Öppnar…' : 'Fortsätt onboarding'}
+                  {busy === 'continue' ? 'Öppnar…' : 'Fortsätt hos Stripe'}
                 </Button>
                 <Button variant="secondary" disabled={busy === 'refresh'} onClick={() => run('refreshConnectStatus', 'refresh')}>
                   {busy === 'refresh' ? 'Uppdaterar…' : 'Uppdatera status'}
@@ -174,15 +273,41 @@ const AdminPayments = () => {
             </>
           )}
 
+          {connectEnabled && hasAccount && !chargesEnabled && status === 'pending' && (
+            <>
+              <p className="text-[13px] text-admin-text-muted mb-3">
+                Klart från din sida! Stripe granskar dina uppgifter — det brukar gå snabbt
+                (oftast minuter, ibland upp till någon dag). Statusen uppdateras automatiskt,
+                och du kan även uppdatera den själv här.
+              </p>
+              <div className="flex items-center gap-3">
+                <Button variant="primary" disabled={busy === 'refresh'} onClick={() => run('refreshConnectStatus', 'refresh')}>
+                  {busy === 'refresh' ? 'Uppdaterar…' : 'Uppdatera status'}
+                </Button>
+                {requirementLabels.length > 0 && (
+                  <Button variant="secondary" disabled={busy === 'continue'} onClick={() => run('createConnectAccountLink', 'continue')}>
+                    {busy === 'continue' ? 'Öppnar…' : 'Öppna Stripe igen'}
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
+
           {chargesEnabled && (
-            <div className="flex items-center gap-3">
-              <Button variant="secondary" disabled={busy === 'dashboard'} onClick={() => run('createConnectLoginLink', 'dashboard')}>
-                {busy === 'dashboard' ? 'Öppnar…' : 'Öppna Stripe-panel'}
-              </Button>
-              <Button variant="plain" disabled={busy === 'refresh'} onClick={() => run('refreshConnectStatus', 'refresh')}>
-                {busy === 'refresh' ? 'Uppdaterar…' : 'Uppdatera status'}
-              </Button>
-            </div>
+            <>
+              <p className="text-[13px] text-admin-text-muted mb-3">
+                Allt är klart. Din butik tar emot betalningar och Stripe betalar ut pengarna
+                till ditt bankkonto automatiskt. I Stripe-panelen ser du saldo och kommande utbetalningar.
+              </p>
+              <div className="flex items-center gap-3">
+                <Button variant="secondary" disabled={busy === 'dashboard'} onClick={() => run('createConnectLoginLink', 'dashboard')}>
+                  {busy === 'dashboard' ? 'Öppnar…' : 'Öppna Stripe-panel'}
+                </Button>
+                <Button variant="plain" disabled={busy === 'refresh'} onClick={() => run('refreshConnectStatus', 'refresh')}>
+                  {busy === 'refresh' ? 'Uppdaterar…' : 'Uppdatera status'}
+                </Button>
+              </div>
+            </>
           )}
         </CardSection>
 
@@ -190,8 +315,9 @@ const AdminPayments = () => {
             platform console (PlatformShops), never shown/editable here on the
             shop owner's page. (setShopCommission is requirePlatform server-side.) */}
 
-        {/* Balance & payout risk — only meaningful once the account exists. */}
-        {hasAccount && (
+        {/* Balance & payout risk — noise before money can flow, so only once
+            the account is live (charges enabled). */}
+        {hasAccount && chargesEnabled && (
           <CardSection title="Saldo & utbetalningsrisk">
             <BalancePanel shopId={shopId} isPlatform={isPlatform} />
           </CardSection>

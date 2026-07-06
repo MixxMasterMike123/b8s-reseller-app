@@ -571,17 +571,27 @@ exports.stripeWebhookV2 = (0, https_1.onRequest)({
                     // newly appeared. Compared against the shop's PREVIOUS values.
                     const prevPayoutsEnabled = existing.payoutsEnabled === true;
                     const newPayoutsEnabled = patch['payments.payoutsEnabled'] === true;
+                    const prevChargesEnabled = existing.chargesEnabled === true;
+                    const newChargesEnabled = patch['payments.chargesEnabled'] === true;
                     const newStatus = patch['payments.connectStatus'];
                     const prevReqDue = Array.isArray(existing.requirementsDue) ? existing.requirementsDue : [];
                     const newReqDue = patch['payments.requirementsDue'] || [];
+                    // Was the account past initial onboarding before this event? During
+                    // first-time onboarding requirements are EXPECTED to be due — only
+                    // an account that already submitted (or was active) should be told
+                    // "Stripe needs more from you" when requirements (re)appear.
+                    const wasPastOnboarding = existing.detailsSubmitted === true || prevChargesEnabled;
                     const changes = [];
+                    if (!prevChargesEnabled && newChargesEnabled) {
+                        changes.push('Ditt konto är verifierat — din butik kan nu ta emot betalningar och pengarna betalas ut till ditt bankkonto.');
+                    }
                     if (prevPayoutsEnabled && !newPayoutsEnabled) {
                         changes.push('Utbetalningar har pausats för ditt konto.');
                     }
                     if (newStatus === 'restricted' && existing.connectStatus !== 'restricted') {
                         changes.push('Ditt konto har begränsats och kräver åtgärd.');
                     }
-                    if (prevReqDue.length === 0 && newReqDue.length > 0) {
+                    if (prevReqDue.length === 0 && newReqDue.length > 0 && wasPastOnboarding) {
                         changes.push('Stripe behöver ytterligare uppgifter från dig för att fortsätta.');
                     }
                     if (changes.length > 0) {
