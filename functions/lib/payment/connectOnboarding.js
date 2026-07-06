@@ -44,6 +44,23 @@ function getStripe() {
         throw new https_1.HttpsError('failed-precondition', 'Stripe is not configured');
     return new stripe_1.default(key, { apiVersion: '2023-10-16' });
 }
+// Surface Stripe failures as HttpsError so the admin UI shows the real reason
+// instead of a bare "INTERNAL" (e.g. the live platform-profile-incomplete
+// error). Auth/shop HttpsErrors pass through untouched.
+function toHttpsError(e) {
+    if (e instanceof https_1.HttpsError)
+        return e;
+    const msg = e?.raw?.message || e?.message || 'Okänt fel mot Stripe';
+    return new https_1.HttpsError('failed-precondition', `Stripe: ${msg}`);
+}
+async function stripeCall(fn) {
+    try {
+        return await fn();
+    }
+    catch (e) {
+        throw toHttpsError(e);
+    }
+}
 // Map a Stripe Account to our connectStatus enum.
 function deriveStatus(acct) {
     if (acct.charges_enabled)
@@ -102,7 +119,7 @@ exports.createConnectAccount = (0, https_1.onCall)(COMMON, async (request) => {
     let accountId = pay.stripeAccountId || '';
     if (!accountId) {
         const ownerEmail = data.ownerEmail || data.storeIdentity?.contactEmail || undefined;
-        const account = await stripe.accounts.create({
+        const account = await stripeCall(() => stripe.accounts.create({
             type: 'express',
             country: 'SE',
             default_currency: 'sek',
@@ -112,7 +129,7 @@ exports.createConnectAccount = (0, https_1.onCall)(COMMON, async (request) => {
                 transfers: { requested: true },
             },
             metadata: { shopId },
-        });
+        }));
         accountId = account.id;
         await database_1.db.collection('shops').doc(shopId).set({
             payments: {
@@ -124,11 +141,11 @@ exports.createConnectAccount = (0, https_1.onCall)(COMMON, async (request) => {
             },
         }, { merge: true });
     }
-    const link = await stripe.accountLinks.create({
+    const link = await stripeCall(() => stripe.accountLinks.create({
         account: accountId,
         ...accountLinkUrls(),
         type: 'account_onboarding',
-    });
+    }));
     return { url: link.url, accountId };
 });
 // ── createConnectAccountLink ────────────────────────────────────────────────
@@ -141,11 +158,11 @@ exports.createConnectAccountLink = (0, https_1.onCall)(COMMON, async (request) =
         throw new https_1.HttpsError('failed-precondition', 'No connected account yet — start onboarding first');
     }
     const stripe = getStripe();
-    const link = await stripe.accountLinks.create({
+    const link = await stripeCall(() => stripe.accountLinks.create({
         account: accountId,
         ...accountLinkUrls(),
         type: 'account_onboarding',
-    });
+    }));
     return { url: link.url };
 });
 // ── refreshConnectStatus ────────────────────────────────────────────────────
@@ -159,7 +176,7 @@ exports.refreshConnectStatus = (0, https_1.onCall)(COMMON, async (request) => {
         return { connectStatus: 'none', chargesEnabled: false };
     }
     const stripe = getStripe();
-    const acct = await stripe.accounts.retrieve(pay.stripeAccountId);
+    const acct = await stripeCall(() => stripe.accounts.retrieve(pay.stripeAccountId));
     const patch = statusPatch(acct, pay);
     // Dotted field-paths update the nested payments.* keys in place (the
     // payments map already exists because createConnectAccount seeded it).
@@ -181,7 +198,7 @@ exports.createConnectLoginLink = (0, https_1.onCall)(COMMON, async (request) => 
         throw new https_1.HttpsError('failed-precondition', 'The connected account is not active yet');
     }
     const stripe = getStripe();
-    const link = await stripe.accounts.createLoginLink(pay.stripeAccountId);
+    const link = await stripeCall(() => stripe.accounts.createLoginLink(pay.stripeAccountId));
     return { url: link.url };
 });
 exports.setShopCommission = (0, https_1.onCall)({ region: 'us-central1', memory: '256MiB', timeoutSeconds: 30, cors: app_urls_1.appUrls.CORS_ORIGINS }, async (request) => {
@@ -212,7 +229,7 @@ exports.getConnectBalance = (0, https_1.onCall)(COMMON, async (request) => {
     }
     const stripe = getStripe();
     // Balance OF THE CONNECTED ACCOUNT — addressed via the stripeAccount option.
-    const balance = await stripe.balance.retrieve({ stripeAccount: pay.stripeAccountId });
+    const balance = await stripeCall(() => stripe.balance.retrieve({ stripeAccount: pay.stripeAccountId }));
     // Report in the shop's currency. All Express accounts are created
     // country:'SE' default_currency:'sek', so this matches the account's balance
     // currency today; if multi-currency accounts arrive, summarize per currency.
@@ -250,9 +267,9 @@ exports.setConnectPayoutDelay = (0, https_1.onCall)(COMMON, async (request) => {
     const stripe = getStripe();
     // Set the per-account payout schedule delay. interval stays the account
     // default (daily); we only adjust the hold window.
-    await stripe.accounts.update(pay.stripeAccountId, {
+    await stripeCall(() => stripe.accounts.update(pay.stripeAccountId, {
         settings: { payouts: { schedule: { delay_days: delayDays } } },
-    });
+    }));
     // Persist for display (the source of truth is Stripe; this mirrors it).
     await database_1.db.collection('shops').doc(shopId).update({
         'payments.payoutDelayDays': isMinimum ? 'minimum' : delayDays,
