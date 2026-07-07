@@ -30,8 +30,8 @@
 import React, { useMemo, useRef, useState } from 'react';
 import TemplateBackground, { templateViewBox } from './TemplateBackground';
 import {
-  MIN_ART_WIDTH_MM, SNAP_SCREEN_PX,
-  pxPerMm, isComposable, maxWidthAtMm,
+  MIN_ART_WIDTH_MM, SNAP_SCREEN_PX, MAX_ROTATION_DEG,
+  pxPerMm, isComposable, maxWidthAtMm, maxWidthForRotationMm, clampRotationDeg,
   clampPlacement, defaultPlacement, snapPlacement, isCenteredX,
   placementToViewBoxRect, rectToPercent,
   formatCm, placementReadout, dpiVerdict,
@@ -87,6 +87,46 @@ const CmField = ({ label, mm, onCommit, disabled = false }) => {
         className="w-16 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2 py-1 text-right text-[12px] text-admin-text focus:border-admin-info-dot focus:outline-none disabled:opacity-50"
       />
       <span className="text-admin-text-faint">cm</span>
+    </label>
+  );
+};
+
+// Rotation input (degrees, small adjustments): same commit semantics as CmField
+// (local text while typing, commit on blur/Enter only if actually edited).
+const DegField = ({ label, deg, onCommit, disabled = false }) => {
+  const fmtDeg = (v) => {
+    const s = (Math.round((v || 0) * 10) / 10).toFixed(1).replace('.', ',');
+    return s.endsWith(',0') ? s.slice(0, -2) : s;
+  };
+  const committed = fmtDeg(deg);
+  const [text, setText] = useState(committed);
+  const [editing, setEditing] = useState(false);
+  const focusTextRef = useRef(committed);
+  const shown = editing ? text : committed;
+
+  const commit = () => {
+    setEditing(false);
+    if (text === focusTextRef.current) return;
+    const n = Number(String(text).trim().replace(',', '.'));
+    if (Number.isFinite(n) && fmtDeg(clampRotationDeg(n)) !== committed) onCommit(clampRotationDeg(n));
+  };
+
+  return (
+    <label className="flex items-center gap-1.5 text-[12px] text-admin-text-muted">
+      {label}
+      <input
+        type="text"
+        inputMode="decimal"
+        disabled={disabled}
+        value={shown}
+        title={`−${MAX_ROTATION_DEG}° till ${MAX_ROTATION_DEG}°`}
+        onFocus={(e) => { setText(committed); focusTextRef.current = committed; setEditing(true); e.target.select(); }}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+        className="w-14 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2 py-1 text-right text-[12px] text-admin-text focus:border-admin-info-dot focus:outline-none disabled:opacity-50"
+      />
+      <span className="text-admin-text-faint">°</span>
     </label>
   );
 };
@@ -165,8 +205,12 @@ const CompositorCanvas = ({
     } else {
       // Resize from the bottom-right handle: top-left stays ANCHORED (the artwork
       // never slides during a resize), so the max width is bounded by the space
-      // remaining from the anchor — not the whole area.
-      const wCap = maxWidthAtMm(d.start, template, slot, artwork);
+      // remaining from the anchor — not the whole area. A rotated motif is also
+      // capped by its ROTATED bounding box fitting the area (clamp fixes residue).
+      const wCap = Math.min(
+        maxWidthAtMm(d.start, template, slot, artwork),
+        maxWidthForRotationMm(template, slot, artwork, d.start.rotationDeg || 0)
+      );
       const wMm = Math.min(Math.max(d.start.wMm + dxMm, Math.min(MIN_ART_WIDTH_MM, wCap)), wCap);
       onPlacementChange({ ...d.start, wMm });
     }
@@ -293,7 +337,11 @@ const CompositorCanvas = ({
             className={`absolute touch-none outline-none ring-admin-info-dot/60 focus-visible:ring-2 ${
               dragging && dragUi.mode === 'move' ? 'cursor-grabbing' : 'cursor-grab'
             }`}
-            style={rectToPercent(artVb, viewBox)}
+            style={{
+              ...rectToPercent(artVb, viewBox),
+              transform: `rotate(${effective.rotationDeg || 0}deg)`,
+              transformOrigin: 'center',
+            }}
             onPointerDown={(e) => startDrag(e, 'move')}
             onPointerMove={onPointerMove}
             onPointerUp={endDrag}
@@ -350,6 +398,11 @@ const CompositorCanvas = ({
               label="Från vänster"
               mm={effective.xMm}
               onCommit={(mm) => commitField({ xMm: mm })}
+            />
+            <DegField
+              label="Rotation"
+              deg={effective.rotationDeg || 0}
+              onCommit={(deg) => commitField({ rotationDeg: deg })}
             />
             <button
               type="button"

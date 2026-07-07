@@ -21,6 +21,22 @@ export const MIN_ART_WIDTH_MM = 20;
 // so snapping "feels" identical whatever size the canvas renders at.
 export const SNAP_SCREEN_PX = 6;
 
+// Rotation is a SMALL-ADJUSTMENT knob (chest prints don't spin) — hard cap.
+export const MAX_ROTATION_DEG = 30;
+
+const rad = (deg) => (deg * Math.PI) / 180;
+
+/** Axis-aligned bounding box of a w×h rect rotated deg° around its centre. */
+const rotatedAabb = (w, h, deg) => {
+  const c = Math.abs(Math.cos(rad(deg)));
+  const s = Math.abs(Math.sin(rad(deg)));
+  return { w: w * c + h * s, h: w * s + h * c };
+};
+
+/** Clamp a rotation to the allowed small-adjustment range (0 for nullish). */
+export const clampRotationDeg = (deg) =>
+  Math.max(-MAX_ROTATION_DEG, Math.min(MAX_ROTATION_DEG, Number(deg) || 0));
+
 /** Artwork aspect ratio (height/width) from its source pixels, or null if unknown
  *  (PDF/SVG/TIFF originals have sourceWidthPx/sourceHeightPx = null). */
 export const artworkAspect = (artwork) => {
@@ -51,14 +67,22 @@ export const placementHeightMm = (placement, artwork) => {
   return a && placement ? placement.wMm * a : 0;
 };
 
-/** The widest this artwork can be placed ANYWHERE in the slot's print area (mm):
- *  limited by area width or by height via the aspect ratio. */
-export const maxWidthMm = (template, slot, artwork) => {
+/** The widest this artwork can be placed ANYWHERE in the slot's print area at a
+ *  given rotation (mm): the ROTATED bounding box must fit the area. At 0° this
+ *  is the classic min(areaW, areaH/aspect). */
+export const maxWidthForRotationMm = (template, slot, artwork, rotationDeg = 0) => {
   const mm = template?.printAreaMm?.[slot];
   const a = artworkAspect(artwork);
   if (!mm || !a) return 0;
-  return Math.min(mm.w, mm.h / a);
+  const c = Math.abs(Math.cos(rad(rotationDeg)));
+  const s = Math.abs(Math.sin(rad(rotationDeg)));
+  return Math.min(mm.w / (c + a * s), mm.h / (s + a * c));
 };
+
+/** The widest this artwork can be placed ANYWHERE in the slot's print area (mm),
+ *  unrotated: limited by area width or by height via the aspect ratio. */
+export const maxWidthMm = (template, slot, artwork) =>
+  maxWidthForRotationMm(template, slot, artwork, 0);
 
 /** The widest the artwork can grow WITHOUT moving, anchored at its current
  *  top-left (used while resizing so the artwork never slides during a resize). */
@@ -73,22 +97,28 @@ const clampNum = (v, lo, hi) => Math.min(Math.max(v, lo), hi < lo ? lo : hi);
 
 /**
  * Clamp a placement fully inside the slot's print area (the safe zone — artwork
- * may never cross it; that is the "inga tryck-överraskningar" contract). Width is
- * clamped first (against the area-wide max), then position with the final size.
- * Corner case: if the area is so small that MIN_ART_WIDTH_MM doesn't fit, the max
- * wins over the min (never produce an invalid oversized placement).
+ * may never cross it; that is the "inga tryck-överraskningar" contract). Rotation
+ * is clamped first, then width (against the rotation-aware max — the ROTATED
+ * bounding box must fit), then position with the rotated box's margins: a tilted
+ * motif's corners can never poke outside the area. Corner case: if the area is so
+ * small that MIN_ART_WIDTH_MM doesn't fit, the max wins over the min.
  */
 export const clampPlacement = (placement, template, slot, artwork) => {
   const mm = template?.printAreaMm?.[slot];
   const a = artworkAspect(artwork);
   if (!mm || !a || !placement) return placement;
-  const wMax = maxWidthMm(template, slot, artwork);
+  const rotationDeg = clampRotationDeg(placement.rotationDeg);
+  const wMax = maxWidthForRotationMm(template, slot, artwork, rotationDeg);
   const wMm = clampNum(placement.wMm, Math.min(MIN_ART_WIDTH_MM, wMax), wMax);
   const hMm = wMm * a;
+  const aabb = rotatedAabb(wMm, hMm, rotationDeg);
+  const marginX = (aabb.w - wMm) / 2;
+  const marginY = (aabb.h - hMm) / 2;
   return {
-    xMm: clampNum(placement.xMm, 0, mm.w - wMm),
-    yMm: clampNum(placement.yMm, 0, mm.h - hMm),
+    xMm: clampNum(placement.xMm, marginX, mm.w - wMm - marginX),
+    yMm: clampNum(placement.yMm, marginY, mm.h - hMm - marginY),
     wMm,
+    rotationDeg,
   };
 };
 
@@ -111,6 +141,7 @@ export const defaultPlacement = (template, slot, artwork) => {
     xMm: (mm.w - wMm) / 2,
     yMm: Math.min(mm.h * 0.1, mm.h - hMm),
     wMm,
+    rotationDeg: 0,
   };
 };
 
@@ -139,10 +170,11 @@ export const snapPlacement = (placement, template, slot, artwork, thresholdMm) =
   };
 };
 
-/** A placement's rect in the garment's viewBox px (mm → px via the template's
- *  px↔mm map, offset by the print-area origin). Shared by the interactive canvas,
- *  the colourway-strip thumbnails and the mockup rasterizer — one source of truth
- *  for "where does the artwork sit on the garment". Null when unresolvable. */
+/** A placement's UNROTATED rect in the garment's viewBox px (mm → px via the
+ *  template's px↔mm map, offset by the print-area origin). Renderers apply
+ *  rotationDeg around this rect's CENTRE themselves (CSS transform / ctx.rotate /
+ *  sprite.rotation). Shared by the interactive canvas, the strip thumbnails and
+ *  the rasterizers — one source of truth. Null when unresolvable. */
 export const placementToViewBoxRect = (placement, template, slot, artwork) => {
   const rect = template?.printAreas?.[slot];
   const ppm = pxPerMm(template, slot);
@@ -207,6 +239,14 @@ export const placementReadout = (placement, template, slot, artwork) => {
   const parts = [`${formatCm(placement.yMm)} cm uppifrån`];
   parts.push(isCenteredX(placement, template, slot) ? 'centrerad' : `${formatCm(placement.xMm)} cm från vänster`);
   parts.push(formatPlacementSizeCm(placement, artwork));
+  // Rotation is part of the PRINT INSTRUCTION: this readout is what the printer
+  // receives via the mapping — a rotated mockup without "roterad X°" would print
+  // straight (the print file itself is the unrotated original).
+  const deg = placement.rotationDeg || 0;
+  if (Math.abs(deg) >= 0.25) {
+    const s = (Math.round(deg * 10) / 10).toFixed(1).replace('.', ',');
+    parts.push(`roterad ${s.endsWith(',0') ? s.slice(0, -2) : s}°`);
+  }
   return parts.join(' · ');
 };
 

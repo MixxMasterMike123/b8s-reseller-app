@@ -43,7 +43,11 @@ const MiniMockup = ({ template, slot, colorway, artwork, placement }) => {
           alt=""
           draggable={false}
           className="pointer-events-none absolute object-fill"
-          style={rectToPercent(artRect, viewBox)}
+          style={{
+            ...rectToPercent(artRect, viewBox),
+            transform: `rotate(${placement?.rotationDeg || 0}deg)`,
+            transformOrigin: 'center',
+          }}
         />
       )}
     </div>

@@ -84,13 +84,25 @@ export const renderMockup = async ({
     );
     if (p) {
       const artImg = await loadImage(artwork.previewUrl);
-      ctx.drawImage(
-        artImg,
-        (areaRect.x + p.xMm * ppm.x) * scale,
-        (areaRect.y + p.yMm * ppm.y) * scale,
-        p.wMm * ppm.x * scale,
-        placementHeightMm(p, artwork) * ppm.y * scale
-      );
+      const x = (areaRect.x + p.xMm * ppm.x) * scale;
+      const y = (areaRect.y + p.yMm * ppm.y) * scale;
+      const w = p.wMm * ppm.x * scale;
+      const h = placementHeightMm(p, artwork) * ppm.y * scale;
+      // Clip to the print area (belt-and-braces with the clamp), then rotate
+      // around the artwork's centre — same semantics as the canvas + 3D view.
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(areaRect.x * scale, areaRect.y * scale, areaRect.w * scale, areaRect.h * scale);
+      ctx.clip();
+      const deg = p.rotationDeg || 0;
+      if (deg) {
+        ctx.translate(x + w / 2, y + h / 2);
+        ctx.rotate((deg * Math.PI) / 180);
+        ctx.drawImage(artImg, -w / 2, -h / 2, w, h);
+      } else {
+        ctx.drawImage(artImg, x, y, w, h);
+      }
+      ctx.restore();
     }
   }
 
