@@ -653,15 +653,12 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
         />
 
         {/* 3D-vy (beta): photo-displacement mockup with the FRONT slot's resolved
-            artwork + live placement. Its sliders edit the SAME front placement as
-            the canvas (two-way). WebGL-gated; pixi loads lazily on open. */}
+            artwork. DECOUPLED from the print placement — the 3D view composes the
+            PRODUCT IMAGE only (never a print instruction); the canvas placement
+            only seeds its starting position. WebGL-gated; pixi lazy-loads. */}
         <Studio3DSection
           artwork={resolveArtwork('front', colorwayId)}
           placement={placements.front || null}
-          onPlacementChange={(p) => {
-            setPlacements((prev) => ({ ...prev, front: p }));
-            resetReviews(); // same rule as canvas edits: composite changed
-          }}
         />
 
         {/* Colourway strip: composited per-colour previews + artwork override. */}

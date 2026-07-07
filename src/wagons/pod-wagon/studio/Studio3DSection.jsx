@@ -40,13 +40,17 @@ const Slider = ({ label, min, max, step, value, onChange, fmt = (v) => v }) => (
 
 /**
  * Props:
- *   artwork            — the artwork doc to composite (front slot's resolved artwork)
- *   placement          — the FRONT slot's placement {xMm,yMm,wMm,rotationDeg} or null
- *   onPlacementChange  — (placement) => void; the placement sliders here edit the
- *                        SAME front placement the flat canvas uses (two-way sync —
- *                        the cm readout/print instruction always matches the 3D view)
+ *   artwork    — the artwork doc to composite (front slot's resolved artwork)
+ *   placement  — the FRONT slot's print placement, used ONLY as the initial seed
+ *
+ * DELIBERATELY DECOUPLED from the canvas placement: the flat canvas placement is
+ * the PRINT INSTRUCTION (it reaches the printer via the mapping readout); the 3D
+ * view is PRODUCT-IMAGE composition only — where the motif looks right on the
+ * posed model photo, which can legitimately differ from the physical print
+ * placement. Its sliders therefore edit their own local state and never touch
+ * the print placement (and never reset the colourway review gate).
  */
-const Studio3DSection = ({ artwork = null, placement = null, onPlacementChange = () => {} }) => {
+const Studio3DSection = ({ artwork = null, placement = null }) => {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const previewRef = useRef(null);
@@ -61,14 +65,17 @@ const Studio3DSection = ({ artwork = null, placement = null, onPlacementChange =
     blend: garment?.blend ?? 'multiply',
   }));
 
+  // The 3D view's OWN placement (product-image composition). Seeded once from
+  // the print placement (or a centred default), then fully independent.
+  const [p3d, setP3d] = useState(null);
+
   if (!garment) return null;
 
-  // No studio placement yet (untouched slot) → the same centred default the flat
-  // canvas shows, built against the 3D garment's mm space (identical 300×400).
   const mm = garment.printAreaMm?.front;
-  const effectivePlacement = placement || (mm ? {
+  const effectivePlacement = p3d || placement || (mm ? {
     xMm: (mm.w - mm.w * 0.7) / 2, yMm: mm.h * 0.1, wMm: mm.w * 0.7, rotationDeg: 0,
   } : null);
+  const patchP3d = (patch) => setP3d({ ...effectivePlacement, ...patch });
 
   const downloadPNG = async () => {
     setBusy(true);
@@ -129,24 +136,24 @@ const Studio3DSection = ({ artwork = null, placement = null, onPlacementChange =
                   className="max-w-[420px]"
                 />
               </Suspense>
-              {/* Placement sliders — SHARED state with the flat canvas (front slot).
-                  Then the beta tuning knobs: displacement/opacity/blend, live. */}
+              {/* Placement sliders — the 3D view's OWN composition (product image
+                  only, never a print instruction). Then the tuning knobs. */}
               <div className="mt-3 flex max-w-[420px] flex-col gap-2">
                 <Slider label="Bredd (cm)" min={5} max={30} step={0.5}
                   value={effectivePlacement.wMm / 10}
-                  onChange={(v) => onPlacementChange({ ...effectivePlacement, wMm: v * 10 })}
+                  onChange={(v) => patchP3d({ wMm: v * 10 })}
                   fmt={(v) => `${v} cm`} />
                 <Slider label="Vänster (cm)" min={0} max={30} step={0.5}
                   value={effectivePlacement.xMm / 10}
-                  onChange={(v) => onPlacementChange({ ...effectivePlacement, xMm: v * 10 })}
+                  onChange={(v) => patchP3d({ xMm: v * 10 })}
                   fmt={(v) => `${v} cm`} />
                 <Slider label="Uppifrån (cm)" min={0} max={40} step={0.5}
                   value={effectivePlacement.yMm / 10}
-                  onChange={(v) => onPlacementChange({ ...effectivePlacement, yMm: v * 10 })}
+                  onChange={(v) => patchP3d({ yMm: v * 10 })}
                   fmt={(v) => `${v} cm`} />
                 <Slider label="Rotation" min={-30} max={30} step={0.5}
                   value={effectivePlacement.rotationDeg || 0}
-                  onChange={(v) => onPlacementChange({ ...effectivePlacement, rotationDeg: v })}
+                  onChange={(v) => patchP3d({ rotationDeg: v })}
                   fmt={(v) => `${v}°`} />
                 <div className="my-1 border-t border-admin-border-soft" />
                 <Slider label="Displacement" min={0} max={100} step={1}
