@@ -1,5 +1,5 @@
-// mockupRender.js — rasterize a Design Studio mockup: garment SVG flat + placed
-// artwork → <canvas> → WebP (or PNG) blob.
+// mockupRender.js — rasterize a Design Studio mockup: garment background (SVG flat
+// OR per-colourway photo) + placed artwork → <canvas> → WebP (or PNG) blob.
 //
 // Browser-only, NO Firebase imports — the storage upload lives in mockupUpload.js
 // so this renderer stays usable from the dev harness and any future export path
@@ -7,19 +7,16 @@
 // placementMath the interactive canvas uses, so what the seller saw is what gets
 // rasterized — the "inga tryck-överraskningar" contract extends to the export.
 //
-// The SVG flat is a React component; renderToStaticMarkup turns it into markup
-// (hooks like useMemo run fine in static rendering), which draws onto the canvas
-// via an <img> with an SVG data URL. Explicit width/height attributes are set on
-// the root <svg> — Safari rasterizes dimensionless SVG images at 0×0 otherwise.
-import React from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { GARMENT_FLATS, GARMENT_VIEWBOX } from './garments';
+// The background comes from backgroundImageSource (templateBackground): a photo url
+// for photo templates, or the SVG flat as a data URL for flat templates. Explicit
+// width/height on the flat's root <svg> keep Safari from rasterizing it at 0×0.
+import { templateViewBox, backgroundImageSource } from './TemplateBackground';
 import {
   pxPerMm, isComposable, placementHeightMm, clampPlacement, defaultPlacement,
 } from './placementMath';
 
-// Export resolution: viewBox (800×900) × 2 = 1600×1800 px. Product-image class,
-// not print class — the print file is the artwork ORIGINAL, decoupled by design.
+// Export resolution: viewBox × 2 (e.g. flat 800×900 → 1600×1800 px). Product-image
+// class, not print class — the print file is the artwork ORIGINAL, decoupled by design.
 export const MOCKUP_SCALE = 2;
 
 // Load an image for canvas drawing. crossOrigin=anonymous so Firebase Storage
@@ -31,15 +28,6 @@ const loadImage = (src) => new Promise((resolve, reject) => {
   img.onerror = () => reject(new Error('Kunde inte läsa bilden för mockupen.'));
   img.src = src;
 });
-
-const flatToDataUrl = (garment, hex, widthPx, heightPx) => {
-  const Flat = GARMENT_FLATS[garment];
-  if (!Flat) throw new Error(`Okänt plagg: ${garment}`);
-  const markup = renderToStaticMarkup(
-    React.createElement(Flat, { color: hex, width: widthPx, height: heightPx })
-  );
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`;
-};
 
 // canvas.toBlob with graceful format fallback: Safari ignores image/webp and
 // returns PNG — we report the ACTUAL type back so filenames/paths stay truthful.
@@ -54,18 +42,22 @@ const canvasToBlob = (canvas, type, quality) => new Promise((resolve, reject) =>
  * renderMockup({ template, colorway, slot, artwork, placement, … }) →
  *   Promise<{ blob, type: 'image/webp'|'image/png', width, height }>
  *
- * One mockup = one garment view: the flat in the colourway's hex with the
- * artwork drawn at its placement (mm → viewBox px → export px). placement may be
- * null → the slot's defaultPlacement (same fallback the canvas shows). artwork
- * may be null / non-composable → garment-only mockup (still valid, e.g. a
- * colourway with no print).
+ * One mockup = one garment view: the garment background (flat in the colourway's
+ * hex, or the colourway's photo) with the artwork drawn at its placement (mm →
+ * viewBox px → export px). placement may be null → the slot's defaultPlacement
+ * (same fallback the canvas shows). artwork may be null / non-composable →
+ * garment-only mockup (still valid, e.g. a colourway with no print).
+ *
+ * For a PHOTO template whose colourway has NO photo, backgroundImageSource rejects
+ * (in Swedish) — the exporter can't fabricate a backdrop, so we surface it (the
+ * generation loop in DesignStudio already reports errors).
  */
 export const renderMockup = async ({
   template, colorway, slot = 'front', artwork = null, placement = null,
   scale = MOCKUP_SCALE, type = 'image/webp', quality = 0.92, background = '#ffffff',
 }) => {
-  const viewBox = GARMENT_VIEWBOX[template.garment];
-  if (!viewBox) throw new Error(`Okänt plagg: ${template.garment}`);
+  const viewBox = templateViewBox(template);
+  if (!viewBox) throw new Error('Okänd mall — kan inte generera mockup.');
   const W = Math.round(viewBox.w * scale);
   const H = Math.round(viewBox.h * scale);
 
@@ -79,8 +71,9 @@ export const renderMockup = async ({
   ctx.fillStyle = background;
   ctx.fillRect(0, 0, W, H);
 
-  const flatImg = await loadImage(flatToDataUrl(template.garment, colorway?.hex || '#ffffff', W, H));
-  ctx.drawImage(flatImg, 0, 0, W, H);
+  const bgSrc = await backgroundImageSource(template, colorway, { widthPx: W, heightPx: H });
+  const bgImg = await loadImage(bgSrc);
+  ctx.drawImage(bgImg, 0, 0, W, H);
 
   const areaRect = template.printAreas?.[slot];
   const ppm = pxPerMm(template, slot);

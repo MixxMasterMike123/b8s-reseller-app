@@ -28,7 +28,7 @@
 //   • onPlacementChange — (placement) => void on every move/resize/nudge.
 //   • onResult   — reserved for slice 3 (mockup export calls back here). Unused.
 import React, { useMemo, useRef, useState } from 'react';
-import { GARMENT_FLATS, GARMENT_VIEWBOX } from './garments';
+import TemplateBackground, { templateViewBox } from './TemplateBackground';
 import {
   MIN_ART_WIDTH_MM, SNAP_SCREEN_PX,
   pxPerMm, isComposable, maxWidthAtMm,
@@ -100,8 +100,7 @@ const CompositorCanvas = ({
   const dragRef = useRef(null);
   const [dragUi, setDragUi] = useState(null); // { mode, snappedX, snappedY } | null
 
-  const Flat = template ? GARMENT_FLATS[template.garment] : null;
-  const viewBox = template ? GARMENT_VIEWBOX[template.garment] : null;
+  const viewBox = templateViewBox(template);
   const areaRect = template?.printAreas?.[slot] || null;
   const areaMm = template?.printAreaMm?.[slot] || null;
   const ppm = template ? pxPerMm(template, slot) : null;
@@ -212,7 +211,7 @@ const CompositorCanvas = ({
   };
 
   // ── render ─────────────────────────────────────────────────────────────────
-  if (!template || !Flat || !viewBox) {
+  if (!template || !viewBox) {
     return (
       <div className="grid aspect-[8/9] w-full max-w-[520px] place-items-center rounded-[var(--radius-admin)] border border-dashed border-admin-border bg-admin-surface-2 text-[13px] text-admin-text-muted">
         Välj en mall för att förhandsgranska.
@@ -228,8 +227,9 @@ const CompositorCanvas = ({
   return (
     <div>
       <div ref={wrapRef} className="relative mx-auto w-full max-w-[520px] select-none">
-        {/* Garment flat. */}
-        <Flat color={colorway?.hex || '#ffffff'} className="block h-auto w-full" />
+        {/* Garment background — SVG flat or per-colourway photo (placeholder when
+            a photo colourway has no photo yet; artwork placement still works). */}
+        <TemplateBackground template={template} colorway={colorway} />
 
         {/* Print area (safe zone) with its physical size labelled in cm. */}
         {areaRect && (

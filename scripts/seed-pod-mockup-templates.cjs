@@ -3,10 +3,12 @@
  * (settings/podMockupTemplates).
  *
  * The Design Studio (POD add-on, Mode A) composes validated artwork onto garment
- * flats. The templates below describe each garment: which SVG flat renders it, its
- * selectable colourways, and the PRINT-AREA GEOMETRY (in the SVG's 800×900 viewBox
- * pixels) together with the physical print size in millimetres. The compositor uses
- * the px↔mm pair to compute effective DPI per placement.
+ * backgrounds. A template is EITHER a FLAT (SVG flat via `garment`; print-area px in
+ * the SVG's 800×900 viewBox) OR a PHOTO (real garment photo per colourway via
+ * `photo`; print-area px in the photo's own pixel space) — see the commented photo
+ * example at the end of TEMPLATES. Each carries its selectable colourways + the
+ * PRINT-AREA GEOMETRY together with the physical print size in millimetres. The
+ * compositor uses the px↔mm pair to compute effective DPI per placement.
  *
  * ⚠️ These are PROVISIONAL, generic garment flats (provisional:true) — interim
  * templates until the real print shop delivers photographed garments + exact
@@ -100,6 +102,49 @@ const TEMPLATES = [
       front: { w: 300, h: 400 },
     },
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PHOTO TEMPLATE — real photographed blank garment per colourway (later: AI-
+  // generated blanks). Example only; NO photos exist yet, so it stays COMMENTED
+  // OUT. A photo template has `photo` INSTEAD OF `garment`; the compositor swaps
+  // only the background layer — placement math is unchanged.
+  //
+  // CALIBRATION (do this ONCE per photographed garment):
+  //   1. Photograph the blank garment flat/front-on, SAME framing for every
+  //      colourway, and upload each to Storage → note the download URL per colour.
+  //      photo.w/h = the pixel dimensions of those photos (all colours share them);
+  //      this IS the template's coordinate space.
+  //   2. Open ONE photo in an image editor. Measure the rectangle where the print
+  //      goes (chest print area) in PHOTO PIXELS: x,y of its top-left + w,h. That
+  //      is printAreas.front — in photo coords, NOT the 800×900 SVG viewBox.
+  //   3. printAreaMm.front = the SAME rectangle's PHYSICAL size in mm (the tryckyta
+  //      the printer prints, ↔ podProfiles apparel_dtg print_area_mm). The px rect's
+  //      w:h aspect MUST match the mm w:h aspect (e.g. 300×400 mm = 3:4) so preview
+  //      scale ↔ physical scale stay consistent, or the artwork previews skewed.
+  //   4. Every colourway needs its own photo url. A colourway without one renders a
+  //      "Foto saknas" placeholder in the studio and mockup generation REJECTS it.
+  // /*
+  // {
+  //   id: 'tee_photo_stanley',
+  //   label: 'T-shirt (foto)',
+  //   profileId: 'apparel_dtg',
+  //   photo: {
+  //     w: 2000, h: 2250,                 // photo pixel dims = coordinate space
+  //     urls: {
+  //       white: 'https://firebasestorage.googleapis.com/…/tee_white.jpg',
+  //       black: 'https://firebasestorage.googleapis.com/…/tee_black.jpg',
+  //       // navy, heather, … one url per colourway id below
+  //     },
+  //   },
+  //   colorways: APPAREL_COLORWAYS,       // hex still drives the colour-dot chips
+  //   printAreas: {                       // px rect IN PHOTO COORDS (calibrated)
+  //     front: { x: 700, y: 560, w: 600, h: 800 },  // 600×800 = 3:4 ↔ 300×400 mm
+  //   },
+  //   printAreaMm: {
+  //     front: { w: 300, h: 400 },
+  //   },
+  // },
+  // */
 ];
 
 async function main() {

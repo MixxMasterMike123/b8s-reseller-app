@@ -12,18 +12,18 @@
 //
 // Pure presentational: state (active colourway, overrides) lives in DesignStudio.
 import React from 'react';
-import { GARMENT_FLATS, GARMENT_VIEWBOX } from './garments';
+import TemplateBackground, { templateViewBox } from './TemplateBackground';
 import {
   isComposable, clampPlacement, defaultPlacement,
   placementToViewBoxRect, rectToPercent,
 } from './placementMath';
 
-// Composited mini-preview: flat + artwork img at the placement (same math as the
-// big canvas — placementToViewBoxRect is the shared source of truth).
+// Composited mini-preview: background (flat or photo) + artwork img at the
+// placement (same math as the big canvas — placementToViewBoxRect is the shared
+// source of truth).
 const MiniMockup = ({ template, slot, colorway, artwork, placement }) => {
-  const Flat = GARMENT_FLATS[template.garment];
-  const viewBox = GARMENT_VIEWBOX[template.garment];
-  if (!Flat || !viewBox) return <div className="h-full w-full bg-admin-surface-2" />;
+  const viewBox = templateViewBox(template);
+  if (!viewBox) return <div className="h-full w-full bg-admin-surface-2" />;
 
   let artRect = null;
   if (artwork && isComposable(artwork)) {
@@ -36,7 +36,7 @@ const MiniMockup = ({ template, slot, colorway, artwork, placement }) => {
 
   return (
     <div className="relative w-full">
-      <Flat color={colorway.hex} className="block h-auto w-full" />
+      <TemplateBackground template={template} colorway={colorway} />
       {artRect && (
         <img
           src={artwork.previewUrl}

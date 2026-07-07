@@ -36,10 +36,10 @@ import {
 } from '../../../config/podMockupTemplates';
 import { loadPodProfiles, getProfileById } from '../../../config/podProfiles';
 import { tierTone, tierLabel } from '../components/podTier';
-import { GARMENT_FLATS } from './garments';
 import { isComposable } from './placementMath';
 import { renderMockup } from './mockupRender';
 import { uploadMockup } from './mockupUpload';
+import TemplateBackground from './TemplateBackground';
 import CompositorCanvas from './CompositorCanvas';
 import ColorwayStrip from './ColorwayStrip';
 import MockupPanel from './MockupPanel';
@@ -48,12 +48,11 @@ import MockupPanel from './MockupPanel';
 // unselectable. PASS + WARN are selectable (WARN is advisory).
 const isSelectableArtwork = (art) => (art?.validation?.tier || 'PASS') !== 'FAIL';
 
-// Small SVG thumbnail of a garment flat in a given colour (for the template cards).
-const GarmentThumb = ({ garment, hex }) => {
-  const Flat = GARMENT_FLATS[garment];
-  if (!Flat) return <div className="h-full w-full bg-admin-surface-2" />;
-  return <Flat color={hex} className="block h-full w-full" />;
-};
+// Thumbnail of a template in its first colourway (for the picker cards): SVG flat
+// or the colourway's garment photo, via the shared background layer.
+const GarmentThumb = ({ template, colorway }) => (
+  <TemplateBackground template={template} colorway={colorway} />
+);
 
 const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
   const [templates, setTemplates] = useState([]);
@@ -201,15 +200,26 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
     const next = [];
     const urls = [];
     let uploadFailures = 0;
+    let renderSkips = 0;
     try {
       for (const cw of selectedTemplate.colorways || []) {
         for (const s of designedSlots(selectedTemplate)) {
           const art = resolveArtwork(s, cw.id);
           if (!art || !isComposable(art)) continue;
-          const { blob, type } = await renderMockup({
-            template: selectedTemplate, colorway: cw, slot: s,
-            artwork: art, placement: placements[s] || null,
-          });
+          // Per-item try/catch: one un-renderable colourway (e.g. a photo
+          // template missing that colourway's photo) skips, not aborts —
+          // the other colourways' mockups still generate.
+          let blob, type;
+          try {
+            ({ blob, type } = await renderMockup({
+              template: selectedTemplate, colorway: cw, slot: s,
+              artwork: art, placement: placements[s] || null,
+            }));
+          } catch (e) {
+            renderSkips += 1;
+            console.warn('DesignStudio: mockup render skipped', cw.id, s, e?.message);
+            continue;
+          }
           const objectUrl = URL.createObjectURL(blob);
           urls.push(objectUrl);
           let uploaded = null;
@@ -235,9 +245,14 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
       setMockups(next);
       setHeroKey((prev) => (prev && next.some((m) => m.key === prev) ? prev : next[0]?.key || null));
       if (next.length === 0) {
-        setMockupError('Inget att generera — välj ett original som kan förhandsgranskas.');
-      } else if (uploadFailures > 0) {
-        setMockupError(`Mockuperna genererades, men ${uploadFailures} kunde inte sparas till lagringen. Nedladdning fungerar ändå.`);
+        setMockupError(renderSkips > 0
+          ? 'Inga mockuper kunde genereras — plaggfoton saknas för mallens färger.'
+          : 'Inget att generera — välj ett original som kan förhandsgranskas.');
+      } else if (renderSkips > 0 || uploadFailures > 0) {
+        const parts = [];
+        if (renderSkips > 0) parts.push(`${renderSkips} färg${renderSkips > 1 ? 'er' : ''} hoppades över (foto saknas)`);
+        if (uploadFailures > 0) parts.push(`${uploadFailures} kunde inte sparas till lagringen — nedladdning fungerar ändå`);
+        setMockupError(`Mockuperna genererades, men ${parts.join('; ')}.`);
       }
     } catch (e) {
       console.warn('DesignStudio: mockup generation failed', e);
@@ -318,7 +333,7 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
             <div className="grid grid-cols-2 gap-3 p-4">
               {templates.map((t) => {
                 const active = t.id === selectedTemplateId;
-                const thumbHex = t.colorways?.[0]?.hex || '#ffffff';
+                const thumbColorway = t.colorways?.[0] || null;
                 return (
                   <button
                     key={t.id}
@@ -332,7 +347,7 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
                   >
                     <div className="grid aspect-square place-items-center overflow-hidden rounded-[6px] bg-admin-surface-2">
                       <div className="h-[88%] w-[88%]">
-                        <GarmentThumb garment={t.garment} hex={thumbHex} />
+                        <GarmentThumb template={t} colorway={thumbColorway} />
                       </div>
                     </div>
                     <div className="mt-1.5 truncate text-[12px] font-medium text-admin-text">{t.label}</div>

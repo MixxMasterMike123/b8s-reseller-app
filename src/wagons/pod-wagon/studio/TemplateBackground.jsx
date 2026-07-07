@@ -1,0 +1,115 @@
+// TemplateBackground.jsx — the background layer of the Design Studio compositor.
+//
+// A template is EITHER a FLAT (has `garment`: an SVG flat from GARMENT_FLATS, drawn
+// in the colourway's hex) OR a PHOTO (has `photo`: a real blank-garment photo per
+// colourway id). The artwork compositing stays code-driven (canvas) — only this
+// background layer differs. Placements are stored in physical mm; the template's
+// px↔mm mapping (printAreas px + printAreaMm) lives ENTIRELY in placementMath, so a
+// photo template only changes the COORDINATE SPACE (photo.w/h instead of the SVG
+// viewBox) and the background rendering — nothing in placementMath moves.
+//
+// PHOTO TEMPLATE shape (see podMockupTemplates.js SHAPE comment):
+//   { id, label, profileId, photo: { w, h, urls: { [colorwayId]: url } },
+//     colorways, printAreas (px IN PHOTO COORDS), printAreaMm }
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { GARMENT_FLATS, GARMENT_VIEWBOX } from './garments';
+
+/** True for a PHOTO template (real garment-photo background per colourway) vs a
+ *  FLAT template (SVG flat). Defined HERE, not in config/podMockupTemplates — that
+ *  module imports firebase/config, and the studio render pipeline (this file,
+ *  mockupRender, the dev harness) must stay Firebase-free. */
+export const isPhotoTemplate = (t) =>
+  Boolean(t && t.photo && t.photo.w > 0 && t.photo.h > 0);
+
+/** The template's own coordinate space { w, h } — the space printAreas px are in:
+ *  photo.w/h for a photo template, else the garment flat's SVG viewBox. Null when
+ *  neither resolves (unknown garment / malformed template) → callers guard on it. */
+export const templateViewBox = (template) => {
+  if (!template) return null;
+  if (isPhotoTemplate(template)) {
+    const { w, h } = template.photo;
+    return w > 0 && h > 0 ? { w, h } : null;
+  }
+  return GARMENT_VIEWBOX[template.garment] || null;
+};
+
+/** The blank-garment photo url for a colourway on a PHOTO template, or null when
+ *  that colourway has no photo yet. Not used for flat templates. */
+export const backgroundUrl = (template, colorway) =>
+  isPhotoTemplate(template) && colorway ? (template.photo.urls?.[colorway.id] || null) : null;
+
+// SVG flat → data URL for canvas rasterization. Explicit width/height attrs are
+// REQUIRED — Safari rasterizes a dimensionless SVG image at 0×0. Moved here from
+// mockupRender.js so both the DOM preview and the exporter share one definition.
+const flatToDataUrl = (garment, hex, widthPx, heightPx) => {
+  const Flat = GARMENT_FLATS[garment];
+  if (!Flat) throw new Error(`Okänt plagg: ${garment}`);
+  const markup = renderToStaticMarkup(
+    React.createElement(Flat, { color: hex, width: widthPx, height: heightPx })
+  );
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`;
+};
+
+/**
+ * backgroundImageSource(template, colorway, { widthPx, heightPx }) → Promise<string>
+ * The src the canvas exporter draws as the background layer:
+ *   • photo template → the colourway's photo url (REJECTS in Swedish if missing —
+ *     the exporter can't fabricate a backdrop for an un-photographed colourway),
+ *   • flat template  → the SVG flat as a data URL at the target px dimensions.
+ */
+export const backgroundImageSource = (template, colorway, { widthPx, heightPx } = {}) => {
+  if (isPhotoTemplate(template)) {
+    const url = backgroundUrl(template, colorway);
+    return url
+      ? Promise.resolve(url)
+      : Promise.reject(new Error(`Foto saknas för färgen ${colorway?.label || colorway?.id || ''} — ladda upp ett plaggfoto för den färgen.`));
+  }
+  try {
+    return Promise.resolve(flatToDataUrl(template.garment, colorway?.hex || '#ffffff', widthPx, heightPx));
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+
+/**
+ * <TemplateBackground template colorway className> — the background element for the
+ * DOM preview. Fills its container width and preserves the template's aspect ratio
+ * in BOTH branches (the artwork/print-area overlays position by percentage against
+ * this box, so its box must match how the SVG flat currently sizes).
+ *   • photo template → <img> of the colourway's photo, or a neutral "Foto saknas"
+ *     placeholder (same aspect ratio via CSS aspect-ratio) when that colourway has
+ *     no photo — the seller can still place artwork; only the backdrop is missing.
+ *   • flat template  → the existing <Flat color={hex}>.
+ */
+const TemplateBackground = ({ template, colorway, className = '' }) => {
+  const vb = templateViewBox(template);
+
+  if (isPhotoTemplate(template)) {
+    const url = backgroundUrl(template, colorway);
+    if (url) {
+      return (
+        <img
+          src={url}
+          alt=""
+          draggable={false}
+          className={`block h-auto w-full ${className}`}
+        />
+      );
+    }
+    return (
+      <div
+        className={`grid w-full place-items-center bg-admin-surface-2 text-[11px] text-admin-text-faint ${className}`}
+        style={vb ? { aspectRatio: `${vb.w} / ${vb.h}` } : undefined}
+      >
+        Foto saknas
+      </div>
+    );
+  }
+
+  const Flat = template ? GARMENT_FLATS[template.garment] : null;
+  if (!Flat) return <div className={`h-full w-full bg-admin-surface-2 ${className}`} />;
+  return <Flat color={colorway?.hex || '#ffffff'} className={`block h-auto w-full ${className}`} />;
+};
+
+export default TemplateBackground;

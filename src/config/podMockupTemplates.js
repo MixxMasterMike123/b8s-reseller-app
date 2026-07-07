@@ -11,7 +11,11 @@
 //
 // SHAPE of settings/podMockupTemplates:
 //   { version, provisional, templates: [ template, … ] }
-// where each template is:
+// A template is EITHER a FLAT (SVG flat background) OR a PHOTO (real garment-photo
+// background per colourway). The px↔mm mapping (printAreas + printAreaMm) is the
+// same for both — only the background layer + coordinate space differ.
+//
+// FLAT template (SVG flat, viewBox 800×900 coordinate space):
 //   {
 //     id: 'tee_flat',              // stable template id
 //     label: 'T-shirt',            // Swedish UI label
@@ -22,10 +26,25 @@
 //     printAreaMm: { front: {w,h}, … },      // physical print size ↔ profile.print_area_mm
 //   }
 //
-// px↔mm MAPPING (what the compositor uses): printAreas[slot] gives the rect in SVG
-// viewBox pixels where the artwork is placed; printAreaMm[slot] gives that same
-// rect's physical size in millimetres. The compositor computes effective DPI per
-// placement from the artwork's source pixels and the physical mm — e.g.
+// PHOTO template (real blank-garment photo per colourway; photo px = coord space):
+//   {
+//     id: 'tee_photo_stanley',
+//     label: 'T-shirt (foto)',
+//     profileId: 'apparel_dtg',
+//     photo: {
+//       w: 2000, h: 2250,          // photo pixel dims = this template's coord space
+//       urls: { white: 'https://…', black: 'https://…' },  // photo PER colourway id
+//     },
+//     colorways: [{ id, label, hex }, …],   // hex still drives the colour-dot chips
+//     printAreas: { front: {x,y,w,h}, … },  // px rects IN PHOTO COORDS (calibrated)
+//     printAreaMm: { front: {w,h}, … },      // unchanged semantics
+//   }
+//
+// px↔mm MAPPING (what the compositor uses): printAreas[slot] gives the rect — in the
+// template's OWN coordinate space (photo.w/h when photo exists, else the SVG viewBox)
+// — where the artwork is placed; printAreaMm[slot] gives that same rect's physical
+// size in millimetres. The compositor computes effective DPI per placement from the
+// artwork's source pixels and the physical mm — e.g.
 //   effectiveDpi = artworkWidthPx / (printAreaMm.w / 25.4).
 // The two must describe the SAME physical region; printAreas is only the on-screen
 // preview geometry (aspect ratio should match printAreaMm's w:h).
@@ -67,6 +86,10 @@ export const loadPodMockupTemplates = async () => {
 
 /** The version/provisional metadata of the last successful load (for banners). */
 export const getPodMockupTemplatesMeta = () => _meta;
+
+// NOTE: isPhotoTemplate lives in the studio's TemplateBackground.jsx (not here) —
+// this module imports firebase/config, and the studio render pipeline must stay
+// Firebase-free (dev harness + rasterizer run without an initialized app).
 
 /** Find a loaded template by its id (e.g. 'tee_flat'). Returns null if absent. */
 export const getTemplateById = (templates, id) =>
