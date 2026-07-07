@@ -14,6 +14,16 @@ export declare class EmailOrchestrator {
     private emailService;
     constructor();
     /**
+     * The shop's ACTIVE admin users' emails — the zero-configuration tier of the
+     * admin-notification resolution (after storeIdentity fields / ownerEmail,
+     * before the platform fallback). Excludes platform operators (they manage
+     * many shops but run none) and inactive users; capped to avoid spamming a
+     * shop that has many staff accounts. Reply-To is NOT affected by this — a
+     * personal admin email must never become the customer-facing reply address
+     * unless the shop explicitly sets it as Support-e-post.
+     */
+    private resolveShopAdminEmails;
+    /**
      * Master email sending method
      * Single entry point for ALL emails in the system
      */

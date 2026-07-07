@@ -56,6 +56,35 @@ class EmailOrchestrator {
         console.log('🎼 EmailOrchestrator: Initialized with unified email system');
     }
     /**
+     * The shop's ACTIVE admin users' emails — the zero-configuration tier of the
+     * admin-notification resolution (after storeIdentity fields / ownerEmail,
+     * before the platform fallback). Excludes platform operators (they manage
+     * many shops but run none) and inactive users; capped to avoid spamming a
+     * shop that has many staff accounts. Reply-To is NOT affected by this — a
+     * personal admin email must never become the customer-facing reply address
+     * unless the shop explicitly sets it as Support-e-post.
+     */
+    async resolveShopAdminEmails(shopId) {
+        try {
+            const snap = await database_1.db
+                .collection('users')
+                .where('shopId', '==', shopId)
+                .where('role', '==', 'admin')
+                .get();
+            const emails = snap.docs
+                .map((d) => d.data())
+                // platform !== true (field may be absent on shop admins — a `!=` query
+                // would exclude docs missing the field, so filter in code)
+                .filter((u) => u.platform !== true && u.active !== false && isRealEmail(u.email))
+                .map((u) => u.email.trim().toLowerCase());
+            return [...new Set(emails)].slice(0, 5);
+        }
+        catch (e) {
+            console.warn(`⚠️ EmailOrchestrator: resolveShopAdminEmails(${shopId}) failed:`, e?.message);
+            return [];
+        }
+    }
+    /**
      * Master email sending method
      * Single entry point for ALL emails in the system
      */
@@ -141,9 +170,17 @@ class EmailOrchestrator {
                         extraAdminRecipients = [shopIdentity.notificationEmail];
                     }
                     else {
-                        console.warn(`⚠️ EmailOrchestrator: shop "${context.shopId}" has no notification/contact/support/owner email configured — ` +
-                            `admin ${context.emailType} email falling back to platform recipients (${config_1.EMAIL_CONFIG.ADMIN_RECIPIENTS.join(', ')}). ` +
-                            `Set storeIdentity.supportEmail (or notificationEmail) for this shop.`);
+                        // No explicit address on storeIdentity — fall through to the shop's
+                        // ACTIVE admin users (the shop's staff get shop mail with zero
+                        // configuration; platform operators are excluded — they administer
+                        // many shops but run none).
+                        extraAdminRecipients = await this.resolveShopAdminEmails(context.shopId);
+                        if (extraAdminRecipients.length === 0) {
+                            console.warn(`⚠️ EmailOrchestrator: shop "${context.shopId}" has no notification/contact/support/owner email ` +
+                                `AND no active admin user with a real email — ` +
+                                `admin ${context.emailType} email falling back to platform recipients (${config_1.EMAIL_CONFIG.ADMIN_RECIPIENTS.join(', ')}). ` +
+                                `Set storeIdentity.supportEmail or add an admin user for this shop.`);
+                        }
                     }
                 }
                 result = await this.emailService.sendAdminEmail(template, { ...emailOptions, extraAdminRecipients });
