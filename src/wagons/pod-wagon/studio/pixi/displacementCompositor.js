@@ -46,7 +46,7 @@ const loadImage = (src) => new Promise((resolve, reject) => {
   // rejects. A fixed query param gives the CORS variant its own cache entry.
   // data:/blob: URLs are untouched (no network, no CORS).
   img.src = /^https?:/i.test(src)
-    ? `${src}${src.includes('?') ? '&' : '?'}corsbust=1`
+    ? `${src}${src.includes('?') ? '&' : '?'}corsbust=2`
     : src;
 });
 
