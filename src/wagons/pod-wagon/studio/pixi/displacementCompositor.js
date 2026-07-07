@@ -40,7 +40,14 @@ const loadImage = (src) => new Promise((resolve, reject) => {
   img.crossOrigin = 'anonymous'; // Storage download URLs serve ACAO:* — no canvas taint
   img.onload = () => resolve(img);
   img.onerror = () => reject(new Error('Kunde inte läsa bilden för 3D-mockupen.'));
-  img.src = src;
+  // CACHE FOOTGUN: the same Storage URL is loaded elsewhere on the page by plain
+  // <img> tags (picker/canvas/strip) WITHOUT CORS mode. The browser may serve
+  // that cached non-CORS response to THIS crossOrigin request, which then
+  // rejects. A fixed query param gives the CORS variant its own cache entry.
+  // data:/blob: URLs are untouched (no network, no CORS).
+  img.src = /^https?:/i.test(src)
+    ? `${src}${src.includes('?') ? '&' : '?'}corsbust=1`
+    : src;
 });
 
 const loadTexture = async (src) => Texture.from(await loadImage(src));
