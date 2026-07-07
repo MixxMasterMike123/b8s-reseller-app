@@ -16,9 +16,13 @@
 //     wagon route in <AddonGate feature="pod"> and AppLayout filters the menu item
 //     by the same key (config/addons.js WAGON_FEATURE_KEY['pod-wagon'] === 'pod').
 //
-// LEGAL FIREWALL: POD must NEVER set/read product.isPersonalized (which removes the
-// 14-day right of withdrawal — that is ONLY for customer-supplied input). This
-// add-on never touches products/cart/checkout, so the firewall is structural.
+// LEGAL FIREWALL: from the Design Studio (slice 4) POD DOES create products — the
+// shop owner's own artwork on garment templates — but it must NEVER set
+// product.isPersonalized true. That flag removes the 14-day right of withdrawal and
+// is reserved for customer-supplied input; it is derived at ORDER creation by the
+// buyer flow, never by product authoring. So studio-created products always ship
+// isPersonalized:false, and POD still never touches cart/checkout. The invariant is
+// structural: the publish path hard-codes isPersonalized:false.
 
 export const PodWagonManifest = {
   id: 'pod-wagon',

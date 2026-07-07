@@ -36,13 +36,25 @@ import {
 } from '../../../config/podMockupTemplates';
 import { loadPodProfiles, getProfileById } from '../../../config/podProfiles';
 import { tierTone, tierLabel } from '../components/podTier';
-import { isComposable } from './placementMath';
+import { isComposable, placementReadout, defaultPlacement } from './placementMath';
 import { renderMockup } from './mockupRender';
 import { uploadMockup } from './mockupUpload';
 import TemplateBackground from './TemplateBackground';
 import CompositorCanvas from './CompositorCanvas';
 import ColorwayStrip from './ColorwayStrip';
 import MockupPanel from './MockupPanel';
+import PublishPanel from './PublishPanel';
+// Publish (slice 4) — create the real product + variants + POD mappings. These
+// are the ONLY Firebase-touching imports in the studio; PublishPanel stays
+// Firebase-free (presentational) so the dev harness can mount it standalone.
+import { collection, addDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../../../firebase/config';
+import { withShopId } from '../../../config/withShopId';
+import { skuFromName, uniqueSku } from '../../../utils/productUrls';
+import { deriveVariantsFromGroups } from '../../../utils/variantDerivation';
+import { setMapping } from '../../../utils/podMappings';
+import { STORE } from '../../../config/store';
 
 // A FAIL artwork can't be composed (it would print badly) — it's shown greyed and
 // unselectable. PASS + WARN are selectable (WARN is advisory).
@@ -75,6 +87,10 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
   const [heroKey, setHeroKey] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [mockupError, setMockupError] = useState(null);
+  // Publish (slice 4): the "Skapa produkt" step. result = { name, sku } on success.
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState(null);
+  const [publishResult, setPublishResult] = useState(null);
   // Object URLs owned by the current mockup set — revoked on replace/unmount.
   const objectUrlsRef = useRef([]);
   const replaceObjectUrls = (urls) => {
@@ -89,6 +105,8 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
     setMockups([]);
     setHeroKey(null);
     setMockupError(null);
+    setPublishError(null);
+    setPublishResult(null);
     replaceObjectUrls([]);
   };
 
@@ -194,7 +212,9 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
     templateSlots(t).filter((s) => s === 'front' || Boolean(placements[s]));
 
   const generateMockups = async () => {
-    if (!selectedTemplate || generating) return;
+    // Also blocked while PUBLISHING: regenerating revokes the object URLs the
+    // publish loop is mid-fetch on (partial-failure trigger).
+    if (!selectedTemplate || generating || publishing) return;
     setGenerating(true);
     setMockupError(null);
     const next = [];
@@ -261,6 +281,230 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
     } finally {
       setGenerating(false);
     }
+  };
+
+  // ── PUBLISH (slice 4) ───────────────────────────────────────────────────
+  // Turn the generated mockups into a real, immediately-sellable product +
+  // variants + POD mappings. PublishPanel is presentational and calls this with
+  // the operator's picks; ALL Firebase work lives here (studio owns the state).
+  //
+  // Write order (mirrors ProductForm's save path where they overlap):
+  //   validate → resolve per-shop-unique sku → upload hero + every mockup blob to
+  //   the PUBLIC product path (the pod-artwork drafts are admin-read-only) → build
+  //   resolved variant groups (selected colourways, per-colourway FRONT mockup as
+  //   the group image, chosen sizes, explicit per-row price or '') →
+  //   deriveVariantsFromGroups → build the product doc EXACTLY like ProductForm →
+  //   addDoc → setMapping parent rows (one per designed slot) → setMapping override
+  //   rows (one per slot×overridden-colourway) → success.
+  //
+  // NO rollback: if a later step fails after the doc was created, we surface an
+  // honest "created but images/mappings may be incomplete" message.
+  const uploadBlobToPublicPath = async (objectUrl, type, path, name) => {
+    // Object URLs are same-session; fetch the blob and upload it RAW (it is already
+    // a rendered WebP/PNG — no compression pipeline, matching mockupUpload.js).
+    const blob = await (await fetch(objectUrl)).blob();
+    const snap = await uploadBytes(storageRef(storage, `${path}/${name}`), blob, { contentType: type });
+    return getDownloadURL(snap.ref);
+  };
+
+  // Synchronous in-flight latch: the `publishing` STATE doesn't update between
+  // two clicks dispatched in the same tick, and two concurrent publishes would
+  // both resolve the SAME "unique" sku (both query the pre-commit SKU set) →
+  // two live products sharing one SKU. The ref flips synchronously.
+  const publishingRef = useRef(false);
+
+  const publish = async ({ name, price, selectedColorwayIds, sizesByColorway, perColorwayPrices }) => {
+    if (publishing || publishingRef.current) return;
+    setPublishError(null);
+    setPublishResult(null);
+
+    // Validate (belt-and-suspenders; PublishPanel gates the button too).
+    if (!shopId) { setPublishError('Ingen butik är vald.'); return; }
+    if (!selectedArtwork) { setPublishError('Välj ett original innan du publicerar.'); return; }
+    const cleanName = (name || '').trim();
+    if (!cleanName) { setPublishError('Ange ett produktnamn.'); return; }
+    const productPrice = parseFloat(price) || 0;
+    if (!(productPrice > 0)) { setPublishError('Ange ett pris större än 0.'); return; }
+    const selectedSet = new Set(selectedColorwayIds || []);
+    if (selectedSet.size === 0) { setPublishError('Välj minst en färg att publicera.'); return; }
+    if (mockups.length === 0) { setPublishError('Generera mockuper först.'); return; }
+
+    publishingRef.current = true;
+    setPublishing(true);
+    let docCreated = false;
+    try {
+      // 1. Resolve a per-shop-UNIQUE sku (same logic as ProductForm).
+      const requestedSku = skuFromName(cleanName);
+      const skuSnap = await getDocs(query(collection(db, 'products'), where('shopId', '==', shopId)));
+      const takenSkus = [];
+      skuSnap.forEach((d) => { const s = (d.data().sku || '').trim(); if (s) takenSkus.push(s); });
+      const resolvedSku = uniqueSku(requestedSku, takenSkus);
+
+      // 2. Upload the hero + mockup blobs to the PUBLIC product image path — ONLY
+      // for the SELECTED colourways: an unchecked colourway must not appear in the
+      // product gallery (it isn't sellable — showing it would be a surprise).
+      // productId is the STORAGE path id only (the Firestore doc id comes from
+      // addDoc — they differ by design, same as ProductForm).
+      const pubMockups = mockups.filter((m) => selectedSet.has(m.colorwayId));
+      if (pubMockups.length === 0) {
+        setPublishError('Inga mockuper för de valda färgerna — generera om.');
+        setPublishing(false);
+        return;
+      }
+      const productId = `prod_${Date.now()}`;
+      const publicPath = `products/${shopId}/${productId}`;
+      // Hero must be a PUBLISHED colourway's mockup; fall back to the first one.
+      const hero = pubMockups.find((m) => m.key === heroKey) || pubMockups[0];
+
+      const heroUrl = await uploadBlobToPublicPath(hero.objectUrl, hero.type, publicPath, 'b2c_main');
+
+      // Upload the published mockups (in mockups-array order → gallery order).
+      // Track the FRONT mockup url per colourway for its variant group image.
+      const galleryUrls = [];
+      const frontUrlByColorway = {};
+      for (const m of pubMockups) {
+        const url = await uploadBlobToPublicPath(
+          m.objectUrl, m.type, publicPath, `mockup_${m.colorwayId}_${m.slot}`
+        );
+        galleryUrls.push(url);
+        if (m.slot === 'front') frontUrlByColorway[m.colorwayId] = url;
+      }
+
+      // 3. Build resolved variant groups — one per SELECTED colourway. Its image is
+      // that colourway's FRONT mockup (fallback: any mockup for it, then hero).
+      const anyUrlByColorway = {};
+      pubMockups.forEach((m, i) => { if (!(m.colorwayId in anyUrlByColorway)) anyUrlByColorway[m.colorwayId] = galleryUrls[i]; });
+      const colorwayLabel = (id) =>
+        (selectedTemplate?.colorways || []).find((c) => c.id === id)?.label || id;
+      // publishedIds order defines resolvedGroups order — and the derivation
+      // processes groups 1:1 in order, so cleanGroups[i] ↔ publishedIds[i].
+      // That index join (not labels) keys the override→group-sku lookup below.
+      const publishedIds = (selectedColorwayIds || []).filter((id) => selectedSet.has(id));
+      const resolvedGroups = publishedIds
+        .map((id) => {
+          const img = frontUrlByColorway[id] || anyUrlByColorway[id] || heroUrl;
+          const explicit = (perColorwayPrices?.[id] ?? '').toString().trim();
+          return {
+            label: colorwayLabel(id),
+            sku: '',                                   // auto-derive from product sku + label
+            price: explicit === '' ? '' : explicit,    // '' inherits the product price
+            images: img ? [img] : [],
+            sizes: sizesByColorway?.[id] || [],
+          };
+        });
+
+      // 4. Derive the cleaned rail + sellable rows (byte-identical to ProductForm).
+      const { cleanGroups, cleanVariants } = deriveVariantsFromGroups(resolvedGroups, {
+        productSku: resolvedSku,
+        productPrice,
+        skuFromName,
+      });
+      const hasVariants = cleanVariants.length > 0;
+
+      // 5. Build the product doc EXACTLY like ProductForm (studio-relevant field
+      // set). Single price → BOTH b2cPrice + basePrice. Empty weight/dimensions/
+      // shipping shapes copied verbatim from ProductForm's emptyForm.
+      // Prices are stored INKL. moms (see STORE.vatRate — VAT is display-only in
+      // the Publish step's profit columns, not applied to the stored number).
+      const data = {
+        name: cleanName,
+        sku: resolvedSku,
+        category: '',
+        tags: [],
+        hasVariants,
+        variantGroups: cleanGroups,
+        options: [],
+        variants: cleanVariants,
+        b2cPrice: productPrice,
+        basePrice: productPrice,          // keep in sync for the `b2cPrice || basePrice` fallback
+        isActive: true,
+        featured: false,
+        imageUrl: heroUrl,
+        b2cImageUrl: heroUrl,
+        b2cImageGallery: galleryUrls,
+        availability: { b2c: true },
+        descriptions: { b2c: '', b2cMoreInfo: '' },
+        // LEGAL FIREWALL: studio-authored products are NEVER personalized. The
+        // 14-day withdrawal right stays; isPersonalized is order-flow-derived only.
+        isPersonalized: false,
+        sizeGuide: '',
+        weight: { value: 0, unit: 'g' },
+        dimensions: {
+          length: { value: 0, unit: 'mm' },
+          width: { value: 0, unit: 'mm' },
+          height: { value: 0, unit: 'mm' },
+        },
+        shipping: {
+          sweden: { cost: 0, service: 'Standard' },
+          nordic: { cost: 0, service: 'Nordic' },
+          eu: { cost: 0, service: 'EU' },
+          worldwide: { cost: 0, service: 'International' },
+        },
+        delivery: { shipping: true, pickup: true },
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+      };
+      await addDoc(collection(db, 'products'), withShopId(data, shopId));
+      docCreated = true;
+
+      // 6. POD mappings. PARENT row per DESIGNED slot: keyed on the product sku,
+      // its placement is the cm readout of the slot's EFFECTIVE placement (stored
+      // placement, else the compositor default). The print pipeline resolves
+      // longest-prefix within a slot, so per-colourway group-sku rows override the
+      // parent for that colourway's sizes.
+      // Group sku per COLORWAY ID (index-aligned with publishedIds) — an id join,
+      // not a label join, so duplicate colorway labels can never cross-target.
+      const groupSkuByColorwayId = new Map(publishedIds.map((id, i) => [id, cleanGroups[i]?.sku]));
+      for (const s of designedSlots(selectedTemplate)) {
+        const effective = placements[s] || defaultPlacement(selectedTemplate, s, selectedArtwork);
+        await setMapping({
+          shopId,
+          sku: resolvedSku,
+          artworkId: selectedArtwork.id,
+          profileId: selectedTemplate.profileId,
+          placement: placementReadout(effective, selectedTemplate, s, selectedArtwork),
+          placementSlot: s,
+        });
+      }
+
+      // OVERRIDE row per (designed slot, colourway that has an override AND is
+      // published): targets that colourway's GROUP sku so it wins over the parent.
+      for (const s of designedSlots(selectedTemplate)) {
+        const slotOverrides = overrides[s] || {};
+        for (const [cwId, overrideArtworkId] of Object.entries(slotOverrides)) {
+          if (!overrideArtworkId || !selectedSet.has(cwId)) continue;
+          const groupSku = groupSkuByColorwayId.get(cwId);
+          if (!groupSku) continue;
+          const overrideArt = artwork.find((a) => a.id === overrideArtworkId) || selectedArtwork;
+          const effective = placements[s] || defaultPlacement(selectedTemplate, s, overrideArt);
+          await setMapping({
+            shopId,
+            sku: groupSku,
+            artworkId: overrideArtworkId,
+            profileId: selectedTemplate.profileId,
+            placement: placementReadout(effective, selectedTemplate, s, overrideArt),
+            placementSlot: s,
+          });
+        }
+      }
+
+      setPublishResult({ name: cleanName, sku: resolvedSku });
+    } catch (e) {
+      console.error('DesignStudio: publish failed', e);
+      setPublishError(
+        docCreated
+          ? 'Produkten skapades men bilder/kopplingar kan vara ofullständiga — kontrollera under Produkter.'
+          : (e?.message || 'Publiceringen misslyckades.')
+      );
+    } finally {
+      publishingRef.current = false;
+      setPublishing(false);
+    }
+  };
+
+  const resetPublishForm = () => {
+    setPublishError(null);
+    setPublishResult(null);
   };
 
   const canvasArtwork = resolveArtwork(slot, colorwayId);
@@ -428,7 +672,21 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
           onGenerate={generateMockups}
           generating={generating}
           error={mockupError}
-          canGenerate={Boolean(selectedTemplate && isComposable(selectedArtwork))}
+          canGenerate={Boolean(selectedTemplate && isComposable(selectedArtwork)) && !publishing}
+        />
+
+        {/* Publish: pick colourways + sizes, price, and create the real product. */}
+        <PublishPanel
+          mockups={mockups}
+          template={selectedTemplate}
+          vatRate={STORE.vatRate}
+          hasArtwork={Boolean(selectedArtwork)}
+          shopId={shopId}
+          publishing={publishing}
+          result={publishResult}
+          error={publishError}
+          onPublish={publish}
+          onReset={resetPublishForm}
         />
       </CardSection>
     </div>

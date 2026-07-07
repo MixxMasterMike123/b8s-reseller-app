@@ -72,6 +72,8 @@ const TEMPLATES = [
     label: 'T-shirt',
     garment: 'tee',
     profileId: 'apparel_dtg',
+    // PROVISIONAL production cost until the printshop price matrix (Kent checklist #2).
+    costSek: 149,
     colorways: APPAREL_COLORWAYS,
     // Front chest: centred (x 280..520 on the 196..604 torso), below the ribbed
     // collar (~y158), well above the hem (~y830). 240×320 px = 3:4.
@@ -91,6 +93,8 @@ const TEMPLATES = [
     label: 'Hoodie',
     garment: 'hoodie',
     profileId: 'apparel_dtg',
+    // PROVISIONAL production cost until the printshop price matrix (Kent checklist #2).
+    costSek: 249,
     colorways: APPAREL_COLORWAYS,
     // Front only for v1 (a hoodie back-view flat comes with the real catalog).
     // Chest: centred (x 285..515 on the 200..600 torso), below the drawstring

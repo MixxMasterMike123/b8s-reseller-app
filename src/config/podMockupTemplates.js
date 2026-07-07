@@ -21,6 +21,9 @@
 //     label: 'T-shirt',            // Swedish UI label
 //     garment: 'tee',              // which SVG flat renders this ('tee' | 'hoodie')
 //     profileId: 'apparel_dtg',    // ↔ settings/podProfiles profile (print specs/DPI)
+//     costSek: 149,                // OPTIONAL provisional production cost (SEK, ex the
+//                                  // print price matrix). Drives the Publish step's
+//                                  // profit/margin columns; undefined → those show '—'.
 //     colorways: [{ id, label, hex }, …],   // selectable garment colours
 //     printAreas: { front: {x,y,w,h}, … },  // in SVG viewBox coords (800×900)
 //     printAreaMm: { front: {w,h}, … },      // physical print size ↔ profile.print_area_mm
