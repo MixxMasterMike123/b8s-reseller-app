@@ -69,6 +69,7 @@ import { withShopId } from '../../config/withShopId';
 import { useShopFeatures } from '../../contexts/ShopFeaturesContext';
 import { CardSection, RightRail, Button } from './ui';
 import { skuFromName, uniqueSku } from '../../utils/productUrls';
+import { deriveVariantsFromGroups } from '../../utils/variantDerivation';
 import { query, where, getDocs } from 'firebase/firestore';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
@@ -678,20 +679,14 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
         labelSeen.add(key);
       }
 
-      const takenRowSkus = new Set();
-      const uniqueRowSku = (base) => {
-        const root = base || 'variant';
-        let candidate = root;
-        for (let n = 2; takenRowSkus.has(candidate.toLowerCase()); n++) candidate = `${root}-${n}`;
-        takenRowSkus.add(candidate.toLowerCase());
-        return candidate;
-      };
-
-      const cleanGroups = [];
-      const cleanVariants = [];
+      // Resolve each group's images first (the one async step: upload pending
+      // files in list order, keep already-uploaded URLs), then hand the
+      // resolved groups to the shared PURE derivation so this and the Design
+      // Studio publish wizard produce byte-identical rows. Money paths key on
+      // the row sku — see utils/variantDerivation.js.
+      const resolvedGroups = [];
       for (const g of editedGroups) {
         const label = g.label.trim();
-        // Upload pending files in list order; keep already-uploaded URLs.
         const images = [];
         for (let i = 0; i < g.images.length; i++) {
           const im = g.images[i];
@@ -701,34 +696,13 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
             images.push(await uploadImageToStorage(im.file, `products/${shopId}/${productId}`, `variant_${skuFromName(label)}_${i}`));
           }
         }
-        const image = images[0] || '';
-        const groupSku = uniqueRowSku((g.sku || '').trim() || `${resolvedSku}-${skuFromName(label)}`);
-        // Inherited (empty) price persists as null on the GROUP so it keeps
-        // following the product price on every future save — snapshotting it
-        // made "Original" drift when the product price later changed. The
-        // derived ROWS always get the concrete number (server needs it).
-        const explicitPrice = parseFloat(g.price) > 0;
-        const groupPrice = explicitPrice ? parseFloat(g.price) : price;
-        const sizes = [...new Set(g.sizes.map((s) => s.trim().toUpperCase()).filter(Boolean))];
-        cleanGroups.push({ label, sku: groupSku, price: explicitPrice ? groupPrice : null, image, images, sizes });
-        if (sizes.length === 0) {
-          cleanVariants.push({ sku: groupSku, label, price: groupPrice, image, images, group: label, size: null });
-        } else {
-          for (const size of sizes) {
-            cleanVariants.push({
-              // The sizeless base sku is already reserved by the group above,
-              // so per-size skus can never collide with it.
-              sku: uniqueRowSku(`${groupSku}-${skuFromName(size)}`),
-              label: `${label} / ${size}`,
-              price: groupPrice,
-              image,
-              images,
-              group: label,
-              size,
-            });
-          }
-        }
+        resolvedGroups.push({ ...g, images });
       }
+      const { cleanGroups, cleanVariants } = deriveVariantsFromGroups(resolvedGroups, {
+        productSku: resolvedSku,
+        productPrice: price,
+        skuFromName,
+      });
       const hasVariants = cleanVariants.length > 0;
 
       // Build the persisted doc. Single price → BOTH consumer-price fields.
