@@ -61,15 +61,19 @@ const MiniMockup = ({ template, slot, colorway, artwork, placement }) => {
  *   onOverrideChange(colorwayId, artworkId|null)
  *   artworkOptions          — selectable artwork docs (PASS/WARN) for the override select
  *   baseArtworkLabel        — label of the product's standard artwork (select's default row)
+ *   reviewedColorwayIds     — Set|array of colourway ids the seller has SEEN (review gate)
  */
 const ColorwayStrip = ({
   template, slot, activeColorwayId, onSelect, placement,
   resolveArtwork, overrides = {}, onOverrideChange, artworkOptions = [], baseArtworkLabel = 'Standardmotiv',
+  reviewedColorwayIds = [],
 }) => {
   if (!template) return null;
   const colorways = template.colorways || [];
   const active = colorways.find((c) => c.id === activeColorwayId) || null;
   const activeOverride = active ? overrides[active.id] || '' : '';
+  // Accept a Set or an array — reviewed = the seller has seen this composite.
+  const reviewedSet = reviewedColorwayIds instanceof Set ? reviewedColorwayIds : new Set(reviewedColorwayIds);
 
   return (
     <div className="mt-4">
@@ -84,6 +88,7 @@ const ColorwayStrip = ({
         {colorways.map((cw) => {
           const isActive = cw.id === activeColorwayId;
           const hasOverride = Boolean(overrides[cw.id]);
+          const isReviewed = reviewedSet.has(cw.id);
           return (
             <button
               key={cw.id}
@@ -110,6 +115,10 @@ const ColorwayStrip = ({
                   style={{ backgroundColor: cw.hex }}
                 />
                 <span className="truncate text-[11px] font-medium text-admin-text">{cw.label}</span>
+                {/* Review gate: a subtle "sedd" tick — reviewed colourways only. */}
+                {isReviewed && (
+                  <span className="shrink-0 text-[11px] leading-none text-admin-success-dot" title="Granskad" aria-label="Granskad">✓</span>
+                )}
               </div>
               {hasOverride && (
                 <div className="mt-0.5 text-[10px] text-admin-info-text">eget motiv</div>

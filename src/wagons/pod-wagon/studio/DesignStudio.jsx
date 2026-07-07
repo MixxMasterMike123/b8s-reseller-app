@@ -85,6 +85,11 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
   // url?, storagePath?, type } + the hero pick (slice 4 reads both).
   const [mockups, setMockups] = useState([]);
   const [heroKey, setHeroKey] = useState(null);
+  // PER-COLOURWAY REVIEW GATE (slice 5): ids the seller has SEEN composited in the
+  // strip for the CURRENT design. Only the active colourway counts as seen; the set
+  // resets to just the active colourway whenever the composite changes (placement /
+  // override / mockup / artwork / template) so a stale review can't unlock publish.
+  const [reviewedColorways, setReviewedColorways] = useState(() => new Set());
   const [generating, setGenerating] = useState(false);
   const [mockupError, setMockupError] = useState(null);
   // Publish (slice 4): the "Skapa produkt" step. result = { name, sku } on success.
@@ -99,6 +104,11 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
   };
   useEffect(() => () => replaceObjectUrls([]), []);
 
+  // Reviews are valid for the CURRENT design only — reset the seen-set to JUST the
+  // active colourway. The colorwayId effect re-seeds anyway; seeding here keeps the
+  // gate honest between that effect firing (and covers a null active colourway).
+  const resetReviews = () => setReviewedColorways(colorwayId ? new Set([colorwayId]) : new Set());
+
   const resetDesignState = () => {
     setPlacements({});
     setOverrides({});
@@ -108,6 +118,7 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
     setPublishError(null);
     setPublishResult(null);
     replaceObjectUrls([]);
+    resetReviews();
   };
 
   useEffect(() => {
@@ -156,6 +167,14 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedArtworkId]);
 
+  // The ACTIVE colourway is always considered SEEN — selecting one composites it
+  // live in the strip. Covers the initial default colourway too. Switching slots
+  // does NOT reset reviews (same colourways; the strip re-previews the active slot).
+  useEffect(() => {
+    if (!colorwayId) return;
+    setReviewedColorways((prev) => (prev.has(colorwayId) ? prev : new Set(prev).add(colorwayId)));
+  }, [colorwayId]);
+
   const selectedColorway = useMemo(
     () => (selectedTemplate?.colorways || []).find((c) => c.id === colorwayId) || selectedTemplate?.colorways?.[0] || null,
     [selectedTemplate, colorwayId]
@@ -196,6 +215,7 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
     });
     setMockups([]); // stale — the motif map changed
     setHeroKey(null);
+    resetReviews(); // the composite changed — every colourway must be re-seen
   };
 
   // Override choices: selectable (non-FAIL) artwork that can actually be
@@ -263,6 +283,7 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
       }
       replaceObjectUrls(urls);
       setMockups(next);
+      resetReviews(); // regenerated composites — the seller must re-scan the strip
       setHeroKey((prev) => (prev && next.some((m) => m.key === prev) ? prev : next[0]?.key || null));
       if (next.length === 0) {
         setMockupError(renderSkips > 0
@@ -621,7 +642,10 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
           artwork={canvasArtwork}
           profile={profile}
           placement={placements[slot] || null}
-          onPlacementChange={(p) => setPlacements((prev) => ({ ...prev, [slot]: p }))}
+          onPlacementChange={(p) => {
+            setPlacements((prev) => ({ ...prev, [slot]: p }));
+            resetReviews(); // moving the artwork changes every colourway's composite
+          }}
         />
 
         {/* Colourway strip: composited per-colour previews + artwork override. */}
@@ -637,6 +661,7 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
             onOverrideChange={selectedArtwork ? (cwId, artId) => setOverride(slot, cwId, artId) : null}
             artworkOptions={overrideOptions}
             baseArtworkLabel={selectedArtwork?.label || selectedArtwork?.fileName || 'Standardmotiv'}
+            reviewedColorwayIds={reviewedColorways}
           />
         )}
 
@@ -685,6 +710,7 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
           publishing={publishing}
           result={publishResult}
           error={publishError}
+          reviewedColorwayIds={reviewedColorways}
           onPublish={publish}
           onReset={resetPublishForm}
         />

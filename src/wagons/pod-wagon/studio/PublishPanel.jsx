@@ -44,6 +44,9 @@ const roundUpTo9 = (value) => {
  *   publishing     — bool (handler in flight)
  *   result         — { name, sku } | null (success)
  *   error          — string | null (honest failure message)
+ *   reviewedColorwayIds — Set|array of colourway ids the seller has SEEN in the strip.
+ *                     LAST publish gate: every selected colourway must be reviewed
+ *                     ("inga tryck-överraskningar").
  *   onPublish(form) — form = { name, price, selectedColorwayIds, sizesByColorway,
  *                     perColorwayPrices }
  *   onReset()      — clear name/price after a success ("Skapa en till")
@@ -57,6 +60,7 @@ const PublishPanel = ({
   publishing = false,
   result = null,
   error = null,
+  reviewedColorwayIds = [],
   onPublish,
   onReset,
 }) => {
@@ -145,9 +149,16 @@ const PublishPanel = ({
   const hasColorways = selectedColorwayIds.length > 0;
   const anySizeless = selectedColorways.some((c) => sizesFor(c.id).length === 0);
 
-  // Success + validity gates.
+  // REVIEW GATE (slice 5): every SELECTED colourway must have been seen in the
+  // strip. Accepts a Set or array. The unreviewed ones drive the actionable hint.
+  const reviewedSet = reviewedColorwayIds instanceof Set ? reviewedColorwayIds : new Set(reviewedColorwayIds);
+  const unreviewedColorways = selectedColorways.filter((c) => !reviewedSet.has(c.id));
+  const allReviewed = hasColorways && unreviewedColorways.length === 0;
+
+  // Success + validity gates. Review is the LAST gate — everything else keeps its
+  // priority so the hint only surfaces once the form is otherwise publishable.
   const canPublish =
-    !publishing && validName && validPrice && hasColorways && hasArtwork && !!shopId;
+    !publishing && validName && validPrice && hasColorways && hasArtwork && !!shopId && allReviewed;
 
   const submit = () => {
     if (!canPublish) return;
@@ -421,6 +432,14 @@ const PublishPanel = ({
               )}
               {!hasArtwork && shopId && (
                 <p className="mt-2 text-[12px] text-admin-text-faint">Välj ett original innan du publicerar.</p>
+              )}
+              {/* Review gate is the LAST gate: shown only when everything else is
+                  valid but not every selected colourway has been seen in the strip. */}
+              {shopId && hasArtwork && validName && validPrice && hasColorways && !allReviewed && (
+                <p className="mt-2 rounded-[var(--radius-admin-el)] bg-admin-caution-bg px-3 py-2 text-[12px] text-admin-caution-text">
+                  Granska färgerna i färglisten innan du publicerar — {selectedColorways.length - unreviewedColorways.length} av {selectedColorways.length} granskade.
+                  {' '}Kvar: {unreviewedColorways.map((c) => c.label).join(', ')}.
+                </p>
               )}
             </div>
           )}
