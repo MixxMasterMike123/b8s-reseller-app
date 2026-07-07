@@ -57,9 +57,12 @@ import { deriveVariantsFromGroups } from '../../../utils/variantDerivation';
 import { setMapping } from '../../../utils/podMappings';
 import { STORE } from '../../../config/store';
 
-// A FAIL artwork can't be composed (it would print badly) — it's shown greyed and
-// unselectable. PASS + WARN are selectable (WARN is advisory).
-const isSelectableArtwork = (art) => (art?.validation?.tier || 'PASS') !== 'FAIL';
+// Validation is ADVISORY (podValidation's contract: "WARN/FAIL never blocks — it
+// guides the seller; the printer decides"). The studio therefore selects ANY
+// composable original; the tier pill (Underkänd/Varning) stays visible on the row
+// as the warning. Only non-composable files (no raster preview/dims — PDF/SVG)
+// are unselectable, because the compositor literally has nothing to draw.
+const isSelectableArtwork = (art) => isComposable(art);
 
 // Thumbnail of a template in its first colourway (for the picker cards): SVG flat
 // or the colourway's garment photo, via the shared background layer.
@@ -554,7 +557,7 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
                       type="button"
                       disabled={!selectable}
                       onClick={() => selectable && setSelectedArtworkId(art.id)}
-                      title={!selectable ? 'Underkänt original kan inte användas i studion' : undefined}
+                      title={!selectable ? 'Formatet kan inte förhandsgranskas i studion (bildmått saknas)' : undefined}
                       className={`flex w-full items-center gap-3 border-b border-admin-border-soft px-4 py-2.5 text-left ${
                         active ? 'bg-admin-info-bg/60' : 'hover:bg-admin-surface-2'
                       } ${selectable ? '' : 'cursor-not-allowed opacity-45'}`}
