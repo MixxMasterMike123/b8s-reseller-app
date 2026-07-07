@@ -63,7 +63,7 @@ export const DEV_3D_GARMENTS = [
     printAreaMm: { front: { w: 300, h: 400 } },
     displacementScale: 30,
     displacementBlur: 6,   // map-px gaussian blur — kills JPEG 8×8 block stair-steps
-    blend: 'multiply',
+    blend: 'screen',       // Mikael's default while multiply is under evaluation
     alpha: 0.8,
     perColorway: {},
     output: { w: 1600, h: 1936 }, // photo aspect (3200×3871 halved)

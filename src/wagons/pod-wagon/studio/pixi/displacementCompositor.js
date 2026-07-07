@@ -26,10 +26,14 @@
 import {
   Application, Container, Sprite, Graphics, DisplacementFilter, Texture,
 } from 'pixi.js';
+// Side-effect import REQUIRED for multiply/overlay & co in Pixi v8: they are
+// "advanced" blend modes implemented via backdrop-reading filters — without this
+// they don't composite (multiply rendered the artwork as a black slab).
+import 'pixi.js/advanced-blend-modes';
 
-// Core v8 blend modes we allow from config (advanced modes need a separate pixi
-// import — extend deliberately if a garment ever needs one).
-const ALLOWED_BLENDS = new Set(['normal', 'multiply', 'screen', 'add']);
+// Blend modes we allow from config ('overlay' is often the most fabric-real:
+// shadows darken the ink, highlights lift it).
+const ALLOWED_BLENDS = new Set(['normal', 'multiply', 'screen', 'overlay', 'add']);
 
 // Load an image from ANY url kind. NOT Assets.load: it sniffs the loader from
 // the file extension, so extension-less blob:/object URLs (uploaded artwork) and

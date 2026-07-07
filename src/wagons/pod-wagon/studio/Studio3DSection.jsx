@@ -172,6 +172,7 @@ const Studio3DSection = ({ artwork = null, placement = null }) => {
                   >
                     <option value="multiply">multiply</option>
                     <option value="screen">screen</option>
+                    <option value="overlay">overlay</option>
                     <option value="normal">normal</option>
                     <option value="add">add</option>
                   </select>
