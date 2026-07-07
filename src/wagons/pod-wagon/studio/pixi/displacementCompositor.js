@@ -219,6 +219,16 @@ export const createDisplacementCompositor = async ({ view, printAreaMm, assets, 
 
   // 2) Artwork layer: a container masked to the print area; the sprite inside is
   // anchored at its centre so rotationDeg rotates in place.
+  //
+  // MASK ORDER (probed, do NOT restructure): the mask on the filtered container
+  // clips the filter's INPUT, so with filter.padding the warped ink can travel up
+  // to scale/2 px past the artwork's edge — including past the print-area rect
+  // when the artwork abuts it (measured: 424 dark px in the spill probe at scale
+  // 100). ACCEPTED: this surface is the product IMAGE only (never a print
+  // instruction), the spill is bounded (≤scale/2 px ≈ mm at photo scale) and
+  // reads as natural fabric pull. Moving the mask to a parent wrapper DOES clip
+  // the output — but it black-slabs the advanced blend modes (multiply meanLum=0,
+  // the historical regression), so the wrapper variant is off the table.
   const artLayer = new Container();
   root.addChild(artLayer);
 
@@ -256,6 +266,13 @@ export const createDisplacementCompositor = async ({ view, printAreaMm, assets, 
 
   const applyTuning = () => {
     dispFilter.scale.set(state.displacementScale);
+    // CRITICAL: Pixi renders a filtered container into an intermediate texture
+    // the size of its bounds + filter.padding — and the DEFAULT padding is 0, so
+    // displaced pixels could never LEAVE the artwork's own rectangle: interior
+    // warped, edges stayed ruler-straight ("warp inside the container"). The
+    // shader's max shift is scale/2 px ((map−0.5)·scale, |map−0.5| ≤ 0.5); pad
+    // by that plus headroom so the artwork edges genuinely warp.
+    dispFilter.padding = Math.ceil(8 + (state.displacementScale || 0) * 0.6);
     // Blend/alpha go on the FILTERED CONTAINER, not the sprite: a filtered
     // container renders its children into an intermediate texture first, so a
     // sprite-level multiply blends against that buffer's EMPTY (black) backdrop
