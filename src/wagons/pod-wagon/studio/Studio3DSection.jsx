@@ -25,14 +25,28 @@ const hasWebGL = () => {
   }
 };
 
+// Shared slider row (label · range · value).
+const Slider = ({ label, min, max, step, value, onChange, fmt = (v) => v }) => (
+  <label className="flex items-center gap-2 text-[12px] text-admin-text-muted">
+    <span className="w-28 shrink-0">{label}</span>
+    <input
+      type="range" min={min} max={max} step={step} value={value}
+      onChange={(e) => onChange(parseFloat(e.target.value))}
+      className="flex-1"
+    />
+    <span className="w-14 text-right tabular-nums text-admin-text">{fmt(value)}</span>
+  </label>
+);
+
 /**
  * Props:
- *   artwork    — the artwork doc to composite (front slot's resolved artwork)
- *   placement  — the front slot's placement {xMm,yMm,wMm,rotationDeg} or null
- *                (→ the compositor centres it via the config default inside
- *                DisplacementPreview when placement arrives later)
+ *   artwork            — the artwork doc to composite (front slot's resolved artwork)
+ *   placement          — the FRONT slot's placement {xMm,yMm,wMm,rotationDeg} or null
+ *   onPlacementChange  — (placement) => void; the placement sliders here edit the
+ *                        SAME front placement the flat canvas uses (two-way sync —
+ *                        the cm readout/print instruction always matches the 3D view)
  */
-const Studio3DSection = ({ artwork = null, placement = null }) => {
+const Studio3DSection = ({ artwork = null, placement = null, onPlacementChange = () => {} }) => {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const previewRef = useRef(null);
@@ -115,28 +129,33 @@ const Studio3DSection = ({ artwork = null, placement = null }) => {
                   className="max-w-[420px]"
                 />
               </Suspense>
-              {/* Beta tuning: displacement/opacity/blend, live. */}
+              {/* Placement sliders — SHARED state with the flat canvas (front slot).
+                  Then the beta tuning knobs: displacement/opacity/blend, live. */}
               <div className="mt-3 flex max-w-[420px] flex-col gap-2">
-                <label className="flex items-center gap-2 text-[12px] text-admin-text-muted">
-                  <span className="w-28 shrink-0">Displacement</span>
-                  <input
-                    type="range" min="0" max="100" step="1"
-                    value={tuning.displacementScale}
-                    onChange={(e) => setTuning((t) => ({ ...t, displacementScale: parseFloat(e.target.value) }))}
-                    className="flex-1"
-                  />
-                  <span className="w-10 text-right tabular-nums text-admin-text">{tuning.displacementScale}</span>
-                </label>
-                <label className="flex items-center gap-2 text-[12px] text-admin-text-muted">
-                  <span className="w-28 shrink-0">Opacitet</span>
-                  <input
-                    type="range" min="0" max="1" step="0.05"
-                    value={tuning.alpha}
-                    onChange={(e) => setTuning((t) => ({ ...t, alpha: parseFloat(e.target.value) }))}
-                    className="flex-1"
-                  />
-                  <span className="w-10 text-right tabular-nums text-admin-text">{tuning.alpha.toFixed(2)}</span>
-                </label>
+                <Slider label="Bredd (cm)" min={5} max={30} step={0.5}
+                  value={effectivePlacement.wMm / 10}
+                  onChange={(v) => onPlacementChange({ ...effectivePlacement, wMm: v * 10 })}
+                  fmt={(v) => `${v} cm`} />
+                <Slider label="Vänster (cm)" min={0} max={30} step={0.5}
+                  value={effectivePlacement.xMm / 10}
+                  onChange={(v) => onPlacementChange({ ...effectivePlacement, xMm: v * 10 })}
+                  fmt={(v) => `${v} cm`} />
+                <Slider label="Uppifrån (cm)" min={0} max={40} step={0.5}
+                  value={effectivePlacement.yMm / 10}
+                  onChange={(v) => onPlacementChange({ ...effectivePlacement, yMm: v * 10 })}
+                  fmt={(v) => `${v} cm`} />
+                <Slider label="Rotation" min={-30} max={30} step={0.5}
+                  value={effectivePlacement.rotationDeg || 0}
+                  onChange={(v) => onPlacementChange({ ...effectivePlacement, rotationDeg: v })}
+                  fmt={(v) => `${v}°`} />
+                <div className="my-1 border-t border-admin-border-soft" />
+                <Slider label="Displacement" min={0} max={100} step={1}
+                  value={tuning.displacementScale}
+                  onChange={(v) => setTuning((t) => ({ ...t, displacementScale: v }))} />
+                <Slider label="Opacitet" min={0} max={1} step={0.05}
+                  value={tuning.alpha}
+                  onChange={(v) => setTuning((t) => ({ ...t, alpha: v }))}
+                  fmt={(v) => v.toFixed(2)} />
                 <label className="flex items-center gap-2 text-[12px] text-admin-text-muted">
                   <span className="w-28 shrink-0">Blend</span>
                   <select
