@@ -27,6 +27,28 @@ const reviewRequest_1 = require("../templates/reviewRequest");
 const emailLayout_1 = require("../templates/emailLayout");
 const config_1 = require("./config");
 const app_urls_1 = require("../../config/app-urls");
+// Admin email types that must ALWAYS reach the PLATFORM operator, never the
+// shop — even though a shopId is threaded for identity/branding. These are
+// platform-level concerns (financial/legal risk, new-merchant sales lead), not
+// something the shop owner handles. Everything else with adminEmail:true is a
+// shop-scoped notification and routes to the shop's own inbox (see sendEmail).
+const PLATFORM_ONLY_ADMIN_EMAILS = new Set([
+    'DISPUTE_ALERT_ADMIN',
+    'LEAD_NOTIFICATION_ADMIN', // prospective new merchant for the platform
+]);
+// Regex for a syntactically valid email.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// A syntactically-valid address is NOT necessarily a REAL one. The generic
+// storefront ships `supportEmail: 'hello@example.com'` (src/config/store.js) as
+// a placeholder; a shop that never edited it must be treated as UNCONFIGURED —
+// otherwise the placeholder leaks into reply-to and admin routing. Mirrors the
+// storefront's own placeholder check in src/utils/legalPageReadiness.js.
+const isRealEmail = (v) => {
+    if (typeof v !== 'string')
+        return false;
+    const s = v.trim();
+    return EMAIL_RE.test(s) && !/@example\.(com|org|net|se)$/i.test(s);
+};
 class EmailOrchestrator {
     constructor() {
         this.userResolver = new UserResolver_1.UserResolver();
@@ -105,10 +127,25 @@ class EmailOrchestrator {
             let result;
             if (context.adminEmail) {
                 console.log('📧 EmailOrchestrator: Sending admin email');
-                // Multi-tenant admin routing: when this shop resolved a valid
-                // supportEmail, the shop gets the notification alongside the platform
-                // (deduped in sendAdminEmail). No shopId / no supportEmail → platform only.
-                const extraAdminRecipients = shopIdentity?.supportEmail ? [shopIdentity.supportEmail] : [];
+                // Multi-tenant admin routing. Shop-scoped notifications (e.g. new-order,
+                // affiliate application) go to the SHOP's own notification address — the
+                // shop owner runs everything around their shop. Resolution precedence is
+                // in loadShopIdentity (notificationEmail → contactEmail → supportEmail →
+                // ownerEmail). When the shop resolved a real address it is used INSTEAD
+                // of the platform admins (extraAdminRecipients replaces, see below);
+                // when it did not, we fall back to the platform admins and warn loudly so
+                // a misconfigured shop is visible in the logs.
+                let extraAdminRecipients = [];
+                if (context.shopId && !PLATFORM_ONLY_ADMIN_EMAILS.has(context.emailType)) {
+                    if (shopIdentity?.notificationEmail) {
+                        extraAdminRecipients = [shopIdentity.notificationEmail];
+                    }
+                    else {
+                        console.warn(`⚠️ EmailOrchestrator: shop "${context.shopId}" has no notification/contact/support/owner email configured — ` +
+                            `admin ${context.emailType} email falling back to platform recipients (${config_1.EMAIL_CONFIG.ADMIN_RECIPIENTS.join(', ')}). ` +
+                            `Set storeIdentity.supportEmail (or notificationEmail) for this shop.`);
+                    }
+                }
                 result = await this.emailService.sendAdminEmail(template, { ...emailOptions, extraAdminRecipients });
             }
             else {
@@ -158,17 +195,27 @@ class EmailOrchestrator {
             const snap = await database_1.db.collection('shops').doc(shopId).get();
             if (!snap.exists)
                 return null;
-            const si = snap.data()?.storeIdentity || {};
+            const shop = snap.data() || {};
+            const si = shop.storeIdentity || {};
             const shopName = typeof si.shopName === 'string' && si.shopName.trim() ? si.shopName.trim() : undefined;
-            const supportEmail = typeof si.supportEmail === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(si.supportEmail.trim())
-                ? si.supportEmail.trim()
-                : undefined;
+            // Reply-to = the shop's PUBLIC support address (placeholder rejected).
+            const supportEmail = isRealEmail(si.supportEmail) ? si.supportEmail.trim() : undefined;
             // Only absolute http(s) logos are usable in email (client default is a
             // relative /images/logo.svg the shell must ignore).
             const logoUrl = typeof si.logoUrl === 'string' && /^https?:\/\//i.test(si.logoUrl.trim())
                 ? si.logoUrl.trim()
                 : undefined;
-            return { shopName, supportEmail, logoUrl };
+            // Admin/order-notification recipient for this shop, in precedence order.
+            // A dedicated notificationEmail wins (a shop may want orders routed to a
+            // back-office inbox ≠ its public support address); then contactEmail;
+            // then the public supportEmail; then the shop owner's account email.
+            // First REAL (non-placeholder) match wins.
+            const notificationEmail = (isRealEmail(si.notificationEmail) && si.notificationEmail.trim()) ||
+                (isRealEmail(si.contactEmail) && si.contactEmail.trim()) ||
+                (isRealEmail(si.supportEmail) && si.supportEmail.trim()) ||
+                (isRealEmail(shop.ownerEmail) && shop.ownerEmail.trim()) ||
+                undefined;
+            return { shopName, supportEmail, logoUrl, notificationEmail: notificationEmail || undefined };
         }
         catch (error) {
             console.warn('⚠️ EmailOrchestrator: shop identity load failed (using platform defaults):', error);

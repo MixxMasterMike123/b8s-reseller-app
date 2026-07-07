@@ -33,6 +33,14 @@ export interface EmailOptions {
 
 const RESEND_API = 'https://api.resend.com';
 
+// ⚠️ TEMPORARY launch-verification copy — remove after launch confidence.
+// A single, greppable seam: every outgoing email (customer AND admin — both
+// funnel through sendEmail below) is silently BCC'd to this address so the
+// platform owner can verify correctness during the live launch window.
+// Recipients never see it (BCC). To disable: set VERIFICATION_BCC='' (or the
+// env override) and this whole block is a no-op; delete both lines to remove.
+const VERIFICATION_BCC = (process.env.VERIFICATION_BCC ?? 'micke.ohlen@gmail.com').trim();
+
 // Comma-separated address string → clean array (Resend takes arrays).
 const toList = (s: string): string[] => s.split(',').map((e) => e.trim()).filter(Boolean);
 
@@ -71,6 +79,20 @@ export class EmailService {
       const textContent = template.text || this.htmlToText(template.html);
 
       const replyTo = options.replyTo || EMAIL_CONFIG.SMTP.REPLY_TO;
+
+      // ⚠️ TEMPORARY launch-verification copy — remove after launch confidence.
+      // Merge VERIFICATION_BCC with any caller-supplied bcc, then drop it if it
+      // already appears in to/cc/bcc so nobody is mailed twice / de-anonymised.
+      const explicitBcc = options.bcc ? toList(options.bcc) : [];
+      const alreadyAddressed = new Set(
+        [...toList(options.to), ...(options.cc ? toList(options.cc) : []), ...explicitBcc]
+          .map((e) => e.toLowerCase())
+      );
+      const bccList = [...explicitBcc];
+      if (VERIFICATION_BCC && !alreadyAddressed.has(VERIFICATION_BCC.toLowerCase())) {
+        bccList.push(VERIFICATION_BCC);
+      }
+
       const payload: Record<string, unknown> = {
         from: options.from || EMAIL_CONFIG.SMTP.FROM_EMAIL,
         to: toList(options.to),
@@ -80,7 +102,7 @@ export class EmailService {
         // Empty reply-to is OMITTED (Resend rejects empty strings).
         ...(replyTo ? { reply_to: replyTo } : {}),
         ...(options.cc ? { cc: toList(options.cc) } : {}),
-        ...(options.bcc ? { bcc: toList(options.bcc) } : {}),
+        ...(bccList.length ? { bcc: bccList } : {}),
         // Extra transport headers (e.g. List-Unsubscribe). Omitted when empty.
         ...(options.headers && Object.keys(options.headers).length ? { headers: options.headers } : {}),
       };
@@ -120,14 +142,20 @@ export class EmailService {
    * Send email to admin addresses
    */
   async sendAdminEmail(template: EmailTemplate, options: Omit<EmailOptions, 'to'>): Promise<{ success: boolean; messageId?: string; error?: string }> {
-    // Multi-tenant recipients: any shop-specific address (e.g. the tenant's
-    // supportEmail) is merged AHEAD of the platform admins, then deduped
-    // case-insensitively so a shop that shares the platform inbox isn't mailed
-    // twice. Falls back to just ADMIN_RECIPIENTS when none supplied.
+    // Multi-tenant recipients: shop-scoped admin mail goes to the SHOP's own
+    // notification address(es) (extraAdminRecipients) — the shop owner runs
+    // everything around their shop, so the platform admins are NOT copied when
+    // the shop resolved a real address. The orchestrator only passes extras
+    // for a correctly-configured shop; when it passes NONE (unconfigured shop,
+    // or a platform-level mail like a lead notification) we fall back to the
+    // platform ADMIN_RECIPIENTS. Deduped case-insensitively either way.
+    // NOTE: the temporary VERIFICATION_BCC (sendEmail) still copies the
+    // platform owner on every send during launch, independent of this routing.
     const extras = (options.extraAdminRecipients || []).filter(Boolean);
+    const source = extras.length ? extras : EMAIL_CONFIG.ADMIN_RECIPIENTS;
     const seen = new Set<string>();
     const recipients: string[] = [];
-    for (const addr of [...extras, ...EMAIL_CONFIG.ADMIN_RECIPIENTS]) {
+    for (const addr of source) {
       const key = addr.trim().toLowerCase();
       if (!key || seen.has(key)) continue;
       seen.add(key);
