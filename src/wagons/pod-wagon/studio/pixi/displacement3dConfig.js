@@ -71,7 +71,8 @@ export const DEV_3D_GARMENTS = [
     displacementScale: 30,
     displacementBlur: 6,   // map-px gaussian blur — kills JPEG 8×8 block stair-steps
     displacementContrast: 1, // dev map already warps beautifully; C=1 only de-biases DC
-    blend: 'screen',       // Mikael's default while multiply is under evaluation
+    blend: 'multiply',     // Mikael's keeper default (2026-07-07): inks into the fabric,
+                           // white artwork backgrounds vanish on light garments
     alpha: 0.8,
     perColorway: {},
     output: { w: 1600, h: 1936 }, // photo aspect (3200×3871 halved)

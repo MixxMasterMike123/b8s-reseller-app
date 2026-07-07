@@ -113,7 +113,7 @@ const ModelEditor = ({
   const [displacementScale, setDisplacementScale] = useState(model.displacementScale ?? 30);
   const [displacementBlur, setDisplacementBlur] = useState(model.displacementBlur ?? 6);
   const [displacementContrast, setDisplacementContrast] = useState(model.displacementContrast ?? 1);
-  const [blend, setBlend] = useState(model.blend || 'screen');
+  const [blend, setBlend] = useState(model.blend || 'multiply');
   const [alpha, setAlpha] = useState(model.alpha ?? 0.8);
   const [outW, setOutW] = useState(model.output?.w ?? null);
   const [outH, setOutH] = useState(model.output?.h ?? null);
@@ -338,7 +338,7 @@ const ModelEditor = ({
         displacementScale: num(displacementScale) || 0,
         displacementBlur: num(displacementBlur) || 0,
         displacementContrast: Number.isFinite(num(displacementContrast)) ? num(displacementContrast) : 1,
-        blend: blend || 'screen',
+        blend: blend || 'multiply',
         alpha: Number.isFinite(num(alpha)) ? num(alpha) : 0.8,
         perColorway: perColorway || {},
         output: outW && outH ? { w: num(outW) || null, h: num(outH) || null } : null,
