@@ -29,7 +29,9 @@
 //       },
 //     },
 //     printAreaMm: { front: { w, h } }, // physical size ↔ views[view].printArea
-//     displacementScale, displacementBlur, blend, alpha,
+//     displacementScale, displacementBlur, displacementContrast, blend, alpha,
+//                                        // displacementContrast (default 1) amplifies
+//                                        //   the map's folds for weak/flat maps
 //     perColorway: { black: { blend: 'screen', alpha: 0.9 } }, // optional overrides
 //     output: { w, h },
 //     createdAt, updatedAt,

@@ -105,6 +105,7 @@ const Studio3DSection = ({ artwork = null, placement = null, models = [] }) => {
   // on model/colourway switch (below); sliders still override live afterwards.
   const [tuning, setTuning] = useState(() => ({
     displacementScale: garment?.displacementScale ?? 30,
+    displacementContrast: garment?.displacementContrast ?? 1,
     alpha: garment?.alpha ?? 0.8,
     blend: garment?.blend ?? 'multiply',
   }));
@@ -141,6 +142,7 @@ const Studio3DSection = ({ artwork = null, placement = null, models = [] }) => {
     const per = garment?.perColorway?.[effColorwayId] || {};
     setTuning({
       displacementScale: per.displacementScale ?? garment?.displacementScale ?? 30,
+      displacementContrast: per.displacementContrast ?? garment?.displacementContrast ?? 1,
       alpha: per.alpha ?? garment?.alpha ?? 0.8,
       blend: per.blend ?? garment?.blend ?? 'multiply',
     });
@@ -287,6 +289,10 @@ const Studio3DSection = ({ artwork = null, placement = null, models = [] }) => {
                 <Slider label="Displacement" min={0} max={100} step={1}
                   value={tuning.displacementScale}
                   onChange={(v) => setTuning((t) => ({ ...t, displacementScale: v }))} />
+                <Slider label="Kontrast (karta)" min={0.5} max={4} step={0.1}
+                  value={tuning.displacementContrast}
+                  onChange={(v) => setTuning((t) => ({ ...t, displacementContrast: v }))}
+                  fmt={(v) => v.toFixed(1)} />
                 <Slider label="Opacitet" min={0} max={1} step={0.05}
                   value={tuning.alpha}
                   onChange={(v) => setTuning((t) => ({ ...t, alpha: v }))}

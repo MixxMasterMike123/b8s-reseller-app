@@ -13,7 +13,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { doc, updateDoc, serverTimestamp, deleteField } from 'firebase/firestore';
 import { db } from '../../firebase/config';
-import { uploadModelColorwayAssets, deleteColorwayAssets } from '../../utils/pod3dUpload';
+import { uploadModelColorwayAssets, deleteColorwayAssets, LOW_CONTRAST_SD_THRESHOLD } from '../../utils/pod3dUpload';
 import { clearPod3dModelsCache } from '../../config/pod3dModels';
 import toast from 'react-hot-toast';
 import { XMarkIcon } from '@heroicons/react/24/outline';
@@ -112,6 +112,7 @@ const ModelEditor = ({
   // Tuning defaults.
   const [displacementScale, setDisplacementScale] = useState(model.displacementScale ?? 30);
   const [displacementBlur, setDisplacementBlur] = useState(model.displacementBlur ?? 6);
+  const [displacementContrast, setDisplacementContrast] = useState(model.displacementContrast ?? 1);
   const [blend, setBlend] = useState(model.blend || 'screen');
   const [alpha, setAlpha] = useState(model.alpha ?? 0.8);
   const [outW, setOutW] = useState(model.output?.w ?? null);
@@ -125,6 +126,8 @@ const ModelEditor = ({
   const [cwMask, setCwMask] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [addError, setAddError] = useState('');
+  // Persistent low-contrast warnings, keyed by colorway id → { label, sd }.
+  const [lowContrast, setLowContrast] = useState({});
 
   const [saving, setSaving] = useState(false);
   const photoInput = useRef(null);
@@ -176,6 +179,8 @@ const ModelEditor = ({
       };
       if (res.maskUrl) entry.maskUrl = res.maskUrl;
       if (res.originalPaths) entry.originalPaths = res.originalPaths;
+      // Harmless metadata: lets the studio warn later if we want.
+      if (Number.isFinite(res.mapContrastSd)) entry.mapContrastSd = res.mapContrastSd;
 
       const nextColorways = { ...colorways, [newId]: entry };
       const newViewW = res.derivative.w;
@@ -208,6 +213,17 @@ const ModelEditor = ({
       setOriginalDims(newOrig);
       if (outW == null) setOutW(newViewW);
       if (outH == null) setOutH(newViewH);
+      // Persistent low-contrast warning: a weak map warps the artwork barely at
+      // all → the 3D-vy looks flat. Set/clear the warning for this colorway.
+      setLowContrast((prev) => {
+        const next = { ...prev };
+        if (Number.isFinite(res.mapContrastSd) && res.mapContrastSd < LOW_CONTRAST_SD_THRESHOLD) {
+          next[newId] = { label: cwLabel.trim(), sd: res.mapContrastSd };
+        } else {
+          delete next[newId];
+        }
+        return next;
+      });
       resetAddForm();
       toast.success(`Färgväg "${cwLabel.trim()}" tillagd`);
     } catch (err) {
@@ -251,6 +267,12 @@ const ModelEditor = ({
       clearPod3dModelsCache();
 
       setColorways(next);
+      setLowContrast((prev) => {
+        if (!prev[cwId]) return prev;
+        const p = { ...prev };
+        delete p[cwId];
+        return p;
+      });
       if (wasLast) {
         setViewW(null);
         setViewH(null);
@@ -315,6 +337,7 @@ const ModelEditor = ({
         },
         displacementScale: num(displacementScale) || 0,
         displacementBlur: num(displacementBlur) || 0,
+        displacementContrast: Number.isFinite(num(displacementContrast)) ? num(displacementContrast) : 1,
         blend: blend || 'screen',
         alpha: Number.isFinite(num(alpha)) ? num(alpha) : 0.8,
         perColorway: perColorway || {},
@@ -389,9 +412,10 @@ const ModelEditor = ({
               {colorwayIds.map((cwId) => {
                 const cw = colorways[cwId];
                 const ov = perColorway[cwId] || {};
+                const weak = lowContrast[cwId];
                 return (
+                  <div key={cwId} className="space-y-1.5">
                   <div
-                    key={cwId}
                     className="flex flex-wrap items-center gap-3 rounded-lg border border-white/10 bg-gray-800/50 p-2"
                   >
                     <img
@@ -440,6 +464,14 @@ const ModelEditor = ({
                     >
                       Ta bort
                     </button>
+                  </div>
+                  {weak && (
+                    <p className="rounded-lg bg-amber-500/15 px-3 py-2 text-xs text-amber-300">
+                      Displacement-kartan för ”{weak.label}” har låg kontrast (svaga veck)
+                      — 3D-vyn kan se platt ut. Höj Kartkontrast under Standardinställningar,
+                      eller ladda upp en karta med tydligare veck.
+                    </p>
+                  )}
                   </div>
                 );
               })}
@@ -628,6 +660,16 @@ const ModelEditor = ({
                 value={displacementBlur}
                 onChange={setDisplacementBlur}
                 help="Jämnar ut JPEG-artefakter i displacement-kartan."
+              />
+              <Range
+                label="Kartkontrast"
+                min={0.5}
+                max={4}
+                step={0.1}
+                value={displacementContrast}
+                onChange={setDisplacementContrast}
+                fmt={(v) => Number(v).toFixed(1)}
+                help="Förstärker vecken i displacement-kartan. Höj om 3D-vyn ser platt ut trots skarp karta — 1 = kartan som den är."
               />
               <div className="flex items-center gap-3">
                 <span className="w-40 shrink-0 text-sm text-gray-400">Blend</span>

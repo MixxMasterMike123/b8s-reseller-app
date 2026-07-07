@@ -23,6 +23,45 @@ import { readImageDimensions, extOf } from './podUpload';
 
 const DERIVATIVE_MAX_EDGE = 1600; // longest-edge cap for the web derivatives
 
+// Displacement-map contrast floor. A map whose folds sit too close to mid-gray
+// barely warps the artwork (DisplacementFilter shifts by (luminance−0.5)×scale),
+// so edges render dead straight and the 3D-vy looks flat. MEASURED EVIDENCE: a
+// weak operator map read sd≈18 over its print area, a good one sd≈52 — 25 sits
+// safely between them. Below this we WARN the operator (and store the number).
+export const LOW_CONTRAST_SD_THRESHOLD = 25;
+
+/**
+ * measureMapContrastSd(canvas) → number
+ * Grayscale std-dev of the luminance over the CENTER 60% of the canvas (the print
+ * area isn't calibrated at upload time, so we sample the middle where the print
+ * usually lands). Standard Rec.601 luminance (0.299/0.587/0.114); every 4th pixel
+ * for speed. Higher = more fold detail = warps better.
+ */
+export const measureMapContrastSd = (canvas) => {
+  const cw = canvas.width;
+  const ch = canvas.height;
+  if (!cw || !ch) return 0;
+  const x0 = Math.floor(cw * 0.2);
+  const y0 = Math.floor(ch * 0.2);
+  const rw = Math.max(1, Math.floor(cw * 0.6));
+  const rh = Math.max(1, Math.floor(ch * 0.6));
+  const { data } = canvas.getContext('2d').getImageData(x0, y0, rw, rh);
+  let n = 0;
+  let sum = 0;
+  let sumSq = 0;
+  // step 16 bytes = every 4th pixel (4 bytes/pixel).
+  for (let i = 0; i < data.length; i += 16) {
+    const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+    sum += lum;
+    sumSq += lum * lum;
+    n += 1;
+  }
+  if (!n) return 0;
+  const mean = sum / n;
+  const variance = Math.max(0, sumSq / n - mean * mean);
+  return Math.sqrt(variance);
+};
+
 // Sanitize a filename for a Storage object segment (matches podUpload's safeName).
 const safeName = (name) => String(name || 'asset').replace(/[^a-zA-Z0-9.-]/g, '_');
 
@@ -87,7 +126,7 @@ export const validateModelAssetSet = async ({ photoFile, displacementFile, maskF
 };
 
 /**
- * makeWebDerivative(file, maxEdge = 1600) → Promise<{ blob, type, w, h }>
+ * makeWebDerivative(file, maxEdge = 1600) → Promise<{ blob, type, w, h, canvas }>
  * Canvas-downscales the longest edge to maxEdge (never upscales) and re-encodes to
  * WebP q0.9 — a UNIFORM pipeline: even an already-small jpeg/png/webp is re-encoded
  * so the studio always gets a predictable contentType. Falls back to PNG when the
@@ -123,7 +162,9 @@ export const makeWebDerivative = (file, maxEdge = DERIVATIVE_MAX_EDGE) =>
           reject(new Error('Kunde inte skapa webb-derivat av bilden.'));
           return;
         }
-        resolve({ blob, type: blob.type, w: cw, h: ch });
+        // Return the canvas too so callers can measure map quality without a
+        // re-decode (displacement-contrast check reuses THIS canvas).
+        resolve({ blob, type: blob.type, w: cw, h: ch, canvas });
       } catch (err) {
         URL.revokeObjectURL(url);
         reject(err);
@@ -139,7 +180,7 @@ export const makeWebDerivative = (file, maxEdge = DERIVATIVE_MAX_EDGE) =>
 /**
  * uploadModelColorwayAssets({ modelId, viewId, colorwayId, photoFile,
  *   displacementFile, maskFile?, expectedOriginalDims? })
- *   → Promise<{ photoUrl, displacementUrl, maskUrl?, originalPaths, derivative, original }>
+ *   → Promise<{ photoUrl, displacementUrl, maskUrl?, originalPaths, derivative, original, mapContrastSd }>
  *
  * Validates registration, uploads the raw originals, then uploads deterministic
  * EXTENSION-LESS web derivatives (true replace on re-upload — the contentType
@@ -196,6 +237,10 @@ export const uploadModelColorwayAssets = async ({
     );
   }
 
+  // Measure displacement-map contrast on its derivative canvas (the exact pixels
+  // the studio will warp with). A low sd → warn the operator (result field below).
+  const mapContrastSd = mapDeriv.canvas ? measureMapContrastSd(mapDeriv.canvas) : null;
+
   const photoDerivPath = `${base}/photo-1600`;
   const mapDerivPath = `${base}/map-1600`;
   const photoSnap = await uploadBytes(ref(storage, photoDerivPath), photoDeriv.blob, { contentType: photoDeriv.type });
@@ -209,6 +254,7 @@ export const uploadModelColorwayAssets = async ({
     originalPaths,
     derivative: { w: photoDeriv.w, h: photoDeriv.h },
     original,
+    mapContrastSd, // grayscale sd of the map's print-ish center; low = weak folds
   };
 
   if (maskFile) {

@@ -12,6 +12,13 @@
 //   displacementScale — warp strength in px at full black/white (start ~20-40)
 //   displacementBlur  — gaussian blur (map px) applied to the map at load; kills
 //                       JPEG block noise that stair-steps artwork edges (default 6)
+//   displacementContrast — förstärker vecken i kartan (default 1). Kontrasten
+//                       pivoterar på kartans MEDELVÄRDE i tryckytan — kartor
+//                       behöver inte vara centrerade på mellangrått, och motivet
+//                       glider aldrig av masken när kontrasten höjs. Höj (2–4) för
+//                       svaga/platta kartor vars veck ligger för nära medelvärdet
+//                       för att warpa motivet (uppmätt: svag karta sd≈18 vs bra
+//                       karta sd≈52 över tryckytan)
 //   blend/alpha       — 'multiply' @ 0.8 for LIGHT garments (picks up shadows);
 //                       override per colorway, e.g. 'screen' for DARK garments
 //   output            — product-image resolution, independent of print DPI
@@ -33,7 +40,7 @@
 //       },
 //     },
 //     printAreaMm: { front: { w, h } },  // physical size ↔ views[view].printArea
-//     displacementScale, blend, alpha,
+//     displacementScale, displacementBlur, displacementContrast, blend, alpha,
 //     perColorway: { black: { blend: 'screen', alpha: 0.9 } },  // optional overrides
 //     output: { w, h },
 //   }
@@ -63,6 +70,7 @@ export const DEV_3D_GARMENTS = [
     printAreaMm: { front: { w: 300, h: 400 } },
     displacementScale: 30,
     displacementBlur: 6,   // map-px gaussian blur — kills JPEG 8×8 block stair-steps
+    displacementContrast: 1, // dev map already warps beautifully; C=1 only de-biases DC
     blend: 'screen',       // Mikael's default while multiply is under evaluation
     alpha: 0.8,
     perColorway: {},
@@ -83,6 +91,9 @@ export const compositorConfigFor = (garment, viewId = 'front', colorwayId = 'whi
     tuning: {
       displacementScale: per.displacementScale ?? garment.displacementScale,
       displacementBlur: per.displacementBlur ?? garment.displacementBlur,
+      // No default-coalesce to 1 here — let the compositor default so an
+      // unconfigured map behaves EXACTLY as before this knob existed.
+      displacementContrast: per.displacementContrast ?? garment.displacementContrast,
       blend: per.blend ?? garment.blend,
       alpha: per.alpha ?? garment.alpha,
     },
