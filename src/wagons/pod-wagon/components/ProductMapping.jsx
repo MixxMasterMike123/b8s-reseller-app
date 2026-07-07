@@ -46,6 +46,20 @@ const ProductMapping = ({
   const artworkById = (id) => artwork.find((a) => a.id === id) || null;
   const purposeLabel = (id) => getProfileById(profiles, id)?.label || id;
 
+  // Orphan check — mirrors resolveMapping() (printProjection.ts) client-side. A
+  // mapping SKU is NOT orphaned if it is a known SKU (parent / colorway / size row),
+  // OR if it '-'-boundary-extends one (a size-level SKU like `north-01-svart-xxl`
+  // that inherits from the colorway `north-01-svart`). Otherwise the product was
+  // renamed/deleted and the mapping would never resolve — flag it.
+  const isKnownSku = (sku) => {
+    if (!sku) return false;
+    if (productSkus.has(sku)) return true;
+    for (const known of productSkus) {
+      if (sku.startsWith(known + '-')) return true;
+    }
+    return false;
+  };
+
   const handleAdd = async () => {
     if (saving) return;
     const cleanSku = sku.trim();
@@ -127,7 +141,7 @@ const ProductMapping = ({
         <ul className="divide-y divide-admin-border-soft">
           {mappings.map((m) => {
             const art = artworkById(m.artworkId);
-            const skuOrphan = m.sku && !productSkus.has(m.sku);
+            const skuOrphan = m.sku && !isKnownSku(m.sku);
             const artOrphan = m.artworkId && !art;
             return (
               <li key={m.id} className="flex items-center gap-3 py-2.5">
