@@ -136,6 +136,15 @@ export const createConnectAccount = onCall<ShopIdRequest>(COMMON, async (request
         card_payments: { requested: true },
         transfers: { requested: true },
       },
+      // Platform standard: MONTHLY payouts on the 1st. Keeps per-payout fees
+      // trivial (≤12 events/yr/shop), gives the shop one clean bookkeeping
+      // entry per month, and is predictable ("pengarna den 1:a varje månad").
+      // Per-shop overrides stay a platform lever (Stripe dashboard /
+      // setConnectPayoutDelay for the risk-delay). Existing accounts are NOT
+      // migrated — this applies at creation only.
+      settings: {
+        payouts: { schedule: { interval: 'monthly', monthly_anchor: 1 } },
+      },
       metadata: { shopId },
     }));
     accountId = account.id;
