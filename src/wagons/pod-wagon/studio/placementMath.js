@@ -139,6 +139,30 @@ export const snapPlacement = (placement, template, slot, artwork, thresholdMm) =
   };
 };
 
+/** A placement's rect in the garment's viewBox px (mm → px via the template's
+ *  px↔mm map, offset by the print-area origin). Shared by the interactive canvas,
+ *  the colourway-strip thumbnails and the mockup rasterizer — one source of truth
+ *  for "where does the artwork sit on the garment". Null when unresolvable. */
+export const placementToViewBoxRect = (placement, template, slot, artwork) => {
+  const rect = template?.printAreas?.[slot];
+  const ppm = pxPerMm(template, slot);
+  if (!rect || !ppm || !placement) return null;
+  return {
+    x: rect.x + placement.xMm * ppm.x,
+    y: rect.y + placement.yMm * ppm.y,
+    w: placement.wMm * ppm.x,
+    h: placementHeightMm(placement, artwork) * ppm.y,
+  };
+};
+
+/** viewBox-px rect → CSS percentage box of the responsive garment wrapper. */
+export const rectToPercent = (rect, viewBox) => ({
+  left: `${(rect.x / viewBox.w) * 100}%`,
+  top: `${(rect.y / viewBox.h) * 100}%`,
+  width: `${(rect.w / viewBox.w) * 100}%`,
+  height: `${(rect.h / viewBox.h) * 100}%`,
+});
+
 /** Is the placement horizontally centred in the print area? (0.05 mm tolerance —
  *  exact after a snap, and floating-point-safe.) */
 export const isCenteredX = (placement, template, slot) => {

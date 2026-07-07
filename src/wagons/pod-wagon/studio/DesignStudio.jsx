@@ -9,14 +9,22 @@
 //                  Colourway chips + a front/back slot selector sit under it.
 //
 // PLACEMENT STATE lives here, ONE PER SLOT (placements[slot] = {xMm,yMm,wMm}), so
-// switching front↔back preserves each side's placement and slice 3 can composite
-// every slot. Placements reset when the artwork or template changes (the aspect
-// ratio and print areas they were clamped against no longer apply).
+// switching front↔back preserves each side's placement. Placements reset when the
+// artwork or template changes (the aspect ratio and print areas they were clamped
+// against no longer apply).
+//
+// SLICE 3 adds:
+//   • overrides — per-slot, per-colourway artwork override ({ [slot]: { [cwId]:
+//     artworkId } }), the "byt motiv på mörka plagg" feature; resolveArtwork()
+//     feeds the override-aware artwork to the canvas, the strip AND the renderer.
+//   • mockups/heroKey — "Generera mockuper" rasterizes one image per colourway
+//     (× designed slot) via renderMockup, uploads drafts to the shop's Storage
+//     partition (best-effort; downloads still work offline), hero pick for slice 4.
 //
 // Artwork comes from the SHARED usePodLibrary load (passed down from PodAdminPage),
 // so no extra Firestore reads. Templates + print profiles (DPI thresholds) load
 // once via their cached loaders.
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { PhotoIcon } from '@heroicons/react/24/outline';
 import { CardSection } from '../../../components/admin/ui';
 import StatusPill from '../../../components/admin/ui/StatusPill';
@@ -29,7 +37,12 @@ import {
 import { loadPodProfiles, getProfileById } from '../../../config/podProfiles';
 import { tierTone, tierLabel } from '../components/podTier';
 import { GARMENT_FLATS } from './garments';
+import { isComposable } from './placementMath';
+import { renderMockup } from './mockupRender';
+import { uploadMockup } from './mockupUpload';
 import CompositorCanvas from './CompositorCanvas';
+import ColorwayStrip from './ColorwayStrip';
+import MockupPanel from './MockupPanel';
 
 // A FAIL artwork can't be composed (it would print badly) — it's shown greyed and
 // unselectable. PASS + WARN are selectable (WARN is advisory).
@@ -42,7 +55,7 @@ const GarmentThumb = ({ garment, hex }) => {
   return <Flat color={hex} className="block h-full w-full" />;
 };
 
-const DesignStudio = ({ artwork = [], loading = false }) => {
+const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
   const [templates, setTemplates] = useState([]);
   const [templatesLoading, setTemplatesLoading] = useState(true);
   const [meta, setMeta] = useState({ version: 0, provisional: true });
@@ -55,6 +68,30 @@ const DesignStudio = ({ artwork = [], loading = false }) => {
   // One placement per slot for the CURRENT artwork+template pair:
   // { front: {xMm,yMm,wMm}, back: … }. Missing slot → compositor uses its default.
   const [placements, setPlacements] = useState({});
+  // Per-slot, per-colourway artwork override: { [slot]: { [colorwayId]: artworkId } }.
+  const [overrides, setOverrides] = useState({});
+  // Generated mockups: array of { key, colorwayId, colorwayLabel, slot, objectUrl,
+  // url?, storagePath?, type } + the hero pick (slice 4 reads both).
+  const [mockups, setMockups] = useState([]);
+  const [heroKey, setHeroKey] = useState(null);
+  const [generating, setGenerating] = useState(false);
+  const [mockupError, setMockupError] = useState(null);
+  // Object URLs owned by the current mockup set — revoked on replace/unmount.
+  const objectUrlsRef = useRef([]);
+  const replaceObjectUrls = (urls) => {
+    objectUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
+    objectUrlsRef.current = urls;
+  };
+  useEffect(() => () => replaceObjectUrls([]), []);
+
+  const resetDesignState = () => {
+    setPlacements({});
+    setOverrides({});
+    setMockups([]);
+    setHeroKey(null);
+    setMockupError(null);
+    replaceObjectUrls([]);
+  };
 
   useEffect(() => {
     let alive = true;
@@ -82,22 +119,24 @@ const DesignStudio = ({ artwork = [], loading = false }) => {
     [templates, selectedTemplateId]
   );
 
-  // Keep the colourway + slot valid whenever the template changes. Placements
-  // reset too — they were clamped against the OLD template's print areas.
+  // Keep the colourway + slot valid whenever the template changes. Design state
+  // (placements/overrides/mockups) resets too — it was built against the OLD
+  // template's print areas and colourways.
   useEffect(() => {
     if (!selectedTemplate) return;
     const cwIds = (selectedTemplate.colorways || []).map((c) => c.id);
     if (!cwIds.includes(colorwayId)) setColorwayId(cwIds[0] || null);
     const slots = templateSlots(selectedTemplate);
     if (!slots.includes(slot)) setSlot(slots[0] || 'front');
-    setPlacements({});
+    resetDesignState();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTemplateId]);
 
   // New artwork = new aspect ratio: every stored placement's derived height (and
-  // clamping) is stale, so start from the defaults again.
+  // clamping) is stale, and overrides/mockups referenced the old base motif.
   useEffect(() => {
-    setPlacements({});
+    resetDesignState();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedArtworkId]);
 
   const selectedColorway = useMemo(
@@ -118,6 +157,98 @@ const DesignStudio = ({ artwork = [], loading = false }) => {
     () => getProfileById(profiles, selectedTemplate?.profileId),
     [profiles, selectedTemplate]
   );
+
+  // Which artwork a colourway prints in a slot: its override, else the product's
+  // base artwork. Single resolver feeding the canvas, the strip AND the renderer,
+  // mirroring the podMappings colorway-override model.
+  const resolveArtwork = (forSlot, cwId) => {
+    const overrideId = overrides[forSlot]?.[cwId];
+    if (overrideId) {
+      const found = artwork.find((a) => a.id === overrideId);
+      if (found) return found;
+    }
+    return selectedArtwork;
+  };
+
+  const setOverride = (forSlot, cwId, artworkId) => {
+    setOverrides((prev) => {
+      const slotMap = { ...(prev[forSlot] || {}) };
+      if (artworkId) slotMap[cwId] = artworkId;
+      else delete slotMap[cwId];
+      return { ...prev, [forSlot]: slotMap };
+    });
+    setMockups([]); // stale — the motif map changed
+    setHeroKey(null);
+  };
+
+  // Override choices: selectable (non-FAIL) artwork that can actually be
+  // COMPOSED (raster with known dims — a PASS-tier PDF can't preview/mockup, and
+  // offering it would silently drop that colourway from the generated set).
+  const overrideOptions = useMemo(
+    () => artwork.filter((a) => isSelectableArtwork(a) && isComposable(a) && a.id !== selectedArtworkId),
+    [artwork, selectedArtworkId]
+  );
+
+  // Slots that end up on mockups: 'front' always (the canvas shows its default
+  // immediately), other slots only once the seller actually placed something.
+  const designedSlots = (t) =>
+    templateSlots(t).filter((s) => s === 'front' || Boolean(placements[s]));
+
+  const generateMockups = async () => {
+    if (!selectedTemplate || generating) return;
+    setGenerating(true);
+    setMockupError(null);
+    const next = [];
+    const urls = [];
+    let uploadFailures = 0;
+    try {
+      for (const cw of selectedTemplate.colorways || []) {
+        for (const s of designedSlots(selectedTemplate)) {
+          const art = resolveArtwork(s, cw.id);
+          if (!art || !isComposable(art)) continue;
+          const { blob, type } = await renderMockup({
+            template: selectedTemplate, colorway: cw, slot: s,
+            artwork: art, placement: placements[s] || null,
+          });
+          const objectUrl = URL.createObjectURL(blob);
+          urls.push(objectUrl);
+          let uploaded = null;
+          if (shopId) {
+            try {
+              uploaded = await uploadMockup({
+                blob, type, shopId,
+                templateId: selectedTemplate.id, slot: s, colorwayId: cw.id,
+              });
+            } catch (e) {
+              uploadFailures += 1;
+              console.warn('DesignStudio: mockup upload failed', cw.id, s, e?.message);
+            }
+          }
+          next.push({
+            key: `${cw.id}:${s}`, colorwayId: cw.id, colorwayLabel: cw.label,
+            slot: s, objectUrl, type,
+            url: uploaded?.url || null, storagePath: uploaded?.storagePath || null,
+          });
+        }
+      }
+      replaceObjectUrls(urls);
+      setMockups(next);
+      setHeroKey((prev) => (prev && next.some((m) => m.key === prev) ? prev : next[0]?.key || null));
+      if (next.length === 0) {
+        setMockupError('Inget att generera — välj ett original som kan förhandsgranskas.');
+      } else if (uploadFailures > 0) {
+        setMockupError(`Mockuperna genererades, men ${uploadFailures} kunde inte sparas till lagringen. Nedladdning fungerar ändå.`);
+      }
+    } catch (e) {
+      console.warn('DesignStudio: mockup generation failed', e);
+      urls.forEach((u) => URL.revokeObjectURL(u));
+      setMockupError(e?.message || 'Mockup-genereringen misslyckades.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const canvasArtwork = resolveArtwork(slot, colorwayId);
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[320px,1fr]">
@@ -228,39 +359,26 @@ const DesignStudio = ({ artwork = [], loading = false }) => {
           template={selectedTemplate}
           colorway={selectedColorway}
           slot={slot}
-          artwork={selectedArtwork}
+          artwork={canvasArtwork}
           profile={profile}
           placement={placements[slot] || null}
           onPlacementChange={(p) => setPlacements((prev) => ({ ...prev, [slot]: p }))}
-          onResult={() => { /* slice 3 wires the generated mockup here */ }}
         />
 
-        {/* Colourway chips */}
+        {/* Colourway strip: composited per-colour previews + artwork override. */}
         {selectedTemplate && (
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <span className="text-[12px] text-admin-text-muted">Färg:</span>
-            {(selectedTemplate.colorways || []).map((cw) => {
-              const active = cw.id === colorwayId;
-              return (
-                <button
-                  key={cw.id}
-                  type="button"
-                  onClick={() => setColorwayId(cw.id)}
-                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] ${
-                    active
-                      ? 'border-admin-info-dot bg-admin-info-bg/60 font-medium text-admin-text'
-                      : 'border-admin-border text-admin-text-muted hover:bg-admin-surface-2'
-                  }`}
-                >
-                  <span
-                    className="h-3.5 w-3.5 shrink-0 rounded-full border border-admin-border"
-                    style={{ backgroundColor: cw.hex }}
-                  />
-                  {cw.label}
-                </button>
-              );
-            })}
-          </div>
+          <ColorwayStrip
+            template={selectedTemplate}
+            slot={slot}
+            activeColorwayId={colorwayId}
+            onSelect={setColorwayId}
+            placement={placements[slot] || null}
+            resolveArtwork={(cwId) => resolveArtwork(slot, cwId)}
+            overrides={overrides[slot] || {}}
+            onOverrideChange={selectedArtwork ? (cwId, artId) => setOverride(slot, cwId, artId) : null}
+            artworkOptions={overrideOptions}
+            baseArtworkLabel={selectedArtwork?.label || selectedArtwork?.fileName || 'Standardmotiv'}
+          />
         )}
 
         {/* Slot selector — only when the template defines more than one slot. */}
@@ -286,6 +404,17 @@ const DesignStudio = ({ artwork = [], loading = false }) => {
             })}
           </div>
         )}
+
+        {/* Generated mockups: per-colourway rasterized previews + hero pick. */}
+        <MockupPanel
+          mockups={mockups}
+          heroKey={heroKey}
+          onPickHero={setHeroKey}
+          onGenerate={generateMockups}
+          generating={generating}
+          error={mockupError}
+          canGenerate={Boolean(selectedTemplate && isComposable(selectedArtwork))}
+        />
       </CardSection>
     </div>
   );

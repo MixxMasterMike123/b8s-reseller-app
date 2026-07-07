@@ -31,18 +31,11 @@ import React, { useMemo, useRef, useState } from 'react';
 import { GARMENT_FLATS, GARMENT_VIEWBOX } from './garments';
 import {
   MIN_ART_WIDTH_MM, SNAP_SCREEN_PX,
-  pxPerMm, isComposable, placementHeightMm, maxWidthAtMm,
+  pxPerMm, isComposable, maxWidthAtMm,
   clampPlacement, defaultPlacement, snapPlacement, isCenteredX,
+  placementToViewBoxRect, rectToPercent,
   formatCm, placementReadout, dpiVerdict,
 } from './placementMath';
-
-// Convert a viewBox-pixel rect into CSS percentages of the responsive wrapper.
-const rectToPercent = (rect, viewBox) => ({
-  left: `${(rect.x / viewBox.w) * 100}%`,
-  top: `${(rect.y / viewBox.h) * 100}%`,
-  width: `${(rect.w / viewBox.w) * 100}%`,
-  height: `${(rect.h / viewBox.h) * 100}%`,
-});
 
 // DPI banner styling per verdict tier (admin badge tones).
 const DPI_TONE = {
@@ -228,12 +221,7 @@ const CompositorCanvas = ({
   }
 
   // Artwork rect in viewBox px (placement mm → px via the template's px↔mm map).
-  const artVb = effective && areaRect && ppm ? {
-    x: areaRect.x + effective.xMm * ppm.x,
-    y: areaRect.y + effective.yMm * ppm.y,
-    w: effective.wMm * ppm.x,
-    h: placementHeightMm(effective, artwork) * ppm.y,
-  } : null;
+  const artVb = effective ? placementToViewBoxRect(effective, template, slot, artwork) : null;
 
   const dragging = Boolean(dragUi);
 

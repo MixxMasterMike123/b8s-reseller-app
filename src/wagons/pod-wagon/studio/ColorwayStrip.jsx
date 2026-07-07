@@ -1,0 +1,146 @@
+// ColorwayStrip.jsx — the per-colourway strip of the Design Studio (slice 3).
+//
+// One card per colourway showing a LIVE composited mini-preview (garment flat in
+// that colour + the artwork that colourway will actually print, at the shared
+// slot placement). This is the foundation of the per-colourway review gate:
+// navy-on-navy is visible HERE, before anything ships.
+//
+// The strip also hosts the signature feature no incumbent automates: the
+// PER-COLOURWAY ARTWORK OVERRIDE ("byt motiv på mörka plagg") — the active
+// colourway gets a select that swaps its artwork for this slot only, mirroring
+// the podMappings colorway-override model the print pipeline already resolves.
+//
+// Pure presentational: state (active colourway, overrides) lives in DesignStudio.
+import React from 'react';
+import { GARMENT_FLATS, GARMENT_VIEWBOX } from './garments';
+import {
+  isComposable, clampPlacement, defaultPlacement,
+  placementToViewBoxRect, rectToPercent,
+} from './placementMath';
+
+// Composited mini-preview: flat + artwork img at the placement (same math as the
+// big canvas — placementToViewBoxRect is the shared source of truth).
+const MiniMockup = ({ template, slot, colorway, artwork, placement }) => {
+  const Flat = GARMENT_FLATS[template.garment];
+  const viewBox = GARMENT_VIEWBOX[template.garment];
+  if (!Flat || !viewBox) return <div className="h-full w-full bg-admin-surface-2" />;
+
+  let artRect = null;
+  if (artwork && isComposable(artwork)) {
+    const p = clampPlacement(
+      placement || defaultPlacement(template, slot, artwork),
+      template, slot, artwork
+    );
+    artRect = p ? placementToViewBoxRect(p, template, slot, artwork) : null;
+  }
+
+  return (
+    <div className="relative w-full">
+      <Flat color={colorway.hex} className="block h-auto w-full" />
+      {artRect && (
+        <img
+          src={artwork.previewUrl}
+          alt=""
+          draggable={false}
+          className="pointer-events-none absolute object-fill"
+          style={rectToPercent(artRect, viewBox)}
+        />
+      )}
+    </div>
+  );
+};
+
+/**
+ * Props:
+ *   template, slot          — active template + slot (previews composite for this slot)
+ *   activeColorwayId        — selected colourway
+ *   onSelect(colorwayId)
+ *   placement               — the slot's shared placement (or null → default)
+ *   resolveArtwork(colorwayId) → artwork doc that colourway prints (override-aware)
+ *   overrides               — { [colorwayId]: artworkId } for THIS slot
+ *   onOverrideChange(colorwayId, artworkId|null)
+ *   artworkOptions          — selectable artwork docs (PASS/WARN) for the override select
+ *   baseArtworkLabel        — label of the product's standard artwork (select's default row)
+ */
+const ColorwayStrip = ({
+  template, slot, activeColorwayId, onSelect, placement,
+  resolveArtwork, overrides = {}, onOverrideChange, artworkOptions = [], baseArtworkLabel = 'Standardmotiv',
+}) => {
+  if (!template) return null;
+  const colorways = template.colorways || [];
+  const active = colorways.find((c) => c.id === activeColorwayId) || null;
+  const activeOverride = active ? overrides[active.id] || '' : '';
+
+  return (
+    <div className="mt-4">
+      <div className="mb-1.5 flex items-baseline justify-between">
+        <span className="text-[12px] font-medium text-admin-text">Färger</span>
+        <span className="text-[11px] text-admin-text-faint">
+          Granska varje färg — det du ser är det som trycks
+        </span>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {colorways.map((cw) => {
+          const isActive = cw.id === activeColorwayId;
+          const hasOverride = Boolean(overrides[cw.id]);
+          return (
+            <button
+              key={cw.id}
+              type="button"
+              onClick={() => onSelect(cw.id)}
+              className={`w-[86px] shrink-0 rounded-[var(--radius-admin)] border p-1.5 text-left transition ${
+                isActive
+                  ? 'border-admin-info-dot ring-1 ring-admin-info-dot/40'
+                  : 'border-admin-border hover:bg-admin-surface-2'
+              }`}
+            >
+              <div className="overflow-hidden rounded-[6px] bg-admin-surface-2 p-1">
+                <MiniMockup
+                  template={template}
+                  slot={slot}
+                  colorway={cw}
+                  artwork={resolveArtwork(cw.id)}
+                  placement={placement}
+                />
+              </div>
+              <div className="mt-1 flex items-center gap-1">
+                <span
+                  className="h-2.5 w-2.5 shrink-0 rounded-full border border-admin-border"
+                  style={{ backgroundColor: cw.hex }}
+                />
+                <span className="truncate text-[11px] font-medium text-admin-text">{cw.label}</span>
+              </div>
+              {hasOverride && (
+                <div className="mt-0.5 text-[10px] text-admin-info-text">eget motiv</div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Override select for the ACTIVE colourway — swaps the artwork this
+          colourway prints in this slot (light motif on dark garments, etc). */}
+      {active && onOverrideChange && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <label htmlFor="cw-override" className="text-[12px] text-admin-text-muted">
+            Motiv på {active.label.toLowerCase()}:
+          </label>
+          <select
+            id="cw-override"
+            value={activeOverride}
+            onChange={(e) => onOverrideChange(active.id, e.target.value || null)}
+            className="rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2 py-1 text-[12px] text-admin-text focus:border-admin-info-dot focus:outline-none"
+          >
+            <option value="">{baseArtworkLabel} (standard)</option>
+            {artworkOptions.map((a) => (
+              <option key={a.id} value={a.id}>{a.label || a.fileName}</option>
+            ))}
+          </select>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ColorwayStrip;

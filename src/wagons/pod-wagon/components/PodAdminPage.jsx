@@ -143,7 +143,7 @@ const PodAdminPage = () => {
           />
         )}
         {tab === 'studio' && (
-          <DesignStudio artwork={lib.artwork} loading={lib.loading} />
+          <DesignStudio artwork={lib.artwork} loading={lib.loading} shopId={shopId} />
         )}
       </Page>
     </AppLayout>
