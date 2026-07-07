@@ -31,14 +31,16 @@ const readyColorwayIds = (garment) => {
 };
 
 // A model reaches the compositor only when its front view has real dimensions, a
-// physical print area, AND at least one render-ready colourway. The platform
-// console can hold half-configured models — this guard keeps them out of the
-// picker (and away from pixi) entirely.
+// physical print area, a CALIBRATED px print area (a zero rect renders the motif
+// into nothing — photo shows, artwork invisible), AND at least one render-ready
+// colourway. The platform console can hold half-configured models — this guard
+// keeps them out of the picker (and away from pixi) entirely.
 const renderReady = (models = []) =>
   (Array.isArray(models) ? models : []).filter((m) => {
     const v = m?.views?.front;
     const pa = m?.printAreaMm?.front;
-    return v?.w && v?.h && pa?.w > 0 && pa?.h > 0 && readyColorwayIds(m).length > 0;
+    return v?.w && v?.h && v?.printArea?.w > 0 && v?.printArea?.h > 0 &&
+      pa?.w > 0 && pa?.h > 0 && readyColorwayIds(m).length > 0;
   });
 
 const hasWebGL = () => {

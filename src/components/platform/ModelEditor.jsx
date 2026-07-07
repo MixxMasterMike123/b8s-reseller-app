@@ -37,6 +37,18 @@ const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 // Swedish decimal input: "30,5" must parse as 30.5, never NaN/0 silently.
 const num = (v) => Number(String(v ?? '').replace(',', '.'));
 
+// An uncalibrated (zero) print area renders the motif into NOTHING in the 3D-vy
+// (photo shows, artwork invisible) — seed a plausible chest rect instead:
+// centred, ~42% of the photo width, aspect from the physical print size.
+const isZeroArea = (pa) => !pa || !(num(pa.w) > 0) || !(num(pa.h) > 0);
+const defaultPrintArea = (w, h, mmW, mmH) => {
+  if (!w || !h) return null;
+  const aspect = mmW > 0 && mmH > 0 ? mmH / mmW : 4 / 3;
+  const pw = Math.round(w * 0.42);
+  const ph = Math.min(Math.round(pw * aspect), Math.round(h * 0.6));
+  return { x: Math.round((w - pw) / 2), y: Math.round(h * 0.3), w: pw, h: ph };
+};
+
 // deleteField() sentinel — updateDoc removes the dot-path key. In the harness the
 // stubbed saveDoc just logs it; production forwards it to updateDoc.
 const deleteFieldMarker = () => deleteField();
@@ -88,9 +100,14 @@ const ModelEditor = ({
   const [areaWcm, setAreaWcm] = useState(mm0.w ? mm0.w / 10 : 30);
   const [areaHcm, setAreaHcm] = useState(mm0.h ? mm0.h / 10 : 40);
 
-  // Pixel calibration rect (derivative px).
+  // Pixel calibration rect (derivative px). A saved-but-uncalibrated model
+  // (zero rect — renders nothing in the 3D-vy) gets the default suggestion
+  // pre-filled locally; the operator adjusts and saves.
   const pa0 = view0.printArea || { x: 0, y: 0, w: 0, h: 0 };
-  const [printArea, setPrintArea] = useState(pa0);
+  const calSeeded = isZeroArea(pa0) && Boolean(view0.w && view0.h);
+  const [printArea, setPrintArea] = useState(() =>
+    calSeeded ? defaultPrintArea(view0.w, view0.h, mm0.w, mm0.h) : pa0
+  );
 
   // Tuning defaults.
   const [displacementScale, setDisplacementScale] = useState(model.displacementScale ?? 30);
@@ -167,14 +184,22 @@ const ModelEditor = ({
 
       // Persist immediately: colorway entry + view dims (dot-paths so a parallel
       // save of the numeric fields can't clobber colorways, and vice-versa).
-      await saveDoc(modelId, {
+      const patch = {
         [`views.front.colorways.${newId}`]: entry,
         'views.front.w': newViewW,
         'views.front.h': newViewH,
         'views.front.originalDims': newOrig,
         updatedAt: serverTimestamp(),
-      });
+      };
+      // First colorway on an uncalibrated model: seed a default print area so the
+      // model renders in the 3D-vy out of the box (the operator refines it below).
+      const seeded = isZeroArea(printArea)
+        ? defaultPrintArea(newViewW, newViewH, num(areaWcm) * 10, num(areaHcm) * 10)
+        : null;
+      if (seeded) patch['views.front.printArea'] = seeded;
+      await saveDoc(modelId, patch);
       clearPod3dModelsCache();
+      if (seeded) setPrintArea(seeded);
 
       // Update local state. If this was the FIRST colorway, seed the output res.
       setColorways(nextColorways);
@@ -492,6 +517,12 @@ const ModelEditor = ({
             <h3 className="mb-1 text-sm font-semibold text-white">Tryckyta (kalibrering)</h3>
             {!hasColorway && (
               <p className="mb-2 text-xs text-gray-600">Lägg till en färgväg först (behöver fotot).</p>
+            )}
+            {calSeeded && (
+              <p className="mb-2 rounded-lg bg-amber-500/15 px-3 py-2 text-xs text-amber-300">
+                Tryckytan var inte kalibrerad — utan den visas inget motiv i 3D-vyn.
+                Ett förslag visas nedan: justera rektangeln så den täcker tryckytan på plagget och spara.
+              </p>
             )}
 
             {/* Physical size FIRST (cm-first). */}
