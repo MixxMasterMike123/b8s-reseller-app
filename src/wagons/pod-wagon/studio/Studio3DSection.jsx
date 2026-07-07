@@ -38,6 +38,14 @@ const Studio3DSection = ({ artwork = null, placement = null }) => {
   const previewRef = useRef(null);
   const webgl = useMemo(hasWebGL, []);
   const garment = DEV_3D_GARMENTS[0] || null;
+  // Beta TUNING knobs (live overrides of the garment config) — here to find the
+  // production defaults; once settled they move into the garment config/settings
+  // doc and these controls become a platform-console concern.
+  const [tuning, setTuning] = useState(() => ({
+    displacementScale: garment?.displacementScale ?? 30,
+    alpha: garment?.alpha ?? 0.8,
+    blend: garment?.blend ?? 'multiply',
+  }));
 
   if (!garment) return null;
 
@@ -103,9 +111,46 @@ const Studio3DSection = ({ artwork = null, placement = null }) => {
                   colorwayId="white"
                   artworkUrl={artwork.previewUrl}
                   placement={effectivePlacement}
+                  tuning={tuning}
                   className="max-w-[420px]"
                 />
               </Suspense>
+              {/* Beta tuning: displacement/opacity/blend, live. */}
+              <div className="mt-3 flex max-w-[420px] flex-col gap-2">
+                <label className="flex items-center gap-2 text-[12px] text-admin-text-muted">
+                  <span className="w-28 shrink-0">Displacement</span>
+                  <input
+                    type="range" min="0" max="100" step="1"
+                    value={tuning.displacementScale}
+                    onChange={(e) => setTuning((t) => ({ ...t, displacementScale: parseFloat(e.target.value) }))}
+                    className="flex-1"
+                  />
+                  <span className="w-10 text-right tabular-nums text-admin-text">{tuning.displacementScale}</span>
+                </label>
+                <label className="flex items-center gap-2 text-[12px] text-admin-text-muted">
+                  <span className="w-28 shrink-0">Opacitet</span>
+                  <input
+                    type="range" min="0" max="1" step="0.05"
+                    value={tuning.alpha}
+                    onChange={(e) => setTuning((t) => ({ ...t, alpha: parseFloat(e.target.value) }))}
+                    className="flex-1"
+                  />
+                  <span className="w-10 text-right tabular-nums text-admin-text">{tuning.alpha.toFixed(2)}</span>
+                </label>
+                <label className="flex items-center gap-2 text-[12px] text-admin-text-muted">
+                  <span className="w-28 shrink-0">Blend</span>
+                  <select
+                    value={tuning.blend}
+                    onChange={(e) => setTuning((t) => ({ ...t, blend: e.target.value }))}
+                    className="rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2 py-1 text-[12px] text-admin-text focus:border-admin-info-dot focus:outline-none"
+                  >
+                    <option value="multiply">multiply</option>
+                    <option value="screen">screen</option>
+                    <option value="normal">normal</option>
+                    <option value="add">add</option>
+                  </select>
+                </label>
+              </div>
               <div className="mt-2 flex items-center gap-3">
                 <button
                   type="button"
@@ -116,7 +161,7 @@ const Studio3DSection = ({ artwork = null, placement = null }) => {
                   {busy ? 'Skapar…' : 'Ladda ner 3D-bild (PNG)'}
                 </button>
                 <span className="text-[11px] text-admin-text-faint">
-                  Framsidans placering styr — flytta/rotera motivet i vyn ovanför.
+                  Position/storlek/rotation styrs i placerings-vyn ovanför.
                 </span>
               </div>
             </>

@@ -104,7 +104,14 @@ const DisplacementPreview = forwardRef(({
           {error}
         </div>
       ) : (
-        <div ref={hostRef} className="w-full overflow-hidden rounded-[var(--radius-admin)]" />
+        <>
+          {!ready && (
+            <div className="grid aspect-[4/5] w-full place-items-center rounded-[var(--radius-admin)] border border-dashed border-admin-border bg-admin-surface-2 text-[12px] text-admin-text-muted">
+              Laddar plaggfoto…
+            </div>
+          )}
+          <div ref={hostRef} className="w-full overflow-hidden rounded-[var(--radius-admin)]" />
+        </>
       )}
     </div>
   );

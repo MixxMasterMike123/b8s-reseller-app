@@ -44,15 +44,17 @@ export const DEV_3D_GARMENTS = [
     label: 'T-shirt på modell (dev)',
     views: {
       front: {
-        w: 3200,
-        h: 3871,
-        // Chest print area, calibrated to /dev-3d/DisplaceOriginalImage.jpg:
-        // centred on the shirt, below the collar, above the hem. 3:4 = 300×400 mm.
-        printArea: { x: 1095, y: 1750, w: 1050, h: 1400 },
+        // Web-sized derivatives (sips -z 1936 1600 of the 3200×3871 originals) —
+        // the originals were 13 MB and dominated the studio's first load.
+        w: 1600,
+        h: 1936,
+        // Chest print area, calibrated to the photo: centred on the shirt, below
+        // the collar, above the hem. 3:4 = 300×400 mm.
+        printArea: { x: 548, y: 875, w: 525, h: 700 },
         colorways: {
           white: {
-            photoUrl: '/dev-3d/DisplaceOriginalImage.jpg',
-            displacementUrl: '/dev-3d/displacementMapOnlyTest1.jpg',
+            photoUrl: '/dev-3d/photo-1600.jpg',
+            displacementUrl: '/dev-3d/map-1600.jpg',
             // maskUrl: none — the printArea rect masks the artwork for now.
           },
         },
