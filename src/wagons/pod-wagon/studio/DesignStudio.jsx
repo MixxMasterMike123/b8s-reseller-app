@@ -35,6 +35,7 @@ import {
   templateSlots,
 } from '../../../config/podMockupTemplates';
 import { loadPodProfiles, getProfileById } from '../../../config/podProfiles';
+import { loadPod3dModels } from '../../../config/pod3dModels';
 import { tierTone, tierLabel } from '../components/podTier';
 import { isComposable, placementReadout, defaultPlacement } from './placementMath';
 import { renderMockup } from './mockupRender';
@@ -75,6 +76,7 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
   const [templatesLoading, setTemplatesLoading] = useState(true);
   const [meta, setMeta] = useState({ version: 0, provisional: true });
   const [profiles, setProfiles] = useState([]);
+  const [models3d, setModels3d] = useState([]);
 
   const [selectedArtworkId, setSelectedArtworkId] = useState(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
@@ -129,10 +131,11 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
     let alive = true;
     (async () => {
       setTemplatesLoading(true);
-      const [t, p] = await Promise.all([loadPodMockupTemplates(), loadPodProfiles()]);
+      const [t, p, m3d] = await Promise.all([loadPodMockupTemplates(), loadPodProfiles(), loadPod3dModels()]);
       if (!alive) return;
       setTemplates(t);
       setProfiles(p);
+      setModels3d(m3d);
       setMeta(getPodMockupTemplatesMeta());
       // Default-select the first template + its first colourway so the canvas
       // isn't empty on open.
@@ -659,6 +662,7 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
         <Studio3DSection
           artwork={resolveArtwork('front', colorwayId)}
           placement={placements.front || null}
+          models={models3d}
         />
 
         {/* Colourway strip: composited per-colour previews + artwork override. */}

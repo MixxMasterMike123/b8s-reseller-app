@@ -11,10 +11,35 @@
 //
 // pixi.js loads lazily: DisplacementPreview is React.lazy'd, so its chunk is
 // fetched only when the seller opens the 3D view.
-import React, { Suspense, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { DEV_3D_GARMENTS } from './pixi/displacement3dConfig';
 
 const DisplacementPreview = React.lazy(() => import('./pixi/DisplacementPreview'));
+
+// A colourway is render-ready only if it carries BOTH a photo and a displacement
+// map — a half-configured colourway (either missing) would break the compositor.
+const colorwayReady = (cw) => Boolean(cw && cw.photoUrl && cw.displacementUrl);
+
+// Render-ready colourway keys of a garment's front view, sorted by Swedish label
+// (falling back to the key). Never assumes 'white'.
+const readyColorwayIds = (garment) => {
+  const cws = garment?.views?.front?.colorways || {};
+  return Object.keys(cws)
+    .filter((k) => colorwayReady(cws[k]))
+    .sort((a, b) =>
+      String(cws[a]?.label || a).localeCompare(String(cws[b]?.label || b), 'sv'));
+};
+
+// A model reaches the compositor only when its front view has real dimensions, a
+// physical print area, AND at least one render-ready colourway. The platform
+// console can hold half-configured models — this guard keeps them out of the
+// picker (and away from pixi) entirely.
+const renderReady = (models = []) =>
+  (Array.isArray(models) ? models : []).filter((m) => {
+    const v = m?.views?.front;
+    const pa = m?.printAreaMm?.front;
+    return v?.w && v?.h && pa?.w > 0 && pa?.h > 0 && readyColorwayIds(m).length > 0;
+  });
 
 const hasWebGL = () => {
   try {
@@ -50,15 +75,32 @@ const Slider = ({ label, min, max, step, value, onChange, fmt = (v) => v }) => (
  * placement. Its sliders therefore edit their own local state and never touch
  * the print placement (and never reset the colourway review gate).
  */
-const Studio3DSection = ({ artwork = null, placement = null }) => {
+const Studio3DSection = ({ artwork = null, placement = null, models = [] }) => {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const previewRef = useRef(null);
   const webgl = useMemo(hasWebGL, []);
-  const garment = DEV_3D_GARMENTS[0] || null;
-  // Beta TUNING knobs (live overrides of the garment config) — here to find the
-  // production defaults; once settled they move into the garment config/settings
-  // doc and these controls become a platform-console concern.
+
+  // GARMENT SOURCE: the platform-managed library models that are render-ready.
+  // In DEV builds, fall back to the hardcoded dev garment so the harness/local
+  // studio still renders before any model is seeded; in PROD an empty library
+  // hides the whole section (return null below).
+  const garments = useMemo(() => {
+    const usable = renderReady(models);
+    return usable.length ? usable : (import.meta.env.DEV ? DEV_3D_GARMENTS : []);
+  }, [models]);
+
+  // Selected model — reconciled with a fallback so a disappearing id (library
+  // load / edit) never leaves us pointing at nothing.
+  const [modelId, setModelId] = useState(() => garments[0]?.id || null);
+  const garment = garments.find((g) => g.id === modelId) || garments[0] || null;
+
+  // Render-ready colourways of the SELECTED model (never hardcode 'white').
+  const colorwayIds = useMemo(() => (garment ? readyColorwayIds(garment) : []), [garment]);
+  const [colorwayId, setColorwayId] = useState(() => colorwayIds[0] || null);
+
+  // Beta TUNING knobs (live overrides of the garment/colourway config). Re-seeded
+  // on model/colourway switch (below); sliders still override live afterwards.
   const [tuning, setTuning] = useState(() => ({
     displacementScale: garment?.displacementScale ?? 30,
     alpha: garment?.alpha ?? 0.8,
@@ -69,7 +111,47 @@ const Studio3DSection = ({ artwork = null, placement = null }) => {
   // the print placement (or a centred default), then fully independent.
   const [p3d, setP3d] = useState(null);
 
-  if (!garment) return null;
+  // Reconcile the selected model when the library loads/changes (id vanished →
+  // snap to the first available garment).
+  useEffect(() => {
+    if (garments.length && !garments.some((g) => g.id === modelId)) {
+      setModelId(garments[0].id);
+    }
+  }, [garments, modelId]);
+
+  // Reconcile the selected colourway on model switch: if the current colourway
+  // isn't render-ready in the (new) model, snap to its first.
+  useEffect(() => {
+    if (colorwayIds.length && !colorwayIds.includes(colorwayId)) {
+      setColorwayId(colorwayIds[0]);
+    }
+  }, [colorwayIds, colorwayId]);
+
+  // Effective colourway: always valid for the CURRENT garment, even during the
+  // one render where the reconcile effect above hasn't snapped colorwayId yet
+  // (prevents a compositorConfigFor-null error flash on model switch).
+  const effColorwayId = colorwayIds.includes(colorwayId) ? colorwayId : (colorwayIds[0] || null);
+
+  // Re-seed tuning on model OR colourway switch: garment defaults with the
+  // platform-configured per-colourway overrides merged over them, so the console's
+  // per-colourway blend/alpha actually take effect (sliders still override live).
+  useEffect(() => {
+    const per = garment?.perColorway?.[effColorwayId] || {};
+    setTuning({
+      displacementScale: per.displacementScale ?? garment?.displacementScale ?? 30,
+      alpha: per.alpha ?? garment?.alpha ?? 0.8,
+      blend: per.blend ?? garment?.blend ?? 'multiply',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [garment?.id, effColorwayId]);
+
+  // Reset the 3D placement on MODEL switch only — a colour change must never
+  // move the motif (placement is per-model; re-seeds from the print placement).
+  useEffect(() => {
+    setP3d(null);
+  }, [garment?.id]);
+
+  if (garments.length === 0 || !garment) return null;
 
   const mm = garment.printAreaMm?.front;
   const effectivePlacement = p3d || placement || (mm ? {
@@ -129,13 +211,57 @@ const Studio3DSection = ({ artwork = null, placement = null }) => {
                   ref={previewRef}
                   garment={garment}
                   viewId="front"
-                  colorwayId="white"
+                  colorwayId={effColorwayId}
                   artworkUrl={artwork.previewUrl}
                   placement={effectivePlacement}
                   tuning={tuning}
                   className="max-w-[420px]"
                 />
               </Suspense>
+              {/* Model + colourway picker — the render-ready library models. The
+                  model <select> only appears with >1 model (a single model shows
+                  its label as static text); the colourway <select> only with >1
+                  render-ready colourway. Styled with the admin design tokens, to
+                  match the blend <select> below. */}
+              <div className="mt-3 flex max-w-[420px] flex-wrap items-center gap-3">
+                <img
+                  src={garment.views.front.colorways[effColorwayId]?.photoUrl}
+                  alt=""
+                  className="h-10 w-10 rounded object-cover"
+                />
+                <label className="flex items-center gap-2 text-[12px] text-admin-text-muted">
+                  <span className="shrink-0">Modell</span>
+                  {garments.length > 1 ? (
+                    <select
+                      value={garment.id}
+                      onChange={(e) => setModelId(e.target.value)}
+                      className="rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2 py-1 text-[12px] text-admin-text focus:border-admin-info-dot focus:outline-none"
+                    >
+                      {garments.map((g) => (
+                        <option key={g.id} value={g.id}>{g.label || g.id}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="text-admin-text">{garment.label || garment.id}</span>
+                  )}
+                </label>
+                {colorwayIds.length > 1 && (
+                  <label className="flex items-center gap-2 text-[12px] text-admin-text-muted">
+                    <span className="shrink-0">Färgväg</span>
+                    <select
+                      value={effColorwayId}
+                      onChange={(e) => setColorwayId(e.target.value)}
+                      className="rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2 py-1 text-[12px] text-admin-text focus:border-admin-info-dot focus:outline-none"
+                    >
+                      {colorwayIds.map((cwId) => (
+                        <option key={cwId} value={cwId}>
+                          {garment.views.front.colorways[cwId]?.label || cwId}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </div>
               {/* Placement sliders — the 3D view's OWN composition (product image
                   only, never a print instruction). Then the tuning knobs. */}
               <div className="mt-3 flex max-w-[420px] flex-col gap-2">
