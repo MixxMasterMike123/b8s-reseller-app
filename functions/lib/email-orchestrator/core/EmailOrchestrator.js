@@ -238,10 +238,13 @@ class EmailOrchestrator {
             // Reply-to = the shop's PUBLIC support address (placeholder rejected).
             const supportEmail = isRealEmail(si.supportEmail) ? si.supportEmail.trim() : undefined;
             // Only absolute http(s) logos are usable in email (client default is a
-            // relative /images/logo.svg the shell must ignore).
-            const logoUrl = typeof si.logoUrl === 'string' && /^https?:\/\//i.test(si.logoUrl.trim())
-                ? si.logoUrl.trim()
-                : undefined;
+            // relative /images/logo.svg the shell must ignore). Prefer the EMAIL-SAFE
+            // variant (emailLogoUrl): storefront logos are often transparent PNGs,
+            // and email clients (Gmail's image proxy, dark mode) flatten transparency
+            // to BLACK — a dark wordmark becomes an unreadable black box. The email
+            // variant has its background baked in.
+            const asAbsoluteUrl = (v) => typeof v === 'string' && /^https?:\/\//i.test(v.trim()) ? v.trim() : undefined;
+            const logoUrl = asAbsoluteUrl(si.emailLogoUrl) || asAbsoluteUrl(si.logoUrl);
             // Admin/order-notification recipient for this shop, in precedence order.
             // A dedicated notificationEmail wins (a shop may want orders routed to a
             // back-office inbox ≠ its public support address); then contactEmail;
