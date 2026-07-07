@@ -39,11 +39,14 @@ const PrintShopQueue = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [exporting, setExporting] = useState(false);
+  // Default view hides finished/dead orders (a printer must never print a refunded
+  // order). The toggle re-fetches with includeAll to show history/reference.
+  const [includeAll, setIncludeAll] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const res = await httpsCallable(functions, 'getPrintQueue')({ sinceDays: 90 });
+      const res = await httpsCallable(functions, 'getPrintQueue')({ sinceDays: 90, includeAll });
       setJobs(res.data?.jobs || []);
     } catch (e) {
       console.error('getPrintQueue failed:', e);
@@ -51,14 +54,14 @@ const PrintShopQueue = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [includeAll]);
 
   useEffect(() => { load(); }, [load]);
 
   const handleExport = async () => {
     setExporting(true);
     try {
-      const res = await httpsCallable(functions, 'getPrintQueueExport')({ sinceDays: 90 });
+      const res = await httpsCallable(functions, 'getPrintQueueExport')({ sinceDays: 90, includeAll });
       const result = exportPrintQueueToCSV(res.data?.rows || []);
       if (!result.success) toast.error(result.message);
       else toast.success(result.message);
@@ -77,13 +80,24 @@ const PrintShopQueue = () => {
             <h1 className="text-lg font-bold">Print-kö</h1>
             <p className="text-sm text-gray-400">POD-ordrar för dina tilldelade butiker (senaste 90 dagar).</p>
           </div>
-          <button
-            onClick={handleExport}
-            disabled={exporting || jobs.length === 0}
-            className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-200 hover:bg-white/10 disabled:opacity-50"
-          >
-            {exporting ? 'Exporterar…' : 'Exportera CSV'}
-          </button>
+          <div className="flex items-center gap-3">
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-300 select-none">
+              <input
+                type="checkbox"
+                checked={includeAll}
+                onChange={(e) => setIncludeAll(e.target.checked)}
+                className="h-4 w-4 rounded border-white/20 bg-white/5"
+              />
+              Visa även klara/avbrutna
+            </label>
+            <button
+              onClick={handleExport}
+              disabled={exporting || jobs.length === 0}
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-200 hover:bg-white/10 disabled:opacity-50"
+            >
+              {exporting ? 'Exporterar…' : 'Exportera CSV'}
+            </button>
+          </div>
         </div>
 
         {error && (

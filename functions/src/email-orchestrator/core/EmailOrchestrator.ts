@@ -22,6 +22,7 @@ import { generateDisputeAlertAdminTemplate } from '../templates/disputeAlertAdmi
 import { generateConnectStatusChangeTemplate } from '../templates/connectStatusChange';
 import { generateAbandonedCheckoutReminderTemplate } from '../templates/abandonedCheckoutReminder';
 import { generateReviewRequestTemplate } from '../templates/reviewRequest';
+import { generatePrintOrderNotificationTemplate } from '../templates/printOrderNotification';
 import {
   renderEmailShell,
   renderHeading,
@@ -51,7 +52,8 @@ export type EmailType =
   | 'DISPUTE_ALERT_ADMIN'
   | 'CONNECT_STATUS_CHANGE'
   | 'ABANDONED_CHECKOUT_REMINDER'
-  | 'REVIEW_REQUEST';
+  | 'REVIEW_REQUEST'
+  | 'PRINT_ORDER_NOTIFICATION';
 
 export interface EmailContext extends OrderContext {
   emailType: EmailType;
@@ -142,6 +144,108 @@ export class EmailOrchestrator {
   }
 
   /**
+   * The ACTIVE print_shop users assigned to a shop — the recipients of the
+   * "Ny POD-order" notification. A printer is assigned when its printShopShops
+   * array contains this shopId; role must be print_shop and active must not be
+   * false (mirrors printGuard's live-doc authority). Emails validated with the
+   * same isRealEmail placeholder guard used everywhere else, deduped, capped to 5.
+   * Returns [] when no printer is assigned — the caller then SKIPS the send (there
+   * is deliberately NO platform fallback for this type: a POD order with no printer
+   * must not spam the platform inbox; it is a shop-configuration gap surfaced in logs).
+   */
+  private async resolvePrinterEmails(shopId: string): Promise<string[]> {
+    try {
+      // Single array-contains only — combining it with a role== equality filter
+      // requires a composite index that does not exist (FAILED_PRECONDITION at
+      // runtime, silently swallowed below → email never sends). Filter role in
+      // code instead; the printShopShops field only exists on print_shop users
+      // anyway, so the read set is tiny.
+      const snap = await db
+        .collection('users')
+        .where('printShopShops', 'array-contains', shopId)
+        .get();
+      const emails = snap.docs
+        .map((d) => d.data() as any)
+        .filter((u) => u.role === 'print_shop' && u.active !== false && isRealEmail(u.email))
+        .map((u) => (u.email as string).trim().toLowerCase());
+      return [...new Set(emails)].slice(0, 5);
+    } catch (e: any) {
+      console.warn(`⚠️ EmailOrchestrator: resolvePrinterEmails(${shopId}) failed:`, e?.message);
+      return [];
+    }
+  }
+
+  /**
+   * Send the "Ny POD-order" notification to a shop's assigned printers. Fully
+   * self-contained: no UserResolver, no customer/admin routing. Resolves the
+   * printers off the live user docs; if none, SKIPS (no platform fallback). The
+   * order data (order number, POD lines, delivery method) is passed by the caller
+   * in orderData/additionalData — production-scoped, no customer PII.
+   */
+  private async sendPrintOrderNotification(
+    context: EmailContext
+  ): Promise<{ success: boolean; messageId?: string; error?: string; details?: any }> {
+    const shopId = context.shopId;
+    if (!shopId) {
+      console.warn('⚠️ EmailOrchestrator: PRINT_ORDER_NOTIFICATION missing shopId — skipping');
+      return { success: false, error: 'shopId required for print order notification' };
+    }
+
+    const recipients = await this.resolvePrinterEmails(shopId);
+    if (recipients.length === 0) {
+      // No assigned printer → nothing to do. NOT an error (a shop may simply have
+      // no printer yet); log so the gap is visible. NEVER falls back to platform.
+      console.log(
+        `📭 EmailOrchestrator: PRINT_ORDER_NOTIFICATION for shop "${shopId}" has no active assigned printer — skipping send (no platform fallback).`
+      );
+      return { success: true, details: { skipped: true, reason: 'no-printer-assigned' } };
+    }
+
+    // Shop identity for brand-name + logo (best-effort, neutral fallback).
+    const shopIdentity = await this.loadShopIdentity(shopId);
+    const brandName = shopIdentity?.shopName || EMAIL_CONFIG.SMTP.FROM_NAME;
+
+    const od = context.orderData || {};
+    const lines = Array.isArray(context.additionalData?.lines) ? context.additionalData.lines : [];
+
+    setShellLogoUrl(shopIdentity?.logoUrl);
+    let template: EmailTemplate;
+    try {
+      template = generatePrintOrderNotificationTemplate({
+        orderNumber: String(od.orderNumber || context.orderId || ''),
+        shopName: brandName,
+        deliveryMethod: od.deliveryMethod === 'pickup' ? 'pickup' : 'home',
+        lines,
+        printPortalUrl: context.additionalData?.printPortalUrl || 'https://print-meteorpr.web.app',
+        brandName,
+      });
+    } finally {
+      setShellLogoUrl(undefined);
+    }
+
+    // Send directly to the printers. Reuses sendAdminEmail's extraAdminRecipients
+    // REPLACE semantics (a non-empty extras list REPLACES the platform recipients),
+    // so the platform ADMIN_RECIPIENTS are never mailed for this type. The from-name
+    // carries no "System" suffix (getFromAddress omits it for this type).
+    const result = await this.emailService.sendAdminEmail(template, {
+      from: this.getFromAddress('PRINT_ORDER_NOTIFICATION', 'B2C', brandName),
+      ...(shopIdentity?.supportEmail ? { replyTo: shopIdentity.supportEmail } : {}),
+      extraAdminRecipients: recipients,
+    });
+
+    if (result.success) {
+      console.log(`✅ EmailOrchestrator: PRINT_ORDER_NOTIFICATION sent to ${recipients.length} printer(s) for shop "${shopId}"`);
+      return {
+        success: true,
+        messageId: result.messageId,
+        details: { emailType: 'PRINT_ORDER_NOTIFICATION', recipients: recipients.length, subject: template.subject },
+      };
+    }
+    console.error('❌ EmailOrchestrator: PRINT_ORDER_NOTIFICATION send failed:', result.error);
+    return { success: false, error: result.error };
+  }
+
+  /**
    * Master email sending method
    * Single entry point for ALL emails in the system
    */
@@ -156,6 +260,15 @@ export class EmailOrchestrator {
         source: context.source,
         adminEmail: context.adminEmail
       });
+
+      // PRINT_ORDER_NOTIFICATION is a special case: it has NO customer/user to
+      // resolve (it goes to the shop's assigned printers), so it bypasses the
+      // UserResolver + the customer/shop-admin routing entirely. Recipients are
+      // the ACTIVE print_shop users for this shop; if there are none we SKIP the
+      // send (deliberately NO platform fallback — see resolvePrinterEmails).
+      if (context.emailType === 'PRINT_ORDER_NOTIFICATION') {
+        return await this.sendPrintOrderNotification(context);
+      }
 
       // Step 1: Resolve user data
       const userData = await this.userResolver.resolve(context);

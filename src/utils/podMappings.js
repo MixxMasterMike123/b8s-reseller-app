@@ -11,6 +11,7 @@ import {
 import { db } from '../firebase/config';
 import { withShopId } from '../config/withShopId';
 import { DEFAULT_SHOP_ID } from '../config/tenancy';
+import { slotOf, DEFAULT_SLOT } from '../config/podSlots';
 
 const COL = 'podMappings';
 
@@ -21,8 +22,15 @@ export const listMappings = async (shopId) => {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
-/** Get the mapping for a (shopId, sku), or null. */
-export const getMappingBySku = async (shopId, sku) => {
+/**
+ * Get the mapping for a (shopId, sku, placementSlot), or null. MULTI-PLACEMENT:
+ * a SKU may have several mappings (one per slot), so we match the slot too. A doc
+ * MISSING placementSlot is treated as 'front' (slotOf normalises it), so the query
+ * fetches every SKU row and matches slot in code (a Firestore `where` can't OR-in
+ * the missing-field case).
+ */
+export const getMappingBySku = async (shopId, sku, placementSlot = DEFAULT_SLOT) => {
+  const wantSlot = slotOf(placementSlot);
   const q = query(
     collection(db, COL),
     where('shopId', '==', shopId || DEFAULT_SHOP_ID),
@@ -30,31 +38,37 @@ export const getMappingBySku = async (shopId, sku) => {
   );
   const snap = await getDocs(q);
   if (snap.empty) return null;
-  const d = snap.docs[0];
-  return { id: d.id, ...d.data() };
+  const match = snap.docs.find((d) => slotOf(d.data()) === wantSlot);
+  if (!match) return null;
+  return { id: match.id, ...match.data() };
 };
 
 /**
- * Upsert a mapping for (shopId, sku). One mapping per SKU per shop: if one exists we
- * update it, else create. Returns the doc id.
+ * Upsert a mapping for (shopId, sku, placementSlot). MULTI-PLACEMENT: one mapping
+ * per (SKU, slot) per shop — adding the same product+slot REPLACES that slot's
+ * artwork; a different slot for the same SKU is a NEW row. `replaced` in the return
+ * tells the caller a slot's previous artwork was overwritten (for the UI toast).
+ * Returns { id, replaced }.
  */
-export const setMapping = async ({ shopId, sku, artworkId, profileId, placement }) => {
+export const setMapping = async ({ shopId, sku, artworkId, profileId, placement, placementSlot }) => {
   const cleanSku = String(sku || '').trim();
   if (!cleanSku) throw new Error('SKU krävs.');
-  const existing = await getMappingBySku(shopId, cleanSku);
+  const slot = slotOf(placementSlot);
+  const existing = await getMappingBySku(shopId, cleanSku, slot);
   const payload = {
     sku: cleanSku,
     artworkId: artworkId || null,
     profileId: profileId || null,
     placement: String(placement || '').trim(),
+    placementSlot: slot,
     updatedAt: serverTimestamp(),
   };
   if (existing) {
     await updateDoc(doc(db, COL, existing.id), payload);
-    return existing.id;
+    return { id: existing.id, replaced: true };
   }
   const ref = await addDoc(collection(db, COL), withShopId({ ...payload, createdAt: serverTimestamp() }, shopId));
-  return ref.id;
+  return { id: ref.id, replaced: false };
 };
 
 /** Delete a mapping by id. */

@@ -1,19 +1,30 @@
-export declare function loadShopMappings(shopId: string): Promise<Map<string, any>>;
-export declare function resolveMapping(sku: string, mappingsBySku: Map<string, any>): any | null;
-export declare function orderHasPodLine(order: any, mappingsBySku: Map<string, any>): boolean;
-export declare function toQueueRow(orderId: string, order: any, shopName: string, mappingsBySku: Map<string, any>): {
+export type PlacementSlot = 'front' | 'back' | 'left_sleeve' | 'right_sleeve' | 'other';
+export declare const DEFAULT_SLOT: PlacementSlot;
+export declare function slotOf(mapping: any): PlacementSlot;
+export declare function slotLabel(slot: PlacementSlot): string;
+export declare function loadShopMappings(shopId: string): Promise<Map<string, any[]>>;
+export declare function resolveSlots(sku: string, mappingsBySku: Map<string, any[]>): Map<PlacementSlot, any>;
+export declare function resolveMapping(sku: string, mappingsBySku: Map<string, any[]>): any | null;
+export declare function orderHasPodLine(order: any, mappingsBySku: Map<string, any[]>): boolean;
+export declare function toPrintNotificationLines(order: any, mappingsBySku: Map<string, any[]>): Array<{
+    productName: string;
+    sku: string;
+    quantity: number;
+    placement: string;
+}>;
+export declare function toQueueRow(orderId: string, order: any, shopName: string, mappingsBySku: Map<string, any[]>): {
     orderId: string;
     orderNumber: any;
     orderDate: any;
     shopId: any;
     shopName: any;
     status: any;
-    podLineCount: any;
+    podLineCount: number;
     deliveryMethod: string;
     shipToCity: any;
     shipToCountry: any;
 };
-export declare function toPrintJob(orderId: string, order: any, shopName: string, mappingsBySku: Map<string, any>): Promise<{
+export declare function toPrintJob(orderId: string, order: any, shopName: string, mappingsBySku: Map<string, any[]>): Promise<{
     order: {
         orderNumber: any;
         orderDate: any;
@@ -50,7 +61,9 @@ export declare function toPrintJob(orderId: string, order: any, shopName: string
         sku: any;
         variantLabel: any;
         quantity: any;
-        placement: any;
+        placementSlot: PlacementSlot;
+        slotLabel: string;
+        placement: string;
         profileId: any;
     } | {
         purpose: any;
@@ -67,7 +80,9 @@ export declare function toPrintJob(orderId: string, order: any, shopName: string
         sku: any;
         variantLabel: any;
         quantity: any;
-        placement: any;
+        placementSlot: PlacementSlot;
+        slotLabel: string;
+        placement: string;
         profileId: any;
     })[];
 }>;

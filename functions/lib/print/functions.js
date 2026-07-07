@@ -19,6 +19,10 @@ const authGuard_1 = require("../email-orchestrator/functions/authGuard");
 const printGuard_1 = require("./printGuard");
 const printProjection_1 = require("./printProjection");
 const auth = (0, auth_1.getAuth)();
+// A printer must NEVER print a finished or dead order (a refunded order shipped
+// again is money lost). These statuses are hidden from the queue by default; the
+// includeAll flag surfaces them (for reference / a printer double-checking history).
+const HIDDEN_STATUSES = new Set(['cancelled', 'refunded', 'shipped', 'delivered', 'completed']);
 // `as const` keeps memory:'256MiB' as the literal MemoryOption type (an inline
 // object widens it to string, which onCall rejects — same reason createShopUser
 // passes options inline).
@@ -37,6 +41,9 @@ exports.getPrintQueue = (0, https_1.onCall)(COMMON, async (request) => {
     const ctx = await (0, printGuard_1.getPrintShopContext)(request.auth?.uid);
     const sinceDays = Math.min(Math.max(Number(request.data?.sinceDays) || 90, 1), 365);
     const sinceMs = Date.now() - sinceDays * 24 * 60 * 60 * 1000;
+    // By default hide finished/dead orders (a printer must never print a refunded
+    // order). includeAll=true surfaces them for history/reference.
+    const includeAll = request.data?.includeAll === true;
     const names = await shopNames(ctx.printShopShops);
     const jobs = [];
     // Per-shop (avoids the 30-item `in` cap and lets us load each shop's mappings once).
@@ -49,6 +56,8 @@ exports.getPrintQueue = (0, https_1.onCall)(COMMON, async (request) => {
             const order = d.data();
             const createdMs = order.createdAt?.toDate ? order.createdAt.toDate().getTime() : 0;
             if (createdMs && createdMs < sinceMs)
+                return;
+            if (!includeAll && HIDDEN_STATUSES.has(String(order.status || '')))
                 return;
             if (!(0, printProjection_1.orderHasPodLine)(order, mappings))
                 return;
@@ -80,6 +89,7 @@ exports.getPrintQueueExport = (0, https_1.onCall)(COMMON, async (request) => {
     const sinceDays = Math.min(Math.max(Number(request.data?.sinceDays) || 90, 1), 365);
     const sinceMs = Date.now() - sinceDays * 24 * 60 * 60 * 1000;
     const onlyShop = String(request.data?.shopId || '').trim();
+    const includeAll = request.data?.includeAll === true;
     const targetShops = onlyShop ? ctx.printShopShops.filter((s) => s === onlyShop) : ctx.printShopShops;
     if (onlyShop && targetShops.length === 0)
         throw new https_1.HttpsError('permission-denied', 'Shop not assigned');
@@ -95,6 +105,8 @@ exports.getPrintQueueExport = (0, https_1.onCall)(COMMON, async (request) => {
             const createdMs = order.createdAt?.toDate ? order.createdAt.toDate().getTime() : 0;
             if (createdMs && createdMs < sinceMs)
                 continue;
+            if (!includeAll && HIDDEN_STATUSES.has(String(order.status || '')))
+                continue;
             if (!(0, printProjection_1.orderHasPodLine)(order, mappings))
                 continue;
             const job = await (0, printProjection_1.toPrintJob)(d.id, order, names[shopId], mappings);
@@ -107,6 +119,7 @@ exports.getPrintQueueExport = (0, https_1.onCall)(COMMON, async (request) => {
                     sku: ln.sku,
                     variant: ln.variantLabel || '',
                     quantity: ln.quantity,
+                    slot: ln.slotLabel || '',
                     placement: ln.placement || '',
                     purpose: ln.purpose || '',
                     fileName: ln.artwork?.fileName || (ln.artwork?.unresolved ? `OLÖST: ${ln.artwork.reason}` : ''),

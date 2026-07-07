@@ -524,6 +524,46 @@ exports.stripeWebhookV2 = (0, https_1.onRequest)({
                 // Don't fail the webhook - order is already created
                 // Admin can manually trigger emails if needed
             }
+            // 🖨️ POD printer notification: if this order has ≥1 POD line, notify the
+            // shop's assigned printers ("Ny POD-order"). Fire-and-forget with catch —
+            // it must NEVER delay or fail the webhook (mirrors the email calls in
+            // processOrderCompletion). Reuses the print projection's slot-aware
+            // resolution (loadShopMappings + resolveSlots via toPrintNotificationLines)
+            // — no duplication. If no printer is assigned, the orchestrator SKIPS the
+            // send (no platform fallback). RESEND_API_KEY is already bound to this fn.
+            try {
+                const { loadShopMappings, orderHasPodLine, toPrintNotificationLines } = require('../print/printProjection');
+                const podShopId = orderData.shopId || tenancy_1.DEFAULT_SHOP_ID;
+                const mappings = await loadShopMappings(podShopId);
+                if (mappings.size > 0 && orderHasPodLine(orderData, mappings)) {
+                    const lines = toPrintNotificationLines(orderData, mappings);
+                    const { EmailOrchestrator } = require('../email-orchestrator/core/EmailOrchestrator');
+                    const orchestrator = new EmailOrchestrator();
+                    // TRULY fire-and-forget: no await — the 200 must not wait on the
+                    // printer query + Resend HTTP call. The surrounding try/catch covers
+                    // synchronous throws; .catch covers async failures.
+                    orchestrator.sendEmail({
+                        emailType: 'PRINT_ORDER_NOTIFICATION',
+                        orderId: orderRef.id,
+                        shopId: podShopId,
+                        orderData: {
+                            orderNumber: orderData.orderNumber || orderNumber,
+                            deliveryMethod: orderData.deliveryMethod,
+                        },
+                        additionalData: { lines },
+                    }).then(() => {
+                        firebase_functions_1.logger.info('🖨️ PRINT_ORDER_NOTIFICATION dispatched', { orderId: orderRef.id, podLines: lines.length });
+                    }).catch((e) => {
+                        firebase_functions_1.logger.warn('⚠️ PRINT_ORDER_NOTIFICATION send failed (best-effort)', { orderId: orderRef.id, error: e?.message });
+                    });
+                }
+            }
+            catch (printNotifyError) {
+                firebase_functions_1.logger.warn('⚠️ PRINT_ORDER_NOTIFICATION failed (best-effort, order unaffected)', {
+                    orderId: orderRef.id,
+                    error: printNotifyError?.message,
+                });
+            }
             response.status(200).json({
                 received: true,
                 orderCreated: true,

@@ -10,6 +10,28 @@ import { db } from '../config/database';
 
 const SIGNED_URL_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
+// Placement slots — a single product can carry SEVERAL artworks (front/back/
+// sleeve). A mapping's placementSlot picks which physical position its artwork
+// prints on. MISSING placementSlot on a doc = 'front' (backward compat: the one
+// live pre-slot mapping keeps working with zero migration). Swedish labels are
+// the shop/print-facing text; the id is stored.
+export type PlacementSlot = 'front' | 'back' | 'left_sleeve' | 'right_sleeve' | 'other';
+const SLOT_LABELS: Record<PlacementSlot, string> = {
+  front: 'Bröst',
+  back: 'Rygg',
+  left_sleeve: 'Vänster ärm',
+  right_sleeve: 'Höger ärm',
+  other: 'Övrig',
+};
+export const DEFAULT_SLOT: PlacementSlot = 'front';
+export function slotOf(mapping: any): PlacementSlot {
+  const s = mapping?.placementSlot;
+  return s === 'back' || s === 'left_sleeve' || s === 'right_sleeve' || s === 'other' ? s : DEFAULT_SLOT;
+}
+export function slotLabel(slot: PlacementSlot): string {
+  return SLOT_LABELS[slot] || SLOT_LABELS[DEFAULT_SLOT];
+}
+
 // Mint a short-lived signed read URL for a Storage object. Falls back to the
 // stored download URL if signing isn't available (the Functions service account
 // needs roles/iam.serviceAccountTokenCreator to sign — a project-config item).
@@ -27,47 +49,112 @@ async function signedUrlFor(storagePath: string, fallbackUrl: string | null): Pr
   }
 }
 
-// Load a shop's POD-SKU set + the mapping per SKU (one read per shop, cached by caller).
-export async function loadShopMappings(shopId: string): Promise<Map<string, any>> {
+// Load a shop's POD mappings, grouped by mapping SKU (one read per shop, cached by
+// caller). MULTI-PLACEMENT: a SKU can now carry SEVERAL mappings (one per slot:
+// front/back/sleeve), so each map value is an ARRAY of mappings for that SKU — the
+// old one-row-per-sku assumption is gone. Slot resolution happens in resolveSlots.
+export async function loadShopMappings(shopId: string): Promise<Map<string, any[]>> {
   const snap = await db.collection('podMappings').where('shopId', '==', shopId).get();
-  const bySku = new Map<string, any>();
+  const bySku = new Map<string, any[]>();
   snap.docs.forEach((d) => {
     const m = d.data();
-    if (m.sku) bySku.set(m.sku, { id: d.id, ...m });
+    if (!m.sku) return;
+    const arr = bySku.get(m.sku) || [];
+    arr.push({ id: d.id, ...m });
+    bySku.set(m.sku, arr);
   });
   return bySku;
 }
 
-// Resolve a mapping for an order-line SKU. Variant SKUs are derived from the
-// parent as `${parentSku}-${color}-${size}` (variant rail), so a mapping on the
-// parent covers every variant. Exact match wins; otherwise the LONGEST mapping
-// key that is a '-'-boundary prefix of the line SKU wins (a per-colorway mapping
-// `north-01-svart` beats the parent `north-01` for `north-01-svart-l`). The
-// '-' boundary prevents `north-01` matching `north-012-...`.
-export function resolveMapping(sku: string, mappingsBySku: Map<string, any>): any | null {
-  if (!sku) return null;
-  if (mappingsBySku.has(sku)) return mappingsBySku.get(sku);
-  let best: any = null;
-  let bestLen = -1;
-  for (const [key, mapping] of mappingsBySku) {
-    if (key.length > bestLen && sku.startsWith(key + '-')) {
-      best = mapping;
-      bestLen = key.length;
+// Resolve the best mapping PER SLOT for an order-line SKU. For each slot, the same
+// matching rule as before applies INDEPENDENTLY: an exact-SKU mapping for that slot
+// wins; otherwise the LONGEST '-'-boundary-prefix mapping for that slot wins (a
+// per-colorway `north-01-svart` beats the parent `north-01` for `north-01-svart-l`,
+// but only within the SAME slot — a colorway front-mapping does NOT override the
+// parent's back-mapping). Variant SKUs derive as `${parent}-${color}-${size}`.
+// Docs missing placementSlot resolve as 'front' (backward compat).
+//
+// Returns a Map<slot, mapping> holding one winning mapping per slot that resolves
+// (empty when the SKU has no mapping at all → a non-POD line).
+export function resolveSlots(sku: string, mappingsBySku: Map<string, any[]>): Map<PlacementSlot, any> {
+  const out = new Map<PlacementSlot, any>();
+  if (!sku) return out;
+  // Per slot: track the current winner + the length of the key that matched it.
+  // Exact match is modelled as an infinitely-long key so it always beats a prefix.
+  const bestLen: Partial<Record<PlacementSlot, number>> = {};
+  for (const [key, mappings] of mappingsBySku) {
+    let matchLen = -1;
+    if (key === sku) matchLen = Number.MAX_SAFE_INTEGER; // exact wins over any prefix
+    else if (sku.startsWith(key + '-')) matchLen = key.length;
+    else continue;
+    for (const mapping of mappings) {
+      const slot = slotOf(mapping);
+      const prev = bestLen[slot] ?? -1;
+      // Ties (two docs same slot + same key length, e.g. duplicate exact rows) keep
+      // the first seen — deterministic enough; the admin upsert prevents this.
+      if (matchLen > prev) {
+        out.set(slot, mapping);
+        bestLen[slot] = matchLen;
+      }
     }
   }
-  return best;
+  return out;
 }
 
-// Is this order a POD order for the given shop? (any line's sku is mapped)
-export function orderHasPodLine(order: any, mappingsBySku: Map<string, any>): boolean {
+// Back-compat helper: resolve the single best mapping for a SKU (any slot). Used by
+// the any-slot POD checks (orderHasPodLine, setPrintJobStatus). Returns null if the
+// SKU has no mapping in any slot; otherwise a representative winning mapping.
+export function resolveMapping(sku: string, mappingsBySku: Map<string, any[]>): any | null {
+  const slots = resolveSlots(sku, mappingsBySku);
+  if (slots.size === 0) return null;
+  // Prefer the front slot when present, else any resolved slot.
+  return slots.get(DEFAULT_SLOT) || slots.values().next().value;
+}
+
+// Is this order a POD order for the given shop? (any line's sku resolves any slot)
+export function orderHasPodLine(order: any, mappingsBySku: Map<string, any[]>): boolean {
   const items = Array.isArray(order.items) ? order.items : [];
-  return items.some((it: any) => it && it.sku && resolveMapping(it.sku, mappingsBySku));
+  return items.some((it: any) => it && it.sku && resolveSlots(it.sku, mappingsBySku).size > 0);
+}
+
+// Build the PRODUCTION-SCOPED line list for the printer notification email —
+// one entry per (order item × resolved slot), with the slot-aware placement label
+// ("Bröst — Centrerat på bröstet"). No artwork lookup (the email links to the
+// portal for files), no customer PII. Mirrors toPrintJob's slot iteration.
+export function toPrintNotificationLines(
+  order: any,
+  mappingsBySku: Map<string, any[]>
+): Array<{ productName: string; sku: string; quantity: number; placement: string }> {
+  const items = Array.isArray(order.items) ? order.items : [];
+  const SLOT_ORDER: PlacementSlot[] = ['front', 'back', 'left_sleeve', 'right_sleeve', 'other'];
+  const out: Array<{ productName: string; sku: string; quantity: number; placement: string }> = [];
+  for (const it of items) {
+    if (!it || !it.sku) continue;
+    const slots = resolveSlots(it.sku, mappingsBySku);
+    if (slots.size === 0) continue;
+    for (const slot of SLOT_ORDER.filter((s) => slots.has(s))) {
+      const mapping = slots.get(slot);
+      const detail = String(mapping.placement || '').trim();
+      out.push({
+        productName: typeof it.name === 'string' ? it.name : (it.name?.['sv-SE'] || it.sku),
+        sku: it.sku,
+        quantity: it.quantity || 0,
+        placement: detail ? `${slotLabel(slot)} — ${detail}` : slotLabel(slot),
+      });
+    }
+  }
+  return out;
 }
 
 // Minimal LIST row — no address, no contact, no money.
-export function toQueueRow(orderId: string, order: any, shopName: string, mappingsBySku: Map<string, any>) {
+export function toQueueRow(orderId: string, order: any, shopName: string, mappingsBySku: Map<string, any[]>) {
   const items = Array.isArray(order.items) ? order.items : [];
-  const podLineCount = items.filter((it: any) => it && it.sku && resolveMapping(it.sku, mappingsBySku)).length;
+  // MULTI-PLACEMENT: one production line per (item × resolved slot) — a shirt with a
+  // front + back print counts as 2 lines. Sum resolved slots across items.
+  let podLineCount = 0;
+  for (const it of items) {
+    if (it && it.sku) podLineCount += resolveSlots(it.sku, mappingsBySku).size;
+  }
   const ship = order.shippingInfo || {};
   const isPickup = order.deliveryMethod === 'pickup';
   return {
@@ -88,45 +175,63 @@ export function toQueueRow(orderId: string, order: any, shopName: string, mappin
 // Full per-order PRODUCTION view: ship-to + per POD line (resolved artwork +
 // signed URL). Lines whose mapping/artwork can't resolve come back with
 // artwork:{unresolved:true,reason} (visible problem, never a silently-missing line).
-export async function toPrintJob(orderId: string, order: any, shopName: string, mappingsBySku: Map<string, any>) {
+export async function toPrintJob(orderId: string, order: any, shopName: string, mappingsBySku: Map<string, any[]>) {
   const items = Array.isArray(order.items) ? order.items : [];
   const ship = order.shippingInfo || {};
 
+  // MULTI-PLACEMENT: emit ONE production line per (order item × resolved slot). A
+  // shirt with a front + back artwork yields two lines, each with its own file and
+  // a slot-aware placement label ("Bröst — Centrerat på bröstet": slot label +
+  // free-text detail). Slots resolve independently (see resolveSlots).
   const lines = [];
   for (const it of items) {
-    const mapping = it && it.sku ? resolveMapping(it.sku, mappingsBySku) : null;
-    if (!mapping) continue; // non-POD line — skip
-    const base = {
-      productName: typeof it.name === 'string' ? it.name : (it.name?.['sv-SE'] || it.sku),
-      sku: it.sku,
-      variantLabel: it.label || null,
-      quantity: it.quantity || 0,
-      placement: mapping.placement || '',
-      profileId: mapping.profileId || null,
-    };
+    if (!it || !it.sku) continue;
+    const slots = resolveSlots(it.sku, mappingsBySku);
+    if (slots.size === 0) continue; // non-POD line — skip
 
-    if (!mapping.artworkId) {
-      lines.push({ ...base, purpose: mapping.profileId || null, artwork: { unresolved: true, reason: 'Ingen artworkId i kopplingen' } });
-      continue;
+    // Stable ordering of the per-item slot lines (front→back→sleeves→other).
+    const SLOT_ORDER: PlacementSlot[] = ['front', 'back', 'left_sleeve', 'right_sleeve', 'other'];
+    const orderedSlots = SLOT_ORDER.filter((s) => slots.has(s));
+
+    for (const slot of orderedSlots) {
+      const mapping = slots.get(slot);
+      const detail = String(mapping.placement || '').trim();
+      // "Bröst — Centrerat på bröstet" (slot label + optional free-text detail).
+      const placement = detail ? `${slotLabel(slot)} — ${detail}` : slotLabel(slot);
+      const base = {
+        productName: typeof it.name === 'string' ? it.name : (it.name?.['sv-SE'] || it.sku),
+        sku: it.sku,
+        variantLabel: it.label || null,
+        quantity: it.quantity || 0,
+        placementSlot: slot,
+        slotLabel: slotLabel(slot),
+        placement,
+        profileId: mapping.profileId || null,
+      };
+
+      if (!mapping.artworkId) {
+        lines.push({ ...base, purpose: mapping.profileId || null, artwork: { unresolved: true, reason: 'Ingen artworkId i kopplingen' } });
+        continue;
+      }
+      const artSnap = await db.collection('podArtwork').doc(mapping.artworkId).get();
+      if (!artSnap.exists) {
+        lines.push({ ...base, purpose: mapping.profileId || null, artwork: { unresolved: true, reason: 'Originalet är borttaget' } });
+        continue;
+      }
+      const art: any = artSnap.data();
+      const downloadUrl = await signedUrlFor(art.originalStoragePath, art.originalUrl || null);
+      lines.push({
+        ...base,
+        purpose: art.purpose || mapping.profileId || null,
+        artwork: {
+          tier: art.validation?.tier || null,
+          fileName: art.fileName || '',
+          ext: art.ext || '',
+          downloadUrl,
+          previewUrl: art.previewUrl || null,
+        },
+      });
     }
-    const artSnap = await db.collection('podArtwork').doc(mapping.artworkId).get();
-    if (!artSnap.exists) {
-      lines.push({ ...base, purpose: mapping.profileId || null, artwork: { unresolved: true, reason: 'Originalet är borttaget' } });
-      continue;
-    }
-    const art: any = artSnap.data();
-    const downloadUrl = await signedUrlFor(art.originalStoragePath, art.originalUrl || null);
-    lines.push({
-      ...base,
-      purpose: art.purpose || mapping.profileId || null,
-      artwork: {
-        tier: art.validation?.tier || null,
-        fileName: art.fileName || '',
-        ext: art.ext || '',
-        downloadUrl,
-        previewUrl: art.previewUrl || null,
-      },
-    });
   }
 
   const deliveryMethod = order.deliveryMethod === 'pickup' ? 'pickup' : 'home';

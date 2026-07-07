@@ -38,7 +38,9 @@ export declare const getPrintJob: import("firebase-functions/v2/https").Callable
         sku: any;
         variantLabel: any;
         quantity: any;
-        placement: any;
+        placementSlot: import("./printProjection").PlacementSlot;
+        slotLabel: string;
+        placement: string;
         profileId: any;
     } | {
         purpose: any;
@@ -55,7 +57,9 @@ export declare const getPrintJob: import("firebase-functions/v2/https").Callable
         sku: any;
         variantLabel: any;
         quantity: any;
-        placement: any;
+        placementSlot: import("./printProjection").PlacementSlot;
+        slotLabel: string;
+        placement: string;
         profileId: any;
     })[];
 }>, unknown>;

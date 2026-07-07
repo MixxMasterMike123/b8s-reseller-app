@@ -15,13 +15,19 @@ import StatusPill from '../../../components/admin/ui/StatusPill';
 import { loadPodProfiles, getProfileById, getPodProfilesMeta } from '../../../config/podProfiles';
 import { readImageDimensions, generatePodPreview, uploadPodOriginal, extOf } from '../../../utils/podUpload';
 import { validateArtwork } from '../../../utils/podValidation';
-import { createArtwork } from '../../../utils/podArtwork';
+import { createArtwork, replaceArtworkFile } from '../../../utils/podArtwork';
 import { setMapping } from '../../../utils/podMappings';
+import { POD_SLOTS, slotLabel } from '../../../config/podSlots';
 import { auth } from '../../../firebase/config';
 import { tierTone, tierLabel } from './podTier';
 import PodProductPicker from './PodProductPicker';
 
-const ArtworkUploadModal = ({ shopId, products = [], onClose, onCreated }) => {
+// `replaceTarget` (optional): when set, the modal runs in REPLACE mode — the profile
+// is LOCKED to the existing artwork's profile and confirming UPDATES that artwork
+// doc in place (same id → all products + unshipped queue orders get the new file);
+// no post-upload mapping prompt (the mapping graph is untouched).
+const ArtworkUploadModal = ({ shopId, products = [], onClose, onCreated, replaceTarget = null }) => {
+  const isReplace = !!replaceTarget;
   const [profiles, setProfiles] = useState([]);
   const [profileId, setProfileId] = useState('');
   const [label, setLabel] = useState('');
@@ -35,6 +41,7 @@ const ArtworkUploadModal = ({ shopId, products = [], onClose, onCreated }) => {
   // mapping is optional here (an unmapped original stays flagged in the library).
   const [createdArtworkId, setCreatedArtworkId] = useState(null);
   const [mapSku, setMapSku] = useState('');
+  const [mapSlot, setMapSlot] = useState('front'); // default Bröst
   const [mapPlacement, setMapPlacement] = useState('');
   const [manualSku, setManualSku] = useState(false);
   const [mapping, setMappingSaving] = useState(false);
@@ -42,7 +49,9 @@ const ArtworkUploadModal = ({ shopId, products = [], onClose, onCreated }) => {
   useEffect(() => {
     loadPodProfiles().then((p) => {
       setProfiles(p);
-      if (p.length && !profileId) setProfileId(p[0].id);
+      // Replace mode: LOCK the profile to the existing artwork's profile.
+      const target = isReplace ? (replaceTarget.purpose || p[0]?.id) : p[0]?.id;
+      if (p.length && !profileId) setProfileId(target || '');
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -101,9 +110,7 @@ const ArtworkUploadModal = ({ shopId, products = [], onClose, onCreated }) => {
       const original = await uploadPodOriginal(file, shopId, profile);
       const preview = await generatePodPreview(file, shopId);
       const meta = getPodProfilesMeta();
-      const docData = {
-        label: label.trim() || file.name,
-        purpose: profile.id,
+      const fileFields = {
         originalUrl: original.originalUrl,
         originalStoragePath: original.originalStoragePath,
         previewUrl: preview.previewUrl,
@@ -122,6 +129,26 @@ const ArtworkUploadModal = ({ shopId, products = [], onClose, onCreated }) => {
           profileId: profile.id,
           profileVersion: meta.version || 0,
         },
+      };
+
+      if (isReplace) {
+        // REPLACE the existing doc in place (same id → mappings + queue untouched),
+        // then the util best-effort deletes the OLD storage objects. Keep label/
+        // purpose unless the seller edited the label.
+        await replaceArtworkFile(replaceTarget, {
+          ...fileFields,
+          ...(label.trim() ? { label: label.trim() } : {}),
+        });
+        toast.success('Filen ersatt');
+        onCreated?.();
+        onClose?.();
+        return;
+      }
+
+      const docData = {
+        label: label.trim() || file.name,
+        purpose: profile.id,
+        ...fileFields,
         createdBy: auth.currentUser?.uid || null,
       };
       const newId = await createArtwork(docData, shopId);
@@ -144,8 +171,11 @@ const ArtworkUploadModal = ({ shopId, products = [], onClose, onCreated }) => {
     if (!cleanSku) { toast.error('Välj en produkt eller ange en SKU.'); return; }
     setMappingSaving(true);
     try {
-      await setMapping({ shopId, sku: cleanSku, artworkId: createdArtworkId, profileId: profile?.id || null, placement: mapPlacement });
-      toast.success('Koppling sparad');
+      const { replaced } = await setMapping({
+        shopId, sku: cleanSku, artworkId: createdArtworkId, profileId: profile?.id || null,
+        placement: mapPlacement, placementSlot: mapSlot,
+      });
+      toast.success(replaced ? `Ersatte tidigare koppling för ${slotLabel(mapSlot)}` : 'Koppling sparad');
       onCreated?.();
       onClose?.();
     } catch (e) {
@@ -162,7 +192,7 @@ const ArtworkUploadModal = ({ shopId, products = [], onClose, onCreated }) => {
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-[15px] font-semibold">
-            {createdArtworkId ? 'Koppla till en produkt nu?' : 'Ladda upp original'}
+            {createdArtworkId ? 'Koppla till en produkt nu?' : isReplace ? 'Ersätt fil' : 'Ladda upp original'}
           </h2>
           <button onClick={onClose} className="text-admin-text-faint hover:text-admin-text">
             <XMarkIcon className="h-5 w-5" />
@@ -187,6 +217,12 @@ const ArtworkUploadModal = ({ shopId, products = [], onClose, onCreated }) => {
                 Ett original måste kopplas till en produkt innan ordrar kan nå tryckeriet.
                 Du kan göra det nu eller senare under Produktkoppling.
               </p>
+              {profile && ['poster_large', 'sticker_diecut', 'mug_wrap'].includes(profile.id) && (
+                <p className="text-[12px] text-admin-text-faint">
+                  Detta original är av typen <span className="font-medium">{profile.label}</span> — kontrollera att
+                  du kopplar det till rätt sorts produkt.
+                </p>
+              )}
               <Field label="Produkt" htmlFor="pod-map-pick-product">
                 <PodProductPicker
                   products={products}
@@ -197,7 +233,14 @@ const ArtworkUploadModal = ({ shopId, products = [], onClose, onCreated }) => {
                   idPrefix="pod-map-pick"
                 />
               </Field>
-              <Field label="Placering" htmlFor="pod-map-place">
+              <Field label="Placering" htmlFor="pod-map-slot">
+                <Select id="pod-map-slot" value={mapSlot} onChange={(e) => setMapSlot(e.target.value)}>
+                  {POD_SLOTS.map((s) => (
+                    <option key={s.id} value={s.id}>{s.label}</option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Detalj (valfritt)" htmlFor="pod-map-place">
                 <Input id="pod-map-place" value={mapPlacement} onChange={(e) => setMapPlacement(e.target.value)} placeholder="t.ex. Centrerat på bröstet, 25 cm" />
               </Field>
               <div className="flex justify-end gap-2 pt-1">
@@ -222,11 +265,14 @@ const ArtworkUploadModal = ({ shopId, products = [], onClose, onCreated }) => {
         ) : (
           <div className="space-y-4">
             <Field label="Tryckändamål (profil)" htmlFor="pod-profile">
-              <Select id="pod-profile" value={profileId} onChange={(e) => setProfileId(e.target.value)}>
+              <Select id="pod-profile" value={profileId} onChange={(e) => setProfileId(e.target.value)} disabled={isReplace}>
                 {profiles.map((p) => (
                   <option key={p.id} value={p.id}>{p.label}</option>
                 ))}
               </Select>
+              {isReplace && (
+                <p className="mt-1 text-[12px] text-admin-text-faint">Profilen är låst till originalets — endast filen byts ut.</p>
+              )}
             </Field>
 
             <Field label="Namn (intern etikett)" htmlFor="pod-label">
@@ -275,10 +321,16 @@ const ArtworkUploadModal = ({ shopId, products = [], onClose, onCreated }) => {
               </div>
             )}
 
+            {isReplace && file && (
+              <p className="rounded-[var(--radius-admin)] border border-admin-caution-dot/30 bg-admin-caution-bg px-3 py-2 text-[12px] text-admin-caution-text">
+                Alla produkter som använder originalet får den nya filen — även ej skickade
+                beställningar i print-kön.
+              </p>
+            )}
             <div className="flex justify-end gap-2 pt-1">
               <Button variant="secondary" onClick={onClose}>Avbryt</Button>
               <Button variant="primary" onClick={handleSave} disabled={!file || saving}>
-                {saving ? 'Laddar upp…' : 'Spara original'}
+                {saving ? (isReplace ? 'Ersätter…' : 'Laddar upp…') : isReplace ? 'Ersätt fil' : 'Spara original'}
               </Button>
             </div>
           </div>

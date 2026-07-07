@@ -13,6 +13,7 @@ import { CardSection, Button } from '../../../components/admin/ui';
 import StatusPill from '../../../components/admin/ui/StatusPill';
 import { deleteArtwork } from '../../../utils/podArtwork';
 import { getProfileById } from '../../../config/podProfiles';
+import { slotOf, slotLabel } from '../../../config/podSlots';
 import { tierTone, tierLabel } from './podTier';
 import ArtworkUploadModal from './ArtworkUploadModal';
 
@@ -31,17 +32,22 @@ const ArtworkLibrary = ({
   onMapArtwork,
 }) => {
   const [uploadOpen, setUploadOpen] = useState(false);
+  // When set, the upload modal opens in REPLACE mode for this artwork (profile
+  // locked, updates the doc in place → all products + queue orders get the new file).
+  const [replaceTarget, setReplaceTarget] = useState(null);
   const items = artwork;
 
   const refresh = () => onChanged?.();
 
-  // Map artworkId → the SKUs that reference it (built once from the shared mappings).
-  const skusByArtwork = React.useMemo(() => {
+  // Map artworkId → the SKU+slot pills that reference it (built once from the shared
+  // mappings). MULTI-PLACEMENT: a SKU may appear per slot, so the pill carries the
+  // slot too ("north-01 · Rygg"). Missing placementSlot → 'front' (Bröst).
+  const pillsByArtwork = React.useMemo(() => {
     const m = new Map();
     mappings.forEach((mp) => {
       if (!mp.artworkId || !mp.sku) return;
       const arr = m.get(mp.artworkId) || [];
-      arr.push(mp.sku);
+      arr.push({ sku: mp.sku, slot: slotOf(mp), id: mp.id });
       m.set(mp.artworkId, arr);
     });
     return m;
@@ -75,8 +81,8 @@ const ArtworkLibrary = ({
       ) : (
         <ul className="divide-y divide-admin-border-soft">
           {items.map((art) => {
-            const mappedSkus = skusByArtwork.get(art.id) || [];
-            const isMapped = mappedSkus.length > 0;
+            const mappedPills = pillsByArtwork.get(art.id) || [];
+            const isMapped = mappedPills.length > 0;
             return (
             <li key={art.id} className="flex items-center gap-3 py-2.5">
               {/* thumbnail (preview is null for PDF/SVG/TIFF → placeholder) */}
@@ -92,9 +98,9 @@ const ArtworkLibrary = ({
                   <span className="truncate text-[13px] font-medium text-admin-text">{art.label || art.fileName}</span>
                   <StatusPill tone={tierTone(art.validation?.tier)}>{tierLabel(art.validation?.tier)}</StatusPill>
                   {isMapped ? (
-                    mappedSkus.map((s) => (
-                      <span key={s} className="inline-flex items-center rounded-full border border-admin-border-soft bg-admin-surface-2 px-2 py-0.5 font-mono text-[11px] text-admin-text-muted">
-                        {s}
+                    mappedPills.map((p) => (
+                      <span key={p.id || `${p.sku}-${p.slot}`} className="inline-flex items-center rounded-full border border-admin-border-soft bg-admin-surface-2 px-2 py-0.5 font-mono text-[11px] text-admin-text-muted">
+                        {p.sku} · {slotLabel(p.slot)}
                       </span>
                     ))
                   ) : (
@@ -119,6 +125,13 @@ const ArtworkLibrary = ({
                   Koppla…
                 </button>
               )}
+              <button
+                onClick={() => setReplaceTarget(art)}
+                className="shrink-0 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2.5 py-1 text-[12px] font-medium text-admin-text hover:bg-admin-surface-2"
+                title="Byt ut filen men behåll alla kopplingar"
+              >
+                Ersätt fil
+              </button>
               <a
                 href={art.originalUrl}
                 target="_blank"
@@ -145,6 +158,16 @@ const ArtworkLibrary = ({
           shopId={shopId}
           products={products}
           onClose={() => setUploadOpen(false)}
+          onCreated={refresh}
+        />
+      )}
+
+      {replaceTarget && (
+        <ArtworkUploadModal
+          shopId={shopId}
+          products={products}
+          replaceTarget={replaceTarget}
+          onClose={() => setReplaceTarget(null)}
           onCreated={refresh}
         />
       )}

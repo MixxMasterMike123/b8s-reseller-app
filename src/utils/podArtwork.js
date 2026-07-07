@@ -5,7 +5,7 @@
 // too; the query scoping is the app-side complement, not the security boundary).
 // Mirrors the data-access style of utils/marketingMaterials.js.
 import {
-  collection, doc, addDoc, getDoc, getDocs, deleteDoc, query, where, orderBy, serverTimestamp,
+  collection, doc, addDoc, getDoc, getDocs, deleteDoc, updateDoc, query, where, orderBy, serverTimestamp,
 } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { db, storage } from '../firebase/config';
@@ -52,6 +52,44 @@ export const mappingsReferencing = async (artworkId, shopId) => {
   );
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+};
+
+/**
+ * Replace an artwork's FILE in place, non-destructively for the mapping graph.
+ * Updates the SAME podArtwork doc (same id → every mapping keeps pointing at it,
+ * so all products using this original — including unshipped orders in the print
+ * queue — pick up the new file) with the new upload + validation fields, THEN
+ * best-effort deletes the OLD storage objects. The doc id + shopId + purpose are
+ * unchanged; only the file + measured/validation fields move.
+ *
+ * @param {object} artwork  the existing artwork doc (must have .id and old storage paths)
+ * @param {object} fields   the new upload+validation fields (same shape createArtwork receives,
+ *                          minus createdAt/createdBy): originalUrl/originalStoragePath/previewUrl/
+ *                          previewStoragePath/fileName/fileSizeBytes/mimeType/ext/sourceWidthPx/
+ *                          sourceHeightPx/validation. `label`/`purpose` are preserved unless passed.
+ */
+export const replaceArtworkFile = async (artwork, fields) => {
+  if (!artwork?.id) throw new Error('Artwork-id saknas.');
+  const oldOriginal = artwork.originalStoragePath;
+  const oldPreview = artwork.previewStoragePath;
+
+  await updateDoc(doc(db, COL, artwork.id), {
+    ...fields,
+    updatedAt: serverTimestamp(),
+  });
+
+  // Best-effort cleanup of the OLD objects — only if the new paths actually differ
+  // (never delete the file we just pointed the doc at). Non-fatal on failure.
+  const newOriginal = fields.originalStoragePath;
+  const newPreview = fields.previewStoragePath;
+  for (const [oldPath, newPath] of [[oldOriginal, newOriginal], [oldPreview, newPreview]]) {
+    if (!oldPath || oldPath === newPath) continue;
+    try {
+      await deleteObject(ref(storage, oldPath));
+    } catch (e) {
+      console.warn('podArtwork: could not delete OLD storage object after replace', oldPath, e?.message);
+    }
+  }
 };
 
 /**
