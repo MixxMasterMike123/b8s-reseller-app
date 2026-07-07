@@ -10,6 +10,7 @@ import {
   ShieldCheckIcon,
   PrinterIcon,
   InboxIcon,
+  CubeIcon,
 } from '@heroicons/react/24/outline';
 
 /**
@@ -24,6 +25,7 @@ import {
 const NAV = [
   { name: 'Butiker', path: '/shops', icon: BuildingStorefrontIcon, live: true },
   { name: 'Tillägg', path: '/addons', icon: PuzzlePieceIcon, live: true },
+  { name: '3D-modeller', path: '/models', icon: CubeIcon, live: true },
   { name: 'DAC7', path: '/dac7', icon: ShieldCheckIcon, live: true },
   { name: 'Tryckerier', path: '/printers', icon: PrinterIcon, live: true },
   { name: 'Leads', path: '/leads', icon: InboxIcon, live: true },

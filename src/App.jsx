@@ -34,6 +34,7 @@ import ImpersonationIntake from './components/auth/ImpersonationIntake';
 import AdminShopIdIntake from './components/auth/AdminShopIdIntake';
 import PlatformShops from './pages/platform/PlatformShops';
 import PlatformAddons from './pages/platform/PlatformAddons';
+import PlatformModels from './pages/platform/PlatformModels';
 import PlatformDac7 from './pages/platform/PlatformDac7';
 import PlatformPrinters from './pages/platform/PlatformPrinters';
 import PlatformLeads from './pages/platform/PlatformLeads';
@@ -274,6 +275,9 @@ function App() {
               } />
               <Route path="/addons" element={
                 <PlatformRoute><PlatformAddons /></PlatformRoute>
+              } />
+              <Route path="/models" element={
+                <PlatformRoute><PlatformModels /></PlatformRoute>
               } />
               <Route path="/dac7" element={
                 <PlatformRoute><PlatformDac7 /></PlatformRoute>
