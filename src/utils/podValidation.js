@@ -19,7 +19,9 @@ const requiredPx = (mm, dpi) => Math.round((mm / MM_PER_INCH) * dpi);
 // at exactly the displayed required pixels computes to e.g. 299.97 DPI, which must
 // read as 300 (PASS), not 299 (a spurious WARN). requiredPx() rounds too, so
 // rounding here keeps the "required px ↔ DPI" pair consistent at the boundary.
-const effectiveDpiFor = (widthPx, heightPx, areaMm) => {
+// Exported for the Design Studio compositor, which computes the SAME effective DPI
+// against the seller's chosen placement size instead of the full print area.
+export const effectiveDpiFor = (widthPx, heightPx, areaMm) => {
   const dpiW = widthPx / (areaMm.w / MM_PER_INCH);
   const dpiH = heightPx / (areaMm.h / MM_PER_INCH);
   return Math.round(Math.min(dpiW, dpiH));

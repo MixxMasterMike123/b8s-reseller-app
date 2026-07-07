@@ -1,28 +1,42 @@
-// CompositorCanvas.jsx — MOUNT POINT for the Design Studio canvas compositor.
+// CompositorCanvas.jsx — the Design Studio PLACEMENT CANVAS (slice 2).
 //
-// ⛔ THIS IS A SLICE-1 STUB. The real canvas compositor (slice 2) replaces the body
-// of this component. It renders the garment flat, overlays the artwork inside the
-// print area with drag/scale, computes effective DPI per placement, and returns a
-// generated mockup via onResult. Slice 1 only draws the garment + a dashed
-// print-area outline + a "coming next" placeholder, so the studio shell is
-// eyeball-testable now.
+// Renders the garment flat with the artwork placed inside the print area, and lets
+// the seller move/resize it with truth-telling feedback — the "inga tryck-
+// överraskningar" contract:
+//   • drag to move, corner handle to resize — always CLAMPED inside the print
+//     area (the dashed safe zone; artwork can never cross it),
+//   • centre-snap with guide lines (snap distance constant in SCREEN px so it
+//     feels identical at every canvas size),
+//   • numeric cm readout + editable cm fields ("4 cm uppifrån · centrerad") —
+//     placement in physical centimetres, never inches, never just "looks right",
+//   • LIVE DPI verdict on every resize, phrased against the actual print size
+//     ("Blir suddigt tryckt i 24×32 cm — …"), thresholds from the print profile.
 //
-// The props below are the CONTRACT the real compositor will receive — do not rename
-// them without updating DesignStudio.jsx:
-//   • template  — the selected mockup template (from podMockupTemplates); carries
-//                 garment, colorways, printAreas (px, viewBox coords) + printAreaMm.
-//   • colorway  — the selected colourway object { id, label, hex }.
-//   • slot      — the active placement slot id ('front' | 'back' | …); indexes
-//                 template.printAreas / template.printAreaMm.
-//   • artwork   — the selected artwork doc (podArtwork) to place, or null.
-//   • onResult  — (result) => void; the compositor calls this when it produces a
-//                 mockup (e.g. { blob, dataUrl, placement }). Unused in the stub.
-import React from 'react';
+// Placement state is OWNED BY THE PARENT (DesignStudio keeps one placement per
+// slot); this component computes a default when the parent has none yet and
+// reports every interaction through onPlacementChange. All geometry/DPI math
+// lives in placementMath.js (pure, shared with the slice-3 exporter).
+//
+// Props (CONTRACT with DesignStudio.jsx):
+//   • template   — selected mockup template (podMockupTemplates): garment,
+//                  colorways, printAreas (viewBox px) + printAreaMm.
+//   • colorway   — selected colourway { id, label, hex }.
+//   • slot       — active placement slot id ('front' | 'back' | …).
+//   • artwork    — selected artwork doc (podArtwork) or null.
+//   • profile    — the template's print profile (podProfiles) for DPI thresholds.
+//   • placement  — { xMm, yMm, wMm } for THIS slot, or null (→ default used).
+//   • onPlacementChange — (placement) => void on every move/resize/nudge.
+//   • onResult   — reserved for slice 3 (mockup export calls back here). Unused.
+import React, { useMemo, useRef, useState } from 'react';
 import { GARMENT_FLATS, GARMENT_VIEWBOX } from './garments';
+import {
+  MIN_ART_WIDTH_MM, SNAP_SCREEN_PX,
+  pxPerMm, isComposable, placementHeightMm, maxWidthAtMm,
+  clampPlacement, defaultPlacement, snapPlacement, isCenteredX,
+  formatCm, placementReadout, dpiVerdict,
+} from './placementMath';
 
-// The px→% helper: convert a viewBox-pixel print-area rect into CSS percentages so
-// the dashed overlay scales with the responsive SVG. Shared shape with the real
-// compositor's placement math.
+// Convert a viewBox-pixel rect into CSS percentages of the responsive wrapper.
 const rectToPercent = (rect, viewBox) => ({
   left: `${(rect.x / viewBox.w) * 100}%`,
   top: `${(rect.y / viewBox.h) * 100}%`,
@@ -30,12 +44,181 @@ const rectToPercent = (rect, viewBox) => ({
   height: `${(rect.h / viewBox.h) * 100}%`,
 });
 
-const CompositorCanvas = ({ template, colorway, slot = 'front', artwork = null, onResult }) => {
-  // Resolve the garment flat React component + its viewBox by the template's garment.
+// DPI banner styling per verdict tier (admin badge tones).
+const DPI_TONE = {
+  PASS: 'bg-admin-success-bg text-admin-success-text',
+  WARN: 'bg-admin-caution-bg text-admin-caution-text',
+  FAIL: 'bg-admin-critical-bg text-admin-critical-text',
+};
+
+// Parse a Swedish cm string ("8,5" or "8.5") → mm, or null if not a number.
+// Empty string is null (an emptied field means "never mind", not 0 cm).
+const parseCmToMm = (s) => {
+  const t = String(s).trim();
+  if (!t) return null;
+  const n = Number(t.replace(',', '.'));
+  return Number.isFinite(n) ? n * 10 : null;
+};
+
+// A small cm input: local text while typing, commits (onCommit(mm)) on blur/Enter,
+// re-syncs from the placement whenever the committed value changes. Commits ONLY
+// if the user actually edited the text since focus — pointerdown on the canvas
+// preventDefault()s, so a cm field can stay focused THROUGH a drag/resize, and an
+// unconditional blur-commit would then revert that gesture with the stale text.
+const CmField = ({ label, mm, onCommit, disabled = false }) => {
+  const committed = formatCm(mm);
+  const [text, setText] = useState(committed);
+  const [editing, setEditing] = useState(false);
+  const focusTextRef = useRef(committed);
+  const shown = editing ? text : committed;
+
+  const commit = () => {
+    setEditing(false);
+    if (text === focusTextRef.current) return; // untouched → never commit stale text
+    const parsed = parseCmToMm(text);
+    if (parsed !== null && formatCm(parsed) !== committed) onCommit(parsed);
+  };
+
+  return (
+    <label className="flex items-center gap-1.5 text-[12px] text-admin-text-muted">
+      {label}
+      <input
+        type="text"
+        inputMode="decimal"
+        disabled={disabled}
+        value={shown}
+        onFocus={(e) => { setText(committed); focusTextRef.current = committed; setEditing(true); e.target.select(); }}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+        className="w-16 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2 py-1 text-right text-[12px] text-admin-text focus:border-admin-info-dot focus:outline-none disabled:opacity-50"
+      />
+      <span className="text-admin-text-faint">cm</span>
+    </label>
+  );
+};
+
+const CompositorCanvas = ({
+  template, colorway, slot = 'front', artwork = null, profile = null,
+  placement = null, onPlacementChange = () => {}, onResult, // eslint-disable-line no-unused-vars
+}) => {
+  const wrapRef = useRef(null);
+  // Full drag data in a ref (no re-render churn mid-gesture); visual flags in state.
+  const dragRef = useRef(null);
+  const [dragUi, setDragUi] = useState(null); // { mode, snappedX, snappedY } | null
+
   const Flat = template ? GARMENT_FLATS[template.garment] : null;
   const viewBox = template ? GARMENT_VIEWBOX[template.garment] : null;
-  const rect = template?.printAreas?.[slot] || null;
+  const areaRect = template?.printAreas?.[slot] || null;
+  const areaMm = template?.printAreaMm?.[slot] || null;
+  const ppm = template ? pxPerMm(template, slot) : null;
 
+  const composable = isComposable(artwork);
+
+  // The placement we render: the parent's, or the default until first touched.
+  const effective = useMemo(() => {
+    if (!composable || !template || !ppm) return null;
+    return placement
+      ? clampPlacement(placement, template, slot, artwork)
+      : defaultPlacement(template, slot, artwork);
+  }, [composable, template, slot, artwork, placement, ppm]);
+
+  const verdict = effective ? dpiVerdict(effective, artwork, profile) : null;
+
+  // ── pointer interaction ────────────────────────────────────────────────────
+  // Screen px → physical mm at the current render scale (wrapper width ↔ viewBox).
+  const screenPxToMm = () => {
+    const box = wrapRef.current?.getBoundingClientRect();
+    if (!box || !box.width || !ppm) return null;
+    const vbPerScreenPx = viewBox.w / box.width;
+    return { x: vbPerScreenPx / ppm.x, y: vbPerScreenPx / ppm.y };
+  };
+
+  const startDrag = (e, mode) => {
+    if (!effective) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return; // primary button only
+    e.preventDefault();
+    e.stopPropagation();
+    // Capture can throw if the pointer vanished between down and here (and for
+    // synthetic test events) — the drag still works without capture, so ignore.
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* noop */ }
+    dragRef.current = {
+      mode,
+      pointerId: e.pointerId,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      start: effective,
+    };
+    setDragUi({ mode, snappedX: false, snappedY: false });
+  };
+
+  const onPointerMove = (e) => {
+    const d = dragRef.current;
+    if (!d || e.pointerId !== d.pointerId) return;
+    const scale = screenPxToMm();
+    if (!scale) return;
+    const dxMm = (e.clientX - d.startClientX) * scale.x;
+    const dyMm = (e.clientY - d.startClientY) * scale.y;
+
+    if (d.mode === 'move') {
+      let next = { ...d.start, xMm: d.start.xMm + dxMm, yMm: d.start.yMm + dyMm };
+      // x-axis scale for both axes: templates keep px:mm uniform (aspect-matched
+      // rects), and snap only ever equalizes to the exact centre — a skewed
+      // threshold can nudge feel, never the numbers.
+      const thresholdMm = SNAP_SCREEN_PX * scale.x;
+      const snapped = snapPlacement(next, template, slot, artwork, thresholdMm);
+      next = clampPlacement(snapped.placement, template, slot, artwork);
+      setDragUi({ mode: 'move', snappedX: snapped.snappedX, snappedY: snapped.snappedY });
+      onPlacementChange(next);
+    } else {
+      // Resize from the bottom-right handle: top-left stays ANCHORED (the artwork
+      // never slides during a resize), so the max width is bounded by the space
+      // remaining from the anchor — not the whole area.
+      const wCap = maxWidthAtMm(d.start, template, slot, artwork);
+      const wMm = Math.min(Math.max(d.start.wMm + dxMm, Math.min(MIN_ART_WIDTH_MM, wCap)), wCap);
+      onPlacementChange({ ...d.start, wMm });
+    }
+  };
+
+  // pointerup / pointercancel / lostpointercapture all end the gesture — touch
+  // scrolling or a revoked capture must never leave a stuck drag.
+  const endDrag = (e) => {
+    const d = dragRef.current;
+    if (!d || (e && e.pointerId !== d.pointerId)) return;
+    dragRef.current = null;
+    setDragUi(null);
+  };
+
+  // Keyboard nudge on the focused artwork: arrows = 1 mm, Shift+arrows = 10 mm.
+  const onKeyDown = (e) => {
+    if (!effective) return;
+    const step = e.shiftKey ? 10 : 1;
+    const delta = {
+      ArrowLeft: { xMm: -step }, ArrowRight: { xMm: step },
+      ArrowUp: { yMm: -step }, ArrowDown: { yMm: step },
+    }[e.key];
+    if (!delta) return;
+    e.preventDefault();
+    onPlacementChange(clampPlacement(
+      { ...effective, xMm: effective.xMm + (delta.xMm || 0), yMm: effective.yMm + (delta.yMm || 0) },
+      template, slot, artwork
+    ));
+  };
+
+  // Commit helpers for the numeric cm fields (parse → clamp → parent).
+  const commitField = (patch) => {
+    if (!effective) return;
+    onPlacementChange(clampPlacement({ ...effective, ...patch }, template, slot, artwork));
+  };
+  const centerX = () => {
+    if (!effective || !areaMm) return;
+    onPlacementChange(clampPlacement(
+      { ...effective, xMm: (areaMm.w - effective.wMm) / 2 },
+      template, slot, artwork
+    ));
+  };
+
+  // ── render ─────────────────────────────────────────────────────────────────
   if (!template || !Flat || !viewBox) {
     return (
       <div className="grid aspect-[8/9] w-full max-w-[520px] place-items-center rounded-[var(--radius-admin)] border border-dashed border-admin-border bg-admin-surface-2 text-[13px] text-admin-text-muted">
@@ -44,23 +227,157 @@ const CompositorCanvas = ({ template, colorway, slot = 'front', artwork = null, 
     );
   }
 
-  return (
-    <div className="relative mx-auto w-full max-w-[520px]">
-      {/* Garment flat at full size. */}
-      <Flat color={colorway?.hex || '#ffffff'} className="block h-auto w-full" />
+  // Artwork rect in viewBox px (placement mm → px via the template's px↔mm map).
+  const artVb = effective && areaRect && ppm ? {
+    x: areaRect.x + effective.xMm * ppm.x,
+    y: areaRect.y + effective.yMm * ppm.y,
+    w: effective.wMm * ppm.x,
+    h: placementHeightMm(effective, artwork) * ppm.y,
+  } : null;
 
-      {/* Dashed print-area overlay + the compositor placeholder. Positioned over
-          the exact print-area rect (percent of the responsive SVG). */}
-      {rect && (
-        <div
-          className="pointer-events-none absolute rounded-[4px] border-2 border-dashed border-admin-info-dot/80"
-          style={rectToPercent(rect, viewBox)}
-        >
-          <div className="flex h-full w-full items-center justify-center p-2 text-center">
-            <span className="rounded-[6px] bg-admin-surface/85 px-2 py-1 text-[11px] font-medium text-admin-text-muted shadow-[var(--shadow-admin)]">
-              Kompositor kommer i nästa steg
-            </span>
+  const dragging = Boolean(dragUi);
+
+  return (
+    <div>
+      <div ref={wrapRef} className="relative mx-auto w-full max-w-[520px] select-none">
+        {/* Garment flat. */}
+        <Flat color={colorway?.hex || '#ffffff'} className="block h-auto w-full" />
+
+        {/* Print area (safe zone) with its physical size labelled in cm. */}
+        {areaRect && (
+          <div
+            className="pointer-events-none absolute rounded-[4px] border-2 border-dashed border-admin-info-dot/70"
+            style={rectToPercent(areaRect, viewBox)}
+          >
+            {areaMm && (
+              <span className="absolute -top-6 right-0 whitespace-nowrap rounded-[6px] bg-admin-surface/85 px-1.5 py-0.5 text-[11px] text-admin-text-faint">
+                Tryckyta {formatCm(areaMm.w)} × {formatCm(areaMm.h)} cm
+              </span>
+            )}
+            {/* Hints INSIDE the zone when there is nothing to place. */}
+            {!artwork && (
+              <div className="flex h-full w-full items-center justify-center p-2 text-center">
+                <span className="rounded-[6px] bg-admin-surface/85 px-2 py-1 text-[11px] font-medium text-admin-text-muted shadow-[var(--shadow-admin)]">
+                  Välj ett original till vänster
+                </span>
+              </div>
+            )}
+            {artwork && !composable && (
+              <div className="flex h-full w-full items-center justify-center p-3 text-center">
+                <span className="rounded-[6px] bg-admin-surface/90 px-2.5 py-1.5 text-[11px] text-admin-text-muted shadow-[var(--shadow-admin)]">
+                  Originalet kan inte förhandsgranskas i studion (bildmått saknas för formatet).
+                  Använd PNG eller JPEG för mockuper.
+                </span>
+              </div>
+            )}
           </div>
+        )}
+
+        {/* Centre guides — visible only while a drag is snapped to that axis. */}
+        {dragUi?.snappedX && areaRect && (
+          <div
+            className="pointer-events-none absolute w-px bg-admin-info-dot"
+            style={{
+              left: `${((areaRect.x + areaRect.w / 2) / viewBox.w) * 100}%`,
+              top: `${(areaRect.y / viewBox.h) * 100}%`,
+              height: `${(areaRect.h / viewBox.h) * 100}%`,
+            }}
+          />
+        )}
+        {dragUi?.snappedY && areaRect && (
+          <div
+            className="pointer-events-none absolute h-px bg-admin-info-dot"
+            style={{
+              top: `${((areaRect.y + areaRect.h / 2) / viewBox.h) * 100}%`,
+              left: `${(areaRect.x / viewBox.w) * 100}%`,
+              width: `${(areaRect.w / viewBox.w) * 100}%`,
+            }}
+          />
+        )}
+
+        {/* The placed artwork: drag to move, corner handle to resize, arrows to
+            nudge. touch-action:none so touch drags aren't hijacked by scrolling. */}
+        {artVb && (
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label={`Motiv: ${placementReadout(effective, template, slot, artwork)}. Flytta med piltangenterna (Skift = 1 cm steg).`}
+            className={`absolute touch-none outline-none ring-admin-info-dot/60 focus-visible:ring-2 ${
+              dragging && dragUi.mode === 'move' ? 'cursor-grabbing' : 'cursor-grab'
+            }`}
+            style={rectToPercent(artVb, viewBox)}
+            onPointerDown={(e) => startDrag(e, 'move')}
+            onPointerMove={onPointerMove}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
+            onLostPointerCapture={endDrag}
+            onKeyDown={onKeyDown}
+          >
+            <img
+              src={artwork.previewUrl}
+              alt=""
+              draggable={false}
+              className="h-full w-full object-fill"
+            />
+            {/* Hairline so a white artwork on a white tee still shows its bounds. */}
+            <div className="pointer-events-none absolute inset-0 border border-admin-info-dot/50" />
+            {/* Resize handle (bottom-right): generous hit target, small visual. */}
+            <div
+              role="presentation"
+              className="absolute -bottom-2.5 -right-2.5 grid h-5 w-5 cursor-nwse-resize touch-none place-items-center"
+              onPointerDown={(e) => startDrag(e, 'resize')}
+              onPointerMove={onPointerMove}
+              onPointerUp={endDrag}
+              onPointerCancel={endDrag}
+              onLostPointerCapture={endDrag}
+            >
+              <div className="h-2.5 w-2.5 rounded-[2px] border border-admin-info-dot bg-admin-surface shadow-[var(--shadow-admin)]" />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Placement panel: cm readout + numeric fields + live DPI verdict ── */}
+      {effective && (
+        <div className="mx-auto mt-3 w-full max-w-[520px]">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-[12px] font-medium text-admin-text">
+              {placementReadout(effective, template, slot, artwork)}
+            </span>
+            <span className="text-[11px] text-admin-text-faint">Mått inom tryckytan</span>
+          </div>
+
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <CmField
+              label="Bredd"
+              mm={effective.wMm}
+              onCommit={(mm) => commitField({ wMm: mm })}
+            />
+            <CmField
+              label="Uppifrån"
+              mm={effective.yMm}
+              onCommit={(mm) => commitField({ yMm: mm })}
+            />
+            <CmField
+              label="Från vänster"
+              mm={effective.xMm}
+              onCommit={(mm) => commitField({ xMm: mm })}
+            />
+            <button
+              type="button"
+              onClick={centerX}
+              disabled={isCenteredX(effective, template, slot)}
+              className="rounded-[var(--radius-admin-el)] border border-admin-border px-2.5 py-1 text-[12px] text-admin-text hover:bg-admin-surface-2 disabled:cursor-default disabled:opacity-40"
+            >
+              Centrera
+            </button>
+          </div>
+
+          {verdict && (
+            <div className={`mt-3 rounded-[var(--radius-admin-el)] px-3 py-2 text-[12px] ${DPI_TONE[verdict.tier]}`}>
+              {verdict.message}
+            </div>
+          )}
         </div>
       )}
     </div>

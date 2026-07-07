@@ -1,19 +1,21 @@
 // DesignStudio.jsx — the Design Studio tab (POD add-on, Mode A / shop-owner studio).
 //
-// SLICE 1 SHELL. This wires the picking UI around a stubbed compositor:
+// SLICE 2: the picking UI around the LIVE placement compositor:
 //   • left rail  — artwork picker (validated originals; PASS/WARN selectable, FAIL
 //                  greyed with an "underkänd" hint) + garment template picker
 //                  (cards showing the SVG flat thumbnail in its colourways).
-//   • main area  — the selected garment flat in the selected colourway at full
-//                  size, with the print area drawn as a dashed overlay and a
-//                  "Kompositor kommer i nästa steg" placeholder (CompositorCanvas
-//                  stub). Colourway chips + a front/back slot selector sit under it.
+//   • main area  — CompositorCanvas: the garment flat with the artwork placed in
+//                  the print area (drag/resize/snap, cm readout, live DPI verdict).
+//                  Colourway chips + a front/back slot selector sit under it.
 //
-// The real canvas compositor (slice 2) drops into CompositorCanvas.jsx — this file
-// only feeds it {template, colorway, slot, artwork, onResult}.
+// PLACEMENT STATE lives here, ONE PER SLOT (placements[slot] = {xMm,yMm,wMm}), so
+// switching front↔back preserves each side's placement and slice 3 can composite
+// every slot. Placements reset when the artwork or template changes (the aspect
+// ratio and print areas they were clamped against no longer apply).
 //
 // Artwork comes from the SHARED usePodLibrary load (passed down from PodAdminPage),
-// so no extra Firestore reads. Templates load once via loadPodMockupTemplates().
+// so no extra Firestore reads. Templates + print profiles (DPI thresholds) load
+// once via their cached loaders.
 import React, { useEffect, useMemo, useState } from 'react';
 import { PhotoIcon } from '@heroicons/react/24/outline';
 import { CardSection } from '../../../components/admin/ui';
@@ -24,6 +26,7 @@ import {
   getPodMockupTemplatesMeta,
   templateSlots,
 } from '../../../config/podMockupTemplates';
+import { loadPodProfiles, getProfileById } from '../../../config/podProfiles';
 import { tierTone, tierLabel } from '../components/podTier';
 import { GARMENT_FLATS } from './garments';
 import CompositorCanvas from './CompositorCanvas';
@@ -43,19 +46,24 @@ const DesignStudio = ({ artwork = [], loading = false }) => {
   const [templates, setTemplates] = useState([]);
   const [templatesLoading, setTemplatesLoading] = useState(true);
   const [meta, setMeta] = useState({ version: 0, provisional: true });
+  const [profiles, setProfiles] = useState([]);
 
   const [selectedArtworkId, setSelectedArtworkId] = useState(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
   const [colorwayId, setColorwayId] = useState(null);
   const [slot, setSlot] = useState('front');
+  // One placement per slot for the CURRENT artwork+template pair:
+  // { front: {xMm,yMm,wMm}, back: … }. Missing slot → compositor uses its default.
+  const [placements, setPlacements] = useState({});
 
   useEffect(() => {
     let alive = true;
     (async () => {
       setTemplatesLoading(true);
-      const t = await loadPodMockupTemplates();
+      const [t, p] = await Promise.all([loadPodMockupTemplates(), loadPodProfiles()]);
       if (!alive) return;
       setTemplates(t);
+      setProfiles(p);
       setMeta(getPodMockupTemplatesMeta());
       // Default-select the first template + its first colourway so the canvas
       // isn't empty on open.
@@ -74,15 +82,23 @@ const DesignStudio = ({ artwork = [], loading = false }) => {
     [templates, selectedTemplateId]
   );
 
-  // Keep the colourway + slot valid whenever the template changes.
+  // Keep the colourway + slot valid whenever the template changes. Placements
+  // reset too — they were clamped against the OLD template's print areas.
   useEffect(() => {
     if (!selectedTemplate) return;
     const cwIds = (selectedTemplate.colorways || []).map((c) => c.id);
     if (!cwIds.includes(colorwayId)) setColorwayId(cwIds[0] || null);
     const slots = templateSlots(selectedTemplate);
     if (!slots.includes(slot)) setSlot(slots[0] || 'front');
+    setPlacements({});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTemplateId]);
+
+  // New artwork = new aspect ratio: every stored placement's derived height (and
+  // clamping) is stale, so start from the defaults again.
+  useEffect(() => {
+    setPlacements({});
+  }, [selectedArtworkId]);
 
   const selectedColorway = useMemo(
     () => (selectedTemplate?.colorways || []).find((c) => c.id === colorwayId) || selectedTemplate?.colorways?.[0] || null,
@@ -95,6 +111,13 @@ const DesignStudio = ({ artwork = [], loading = false }) => {
   );
 
   const slots = templateSlots(selectedTemplate);
+
+  // The template's print profile (settings/podProfiles) — DPI thresholds for the
+  // compositor's live verdict.
+  const profile = useMemo(
+    () => getProfileById(profiles, selectedTemplate?.profileId),
+    [profiles, selectedTemplate]
+  );
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[320px,1fr]">
@@ -206,7 +229,10 @@ const DesignStudio = ({ artwork = [], loading = false }) => {
           colorway={selectedColorway}
           slot={slot}
           artwork={selectedArtwork}
-          onResult={() => { /* slice 2 wires the generated mockup here */ }}
+          profile={profile}
+          placement={placements[slot] || null}
+          onPlacementChange={(p) => setPlacements((prev) => ({ ...prev, [slot]: p }))}
+          onResult={() => { /* slice 3 wires the generated mockup here */ }}
         />
 
         {/* Colourway chips */}
