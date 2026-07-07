@@ -215,6 +215,12 @@ service cloud.firestore {
       allow write: if isPlatform();
     }
 
+    // platform-managed 3D model library (platform writes, all active shop users read).
+    match /pod3dModels/{modelId} {
+      allow read: if isActiveUser();
+      allow write: if isPlatform();
+    }
+
     // ============================================================
     // shops/{shopId} — the tenant docs. Public read of identity/status (the
     // storefront reads its shop config + active/disabled). Only platform
