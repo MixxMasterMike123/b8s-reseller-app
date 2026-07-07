@@ -185,6 +185,13 @@ export const createDisplacementCompositor = async ({ view, printAreaMm, assets, 
     backgroundAlpha: 1,
     background: '#ffffff',
     preference: 'webgl',
+    // REQUIRED for multiply/overlay & co: backdrop-reading blend modes need to
+    // sample "what pixels they draw onto". Pixi's WebGL renderer only provides
+    // that when it renders via a back buffer — and the DEFAULT is false, which
+    // made multiply ink the artwork against an EMPTY backdrop → black slab
+    // (screen survived only because screen-vs-empty degenerates to normal — it
+    // never actually picked up the garment's shadows either).
+    useBackBuffer: true,
   });
 
   // Root container in PHOTO px space, scaled once to the output resolution.
@@ -278,7 +285,14 @@ export const createDisplacementCompositor = async ({ view, printAreaMm, assets, 
     // sprite-level multiply blends against that buffer's EMPTY (black) backdrop
     // → solid black artwork. On the container, the blend applies where the
     // filter's OUTPUT composites with the photo — which is the whole point.
-    artLayer.blendMode = state.blend;
+    // Blend goes on the FILTER, not the sprite/container (pixi maintainer's
+    // answer in pixijs#7224, "working as intended"): filter.blendMode sets how
+    // the filter's OUTPUT composites onto the scene, via the NATIVE GL blend —
+    // no backdrop reading needed. Container-level blend on a filtered container
+    // applies inside the filter pipeline against an EMPTY buffer: multiply
+    // rendered black, and screen/overlay silently degenerated to normal ("blend
+    // modes do nothing").
+    dispFilter.blendMode = state.blend;
     artLayer.alpha = state.alpha;
   };
 
