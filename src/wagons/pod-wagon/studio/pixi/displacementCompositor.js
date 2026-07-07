@@ -24,12 +24,56 @@
 // Import this module LAZILY (dynamic import) — pixi.js is its own chunk and must
 // not enter the main admin bundle.
 import {
-  Application, Assets, Container, Sprite, Graphics, DisplacementFilter,
+  Application, Container, Sprite, Graphics, DisplacementFilter, Texture,
 } from 'pixi.js';
 
 // Core v8 blend modes we allow from config (advanced modes need a separate pixi
 // import — extend deliberately if a garment ever needs one).
 const ALLOWED_BLENDS = new Set(['normal', 'multiply', 'screen', 'add']);
+
+// Load an image from ANY url kind. NOT Assets.load: it sniffs the loader from
+// the file extension, so extension-less blob:/object URLs (uploaded artwork) and
+// token-suffixed Storage URLs fail parser detection. A manual <img> decode is
+// deterministic for every source we feed it.
+const loadImage = (src) => new Promise((resolve, reject) => {
+  const img = new Image();
+  img.crossOrigin = 'anonymous'; // Storage download URLs serve ACAO:* — no canvas taint
+  img.onload = () => resolve(img);
+  img.onerror = () => reject(new Error('Kunde inte läsa bilden för 3D-mockupen.'));
+  img.src = src;
+});
+
+const loadTexture = async (src) => Texture.from(await loadImage(src));
+
+// Soften the displacement map before it drives the warp. JPEG maps carry 8×8
+// block noise that QUANTIZES the displacement field — artwork edges then shift
+// in discrete jumps and read as stair-steps. A gaussian blur at load time (the
+// Affinity recipe's "blur the map" step) smooths the field; blurPx is in MAP
+// pixels (JPEG blocks are 8px → default 6 kills them without flattening folds).
+// Safari <18 lacks ctx.filter: fall back to a downscale→upscale pass, whose
+// bilinear resampling approximates the blur.
+const loadDisplacementTexture = async (src, blurPx) => {
+  const img = await loadImage(src);
+  if (!blurPx) return Texture.from(img);
+  const c = document.createElement('canvas');
+  c.width = img.naturalWidth;
+  c.height = img.naturalHeight;
+  const g = c.getContext('2d');
+  if (typeof g.filter === 'string') {
+    g.filter = `blur(${blurPx}px)`;
+    g.drawImage(img, 0, 0);
+  } else {
+    const small = document.createElement('canvas');
+    const f = Math.max(2, Math.round(blurPx));
+    small.width = Math.max(1, Math.round(img.naturalWidth / f));
+    small.height = Math.max(1, Math.round(img.naturalHeight / f));
+    small.getContext('2d').drawImage(img, 0, 0, small.width, small.height);
+    g.imageSmoothingEnabled = true;
+    g.imageSmoothingQuality = 'high';
+    g.drawImage(small, 0, 0, c.width, c.height);
+  }
+  return Texture.from(c);
+};
 
 /**
  * createDisplacementCompositor(cfg) → Promise<compositor>
@@ -74,9 +118,9 @@ export const createDisplacementCompositor = async ({ view, printAreaMm, assets, 
   app.stage.addChild(root);
 
   const [photoTex, dispTex, maskTex] = await Promise.all([
-    Assets.load(assets.photoUrl),
-    Assets.load(assets.displacementUrl),
-    assets.maskUrl ? Assets.load(assets.maskUrl) : Promise.resolve(null),
+    loadTexture(assets.photoUrl),
+    loadDisplacementTexture(assets.displacementUrl, tuning.displacementBlur ?? 6),
+    assets.maskUrl ? loadTexture(assets.maskUrl) : Promise.resolve(null),
   ]);
 
   // 1) Base: the blank-garment photograph, filling the view.
@@ -161,7 +205,7 @@ export const createDisplacementCompositor = async ({ view, printAreaMm, assets, 
     canvas: app.canvas,
 
     async setArtwork(url) {
-      const tex = await Assets.load(url);
+      const tex = await loadTexture(url);
       artSprite.texture = tex;
       applyPlacement();
       render();

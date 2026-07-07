@@ -10,6 +10,8 @@
 //
 // TUNING KNOBS (all config, no code):
 //   displacementScale — warp strength in px at full black/white (start ~20-40)
+//   displacementBlur  — gaussian blur (map px) applied to the map at load; kills
+//                       JPEG block noise that stair-steps artwork edges (default 6)
 //   blend/alpha       — 'multiply' @ 0.8 for LIGHT garments (picks up shadows);
 //                       override per colorway, e.g. 'screen' for DARK garments
 //   output            — product-image resolution, independent of print DPI
@@ -58,6 +60,7 @@ export const DEV_3D_GARMENTS = [
     },
     printAreaMm: { front: { w: 300, h: 400 } },
     displacementScale: 30,
+    displacementBlur: 6,   // map-px gaussian blur — kills JPEG 8×8 block stair-steps
     blend: 'multiply',
     alpha: 0.8,
     perColorway: {},
@@ -77,6 +80,7 @@ export const compositorConfigFor = (garment, viewId = 'front', colorwayId = 'whi
     assets: { photoUrl: cw.photoUrl, displacementUrl: cw.displacementUrl, maskUrl: cw.maskUrl },
     tuning: {
       displacementScale: per.displacementScale ?? garment.displacementScale,
+      displacementBlur: per.displacementBlur ?? garment.displacementBlur,
       blend: per.blend ?? garment.blend,
       alpha: per.alpha ?? garment.alpha,
     },

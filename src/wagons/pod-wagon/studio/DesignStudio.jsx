@@ -44,6 +44,7 @@ import CompositorCanvas from './CompositorCanvas';
 import ColorwayStrip from './ColorwayStrip';
 import MockupPanel from './MockupPanel';
 import PublishPanel from './PublishPanel';
+import Studio3DSection from './Studio3DSection';
 // Publish (slice 4) — create the real product + variants + POD mappings. These
 // are the ONLY Firebase-touching imports in the studio; PublishPanel stays
 // Firebase-free (presentational) so the dev harness can mount it standalone.
@@ -646,6 +647,13 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
             setPlacements((prev) => ({ ...prev, [slot]: p }));
             resetReviews(); // moving the artwork changes every colourway's composite
           }}
+        />
+
+        {/* 3D-vy (beta): photo-displacement mockup with the FRONT slot's resolved
+            artwork + live placement. WebGL-gated; pixi loads lazily on open. */}
+        <Studio3DSection
+          artwork={resolveArtwork('front', colorwayId)}
+          placement={placements.front || null}
         />
 
         {/* Colourway strip: composited per-colour previews + artwork override. */}
