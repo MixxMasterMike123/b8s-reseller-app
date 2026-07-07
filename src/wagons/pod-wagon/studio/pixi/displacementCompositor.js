@@ -181,8 +181,13 @@ export const createDisplacementCompositor = async ({ view, printAreaMm, assets, 
 
   const applyTuning = () => {
     dispFilter.scale.set(state.displacementScale);
-    artSprite.blendMode = state.blend;
-    artSprite.alpha = state.alpha;
+    // Blend/alpha go on the FILTERED CONTAINER, not the sprite: a filtered
+    // container renders its children into an intermediate texture first, so a
+    // sprite-level multiply blends against that buffer's EMPTY (black) backdrop
+    // → solid black artwork. On the container, the blend applies where the
+    // filter's OUTPUT composites with the photo — which is the whole point.
+    artLayer.blendMode = state.blend;
+    artLayer.alpha = state.alpha;
   };
 
   const applyPlacement = () => {
