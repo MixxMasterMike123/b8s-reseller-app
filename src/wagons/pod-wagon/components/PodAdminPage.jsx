@@ -18,6 +18,7 @@ import { useShopId } from '../../../contexts/ShopContext';
 import { useShopFeatures } from '../../../contexts/ShopFeaturesContext';
 import ArtworkLibrary from './ArtworkLibrary';
 import ProductMapping from './ProductMapping';
+import DesignStudio from '../studio/DesignStudio';
 import usePodLibrary from './usePodLibrary';
 
 // Provisional-spec banner: the seeded print profiles are industry-typical
@@ -35,6 +36,7 @@ const ProvisionalBanner = () => (
 const TABS = [
   { key: 'library', label: 'Original' },
   { key: 'mapping', label: 'Produktkoppling' },
+  { key: 'studio', label: 'Studio' },
 ];
 
 // UnmappedBanner — LOUD page-level alert (visible on ANY tab). An unmapped original
@@ -114,7 +116,7 @@ const PodAdminPage = () => {
           })}
         </div>
 
-        {tab === 'library' ? (
+        {tab === 'library' && (
           <ArtworkLibrary
             shopId={shopId}
             artwork={lib.artwork}
@@ -126,7 +128,8 @@ const PodAdminPage = () => {
             onChanged={lib.refresh}
             onMapArtwork={(artworkId) => jumpToMapping(artworkId)}
           />
-        ) : (
+        )}
+        {tab === 'mapping' && (
           <ProductMapping
             shopId={shopId}
             mappings={lib.mappings}
@@ -138,6 +141,9 @@ const PodAdminPage = () => {
             onChanged={lib.refresh}
             prefillArtworkId={prefillArtworkId}
           />
+        )}
+        {tab === 'studio' && (
+          <DesignStudio artwork={lib.artwork} loading={lib.loading} />
         )}
       </Page>
     </AppLayout>
