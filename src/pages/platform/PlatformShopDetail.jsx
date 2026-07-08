@@ -83,35 +83,37 @@ const PlatformShopDetail = () => {
     load();
   }, [load]);
 
-  // Live derivation — IDENTICAL to the storefront gate (ShopGate): only an
-  // explicit published===false means "not live". undefined/true = live.
-  const isLive = shop ? shop.published !== false : false;
+  // Searchability derivation — IDENTICAL to the storefront gate (ShopGate): only
+  // an explicit published===false hides the shop from search engines. undefined/
+  // true = searchable/indexable. The STORE is open + shoppable either way; this
+  // only controls whether Google/Bing may index it.
+  const isSearchable = shop ? shop.published !== false : false;
   const disabled = shop?.status === 'disabled';
 
-  // GO LIVE / TA OFFLINE — the launch gate. Platform-only Firestore write
-  // (rules: allow update if isPlatform()). Mirrors toggleStatus.
+  // GO LIVE (make searchable) / TA UR SÖK (hide from search). Platform-only
+  // Firestore write (rules: allow update if isPlatform()). Mirrors toggleStatus.
   const togglePublished = async () => {
-    const next = !isLive; // going live = true
+    const next = !isSearchable; // becoming searchable = true
     if (next) {
-      // Publishing warns if the shop isn't launch-ready (legal pages / payments)
-      // — the storefront would go public + indexable half-finished. Operator's
-      // call, so it's a warning, not a hard block.
+      // Making it searchable warns if the shop isn't ready (legal pages / payments)
+      // — you'd be inviting Google to index a half-finished store. Operator's call,
+      // so it's a warning, not a hard block.
       const gaps = [];
       if (!getLegalReadiness(shop.storeIdentity || {}).ready) gaps.push('juridiska sidor ej klara');
       if (!shop.payments?.chargesEnabled) gaps.push('kan inte ta betalt än');
       const warn = gaps.length ? `\n\nOBS: ${gaps.join(', ')}.` : '';
-      if (!window.confirm(`Vill du publicera (GO LIVE) "${shop.name || shop.id}"?${warn}`)) return;
-    } else if (!window.confirm(`Vill du ta offline "${shop.name || shop.id}"?`)) {
+      if (!window.confirm(`Vill du göra "${shop.name || shop.id}" sökbar (GO LIVE)?${warn}`)) return;
+    } else if (!window.confirm(`Vill du dölja "${shop.name || shop.id}" från sökmotorer? Butiken förblir öppen via länk.`)) {
       return;
     }
     try {
       setBusy('published');
       await updateDoc(doc(db, 'shops', shop.id), { published: next });
       setShop((prev) => ({ ...prev, published: next }));
-      toast.success(next ? 'Butiken är nu LIVE' : 'Butiken är nu offline');
+      toast.success(next ? 'Butiken är nu sökbar (indexeras)' : 'Butiken är nu dold för sökmotorer');
     } catch (e) {
       console.error('Error toggling published:', e);
-      toast.error('Kunde inte ändra live-status');
+      toast.error('Kunde inte ändra sökbarhet');
     } finally {
       setBusy(null);
     }
@@ -204,10 +206,10 @@ const PlatformShopDetail = () => {
             <span
               className={
                 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ' +
-                (isLive ? 'bg-green-500/15 text-green-300' : 'bg-white/5 text-gray-400')
+                (isSearchable ? 'bg-green-500/15 text-green-300' : 'bg-amber-500/15 text-amber-300')
               }
             >
-              {isLive ? 'Live' : 'Ej live'}
+              {isSearchable ? 'Sökbar' : 'Dold för sök'}
             </span>
             <span
               className={
@@ -221,21 +223,24 @@ const PlatformShopDetail = () => {
         </div>
 
         <div className="space-y-5">
-          {/* GO LIVE gate — the headline section */}
+          {/* Searchability gate — the headline section. NOTE: this only controls
+              search-engine indexing. The store is open + shoppable via link either
+              way; "dold för sök" ≠ closed. */}
           <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="max-w-xl">
                 <h2 className="flex items-center gap-2 text-base font-semibold text-white">
                   <RocketLaunchIcon className="h-5 w-5 text-indigo-300" />
-                  Live-status
+                  Sökbarhet
                 </h2>
                 <p className="mt-2 text-sm text-gray-400">
-                  {isLive ? (
-                    <>Butiken är <span className="text-green-300 font-medium">live</span> och syns publikt på{' '}
+                  {isSearchable ? (
+                    <>Butiken är <span className="text-green-300 font-medium">sökbar</span> — Google och Bing får indexera{' '}
                       <a href={storefrontUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-300 hover:underline">{storefrontUrl}</a>.</>
                   ) : (
-                    <>Butiken är <span className="text-gray-300 font-medium">ej live</span>. Storefronten visar en
-                      &ldquo;Kommer snart&rdquo;-sida och är utesluten från sökmotorer (noindex) tills du klickar GO LIVE.</>
+                    <>Butiken är <span className="text-amber-300 font-medium">dold för sökmotorer</span> (noindex).
+                      Den är fortfarande <span className="text-gray-300 font-medium">öppen och köpbar</span> via länk —
+                      bara osynlig i Google/Bing tills du klickar GO LIVE.</>
                   )}
                 </p>
                 <p className="mt-2 text-xs text-gray-600">
@@ -247,13 +252,13 @@ const PlatformShopDetail = () => {
                 disabled={busy === 'published'}
                 className={
                   'inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 ' +
-                  (isLive
-                    ? 'bg-white/5 text-gray-300 hover:bg-red-500/15 hover:text-red-300'
+                  (isSearchable
+                    ? 'bg-white/5 text-gray-300 hover:bg-amber-500/15 hover:text-amber-300'
                     : 'bg-indigo-600 text-white hover:bg-indigo-500')
                 }
               >
                 <RocketLaunchIcon className="h-4 w-4" />
-                {busy === 'published' ? '…' : isLive ? 'TA OFFLINE' : 'GO LIVE'}
+                {busy === 'published' ? '…' : isSearchable ? 'TA UR SÖK' : 'GO LIVE'}
               </button>
             </div>
           </div>

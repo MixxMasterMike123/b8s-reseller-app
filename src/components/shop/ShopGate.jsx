@@ -17,11 +17,12 @@ import LandingPage from '../../pages/LandingPage';
  *  2. Unknown shopId (no shops/{id} doc) → redirect to the default shop.
  *  3. Disabled shop (status === 'disabled') → render the kill-switch
  *     "unavailable" state instead of the storefront.
- *  3b. Not-live shop (published === false) → render a "coming soon" holding
- *     page + a noindex robots meta, instead of the catalog. Only an EXPLICIT
- *     false blocks; missing/true = live (existing shops predate the field).
- *  4. Valid active shop → render children (the storefront page). ShopContext
- *     already resolved shopId from the path for data scoping.
+ *  4. Valid shop → render children (the storefront page). ShopContext already
+ *     resolved shopId from the path for data scoping. If the shop is NOT
+ *     published (published === false), the store still renders fully but we add a
+ *     noindex,nofollow robots meta so search engines don't index it (indexing
+ *     gate, not a holding page). Only an EXPLICIT false hides it; missing/true =
+ *     indexable (existing shops predate the field).
  */
 const ShopGate = ({ children }) => {
   const { shopId } = useParams();
@@ -98,27 +99,30 @@ const ShopGate = ({ children }) => {
     );
   }
 
-  // 3b. Not-live shop (published === false, EXPLICIT) → "coming soon" holding page
-  //     + noindex. undefined/true = live (existing shops have no published field,
-  //     so they must NOT go dark). state.shop === null (the default shop with no
-  //     doc, path 2 above) never matches this — the default shop is never blocked.
-  //     Storefront-neutral palette (not platform-dark): this renders on the shop.
-  if (state.shop && state.shop.published === false) {
-    return (
-      <>
-        <Helmet><meta name="robots" content="noindex,nofollow" /></Helmet>
-        <div className="min-h-screen flex items-center justify-center bg-[#F3F1EC] px-6">
-          <div className="text-center max-w-md">
-            <h1 className="text-2xl font-bold text-[#1A1C1E] mb-2">Kommer snart</h1>
-            <p className="text-[#71757C]">Den här butiken öppnar snart.</p>
-          </div>
-        </div>
-      </>
-    );
-  }
+  // 4. Valid shop → render the storefront normally.
+  //
+  //    Indexing gate: a NOT-published shop (published === false, EXPLICIT) is
+  //    fully open + shoppable to anyone with the link, but hidden from search
+  //    engines — we inject a noindex,nofollow robots meta so Google/Bing don't
+  //    index it. GO LIVE (published:true) removes it. This is NOT a holding page:
+  //    the store works either way; only indexability changes.
+  //
+  //    undefined/true = indexable (existing shops have no published field, so they
+  //    stay indexable — no regression). state.shop === null (default shop with no
+  //    doc, or a read-error fail-open) never matches === false, so it stays
+  //    indexable too. A child page that sets its own robots meta (token/legal
+  //    pages) renders deeper and wins per react-helmet-async's last-wins rule —
+  //    harmless here since those are also noindex.
+  const hideFromRobots = state.shop && state.shop.published === false;
 
-  // 4. Valid active shop.
-  return children;
+  return (
+    <>
+      {hideFromRobots && (
+        <Helmet><meta name="robots" content="noindex,nofollow" /></Helmet>
+      )}
+      {children}
+    </>
+  );
 };
 
 export default ShopGate;

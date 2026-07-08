@@ -105,7 +105,7 @@ const PlatformShops = () => {
               <thead>
                 <tr className="text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                   <th className="px-4 py-3">Butik</th>
-                  <th className="px-4 py-3">Live</th>
+                  <th className="px-4 py-3">Sök</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-3 py-3 text-right">Produkter</th>
                   <th className="px-3 py-3 text-right">Ordrar</th>
@@ -116,9 +116,10 @@ const PlatformShops = () => {
               <tbody className="divide-y divide-white/5">
                 {shops.map((shop) => {
                   const disabled = shop.status === 'disabled';
-                  // Only an explicit published===false is "not live"; missing/true = live
-                  // (backward-compat with pre-existing shops that have no field).
-                  const isLive = shop.published !== false;
+                  // Indexing gate: only an explicit published===false hides the shop
+                  // from search engines; missing/true = searchable (backward-compat
+                  // with pre-existing shops that have no field). Store is open either way.
+                  const isSearchable = shop.published !== false;
                   return (
                     <tr key={shop.id} className="hover:bg-white/5">
                       <td className="px-4 py-3">
@@ -127,12 +128,13 @@ const PlatformShops = () => {
                       </td>
                       <td className="px-4 py-3">
                         <span
+                          title={isSearchable ? 'Indexeras av Google/Bing' : 'Dold för sökmotorer (noindex) — butiken är ändå öppen via länk'}
                           className={
                             'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ' +
-                            (isLive ? 'bg-green-500/15 text-green-300' : 'bg-white/5 text-gray-400')
+                            (isSearchable ? 'bg-green-500/15 text-green-300' : 'bg-amber-500/15 text-amber-300')
                           }
                         >
-                          {isLive ? 'Live' : 'Ej live'}
+                          {isSearchable ? 'Sökbar' : 'Dold'}
                         </span>
                       </td>
                       <td className="px-4 py-3">
