@@ -22,14 +22,22 @@ const MigrateShopifyModal = ({ shop, onClose }) => {
     if (!trimmed) return setError('Ange butikens Shopify-adress.');
     setBusy(true);
     try {
-      const res = await httpsCallable(functions, 'migrateFromShopify')({
+      // Match the function's 540s budget so the client waits for a large catalog
+      // instead of giving up at the 70s default (deadline-exceeded).
+      const res = await httpsCallable(functions, 'migrateFromShopify', { timeout: 540000 })({
         shopId: shop.id,
         shopifyDomain: trimmed,
       });
       setResult(res.data || {});
     } catch (err) {
       console.error('migrateFromShopify failed:', err);
-      setError(err?.message || 'Migreringen misslyckades.');
+      // The import is RESUMABLE (skips already-imported products), so a timeout on a
+      // very large catalog is recoverable — tell the operator to just run it again.
+      if (err?.code === 'functions/deadline-exceeded' || /deadline/i.test(err?.message || '')) {
+        setError('Tidsgränsen nåddes för en stor katalog. En del importerades — klicka "Importera katalog" igen för att fortsätta med resten (redan importerade hoppas över).');
+      } else {
+        setError(err?.message || 'Migreringen misslyckades.');
+      }
     } finally {
       setBusy(false);
     }
@@ -60,8 +68,11 @@ const MigrateShopifyModal = ({ shop, onClose }) => {
             <p className="text-emerald-300">
               ✓ {result.created} produkter importerade från {result.source}.
             </p>
-            {result.productsFound > result.created && (
+            {result.productsFound > 0 && (
               <p className="text-gray-400">{result.productsFound} hittades totalt.</p>
+            )}
+            {result.alreadyImported > 0 && (
+              <p className="text-gray-400">{result.alreadyImported} fanns redan (hoppades över).</p>
             )}
             {result.imageFailures > 0 && (
               <p className="text-amber-300">{result.imageFailures} bilder kunde inte hämtas.</p>

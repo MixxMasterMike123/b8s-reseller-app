@@ -101,7 +101,22 @@ function deriveVariantsFromGroups(
 interface ShopifyImage { id: number; src: string; variant_ids?: number[]; }
 interface ShopifyVariant { id: number; title: string; option1: string | null; option2: string | null; option3: string | null; sku: string; price: string; available: boolean; featured_image?: { src: string } | null; }
 interface ShopifyOption { name: string; position: number; values: string[]; }
-interface ShopifyProduct { id: number; title: string; body_html: string; vendor: string; tags: string[] | string; variants: ShopifyVariant[]; images: ShopifyImage[]; options: ShopifyOption[]; }
+interface ShopifyProduct { id: number; handle?: string; title: string; body_html: string; vendor: string; product_type?: string; tags: string[] | string; variants: ShopifyVariant[]; images: ShopifyImage[]; options: ShopifyOption[]; }
+
+// Map Shopify's product_type to our free-text `category` (drives /kategori/{slug}
+// browse + storefront filtering). Normalise the messy real-world values seen on
+// Ninetone ('cd', 'T-SHIRT', 'zip_hoodie', 'cap_baseball', …) to a clean, human
+// label: underscores→spaces, Title Case. Empty product_type → '' (no category).
+const toCategory = (productType?: string): string => {
+  const raw = (productType || '').trim();
+  if (!raw) return '';
+  return raw
+    .replace(/[_-]+/g, ' ')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+};
 
 // Shopify's "no real variants" sentinel: a single option named 'Title' with the
 // single value 'Default Title'. Such products map to a plain (variant-less) product.
@@ -220,12 +235,18 @@ export const migrateFromShopify = onCall<MigrateRequest>(
     }
     if (products.length === 0) throw new HttpsError('not-found', `Inga produkter hittades på ${host}.`);
 
-    // ── 2. Existing SKUs in the target shop (for per-shop-unique product SKUs). ──
+    // ── 2. Existing products in the target shop: collect taken SKUs (for unique
+    //    product SKUs) AND already-imported Shopify keys (for RESUMABILITY — a
+    //    re-run skips products already imported and finishes the rest, so a client
+    //    timeout mid-import is harmless: just click Importera again). ──
     const existingSnap = await db.collection('products').where('shopId', '==', shopId).get();
     const takenSkus = new Set<string>();
+    const importedShopifyKeys = new Set<string>();
     existingSnap.forEach((d) => {
-      const s = (d.data().sku || '').toString().trim().toLowerCase();
+      const data = d.data();
+      const s = (data.sku || '').toString().trim().toLowerCase();
       if (s) takenSkus.add(s);
+      if (data.shopifyKey) importedShopifyKeys.add(String(data.shopifyKey));
     });
 
     const bucket = getStorage().bucket();
@@ -265,6 +286,7 @@ export const migrateFromShopify = onCall<MigrateRequest>(
     // it must never abort the whole import.
     let created = 0;
     let imageFailures = 0;
+    let alreadyImported = 0; // skipped on a re-run because already present
     const skipped: string[] = [];
     const droppedShopifyFields = [
       'inventory/stock', 'orders', 'customers', 'compare_at_price', 'barcode',
@@ -279,8 +301,20 @@ export const migrateFromShopify = onCall<MigrateRequest>(
       const name = (sp.title || '').trim();
       if (!name) { skipped.push('(namnlös produkt)'); continue; }
 
-      const productSku = uniqueSku(skuFromName(name), takenSkus);
+      // RESUMABILITY: skip products already imported. Primary key = the Shopify
+      // handle/id (stamped as shopifyKey on prior imports). Fallback for products
+      // imported before shopifyKey existed: skip when the DERIVED base sku already
+      // exists in the shop (so a re-run doesn't create "-2" duplicates of them).
+      const shopifyKey = (sp.handle || `id-${sp.id}`).toString();
+      const baseSku = skuFromName(name);
+      if (importedShopifyKeys.has(shopifyKey) || takenSkus.has(baseSku.toLowerCase())) {
+        alreadyImported++;
+        continue;
+      }
+
+      const productSku = uniqueSku(baseSku, takenSkus);
       takenSkus.add(productSku.toLowerCase()); // reserve so the next product can't collide
+      importedShopifyKeys.add(shopifyKey);
 
       // Product price = the first PARSEABLE variant price (Shopify prices are
       // decimal, VAT-inclusive for EU stores — matches our b2cPrice convention).
@@ -298,15 +332,30 @@ export const migrateFromShopify = onCall<MigrateRequest>(
       // doc id via addDoc; this only namespaces images).
       const imgNs = `shopify_${sp.id}`;
       const uploadedByShopifySrc = new Map<string, string>();
-      const uploadImageOnce = async (src: string): Promise<string | null> => {
-        if (!src) return null;
-        if (uploadedByShopifySrc.has(src)) return uploadedByShopifySrc.get(src)!;
-        const idx = uploadedByShopifySrc.size;
-        const url = await reuploadImage(src, `products/${shopId}/${imgNs}/img_${idx}`);
-        if (url) uploadedByShopifySrc.set(src, url);
-        else imageFailures++;
-        return url;
-      };
+
+      // SPEED: pre-upload all of THIS product's distinct image URLs CONCURRENTLY
+      // (Promise.all), so the sequential transform below hits the cache instantly
+      // instead of awaiting each network round-trip in series (~4× faster per
+      // product — the fix for the client deadline-exceeded on large catalogs). The
+      // per-image failure accounting and dedup-by-src are unchanged. A deterministic
+      // index per distinct src keeps Storage paths stable + collision-free.
+      {
+        const distinct: string[] = [];
+        const seen = new Set<string>();
+        const collect = (s?: string | null) => { if (s && !seen.has(s)) { seen.add(s); distinct.push(s); } };
+        (sp.variants || []).forEach((v) => collect(v.featured_image?.src));
+        (sp.images || []).forEach((im) => collect(im.src));
+        await Promise.all(distinct.map(async (src, idx) => {
+          const url = await reuploadImage(src, `products/${shopId}/${imgNs}/img_${idx}`);
+          if (url) uploadedByShopifySrc.set(src, url);
+          else imageFailures++;
+        }));
+      }
+
+      // Now a pure cache lookup — never a fresh upload (pre-uploaded above), so the
+      // existing sequential transform logic stays byte-identical.
+      const uploadImageOnce = async (src: string): Promise<string | null> =>
+        (src && uploadedByShopifySrc.get(src)) || null;
 
       let cleanGroups: CleanGroup[] = [];
       let cleanVariants: VariantRow[] = [];
@@ -370,7 +419,7 @@ export const migrateFromShopify = onCall<MigrateRequest>(
       const data: Record<string, unknown> = {
         name,
         sku: productSku,
-        category: '',
+        category: toCategory(sp.product_type),
         tags: Array.isArray(sp.tags) ? sp.tags : (typeof sp.tags === 'string' && sp.tags ? sp.tags.split(',').map((t) => t.trim()) : []),
         hasVariants: cleanVariants.length > 0,
         variantGroups: cleanGroups,
@@ -398,6 +447,7 @@ export const migrateFromShopify = onCall<MigrateRequest>(
         delivery: { shipping: true, pickup: true },
         shopId,
         migratedFrom: `shopify:${host}`, // provenance marker (demo imports)
+        shopifyKey,                      // stable key for resumable re-runs
         updatedAt: FieldValue.serverTimestamp(),
         createdAt: FieldValue.serverTimestamp(),
       };
@@ -416,6 +466,7 @@ export const migrateFromShopify = onCall<MigrateRequest>(
       source: host,
       productsFound: products.length,
       created,
+      alreadyImported, // skipped on this run because already present (resumable re-run)
       imageFailures,   // images that failed to reupload (products still created w/o them)
       skipped,         // product names that couldn't be imported at all
       // Honest disclosure of what a public-catalog demo import cannot carry, so the
