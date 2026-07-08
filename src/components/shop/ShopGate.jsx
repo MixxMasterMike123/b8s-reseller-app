@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useLocation, Navigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { DEFAULT_SHOP_ID, COUNTRY_PREFIXES } from '../../config/tenancy';
@@ -16,6 +17,9 @@ import LandingPage from '../../pages/LandingPage';
  *  2. Unknown shopId (no shops/{id} doc) → redirect to the default shop.
  *  3. Disabled shop (status === 'disabled') → render the kill-switch
  *     "unavailable" state instead of the storefront.
+ *  3b. Not-live shop (published === false) → render a "coming soon" holding
+ *     page + a noindex robots meta, instead of the catalog. Only an EXPLICIT
+ *     false blocks; missing/true = live (existing shops predate the field).
  *  4. Valid active shop → render children (the storefront page). ShopContext
  *     already resolved shopId from the path for data scoping.
  */
@@ -91,6 +95,25 @@ const ShopGate = ({ children }) => {
           </p>
         </div>
       </div>
+    );
+  }
+
+  // 3b. Not-live shop (published === false, EXPLICIT) → "coming soon" holding page
+  //     + noindex. undefined/true = live (existing shops have no published field,
+  //     so they must NOT go dark). state.shop === null (the default shop with no
+  //     doc, path 2 above) never matches this — the default shop is never blocked.
+  //     Storefront-neutral palette (not platform-dark): this renders on the shop.
+  if (state.shop && state.shop.published === false) {
+    return (
+      <>
+        <Helmet><meta name="robots" content="noindex,nofollow" /></Helmet>
+        <div className="min-h-screen flex items-center justify-center bg-[#F3F1EC] px-6">
+          <div className="text-center max-w-md">
+            <h1 className="text-2xl font-bold text-[#1A1C1E] mb-2">Kommer snart</h1>
+            <p className="text-[#71757C]">Den här butiken öppnar snart.</p>
+          </div>
+        </div>
+      </>
     );
   }
 

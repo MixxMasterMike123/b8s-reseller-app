@@ -239,13 +239,13 @@ service cloud.firestore {
       // Platform may update anything. A shop admin may update their OWN shop's
       // config (storefront/identity), but NOT the `payments` map — Connect
       // opt-in (connectEnabled), commission, and the Stripe-derived status are
-      // platform-/server-set only. The onboarding Cloud Functions write
-      // payments.* via the Admin SDK (bypassing rules), so this doesn't block
-      // legitimate onboarding; it only stops a shop admin from self-granting
-      // payments via a direct SDK write.
+      // platform-/server-set only — NOR `published` (the GO LIVE launch gate is a
+      // platform-operator decision; a shop admin must not self-publish via a
+      // direct SDK write). The onboarding Cloud Functions write payments.* via the
+      // Admin SDK (bypassing rules), so this doesn't block legitimate onboarding.
       allow update: if isPlatform() ||
         (isAdmin() && userDoc().shopId == shopId &&
-          !("payments" in request.resource.data.diff(resource.data).affectedKeys()));
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['payments', 'published']));
     }
 
     // ============================================================

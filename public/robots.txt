@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Multi-tenant storefront: all shops share one host, path-prefixed per shop
+# (/{shopId}). A static robots.txt can't per-shop-block, so not-live shops emit
+# <meta name="robots" content="noindex,nofollow"> at runtime (see ShopGate.jsx).
+# Sitemap intentionally omitted (SPA, one shared host).

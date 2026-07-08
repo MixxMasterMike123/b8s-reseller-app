@@ -84,6 +84,10 @@ const ProvisionShopModal = ({ onClose, onCreated }) => {
           accent,
         },
         status: 'active',
+        // A new shop starts NOT live: storefront shows a "Kommer snart" holding
+        // page + noindex until the operator clicks GO LIVE on the shop detail page.
+        // (status=active is the kill-switch, distinct from published = has-launched.)
+        published: false,
         features: DEFAULT_FEATURES,
         ownerUid: null, // owner assignment is a later slice (P4.6)
         createdAt: serverTimestamp(),
@@ -170,7 +174,8 @@ const ProvisionShopModal = ({ onClose, onCreated }) => {
         </form>
 
         <p className="mt-4 text-xs text-gray-600">
-          Ägare/användare läggs till i ett senare steg. Branding och funktioner kan justeras efteråt.
+          Butiken skapas <span className="text-gray-500">ej live</span> — publicera den via GO LIVE på butikens
+          detaljsida när den är klar. Ägare/användare läggs till i ett senare steg. Branding och funktioner kan justeras efteråt.
         </p>
       </div>
     </div>
