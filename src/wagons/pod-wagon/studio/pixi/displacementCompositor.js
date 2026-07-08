@@ -265,7 +265,20 @@ export const createDisplacementCompositor = async ({ view, printAreaMm, assets, 
   };
   let destroyed = false;
   let contrastToken = 0; // guards against out-of-order async rebuilds
-  const dispFilter = new DisplacementFilter({ sprite: dispSprite, scale: state.displacementScale });
+  // antialias:'on' forces the filter's INTERMEDIATE render target to be
+  // multisampled. Without it (Pixi's default is 'off' even when the Application
+  // has antialias:true — the app flag only AAs final-stage geometry, not a
+  // filter's own buffer), the warp resamples artwork edges into a hard, aliased
+  // boundary → stair-stepped motif edges, worst at high displacement/contrast
+  // (exactly when the shift is largest). The app render target IS antialiased
+  // (Application.init antialias:true above), so 'on' is safe per the Pixi docs.
+  // Display-only: the DisplacementFilter is on the product-image artLayer, never
+  // the print file.
+  const dispFilter = new DisplacementFilter({
+    sprite: dispSprite,
+    scale: state.displacementScale,
+    antialias: 'on',
+  });
   artLayer.filters = [dispFilter];
 
   const pxPerMmX = view.printArea.w / printAreaMm.w;
