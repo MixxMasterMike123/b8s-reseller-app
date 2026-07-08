@@ -11,6 +11,7 @@ import PlatformLayout from '../../components/platform/PlatformLayout';
 import ProvisionShopModal from '../../components/platform/ProvisionShopModal';
 import ImpersonateShopModal from '../../components/platform/ImpersonateShopModal';
 import AddShopUserModal from '../../components/platform/AddShopUserModal';
+import MigrateShopifyModal from '../../components/platform/MigrateShopifyModal';
 import { getLegalReadiness } from '../../utils/legalPageReadiness';
 import toast from 'react-hot-toast';
 import {
@@ -18,6 +19,7 @@ import {
   ArrowTopRightOnSquareIcon,
   PlusIcon,
   UserPlusIcon,
+  ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline';
 
 const PlatformShops = () => {
@@ -27,6 +29,7 @@ const PlatformShops = () => {
   const [showProvision, setShowProvision] = useState(false);
   const [impersonateShop, setImpersonateShop] = useState(null);
   const [addUserShop, setAddUserShop] = useState(null);
+  const [migrateShop, setMigrateShop] = useState(null);
 
   const loadShops = useCallback(async () => {
     try {
@@ -223,6 +226,14 @@ const PlatformShops = () => {
                             <span className="hidden xl:inline">Användare</span>
                           </button>
                           <button
+                            onClick={() => setMigrateShop(shop)}
+                            title="Importera produkter från en Shopify-butik (demo)"
+                            className="inline-flex items-center gap-1 rounded-lg px-3 py-1 text-xs font-medium bg-white/5 text-gray-200 hover:bg-emerald-500/15 hover:text-emerald-300"
+                          >
+                            <ArrowDownTrayIcon className="h-4 w-4" />
+                            <span className="hidden xl:inline">Migrera</span>
+                          </button>
+                          <button
                             onClick={() => setImpersonateShop(shop)}
                             disabled={disabled}
                             title={
@@ -284,6 +295,13 @@ const PlatformShops = () => {
         <AddShopUserModal
           shop={addUserShop}
           onClose={() => setAddUserShop(null)}
+        />
+      )}
+
+      {migrateShop && (
+        <MigrateShopifyModal
+          shop={migrateShop}
+          onClose={() => setMigrateShop(null)}
         />
       )}
     </PlatformLayout>

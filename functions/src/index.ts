@@ -17,6 +17,7 @@ export {
   createShopUser,
   createPlatformSuperAdmin,
   deletePlatformUser,
+  migrateFromShopify,
   sendEmailVerification,
   sendCustomEmailVerification,
   verifyEmailCode,

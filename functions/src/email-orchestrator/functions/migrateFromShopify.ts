@@ -1,0 +1,427 @@
+// migrateFromShopify — PLATFORM-only one-click demo migration. Ingests a public
+// Shopify store's /products.json (no credentials needed) and creates products in
+// OUR platform for the target shop. DISPLAY/DEMO catalog only: no orders,
+// customers, inventory truth, or print-masters (those aren't public — see the
+// competitor-research notes). Images are the storefront-rendered ~2000px assets.
+//
+// WHY A CALLABLE (server-side): Shopify's /products.json does NOT send an
+// Access-Control-Allow-Origin header, so a browser fetch is CORS-blocked. The
+// whole ingest (fetch + image reupload + product writes) therefore runs here.
+//
+// MONEY-PATH / SELLABLE-DOC INVARIANTS (must hold or products won't render/sell):
+//   • Storefront query requires shopId + sku + isActive:true + availability.b2c:true
+//     (PublicProductPage.jsx). Every product we write sets all four.
+//   • Variant row `sku` is the cart/repricing key — the derivation below is a
+//     byte-for-byte port of utils/variantDerivation.js + utils/productUrls.js
+//     (slugify/skuFromName). Do NOT "improve" the slug/uniquing logic.
+//   • Price is stored as decimal SEK on BOTH b2cPrice and basePrice (consumer
+//     price resolves as b2cPrice || basePrice), matching ProductForm.
+
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { randomUUID } from 'crypto';
+import { getStorage } from 'firebase-admin/storage';
+import { FieldValue } from 'firebase-admin/firestore';
+import { appUrls } from '../../config/app-urls';
+import { db } from '../../config/database';
+import { requireAdminOfShop } from './authGuard';
+
+// ── ported slug/sku helpers (verbatim from src/utils/productUrls.js) ─────────
+const slugify = (str: string): string => {
+  if (!str) return '';
+  return str
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[åä]/g, 'a')
+    .replace(/ö/g, 'o')
+    .replace(/&/g, '-and-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-');
+};
+const skuFromName = (name: string): string => {
+  const base = slugify(name).replace(/_/g, '-').replace(/\-\-+/g, '-').replace(/^-|-$/g, '');
+  return base || 'produkt';
+};
+const uniqueSku = (base: string, takenSkus: Set<string>): string => {
+  const root = (base || 'produkt').toLowerCase();
+  if (!takenSkus.has(root)) return base || 'produkt';
+  for (let n = 2; n < 10000; n++) {
+    const candidate = `${root}-${n}`;
+    if (!takenSkus.has(candidate)) return candidate;
+  }
+  return `${root}-${Date.now()}`;
+};
+
+// ── ported variant derivation (verbatim from src/utils/variantDerivation.js) ──
+interface RawGroup { label: string; sku?: string; price?: string | number; images: string[]; sizes: string[]; }
+interface CleanGroup { label: string; sku: string; price: number | null; image: string; images: string[]; sizes: string[]; }
+interface VariantRow { sku: string; label: string; price: number; image: string; images: string[]; group: string; size: string | null; }
+
+function deriveVariantsFromGroups(
+  groups: RawGroup[],
+  { productSku, productPrice }: { productSku: string; productPrice: number }
+): { cleanGroups: CleanGroup[]; cleanVariants: VariantRow[] } {
+  const takenRowSkus = new Set<string>();
+  const uniqueRowSku = (base: string): string => {
+    const root = base || 'variant';
+    let candidate = root;
+    for (let n = 2; takenRowSkus.has(candidate.toLowerCase()); n++) candidate = `${root}-${n}`;
+    takenRowSkus.add(candidate.toLowerCase());
+    return candidate;
+  };
+
+  const cleanGroups: CleanGroup[] = [];
+  const cleanVariants: VariantRow[] = [];
+  for (const g of groups) {
+    const label = g.label.trim();
+    const images = g.images;
+    const image = images[0] || '';
+    const groupSku = uniqueRowSku((g.sku || '').toString().trim() || `${productSku}-${skuFromName(label)}`);
+    const explicitPrice = parseFloat(String(g.price)) > 0;
+    const groupPrice = explicitPrice ? parseFloat(String(g.price)) : productPrice;
+    const sizes = [...new Set(g.sizes.map((s) => s.trim().toUpperCase()).filter(Boolean))];
+    cleanGroups.push({ label, sku: groupSku, price: explicitPrice ? groupPrice : null, image, images, sizes });
+    if (sizes.length === 0) {
+      cleanVariants.push({ sku: groupSku, label, price: groupPrice, image, images, group: label, size: null });
+    } else {
+      for (const size of sizes) {
+        cleanVariants.push({
+          sku: uniqueRowSku(`${groupSku}-${skuFromName(size)}`),
+          label: `${label} / ${size}`,
+          price: groupPrice, image, images, group: label, size,
+        });
+      }
+    }
+  }
+  return { cleanGroups, cleanVariants };
+}
+
+// ── Shopify types (only the fields we read from /products.json) ──────────────
+interface ShopifyImage { id: number; src: string; variant_ids?: number[]; }
+interface ShopifyVariant { id: number; title: string; option1: string | null; option2: string | null; option3: string | null; sku: string; price: string; available: boolean; featured_image?: { src: string } | null; }
+interface ShopifyOption { name: string; position: number; values: string[]; }
+interface ShopifyProduct { id: number; title: string; body_html: string; vendor: string; tags: string[] | string; variants: ShopifyVariant[]; images: ShopifyImage[]; options: ShopifyOption[]; }
+
+// Shopify's "no real variants" sentinel: a single option named 'Title' with the
+// single value 'Default Title'. Such products map to a plain (variant-less) product.
+const isSingleVariant = (p: ShopifyProduct): boolean =>
+  (p.options || []).length === 1 &&
+  p.options[0]?.name === 'Title' &&
+  (p.variants || []).length <= 1;
+
+// Which option axis is the "colorway" (→ variantGroups) vs the "size" (→ sizes)?
+// Prefer an explicit Color/Colour/Färg option for the group axis and Size/Storlek
+// for the size axis; otherwise fall back to option positions (1 = group, 2 = size).
+const COLOR_NAMES = new Set(['color', 'colour', 'färg', 'farg']);
+const SIZE_NAMES = new Set(['size', 'storlek']);
+const pickAxes = (opts: ShopifyOption[]): { groupPos: number | null; sizePos: number | null } => {
+  let groupPos: number | null = null;
+  let sizePos: number | null = null;
+  for (const o of opts) {
+    const n = (o.name || '').toLowerCase().trim();
+    if (groupPos === null && COLOR_NAMES.has(n)) groupPos = o.position;
+    if (sizePos === null && SIZE_NAMES.has(n)) sizePos = o.position;
+  }
+  if (groupPos === null && sizePos === null) {
+    // No named color/size → first option is the group axis, second (if any) sizes.
+    groupPos = opts[0]?.position ?? 1;
+    sizePos = opts.length > 1 ? opts[1].position : null;
+  } else if (groupPos === null) {
+    // A size axis exists but no color axis. The group axis is the FIRST option
+    // that ISN'T the size axis (e.g. Print, Type, Variant) — so a "Print × Size"
+    // product keeps its Print dimension as colorway groups. Only when Size is the
+    // ONLY option does the group axis stay null (→ one implicit group of sizes).
+    const other = opts.find((o) => o.position !== sizePos);
+    groupPos = other ? other.position : null;
+  }
+  return { groupPos, sizePos };
+};
+const optByPos = (v: ShopifyVariant, pos: number | null): string | null => {
+  if (pos === 1) return v.option1;
+  if (pos === 2) return v.option2;
+  if (pos === 3) return v.option3;
+  return null;
+};
+
+// SSRF defense-in-depth: reject hosts that resolve to localhost / private / link-
+// local ranges (incl. the cloud metadata endpoint 169.254.169.254) and internal
+// TLDs. The callable is already platform/admin-gated, but this stops a typo'd or
+// hostile internal target from being fetched. Applied to BOTH the products.json
+// host and every image src before fetching.
+const isBlockedHost = (host: string): boolean => {
+  const h = (host || '').toLowerCase().split(':')[0];
+  if (!h || h === 'localhost' || h.endsWith('.localhost') || h.endsWith('.internal') || h.endsWith('.local')) return true;
+  // IPv6 loopback/ULA; bare IPv4 in private/link-local/loopback ranges.
+  if (h === '::1' || h.startsWith('fc') || h.startsWith('fd') || h.startsWith('fe80')) return true;
+  const m = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (m) {
+    const [a, b] = [Number(m[1]), Number(m[2])];
+    if (a === 10 || a === 127 || a === 0) return true;
+    if (a === 169 && b === 254) return true;      // link-local + metadata
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+  }
+  return false;
+};
+
+interface MigrateRequest { shopId: string; shopifyDomain: string; limit?: number; }
+
+export const migrateFromShopify = onCall<MigrateRequest>(
+  {
+    region: 'us-central1',
+    memory: '1GiB',            // image buffers add up across a catalog
+    timeoutSeconds: 540,       // large catalogs + image reuploads
+    cors: appUrls.CORS_ORIGINS,
+  },
+  async (request) => {
+    // Platform OR admin-of-this-shop. requireAdminOfShop already lets platform
+    // act on any shop; a shop admin only on their own — correct for both surfaces.
+    await requireAdminOfShop(request.data.shopId, request.auth?.uid);
+
+    const shopId = (request.data.shopId || '').trim();
+    if (!shopId) throw new HttpsError('invalid-argument', 'shopId saknas.');
+
+    // Normalise the Shopify domain (accept "shop.x.com", "https://shop.x.com/sv", …).
+    let host: string;
+    try {
+      const raw = (request.data.shopifyDomain || '').trim();
+      const withProto = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+      host = new URL(withProto).host;
+    } catch {
+      throw new HttpsError('invalid-argument', 'Ogiltig Shopify-adress.');
+    }
+    if (!host) throw new HttpsError('invalid-argument', 'Ogiltig Shopify-adress.');
+    if (isBlockedHost(host)) throw new HttpsError('invalid-argument', 'Otillåten adress.');
+
+    // The target shop must exist (don't strand products on a non-existent tenant).
+    const shopSnap = await db.collection('shops').doc(shopId).get();
+    if (!shopSnap.exists) throw new HttpsError('not-found', `Butiken "${shopId}" finns inte.`);
+
+    // ── 1. Fetch the public catalog (paginated; 250/page is Shopify's max). ──
+    const maxProducts = Math.min(Math.max(1, request.data.limit || 500), 1000);
+    const products: ShopifyProduct[] = [];
+    for (let page = 1; page <= 20 && products.length < maxProducts; page++) {
+      const url = `https://${host}/products.json?limit=250&page=${page}`;
+      let res: Response;
+      try {
+        res = await fetch(url, { headers: { Accept: 'application/json' } });
+      } catch {
+        throw new HttpsError('unavailable', `Kunde inte nå ${host}.`);
+      }
+      if (!res.ok) {
+        if (page === 1) throw new HttpsError('not-found', `${host} exponerar ingen /products.json (är det en Shopify-butik?).`);
+        break;
+      }
+      const body = (await res.json()) as { products?: ShopifyProduct[] };
+      const batch = body.products || [];
+      if (batch.length === 0) break;
+      products.push(...batch);
+    }
+    if (products.length === 0) throw new HttpsError('not-found', `Inga produkter hittades på ${host}.`);
+
+    // ── 2. Existing SKUs in the target shop (for per-shop-unique product SKUs). ──
+    const existingSnap = await db.collection('products').where('shopId', '==', shopId).get();
+    const takenSkus = new Set<string>();
+    existingSnap.forEach((d) => {
+      const s = (d.data().sku || '').toString().trim().toLowerCase();
+      if (s) takenSkus.add(s);
+    });
+
+    const bucket = getStorage().bucket();
+    // Reupload one Shopify image into our Storage; returns a tokenized download URL
+    // (identical format to the web SDK's getDownloadURL, so the storefront reads it
+    // the same way). Raw bytes — no server-side canvas/compression; the source is
+    // already an optimised ~2000px JPEG, fine for a demo product image.
+    const reuploadImage = async (srcUrl: string, destPath: string): Promise<string | null> => {
+      try {
+        // Image src comes from the fetched JSON — re-check the host (SSRF).
+        let imgHost = '';
+        try { imgHost = new URL(srcUrl).host; } catch { return null; }
+        if (isBlockedHost(imgHost)) return null;
+        const r = await fetch(srcUrl);
+        if (!r.ok) return null;
+        const buf = Buffer.from(await r.arrayBuffer());
+        const contentType = r.headers.get('content-type') || 'image/jpeg';
+        const token = randomUUID();
+        await bucket.file(destPath).save(buf, {
+          metadata: { contentType, metadata: { firebaseStorageDownloadTokens: token } },
+        });
+        return `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(destPath)}?alt=media&token=${token}`;
+      } catch {
+        return null;
+      }
+    };
+
+    // ── 3. Transform + create each product. ──
+    // GRACEFUL DEGRADATION (per requirement): Shopify sends many fields our system
+    // has no home for (grams, barcode, compare_at_price, product_type, taxable,
+    // requires_shipping, per-variant weight, gift-card flags, …). We intentionally
+    // DROP those — this is a display/demo catalog — and record it once in
+    // `droppedShopifyFields` so the import is honestly reported as lossy, not
+    // silently partial. Conversely, fields WE require that Shopify may omit (price,
+    // images, variant labels) each get a safe fallback below so a product is never
+    // written in an unsellable state. One malformed product is caught and skipped —
+    // it must never abort the whole import.
+    let created = 0;
+    let imageFailures = 0;
+    const skipped: string[] = [];
+    const droppedShopifyFields = [
+      'inventory/stock', 'orders', 'customers', 'compare_at_price', 'barcode',
+      'grams/weight', 'product_type', 'taxable', 'requires_shipping', 'gift_card',
+      // Our rail model has ONE colorway axis: a product with TWO non-size option
+      // axes (e.g. Print × Color) keeps one as groups and drops the other.
+      'second variant axis (e.g. Print on Print×Color)',
+    ];
+
+    for (const sp of products.slice(0, maxProducts)) {
+     try {
+      const name = (sp.title || '').trim();
+      if (!name) { skipped.push('(namnlös produkt)'); continue; }
+
+      const productSku = uniqueSku(skuFromName(name), takenSkus);
+      takenSkus.add(productSku.toLowerCase()); // reserve so the next product can't collide
+
+      // Product price = the first PARSEABLE variant price (Shopify prices are
+      // decimal, VAT-inclusive for EU stores — matches our b2cPrice convention).
+      // A product with no parseable price anywhere → price 0 (still importable as a
+      // demo display item; flagged via the skipped-price note below).
+      const firstPrice = (() => {
+        for (const v of sp.variants || []) {
+          const p = parseFloat(v?.price || '');
+          if (Number.isFinite(p) && p > 0) return p;
+        }
+        return 0;
+      })();
+
+      // A stable-ish product id for the Storage path (Firestore assigns the real
+      // doc id via addDoc; this only namespaces images).
+      const imgNs = `shopify_${sp.id}`;
+      const uploadedByShopifySrc = new Map<string, string>();
+      const uploadImageOnce = async (src: string): Promise<string | null> => {
+        if (!src) return null;
+        if (uploadedByShopifySrc.has(src)) return uploadedByShopifySrc.get(src)!;
+        const idx = uploadedByShopifySrc.size;
+        const url = await reuploadImage(src, `products/${shopId}/${imgNs}/img_${idx}`);
+        if (url) uploadedByShopifySrc.set(src, url);
+        else imageFailures++;
+        return url;
+      };
+
+      let cleanGroups: CleanGroup[] = [];
+      let cleanVariants: VariantRow[] = [];
+      let heroUrl = '';
+      const galleryUrls: string[] = [];
+
+      if (isSingleVariant(sp)) {
+        // No real variants → plain product. All product images go to the gallery;
+        // the first is the hero. hasVariants:false.
+        for (const im of sp.images || []) {
+          const u = await uploadImageOnce(im.src);
+          if (u) { if (!heroUrl) heroUrl = u; else galleryUrls.push(u); }
+        }
+      } else {
+        const { groupPos, sizePos } = pickAxes(sp.options || []);
+        // Bucket variants by the group-axis value (colorway). groupPos null means a
+        // single implicit group (size-only product).
+        const order: string[] = [];
+        const byGroup = new Map<string, { sizes: Set<string>; price: number; imgSrc: string | null; sku: string }>();
+        for (const v of sp.variants || []) {
+          const gLabel = (groupPos !== null ? optByPos(v, groupPos) : null) || name;
+          const sLabel = sizePos !== null ? optByPos(v, sizePos) : null;
+          if (!byGroup.has(gLabel)) {
+            order.push(gLabel);
+            byGroup.set(gLabel, { sizes: new Set(), price: parseFloat(v.price) || firstPrice, imgSrc: v.featured_image?.src || null, sku: '' });
+          }
+          const entry = byGroup.get(gLabel)!;
+          if (sLabel) entry.sizes.add(sLabel);
+        }
+        // Build raw groups with uploaded images, then derive byte-identically.
+        const rawGroups: RawGroup[] = [];
+        for (const gLabel of order) {
+          const e = byGroup.get(gLabel)!;
+          // Group image = the variant's featured image if present, else product image[0].
+          const src = e.imgSrc || sp.images?.[0]?.src || '';
+          const gUrl = await uploadImageOnce(src);
+          rawGroups.push({
+            label: gLabel,
+            price: e.price === firstPrice ? '' : e.price, // inherit when equal to product price
+            images: gUrl ? [gUrl] : [],
+            sizes: [...e.sizes],
+          });
+        }
+        const derived = deriveVariantsFromGroups(rawGroups, { productSku, productPrice: firstPrice });
+        cleanGroups = derived.cleanGroups;
+        cleanVariants = derived.cleanVariants;
+        heroUrl = cleanGroups[0]?.image || (await uploadImageOnce(sp.images?.[0]?.src || '')) || '';
+        // Gallery = every product image not already used as a group hero.
+        const usedUrls = new Set(cleanGroups.map((g) => g.image).filter(Boolean));
+        for (const im of sp.images || []) {
+          const u = await uploadImageOnce(im.src);
+          if (u && u !== heroUrl && !usedUrls.has(u)) galleryUrls.push(u);
+        }
+      }
+
+      // Plain-text description from Shopify's body_html (strip tags for descriptions.b2c;
+      // keep the HTML in b2cMoreInfo which is a rich-text field).
+      const html = sp.body_html || '';
+      const plain = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+
+      const data: Record<string, unknown> = {
+        name,
+        sku: productSku,
+        category: '',
+        tags: Array.isArray(sp.tags) ? sp.tags : (typeof sp.tags === 'string' && sp.tags ? sp.tags.split(',').map((t) => t.trim()) : []),
+        hasVariants: cleanVariants.length > 0,
+        variantGroups: cleanGroups,
+        options: [],
+        variants: cleanVariants,
+        b2cPrice: firstPrice,
+        basePrice: firstPrice,
+        isActive: true,
+        featured: false,
+        imageUrl: heroUrl,
+        b2cImageUrl: heroUrl,
+        b2cImageGallery: galleryUrls,
+        availability: { b2c: true },
+        descriptions: { b2c: plain.slice(0, 600), b2cMoreInfo: html },
+        isPersonalized: false,
+        sizeGuide: '',
+        weight: { value: 0, unit: 'g' },
+        dimensions: { length: { value: 0, unit: 'mm' }, width: { value: 0, unit: 'mm' }, height: { value: 0, unit: 'mm' } },
+        shipping: {
+          sweden: { cost: 0, service: 'Standard' },
+          nordic: { cost: 0, service: 'Nordic' },
+          eu: { cost: 0, service: 'EU' },
+          worldwide: { cost: 0, service: 'International' },
+        },
+        delivery: { shipping: true, pickup: true },
+        shopId,
+        migratedFrom: `shopify:${host}`, // provenance marker (demo imports)
+        updatedAt: FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+      };
+
+      await db.collection('products').add(data);
+      created++;
+     } catch (e: any) {
+      // One malformed product must never abort the whole import — record + move on.
+      skipped.push((sp?.title || `#${sp?.id ?? '?'}`).toString().slice(0, 80));
+      console.warn('migrateFromShopify: product skipped', sp?.id, e?.message);
+     }
+    }
+
+    return {
+      success: true,
+      source: host,
+      productsFound: products.length,
+      created,
+      imageFailures,   // images that failed to reupload (products still created w/o them)
+      skipped,         // product names that couldn't be imported at all
+      // Honest disclosure of what a public-catalog demo import cannot carry, so the
+      // operator never mistakes it for a full migration.
+      droppedShopifyFields,
+      note: 'Demo-import: endast publik katalog (produkter, varianter, priser, bilder). Lager, ordrar, kunder och tryckfiler ingår inte.',
+    };
+  }
+);
