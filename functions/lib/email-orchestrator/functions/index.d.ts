@@ -6,6 +6,7 @@ export { sendLoginCredentialsEmail } from './sendLoginCredentialsEmail';
 export { sendAffiliateWelcomeEmail } from './sendAffiliateWelcomeEmail';
 export { approveAffiliate } from './approveAffiliate';
 export { createShopUser } from './createShopUser';
+export { createPlatformSuperAdmin, deletePlatformUser } from './platformUsers';
 export { sendEmailVerification } from './sendEmailVerification';
 export { sendCustomEmailVerification } from './sendCustomEmailVerification';
 export { verifyEmailCode } from './verifyEmailCode';

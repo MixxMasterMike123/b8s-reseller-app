@@ -15,6 +15,8 @@ export {
   sendAffiliateWelcomeEmail,
   approveAffiliate,
   createShopUser,
+  createPlatformSuperAdmin,
+  deletePlatformUser,
   sendEmailVerification,
   sendCustomEmailVerification,
   verifyEmailCode,

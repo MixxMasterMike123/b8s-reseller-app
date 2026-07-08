@@ -38,6 +38,7 @@ import PlatformModels from './pages/platform/PlatformModels';
 import PlatformDac7 from './pages/platform/PlatformDac7';
 import PlatformPrinters from './pages/platform/PlatformPrinters';
 import PlatformLeads from './pages/platform/PlatformLeads';
+import PlatformUsers from './pages/platform/PlatformUsers';
 import LoginPage from './pages/LoginPage';
 import LandingPage from './pages/LandingPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -287,6 +288,9 @@ function App() {
               } />
               <Route path="/leads" element={
                 <PlatformRoute><PlatformLeads /></PlatformRoute>
+              } />
+              <Route path="/users" element={
+                <PlatformRoute><PlatformUsers /></PlatformRoute>
               } />
               <Route path="*" element={<Navigate to="/" replace />} />
             </>

@@ -1,0 +1,255 @@
+// platformUsers — operator-console user administration (Settings → Användare).
+//
+// Two PLATFORM-ONLY callables (requirePlatform). LISTING is done client-side
+// (the page queries users where role=='admin' directly — firestore.rules lets
+// isPlatform() read any user doc), so no list callable exists. Only the two
+// operations that REQUIRE the Admin SDK are functions:
+//   • createPlatformSuperAdmin — provisions a NEW platform super-admin
+//                              (platform:true, shopId=null): Auth account +
+//                              users/{uid} doc + custom claims + credentials
+//                              email. Modeled on createShopUser.
+//   • deletePlatformUser     — deletes an admin's Auth account + users/{uid}
+//                              doc. Lockout guards: never delete yourself, never
+//                              delete the LAST platform super-admin.
+//
+// Why callables (Admin SDK): only the Admin SDK can create/delete a Firebase
+// Auth account and set custom claims — the client cannot. Claims are set inline
+// because Storage rules read token.platform and can't read the named DB. (The
+// syncUserClaimsOnWrite trigger also keeps them in sync, but we set them here so
+// they're live immediately, matching createShopUser.)
+
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { appUrls } from '../../config/app-urls';
+import { getAuth } from 'firebase-admin/auth';
+import { FieldValue } from 'firebase-admin/firestore';
+import { db } from '../../config/database';
+import { EmailOrchestrator } from '../core/EmailOrchestrator';
+import { requirePlatform } from './authGuard';
+
+const auth = getAuth();
+
+const COMMON = {
+  region: 'us-central1' as const,
+  memory: '256MiB' as const,
+  timeoutSeconds: 120,
+  cors: appUrls.CORS_ORIGINS,
+};
+
+// ── create super-admin ────────────────────────────────────────────────────────
+
+interface CreateSuperAdminRequest {
+  email: string;
+  name?: string;
+}
+
+export const createPlatformSuperAdmin = onCall<CreateSuperAdminRequest>(
+  { ...COMMON, secrets: ['RESEND_API_KEY'] },
+  async (request) => {
+    await requirePlatform(request.auth?.uid);
+
+    const email = (request.data.email || '').trim().toLowerCase();
+    const name = (request.data.name || '').trim() || email;
+
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      throw new HttpsError('invalid-argument', 'A valid email is required');
+    }
+
+    // Create (or carefully reuse) the Auth account. Same deny-by-default reuse
+    // guard as createShopUser: only reuse an account that is ALREADY a platform
+    // super-admin (re-inviting / resending). Any other existing account — a shop
+    // admin, a B2C customer, an affiliate — is refused, so we never silently
+    // escalate an existing user to platform.
+    const tempPassword = Math.random().toString(36).slice(2) + 'A1!';
+    let authUser;
+    let wasExistingAuthUser = false;
+    try {
+      authUser = await auth.createUser({
+        email,
+        password: tempPassword,
+        displayName: name,
+        emailVerified: true,
+      });
+    } catch (error: any) {
+      if (error.code === 'auth/email-already-exists') {
+        authUser = await auth.getUserByEmail(email);
+        const existing = await db.collection('users').doc(authUser.uid).get();
+        const ed = existing.exists ? existing.data() : null;
+        const isAlreadySuperAdmin = ed && ed.role === 'admin' && ed.platform === true;
+        if (!isAlreadySuperAdmin) {
+          throw new HttpsError(
+            'already-exists',
+            `${email} används redan av ett annat konto och kan inte göras till plattformsadmin. Använd en annan e-postadress.`
+          );
+        }
+        await auth.updateUser(authUser.uid, { password: tempPassword });
+        wasExistingAuthUser = true;
+      } else {
+        throw error;
+      }
+    }
+
+    const uid = authUser.uid;
+
+    // users/{uid} doc KEYED BY UID (so AuthContext + Firestore rules + claims all
+    // line up). shopId = null: platform admins bypass shop-scoping, AuthContext
+    // already treats a platform user as "no shopId", and firestore.rules documents
+    // that "platform super-admin docs carry shopId == null" (rules ~L567). Using a
+    // real shop id (e.g. 'b8shield') would let a future admin OF that shop read
+    // this platform doc via the same-shop read branch — null closes that leak.
+    await db.collection('users').doc(uid).set(
+      {
+        email,
+        contactPerson: name,
+        role: 'admin',
+        shopId: null,
+        platform: true,
+        active: true,
+        isActive: true,
+        createdByPlatform: true,
+        updatedAt: FieldValue.serverTimestamp(),
+        ...(wasExistingAuthUser ? {} : { createdAt: FieldValue.serverTimestamp() }),
+      },
+      { merge: true }
+    );
+
+    // Set claims inline (Storage rules read token.platform and can't read the DB).
+    // Matches syncUserClaimsOnWrite's shape (shopId: userData.shopId || null).
+    await auth.setCustomUserClaims(uid, {
+      role: 'admin',
+      shopId: null,
+      platform: true,
+    });
+
+    // Credentials email — best-effort (a mail failure must not undo a
+    // successfully provisioned admin; surface it in the response instead).
+    let emailSent = false;
+    let emailError: string | null = null;
+    try {
+      const orchestrator = new EmailOrchestrator();
+      const result = await orchestrator.sendEmail({
+        emailType: 'LOGIN_CREDENTIALS',
+        userId: uid,
+        customerInfo: { email, name },
+        language: 'sv-SE',
+        additionalData: {
+          credentials: { email, temporaryPassword: tempPassword },
+          wasExistingAuthUser,
+          userInfo: { name, email },
+          accountType: 'B2B',
+        },
+        adminEmail: false,
+      });
+      emailSent = !!result.success;
+      if (!result.success) emailError = result.error || 'Email sending failed';
+    } catch (e: any) {
+      emailError = e instanceof Error ? e.message : 'Email sending failed';
+    }
+
+    return { success: true, uid, email, wasExistingAuthUser, emailSent, emailError };
+  }
+);
+
+// ── delete ─────────────────────────────────────────────────────────────────
+
+interface DeletePlatformUserRequest {
+  uid: string;
+}
+
+export const deletePlatformUser = onCall<DeletePlatformUserRequest>(COMMON, async (request) => {
+  const callerUid = request.auth?.uid;
+  await requirePlatform(callerUid);
+
+  const uid = (request.data.uid || '').trim();
+  if (!uid) throw new HttpsError('invalid-argument', 'uid is required');
+
+  // Guard 1: never delete yourself (would lock the operator out mid-session).
+  if (uid === callerUid) {
+    throw new HttpsError('failed-precondition', 'Du kan inte ta bort ditt eget konto.');
+  }
+
+  const targetSnap = await db.collection('users').doc(uid).get();
+  const target = targetSnap.exists ? targetSnap.data() : null;
+
+  // Only manage admin accounts here (Settings → Användare is the admin console).
+  if (!target || target.role !== 'admin') {
+    throw new HttpsError('not-found', 'Ingen administratör med det ID:t hittades.');
+  }
+
+  // Guard 2: never delete the LAST usable platform super-admin (irreversible
+  // lockout — no one could administer the platform afterwards).
+  //
+  // Two independent risks, closed together:
+  //   (a) an orphan/disabled admin must NOT count as a survivor — a platform:true
+  //       doc whose Auth account is missing or disabled is not login-capable;
+  //   (b) two CONCURRENT deletes of DIFFERENT admins must not both pass (each
+  //       seeing the other as the survivor) and race to zero.
+  //
+  // (a) is checked OUTSIDE the tx via Auth (can't read Auth state inside a tx).
+  // (b) is closed INSIDE the tx: we re-read every OTHER platform-admin DOC and
+  //     the target, require ≥1 other doc still {exists, platform:true}, then
+  //     delete the target — all in one transaction. A concurrent delete of a
+  //     shared candidate doc mutates a doc THIS tx read, so Firestore's
+  //     serializable isolation forces one of the two to retry and re-observe the
+  //     reduced set. (Single-field query for the id list — no composite index.)
+  const isPlatformTarget = target.platform === true;
+
+  let liveOtherUids: string[] = [];
+  if (isPlatformTarget) {
+    const platformAdmins = await db.collection('users').where('platform', '==', true).get();
+    const otherUids = platformAdmins.docs.map((d) => d.id).filter((id) => id !== uid);
+    // Keep only OTHERS whose Auth account exists AND is enabled (login-capable).
+    for (const otherUid of otherUids) {
+      try {
+        const rec = await auth.getUser(otherUid);
+        if (!rec.disabled) liveOtherUids.push(otherUid);
+      } catch (e: any) {
+        if (e?.code === 'auth/user-not-found') continue; // orphan doc — not usable
+        throw e;
+      }
+    }
+    if (liveOtherUids.length === 0) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Det måste finnas minst en fungerande plattformsadmin. Skapa en till innan du tar bort den sista.'
+      );
+    }
+  }
+
+  // Delete the target's users doc inside a transaction. For a platform target we
+  // re-read the live OTHERS inside the tx and require ≥1 still-platform survivor,
+  // so concurrent different-admin deletes can't both commit (see (b) above). The
+  // same-uid double-delete case no-ops (doc already gone).
+  const deletedDoc = await db.runTransaction(async (tx) => {
+    const ref = db.collection('users').doc(uid);
+    // Firestore requires all reads before writes: read survivors first, then target.
+    let survivorInTx = !isPlatformTarget;
+    if (isPlatformTarget) {
+      const otherSnaps = await tx.getAll(...liveOtherUids.map((id) => db.collection('users').doc(id)));
+      survivorInTx = otherSnaps.some((s) => s.exists && s.data()?.platform === true);
+    }
+    const snap = await tx.get(ref);
+    if (!snap.exists) return false; // already deleted by a concurrent call
+    if (isPlatformTarget && !survivorInTx) {
+      // A concurrent delete removed the last surviving platform admin between our
+      // Auth check and this read. Abort rather than race to zero.
+      throw new HttpsError(
+        'failed-precondition',
+        'Det måste finnas minst en fungerande plattformsadmin. Skapa en till innan du tar bort den sista.'
+      );
+    }
+    tx.delete(ref);
+    return true;
+  });
+
+  // Delete the Auth account (idempotent — tolerate an already-missing account so
+  // a half-provisioned user can still be cleaned up). Account deletion is what
+  // invalidates the user's tokens/claims; the syncUserClaimsOnWrite trigger
+  // no-ops on this delete because auth.getUser now throws user-not-found.
+  try {
+    await auth.deleteUser(uid);
+  } catch (e: any) {
+    if (e?.code !== 'auth/user-not-found') throw e;
+  }
+
+  return { success: true, uid, alreadyDeleted: !deletedDoc };
+});
