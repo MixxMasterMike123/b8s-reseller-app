@@ -24,6 +24,7 @@ import { getReviewStats } from '../../utils/trustpilotAPI';
 import SeoHreflang from '../../components/shop/SeoHreflang';
 import { Helmet } from 'react-helmet-async';
 import SmartPrice from '../../components/shop/SmartPrice';
+import { getCompareAtPrice } from '../../utils/productPricing';
 import AddedToCartModal from '../../components/shop/AddedToCartModal';
 import ProductSocialShare from '../../components/ProductSocialShare';
 import DOMPurify from 'dompurify';
@@ -301,6 +302,8 @@ const PublicProductPage = () => {
 
   // The price to display/charge: the selected variant's, else the product's.
   const currentPrice = selectedVariant?.price ?? (product?.b2cPrice || product?.basePrice);
+  // Product-level REA: the was-price when it's genuinely above what's paid now.
+  const compareAtPrice = getCompareAtPrice(product, currentPrice);
 
   // Delivery & Pickup v2: what delivery the customer can actually use for THIS
   // product, cross-checked against the shop's configuration.
@@ -743,11 +746,21 @@ const PublicProductPage = () => {
 
                 {/* Price */}
                   <div className="font-display mb-6">
+                    {compareAtPrice && (
+                      <div className="flex items-center gap-3 mb-1">
+                        <span className="text-base text-ink-muted line-through">
+                          <SmartPrice sekPrice={compareAtPrice} showOriginal={false} />
+                        </span>
+                        <span className="text-xs font-bold uppercase tracking-wide bg-accent text-white px-2.5 py-1 rounded-full">
+                          Rea
+                        </span>
+                      </div>
+                    )}
                     <SmartPrice
                       sekPrice={currentPrice}
                       size="large"
                       showOriginal={false}
-                      className="font-display"
+                      className={'font-display ' + (compareAtPrice ? 'text-accent' : '')}
                     />
                   </div>
                 </div>

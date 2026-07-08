@@ -25,7 +25,8 @@ const variantGroups = (variants) => {
   return Array.from(seen.values());
 };
 
-const NordProductCard = ({ to, linkState, image, imageAlt, tag, name, description, meta, priceSek, isFromPrice = false, product, ctaLabel }) => {
+const NordProductCard = ({ to, linkState, image, imageAlt, tag, name, description, meta, priceSek, compareSek = null, isFromPrice = false, product, ctaLabel }) => {
+  const onSale = Number(compareSek) > Number(priceSek);
   const groups = variantGroups(product?.variants);
   const showHint = groups.length >= 2;
   const thumbs = groups.filter((g) => g.image).slice(0, 4);
@@ -40,7 +41,12 @@ const NordProductCard = ({ to, linkState, image, imageAlt, tag, name, descriptio
             alt={imageAlt || name}
             className="w-full h-full object-cover transition-transform duration-700 ease-nord group-hover:scale-105"
           />
-          {tag && (
+          {onSale && (
+            <span className="absolute top-3.5 left-3.5 bg-accent text-white text-xs font-bold px-3 py-1.5 rounded-full">
+              Rea!
+            </span>
+          )}
+          {tag && !onSale && (
             <span className="absolute top-3.5 left-3.5 bg-white/90 backdrop-blur-sm text-ink text-xs font-bold px-3 py-1.5 rounded-full">
               {tag}
             </span>
@@ -78,11 +84,16 @@ const NordProductCard = ({ to, linkState, image, imageAlt, tag, name, descriptio
           })()}
 
           <div className="mt-auto pt-4 flex items-center justify-between gap-3">
-            <div className="flex items-baseline gap-1 min-w-0">
+            <div className="flex items-baseline gap-1.5 min-w-0">
               {isFromPrice && (
                 <span className="text-xs text-ink-muted shrink-0">från</span>
               )}
-              <SmartPrice sekPrice={priceSek} className="font-display" showOriginal={false} />
+              {onSale && (
+                <span className="text-sm text-ink-muted line-through shrink-0">
+                  <SmartPrice sekPrice={compareSek} showOriginal={false} />
+                </span>
+              )}
+              <SmartPrice sekPrice={priceSek} className={'font-display ' + (onSale ? 'text-accent' : '')} showOriginal={false} />
             </div>
             <span className="bg-accent text-white text-sm font-bold px-5 py-2.5 rounded-full whitespace-nowrap transition-transform duration-300 ease-nord group-hover:-translate-y-0.5">
               {ctaLabel}

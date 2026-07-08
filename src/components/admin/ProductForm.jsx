@@ -195,6 +195,9 @@ const emptyForm = () => ({
   category: '',          // was `group`: the browse taxonomy / URL driver
   tags: [],
   price: 0,
+  // "Ordinarie pris" (was-price) for a REA/sale. 0/empty = not on sale. When set
+  // above the sale price, the storefront strikes it through + shows a Rea-badge.
+  compareAtPrice: 0,
   // Wholesale price (B2B add-on). Distinct from the consumer price: the B2B
   // portal charges this (ex moms), the storefront never reads it. Persisted to
   // a NEW `b2bPrice` field — NOT basePrice (basePrice mirrors b2cPrice as the
@@ -269,6 +272,8 @@ const formFromProduct = (p) => ({
   tags: Array.isArray(p.tags) ? p.tags : [],
   // Single price sourced from the consumer price (b2cPrice || basePrice).
   price: p.b2cPrice || p.basePrice || 0,
+  // Was-price for a REA. Read as empty when 0/unset so the field shows blank.
+  compareAtPrice: p.compareAtPrice || '',
   // Wholesale price (B2B add-on). Read straight from b2bPrice; 0 if unset.
   b2bPrice: p.b2bPrice || 0,
   hasVariants: !!p.hasVariants && Array.isArray(p.variants) && p.variants.length > 0,
@@ -648,6 +653,10 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
       for (const url of imagesToDelete) await deleteImageFromStorage(url);
 
       const price = parseFloat(formData.price) || 0;
+      // Was-price for a REA. Only persist a genuine sale (> the selling price);
+      // anything else stores 0 (= not on sale), so a stale/lower value never shows.
+      const compareAtRaw = parseFloat(formData.compareAtPrice);
+      const compareAtPrice = Number.isFinite(compareAtRaw) && compareAtRaw > price ? compareAtRaw : 0;
       const b2bPrice = parseFloat(formData.b2bPrice) || 0;
 
       // Variants (v2.2): upload any pending per-variant images, persist the
@@ -719,6 +728,7 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
         variants: cleanVariants,
         b2cPrice: price,
         basePrice: price,               // keep in sync for the `b2cPrice || basePrice` fallback
+        compareAtPrice,                 // was-price for a REA (0 = not on sale)
         // Wholesale price — only written for B2B shops (a non-B2B shop's
         // products never gain the field). NOT folded into base/b2cPrice.
         ...(b2bEnabled ? { b2bPrice } : {}),
@@ -1090,6 +1100,14 @@ const ProductForm = ({ product, shopId, availableCategories = [], availableTags 
               <div className="max-w-xs">
                 <label className={labelCls}>Pris (SEK, inkl. moms)</label>
                 <input type="number" name="price" min="0" step="0.01" value={formData.price} onChange={handleInput} className={inputCls} />
+              </div>
+              <div className="max-w-xs">
+                <label className={labelCls}>Ordinarie pris / REA (valfritt)</label>
+                <input type="number" name="compareAtPrice" min="0" step="0.01" value={formData.compareAtPrice} onChange={handleInput} placeholder="Tomt = ingen rea" className={inputCls} />
+                <p className={helpCls}>
+                  Sätt ett högre ordinarie pris för att visa REA (överstruket). Enligt prisinformationslagen
+                  måste ordinarie pris vara det lägsta priset de senaste 30 dagarna.
+                </p>
               </div>
               {/* Wholesale price — only when the shop has the B2B add-on. The
                   consumer storefront never reads this; the B2B portal charges it. */}

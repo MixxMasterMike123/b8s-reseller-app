@@ -96,7 +96,7 @@ const CollectionPage = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
               {cards.map((p) => {
-                const { price, isFrom } = getCardPrice(p);
+                const { price, isFrom, compareAt } = getCardPrice(p);
                 return (
                   <NordProductCard
                     key={p.id}
@@ -106,6 +106,7 @@ const CollectionPage = () => {
                     name={nameOf(p)}
                     description=""
                     priceSek={price}
+                    compareSek={compareAt}
                     isFromPrice={isFrom}
                     product={p}
                     ctaLabel={t('product_choose_button', 'Välj')}
