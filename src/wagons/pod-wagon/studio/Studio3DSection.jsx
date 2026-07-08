@@ -12,6 +12,12 @@
 // pixi.js loads lazily: DisplacementPreview is React.lazy'd, so its chunk is
 // fetched only when the seller opens the 3D view.
 import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import toast from 'react-hot-toast';
+import { db, storage } from '../../../firebase/config';
+import { useShopId } from '../../../contexts/ShopContext';
+import { listShopProductSkus } from '../../../utils/podMappings';
 import { DEV_3D_GARMENTS } from './pixi/displacement3dConfig';
 
 const DisplacementPreview = React.lazy(() => import('./pixi/DisplacementPreview'));
@@ -94,6 +100,17 @@ const Studio3DSection = ({ artwork = null, placement = null, models = [] }) => {
   const previewRef = useRef(null);
   const webgl = useMemo(hasWebGL, []);
 
+  // "Lägg till i produkt" — append the rendered 3D image to an existing product's
+  // SECONDARY gallery (b2cImageGallery), never the main image. Reuses the same
+  // pieces the publish flow uses: listShopProductSkus (products carry doc `id`),
+  // the public products/{shopId}/{productId} Storage path, and a client updateDoc
+  // (firestore.rules: products update allowed for isAdminOfShop — the studio is
+  // admin-only, so no callable needed).
+  const shopId = useShopId();
+  const [products, setProducts] = useState([]);
+  const [targetProductId, setTargetProductId] = useState('');
+  const [adding, setAdding] = useState(false);
+
   // GARMENT SOURCE: the platform-managed library models that are render-ready.
   // In DEV builds, fall back to the hardcoded dev garment so the harness/local
   // studio still renders before any model is seeded; in PROD an empty library
@@ -166,6 +183,18 @@ const Studio3DSection = ({ artwork = null, placement = null, models = [] }) => {
     setP3d(null);
   }, [garment?.id]);
 
+  // Load this shop's products once the 3D view is opened (for the "Lägg till i
+  // produkt" picker). Best-effort — a failure just leaves the picker empty.
+  useEffect(() => {
+    if (!open || !shopId) return;
+    let alive = true;
+    setTargetProductId(''); // drop any stale selection when the shop/open changes
+    listShopProductSkus(shopId)
+      .then((res) => { if (alive) setProducts(res?.products || []); })
+      .catch((e) => console.warn('Studio3DSection: product list failed', e?.message));
+    return () => { alive = false; };
+  }, [open, shopId]);
+
   if (garments.length === 0 || !garment) return null;
 
   const mm = garment.printAreaMm?.front;
@@ -187,6 +216,34 @@ const Studio3DSection = ({ artwork = null, placement = null, models = [] }) => {
       console.warn('Studio3DSection: extract failed', e?.message);
     } finally {
       setBusy(false);
+    }
+  };
+
+  // Append the rendered 3D image to the chosen product's SECONDARY gallery.
+  // NEVER touches imageUrl / b2cImageUrl (the main image) — append only. Uploads
+  // the PNG to the public product-image path, then updateDoc's b2cImageGallery.
+  const addToProduct = async () => {
+    if (!targetProductId || !shopId) return;
+    setAdding(true);
+    try {
+      const blob = await previewRef.current.extractPNG();
+      const path = `products/${shopId}/${targetProductId}/3d_${Date.now()}`;
+      const snap = await uploadBytes(storageRef(storage, path), blob, { contentType: 'image/png' });
+      const url = await getDownloadURL(snap.ref);
+      // arrayUnion appends atomically (no read-modify-write race with a concurrent
+      // gallery edit) and touches ONLY b2cImageGallery — the main image
+      // (imageUrl/b2cImageUrl) is never referenced, so it can't be replaced.
+      await updateDoc(doc(db, 'products', targetProductId), {
+        b2cImageGallery: arrayUnion(url),
+      });
+      const name = products.find((p) => p.id === targetProductId)?.name || 'produkten';
+      toast.success(`3D-bilden lades till som extra bild på ${name}.`);
+      setTargetProductId(''); // ready for the next add
+    } catch (e) {
+      console.warn('Studio3DSection: addToProduct failed', e?.message);
+      toast.error('Kunde inte lägga till bilden på produkten.');
+    } finally {
+      setAdding(false);
     }
   };
 
@@ -358,8 +415,36 @@ const Studio3DSection = ({ artwork = null, placement = null, models = [] }) => {
                   >
                     {busy ? 'Skapar…' : 'Ladda ner 3D-bild (PNG)'}
                   </button>
+
+                  {/* Add to an existing product as a SECONDARY gallery image. Only
+                      shown when the shop has products. Never sets the main image. */}
+                  {products.length > 0 && (
+                    <div className="mt-3 flex items-center gap-2">
+                      <select
+                        value={targetProductId}
+                        onChange={(e) => setTargetProductId(e.target.value)}
+                        aria-label="Välj produkt att lägga bilden på"
+                        className="min-w-0 flex-1 rounded-[10px] border border-admin-border bg-admin-surface px-2.5 py-2 text-[13px] text-admin-text focus:border-admin-info-dot focus:outline-none"
+                      >
+                        <option value="">Lägg till i produkt…</option>
+                        {products.map((p) => (
+                          <option key={p.id} value={p.id}>{p.name || '(namnlös produkt)'}</option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={addToProduct}
+                        disabled={!targetProductId || adding}
+                        className="shrink-0 rounded-[10px] border border-admin-border px-3 py-2 text-[13px] font-medium text-admin-text hover:bg-admin-surface-2 disabled:opacity-40"
+                      >
+                        {adding ? 'Lägger till…' : 'Lägg till'}
+                      </button>
+                    </div>
+                  )}
+
                   <p className="mt-3 text-[12px] leading-relaxed text-admin-text-faint">
                     Position, storlek och rotation styrs med reglagen ovan (påverkar bara produktbilden, inte trycket).
+                    {products.length > 0 && ' Bilden läggs till som extra produktbild, aldrig som huvudbild.'}
                   </p>
                 </div>
               </div>
