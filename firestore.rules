@@ -276,6 +276,19 @@ service cloud.firestore {
     }
 
     // ============================================================
+    // migrations — live status doc for a catalog import (Shopify/Woo). Written
+    // ONLY by the Admin SDK (migrateFromShopify/migrateFromWoo bypass rules); the
+    // client only READS it via onSnapshot to render the progress bar. Platform
+    // sees all; a shop admin may read their own shop's imports. Client writes are
+    // denied (the server writes via Admin SDK, which ignores these rules).
+    // ============================================================
+    match /migrations/{migrationId} {
+      allow read: if isPlatform() ||
+        (isAdmin() && resource.data.shopId == userDoc().shopId);
+      allow write: if false;
+    }
+
+    // ============================================================
     // dac7Sellers — DAC7 seller due-diligence data (sensitive PII: tax id /
     // personnummer, DOB, verified legal name + address, country of residence).
     // ⚠️ DAC7 is the PLATFORM operator's obligation (reporting platform operator,

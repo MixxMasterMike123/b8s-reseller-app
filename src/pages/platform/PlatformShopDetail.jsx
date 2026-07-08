@@ -12,6 +12,7 @@ import PlatformLayout from '../../components/platform/PlatformLayout';
 import ImpersonateShopModal from '../../components/platform/ImpersonateShopModal';
 import AddShopUserModal from '../../components/platform/AddShopUserModal';
 import MigrateShopifyModal from '../../components/platform/MigrateShopifyModal';
+import MigrateWooModal from '../../components/platform/MigrateWooModal';
 import { connectLabel, LegalCell, CommissionCell } from './shopCells';
 import { getLegalReadiness } from '../../utils/legalPageReadiness';
 import toast from 'react-hot-toast';
@@ -46,6 +47,7 @@ const PlatformShopDetail = () => {
   const [busy, setBusy] = useState(null);
   const [addUser, setAddUser] = useState(false);
   const [migrate, setMigrate] = useState(false);
+  const [migrateWoo, setMigrateWoo] = useState(false);
   const [impersonate, setImpersonate] = useState(false);
 
   const load = useCallback(async () => {
@@ -344,6 +346,13 @@ const PlatformShopDetail = () => {
                 Migrera från Shopify
               </button>
               <button
+                onClick={() => setMigrateWoo(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium bg-white/5 text-gray-200 hover:bg-purple-500/15 hover:text-purple-300"
+              >
+                <ArrowDownTrayIcon className="h-4 w-4" />
+                Migrera från WooCommerce
+              </button>
+              <button
                 onClick={() => setImpersonate(true)}
                 disabled={disabled}
                 title={disabled ? 'Butiken är inaktiverad — aktivera först' : 'Öppna butikens admin som plattformsadmin (loggas)'}
@@ -375,6 +384,7 @@ const PlatformShopDetail = () => {
 
       {addUser && <AddShopUserModal shop={shop} onClose={() => setAddUser(false)} />}
       {migrate && <MigrateShopifyModal shop={shop} onClose={() => setMigrate(false)} />}
+      {migrateWoo && <MigrateWooModal shop={shop} onClose={() => setMigrateWoo(false)} />}
       {impersonate && <ImpersonateShopModal shop={shop} onClose={() => setImpersonate(false)} />}
     </PlatformLayout>
   );

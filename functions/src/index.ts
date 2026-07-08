@@ -18,6 +18,7 @@ export {
   createPlatformSuperAdmin,
   deletePlatformUser,
   migrateFromShopify,
+  migrateFromWoo,
   sendEmailVerification,
   sendCustomEmailVerification,
   verifyEmailCode,
