@@ -143,6 +143,11 @@ async function seed() {
     await setDoc(doc(db, 'podArtwork/artB'), { shopId: 'shopB', label: 'B logo', purpose: 'apparel_dtg', originalUrl: 'gs://y', validation: { tier: 'PASS' } });
     await setDoc(doc(db, 'podMappings/mapA'), { shopId: 'shopA', sku: 'TSHIRT-A', artworkId: 'artA', placement: 'Brost' });
     await setDoc(doc(db, 'podMappings/mapB'), { shopId: 'shopB', sku: 'TSHIRT-B', artworkId: 'artB', placement: 'Rygg' });
+
+    // Collections (curated product groups). PUBLIC read (storefront, like products),
+    // shop-admin write. Seed both shops to prove cross-shop write/delete is denied.
+    await setDoc(doc(db, 'collections/collA'), { shopId: 'shopA', handle: 'artist-a', title: 'Artist A', type: 'manual', productIds: [], published: true, featured: true });
+    await setDoc(doc(db, 'collections/collB'), { shopId: 'shopB', handle: 'artist-b', title: 'Artist B', type: 'smart', rule: { tag: 'b' }, published: true, featured: false });
   });
 }
 
@@ -407,6 +412,33 @@ async function run() {
   // A plain customer must not touch POD config at all.
   await check('plain customer CANNOT read podArtwork', assertFails(getDoc(doc(customerDb('custA'), 'podArtwork/artA'))));
   await check('plain customer CANNOT read podMapping', assertFails(getDoc(doc(customerDb('custA'), 'podMappings/mapA'))));
+
+  // ── Collections (curated product groups). PUBLIC read is INTENDED (storefront
+  //    renders them anonymously, exactly like products). Isolation is on the WRITE
+  //    side: a shop admin may only create/update/delete their OWN shop's
+  //    collections, and cannot forge another shop's shopId on create. ──
+  console.log('\n=== Collections isolation ===');
+  // LEGIT (no lockout): storefront (anon) + own-shop admin read; own admin writes.
+  await check('anon reads a collection (storefront, public)', assertSucceeds(getDoc(doc(env.unauthenticatedContext().firestore(), 'collections/collA'))));
+  await check('shopA admin reads OWN collection', assertSucceeds(getDoc(doc(shopAAdminDb(), 'collections/collA'))));
+  await check('shopA admin CREATES own collection', assertSucceeds(
+    setDoc(doc(shopAAdminDb(), 'collections/collA2'), { shopId: 'shopA', handle: 'artist-a2', title: 'A2', type: 'manual', productIds: [], published: false, featured: false })));
+  await check('shopA admin UPDATES own collection', assertSucceeds(
+    updateDoc(doc(shopAAdminDb(), 'collections/collA'), { featured: false })));
+  await check('shopA admin DELETES own collection', assertSucceeds(deleteDoc(doc(shopAAdminDb(), 'collections/collA2'))));
+  await check('platform reads ANY collection (shopB)', assertSucceeds(getDoc(doc(platformDb(), 'collections/collB'))));
+  await check('platform updates ANY collection (shopB)', assertSucceeds(updateDoc(doc(platformDb(), 'collections/collB'), { featured: true })));
+  // DENY (the isolation guarantee): no cross-shop WRITE/DELETE, no forged create.
+  await check('shopA admin CANNOT update shopB collection', assertFails(
+    updateDoc(doc(shopAAdminDb(), 'collections/collB'), { title: 'hacked' })));
+  await check('shopA admin CANNOT delete shopB collection', assertFails(deleteDoc(doc(shopAAdminDb(), 'collections/collB'))));
+  await check('shopA admin CANNOT create collection UNDER shopB (forged shopId)', assertFails(
+    setDoc(doc(shopAAdminDb(), 'collections/evilB'), { shopId: 'shopB', handle: 'evil', title: 'evil', type: 'manual', productIds: [] })));
+  await check('shopA admin CANNOT create collection with NO shopId', assertFails(
+    setDoc(doc(shopAAdminDb(), 'collections/noShop'), { handle: 'no-shop', title: 'x', type: 'manual', productIds: [] })));
+  // A plain customer must not write collections (read is public, write is admin-only).
+  await check('plain customer CANNOT create a collection', assertFails(
+    setDoc(doc(customerDb('custA'), 'collections/custColl'), { shopId: 'shopA', handle: 'c', title: 'c', type: 'manual', productIds: [] })));
 
   console.log(`\n=== RESULT: ${passed} passed, ${failed} failed ===`);
   await env.cleanup();
