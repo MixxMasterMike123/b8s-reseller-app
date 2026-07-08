@@ -50,6 +50,7 @@ const BRANDING_KEYS = [
   'featuredLimit',
   // Section headings/subtitles (close the rendered-but-uncontrollable gap).
   'featuredTitle',
+  'collectionsTitle',
   'productsTitle',
   'productsSubtitle',
   'reviewsTitle',
@@ -501,6 +502,16 @@ const AdminStorefront = () => {
                     />
                   </div>
                   <div>
+                    <label className={labelCls}>Rubrik: Populära samlingar</label>
+                    <input
+                      type="text"
+                      value={form.collectionsTitle ?? ''}
+                      placeholder="Populära samlingar"
+                      onChange={(e) => setField('collectionsTitle', e.target.value)}
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
                     <label className={labelCls}>Rubrik: Produkter</label>
                     <input
                       type="text"
@@ -695,6 +706,7 @@ const AdminStorefront = () => {
                 <div className="divide-y divide-admin-border-soft">
                   {[
                     { key: 'gallery', label: 'Galleri', desc: 'Bildrad under hero-sektionen' },
+                    { key: 'collections', label: 'Populära samlingar', desc: 'Utvalda samlingar som kort på startsidan' },
                     { key: 'story', label: 'Berättelse', desc: 'Tre steg som berättar om din butik' },
                     { key: 'bestseller', label: 'Bästsäljare', desc: 'Utvald produkt i hero-rutnätet' },
                     { key: 'trust', label: 'Trygghet', desc: 'Omdöme + betalsätt i hero-rutnätet' },

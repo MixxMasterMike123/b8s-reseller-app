@@ -170,6 +170,16 @@ service cloud.firestore {
       allow update, delete: if isAdminOfShop(resource.data.shopId);
     }
 
+    // Collections — curated product groups (manual pick or smart tag-rule) that
+    // drive the storefront's collection pages + homepage "Populära samlingar"
+    // cards + menu links. Public read (storefront), shop-admin write (same
+    // pattern as products/productGroups).
+    match /collections/{collectionId} {
+      allow read: if true;
+      allow create: if isAdminOfShop(request.resource.data.shopId);
+      allow update, delete: if isAdminOfShop(resource.data.shopId);
+    }
+
     // CMS pages (legal pages, content pages). Note: drafts are technically
     // readable; keep secrets out of CMS docs.
     match /pages/{pageId} {

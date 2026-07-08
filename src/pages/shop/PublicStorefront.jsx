@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getProductImage } from '../../utils/productImages';
-import { getProductUrl, getCategoryUrl, getAllProductsUrl, getShopSeoTitle, getShopSeoDescription, generateShopStructuredData } from '../../utils/productUrls';
+import { getProductUrl, getCategoryUrl, getAllProductsUrl, getCollectionUrl, getShopSeoTitle, getShopSeoDescription, generateShopStructuredData } from '../../utils/productUrls';
 import { useNavigate } from 'react-router-dom';
 import { translateColor } from '../../utils/colorTranslations';
 // Toast notifications removed - using AddedToCartModal for user feedback
@@ -22,6 +22,7 @@ import { getCardPrice } from '../../utils/productPricing';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import { useShopId } from '../../contexts/ShopContext';
 import { isProductFeatured, sortProductsForDisplay, FRONTPAGE_FEATURED } from '../../utils/productSorting';
+import { resolveCollectionProducts } from '../../utils/collectionResolver';
 import { Helmet } from 'react-helmet-async';
 
 const PublicStorefront = () => {
@@ -45,10 +46,14 @@ const PublicStorefront = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [heroReview, setHeroReview] = useState(null);
+  // Featured collections for the homepage "Populära samlingar" cards. Empty for
+  // shops that have none → the section renders nothing (backward-compat).
+  const [featuredCollections, setFeaturedCollections] = useState([]);
 
   useEffect(() => {
     loadProducts();
     loadHeroReview();
+    loadFeaturedCollections();
   }, [currentLanguage, shopId]); // Reload when language or shop changes
 
   const loadHeroReview = async () => {
@@ -106,6 +111,28 @@ const PublicStorefront = () => {
     }
   };
 
+  // Featured collections for the homepage "Populära samlingar" strip. Load all of
+  // the shop's collections, then client-filter to published + featured and order
+  // by sortOrder (mirrors how products derive featured/sort — no extra index).
+  const loadFeaturedCollections = async () => {
+    try {
+      const snap = await getDocs(query(collection(db, 'collections'), where('shopId', '==', shopId)));
+      const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const feat = all
+        .filter((c) => c.published === true && c.featured === true)
+        .sort((a, b) => {
+          const ao = Number.isFinite(a.sortOrder) ? a.sortOrder : Number.POSITIVE_INFINITY;
+          const bo = Number.isFinite(b.sortOrder) ? b.sortOrder : Number.POSITIVE_INFINITY;
+          if (ao !== bo) return ao - bo;
+          return (a.title || '').localeCompare(b.title || '', 'sv');
+        });
+      setFeaturedCollections(feat);
+    } catch (err) {
+      console.error('Error loading featured collections:', err);
+      setFeaturedCollections([]);
+    }
+  };
+
   const addToCart = (product) => {
     addToCartContext(product);
     // Success feedback now handled by AddedToCartModal
@@ -158,6 +185,16 @@ const PublicStorefront = () => {
   const showStory = blocks.story !== false;
   const showBestseller = blocks.bestseller !== false;
   const showTrust = blocks.trust !== false;
+  // "Populära samlingar" block: shown when the shop has featured collections AND
+  // the block isn't turned off. Heading is admin-editable (collectionsTitle).
+  const showCollections = blocks.collections !== false;
+  const collectionsTitle = (store.collectionsTitle || '').trim() || t('collections_popular', 'Populära samlingar');
+  // Only show a featured-collection card if it actually resolves to ≥1 live
+  // product — a card linking to an empty collection page is a dead end. Uses the
+  // same resolver the collection page uses (manual pick / smart tag-rule).
+  const visibleCollections = featuredCollections.filter(
+    (c) => resolveCollectionProducts(c, products, (p) => (typeof p.name === 'string' ? p.name : ''), currentLanguage || 'sv').length > 0
+  );
   // Right ("supporting") hero column only renders if it has any content;
   // otherwise the hero tile spans full width (no empty grid cell).
   const showSupporting = showBestseller || showTrust;
@@ -448,6 +485,42 @@ const PublicStorefront = () => {
                 {introBody}
               </p>
             )}
+          </section>
+        )}
+
+        {/* ===== Populära samlingar (featured collections; hidden when the shop
+            has none — backward-compat for shops without collections) ===== */}
+        {showCollections && visibleCollections.length > 0 && (
+          <section id="collections" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 lg:pt-20">
+            <h2 className="font-display font-bold text-2xl lg:text-3xl tracking-tight text-ink mb-6">
+              {collectionsTitle}
+            </h2>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
+              {visibleCollections.map((c) => (
+                <Link
+                  key={c.id}
+                  to={getCollectionUrl(c.handle)}
+                  className="group relative block overflow-hidden rounded-tile bg-ink shadow-tile aspect-[4/5]"
+                >
+                  {c.imageUrl ? (
+                    <img
+                      src={c.imageUrl}
+                      alt={c.title || ''}
+                      loading="lazy"
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-ink to-ink-muted" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 p-5">
+                    <span className="font-display font-bold text-lg lg:text-xl text-white">
+                      {c.title} <span aria-hidden="true" className="inline-block transition-transform group-hover:translate-x-1">→</span>
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </section>
         )}
 

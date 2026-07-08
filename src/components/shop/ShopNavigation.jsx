@@ -1,21 +1,23 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { 
+import {
   ArrowRightOnRectangleIcon,
   ShoppingBagIcon,
   MagnifyingGlassIcon,
   UserIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  Bars3Icon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import { useSimpleAuth } from '../../contexts/SimpleAuthContext';
 import { db } from '../../firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { getCountryAwareUrl, getCategoryUrl } from '../../utils/productUrls';
+import { getCountryAwareUrl, getCategoryUrl, buildMenuHref, isExternalMenuItem } from '../../utils/productUrls';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import { useShopId } from '../../contexts/ShopContext';
 import { useShopFeatures } from '../../contexts/ShopFeaturesContext';
@@ -30,12 +32,33 @@ const ShopNavigation = ({ breadcrumb, breadcrumbCategory = null, tags = [], acti
   const { isEnabled: isAddonEnabled } = useShopFeatures();
   const affiliateEnabled = isAddonEnabled('affiliate');
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser, logout } = useSimpleAuth();
   const [affiliateData, setAffiliateData] = useState(null);
   const [showLoginDropdown, setShowLoginDropdown] = useState(false);
   
   // Calculate total items in cart
   const cartItemCount = cart.items.reduce((total, item) => total + item.quantity, 0);
+
+  // Curated top menu (admin-built via /admin/menu → storeIdentity.menu). When the
+  // shop has configured one, it REPLACES the auto-category/tag nav on every page.
+  // Guard on length > 0 (StoreSettingsContext keeps empty arrays), so shops with
+  // no menu fall back to today's behavior — zero regression.
+  const curatedMenu = Array.isArray(store.menu) ? store.menu.filter((m) => m && m.label) : [];
+  const hasCuratedMenu = curatedMenu.length > 0;
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+  // Unified list of {label, href, external} for the MOBILE dropdown. Curated menu
+  // wins; otherwise fall back to the category links (from the `tags` prop the home
+  // page passes). Always leads with Hem + Alla produkter so mobile users have a
+  // baseline nav on every page even when no menu/categories exist.
+  const mobileItems = hasCuratedMenu
+    ? curatedMenu.map((item) => ({ label: item.label, href: buildMenuHref(item), external: isExternalMenuItem(item) }))
+    : [
+        { label: t('nav_home', 'Hem'), href: getCountryAwareUrl(''), external: false },
+        { label: t('nav_all', 'Alla'), href: getCountryAwareUrl('produkter'), external: false },
+        ...tags.map((tag) => ({ label: tag, href: getCategoryUrl(tag), external: false })),
+      ];
 
   useEffect(() => {
     const fetchAffiliateData = async () => {
@@ -71,22 +94,69 @@ const ShopNavigation = ({ breadcrumb, breadcrumbCategory = null, tags = [], acti
       if (!event.target.closest('.login-dropdown')) {
         setShowLoginDropdown(false);
       }
+      if (!event.target.closest('.mobile-menu')) {
+        setShowMobileMenu(false);
+      }
     };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
+  // Close the mobile menu whenever the route changes — covers navigations that
+  // don't go through a menu <Link> (back button, logo, cart, programmatic).
+  useEffect(() => {
+    setShowMobileMenu(false);
+  }, [location.pathname]);
+
   return (
     <nav className="bg-canvas/85 backdrop-blur-md sticky top-0 z-50 font-body">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link to={getCountryAwareUrl('')} className="flex items-center">
-            <img src={store.logoUrl} alt={store.shopName} className="h-8 w-auto" />
-          </Link>
-          
-          {/* Center: tag links (storefront home) OR breadcrumb. Tag links
-              filter the product grid via onSelectTag (single tag). */}
-          {tags.length > 0 && onSelectTag ? (
+          <div className="flex items-center gap-1">
+            {/* Mobile hamburger — opens the nav dropdown (curated menu or
+                categories). Hidden on desktop where the center nav shows. */}
+            <button
+              type="button"
+              onClick={() => setShowMobileMenu((v) => !v)}
+              className="md:hidden p-2 -ml-2 text-ink/70 hover:text-ink transition-colors mobile-menu"
+              aria-label={t('nav_menu', 'Meny')}
+              aria-expanded={showMobileMenu}
+            >
+              {showMobileMenu ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
+            </button>
+            <Link to={getCountryAwareUrl('')} className="flex items-center">
+              <img src={store.logoUrl} alt={store.shopName} className="h-8 w-auto" />
+            </Link>
+          </div>
+
+          {/* Center: curated menu (admin-built) takes priority on EVERY page.
+              Else tag links (storefront home) OR breadcrumb. */}
+          {hasCuratedMenu ? (
+            <div className="hidden md:flex items-center gap-1 text-sm overflow-x-auto">
+              {curatedMenu.map((item, i) => {
+                const href = buildMenuHref(item);
+                return isExternalMenuItem(item) ? (
+                  <a
+                    key={i}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-full font-medium whitespace-nowrap text-ink-muted hover:text-ink transition-colors"
+                  >
+                    {item.label}
+                  </a>
+                ) : (
+                  <Link
+                    key={i}
+                    to={href}
+                    className="px-3 py-1.5 rounded-full font-medium whitespace-nowrap text-ink-muted hover:text-ink transition-colors"
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          ) : tags.length > 0 && onSelectTag ? (
             <div className="hidden md:flex items-center gap-1 text-sm overflow-x-auto">
               <button
                 onClick={() => onSelectTag(null)}
@@ -263,6 +333,38 @@ const ShopNavigation = ({ breadcrumb, breadcrumbCategory = null, tags = [], acti
           </div>
         </div>
       </div>
+
+      {/* Mobile menu dropdown — the curated menu (or category fallback) as a
+          vertical list. Only rendered on small screens (the button is md:hidden). */}
+      {showMobileMenu && (
+        <div className="md:hidden border-t border-ink/10 bg-canvas mobile-menu">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2">
+            {mobileItems.map((mi, i) =>
+              mi.external ? (
+                <a
+                  key={i}
+                  href={mi.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setShowMobileMenu(false)}
+                  className="block py-2.5 text-sm font-medium text-ink-muted hover:text-ink transition-colors"
+                >
+                  {mi.label}
+                </a>
+              ) : (
+                <Link
+                  key={i}
+                  to={mi.href}
+                  onClick={() => setShowMobileMenu(false)}
+                  className="block py-2.5 text-sm font-medium text-ink-muted hover:text-ink transition-colors"
+                >
+                  {mi.label}
+                </Link>
+              )
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

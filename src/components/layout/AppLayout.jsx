@@ -31,7 +31,9 @@ import {
   DocumentTextIcon,
   BuildingStorefrontIcon,
   TagIcon,
-  StarIcon
+  StarIcon,
+  RectangleStackIcon,
+  ListBulletIcon
 } from '@heroicons/react/24/outline';
 
 const AppLayout = ({ children }) => {
@@ -137,6 +139,18 @@ const AppLayout = ({ children }) => {
       path: '/admin/products',
       icon: CubeIcon,
       description: t('nav.admin_products_desc', 'Hantera produkter'),
+    },
+    {
+      name: t('nav.admin_collections', 'Samlingar'),
+      path: '/admin/collections',
+      icon: RectangleStackIcon,
+      description: t('nav.admin_collections_desc', 'Gruppera produkter (t.ex. per artist) för meny och startsida'),
+    },
+    {
+      name: t('nav.admin_menu', 'Meny'),
+      path: '/admin/menu',
+      icon: ListBulletIcon,
+      description: t('nav.admin_menu_desc', 'Bygg butikens toppmeny (samlingar, kategorier, sidor…)'),
     },
     {
       name: t('nav.admin_storefront', 'Butik'),

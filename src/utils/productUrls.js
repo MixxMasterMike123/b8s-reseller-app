@@ -151,6 +151,45 @@ export const getCategoryUrl = (category) => `${currentShopPrefix()}/kategori/${s
 // (Shopify's /collections/all equivalent): /{shopId}/produkter
 export const getAllProductsUrl = () => `${currentShopPrefix()}/produkter`;
 
+// Collection (curated group) browse URL — shop-prefixed. The handle is already a
+// slug (stored slugified), so DON'T re-slugify it. getCollectionUrl('eva-eastwood')
+// -> /{shopId}/samling/eva-eastwood
+export const getCollectionUrl = (handle) => `${currentShopPrefix()}/samling/${handle}`;
+
+// Tag browse URL — shop-prefixed. Tags are free-text; slugify for the URL. The
+// TagPage un-slugs by matching against the shop's real tags. getTagUrl('Nyhet')
+// -> /{shopId}/tagg/nyhet
+export const getTagUrl = (tag) => `${currentShopPrefix()}/tagg/${slugify(tag)}`;
+
+// Resolve a menu item ({ type, target }) to an href. Single source for the
+// storefront nav (ShopNavigation) so every menu link points at the right page.
+// - home         → the shop home (/{shopId})
+// - all-products → /{shopId}/produkter
+// - category     → /{shopId}/kategori/{slug}
+// - tag          → /{shopId}/tagg/{slug}
+// - collection   → /{shopId}/samling/{handle}
+// - page         → /{shopId}/{slug}  (CMS page; shop-prefixed via getCountryAwareUrl)
+// - url          → the raw target (external / absolute), used as-is
+export const buildMenuHref = (item) => {
+  if (!item || !item.type) return currentShopPrefix();
+  const target = item.target || '';
+  switch (item.type) {
+    case 'all-products': return getAllProductsUrl();
+    case 'category': return getCategoryUrl(target);
+    case 'tag': return getTagUrl(target);
+    case 'collection': return getCollectionUrl(target);
+    case 'page': return getCountryAwareUrl(target);
+    case 'url': return target || currentShopPrefix();
+    case 'home':
+    default: return getCountryAwareUrl('');
+  }
+};
+
+// Is a menu item an EXTERNAL link (raw url that leaves the SPA)? Used so the nav
+// renders it as a plain <a target=_blank> instead of a client-side <Link>.
+export const isExternalMenuItem = (item) =>
+  item?.type === 'url' && /^https?:\/\//i.test(item.target || '');
+
 
 /**
  * DYNAMIC SEO TITLE GENERATOR

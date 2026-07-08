@@ -101,6 +101,15 @@ service firebase.storage {
       allow read: if true;
     }
 
+    // Collection cover images (the "Populära samlingar" card photos), set via the
+    // admin Samlingar page. PARTITIONED by shopId. Public read so anonymous
+    // shoppers see them; write gated to the shop's own admin (or platform).
+    // Greenfield path — no legacy flat block.
+    match /collections/{shopId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdminOfShop(shopId);
+    }
+
     // POD print artwork (original + web preview) — PARTITIONED by shopId.
     // Read is GATED (NOT public, unlike product/branding images): print originals
     // are the seller's intellectual property and must not be world-readable. Read +

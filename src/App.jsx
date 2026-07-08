@@ -62,6 +62,9 @@ import AdminCustomerMarketingMaterials from './pages/admin/AdminCustomerMarketin
 import AdminCustomerMarketingMaterialEdit from './pages/admin/AdminCustomerMarketingMaterialEdit';
 import AdminPages from './pages/admin/AdminPages';
 import AdminPageEdit from './pages/admin/AdminPageEdit';
+import AdminCollections from './pages/admin/AdminCollections';
+import AdminCollectionEdit from './pages/admin/AdminCollectionEdit';
+import AdminMenu from './pages/admin/AdminMenu';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminPayments from './pages/admin/AdminPayments';
 import AdminMyTaxData from './pages/admin/AdminMyTaxData';
@@ -90,6 +93,8 @@ import VerifyEmailPage from './pages/shop/VerifyEmailPage';
 import EmailVerificationHandler from './pages/shop/EmailVerificationHandler';
 import ShopGate from './components/shop/ShopGate';
 import CollectionPage from './pages/shop/CollectionPage';
+import ProductCollectionPage from './pages/shop/ProductCollectionPage';
+import TagPage from './pages/shop/TagPage';
 import AllProductsPage from './pages/shop/AllProductsPage';
 import DynamicRouteHandler from './components/shop/DynamicRouteHandler';
 import { DEFAULT_SHOP_ID } from './config/tenancy';
@@ -384,6 +389,14 @@ function App() {
                   it matches before the CMS catch-all below. */}
               <Route path="/:shopId/kategori/:category" element={<ShopGate><CollectionPage /></ShopGate>} />
 
+              {/* Collection browse pages (curated groups: manual pick or smart
+                  tag-rule). Specific path — matches before the CMS catch-all. */}
+              <Route path="/:shopId/samling/:handle" element={<ShopGate><ProductCollectionPage /></ShopGate>} />
+
+              {/* Tag browse pages (products with a given tag). Specific path —
+                  matches before the CMS catch-all. */}
+              <Route path="/:shopId/tagg/:tag" element={<ShopGate><TagPage /></ShopGate>} />
+
               {/* Full-catalog browse page (Shopify's /collections/all). Where
                   "Visa alla produkter" lands when the frontpage is curated. */}
               <Route path="/:shopId/produkter" element={<ShopGate><AllProductsPage /></ShopGate>} />
@@ -519,6 +532,24 @@ function App() {
               <Route path="/admin/pages/:id" element={
                 <AdminRoute>
                   <AdminPageEdit />
+                </AdminRoute>
+              } />
+
+              <Route path="/admin/collections" element={
+                <AdminRoute>
+                  <AdminCollections />
+                </AdminRoute>
+              } />
+
+              <Route path="/admin/collections/:id" element={
+                <AdminRoute>
+                  <AdminCollectionEdit />
+                </AdminRoute>
+              } />
+
+              <Route path="/admin/menu" element={
+                <AdminRoute>
+                  <AdminMenu />
                 </AdminRoute>
               } />
 
