@@ -11,8 +11,11 @@ import {
   InlineSearch,
 } from '../../components/admin/ui';
 
-// NOTE: the `users` collection is GLOBAL (not shopId-scoped) by design — admin
-// accounts span the platform. Do NOT add shop scoping here.
+// This admin surface lists ADMIN users for the CURRENT shop. Scoping is done by
+// AuthContext.getAllUsers(): a shop admin sees only their own shop; a platform
+// operator IMPERSONATING a shop sees that shop (impersonation wins); a platform
+// admin NOT impersonating sees everyone. (Fixed a cross-shop leak: this page used
+// to show every shop's admins while impersonating — see getAllUsers.)
 const AdminUsers = () => {
   const { getAllUsers, updateUserRole, updateUserMarginal } = useAuth();
 

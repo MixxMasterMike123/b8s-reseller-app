@@ -23,7 +23,7 @@ import toast from 'react-hot-toast';
 import { onNewB2BCustomer } from '../wagons/dining-wagon/utils/customerStatusAutomation';
 import { useShopFeatures } from './ShopFeaturesContext';
 import { addAdminUID, removeAdminUID } from '../utils/adminUIDManager';
-import { clearImpersonation } from '../config/impersonation';
+import { clearImpersonation, getImpersonationShopId } from '../config/impersonation';
 import { setActiveShopId } from '../config/activeShop';
 
 const AuthContext = createContext();
@@ -369,10 +369,17 @@ export function AuthProvider({ children }) {
         // rules) is required — the hardened users read-rule denies cross-shop
         // docs, and Firestore rejects the whole getDocs() if any matched doc is
         // unreadable. (See docs/TENANT_ISOLATION_HARDENING_PLAN.md.)
+        //
+        // IMPERSONATION: a platform admin viewing a specific shop (impersonation
+        // session) must be scoped to THAT shop — otherwise this admin surface
+        // shows every shop's users (cross-shop leak). Impersonation wins over the
+        // caller's own platform flag; only a platform admin NOT impersonating
+        // lists everyone. This mirrors useShopId's resolution order.
+        const impersonatedShopId = getImpersonationShopId();
         const usersCollection = collection(db, 'users');
-        const usersQuery = (userData?.platform === true)
+        const usersQuery = (userData?.platform === true && !impersonatedShopId)
           ? usersCollection
-          : query(usersCollection, where('shopId', '==', userData?.shopId || null));
+          : query(usersCollection, where('shopId', '==', impersonatedShopId || userData?.shopId || null));
         const querySnapshot = await getDocs(usersQuery);
 
         const users = [];

@@ -119,10 +119,22 @@ const PlatformUsers = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {users.map((u) => {
+                {users.map((u, i) => {
                   const isSelf = u.uid === currentUser?.uid;
+                  // Group divider: rows are sorted platform-first, so the first
+                  // non-platform row starts the "shop admins" section. Makes the
+                  // two kinds read as distinct groups, not one mixed roster.
+                  const startsShopSection = !u.platform && (i === 0 || users[i - 1].platform);
                   return (
-                    <tr key={u.uid} className="text-gray-200">
+                    <React.Fragment key={u.uid}>
+                    {startsShopSection && (
+                      <tr className="bg-white/[0.02]">
+                        <td colSpan={4} className="px-4 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                          Butiksadmins (hanteras i respektive butik)
+                        </td>
+                      </tr>
+                    )}
+                    <tr className="text-gray-200">
                       <td className="px-4 py-3">
                         {u.email}
                         {isSelf && <span className="ml-2 text-xs text-gray-500">(du)</span>}
@@ -135,9 +147,9 @@ const PlatformUsers = () => {
                             Plattformsadmin
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-white/5 px-2 py-0.5 text-xs font-medium text-gray-300">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-300">
                             <BuildingStorefrontIcon className="h-3.5 w-3.5" />
-                            {u.shopId || 'butik'}
+                            Butiksadmin · {u.shopId || 'butik'}
                           </span>
                         )}
                       </td>
@@ -160,6 +172,7 @@ const PlatformUsers = () => {
                         </div>
                       </td>
                     </tr>
+                    </React.Fragment>
                   );
                 })}
               </tbody>
