@@ -52,18 +52,29 @@ const hasWebGL = () => {
   }
 };
 
-// Shared slider row (label · range · value).
-const Slider = ({ label, min, max, step, value, onChange, fmt = (v) => v }) => (
-  <label className="flex items-center gap-2 text-[12px] text-admin-text-muted">
-    <span className="w-28 shrink-0">{label}</span>
-    <input
-      type="range" min={min} max={max} step={step} value={value}
-      onChange={(e) => onChange(parseFloat(e.target.value))}
-      className="flex-1"
-    />
-    <span className="w-14 text-right tabular-nums text-admin-text">{fmt(value)}</span>
-  </label>
-);
+// Shared slider row — label + mono value on top, full-width styled track below
+// (matches the "Modernizing slider UI design" reference). PRESENTATION ONLY: the
+// control is still a native <input type="range"> with the SAME value/onChange;
+// `--s3d-fill` is derived from the existing value/min/max purely to paint the
+// filled portion of the track and adds no behaviour.
+const Slider = ({ label, min, max, step, value, onChange, fmt = (v) => v }) => {
+  const fillPct = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-baseline justify-between">
+        <span className="text-[13px] text-admin-text">{label}</span>
+        <span className="font-mono text-[12px] tabular-nums text-admin-text-muted">{fmt(value)}</span>
+      </div>
+      <input
+        type="range" min={min} max={max} step={step} value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        aria-label={label}
+        className="s3d-range"
+        style={{ '--s3d-fill': `${fillPct}%` }}
+      />
+    </div>
+  );
+};
 
 /**
  * Props:
@@ -209,53 +220,64 @@ const Studio3DSection = ({ artwork = null, placement = null, models = [] }) => {
           {!artwork?.previewUrl ? (
             <p className="text-[12px] text-admin-text-muted">Välj ett original för att se 3D-vyn.</p>
           ) : (
-            <>
-              <Suspense fallback={<div className="grid aspect-[4/5] max-w-[420px] place-items-center text-[12px] text-admin-text-muted">Laddar 3D-motorn…</div>}>
-                <DisplacementPreview
-                  ref={previewRef}
-                  garment={garment}
-                  viewId="front"
-                  colorwayId={effColorwayId}
-                  artworkUrl={artwork.previewUrl}
-                  placement={effectivePlacement}
-                  tuning={tuning}
-                  className="max-w-[420px]"
-                />
-              </Suspense>
-              {/* Model + colourway picker — the render-ready library models. The
-                  model <select> only appears with >1 model (a single model shows
-                  its label as static text); the colourway <select> only with >1
-                  render-ready colourway. Styled with the admin design tokens, to
-                  match the blend <select> below. */}
-              <div className="mt-3 flex max-w-[420px] flex-wrap items-center gap-3">
-                <img
-                  src={garment.views.front.colorways[effColorwayId]?.photoUrl}
-                  alt=""
-                  className="h-10 w-10 rounded object-cover"
-                />
-                <label className="flex items-center gap-2 text-[12px] text-admin-text-muted">
-                  <span className="shrink-0">Modell</span>
-                  {garments.length > 1 ? (
-                    <select
-                      value={garment.id}
-                      onChange={(e) => setModelId(e.target.value)}
-                      className="rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2 py-1 text-[12px] text-admin-text focus:border-admin-info-dot focus:outline-none"
-                    >
-                      {garments.map((g) => (
-                        <option key={g.id} value={g.id}>{g.label || g.id}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span className="text-admin-text">{garment.label || garment.id}</span>
-                  )}
-                </label>
+            /* Two-column layout: 2/3 canvas · 1/3 controls rail (desktop). The
+               larger canvas makes motif changes easier to read as you drag. On
+               narrow widths it stacks. */
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+              {/* Canvas — 2/3 */}
+              <div className="lg:col-span-2">
+                <Suspense fallback={<div className="grid aspect-[4/5] w-full place-items-center rounded-xl bg-admin-surface-2 text-[12px] text-admin-text-muted">Laddar 3D-motorn…</div>}>
+                  <DisplacementPreview
+                    ref={previewRef}
+                    garment={garment}
+                    viewId="front"
+                    colorwayId={effColorwayId}
+                    artworkUrl={artwork.previewUrl}
+                    placement={effectivePlacement}
+                    tuning={tuning}
+                    className="w-full"
+                  />
+                </Suspense>
+              </div>
+
+              {/* Controls rail — 1/3 */}
+              <div className="flex flex-col gap-5 rounded-xl border border-admin-border-soft bg-admin-surface p-4 lg:col-span-1">
+                {/* Model + colourway picker — the render-ready library models. The
+                    model <select> only appears with >1 model (a single model shows
+                    its label as static text); the colourway <select> only with >1
+                    render-ready colourway. */}
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[13px] font-medium text-admin-text-muted">Modell</span>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={garment.views.front.colorways[effColorwayId]?.photoUrl}
+                      alt=""
+                      className="h-7 w-7 rounded-lg object-cover"
+                    />
+                    {garments.length > 1 ? (
+                      <select
+                        value={garment.id}
+                        onChange={(e) => setModelId(e.target.value)}
+                        aria-label="Modell"
+                        className="rounded-[10px] border border-admin-border bg-admin-surface px-2.5 py-1.5 text-[13px] font-medium text-admin-text focus:border-admin-info-dot focus:outline-none"
+                      >
+                        {garments.map((g) => (
+                          <option key={g.id} value={g.id}>{g.label || g.id}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="text-[13px] font-medium text-admin-text">{garment.label || garment.id}</span>
+                    )}
+                  </div>
+                </div>
                 {colorwayIds.length > 1 && (
-                  <label className="flex items-center gap-2 text-[12px] text-admin-text-muted">
-                    <span className="shrink-0">Färgväg</span>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[13px] font-medium text-admin-text-muted">Färgväg</span>
                     <select
                       value={effColorwayId}
                       onChange={(e) => setColorwayId(e.target.value)}
-                      className="rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2 py-1 text-[12px] text-admin-text focus:border-admin-info-dot focus:outline-none"
+                      aria-label="Färgväg"
+                      className="rounded-[10px] border border-admin-border bg-admin-surface px-2.5 py-1.5 text-[13px] font-medium text-admin-text focus:border-admin-info-dot focus:outline-none"
                     >
                       {colorwayIds.map((cwId) => (
                         <option key={cwId} value={cwId}>
@@ -263,69 +285,85 @@ const Studio3DSection = ({ artwork = null, placement = null, models = [] }) => {
                         </option>
                       ))}
                     </select>
-                  </label>
+                  </div>
                 )}
-              </div>
-              {/* Placement sliders — the 3D view's OWN composition (product image
-                  only, never a print instruction). Then the tuning knobs. */}
-              <div className="mt-3 flex max-w-[420px] flex-col gap-2">
-                <Slider label="Bredd (cm)" min={5} max={30} step={0.5}
-                  value={effectivePlacement.wMm / 10}
-                  onChange={(v) => patchP3d({ wMm: v * 10 })}
-                  fmt={(v) => `${v} cm`} />
-                <Slider label="Vänster (cm)" min={0} max={30} step={0.5}
-                  value={effectivePlacement.xMm / 10}
-                  onChange={(v) => patchP3d({ xMm: v * 10 })}
-                  fmt={(v) => `${v} cm`} />
-                <Slider label="Uppifrån (cm)" min={0} max={40} step={0.5}
-                  value={effectivePlacement.yMm / 10}
-                  onChange={(v) => patchP3d({ yMm: v * 10 })}
-                  fmt={(v) => `${v} cm`} />
-                <Slider label="Rotation" min={-30} max={30} step={0.5}
-                  value={effectivePlacement.rotationDeg || 0}
-                  onChange={(v) => patchP3d({ rotationDeg: v })}
-                  fmt={(v) => `${v}°`} />
-                <div className="my-1 border-t border-admin-border-soft" />
-                <Slider label="Displacement" min={0} max={100} step={1}
-                  value={tuning.displacementScale}
-                  onChange={(v) => setTuning((t) => ({ ...t, displacementScale: v }))} />
-                <Slider label="Kontrast (karta)" min={0.5} max={4} step={0.1}
-                  value={tuning.displacementContrast}
-                  onChange={(v) => setTuning((t) => ({ ...t, displacementContrast: v }))}
-                  fmt={(v) => v.toFixed(1)} />
-                <Slider label="Opacitet" min={0} max={1} step={0.05}
-                  value={tuning.alpha}
-                  onChange={(v) => setTuning((t) => ({ ...t, alpha: v }))}
-                  fmt={(v) => v.toFixed(2)} />
-                <label className="flex items-center gap-2 text-[12px] text-admin-text-muted">
-                  <span className="w-28 shrink-0">Blend</span>
-                  <select
-                    value={tuning.blend}
-                    onChange={(e) => setTuning((t) => ({ ...t, blend: e.target.value }))}
-                    className="rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-2 py-1 text-[12px] text-admin-text focus:border-admin-info-dot focus:outline-none"
+
+                {/* PLACERING section */}
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-admin-text-faint">Placering</span>
+                  <span className="h-px flex-1 bg-admin-border-soft" />
+                </div>
+                {/* Placement sliders — the 3D view's OWN composition (product image
+                    only, never a print instruction). */}
+                <div className="flex flex-col gap-4">
+                  <Slider label="Bredd" min={5} max={30} step={0.5}
+                    value={effectivePlacement.wMm / 10}
+                    onChange={(v) => patchP3d({ wMm: v * 10 })}
+                    fmt={(v) => `${v} cm`} />
+                  <Slider label="Vänster" min={0} max={30} step={0.5}
+                    value={effectivePlacement.xMm / 10}
+                    onChange={(v) => patchP3d({ xMm: v * 10 })}
+                    fmt={(v) => `${v} cm`} />
+                  <Slider label="Uppifrån" min={0} max={40} step={0.5}
+                    value={effectivePlacement.yMm / 10}
+                    onChange={(v) => patchP3d({ yMm: v * 10 })}
+                    fmt={(v) => `${v} cm`} />
+                  <Slider label="Rotation" min={-30} max={30} step={0.5}
+                    value={effectivePlacement.rotationDeg || 0}
+                    onChange={(v) => patchP3d({ rotationDeg: v })}
+                    fmt={(v) => `${v}°`} />
+                </div>
+
+                {/* UTSEENDE section */}
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-admin-text-faint">Utseende</span>
+                  <span className="h-px flex-1 bg-admin-border-soft" />
+                </div>
+                <div className="flex flex-col gap-4">
+                  <Slider label="Displacement" min={0} max={100} step={1}
+                    value={tuning.displacementScale}
+                    onChange={(v) => setTuning((t) => ({ ...t, displacementScale: v }))} />
+                  <Slider label="Kontrast (karta)" min={0.5} max={4} step={0.1}
+                    value={tuning.displacementContrast}
+                    onChange={(v) => setTuning((t) => ({ ...t, displacementContrast: v }))}
+                    fmt={(v) => v.toFixed(1)} />
+                  <Slider label="Opacitet" min={0} max={1} step={0.05}
+                    value={tuning.alpha}
+                    onChange={(v) => setTuning((t) => ({ ...t, alpha: v }))}
+                    fmt={(v) => v.toFixed(2)} />
+                  <div className="flex items-center justify-between gap-3 pt-0.5">
+                    <span className="text-[13px] text-admin-text">Blend</span>
+                    <select
+                      value={tuning.blend}
+                      onChange={(e) => setTuning((t) => ({ ...t, blend: e.target.value }))}
+                      aria-label="Blend"
+                      className="min-w-[120px] rounded-[10px] border border-admin-border bg-admin-surface px-2.5 py-1.5 text-[13px] text-admin-text focus:border-admin-info-dot focus:outline-none"
+                    >
+                      <option value="multiply">multiply</option>
+                      <option value="screen">screen</option>
+                      <option value="overlay">overlay</option>
+                      <option value="normal">normal</option>
+                      <option value="add">add</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Download — full-width dark button, per reference */}
+                <div className="mt-1 border-t border-admin-border-soft pt-4">
+                  <button
+                    type="button"
+                    onClick={downloadPNG}
+                    disabled={busy}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-admin-text px-4 py-3 text-[14px] font-medium text-admin-surface transition-shadow hover:shadow-lg disabled:opacity-40"
                   >
-                    <option value="multiply">multiply</option>
-                    <option value="screen">screen</option>
-                    <option value="overlay">overlay</option>
-                    <option value="normal">normal</option>
-                    <option value="add">add</option>
-                  </select>
-                </label>
+                    {busy ? 'Skapar…' : 'Ladda ner 3D-bild (PNG)'}
+                  </button>
+                  <p className="mt-3 text-[12px] leading-relaxed text-admin-text-faint">
+                    Position, storlek och rotation styrs med reglagen ovan (påverkar bara produktbilden, inte trycket).
+                  </p>
+                </div>
               </div>
-              <div className="mt-2 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={downloadPNG}
-                  disabled={busy}
-                  className="rounded-[var(--radius-admin-el)] border border-admin-border px-2.5 py-1 text-[12px] text-admin-text hover:bg-admin-surface-2 disabled:opacity-40"
-                >
-                  {busy ? 'Skapar…' : 'Ladda ner 3D-bild (PNG)'}
-                </button>
-                <span className="text-[11px] text-admin-text-faint">
-                  Position/storlek/rotation styrs i placerings-vyn ovanför.
-                </span>
-              </div>
-            </>
+            </div>
           )}
         </div>
       )}
