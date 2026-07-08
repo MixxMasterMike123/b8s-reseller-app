@@ -33,7 +33,36 @@ const ShopFooter = () => {
   const affiliateEnabled = isAddonEnabled('affiliate');
   const [isActiveAffiliate, setIsActiveAffiliate] = useState(false);
   const [affiliateCheckLoading, setAffiliateCheckLoading] = useState(false);
+  const [cmsPages, setCmsPages] = useState([]);
   const currentYear = new Date().getFullYear();
+
+  // Published CMS pages (Kontakta oss, FAQ, etc.) → footer links. Auto-listed:
+  // publish a page in admin and it appears here. ponytail: no per-link curation —
+  // control the footer by controlling what you publish.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const snap = await getDocs(query(
+          collection(db, 'pages'),
+          where('shopId', '==', shopId),
+          where('status', '==', 'published')
+        ));
+        if (cancelled) return;
+        const pageTitle = (tt) => (typeof tt === 'string' ? tt : (tt?.['sv-SE'] || Object.values(tt || {}).find((v) => typeof v === 'string') || ''));
+        setCmsPages(
+          snap.docs
+            .map((d) => ({ slug: d.data().slug, title: pageTitle(d.data().title) }))
+            .filter((p) => p.slug && p.title)
+            .sort((a, b) => a.title.localeCompare(b.title, 'sv'))
+        );
+      } catch (e) {
+        console.error('ShopFooter: could not load CMS pages:', e?.message);
+        if (!cancelled) setCmsPages([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [shopId]);
 
   // Check if current user is an active affiliate
   useEffect(() => {
@@ -122,6 +151,14 @@ const ShopFooter = () => {
           <div>
             <h3 className="font-display text-lg font-bold mb-4 tracking-tight">{t('footer_customer_service', 'Kundservice & Info')}</h3>
             <ul className="space-y-2 text-sm">
+              {/* Published CMS pages (Kontakta oss, FAQ, …) — auto-listed. */}
+              {cmsPages.map((p) => (
+                <li key={p.slug}>
+                  <Link to={getCountryAwareUrl(p.slug)} className="text-white/70 hover:text-white transition-colors">
+                    {p.title}
+                  </Link>
+                </li>
+              ))}
               {/* NOTE: no Leveransinformation link — there is no such route, and
                   the old ShippingInfo page was hardcoded to another company's
                   details. Delivery terms live in köpvillkor §5; a shop that wants
