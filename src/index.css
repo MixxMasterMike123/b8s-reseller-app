@@ -193,18 +193,14 @@
 }
 
 /*
-  NORD product grid — desktop column count driven by the --nord-grid-cols
-  template token (3 | 4; default 4 = current NORD). Mobile (1) and tablet (2)
-  steps stay fixed for readability. Replaces a hardcoded `lg:grid-cols-4` on the
-  customer-facing product listings so a template can restructure the grid
-  without touching component JSX. Below `lg` this utility does nothing, so the
-  existing `grid-cols-1 sm:grid-cols-2` classes still own the small breakpoints.
+  NORD product grid — the desktop column count is driven by the template's
+  `gridCols` token, but applied via a STATIC Tailwind class chosen in JS (see
+  nordGridClass in src/config/nordTokens.js), NOT a custom @utility. An earlier
+  @utility approach lost the cascade to `sm:grid-cols-2` at desktop (both media
+  queries active → later source order won → 2 columns), so the storefront grid
+  silently dropped to 2-col. Using the real Tailwind grid-cols utilities avoids
+  that entirely.
 */
-@utility nord-grid {
-  @variant lg {
-    grid-template-columns: repeat(var(--nord-grid-cols, 4), minmax(0, 1fr));
-  }
-}
 
 @layer utilities {
   /* Simple modal isolation */

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from '
 import { STORE } from '../config/store';
 import { loadShopConfig } from '../config/shopConfig';
 import { useShopId } from './ShopContext';
-import { resolveTheme, ensureTemplateFonts } from '../config/nordTokens';
+import { resolveTheme, ensureTemplateFonts, nordGridClass } from '../config/nordTokens';
 import { getTemplate } from '../config/templates';
 
 /**
@@ -150,7 +150,14 @@ export function StoreSettingsProvider({ children }) {
   // (hero, product card) can read them without re-resolving the theme. Prefixed
   // with __ so they can't collide with a saved config field.
   const value = useMemo(
-    () => ({ ...settings, __heroStyle: resolved.heroStyle, __cardStyle: resolved.cardStyle }),
+    () => ({
+      ...settings,
+      __heroStyle: resolved.heroStyle,
+      __cardStyle: resolved.cardStyle,
+      // Full static Tailwind grid class for the template's column count. The
+      // storefront product grids use this instead of a hardcoded lg:grid-cols-4.
+      __gridClass: nordGridClass(resolved.gridCols),
+    }),
     [settings, resolved]
   );
 

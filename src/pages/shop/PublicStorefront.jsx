@@ -710,8 +710,9 @@ const PublicStorefront = () => {
           ) : (
             <>
               {/* One product = one card (v2: variants are embedded on the
-                  product; selection happens on the product page). */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 nord-grid gap-4 items-stretch">
+                  product; selection happens on the product page). Grid columns
+                  follow the active template (store.__gridClass). */}
+              <div className={store.__gridClass}>
                 {displayCards.map((product) => {
                   // 🚨 CRITICAL: never render an object — prevent React Error #31
                   const productName = getContentValue(product.name);

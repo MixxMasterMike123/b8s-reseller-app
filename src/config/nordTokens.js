@@ -131,11 +131,29 @@ export const TOKEN_CSS_VAR = {
   'shape.rTile': '--radius-tile',
   'shape.rEl': '--radius-el',
   'motion.ease': '--ease-nord',
-  'layout.gridCols': '--nord-grid-cols',
-  // density + heroStyle are NOT single CSS vars: density expands to several
-  // spacing vars (see DENSITY_VARS), heroStyle switches a layout branch in the
-  // hero component. Handled specially in applyThemeTokens.
+  // gridCols is NOT a CSS var — it maps to a static Tailwind class via
+  // nordGridClass() (a custom @utility lost the cascade to sm:grid-cols-2).
+  // density + heroStyle + cardStyle are also not single CSS vars: density
+  // expands to several spacing vars (DENSITY_VARS); heroStyle/cardStyle switch
+  // a component branch. All handled specially in resolveTheme.
 };
+
+/**
+ * Static Tailwind grid class for a template's desktop column count. Returns a
+ * COMPLETE class string (no dynamic construction) so Tailwind's scanner keeps
+ * these utilities in the build. Mobile (1) + tablet (2) steps are fixed for
+ * readability; only the `lg:` desktop count varies with the template.
+ * Falls back to 4 for anything unexpected.
+ */
+export function nordGridClass(gridCols) {
+  switch (gridCols) {
+    case 3:
+      return 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch';
+    case 4:
+    default:
+      return 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch';
+  }
+}
 
 /**
  * Density → concrete spacing values. Applied as CSS vars the storefront
@@ -242,5 +260,9 @@ export function resolveTheme(template) {
     ? merged.layout.cardStyle
     : NORD_TOKENS.layout.cardStyle;
 
-  return { vars, heroStyle, cardStyle };
+  const gridCols = TOKEN_ENUMS['layout.gridCols'].includes(merged.layout.gridCols)
+    ? merged.layout.gridCols
+    : NORD_TOKENS.layout.gridCols;
+
+  return { vars, heroStyle, cardStyle, gridCols };
 }
