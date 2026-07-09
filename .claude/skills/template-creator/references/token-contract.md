@@ -42,9 +42,12 @@ So there is no point setting anything not listed here.
     ease: 'cubic-bezier(...)'  // transition easing. ease-OUT curves only; no bounce.
   },
   layout: {
-    gridCols:  4,           // desktop product-grid columns.  ENUM: 3 | 4
+    gridStyle: 'grid-4',    // PRODUCT-GRID layout — the PRIMARY grid axis.
+                            //   ENUM: 'grid-3'|'grid-4'|'grid-5'|'mosaic'|'offset'|'runway'
+    gridCols:  4,           // LEGACY alias for column count. ENUM: 3 | 4.
+                            //   Superseded by gridStyle; kept for back-compat only.
     density:   'cozy',      // section rhythm.  ENUM: 'compact' | 'cozy' | 'airy'
-    heroStyle: 'bento',     // homepage hero.   ENUM: 'bento' | 'full' | 'split' | 'editorial'
+    heroStyle: 'bento',     // homepage hero.   ENUM: 'bento' | 'editorial'
     cardStyle: 'elevated'   // PRODUCT-CARD design. ENUM: 'elevated' | 'flat' | 'bordered' | 'overlay'
   }
 }
@@ -66,7 +69,8 @@ fonts.body        'Instrument Sans', ...
 shape.rTile       22px
 shape.rEl         14px
 motion.ease       cubic-bezier(0.22, 1, 0.36, 1)
-layout.gridCols   4
+layout.gridStyle  grid-4
+layout.gridCols   4          (legacy alias — grid-4 equivalent)
 layout.density    cozy
 layout.heroStyle  bento
 layout.cardStyle  elevated
@@ -91,6 +95,32 @@ anything else to make two templates feel different. Vary it deliberately:
 Pick the cardStyle that matches the brief's register, and make sure it's NOT the
 same as an existing template's unless the whole look genuinely calls for it.
 
+## gridStyle notes (the PRIMARY grid axis — use this, not gridCols)
+
+`layout.gridStyle` is the real product-grid lever and the highest-impact
+STRUCTURAL choice after cardStyle. It's not just a column count — the non-uniform
+values change the grid's SHAPE, which is what stops two templates from reading as
+the same page recolored. Each value maps to a pre-authored layout recipe
+(`nordGridLayout` in nordTokens.js); it can't be a free integer because Tailwind
+purges dynamically-built classes. ENUM: `grid-3 | grid-4 | grid-5 | mosaic |
+offset | runway`.
+
+- `grid-3` — uniform 3-col at desktop. Roomy, boutique/premium.
+- `grid-4` — uniform 4-col. The NORD default (no-op).
+- `grid-5` — uniform 5-col. Dense/retail; lots of SKUs per screen.
+- `mosaic` — mixed cell spans; the first card spans 2 cols (a "hero product").
+  Editorial. Pairs well with `overlay` cards.
+- `offset` — brick-bond; alternating desktop columns nudged down half a cell.
+  Uniform cells, staggered rhythm — subtle-distinct.
+- `runway` — one horizontal-scroll row, no wrap (a lookbook/catwalk). Fashion/drop.
+
+`layout.gridCols` (3 | 4) is a **legacy alias** kept only for back-compat: a
+template that sets just `gridCols: 3` is mapped to `grid-3` at runtime, and
+`gridStyle` wins if both are present. **Prefer setting `gridStyle` directly** — it
+covers everything gridCols did plus the four expressive shapes. Vary it
+deliberately per template; leaving it at `grid-4` for every template wastes the
+strongest structural lever after cardStyle.
+
 ## heroStyle notes
 
 - `bento` — the default NORD signature hero (image/accent-gradient bento tile +
@@ -99,14 +129,17 @@ same as an existing template's unless the whole look genuinely calls for it.
 - `editorial` — implemented (the Sport template uses it): light surface card,
   big blocky uppercase headline, an OPTIONAL faint graphic mark (only shown when
   the shop sets `heroMark`), accent CTA. Good for bold/branded looks.
-- `full`, `split` — reserved in the enum but **not yet implemented** in the hero
-  component. ⚠️ TRAP: `TOKEN_ENUMS` still lists them, so `resolveTheme` accepts
-  `heroStyle:'split'` as "valid" and the enum-validation will NOT catch it — but
-  the hero component has no branch for it, so it silently renders `bento`. So a
-  template that sets `full`/`split` builds green and looks broken-ish (bento
-  where you expected something else). If a direction needs one, you MUST first
-  implement its branch in `src/pages/shop/PublicStorefront.jsx` (SKILL.md step 6);
-  otherwise use `bento` or `editorial`, the two that actually render.
+
+`bento` and `editorial` are **the only two values in the enum** — the older
+`full`/`split` names were trimmed out of `TOKEN_ENUMS['layout.heroStyle']`, so
+they no longer pass validation. If you set `heroStyle:'split'` now, `resolveTheme`
+sees it's not in the enum and **falls back to `bento`** (the enum check catches it
+— no silent look-alike bug, just a bento hero where you may have wanted something
+else). So there are exactly two heroStyles you can pick from. If a direction truly
+needs a third hero treatment, that's the one sanctioned component change: implement
+its branch in `src/pages/shop/PublicStorefront.jsx` AND add its name to
+`TOKEN_ENUMS['layout.heroStyle']` in nordTokens.js (SKILL.md step 6) — until both
+are done, the value is dropped back to bento.
 
 ## Canvas temperature rule (the #1 slop check — make it numeric)
 

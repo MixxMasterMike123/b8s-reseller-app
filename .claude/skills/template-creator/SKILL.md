@@ -54,12 +54,17 @@ not just color/type:
   what makes a template read as genuinely different. **Do not leave this at the
   default `elevated` unless the brief truly is warm-premium-calm.** Pick the
   variant that fits the register, and avoid reusing another template's cardStyle.
-- `layout.gridCols` and `layout.density` — vary the grid and rhythm too.
+- `layout.gridStyle` — the PRIMARY grid axis and the highest-impact structural
+  lever after cardStyle. It's not just a column count: `mosaic`/`offset`/`runway`
+  change the grid's SHAPE (`grid-3`/`grid-4`/`grid-5` are uniform N-col). Vary it
+  deliberately; don't leave it at `grid-4`. (`layout.gridCols` 3|4 is only a
+  legacy alias for column count — set `gridStyle`, not gridCols.)
+- `layout.density` — vary the section rhythm too.
 - `layout.heroStyle` — bento vs editorial is a big structural difference; use it.
 
 When you present directions in step 4, if two of your directions differ only in
-color/font, that's a red flag — push them apart on cardStyle/grid/hero. A good
-set of directions looks structurally distinct at a glance, not just re-tinted.
+color/font, that's a red flag — push them apart on cardStyle/gridStyle/hero. A
+good set of directions looks structurally distinct at a glance, not just re-tinted.
 
 ## When reference images are provided
 
@@ -73,6 +78,27 @@ output is still a clean NORD_TOKENS partial rendered by our components.
 into tokens without slop.
 
 ## Workflow
+
+### 0. Preflight — trust the code, not this doc (mandatory)
+
+This skill's reference docs drift behind the code (they have before). Before you
+author anything, open `src/config/nordTokens.js` and diff its live `TOKEN_ENUMS`
+and `NORD_TOKENS` shape against what `references/token-contract.md` claims — enum
+members, default values, the `layout` keys. On ANY mismatch the CODE wins; author
+against the code. If you find a divergence, fix the reference doc as part of this
+template's PR so the next run starts clean. (Concrete tells this matters: the grid
+axis is `layout.gridStyle`, not just `gridCols`; `heroStyle` is only
+`['bento','editorial']`.)
+
+Two skills shape HOW you build here — load them at the start and keep them on:
+- **`impeccable`** — the design-quality / anti-AI-slop rulebook. Load and follow
+  it when authoring the previews (step 4) and the final template. An impeccable
+  design hook also scans edits; treat anything it flags as required review, not
+  advisory.
+- **`ponytail`** — laziest-solution-that-works thinking. A template is TOKENS
+  ONLY. Resist inventing new mechanisms, components, or CSS: if a combination of
+  existing tokens achieves the look, that IS the solution. Reaching for bespoke
+  code is the failure mode this whole skill guards against.
 
 ### 1. Understand the brief
 
@@ -115,8 +141,13 @@ mockups (this harness has no image generation, so HTML previews are the
 substitute). Each preview:
 - Defines the template's token values as `:root` CSS custom properties using the
   EXACT contract variable names (`--color-accent`, `--font-display`,
-  `--radius-tile`, `--nord-grid-cols`, etc.) so the doc doubles as the token
-  spec you'll transcribe in step 5.
+  `--radius-tile`, etc. — see `TOKEN_CSS_VAR` in nordTokens.js for the full map)
+  so the doc doubles as the token spec you'll transcribe in step 5. Note the grid
+  is NOT a CSS var: `resolveTheme` no longer emits `--nord-grid-cols`. `gridStyle`
+  is class-based — StoreSettingsContext runs `nordGridLayout(gridStyle)` into
+  `store.__grid` ({ container, cellClass }) and the storefront pages apply those
+  Tailwind classes. So in a preview, express the grid with the container/cell
+  classes from `nordGridLayout`, not a CSS variable.
 - Renders a realistic storefront slice: nav, hero (in the direction's heroStyle),
   a product grid, one supporting band, footer. Real copy in the shop's language,
   real product-ish names — never "Product 1".
@@ -147,11 +178,12 @@ output; skipping it wastes the whole run.
 Transcribe the chosen direction's tokens into a `templates.js` entry — a partial
 of NORD_TOKENS. Only include keys that *differ* from NORD (omitted keys inherit
 the default; a leaner partial is clearer and safer). Validate every structural
-value against `TOKEN_ENUMS` (gridCols ∈ {3,4}, density ∈ {compact,cozy,airy}).
-For `heroStyle`, only **`bento` and `editorial` actually render today** — the
-enum also lists `full`/`split` but they silently fall back to bento (see the
-trap in token-contract.md). So pick bento or editorial unless you're prepared to
-implement a new hero variant below.
+value against `TOKEN_ENUMS` (gridStyle ∈ {grid-3,grid-4,grid-5,mosaic,offset,
+runway}, density ∈ {compact,cozy,airy}). Set `layout.gridStyle` — it's the real
+grid axis; `gridCols` (3|4) is only a legacy alias. For `heroStyle` the enum is
+now exactly **`['bento','editorial']`** — anything else (e.g. the old
+`full`/`split`) is not valid and `resolveTheme` drops it back to bento. So pick
+bento or editorial unless you're prepared to implement a new hero variant below.
 
 - If the winning hero uses `bento` or `editorial`, you're done here — just set
   `layout.heroStyle`.
@@ -162,8 +194,17 @@ implement a new hero variant below.
   other templates are untouched. Prefer reusing an existing heroStyle when it
   fits — new hero variants are real work and a maintenance surface.
 
-If the template swaps fonts, add the Google Fonts families to the entry's
-`fonts` array (the exact `family=` css2 form) so they load on demand.
+If the template swaps fonts, add the Google Fonts families to the entry's `fonts`
+array. **`fonts` is a TOP-LEVEL entry field — a sibling of `tokens`, NOT nested
+inside it** (`{ id, name, tagline, thumb, tokens: {…}, fonts: [...] }`). Each item
+must be an exact Google Fonts css2 `family=` value: the family with `+` for
+spaces and any axis suffix — e.g. `'Archivo+Black'`, `'Oswald:wght@500;600;700'`,
+`'Archivo:ital,wght@0,400;0,700;1,600'`. `ensureTemplateFonts()` injects these as
+a `<link>` at runtime. This array is the ONLY thing that loads the webfont: if
+`tokens.fonts.display` names a family that isn't in this array, the font never
+loads and the display face silently falls back to system fonts (a common, easy-to-
+miss break). So every non-NORD face in `tokens.fonts` MUST have a matching entry
+in `fonts`.
 
 **Registering the entry** (hand-edit `src/config/templates.js`, matching the
 existing entries' shape exactly):
@@ -176,12 +217,16 @@ used before adding.
 
 ### 7. Render the thumbnail + register in the picker
 
-Run `scripts/render-thumbnail.mjs <templateId>` — it resolves the template's real
-tokens, renders a 16:10 storefront preview, and writes
-`public/template-thumbs/<templateId>.png` (the image the admin picker shows).
-Set the entry's `thumb` to that path. The picker auto-lists everything in
-`TEMPLATES`, so no picker code changes are needed — adding the entry + thumbnail
-is the whole registration.
+Run `scripts/render-thumbnail.mjs <templateId>` (from the repo root — it resolves
+paths off cwd) — it resolves the template's real tokens (honoring its cardStyle +
+gridStyle), writes the 16:10 preview HTML to a temp file, and prints the exact
+`browse` commands to screenshot it to `public/template-thumbs/<templateId>.png`
+(the image the admin picker shows). Run those printed commands, then delete the
+temp HTML and set the entry's `thumb` to that path. Rendering needs the gstack
+`browse` binary (`~/.claude/skills/gstack/browse`); on a machine without it,
+render the temp HTML by any other means and screenshot it at 640×400. The picker
+auto-lists everything in `TEMPLATES`, so no picker code changes are needed —
+adding the entry + thumbnail is the whole registration.
 
 ### 8. Verify
 

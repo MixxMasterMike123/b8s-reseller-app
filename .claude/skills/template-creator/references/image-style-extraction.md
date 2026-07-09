@@ -44,13 +44,22 @@ temperature and saturation.
 ### 4. Density & rhythm → layout tokens
 - Is the reference **dense and packed** (lots per screen, editorial/retail energy)
   or **airy and spacious** (few elements, luxury/calm)? → `density`
-  (compact/cozy/airy) and `gridCols` (4 for dense, 3 for roomy).
+  (compact/cozy/airy).
+- Then read the grid SHAPE and map it to `gridStyle` (the PRIMARY grid axis — set
+  this, not the legacy `gridCols`):
+  - Uniform tidy grid, roomy → `grid-3`; standard → `grid-4`; packed/retail → `grid-5`.
+  - One image dominates the grid, editorial magazine energy → `mosaic`.
+  - Staggered/brick-bond, offset rows → `offset`.
+  - A single horizontal filmstrip / lookbook / catwalk row → `runway`.
+  Only fall back to `gridCols` (3 | 4) if the brief is genuinely just "how many
+  columns" — `gridStyle` covers that plus the expressive shapes.
 
 ### 5. Mood → heroStyle
 - Bold/graphic/branded, big type as the hero → `editorial`.
 - Photographic, image-led, warm → `bento` (the default; carries a hero photo well).
-- (If it clearly needs `full`/`split`, remember those aren't implemented yet —
-  see token-contract.md — so either use bento/editorial or plan the hero work.)
+- These are the only two heroStyles in the enum; anything else falls back to
+  `bento` (see token-contract.md). If the image clearly needs a third treatment,
+  either use bento/editorial or plan the hero-component work.
 
 ## Multiple images
 
