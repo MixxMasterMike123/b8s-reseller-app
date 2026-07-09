@@ -97,7 +97,7 @@ export const NORD_TOKENS = {
     density: 'cozy',            // 'compact' | 'cozy' | 'airy'
     // Homepage hero treatment. 'bento' is the signature NORD layout; the
     // others are template variants (implemented incrementally on the hero).
-    heroStyle: 'bento',         // 'bento' | 'full' | 'split' | 'editorial'
+    heroStyle: 'bento',         // 'bento' | 'editorial'  (only these two are implemented)
     // Product-CARD design. This is what makes two templates genuinely differ —
     // not just color/font but the card shape itself. 'elevated' is the NORD
     // default (white module + soft shadow + hover lift). Others:
@@ -120,7 +120,7 @@ export const TOKEN_ENUMS = {
   'layout.gridCols': [3, 4],
   'layout.gridStyle': ['grid-3', 'grid-4', 'grid-5', 'mosaic', 'offset', 'runway'],
   'layout.density': ['compact', 'cozy', 'airy'],
-  'layout.heroStyle': ['bento', 'full', 'split', 'editorial'],
+  'layout.heroStyle': ['bento', 'editorial'],
   'layout.cardStyle': ['elevated', 'flat', 'bordered', 'overlay'],
 };
 
@@ -268,7 +268,7 @@ export function ensureTemplateFonts(families) {
  * flat { cssVar → value } map plus the special density/hero handling.
  *
  * `template` shape is a partial of NORD_TOKENS, e.g.
- *   { colors: { accent: '#2B50E2' }, layout: { gridCols: 3, heroStyle: 'split' } }
+ *   { colors: { accent: '#2B50E2' }, layout: { gridCols: 3, heroStyle: 'editorial' } }
  * Unknown/omitted keys fall back to NORD defaults. Invalid enum values are
  * dropped (fall back to default) rather than applied — defensive against a
  * malformed generated template.

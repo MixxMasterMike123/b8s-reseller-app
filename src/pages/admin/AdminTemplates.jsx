@@ -138,7 +138,9 @@ const AdminTemplates = () => {
         if (form[k] !== undefined) acc[k] = form[k];
         return acc;
       }, {});
-      await saveShopConfig(patch, shopId);
+      // replaceTheme: this editor CLEARS theme keys (accent, layout overrides);
+      // a plain merge-save would let cleared keys resurrect on reload.
+      await saveShopConfig(patch, shopId, { replaceTheme: true });
       toast.success('Mall sparad.');
     } catch (e) {
       console.error('Error saving template config:', e);

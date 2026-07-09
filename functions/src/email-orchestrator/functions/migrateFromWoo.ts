@@ -27,7 +27,7 @@ interface WooImage { src: string; }
 interface WooTerm { name: string; }
 interface WooAttribute { name: string; has_variations: boolean; terms: WooTerm[]; }
 interface WooCategory { name: string; }
-interface WooPrices { price: string; regular_price?: string; currency_minor_unit: number; currency_code?: string; }
+interface WooPrices { price: string; regular_price?: string; currency_minor_unit: number; currency_code?: string; price_range?: { min_amount?: string; max_amount?: string } | null; }
 interface WooProduct {
   id: number;
   name: string;
@@ -180,6 +180,22 @@ export const migrateFromWoo = onCall<MigrateWooRequest>(
        try {
         const name = decodeEntities((wp.name || '').trim());
         if (!name) { skipped.push('(namnlös produkt)'); done++; continue; }
+
+        // MISPRICING GUARD: a variable product whose variations span a real price
+        // RANGE (Store API prices.price is the MIN of the range) can't be imported
+        // honestly — our rail model carries per-GROUP not per-SIZE prices, so every
+        // size would inherit the single min price and undersell. Detect the spread
+        // (price_range present AND min !== max; unparseable → treated as no-spread so
+        // normal products are unaffected) and skip with a reason instead of creating
+        // a mispriced product. Per-variation price fetch is a v2 improvement.
+        const range = wp.prices?.price_range;
+        const rMin = Number(range?.min_amount);
+        const rMax = Number(range?.max_amount);
+        if (wp.type === 'variable' && range && Number.isFinite(rMin) && Number.isFinite(rMax) && rMin !== rMax) {
+          skipped.push(`${name} (storleksberoende priser — importera manuellt)`);
+          done++;
+          continue;
+        }
 
         // RESUMABILITY: skip already-imported (by Woo product id) or a taken base sku.
         const wooKey = `id-${wp.id}`;

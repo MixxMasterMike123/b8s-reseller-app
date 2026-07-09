@@ -8,7 +8,7 @@
 // upcoming AdminStorefront) goes through loadShopConfig / saveShopConfig so
 // the tenancy migration is a one-file change.
 
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { DEFAULT_SHOP_ID } from './tenancy';
 
@@ -76,7 +76,7 @@ export const loadShopFeatures = async (shopId) => {
 //    the shared settings/app doc — that would clobber the default shop's config
 //    with another tenant's data (cross-tenant data loss). The storefront reads
 //    the same shops/{shopId} for non-default shops, so the round-trip matches.
-export const saveShopConfig = async (patch, shopId) => {
+export const saveShopConfig = async (patch, shopId, { replaceTheme = false } = {}) => {
   const id = shopId || DEFAULT_SHOP_ID;
   let ref;
   if (id === DEFAULT_SHOP_ID) {
@@ -91,6 +91,19 @@ export const saveShopConfig = async (patch, shopId) => {
     { storeIdentity: patch, updatedAt: new Date().toISOString() },
     { merge: true }
   );
+  // replaceTheme: Firestore's merge deep-merges maps, so a theme key the Mallar
+  // editor CLEARED (accent removed, a layout override reset) is not in `patch`
+  // and survives server-side — it resurrects on reload. The editor that CLEARS
+  // keys opts into a follow-up dotted-path updateDoc that replaces
+  // storeIdentity.theme wholesale so removed keys actually delete (the merge
+  // write above guarantees the doc exists; the dotted path touches only that
+  // one map — sibling storeIdentity keys are untouched). OPT-IN because pages
+  // that merely round-trip a theme they loaded earlier (AdminStorefront,
+  // AdminSettings) must keep merge semantics — replace would let a stale tab
+  // delete keys another editor added since load.
+  if (replaceTheme && Object.prototype.hasOwnProperty.call(patch, 'theme')) {
+    await updateDoc(ref, { 'storeIdentity.theme': patch.theme });
+  }
   // The doc now exists — invalidate the probe cache so a subsequent
   // loadShopConfig in this session reads the tenant doc, not the legacy fallback.
   tenantProbe.delete(id);

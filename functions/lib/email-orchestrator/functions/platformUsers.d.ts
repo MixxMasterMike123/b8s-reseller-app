@@ -1,3 +1,4 @@
+export declare const mintImpersonationToken: import("firebase-functions/v2/https").CallableFunction<Record<string, never>, any, unknown>;
 interface CreateSuperAdminRequest {
     email: string;
     name?: string;

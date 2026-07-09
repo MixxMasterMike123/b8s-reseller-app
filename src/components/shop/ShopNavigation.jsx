@@ -91,6 +91,13 @@ const ShopNavigation = ({ breadcrumb, breadcrumbCategory = null, tags = [], acti
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // React flushes the toggle re-render BEFORE the native click finishes
+      // bubbling to document. The hamburger swaps its icon on toggle
+      // (Bars3 → XMark), so the clicked SVG is DETACHED by the time this
+      // runs — a detached target has no ancestors, closest() misses
+      // '.mobile-menu', and the just-opened menu instantly closes again.
+      // A detached target can never be an outside click; ignore it.
+      if (!event.target.isConnected) return;
       if (!event.target.closest('.login-dropdown')) {
         setShowLoginDropdown(false);
       }

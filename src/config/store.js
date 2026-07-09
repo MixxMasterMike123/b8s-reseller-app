@@ -41,7 +41,7 @@ export const STORE = {
   //             inkFaint,line},
   //     fonts:{display,body}, shape:{rTile,rEl}, motion:{ease},
   //     layout:{ gridCols:3|4, density:'compact'|'cozy'|'airy',
-  //              heroStyle:'bento'|'full'|'split'|'editorial' } }
+  //              heroStyle:'bento'|'editorial' } }
   // Applied at runtime on <html> by StoreSettingsContext → resolveTheme().
   // Omitted keys fall back to NORD defaults, so a template can never break.
   theme: {},

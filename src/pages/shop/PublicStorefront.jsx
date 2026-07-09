@@ -20,8 +20,6 @@ import AddedToCartModal from '../../components/shop/AddedToCartModal';
 import NordProductCard from '../../components/shop/NordProductCard';
 import { getCardPrice } from '../../utils/productPricing';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
-import { resolveTheme } from '../../config/nordTokens';
-import { getTemplate } from '../../config/templates';
 import { useShopId } from '../../contexts/ShopContext';
 import { isProductFeatured, sortProductsForDisplay, FRONTPAGE_FEATURED } from '../../utils/productSorting';
 import { resolveCollectionProducts } from '../../utils/collectionResolver';
@@ -181,13 +179,13 @@ const PublicStorefront = () => {
 
   // Hero layout variant from the active template (see nordTokens.resolveTheme).
   // Default NORD (and any template that doesn't set it) → 'bento', the current
-  // signature hero. 'editorial' → the Sport template's variant below. Resolved
-  // from the same template+inline+accent layering the context applies, so the
-  // component and the CSS vars never disagree.
-  const heroStyle = resolveTheme({
-    ...getTemplate(store.templateId).tokens,
-    ...(store.theme || {}),
-  }).heroStyle;
+  // signature hero. 'editorial' → the Sport template's variant below. Read the
+  // context's already-resolved pick (__heroStyle) rather than re-deriving here:
+  // the context does a PER-GROUP deep merge (template ← inline theme ← accent),
+  // so an inline theme.layout that sets only cardStyle keeps the template's
+  // heroStyle. A local shallow spread would replace the whole layout group and
+  // silently drop heroStyle. Same merged token set → component and CSS vars agree.
+  const heroStyle = store.__heroStyle;
   // Graphic mark for the editorial hero (a big faint glyph behind the headline,
   // shown when there's no hero image). A shop can set `heroMark` explicitly
   // (a short string — club initials, a number, a monogram); otherwise we derive
@@ -431,10 +429,10 @@ const PublicStorefront = () => {
               {showBestseller && (bestseller ? (
                 <Link
                   to={getProductUrl(bestseller)}
-                  className="group block bg-white rounded-tile shadow-tile overflow-hidden transition-all duration-300 ease-nord hover:-translate-y-1 hover:shadow-lift animate-rise"
+                  className="group block bg-surface rounded-tile shadow-tile overflow-hidden transition-all duration-300 ease-nord hover:-translate-y-1 hover:shadow-lift animate-rise"
                   style={{ animationDelay: '0.1s' }}
                 >
-                  <div className="relative aspect-[16/9] overflow-hidden bg-[#F7F5F2]">
+                  <div className="relative aspect-[16/9] overflow-hidden bg-canvas">
                     <img
                       src={getB2cProductImage(bestseller)}
                       alt={getContentValue(bestseller.name)}
@@ -467,8 +465,8 @@ const PublicStorefront = () => {
                   </div>
                 </Link>
               ) : (
-                <div className="bg-white rounded-tile shadow-tile overflow-hidden animate-rise" style={{ animationDelay: '0.1s' }}>
-                  <div className="aspect-[16/9] bg-[#F7F5F2] animate-pulse" />
+                <div className="bg-surface rounded-tile shadow-tile overflow-hidden animate-rise" style={{ animationDelay: '0.1s' }}>
+                  <div className="aspect-[16/9] bg-canvas animate-pulse" />
                   <div className="p-5">
                     <div className="h-3 w-24 bg-canvas rounded-full animate-pulse" />
                     <div className="h-5 w-40 bg-canvas rounded-full animate-pulse mt-3" />
@@ -480,7 +478,7 @@ const PublicStorefront = () => {
               {showTrust && (
               <div className={`grid gap-4 flex-1 ${heroReview ? 'grid-cols-2' : 'grid-cols-1'}`}>
                 {heroReview && (
-                <div className="bg-white rounded-tile shadow-tile p-5 flex flex-col animate-rise" style={{ animationDelay: '0.18s' }}>
+                <div className="bg-surface rounded-tile shadow-tile p-5 flex flex-col animate-rise" style={{ animationDelay: '0.18s' }}>
                   <div className="text-accent text-base tracking-[2px]" aria-label={`${heroReview.rating || 5}/5`}>
                     ★★★★★
                   </div>
@@ -493,7 +491,7 @@ const PublicStorefront = () => {
                 </div>
                 )}
 
-                <div className="bg-white rounded-tile shadow-tile p-5 flex flex-col animate-rise" style={{ animationDelay: '0.26s' }}>
+                <div className="bg-surface rounded-tile shadow-tile p-5 flex flex-col animate-rise" style={{ animationDelay: '0.26s' }}>
                   <div className="text-[11px] font-semibold uppercase tracking-[0.13em] text-ink-muted">
                     {t('payments_tile_label', 'Betala tryggt')}
                   </div>
