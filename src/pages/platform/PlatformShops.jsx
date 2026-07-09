@@ -6,12 +6,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, getDocs, doc, updateDoc, query, where, getCountFromServer } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { APP_URLS } from '../../config/urls';
 import PlatformLayout from '../../components/platform/PlatformLayout';
 import ProvisionShopModal from '../../components/platform/ProvisionShopModal';
+import ImpersonateShopModal from '../../components/platform/ImpersonateShopModal';
 import toast from 'react-hot-toast';
 import {
   BuildingStorefrontIcon,
   ArrowTopRightOnSquareIcon,
+  UserCircleIcon,
   PlusIcon,
 } from '@heroicons/react/24/outline';
 
@@ -20,6 +23,12 @@ const PlatformShops = () => {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
   const [showProvision, setShowProvision] = useState(false);
+  const [impersonateShop, setImpersonateShop] = useState(null);
+
+  // The two most-used per-shop actions live on the list row (quick access);
+  // the rest stay on the detail page.
+  const openStorefront = (shop) =>
+    window.open(`${APP_URLS.B2C_SHOP}/${shop.id}`, '_blank', 'noopener');
 
   const loadShops = useCallback(async () => {
     try {
@@ -151,13 +160,32 @@ const PlatformShops = () => {
                       <td className="px-3 py-3 text-right tabular-nums text-gray-300">{shop.counts?.orders ?? '–'}</td>
                       <td className="px-3 py-3 text-right tabular-nums text-gray-300">{shop.counts?.b2cCustomers ?? '–'}</td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center justify-end">
+                        <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                          <button
+                            onClick={() => openStorefront(shop)}
+                            title="Öppna butikens storefront"
+                            className="inline-flex items-center rounded-lg p-1.5 text-gray-300 hover:bg-white/10 hover:text-white"
+                          >
+                            <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => setImpersonateShop(shop)}
+                            disabled={disabled}
+                            title={disabled ? 'Butiken är inaktiverad — aktivera först' : 'Öppna butikens admin som plattformsadmin (loggas)'}
+                            className={
+                              'inline-flex items-center rounded-lg p-1.5 ' +
+                              (disabled
+                                ? 'text-gray-600 cursor-not-allowed'
+                                : 'text-gray-300 hover:bg-amber-500/15 hover:text-amber-300')
+                            }
+                          >
+                            <UserCircleIcon className="h-4 w-4" />
+                          </button>
                           <Link
                             to={`/shops/${shop.id}`}
                             title="Öppna butikens detaljsida"
                             className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium bg-white/5 text-gray-200 hover:bg-white/10"
                           >
-                            <ArrowTopRightOnSquareIcon className="h-4 w-4" />
                             Öppna
                           </Link>
                         </div>
@@ -179,6 +207,13 @@ const PlatformShops = () => {
         <ProvisionShopModal
           onClose={() => setShowProvision(false)}
           onCreated={loadShops}
+        />
+      )}
+
+      {impersonateShop && (
+        <ImpersonateShopModal
+          shop={impersonateShop}
+          onClose={() => setImpersonateShop(null)}
         />
       )}
     </PlatformLayout>
