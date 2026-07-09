@@ -26,16 +26,31 @@
 */
 @theme {
   --color-canvas: #F3F1EC;
+  --color-surface: #FFFFFF;   /* module/card bg — was hardcoded white; now themable */
   --color-ink: #1A1C1E;
   --color-ink-muted: #71757C;
   --color-ink-faint: #A8ABB0;
+  --color-line: #1A1C1E0F;    /* rare hairlines (inputs, swatch borders) */
   --color-accent: #0E5E63;
+  --color-accent-ink: #FFFFFF;  /* text/icon ON an accent fill */
+  /* soft accent wash (chips, focus rings). Default = the NORD 8% mix of the
+     default accent on white; StoreSettingsContext re-derives this per template
+     when a custom accent is applied (see nordTokens.resolveTheme). */
+  --color-accent-soft: color-mix(in srgb, #0E5E63 8%, #FFFFFF);
 
   --font-display: 'Familjen Grotesk', ui-sans-serif, system-ui, sans-serif;
   --font-body: 'Instrument Sans', -apple-system, ui-sans-serif, system-ui, sans-serif;
 
   --radius-tile: 22px;
   --radius-el: 14px;
+
+  /* ── Structural template tokens (see src/config/nordTokens.js) ──
+     Defaults equal the current hardcoded NORD rhythm, so they are no-ops until
+     a template overrides them at runtime via applyThemeTokens(). Storefront
+     grids/sections reference these; templates set them per-shop on <html>. */
+  --nord-grid-cols: 4;        /* desktop product-grid columns (3 | 4) */
+  --nord-section-y: 4.5rem;   /* section vertical padding (density: cozy) */
+  --nord-gap: 1rem;           /* inter-module gap (density: cozy) */
 
   --shadow-tile: 0 1px 2px #1A1C1E08, 0 8px 24px -12px #1A1C1E1F;
   --shadow-lift: 0 2px 4px #1A1C1E0A, 0 20px 44px -16px #1A1C1E2E;
@@ -175,6 +190,20 @@
 @utility scroll-hint {
   /* Scroll hint animation for mobile tabs */
   animation: scroll-hint 2s ease-in-out infinite;
+}
+
+/*
+  NORD product grid — desktop column count driven by the --nord-grid-cols
+  template token (3 | 4; default 4 = current NORD). Mobile (1) and tablet (2)
+  steps stay fixed for readability. Replaces a hardcoded `lg:grid-cols-4` on the
+  customer-facing product listings so a template can restructure the grid
+  without touching component JSX. Below `lg` this utility does nothing, so the
+  existing `grid-cols-1 sm:grid-cols-2` classes still own the small breakpoints.
+*/
+@utility nord-grid {
+  @variant lg {
+    grid-template-columns: repeat(var(--nord-grid-cols, 4), minmax(0, 1fr));
+  }
 }
 
 @layer utilities {

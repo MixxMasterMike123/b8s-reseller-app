@@ -28,6 +28,18 @@ export const STORE = {
   // accent: the single brand color, used ONLY on actions and live signals.
   // Must pass WCAG AA as a button background with white text.
   accent: '#0E5E63',
+
+  // NORD template — a PARTIAL override of the NORD token defaults
+  // (src/config/nordTokens.js). Empty {} = pure NORD (only `accent` above
+  // applies). A template we build/generate sets a subset of:
+  //   { colors:{accent,accentInk,accentSoft,canvas,surface,ink,inkMuted,
+  //             inkFaint,line},
+  //     fonts:{display,body}, shape:{rTile,rEl}, motion:{ease},
+  //     layout:{ gridCols:3|4, density:'compact'|'cozy'|'airy',
+  //              heroStyle:'bento'|'full'|'split'|'editorial' } }
+  // Applied at runtime on <html> by StoreSettingsContext → resolveTheme().
+  // Omitted keys fall back to NORD defaults, so a template can never break.
+  theme: {},
   // Hero block content. ALL empty by default — a generic template must not
   // ship a brand-specific image/copy. Empty heroImageUrl → the storefront
   // renders the accent-gradient hero (no flash of a placeholder image before

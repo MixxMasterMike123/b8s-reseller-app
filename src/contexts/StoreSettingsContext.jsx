@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { STORE } from '../config/store';
 import { loadShopConfig } from '../config/shopConfig';
 import { useShopId } from './ShopContext';
+import { resolveTheme } from '../config/nordTokens';
 
 /**
  * StoreSettingsContext — provides per-shop store identity to the app.
@@ -63,14 +64,29 @@ export function StoreSettingsProvider({ children }) {
     };
   }, [shopId]);
 
-  // Per-shop accent token for the NORD STOREFRONT only (--color-accent). The
-  // admin (--color-admin-primary) does NOT use the shop accent — per the
-  // "full Shopify" admin decision it stays Polaris near-black for every shop.
+  // Per-shop THEME tokens for the NORD STOREFRONT only. Historically this set
+  // only --color-accent; it now applies the full NORD token set (colors, fonts,
+  // shape, motion, structural grid/density) so a shop can run a template — a
+  // partial override of the NORD defaults (see src/config/nordTokens.js).
+  //
+  // Back-compat: a shop with only `accent` (no `theme`) behaves EXACTLY as
+  // before — accent flows into theme.colors.accent below and every other token
+  // stays at its NORD default (a no-op set). The admin (--color-admin-*) is
+  // untouched: templating is storefront-only, per the "full Shopify" admin
+  // decision (admin stays Polaris near-black for every shop).
   useEffect(() => {
+    // Merge the legacy top-level `accent` into the theme's accent so both the
+    // old single-color path and a new full `theme` object resolve correctly.
+    const template = { ...(settings.theme || {}) };
     if (settings.accent) {
-      document.documentElement.style.setProperty('--color-accent', settings.accent);
+      template.colors = { accent: settings.accent, ...(template.colors || {}) };
     }
-  }, [settings.accent]);
+    const { vars } = resolveTheme(template);
+    const root = document.documentElement.style;
+    for (const [cssVar, value] of Object.entries(vars)) {
+      root.setProperty(cssVar, value);
+    }
+  }, [settings.accent, settings.theme]);
 
   // Per-shop browser-tab identity — runs on BOTH the storefront and the admin
   // (both mount this provider, keyed on the active/managed shopId), so each tab
