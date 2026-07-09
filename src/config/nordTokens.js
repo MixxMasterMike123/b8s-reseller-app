@@ -306,6 +306,25 @@ export function resolveTheme(template) {
       `color-mix(in srgb, ${merged.colors.accent} 8%, ${merged.colors.surface})`;
   }
 
+  // Strong-block pairing (the footer): "the heaviest slab on the page". On a
+  // LIGHT theme that's an ink-colored block with surface-colored text — the
+  // classic NORD footer. On a DARK theme ink is near-WHITE (it's the text
+  // color), so an ink slab would flip the footer light with white-on-white
+  // text; use the raised dark surface with ink text instead, matching the
+  // tiles. Derived from canvas lightness rather than being a template token —
+  // the right answer always follows from the canvas.
+  {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(merged.colors.canvas).trim());
+    let darkCanvas = false;
+    if (m) {
+      const n = parseInt(m[1], 16);
+      const lum = (0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255;
+      darkCanvas = lum < 0.5;
+    }
+    vars['--color-block'] = darkCanvas ? merged.colors.surface : merged.colors.ink;
+    vars['--color-block-ink'] = darkCanvas ? merged.colors.ink : merged.colors.surface;
+  }
+
   // density → spacing vars (validated).
   const density = TOKEN_ENUMS['layout.density'].includes(merged.layout.density)
     ? merged.layout.density

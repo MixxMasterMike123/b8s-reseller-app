@@ -95,7 +95,11 @@ const NordProductCard = ({ to, linkState, image, imageAlt, tag, name, descriptio
               alt={imageAlt || name}
               className="w-full h-full object-cover transition-transform duration-700 ease-nord group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+            {/* Scrim must hold up against ALL-WHITE product photography (the
+                common POD merch case): the name/price/CTA rows sit in the
+                bottom ~25%, so keep that band ≥ black/60 — from-black/75 with
+                a 20% midpoint left the price at ~3:1 on white photos. */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 via-30% to-transparent" />
             {tagPill}
             <div className="absolute inset-x-0 bottom-0 p-4 text-white">
               <h3 className="font-display font-bold text-lg leading-snug tracking-tight">{name}</h3>

@@ -95,8 +95,12 @@ const ShopFooter = () => {
     checkAffiliateStatus();
   }, [currentUser, shopId, affiliateEnabled]);
 
+  // bg-block/text-block-ink: ink slab on light themes (the classic NORD
+  // footer), raised dark surface + ink text on dark templates — resolveTheme
+  // derives the pair from canvas lightness so this never renders
+  // light-on-light (see nordTokens.js).
   return (
-    <footer className="bg-ink text-white font-body">
+    <footer className="bg-block text-block-ink font-body">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           
@@ -104,12 +108,12 @@ const ShopFooter = () => {
           <div>
             <h3 className="font-display text-lg font-bold mb-4 tracking-tight">{store.shopName}</h3>
             {store.companyDescription && (
-              <p className="text-white/70 text-sm mb-4 leading-relaxed">
+              <p className="text-block-ink/70 text-sm mb-4 leading-relaxed">
                 {store.companyDescription}
               </p>
             )}
             {store.address && (
-              <div className="text-white/50 text-sm" dangerouslySetInnerHTML={{
+              <div className="text-block-ink/50 text-sm" dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(store.address || '')
               }} />
             )}
@@ -120,27 +124,27 @@ const ShopFooter = () => {
             <h3 className="font-display text-lg font-bold mb-4 tracking-tight">{t('footer_quick_links', 'Snabblänkar')}</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to={getCountryAwareUrl('')} className="text-white/70 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('')} className="text-block-ink/70 hover:text-block-ink transition-colors">
                   {t('footer_home', 'Hem')}
                 </Link>
               </li>
               <li>
-                <Link to={getCountryAwareUrl('produkter')} className="text-white/70 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('produkter')} className="text-block-ink/70 hover:text-block-ink transition-colors">
                   {t('footer_all_products', 'Alla produkter')}
                 </Link>
               </li>
               <li>
-                <Link to={getCountryAwareUrl('cart')} className="text-white/70 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('cart')} className="text-block-ink/70 hover:text-block-ink transition-colors">
                   {t('footer_cart', 'Varukorg')}
                 </Link>
               </li>
               <li>
-                <Link to={getCountryAwareUrl('account')} className="text-white/70 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('account')} className="text-block-ink/70 hover:text-block-ink transition-colors">
                   {t('footer_my_account', 'Mitt konto')}
                 </Link>
               </li>
               <li>
-                <a href={`mailto:${store.supportEmail}`} className="text-white/70 hover:text-white transition-colors">
+                <a href={`mailto:${store.supportEmail}`} className="text-block-ink/70 hover:text-block-ink transition-colors">
                   {t('footer_contact', 'Kontakt')}
                 </a>
               </li>
@@ -154,7 +158,7 @@ const ShopFooter = () => {
               {/* Published CMS pages (Kontakta oss, FAQ, …) — auto-listed. */}
               {cmsPages.map((p) => (
                 <li key={p.slug}>
-                  <Link to={getCountryAwareUrl(p.slug)} className="text-white/70 hover:text-white transition-colors">
+                  <Link to={getCountryAwareUrl(p.slug)} className="text-block-ink/70 hover:text-block-ink transition-colors">
                     {p.title}
                   </Link>
                 </li>
@@ -164,7 +168,7 @@ const ShopFooter = () => {
                   details. Delivery terms live in köpvillkor §5; a shop that wants
                   a dedicated page can create a CMS page and link it via nav. */}
               <li>
-                <Link to={getCountryAwareUrl('legal/angerratt-och-returer')} className="text-white/70 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('legal/angerratt-och-returer')} className="text-block-ink/70 hover:text-block-ink transition-colors">
                   {t('footer_returns', 'Returer & Ångerrätt')}
                 </Link>
               </li>
@@ -172,13 +176,13 @@ const ShopFooter = () => {
                 {/* Ångerfunktionen — statutory label "ångra avtalet här" (DAL
                     2 kap. 10 a §); footer link = available on every page,
                     throughout the whole frist. */}
-                <Link to={getCountryAwareUrl('angra')} className="text-white/70 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('angra')} className="text-block-ink/70 hover:text-block-ink transition-colors">
                   {t('footer_withdraw_here', 'Ångra avtalet här')}
                 </Link>
               </li>
               {affiliateEnabled && (
               <li>
-                <Link to={getCountryAwareUrl('affiliate-registration')} className="text-white/70 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('affiliate-registration')} className="text-block-ink/70 hover:text-block-ink transition-colors">
                   {t('footer_become_affiliate', 'Bli en affiliate')}
                 </Link>
               </li>
@@ -187,11 +191,11 @@ const ShopFooter = () => {
               <li>
                 <Link
                   to={getCountryAwareUrl(isActiveAffiliate ? 'affiliate-portal' : 'affiliate-login')}
-                  className="text-white/70 hover:text-white transition-colors flex items-center"
+                  className="text-block-ink/70 hover:text-block-ink transition-colors flex items-center"
                 >
                   {affiliateCheckLoading ? (
                     <>
-                      <span className="animate-spin rounded-full h-3 w-3 border border-white/40 border-t-transparent mr-2"></span>
+                      <span className="animate-spin rounded-full h-3 w-3 border border-block-ink/40 border-t-transparent mr-2"></span>
                       {t('footer_affiliate_checking', 'Kontrollerar...')}
                     </>
                   ) : (
@@ -209,12 +213,12 @@ const ShopFooter = () => {
               </li>
               )}
               <li>
-                <a href={`mailto:${store.supportEmail}`} className="text-white/70 hover:text-white transition-colors">
+                <a href={`mailto:${store.supportEmail}`} className="text-block-ink/70 hover:text-block-ink transition-colors">
                   {t('footer_customer_support', 'Kundtjänst')}
                 </a>
               </li>
               <li>
-                <span className="text-white/50">
+                <span className="text-block-ink/50">
                   {t('footer_business_hours', 'Mån-Fre: 09:00-17:00')}
                 </span>
               </li>
@@ -228,17 +232,17 @@ const ShopFooter = () => {
             <h3 className="font-display text-lg font-bold mb-4 tracking-tight">{t('footer_legal', 'Juridiskt')}</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to={getCountryAwareUrl('legal/kopvillkor')} className="text-white/70 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('legal/kopvillkor')} className="text-block-ink/70 hover:text-block-ink transition-colors">
                   {t('footer_terms_of_sale', 'Köpvillkor')}
                 </Link>
               </li>
               <li>
-                <Link to={getCountryAwareUrl('legal/angerratt-och-returer')} className="text-white/70 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('legal/angerratt-och-returer')} className="text-block-ink/70 hover:text-block-ink transition-colors">
                   {t('footer_withdrawal_returns', 'Ångerrätt & returer')}
                 </Link>
               </li>
               <li>
-                <Link to={getCountryAwareUrl('legal/integritetspolicy')} className="text-white/70 hover:text-white transition-colors">
+                <Link to={getCountryAwareUrl('legal/integritetspolicy')} className="text-block-ink/70 hover:text-block-ink transition-colors">
                   {t('footer_privacy', 'Integritetspolicy')}
                 </Link>
               </li>
@@ -251,9 +255,9 @@ const ShopFooter = () => {
         {/* Bottom Section */}
         {/* Social Media Follow Section — driven by store.social; only configured links show */}
         {SOCIAL_LINKS.some(s => store.social?.[s.key]) && (
-          <div className="border-t border-white/10 mt-8 pt-8">
+          <div className="border-t border-block-ink/10 mt-8 pt-8">
             <div className="flex flex-col items-center gap-6 mb-8">
-              <h3 className="font-display text-lg font-bold text-white tracking-tight">
+              <h3 className="font-display text-lg font-bold text-block-ink tracking-tight">
                 {`${t('footer_follow_us_prefix', 'Följ')} ${store.shopName}`}
               </h3>
               <div className="flex items-center gap-4 flex-wrap justify-center">
@@ -263,7 +267,7 @@ const ShopFooter = () => {
                     href={store.social[s.key]}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`w-10 h-10 flex items-center justify-center bg-white/10 ${s.hover} rounded-full transition-colors`}
+                    className={`w-10 h-10 flex items-center justify-center bg-block-ink/10 ${s.hover} rounded-full transition-colors`}
                     title={s.title}
                   >
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -276,9 +280,9 @@ const ShopFooter = () => {
           </div>
         )}
 
-        <div className="border-t border-white/10 pt-8">
+        <div className="border-t border-block-ink/10 pt-8">
           <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
-            <div className="text-white/50 text-sm">
+            <div className="text-block-ink/50 text-sm">
               <p>{`© ${currentYear} ${store.legalName}. `}{t('footer_rights_reserved', 'Alla rättigheter förbehållna.')}</p>
             </div>
             
@@ -290,14 +294,14 @@ const ShopFooter = () => {
               </div> */}
 
               {/* Trust Badges */}
-              <div className="flex items-center gap-2 text-xs text-white/60">
-                <span className="border border-white/20 text-white/80 px-2.5 py-1 rounded-full">
+              <div className="flex items-center gap-2 text-xs text-block-ink/60">
+                <span className="border border-block-ink/20 text-block-ink/80 px-2.5 py-1 rounded-full">
                   {t('footer_badge_ssl', '✓ SSL')}
                 </span>
-                <span className="border border-white/20 text-white/80 px-2.5 py-1 rounded-full">
+                <span className="border border-block-ink/20 text-block-ink/80 px-2.5 py-1 rounded-full">
                   {t('footer_badge_gdpr', '✓ GDPR')}
                 </span>
-                <span className="border border-white/20 text-white/80 px-2.5 py-1 rounded-full">
+                <span className="border border-block-ink/20 text-block-ink/80 px-2.5 py-1 rounded-full">
                   {t('footer_badge_returns', '✓ 14 dagar ångerrätt')}
                 </span>
               </div>
@@ -306,7 +310,7 @@ const ShopFooter = () => {
           
           {/* Additional Legal Text — rendered directly from store settings */}
           {(store.orgNumber || store.businessInfo) && (
-            <div className="mt-4 text-xs text-white/40 text-center md:text-left">
+            <div className="mt-4 text-xs text-block-ink/40 text-center md:text-left">
               <p>
                 {[
                   store.orgNumber && `${t('footer_org_number', 'Organisationsnummer')}: ${store.orgNumber}`,

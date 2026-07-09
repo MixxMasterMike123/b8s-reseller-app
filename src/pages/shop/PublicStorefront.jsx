@@ -59,9 +59,13 @@ const PublicStorefront = () => {
   const loadHeroReview = async () => {
     try {
       const allReviews = await getAllReviews();
-      // Exclude Paul W. to avoid duplicate testimonial
-      const filteredReviews = allReviews.filter(r => r.author !== 'Paul W.');
-      
+      // Exclude Paul W. to avoid duplicate testimonial. Require actual quote
+      // TEXT — a review with an empty/whitespace body would render as a bare
+      // “” — Author tile in the hero, on every template.
+      const filteredReviews = allReviews.filter(
+        (r) => r.author !== 'Paul W.' && typeof r.text === 'string' && r.text.trim()
+      );
+
       if (filteredReviews.length > 0) {
         const randomIndex = Math.floor(Math.random() * filteredReviews.length);
         const selectedReview = filteredReviews[randomIndex];

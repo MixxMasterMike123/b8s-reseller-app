@@ -37,6 +37,11 @@
      default accent on white; StoreSettingsContext re-derives this per template
      when a custom accent is applied (see nordTokens.resolveTheme). */
   --color-accent-soft: color-mix(in srgb, #0E5E63 8%, #FFFFFF);
+  /* strong-block pairing (the footer): ink slab + surface text on light
+     themes; surface slab + ink text on dark ones. Defaults = NORD light;
+     resolveTheme re-derives per template from canvas lightness. */
+  --color-block: #1A1C1E;
+  --color-block-ink: #FFFFFF;
 
   --font-display: 'Familjen Grotesk', ui-sans-serif, system-ui, sans-serif;
   --font-body: 'Instrument Sans', -apple-system, ui-sans-serif, system-ui, sans-serif;
