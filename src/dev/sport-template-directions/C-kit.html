@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KIT — Gameday Light · Sport Storefront</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:ital,wght@0,400;0,500;0,600;0,700;1,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ── KIT token contract ─────────────────────────── */
+    --color-accent:      #0047FF;   /* club color — electric heritage blue, AA on white text (contrast 5.0) */
+    --color-accent-ink:  #ffffff;
+    --color-accent-deep: #0033b8;   /* pressed / hover state of the club color */
+    --color-canvas:      #eef0f3;   /* cool light, chroma≈0 leaning jersey off-white — NOT cream */
+    --color-surface:     #ffffff;   /* card / kit bg */
+    --color-ink:         #0d1013;   /* near-black, cool */
+    --color-ink-muted:   #4a5058;
+    --color-ink-faint:   #8a9099;
+    --color-line:        #d7dbe0;
+
+    --font-display: 'Archivo Black', system-ui, sans-serif;
+    --font-body:    'Archivo', system-ui, sans-serif;
+
+    --radius-tile: 8px;   /* blocky — arena signage */
+    --radius-el:   6px;
+
+    --nord-grid-cols: 4;
+
+    --ease: cubic-bezier(0.16, 0.84, 0.44, 1); /* fast, momentum, no bounce */
+
+    --maxw: 1220px;
+    --gap: 18px;
+  }
+
+  *{ box-sizing:border-box; }
+  html{ -webkit-text-size-adjust:100%; }
+  body{
+    margin:0;
+    background:var(--color-canvas);
+    color:var(--color-ink);
+    font-family:var(--font-body);
+    font-size:16px;
+    line-height:1.5;
+    font-weight:400;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    overflow-x:hidden;
+  }
+  a{ color:inherit; text-decoration:none; }
+  img{ max-width:100%; display:block; }
+  .tnum{ font-variant-numeric:tabular-nums; }
+
+  .wrap{ width:100%; max-width:var(--maxw); margin-inline:auto; padding-inline:20px; }
+
+  /* ── entrance motion ─────────────────────────────── */
+  .rise{ opacity:0; transform:translateY(14px); animation:rise .62s var(--ease) forwards; }
+  .d1{ animation-delay:.02s } .d2{ animation-delay:.09s } .d3{ animation-delay:.16s }
+  .d4{ animation-delay:.23s } .d5{ animation-delay:.30s } .d6{ animation-delay:.37s }
+  @keyframes rise{ to{ opacity:1; transform:none; } }
+  @media (prefers-reduced-motion: reduce){
+    .rise{ animation:none; opacity:1; transform:none; }
+    *{ scroll-behavior:auto !important; }
+  }
+
+  /* ── NAV ─────────────────────────────────────────── */
+  header.nav{
+    position:sticky; top:0; z-index:50;
+    background:color-mix(in srgb, var(--color-canvas) 88%, transparent);
+    backdrop-filter:saturate(1.4) blur(10px);
+    border-bottom:1px solid var(--color-line);
+  }
+  .nav-inner{ display:flex; align-items:center; gap:16px; height:64px; }
+  .logo{
+    display:inline-flex; align-items:center; gap:10px;
+    font-family:var(--font-display); font-size:20px; letter-spacing:.01em;
+    text-transform:uppercase; white-space:nowrap;
+  }
+  .logo .crest{
+    width:30px; height:30px; border-radius:5px;
+    background:var(--color-accent); color:var(--color-accent-ink);
+    display:grid; place-items:center;
+    font-family:var(--font-display); font-size:15px;
+    transform:skewX(-9deg);
+  }
+  .logo .crest span{ transform:skewX(9deg); }
+  .pillnav{ display:flex; align-items:center; gap:4px; margin-left:6px; }
+  .pillnav a{
+    padding:8px 14px; border-radius:999px;
+    font-size:13.5px; font-weight:600; color:var(--color-ink-muted);
+    letter-spacing:.01em; transition:color .18s var(--ease), background .18s var(--ease);
+  }
+  .pillnav a:hover{ color:var(--color-ink); background:#fff; }
+  .pillnav a.on{ color:var(--color-ink); background:#fff; box-shadow:inset 0 0 0 1px var(--color-line); }
+  .nav-right{ margin-left:auto; display:flex; align-items:center; gap:10px; }
+  .cart{
+    display:inline-flex; align-items:center; gap:9px;
+    padding:9px 15px 9px 14px; border-radius:999px;
+    background:var(--color-ink); color:#fff;
+    font-size:13.5px; font-weight:600;
+    transition:background .18s var(--ease);
+  }
+  .cart:hover{ background:#000; }
+  .cart .badge{
+    min-width:20px; height:20px; padding:0 5px; border-radius:999px;
+    background:var(--color-accent); color:var(--color-accent-ink);
+    font-family:var(--font-display); font-size:12px;
+    display:grid; place-items:center;
+  }
+
+  /* ── HERO ────────────────────────────────────────── */
+  .hero{ padding:40px 0 30px; }
+  .hero-card{
+    position:relative; overflow:hidden;
+    background:var(--color-surface);
+    border:1px solid var(--color-line);
+    border-radius:var(--radius-tile);
+  }
+  /* giant club numeral as graphic element */
+  .hero-number{
+    position:absolute; right:-3%; top:50%; transform:translateY(-50%);
+    font-family:var(--font-display);
+    font-size:min(46vw, 560px); line-height:.72;
+    color:var(--color-accent);
+    opacity:.10; letter-spacing:-.04em;
+    pointer-events:none; user-select:none;
+    z-index:0;
+  }
+  .hero-content{ position:relative; z-index:1; padding:clamp(28px,5vw,64px); max-width:640px; }
+  .kicker{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:13px; font-weight:700; color:var(--color-ink-muted);
+    margin-bottom:20px;
+  }
+  .kicker .dot{ width:8px; height:8px; border-radius:2px; background:var(--color-accent); }
+  .hero h1{
+    font-family:var(--font-display); font-weight:400;
+    font-size:clamp(40px, 8.2vw, 88px); line-height:.94;
+    letter-spacing:-.015em; text-transform:uppercase;
+    margin:0 0 6px; text-wrap:balance;
+  }
+  /* jersey underline stripe motif — hero underline, not a card side-stripe */
+  .hero h1 .marked{ position:relative; display:inline-block; }
+  .hero h1 .marked::after{
+    content:""; position:absolute; left:0; right:-2px; bottom:.06em; height:.14em;
+    background:var(--color-accent);
+  }
+  .hero p{
+    font-size:clamp(16px,1.6vw,18.5px); color:var(--color-ink-muted);
+    max-width:46ch; margin:18px 0 30px; line-height:1.55;
+  }
+  .hero-cta{ display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+  .btn{
+    display:inline-flex; align-items:center; gap:9px;
+    font-family:var(--font-body); font-weight:700; font-size:15px;
+    padding:14px 24px; border-radius:var(--radius-el);
+    cursor:pointer; border:1px solid transparent;
+    transition:transform .16s var(--ease), background .16s var(--ease);
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn-primary{ background:var(--color-accent); color:var(--color-accent-ink); }
+  .btn-primary:hover{ background:var(--color-accent-deep); }
+  .btn-ghost{ background:transparent; color:var(--color-ink); border-color:var(--color-line); }
+  .btn-ghost:hover{ border-color:var(--color-ink); }
+  .hero-meta{
+    display:flex; gap:26px; flex-wrap:wrap; margin-top:34px;
+    padding-top:26px; border-top:1px solid var(--color-line);
+  }
+  .hero-meta .stat{ display:flex; flex-direction:column; gap:2px; }
+  .hero-meta .stat b{ font-family:var(--font-display); font-weight:400; font-size:22px; letter-spacing:.01em; }
+  .hero-meta .stat small{ font-size:12.5px; color:var(--color-ink-faint); font-weight:600; }
+
+  /* ── SECTION HEAD ────────────────────────────────── */
+  .sec-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin:44px 0 20px; }
+  .sec-head h2{
+    font-family:var(--font-display); font-weight:400;
+    font-size:clamp(24px,3.4vw,34px); line-height:1; text-transform:uppercase;
+    letter-spacing:-.01em; margin:0;
+  }
+  .sec-head .link{ font-size:13.5px; font-weight:700; color:var(--color-accent); white-space:nowrap; }
+  .sec-head .link:hover{ color:var(--color-accent-deep); }
+
+  /* ── PRODUCT GRID ────────────────────────────────── */
+  .grid{
+    display:grid; gap:var(--gap);
+    grid-template-columns:repeat(var(--nord-grid-cols), 1fr);
+  }
+  .card{
+    background:var(--color-surface);
+    border:1px solid var(--color-line);
+    border-radius:var(--radius-tile);
+    overflow:hidden;
+    display:flex; flex-direction:column;
+    transition:transform .18s var(--ease), box-shadow .18s var(--ease), border-color .18s var(--ease);
+  }
+  .card:hover{ transform:translateY(-3px); box-shadow:0 12px 28px -14px rgba(13,16,19,.35); border-color:#c3c9d1; }
+  .thumb{
+    position:relative; aspect-ratio:4/5; overflow:hidden;
+    display:grid; place-items:center;
+    background:
+      linear-gradient(135deg, transparent 46%, rgba(0,0,0,.03) 46%, rgba(0,0,0,.03) 54%, transparent 54%),
+      var(--tint, #e6e9ee);
+  }
+  .thumb .num{
+    font-family:var(--font-display); font-size:88px; line-height:1;
+    color:#fff; opacity:.9; letter-spacing:-.02em;
+    text-shadow:0 2px 0 rgba(0,0,0,.06);
+  }
+  .thumb .pname{
+    position:absolute; left:12px; bottom:11px;
+    font-size:11.5px; font-weight:700; letter-spacing:.02em;
+    color:rgba(255,255,255,.92);
+  }
+  .tag{
+    position:absolute; top:11px; left:11px;
+    font-family:var(--font-body); font-weight:700; font-size:11px; letter-spacing:.03em;
+    padding:5px 9px; border-radius:5px;
+    background:var(--color-accent); color:var(--color-accent-ink);
+    text-transform:uppercase;
+  }
+  .tag.ink{ background:var(--color-ink); }
+  .card-body{ padding:14px 14px 15px; display:flex; flex-direction:column; gap:3px; flex:1; }
+  .card-body .cat{ font-size:11.5px; font-weight:700; color:var(--color-ink-faint); text-transform:uppercase; letter-spacing:.04em; }
+  .card-body h3{ font-size:15px; font-weight:600; margin:0; line-height:1.25; }
+  .card-foot{ margin-top:auto; padding-top:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .price{ font-family:var(--font-display); font-weight:400; font-size:18px; letter-spacing:.01em; }
+  .add{
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:var(--font-body); font-weight:700; font-size:13px;
+    padding:9px 15px; border-radius:999px;
+    background:var(--color-accent); color:var(--color-accent-ink);
+    cursor:pointer; border:none; white-space:nowrap;
+    transition:background .16s var(--ease), transform .16s var(--ease);
+  }
+  .add:hover{ background:var(--color-accent-deep); }
+  .add:active{ transform:translateY(1px); }
+
+  /* ── GAMEDAY BAND (jersey stripe, full-width) ────── */
+  .band{
+    margin:52px 0;
+    background:var(--color-ink); color:#fff;
+    border-radius:var(--radius-tile); overflow:hidden;
+    position:relative;
+  }
+  /* the structural jersey stripe done tastefully — a full-width band */
+  .band::before{
+    content:""; position:absolute; left:0; right:0; top:0; height:6px;
+    background:var(--color-accent);
+  }
+  .band-inner{ display:grid; grid-template-columns:1.15fr 1fr 1fr; gap:0; }
+  .band-lead{ padding:34px clamp(26px,4vw,44px); border-right:1px solid rgba(255,255,255,.10); }
+  .band-lead h2{
+    font-family:var(--font-display); font-weight:400; font-size:clamp(24px,3.2vw,32px);
+    line-height:1; text-transform:uppercase; margin:0 0 12px;
+  }
+  .band-lead p{ color:rgba(255,255,255,.66); font-size:14.5px; margin:0; max-width:34ch; }
+  .band-item{ padding:34px clamp(22px,3vw,34px); display:flex; flex-direction:column; gap:6px; }
+  .band-item:not(:last-child){ border-right:1px solid rgba(255,255,255,.10); }
+  .band-item .big{ font-family:var(--font-display); font-weight:400; font-size:30px; color:var(--color-accent); letter-spacing:.01em; }
+  .band-item .lbl{ font-size:13px; font-weight:700; }
+  .band-item small{ color:rgba(255,255,255,.58); font-size:12.5px; line-height:1.45; }
+
+  /* ── FOOTER ──────────────────────────────────────── */
+  footer.ft{ background:var(--color-ink); color:#fff; margin-top:8px; }
+  .ft-top{ display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:26px; padding:48px 0 38px; }
+  .ft .logo{ color:#fff; margin-bottom:14px; }
+  .ft p.blurb{ color:rgba(255,255,255,.55); font-size:13.5px; max-width:32ch; margin:0; line-height:1.55; }
+  .ft h4{ font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:rgba(255,255,255,.5); margin:0 0 14px; }
+  .ft ul{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px; }
+  .ft ul a{ color:rgba(255,255,255,.8); font-size:14px; }
+  .ft ul a:hover{ color:#fff; }
+  .ft-bottom{
+    border-top:1px solid rgba(255,255,255,.12);
+    padding:20px 0 26px; display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between;
+    color:rgba(255,255,255,.5); font-size:12.5px;
+  }
+  .ft-bottom .pays{ display:flex; gap:8px; }
+  .ft-bottom .pays span{ padding:4px 9px; border:1px solid rgba(255,255,255,.18); border-radius:5px; font-weight:600; color:rgba(255,255,255,.7); font-size:11.5px; }
+
+  /* ── corner self-doc label ───────────────────────── */
+  .selfdoc{
+    position:fixed; right:12px; bottom:12px; z-index:80;
+    background:var(--color-ink); color:#fff;
+    border-radius:8px; padding:9px 12px;
+    font-family:var(--font-body); font-size:11px; line-height:1.5;
+    box-shadow:0 8px 24px -10px rgba(0,0,0,.5);
+    max-width:230px;
+  }
+  .selfdoc b{ font-family:var(--font-display); font-weight:400; font-size:12px; letter-spacing:.02em; }
+  .selfdoc .sw{ display:inline-block; width:9px; height:9px; border-radius:2px; background:var(--color-accent); vertical-align:middle; margin-right:5px; }
+  .selfdoc .row{ color:rgba(255,255,255,.62); }
+  .selfdoc code{ color:#fff; font-family:var(--font-body); }
+
+  /* ── responsive ──────────────────────────────────── */
+  @media (max-width:960px){
+    :root{ --nord-grid-cols:2; }
+    .pillnav{ display:none; }
+    .band-inner{ grid-template-columns:1fr 1fr; }
+    .band-lead{ grid-column:1 / -1; border-right:none; border-bottom:1px solid rgba(255,255,255,.10); }
+    .band-item:nth-child(2){ border-right:1px solid rgba(255,255,255,.10); }
+    .ft-top{ grid-template-columns:1fr 1fr; }
+  }
+  @media (max-width:560px){
+    :root{ --nord-grid-cols:1; }
+    .hero-meta{ gap:18px; }
+    .band-inner{ grid-template-columns:1fr; }
+    .band-item{ border-right:none !important; border-bottom:1px solid rgba(255,255,255,.10); }
+    .ft-top{ grid-template-columns:1fr 1fr; }
+    .selfdoc{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="logo" href="#"><span class="crest"><span>TK</span></span> Timrå&nbsp;Kiosk</a>
+      <nav class="pillnav">
+        <a href="#" class="on">Matchdräkt</a>
+        <a href="#">Supporter</a>
+        <a href="#">Barn</a>
+        <a href="#">Hemmamatch</a>
+      </nav>
+      <div class="nav-right">
+        <a class="cart" href="#">Varukorg <span class="badge tnum">2</span></a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-card rise d1">
+        <div class="hero-number" aria-hidden="true">17</div>
+        <div class="hero-content">
+          <span class="kicker"><span class="dot"></span> Hemmamatch fredag · 19:00 · nedsläpp om 40 min</span>
+          <h1>Kläi <span class="marked">färgerna</span> före nedsläpp</h1>
+          <p>Matchtröjor, halsdukar och kepsar — redo att bäras i kylan på läktaren. Hämtas i kiosken eller skickas hem samma vecka.</p>
+          <div class="hero-cta">
+            <button class="btn btn-primary">Handla matchdräkt</button>
+            <a class="btn btn-ghost" href="#">Se hela sortimentet</a>
+          </div>
+          <div class="hero-meta">
+            <div class="stat"><b class="tnum">48h</b><small>Hämta i arenakiosken</small></div>
+            <div class="stat"><b class="tnum">1–3</b><small>Dagar hemleverans</small></div>
+            <div class="stat"><b>Officiell</b><small>Klubbmärkt sortiment</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUCT GRID -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head rise d1">
+        <h2>Matchdagens favoriter</h2>
+        <a class="link" href="#">Alla produkter →</a>
+      </div>
+      <div class="grid">
+
+        <article class="card rise d1">
+          <div class="thumb" style="--tint:#0047FF;">
+            <span class="tag ink">Nyhet</span>
+            <span class="num tnum">17</span>
+            <span class="pname">Hemmatröja 25/26</span>
+          </div>
+          <div class="card-body">
+            <span class="cat">Matchtröja</span>
+            <h3>Hemmatröja 25/26</h3>
+            <div class="card-foot">
+              <span class="price tnum">799&nbsp;kr</span>
+              <button class="add">Lägg till</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card rise d2">
+          <div class="thumb" style="--tint:#111418;">
+            <span class="num tnum">7</span>
+            <span class="pname">Bortatröja 25/26</span>
+          </div>
+          <div class="card-body">
+            <span class="cat">Matchtröja</span>
+            <h3>Bortatröja 25/26</h3>
+            <div class="card-foot">
+              <span class="price tnum">799&nbsp;kr</span>
+              <button class="add">Lägg till</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card rise d3">
+          <div class="thumb" style="--tint:#2b6bff;">
+            <span class="tag">Bästsäljare</span>
+            <span class="num">||</span>
+            <span class="pname">Supporterhalsduk</span>
+          </div>
+          <div class="card-body">
+            <span class="cat">Halsduk</span>
+            <h3>Supporterhalsduk Randig</h3>
+            <div class="card-foot">
+              <span class="price tnum">249&nbsp;kr</span>
+              <button class="add">Lägg till</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card rise d4">
+          <div class="thumb" style="--tint:#3a4048;">
+            <span class="num">▲</span>
+            <span class="pname">Supporterkeps</span>
+          </div>
+          <div class="card-body">
+            <span class="cat">Keps</span>
+            <h3>Supporterkeps Snapback</h3>
+            <div class="card-foot">
+              <span class="price tnum">299&nbsp;kr</span>
+              <button class="add">Lägg till</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card rise d2">
+          <div class="thumb" style="--tint:#0038c9;">
+            <span class="tag">Barn</span>
+            <span class="num tnum">10</span>
+            <span class="pname">Barntröja Hemma</span>
+          </div>
+          <div class="card-body">
+            <span class="cat">Matchtröja · Barn</span>
+            <h3>Barntröja Hemma 25/26</h3>
+            <div class="card-foot">
+              <span class="price tnum">599&nbsp;kr</span>
+              <button class="add">Lägg till</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card rise d3">
+          <div class="thumb" style="--tint:#1a1e24;">
+            <span class="num">●</span>
+            <span class="pname">Hemmamössa</span>
+          </div>
+          <div class="card-body">
+            <span class="cat">Mössa</span>
+            <h3>Stickad Hemmamössa</h3>
+            <div class="card-foot">
+              <span class="price tnum">229&nbsp;kr</span>
+              <button class="add">Lägg till</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card rise d4">
+          <div class="thumb" style="--tint:#4457ff;">
+            <span class="num tnum">1</span>
+            <span class="pname">Träningströja</span>
+          </div>
+          <div class="card-body">
+            <span class="cat">Träning</span>
+            <h3>Träningströja Långärmad</h3>
+            <div class="card-foot">
+              <span class="price tnum">549&nbsp;kr</span>
+              <button class="add">Lägg till</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card rise d5">
+          <div class="thumb" style="--tint:#2a2f36;">
+            <span class="tag ink">Fanfavorit</span>
+            <span class="num">★</span>
+            <span class="pname">Läktarflagga</span>
+          </div>
+          <div class="card-body">
+            <span class="cat">Supporter</span>
+            <h3>Läktarflagga Stor</h3>
+            <div class="card-foot">
+              <span class="price tnum">199&nbsp;kr</span>
+              <button class="add">Lägg till</button>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- GAMEDAY BAND -->
+  <section>
+    <div class="wrap">
+      <div class="band rise d1">
+        <div class="band-inner">
+          <div class="band-lead">
+            <h2>Redo till nedsläpp</h2>
+            <p>Beställ före matchdag och bär färgerna på läktaren — vi ser till att din order hinner fram.</p>
+          </div>
+          <div class="band-item">
+            <span class="big">Hämta</span>
+            <span class="lbl">I arenakiosken på matchdag</span>
+            <small>Klart för avhämtning inom 48 timmar, precis innan nedsläpp.</small>
+          </div>
+          <div class="band-item">
+            <span class="big tnum">1–3</span>
+            <span class="lbl">Dagars hemleverans</span>
+            <small>Fri frakt över 699 kr, spårbart till din dörr.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="ft">
+    <div class="wrap">
+      <div class="ft-top">
+        <div>
+          <div class="logo"><span class="crest"><span>TK</span></span> Timrå&nbsp;Kiosk</div>
+          <p class="blurb">Den officiella supporterbutiken. Bär färgerna — på läktaren, på stan, hemma i soffan.</p>
+        </div>
+        <div>
+          <h4>Handla</h4>
+          <ul>
+            <li><a href="#">Matchtröjor</a></li>
+            <li><a href="#">Halsdukar</a></li>
+            <li><a href="#">Kepsar &amp; mössor</a></li>
+            <li><a href="#">Barn</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Klubben</h4>
+          <ul>
+            <li><a href="#">Hemmamatcher</a></li>
+            <li><a href="#">Bli medlem</a></li>
+            <li><a href="#">Om butiken</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Kundservice</h4>
+          <ul>
+            <li><a href="#">Leverans &amp; retur</a></li>
+            <li><a href="#">Storleksguide</a></li>
+            <li><a href="#">Kontakt</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="ft-bottom">
+        <span>© 2026 Timrå Kiosk · Officiell supporterbutik</span>
+        <span class="pays"><span>Klarna</span><span>Swish</span><span>Kort</span></span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- SELF-DOC CORNER LABEL -->
+  <aside class="selfdoc" aria-hidden="true">
+    <div><b>KIT</b> — Gameday Light</div>
+    <div class="row"><span class="sw"></span>accent <code>#0047FF</code></div>
+    <div class="row">display <code>Archivo Black</code></div>
+    <div class="row">body <code>Archivo</code></div>
+  </aside>
+
+</body>
+</html>

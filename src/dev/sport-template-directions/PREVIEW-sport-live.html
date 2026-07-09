@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sport template — live token preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;1,600&family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --color-accent: #E8112D;
+    --color-accent-ink: #FFFFFF;
+    --color-canvas: #EEF0F3;
+    --color-surface: #FFFFFF;
+    --color-ink: #0D1013;
+    --color-ink-muted: #4A5058;
+    --color-ink-faint: #8A9099;
+    --color-line: #D7DBE0;
+    --font-display: 'Archivo Black', ui-sans-serif, system-ui, sans-serif;
+    --font-body: 'Archivo', -apple-system, ui-sans-serif, system-ui, sans-serif;
+    --radius-tile: 8px;
+    --radius-el: 6px;
+    --ease-nord: cubic-bezier(0.16, 0.84, 0.44, 1);
+    --nord-grid-cols: 4;
+    --color-accent-soft: color-mix(in srgb, #E8112D 8%, #FFFFFF);
+    --nord-section-y: 3rem;
+    --nord-gap: 0.75rem;
+    --shadow-tile: 0 1px 2px #1A1C1E08, 0 8px 24px -12px #1A1C1E1F;
+  }
+  *{box-sizing:border-box} body{margin:0;background:var(--color-canvas);color:var(--color-ink);font-family:var(--font-body);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 20px} a{color:inherit;text-decoration:none} .tnum{font-variant-numeric:tabular-nums}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}} .card,.hero-tile{animation:rise .5s var(--ease) both}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+  .nav{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--color-canvas) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--color-line)}
+  .nav-in{display:flex;align-items:center;gap:16px;height:64px}
+  .nav-left{display:flex;align-items:center;gap:8px}
+  /* hamburger — mirrors ShopNavigation: md:hidden, text-ink */
+  .burger{display:none;background:none;border:none;padding:8px;margin-left:-8px;color:var(--color-ink);cursor:pointer}
+  .burger svg{display:block}
+  .logo{font-family:var(--font-display);font-size:20px;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+  .crest{width:30px;height:30px;border-radius:5px;background:var(--color-accent);color:#fff;display:grid;place-items:center;font-family:var(--font-display);font-size:14px}
+  .pillnav{display:flex;gap:4px;margin-left:8px}.pillnav a{padding:8px 14px;border-radius:999px;font-weight:600;font-size:13.5px;color:var(--color-ink-muted)}.pillnav a.on{background:#fff;color:var(--color-ink);box-shadow:inset 0 0 0 1px var(--color-line)}
+  .cart{margin-left:auto;background:var(--color-ink);color:#fff;padding:9px 15px;border-radius:999px;font-weight:600;font-size:13.5px;display:inline-flex;gap:9px;align-items:center}
+  .cart .badge{background:var(--color-accent);color:#fff;min-width:20px;height:20px;padding:0 5px;border-radius:999px;font-family:var(--font-display);font-size:12px;display:grid;place-items:center}
+  .hero{padding:16px 0 8px}
+  .hero-tile{position:relative;overflow:hidden;min-height:560px;border-radius:var(--radius-tile);background:var(--color-surface);border:1px solid var(--color-line);box-shadow:var(--shadow-tile);display:flex;align-items:center}
+  /* tuned mark: contained right-0, clamp(180,26vw,360), 0.08, hidden <640 */
+  .hero-mark{position:absolute;top:50%;right:0;transform:translateY(-50%);font-family:var(--font-display);line-height:.72;letter-spacing:-.04em;color:color-mix(in srgb,var(--color-accent) 8%,transparent);font-size:clamp(180px,26vw,360px);pointer-events:none;user-select:none}
+  @media(max-width:639px){.hero-mark{display:none}}
+  .hero-content{position:relative;z-index:1;max-width:640px;padding:56px}
+  .kicker{display:inline-flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:var(--color-ink-muted);margin-bottom:20px}
+  .kicker .dot{width:8px;height:8px;border-radius:2px;background:var(--color-accent)}
+  .hero h1{font-family:var(--font-display);font-size:clamp(40px,8vw,64px);line-height:.94;letter-spacing:-.015em;text-transform:uppercase;margin:0;text-wrap:balance}
+  .hero p{font-size:18px;color:var(--color-ink-muted);max-width:46ch;margin:18px 0 28px;line-height:1.55}
+  .hero-cta{display:flex;flex-wrap:wrap;gap:12px}
+  .btn-primary{background:var(--color-accent);color:#fff;font-weight:700;font-size:16px;padding:14px 24px;border:none;border-radius:var(--radius-el);cursor:pointer}
+  .btn-ghost{background:transparent;color:var(--color-ink);border:1px solid var(--color-line);font-weight:600;font-size:15px;padding:14px 20px;border-radius:var(--radius-el);cursor:pointer}
+  .sec-head{display:flex;align-items:flex-end;justify-content:space-between;margin:44px 0 20px}
+  .sec-head h2{font-family:var(--font-display);font-size:clamp(24px,3.4vw,34px);text-transform:uppercase;letter-spacing:-.01em;margin:0}
+  .sec-head a{font-weight:700;font-size:13.5px;color:var(--color-accent)}
+  .grid{display:grid;gap:1rem;grid-template-columns:repeat(var(--nord-grid-cols),1fr)}
+  @media(max-width:960px){.grid{grid-template-columns:repeat(2,1fr)}.pillnav{display:none}.burger{display:block}}
+  @media(max-width:560px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--color-surface);border:1px solid var(--color-line);border-radius:var(--radius-tile);overflow:hidden;display:flex;flex-direction:column;transition:transform .18s var(--ease),box-shadow .18s var(--ease)}
+  .card:hover{transform:translateY(-3px);box-shadow:0 12px 28px -14px rgba(13,16,19,.35)}
+  .thumb{position:relative;aspect-ratio:4/5;background:#e6e9ee;display:grid;place-items:center}
+  .thumb .ph{font-family:var(--font-display);font-size:34px;color:#c3c9d1;text-transform:uppercase}
+  .tag{position:absolute;top:11px;left:11px;background:var(--color-accent);color:#fff;font-weight:700;font-size:11px;letter-spacing:.03em;padding:5px 9px;border-radius:5px;text-transform:uppercase}
+  .card-body{padding:14px;display:flex;flex-direction:column;gap:3px;flex:1}
+  .cat{font-size:11.5px;font-weight:700;color:var(--color-ink-faint);text-transform:uppercase;letter-spacing:.04em}
+  .card-body h3{font-size:15px;font-weight:600;margin:0}
+  .card-foot{margin-top:auto;padding-top:12px;display:flex;align-items:center;justify-content:space-between}
+  .price{font-family:var(--font-display);font-size:18px}
+  .add{background:var(--color-accent);color:#fff;font-weight:700;font-size:13px;padding:9px 15px;border:none;border-radius:999px;cursor:pointer}
+  .label{position:fixed;left:12px;bottom:12px;background:var(--color-ink);color:#fff;font-size:11px;padding:8px 11px;border-radius:8px;line-height:1.5;z-index:90}
+  .label b{font-family:var(--font-display)}
+
+  footer.ft{background:var(--color-ink);color:#fff;margin-top:52px}
+  .ft-in{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:26px;padding:48px 0 34px}
+  .ft h3{font-family:var(--font-display);font-size:20px;text-transform:uppercase;margin:0 0 12px;display:flex;align-items:center;gap:10px}
+  .ft .blurb{color:rgba(255,255,255,.7);font-size:14px;max-width:34ch;margin:0;line-height:1.6}
+  .ft h4{font-family:var(--font-display);font-size:13px;letter-spacing:.02em;text-transform:uppercase;color:#fff;margin:0 0 14px}
+  .ft ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+  .ft ul a{color:rgba(255,255,255,.7);font-size:14px}.ft ul a:hover{color:#fff}
+  .ft .social{display:flex;gap:8px;margin-top:16px}
+  .ft .social a{width:36px;height:36px;border-radius:999px;background:rgba(255,255,255,.1);display:grid;place-items:center;color:#fff}
+  .ft-bot{border-top:1px solid rgba(255,255,255,.12);padding:18px 0 28px;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;color:rgba(255,255,255,.5);font-size:12.5px}
+  .ft-bot .pays{display:flex;gap:8px}.ft-bot .pays span{padding:4px 10px;border:1px solid rgba(255,255,255,.18);border-radius:999px;color:rgba(255,255,255,.7);font-weight:600;font-size:11.5px}
+  @media(max-width:760px){.ft-in{grid-template-columns:1fr 1fr}}
+</style></head><body>
+  <header class="nav"><div class="wrap nav-in">
+    <div class="nav-left">
+      <button class="burger" aria-label="Meny"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <a class="logo"><span class="crest">FC</span> Klubbshop</a>
+    </div>
+    <nav class="pillnav"><a class="on">Matchställ</a><a>Supporter</a><a>Barn</a><a>Rea</a></nav>
+    <a class="cart">Varukorg <span class="badge tnum">2</span></a>
+  </div></header>
+  <section class="hero"><div class="wrap"><div class="hero-tile">
+    <div class="hero-mark" aria-hidden="true">FC</div>
+    <div class="hero-content">
+      <span class="kicker"><span class="dot"></span> Officiell klubbshop · fri frakt över 699 kr</span>
+      <h1>Bär färgerna hela säsongen</h1>
+      <p>Matchställ, supporterprylar och träningskläder — redo att bäras på läktaren och på plan. Hämtas i shopen eller skickas hem.</p>
+      <div class="hero-cta"><button class="btn-primary">Handla nu</button><button class="btn-ghost">Se sortimentet ↓</button></div>
+    </div>
+  </div></div></section>
+  <section><div class="wrap">
+    <div class="sec-head"><h2>Matchdagens favoriter</h2><a>Alla produkter →</a></div>
+    <div class="grid">
+      <article class="card" style="animation-delay:0s">
+        <div class="thumb"><span class="ph">Klubbtröja</span></div>
+        <div class="card-body"><span class="cat">Matchställ</span><h3>Klubbtröja Hemma</h3>
+          <div class="card-foot"><span class="price tnum">799 kr</span><button class="add">Lägg till</button></div></div>
+      </article>
+      <article class="card" style="animation-delay:0.03s">
+        <div class="thumb"><span class="ph">Klubbtröja</span></div>
+        <div class="card-body"><span class="cat">Matchställ</span><h3>Klubbtröja Borta</h3>
+          <div class="card-foot"><span class="price tnum">799 kr</span><button class="add">Lägg till</button></div></div>
+      </article>
+      <article class="card" style="animation-delay:0.06s">
+        <div class="thumb"><span class="ph">Supporterhalsduk</span></div>
+        <div class="card-body"><span class="cat">Accessoarer</span><h3>Supporterhalsduk</h3>
+          <div class="card-foot"><span class="price tnum">249 kr</span><button class="add">Lägg till</button></div></div>
+      </article>
+      <article class="card" style="animation-delay:0.09s">
+        <div class="thumb"><span class="ph">Supporterkeps</span></div>
+        <div class="card-body"><span class="cat">Accessoarer</span><h3>Supporterkeps</h3>
+          <div class="card-foot"><span class="price tnum">299 kr</span><button class="add">Lägg till</button></div></div>
+      </article>
+      <article class="card" style="animation-delay:0.12s">
+        <div class="thumb"><span class="ph">Träningströja</span><span class="tag">Nyhet</span></div>
+        <div class="card-body"><span class="cat">Träning</span><h3>Träningströja</h3>
+          <div class="card-foot"><span class="price tnum">549 kr</span><button class="add">Lägg till</button></div></div>
+      </article>
+      <article class="card" style="animation-delay:0.15s">
+        <div class="thumb"><span class="ph">Barntröja</span></div>
+        <div class="card-body"><span class="cat">Barn</span><h3>Barntröja</h3>
+          <div class="card-foot"><span class="price tnum">599 kr</span><button class="add">Lägg till</button></div></div>
+      </article>
+      <article class="card" style="animation-delay:0.18s">
+        <div class="thumb"><span class="ph">Stickad</span></div>
+        <div class="card-body"><span class="cat">Accessoarer</span><h3>Stickad Mössa</h3>
+          <div class="card-foot"><span class="price tnum">229 kr</span><button class="add">Lägg till</button></div></div>
+      </article>
+      <article class="card" style="animation-delay:0.21s">
+        <div class="thumb"><span class="ph">Läktarflagga</span><span class="tag">Bästsäljare</span></div>
+        <div class="card-body"><span class="cat">Supporter</span><h3>Läktarflagga</h3>
+          <div class="card-foot"><span class="price tnum">199 kr</span><button class="add">Lägg till</button></div></div>
+      </article></div>
+  </div></section>
+  <div class="label"><b>SPORT</b> · hamburger + optional heroMark (opt-in)<br>accent #E8112D · editorial hero · grid 4</div>
+
+  <footer class="ft"><div class="wrap">
+    <div class="ft-in">
+      <div><h3><span class="crest">FC</span> Klubbshop</h3><p class="blurb">Den officiella klubbshopen. Bär färgerna — på läktaren, på plan och hemma i soffan.</p>
+        <div class="social"><a>f</a><a>◎</a><a>▶</a></div></div>
+      <div><h4>Handla</h4><ul><li><a>Matchställ</a></li><li><a>Supporter</a></li><li><a>Barn</a></li><li><a>Rea</a></li></ul></div>
+      <div><h4>Klubben</h4><ul><li><a>Om butiken</a></li><li><a>Bli medlem</a></li><li><a>Kontakt</a></li></ul></div>
+      <div><h4>Kundservice</h4><ul><li><a>Leverans & retur</a></li><li><a>Storleksguide</a></li><li><a>Köpvillkor</a></li></ul></div>
+    </div>
+    <div class="ft-bot"><span>© 2026 Klubbshop · Officiell butik</span><span class="pays"><span>Swish</span><span>Klarna</span><span>Kort</span></span></div>
+  </div></footer>
+</body></html>

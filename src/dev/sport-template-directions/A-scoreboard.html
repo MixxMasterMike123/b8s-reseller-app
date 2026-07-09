@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scoreboard — Gameday Light sport-storefront</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* --- Scoreboard token contract --- */
+    --color-accent:#E8112D;          /* club red — AA as button bg w/ #fff text */
+    --color-accent-ink:#ffffff;
+    --color-accent-deep:#B00C22;     /* pressed / hover */
+    --color-canvas:#EEF1F4;          /* cool pale steel — NOT warm */
+    --color-surface:#FFFFFF;
+    --color-surface-2:#F6F8FA;
+    --color-ink:#111417;             /* near-black */
+    --color-ink-muted:#4A525B;
+    --color-ink-faint:#8B95A0;
+    --color-line:#DDE3E9;
+
+    --font-display:'Archivo', system-ui, sans-serif;   /* blocky condensed grotesk */
+    --font-black:'Archivo Black', system-ui, sans-serif;
+    --font-body:'Inter', system-ui, sans-serif;
+
+    --radius-tile:7px;   /* blocky arena signage */
+    --radius-el:6px;
+
+    --nord-grid-cols:4;
+
+    --ease:cubic-bezier(.16,.84,.34,1); /* fast, ease-out, no bounce */
+
+    --maxw:1200px;
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--color-canvas);
+    color:var(--color-ink);
+    font-family:var(--font-body);
+    font-size:15px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  img{max-width:100%;display:block}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;cursor:pointer}
+
+  .tnum{font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+
+  /* ---------- entrance motion ---------- */
+  .rise{opacity:0;transform:translateY(14px);animation:rise .5s var(--ease) forwards}
+  .rise.d1{animation-delay:.05s}
+  .rise.d2{animation-delay:.10s}
+  .rise.d3{animation-delay:.16s}
+  .rise.d4{animation-delay:.22s}
+  @keyframes rise{to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){
+    .rise{opacity:1;transform:none;animation:none}
+    *{scroll-behavior:auto!important}
+  }
+
+  /* ---------- nav ---------- */
+  .nav{
+    position:sticky;top:0;z-index:40;
+    background:rgba(238,241,244,.86);
+    backdrop-filter:saturate(1.4) blur(8px);
+    border-bottom:1px solid var(--color-line);
+  }
+  .nav-in{display:flex;align-items:center;gap:18px;height:64px}
+  .logo{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;letter-spacing:-.02em}
+  .logo .mark{
+    width:34px;height:34px;border-radius:var(--radius-el);
+    background:var(--color-ink);color:#fff;
+    display:grid;place-items:center;
+    font-family:var(--font-black);font-size:17px;line-height:1;
+  }
+  .logo .mark::after{content:"IK"}
+  .logo .name{font-size:18px;text-transform:uppercase}
+  .logo .name b{color:var(--color-accent)}
+  .pillnav{display:flex;gap:4px;margin-left:8px}
+  .pillnav a{
+    padding:8px 14px;border-radius:var(--radius-el);
+    font-weight:600;font-size:14px;color:var(--color-ink-muted);
+    transition:background .15s var(--ease),color .15s var(--ease);
+  }
+  .pillnav a:hover{background:var(--color-surface);color:var(--color-ink)}
+  .pillnav a.on{background:var(--color-ink);color:#fff}
+  .nav-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .search{
+    display:flex;align-items:center;gap:8px;
+    background:var(--color-surface);border:1px solid var(--color-line);
+    padding:8px 12px;border-radius:var(--radius-el);color:var(--color-ink-faint);
+    font-size:14px;font-weight:500;
+  }
+  .cart{
+    display:flex;align-items:center;gap:8px;
+    background:var(--color-ink);color:#fff;
+    padding:9px 14px 9px 13px;border-radius:var(--radius-el);
+    font-weight:600;font-size:14px;border:none;
+  }
+  .cart .badge{
+    background:var(--color-accent);color:var(--color-accent-ink);
+    min-width:20px;height:20px;padding:0 6px;border-radius:5px;
+    display:grid;place-items:center;font-size:12px;font-weight:700;
+    font-family:var(--font-display);
+  }
+  .search svg,.cart svg{display:block}
+
+  /* ---------- hero (split scoreboard) ---------- */
+  .hero{padding:22px 0 8px}
+  .hero-grid{
+    display:grid;grid-template-columns:1.15fr .85fr;gap:14px;
+  }
+  .hero-panel{border-radius:var(--radius-tile);overflow:hidden}
+
+  /* left accent block */
+  .hero-left{
+    background:var(--color-accent);color:var(--color-accent-ink);
+    padding:34px 34px 30px;
+    display:flex;flex-direction:column;
+    position:relative;min-height:430px;
+  }
+  .hero-left::before{
+    /* faint scoreboard grid, not a gradient */
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:.10;
+    background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);
+    background-size:34px 34px;
+  }
+  .hero-left>*{position:relative}
+  .matchbar{
+    display:flex;align-items:center;gap:10px;
+    font-family:var(--font-display);font-weight:700;font-size:13px;
+    text-transform:uppercase;letter-spacing:.04em;
+  }
+  .matchbar .dot{width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 0 0 rgba(255,255,255,.7);animation:pulse 1.8s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.55)}70%{box-shadow:0 0 0 9px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+  @media(prefers-reduced-motion:reduce){.hero-left .dot{animation:none}}
+  .matchbar .sep{opacity:.55}
+  .hero-title{
+    font-family:var(--font-black);
+    font-size:clamp(46px,7vw,88px);
+    line-height:.90;letter-spacing:-.02em;
+    text-transform:uppercase;text-wrap:balance;
+    margin:22px 0 0;
+  }
+  .hero-sub{
+    font-size:16px;font-weight:500;max-width:42ch;
+    margin:16px 0 0;color:rgba(255,255,255,.92);
+  }
+  .hero-cta{margin-top:auto;padding-top:26px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .btn-invert{
+    background:#fff;color:var(--color-accent);
+    padding:14px 22px;border-radius:var(--radius-el);border:none;
+    font-family:var(--font-display);font-weight:700;font-size:16px;
+    text-transform:uppercase;letter-spacing:.01em;
+    transition:transform .15s var(--ease),background .15s var(--ease);
+  }
+  .btn-invert:hover{transform:translateY(-2px);background:var(--color-ink);color:#fff}
+  .btn-ghost{
+    color:#fff;padding:14px 4px;font-weight:600;font-size:15px;
+    border-bottom:2px solid rgba(255,255,255,.45);
+    transition:border-color .15s var(--ease);
+  }
+  .btn-ghost:hover{border-color:#fff}
+
+  /* scoreboard readout strip inside left panel */
+  .readout{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+    margin-top:26px;background:rgba(255,255,255,.22);
+    border-radius:var(--radius-el);overflow:hidden;
+  }
+  .readout .cell{background:var(--color-accent);padding:12px 14px}
+  .readout .k{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;opacity:.82}
+  .readout .v{font-family:var(--font-black);font-size:24px;line-height:1;margin-top:5px}
+
+  /* right featured product */
+  .hero-right{
+    background:var(--color-surface);border:1px solid var(--color-line);
+    padding:20px;display:flex;flex-direction:column;
+  }
+  .feat-tag{
+    align-self:flex-start;
+    background:var(--color-ink);color:#fff;
+    font-family:var(--font-display);font-weight:700;font-size:12px;
+    text-transform:uppercase;letter-spacing:.05em;
+    padding:5px 10px;border-radius:5px;
+  }
+  .feat-img{
+    margin-top:14px;flex:1;min-height:230px;border-radius:var(--radius-el);
+    background:
+      radial-gradient(circle at 50% 42%, rgba(232,17,45,.10), transparent 60%),
+      var(--color-surface-2);
+    border:1px solid var(--color-line);
+    display:flex;align-items:center;justify-content:center;
+    position:relative;overflow:hidden;
+  }
+  /* jersey number placeholder */
+  .jersey{
+    font-family:var(--font-black);font-size:clamp(90px,15vw,150px);
+    line-height:1;color:var(--color-accent);
+    -webkit-text-stroke:2px var(--color-accent);
+    position:relative;
+  }
+  .jersey .nm{
+    position:absolute;top:-1.05em;left:50%;transform:translateX(-50%);
+    font-family:var(--font-display);font-weight:700;font-size:15px;
+    color:var(--color-ink);letter-spacing:.14em;-webkit-text-stroke:0;
+  }
+  .feat-meta{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:16px}
+  .feat-name{font-family:var(--font-display);font-weight:700;font-size:19px;line-height:1.15}
+  .feat-name small{display:block;color:var(--color-ink-muted);font-weight:500;font-size:13px;margin-top:3px}
+  .feat-price{font-family:var(--font-black);font-size:26px;line-height:1}
+  .feat-add{
+    margin-top:14px;width:100%;
+    background:var(--color-accent);color:var(--color-accent-ink);border:none;
+    padding:14px;border-radius:var(--radius-el);
+    font-family:var(--font-display);font-weight:700;font-size:15px;
+    text-transform:uppercase;letter-spacing:.02em;
+    transition:background .15s var(--ease),transform .15s var(--ease);
+  }
+  .feat-add:hover{background:var(--color-accent-deep);transform:translateY(-1px)}
+
+  /* ---------- section head ---------- */
+  .sec{padding:38px 0 6px}
+  .sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:16px}
+  .sec-head h2{
+    font-family:var(--font-black);font-size:clamp(24px,3.4vw,34px);
+    text-transform:uppercase;letter-spacing:-.01em;margin:0;line-height:1;
+  }
+  .sec-head .link{color:var(--color-accent);font-weight:700;font-size:14px}
+  .sec-head .link:hover{text-decoration:underline}
+
+  /* filter pills */
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .filters button{
+    background:var(--color-surface);border:1px solid var(--color-line);
+    padding:8px 14px;border-radius:var(--radius-el);
+    font-weight:600;font-size:13px;color:var(--color-ink-muted);
+    transition:all .15s var(--ease);
+  }
+  .filters button:hover{border-color:var(--color-ink-faint);color:var(--color-ink)}
+  .filters button.on{background:var(--color-ink);border-color:var(--color-ink);color:#fff}
+
+  /* ---------- product grid ---------- */
+  .grid{
+    display:grid;grid-template-columns:repeat(var(--nord-grid-cols),1fr);gap:14px;
+  }
+  .card{
+    background:var(--color-surface);border:1px solid var(--color-line);
+    border-radius:var(--radius-tile);padding:12px;
+    display:flex;flex-direction:column;
+    transition:transform .18s var(--ease),box-shadow .18s var(--ease),border-color .18s var(--ease);
+  }
+  .card:hover{transform:translateY(-3px);box-shadow:0 10px 24px -14px rgba(17,20,23,.35);border-color:var(--color-ink-faint)}
+  .ph{
+    border-radius:var(--radius-el);aspect-ratio:1/1;
+    background:var(--color-surface-2);border:1px solid var(--color-line);
+    display:flex;align-items:center;justify-content:center;
+    position:relative;overflow:hidden;
+  }
+  .ph .plabel{
+    font-family:var(--font-display);font-weight:700;font-size:13px;
+    color:var(--color-ink-faint);text-transform:uppercase;letter-spacing:.04em;
+    text-align:center;padding:0 12px;
+  }
+  .ph .num{
+    font-family:var(--font-black);color:var(--color-line);
+    font-size:clamp(60px,9vw,86px);line-height:1;position:absolute;
+  }
+  .ph.acc{background:linear-gradient(0deg,rgba(232,17,45,.07),rgba(232,17,45,.07)),var(--color-surface-2)}
+  .ph.acc .num{color:rgba(232,17,45,.16)}
+  .flag{
+    position:absolute;top:8px;left:8px;z-index:2;
+    background:var(--color-accent);color:#fff;
+    font-family:var(--font-display);font-weight:700;font-size:11px;
+    text-transform:uppercase;letter-spacing:.04em;
+    padding:4px 8px;border-radius:5px;
+  }
+  .flag.ink{background:var(--color-ink)}
+  .card h3{
+    font-family:var(--font-display);font-weight:700;font-size:15px;line-height:1.2;
+    margin:12px 0 2px;
+  }
+  .card .cat{color:var(--color-ink-faint);font-size:12px;font-weight:500}
+  .card-foot{margin-top:auto;padding-top:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .price{font-family:var(--font-black);font-size:18px;line-height:1}
+  .price .old{
+    display:block;font-family:var(--font-body);font-weight:500;font-size:11px;
+    color:var(--color-ink-faint);text-decoration:line-through;margin-top:2px;
+  }
+  .add{
+    background:var(--color-accent);color:var(--color-accent-ink);border:none;
+    padding:9px 14px;border-radius:var(--radius-el);
+    font-family:var(--font-display);font-weight:700;font-size:13px;
+    text-transform:uppercase;letter-spacing:.02em;white-space:nowrap;
+    transition:background .15s var(--ease),transform .12s var(--ease);
+  }
+  .add:hover{background:var(--color-accent-deep);transform:translateY(-1px)}
+  .add:active{transform:translateY(0)}
+
+  /* ---------- gameday band ---------- */
+  .band{margin-top:40px}
+  .band-in{
+    background:var(--color-ink);color:#fff;border-radius:var(--radius-tile);
+    padding:26px 28px;
+    display:grid;grid-template-columns:auto 1px 1fr 1fr 1fr;gap:26px;align-items:center;
+  }
+  .band .lead{max-width:22ch}
+  .band .lead .kicker{
+    font-family:var(--font-display);font-weight:700;font-size:12px;
+    text-transform:uppercase;letter-spacing:.06em;color:var(--color-accent);
+  }
+  .band .lead h3{font-family:var(--font-black);font-size:26px;line-height:1;margin:8px 0 0;text-transform:uppercase}
+  .band .rule{width:1px;align-self:stretch;background:rgba(255,255,255,.14)}
+  .band .item{display:flex;flex-direction:column;gap:4px}
+  .band .item .t{font-family:var(--font-display);font-weight:700;font-size:15px}
+  .band .item .d{color:rgba(255,255,255,.62);font-size:13px}
+  .band .item .icn{
+    width:30px;height:30px;border-radius:var(--radius-el);
+    background:rgba(255,255,255,.08);display:grid;place-items:center;margin-bottom:6px;color:var(--color-accent);
+  }
+
+  /* ---------- footer ---------- */
+  footer{background:var(--color-ink);color:#fff;margin-top:22px;padding:44px 0 30px}
+  .foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:28px}
+  .foot-brand .logo .name{color:#fff}
+  .foot-brand p{color:rgba(255,255,255,.6);font-size:14px;max-width:32ch;margin:14px 0 0}
+  .foot-col h4{font-family:var(--font-display);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.05em;margin:2px 0 14px;color:rgba(255,255,255,.55)}
+  .foot-col a{display:block;color:rgba(255,255,255,.82);font-size:14px;padding:5px 0}
+  .foot-col a:hover{color:var(--color-accent)}
+  .foot-bot{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    border-top:1px solid rgba(255,255,255,.12);margin-top:34px;padding-top:20px;
+    color:rgba(255,255,255,.5);font-size:13px;
+  }
+  .foot-bot .pays{display:flex;gap:8px}
+  .foot-bot .pays span{border:1px solid rgba(255,255,255,.2);border-radius:5px;padding:4px 9px;font-weight:600;font-size:11px;letter-spacing:.03em}
+
+  /* ---------- self-doc corner label ---------- */
+  .doclabel{
+    position:fixed;right:12px;bottom:12px;z-index:80;
+    background:var(--color-ink);color:#fff;
+    border-radius:var(--radius-el);padding:9px 12px;
+    font-family:var(--font-body);font-size:11px;line-height:1.5;
+    box-shadow:0 8px 22px -10px rgba(0,0,0,.5);max-width:230px;
+  }
+  .doclabel b{font-family:var(--font-display);font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:12px}
+  .doclabel .sw{display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--color-accent);vertical-align:baseline;margin-right:5px}
+  .doclabel .row{color:rgba(255,255,255,.7)}
+  .doclabel .row b{color:#fff;font-family:var(--font-body);font-weight:600;letter-spacing:0;text-transform:none}
+
+  /* ---------- responsive ---------- */
+  @media(max-width:1000px){
+    :root{--nord-grid-cols:2}
+    .hero-grid{grid-template-columns:1fr}
+    .hero-left{min-height:340px}
+    .band-in{grid-template-columns:1fr 1fr;gap:20px}
+    .band .rule{display:none}
+    .band .lead{grid-column:1 / -1}
+    .foot-grid{grid-template-columns:1fr 1fr}
+    .pillnav,.search{display:none}
+  }
+  @media(max-width:600px){
+    :root{--nord-grid-cols:1}
+    .band-in{grid-template-columns:1fr}
+    .foot-grid{grid-template-columns:1fr 1fr}
+    .foot-brand{grid-column:1 / -1}
+    .doclabel{display:none}
+    .nav-in{gap:10px}
+    .readout{grid-template-columns:1fr 1fr}
+  }
+</style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <header class="nav">
+    <div class="wrap nav-in">
+      <a href="#" class="logo" aria-label="Timrå IK Fanshop, startsida">
+        <span class="mark" aria-hidden="true"></span>
+        <span class="name">Timrå<b>IK</b></span>
+      </a>
+      <nav class="pillnav" aria-label="Huvudmeny">
+        <a href="#" class="on">Butik</a>
+        <a href="#">Matchtröjor</a>
+        <a href="#">Supporter</a>
+        <a href="#">Barn</a>
+        <a href="#">REA</a>
+      </nav>
+      <div class="nav-right">
+        <span class="search" aria-hidden="true">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          Sök
+        </span>
+        <button class="cart" aria-label="Varukorg, 2 varor">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6L5 3H2"/></svg>
+          Varukorg
+          <span class="badge tnum">2</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+
+      <div class="hero-panel hero-left rise">
+        <div class="matchbar">
+          <span class="dot" aria-hidden="true"></span>
+          Hemmamatch <span class="sep">·</span> Lör 19.00 <span class="sep">·</span> NHK Arena
+        </div>
+        <h1 class="hero-title">Bär färgerna<br>till puck-drop</h1>
+        <p class="hero-sub">Ny hemmatröja, halsdukar och kepsar. Beställ före matchen — hämtas i kiosken eller levereras hem.</p>
+
+        <div class="readout" aria-label="Snabbfakta">
+          <div class="cell"><div class="k">Nästa match</div><div class="v tnum">2</div><div class="k" style="opacity:.7">dagar kvar</div></div>
+          <div class="cell"><div class="k">Fri frakt</div><div class="v tnum">599</div><div class="k" style="opacity:.7">kr och uppåt</div></div>
+          <div class="cell"><div class="k">Hämta i arena</div><div class="v">Kiosk</div><div class="k" style="opacity:.7">samma dag</div></div>
+        </div>
+
+        <div class="hero-cta">
+          <button class="btn-invert">Till kassan</button>
+          <a href="#grid" class="btn-ghost">Se hela butiken</a>
+        </div>
+      </div>
+
+      <div class="hero-panel hero-right rise d1">
+        <span class="feat-tag">Veckans tröja</span>
+        <div class="feat-img">
+          <span class="jersey tnum" aria-hidden="true"><span class="nm">TIMRÅ</span>67</span>
+        </div>
+        <div class="feat-meta">
+          <div class="feat-name">Hemmatröja 25/26<small>Auktoriserad matchtröja · SHL</small></div>
+          <div class="feat-price tnum">899&nbsp;kr</div>
+        </div>
+        <button class="feat-add">Lägg till</button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PRODUCT GRID -->
+  <section class="sec" id="grid">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Populärt just nu</h2>
+        <a href="#" class="link">Visa alla →</a>
+      </div>
+      <div class="filters" role="group" aria-label="Filtrera produkter">
+        <button class="on">Allt</button>
+        <button>Matchtröjor</button>
+        <button>Halsdukar</button>
+        <button>Kepsar</button>
+        <button>Barn</button>
+        <button>Accessoarer</button>
+      </div>
+
+      <div class="grid">
+
+        <article class="card rise">
+          <div class="ph acc"><span class="num tnum" aria-hidden="true">67</span><span class="flag">Bästsäljare</span></div>
+          <h3>Hemmatröja 25/26</h3>
+          <div class="cat">Matchtröja</div>
+          <div class="card-foot">
+            <div class="price tnum">899&nbsp;kr</div>
+            <button class="add">Lägg till</button>
+          </div>
+        </article>
+
+        <article class="card rise d1">
+          <div class="ph"><span class="plabel">Bortatröja<br>Vit</span></div>
+          <h3>Bortatröja 25/26</h3>
+          <div class="cat">Matchtröja</div>
+          <div class="card-foot">
+            <div class="price tnum">899&nbsp;kr</div>
+            <button class="add">Lägg till</button>
+          </div>
+        </article>
+
+        <article class="card rise d2">
+          <div class="ph acc"><span class="plabel">Randig<br>Halsduk</span><span class="flag ink">Nyhet</span></div>
+          <h3>Supporterhalsduk Randig</h3>
+          <div class="cat">Halsduk</div>
+          <div class="card-foot">
+            <div class="price tnum">249&nbsp;kr</div>
+            <button class="add">Lägg till</button>
+          </div>
+        </article>
+
+        <article class="card rise d3">
+          <div class="ph"><span class="plabel">Snapback<br>Keps</span></div>
+          <h3>Supporterkeps Snapback</h3>
+          <div class="cat">Keps</div>
+          <div class="card-foot">
+            <div class="price tnum">299&nbsp;kr</div>
+            <button class="add">Lägg till</button>
+          </div>
+        </article>
+
+        <article class="card rise">
+          <div class="ph acc"><span class="num tnum" aria-hidden="true">09</span><span class="flag">-25%</span></div>
+          <h3>Barntröja Hemma</h3>
+          <div class="cat">Barn · Matchtröja</div>
+          <div class="card-foot">
+            <div class="price tnum">449&nbsp;kr<span class="old tnum">599 kr</span></div>
+            <button class="add">Lägg till</button>
+          </div>
+        </article>
+
+        <article class="card rise d1">
+          <div class="ph"><span class="plabel">Hemma<br>Träningströja</span></div>
+          <h3>Träningströja Fleece</h3>
+          <div class="cat">Kläder</div>
+          <div class="card-foot">
+            <div class="price tnum">699&nbsp;kr</div>
+            <button class="add">Lägg till</button>
+          </div>
+        </article>
+
+        <article class="card rise d2">
+          <div class="ph"><span class="plabel">Puck +<br>Vimpel</span></div>
+          <h3>Matchpuck &amp; Vimpel</h3>
+          <div class="cat">Accessoarer</div>
+          <div class="card-foot">
+            <div class="price tnum">199&nbsp;kr</div>
+            <button class="add">Lägg till</button>
+          </div>
+        </article>
+
+        <article class="card rise d3">
+          <div class="ph acc"><span class="plabel">Mössa<br>Stickad</span></div>
+          <h3>Stickad Supportermössa</h3>
+          <div class="cat">Accessoarer</div>
+          <div class="card-foot">
+            <div class="price tnum">279&nbsp;kr</div>
+            <button class="add">Lägg till</button>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- GAMEDAY BAND -->
+  <section class="band">
+    <div class="wrap">
+      <div class="band-in rise">
+        <div class="lead">
+          <div class="kicker">Gameday</div>
+          <h3>Redo före puck-drop</h3>
+        </div>
+        <div class="rule" aria-hidden="true"></div>
+        <div class="item">
+          <span class="icn" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="7" width="15" height="10" rx="1.5"/><path d="M17 10h3l2 3v4h-5"/><circle cx="6.5" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></svg></span>
+          <span class="t">Hämta i arenan</span>
+          <span class="d">Reservera online, hämta i fankiosken samma matchdag.</span>
+        </div>
+        <div class="item">
+          <span class="icn" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12h13"/><path d="M12 5l7 7-7 7"/></svg></span>
+          <span class="t">Snabb leverans</span>
+          <span class="d">1–3 arbetsdagar. Fri frakt över 599 kr.</span>
+        </div>
+        <div class="item">
+          <span class="icn" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></span>
+          <span class="t">Officiell klubbutik</span>
+          <span class="d">Äkta licensierade produkter. Varje köp stöttar klubben.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="wrap">
+      <div class="foot-grid">
+        <div class="foot-brand">
+          <a href="#" class="logo">
+            <span class="mark" aria-hidden="true"></span>
+            <span class="name">Timrå<b>IK</b></span>
+          </a>
+          <p>Den officiella supporterbutiken. Bär färgerna på läktaren, på stan och på isen.</p>
+        </div>
+        <div class="foot-col">
+          <h4>Butik</h4>
+          <a href="#">Matchtröjor</a>
+          <a href="#">Halsdukar</a>
+          <a href="#">Kepsar &amp; mössor</a>
+          <a href="#">Barn</a>
+          <a href="#">REA</a>
+        </div>
+        <div class="foot-col">
+          <h4>Kundservice</h4>
+          <a href="#">Frakt &amp; leverans</a>
+          <a href="#">Byten &amp; retur</a>
+          <a href="#">Storleksguide</a>
+          <a href="#">Kontakt</a>
+        </div>
+        <div class="foot-col">
+          <h4>Klubben</h4>
+          <a href="#">Matchprogram</a>
+          <a href="#">Bli medlem</a>
+          <a href="#">Arenan</a>
+          <a href="#">Nyhetsbrev</a>
+        </div>
+      </div>
+      <div class="foot-bot">
+        <span>© 2026 Timrå IK Fanshop · Drivs på Nord</span>
+        <span class="pays" aria-label="Betalsätt">
+          <span>Swish</span><span>Klarna</span><span>Visa</span><span>Mastercard</span>
+        </span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- SELF-DOC LABEL -->
+  <aside class="doclabel" aria-hidden="true">
+    <b>Scoreboard</b>
+    <div class="row"><span class="sw"></span>Accent <b>#E8112D</b></div>
+    <div class="row">Display <b>Archivo Black</b></div>
+    <div class="row">Body <b>Inter</b></div>
+    <div class="row">Lane · Gameday Light</div>
+  </aside>
+
+</body>
+</html>
