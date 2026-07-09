@@ -10,7 +10,7 @@ export { sendLoginCredentialsEmail } from './sendLoginCredentialsEmail';
 export { sendAffiliateWelcomeEmail } from './sendAffiliateWelcomeEmail';
 export { approveAffiliate } from './approveAffiliate';
 export { createShopUser } from './createShopUser';
-export { createPlatformSuperAdmin, deletePlatformUser } from './platformUsers';
+export { createPlatformSuperAdmin, deletePlatformUser, mintImpersonationToken } from './platformUsers';
 export { migrateFromShopify } from './migrateFromShopify';
 export { migrateFromWoo } from './migrateFromWoo';
 export { sendEmailVerification } from './sendEmailVerification';

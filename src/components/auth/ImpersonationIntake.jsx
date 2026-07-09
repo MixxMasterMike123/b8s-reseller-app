@@ -17,6 +17,7 @@
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
+import { getAuth, signInWithCustomToken } from 'firebase/auth';
 import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import { setImpersonation } from '../../config/impersonation';
@@ -29,73 +30,56 @@ const ImpersonationIntake = () => {
   // Guard so the async intake runs once per param arrival (StrictMode double-mount
   // + the post-nav re-render must not re-process or double-write).
   const handledRef = useRef(false);
+  // Guard so the silent sign-in handoff is attempted only once per tab, even
+  // across the effect re-runs that the sign-in itself triggers.
+  const handoffRef = useRef(false);
 
   useEffect(() => {
+    if (loading) return; // wait for auth to resolve before deciding
     const params = new URLSearchParams(location.search);
-    const urlImpersonate = params.get('impersonate');
-    const urlAuditId = params.get('audit');
-
-    // STASH-FIRST (survives the login round-trip). When the operator lands here
-    // WITHOUT a session (incognito / fresh browser), AdminRoute redirects to
-    // /login and DISCARDS the URL — so the ?impersonate=&audit= params are gone
-    // by the time they log in and the effect re-runs. To survive that, we copy
-    // the params into sessionStorage the INSTANT we see them (before the auth
-    // wait below), and treat sessionStorage as the source of truth. It's the
-    // per-tab handshake: sessionStorage is scoped to this tab and cleared once
-    // consumed or refused, so it can't leak into a later unrelated session.
-    const PENDING_KEY = 'nord-impersonation-pending';
-    // Short TTL: the stash only has to survive ONE login round-trip (seconds).
-    // Bounding it prevents a stale handshake from being silently consumed by a
-    // LATER, unrelated authentication in the same tab (an operator who queued a
-    // link, walked away, then logged in again for other work must NOT be dropped
-    // into that shop). Also cleared on logout (AuthContext). 2 min is generous
-    // for a login yet short enough that no later session picks it up.
-    const PENDING_TTL_MS = 2 * 60 * 1000;
-    if (urlImpersonate) {
-      try {
-        sessionStorage.setItem(
-          PENDING_KEY,
-          JSON.stringify({ impersonate: urlImpersonate, auditId: urlAuditId || '', ts: Date.now() })
-        );
-      } catch { /* sessionStorage unavailable → fall back to URL params below */ }
-    }
-
-    // Resolve the handshake from the stash first, then the URL (covers both the
-    // already-logged-in case and the post-login case where the URL lost them).
-    // A stash past its TTL is treated as absent AND purged, so it can't linger.
-    let pending = null;
-    try {
-      const raw = sessionStorage.getItem(PENDING_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed.ts === 'number' && Date.now() - parsed.ts <= PENDING_TTL_MS) {
-          pending = parsed;
-        } else {
-          sessionStorage.removeItem(PENDING_KEY); // expired or malformed → purge
-        }
-      }
-    } catch { /* ignore */ }
-    const impersonate = pending?.impersonate || urlImpersonate;
-    const auditId = pending?.auditId || urlAuditId;
+    const impersonate = params.get('impersonate');
+    const auditId = params.get('audit');
     if (!impersonate) return; // nothing to intake
 
-    if (loading) return; // wait for auth to resolve before deciding
+    // SILENT SIGN-IN (cross-origin handoff). The platform host and this admin
+    // host are SEPARATE origins with independent Firebase Auth sessions, so an
+    // operator who is logged in on the platform host has NO session here. The
+    // launcher put a short-lived custom token minted for the operator's OWN uid
+    // in the URL fragment (#handoff=). If we have no session yet, exchange it so
+    // the SAME identity is materialized on this origin — in any browser, with no
+    // login prompt. Then the normal flow below proceeds unchanged. In a browser
+    // that already has an admin-host session (the pre-existing working case),
+    // currentUser is set, so this whole branch is skipped.
+    if (!currentUser && !handoffRef.current) {
+      const hashParams = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+      const handoffToken = hashParams.get('handoff');
+      if (handoffToken) {
+        handoffRef.current = true;
+        // Wipe the token from the address bar + history IMMEDIATELY so it never
+        // lingers, regardless of whether the exchange succeeds.
+        try { window.history.replaceState(null, '', location.pathname + location.search); } catch { /* ignore */ }
+        signInWithCustomToken(getAuth(), handoffToken).catch((e) => {
+          // Expired (>1h) / invalid token → fall through to the normal
+          // un-authenticated path (login), no crash.
+          console.warn('Impersonation silent sign-in failed:', e?.message || e);
+        });
+        // onAuthStateChanged will set currentUser and re-run this effect; wait.
+        return;
+      }
+    }
 
-    // NOT-YET-AUTHENTICATED is a WAIT, not a refusal — the operator is mid-login.
-    // The stash above already preserved the handshake, so once they log in this
-    // effect re-runs (currentUser is a dep) and proceeds from sessionStorage.
+    // NOT-YET-AUTHENTICATED is not a refusal — it's a wait. The operator may
+    // land here un-logged-in (AdminRoute will send them to /login). We must NOT
+    // latch/strip the params in that case, or the handshake is lost across the
+    // login redirect. currentUser is an effect dep, so once they log in this
+    // effect re-runs and proceeds. Only a logged-in NON-platform user is refused.
     if (!currentUser) return;
 
     if (handledRef.current) return;
     handledRef.current = true;
 
-    const clearPending = () => {
-      try { sessionStorage.removeItem(PENDING_KEY); } catch { /* ignore */ }
-    };
-
     const stripParams = () => {
-      clearPending();
-      // Drop ONLY our params if they're still in the URL; preserve any others.
+      // Drop ONLY our params; preserve any others + the current path.
       params.delete('impersonate');
       params.delete('audit');
       const qs = params.toString();
@@ -105,16 +89,27 @@ const ImpersonationIntake = () => {
     const refuse = (msg) => {
       toast.error(msg);
       stripParams();
-      // Un-latch so a subsequent valid launch in the SAME tab is processed (e.g.
-      // a first attempt refused because the audit doc hadn't propagated yet, then
-      // an immediate retry). Without this, the once-per-mount latch would swallow
-      // the retry until a full reload.
-      handledRef.current = false;
     };
 
     (async () => {
-      // 1) a logged-in user who is NOT a platform operator → refuse.
-      if (!isPlatform) {
+      // 1) require a platform operator. IMPORTANT: read the platform flag from
+      // the user's Firestore doc directly rather than the `isPlatform` context
+      // flag. After a silent custom-token sign-in (cross-origin handoff), the
+      // auth `currentUser` is set a beat BEFORE AuthContext's async users-doc
+      // fetch resolves `isPlatform` — so trusting the context flag here refuses
+      // a legitimate operator during that window (and the once-per-mount latch
+      // then makes the refusal permanent). Reading the doc is authoritative and
+      // race-free (same source the context and firestore.rules use).
+      let platformOk = isPlatform;
+      if (!platformOk) {
+        try {
+          const meSnap = await getDoc(doc(db, 'users', currentUser.uid));
+          platformOk = meSnap.exists() && meSnap.data().platform === true;
+        } catch {
+          platformOk = false;
+        }
+      }
+      if (!platformOk) {
         refuse('Endast plattformsadministratörer kan öppna en butiks admin.');
         return;
       }
@@ -125,21 +120,23 @@ const ImpersonationIntake = () => {
           return;
         }
         const snap = await getDoc(doc(db, 'impersonationAudit', auditId));
-        // Verify the audit doc exists and targets the shop in the URL. We do NOT
-        // require the audit's actorUid to equal the lander's uid: the platform
-        // console and the shop-admin host are SEPARATE origins with independent
-        // Firebase Auth persistence, so an operator who launched as user A on the
-        // platform host can legitimately land on the admin host as a DIFFERENT
-        // platform operator B (whoever that browser is signed into). Requiring
-        // A==B broke that case ("Revisionsloggen matchar inte") without adding
-        // real security: data access during impersonation is gated by isPlatform()
-        // in the Firestore rules (token.platform), which we already require above
-        // (and re-enforce at every read), NOT by this cross-check. So we keep the
-        // meaningful gates (doc exists + shop matches + lander isPlatform) and let
-        // the AUDIT trail carry the launcher; the SESSION carries who actually
-        // operated (the lander) for accurate accountability in the banner.
-        if (!snap.exists() || snap.data().shopId !== impersonate) {
+        if (
+          !snap.exists() ||
+          snap.data().actorUid !== currentUser.uid ||
+          snap.data().shopId !== impersonate
+        ) {
           refuse('Revisionsloggen matchar inte — impersonering avbruten.');
+          return;
+        }
+        // Freshness bound: an impersonation link must be consumed promptly after
+        // launch. A #handoff custom token is exchangeable for ~1h, so this caps
+        // the practical replay window of a captured link (e.g. glimpsed on a
+        // shared screen) — each launch mints a NEW audit doc, and a stale one is
+        // rejected. 2 min is generous for the open+silent-sign-in round-trip.
+        const startedAt = snap.data().startedAt;
+        const startedMs = startedAt?.toMillis ? startedAt.toMillis() : null;
+        if (startedMs !== null && Date.now() - startedMs > 2 * 60 * 1000) {
+          refuse('Impersoneringslänken har gått ut — starta om från plattformen.');
           return;
         }
         // 3) store the session, then HARD-reload to a clean /admin. A full
@@ -150,7 +147,6 @@ const ImpersonationIntake = () => {
         // pre-intake default. (A soft navigate would leave the already-mounted
         // banner with its initial null session.) The success toast would be lost
         // across the reload, so we skip it; the banner IS the confirmation.
-        clearPending(); // handshake consumed — don't let it re-fire after reload
         setImpersonation({
           shopId: impersonate,
           shopName: snap.data().shopName || impersonate,
@@ -164,7 +160,7 @@ const ImpersonationIntake = () => {
         refuse('Kunde inte verifiera impersonering.');
       }
     })();
-  }, [loading, location.search, location.pathname, currentUser, isPlatform, navigate]);
+  }, [loading, location.search, location.pathname, location.hash, currentUser, isPlatform, navigate]);
 
   // This component only handles the param handshake; the banner reads the stored
   // session, so an existing session on a soft reload needs nothing here.

@@ -35,6 +35,34 @@ const COMMON = {
   cors: appUrls.CORS_ORIGINS,
 };
 
+// ── mint impersonation handoff token ──────────────────────────────────────────
+//
+// The platform operator console (platform-meteorpr.web.app) and the shop-admin
+// host (meteorpr.web.app) are SEPARATE ORIGINS with independent Firebase Auth
+// sessions (per-origin IndexedDB). So "Öppna Shop Admin" opens a host where the
+// operator has NO session — it only worked in a browser that had previously
+// logged into the admin host directly. This callable lets the platform host mint
+// a short-lived Firebase custom token FOR THE CALLER'S OWN uid; the admin host
+// consumes it with signInWithCustomToken to silently re-materialize the SAME
+// identity on that origin, in ANY browser. It is NOT a privilege grant — it
+// returns the operator's own identity, gated by requirePlatform — and the
+// existing impersonation audit-doc check remains the accountability gate.
+export const mintImpersonationToken = onCall<Record<string, never>>(
+  COMMON,
+  async (request) => {
+    // Verify the caller is a platform super-admin against the LIVE users doc
+    // (not the token claim) — a demoted operator is refused immediately.
+    await requirePlatform(request.auth?.uid);
+
+    // Mint a custom token for the caller's OWN uid only. We deliberately do NOT
+    // accept a target uid from the client: impersonation is a data-SCOPE applied
+    // on the admin host (via the audit doc + session), not an identity swap. So
+    // the token just re-authenticates the operator as themselves elsewhere.
+    const token = await auth.createCustomToken(request.auth!.uid);
+    return { token };
+  }
+);
+
 // ── create super-admin ────────────────────────────────────────────────────────
 
 interface CreateSuperAdminRequest {

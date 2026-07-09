@@ -17,6 +17,7 @@ export {
   createShopUser,
   createPlatformSuperAdmin,
   deletePlatformUser,
+  mintImpersonationToken,
   migrateFromShopify,
   migrateFromWoo,
   sendEmailVerification,

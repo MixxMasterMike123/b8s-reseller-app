@@ -7,6 +7,8 @@
 // banner. Nothing here grants data access — the operator already has it via the
 // Phase 3 rules; this is accountability + which-shop routing.
 import React, { useState } from 'react';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import { APP_URLS } from '../../config/urls';
 import { IMPERSONATION_TTL_MS } from '../../config/impersonation';
@@ -38,9 +40,30 @@ const ImpersonateShopModal = ({ shop, onClose }) => {
         expiresAt,
       });
 
-      // Open the SHOP-ADMIN surface (its own host) with the intake params.
+      // Mint a short-lived custom token for THIS operator's own uid so the admin
+      // host (a SEPARATE origin with its own empty auth store) can sign us in
+      // silently — otherwise a browser that never logged into the admin host
+      // directly lands on a login screen and the handshake is lost. The token is
+      // re-materialization of our OWN identity (platform-gated server-side), not
+      // a privilege grant; the audit-doc check remains the accountability gate.
+      let handoffToken = '';
+      try {
+        const res = await httpsCallable(functions, 'mintImpersonationToken')({});
+        handoffToken = res?.data?.token || '';
+      } catch (e) {
+        // Non-fatal: fall back to the param-only open. In a browser already
+        // logged into the admin host (the pre-existing working case) the token
+        // isn't needed; only a session-less browser degrades to a login prompt.
+        console.warn('mintImpersonationToken failed; opening without silent sign-in:', e?.message || e);
+      }
+
+      // Open the SHOP-ADMIN surface (its own host) with the intake params in the
+      // QUERY and the handoff token in the FRAGMENT (#). The fragment is never
+      // sent to the server or captured in Referer/access logs, and the intake
+      // wipes it from history immediately after consuming it.
       const params = new URLSearchParams({ impersonate: shop.id, audit: auditId });
-      window.open(`${APP_URLS.ADMIN_URL}/admin?${params.toString()}`, '_blank', 'noopener');
+      const frag = handoffToken ? `#handoff=${encodeURIComponent(handoffToken)}` : '';
+      window.open(`${APP_URLS.ADMIN_URL}/admin?${params.toString()}${frag}`, '_blank', 'noopener');
 
       toast.success(`Öppnar ${shop.name || shop.id} som plattformsadmin`);
       onClose();
