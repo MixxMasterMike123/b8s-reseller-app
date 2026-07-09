@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VOLTAGE — streetwear template preview (Direction B)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --color-accent: #C6F736;        /* electric acid-lime */
+    --color-accent-ink: #0A0B0C;    /* DARK ink on the bright accent (readability) */
+    --color-canvas: #0A0B0D;        /* near-black, cool/neutral */
+    --color-surface: #131519;       /* raised module */
+    --color-ink: #F2F4F5;           /* tier-1 near-white */
+    --color-ink-muted: #969CA4;     /* tier-2 mid gray, readable on dark */
+    --color-ink-faint: #5F646B;     /* tier-3 */
+    --color-line: #FFFFFF14;        /* hairline: white ~8% */
+    --font-display: 'Archivo Black', ui-sans-serif, system-ui, sans-serif;  /* blocky heavy display */
+    --font-body: 'Space Mono', ui-monospace, monospace;   /* technical mono body — zine feel */
+    --radius-tile: 2px;   /* almost sharp — flyer/print edges */
+    --radius-el: 2px;
+    --nord-grid-cols: 3;
+    --ease: cubic-bezier(0.16, 0.84, 0.44, 1);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .wrap {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* ---------- NAV ---------- */
+  .nav {
+    border-bottom: 1px solid var(--color-line);
+    position: sticky;
+    top: 0;
+    background: rgba(10,11,13,0.86);
+    backdrop-filter: none;
+    z-index: 20;
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    height: 68px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .crest {
+    width: 30px;
+    height: 30px;
+    background: var(--color-accent);
+    color: var(--color-accent-ink);
+    border-radius: var(--radius-el);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-display);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    transform: skewX(-6deg);
+  }
+  .crest span { transform: skewX(6deg); }
+  .wordmark {
+    font-family: var(--font-display);
+    font-size: 17px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .nav-links {
+    display: flex;
+    gap: 26px;
+    margin-left: 12px;
+  }
+  .nav-links a {
+    font-size: 12.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+    transition: color 0.2s var(--ease);
+  }
+  .nav-links a:hover { color: var(--color-ink); }
+  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 18px; }
+  .cart-pill {
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-el);
+    padding: 8px 15px;
+    font-size: 12.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+    transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+  }
+  .cart-pill:hover { border-color: var(--color-accent); }
+  .cart-pill b { color: var(--color-accent); font-weight: 700; }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    position: relative;
+    margin-top: 34px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-tile);
+    overflow: hidden;
+    padding: 68px 56px 60px;
+  }
+  .hero-mark {
+    position: absolute;
+    right: -18px;
+    top: 50%;
+    transform: translateY(-50%) skewX(-7deg);
+    font-family: var(--font-display);
+    font-size: 340px;
+    line-height: 0.72;
+    color: var(--color-accent);
+    opacity: 0.09;
+    pointer-events: none;
+    letter-spacing: -0.03em;
+    user-select: none;
+  }
+  .hero-content { position: relative; max-width: 720px; }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+    margin-bottom: 24px;
+  }
+  .eyebrow .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    box-shadow: 0 0 0 4px rgba(198,247,54,0.16);
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(52px, 8vw, 104px);
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    margin: 0 0 26px;
+  }
+  .hero h1 .u {
+    position: relative;
+    display: inline-block;
+  }
+  .hero h1 .u::after {
+    content: "";
+    position: absolute;
+    left: -2px;
+    right: -2px;
+    bottom: 0.06em;
+    height: 0.16em;
+    background: var(--color-accent);
+    z-index: -1;
+  }
+  .hero .subline {
+    font-size: 15px;
+    color: var(--color-ink-muted);
+    max-width: 430px;
+    margin: 0 0 34px;
+    line-height: 1.65;
+  }
+  .cta-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .btn {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 15px 26px;
+    border-radius: var(--radius-el);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: transform 0.18s var(--ease), background 0.2s var(--ease), border-color 0.2s var(--ease);
+    display: inline-block;
+  }
+  .btn-accent {
+    background: var(--color-accent);
+    color: var(--color-accent-ink);
+  }
+  .btn-accent:hover { transform: translateY(-2px); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-ink);
+    border-color: var(--color-line);
+  }
+  .btn-ghost:hover { border-color: var(--color-ink-muted); }
+
+  .stat-row {
+    position: relative;
+    margin-top: 42px;
+    padding-top: 22px;
+    border-top: 1px solid var(--color-line);
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+  }
+  .stat-row .sep { color: var(--color-ink-faint); }
+
+  /* ---------- SECTION HEADING ---------- */
+  .section {
+    margin-top: 88px;
+  }
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .sec-head h2 {
+    font-family: var(--font-display);
+    font-size: clamp(30px, 4vw, 44px);
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .sec-head a {
+    font-size: 12.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+    border-bottom: 1px solid var(--color-line);
+    padding-bottom: 3px;
+    transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
+  }
+  .sec-head a:hover { color: var(--color-accent); border-color: var(--color-accent); }
+
+  /* ---------- PRODUCT GRID (3 col, editorial) ---------- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(var(--nord-grid-cols), 1fr);
+    gap: 22px;
+  }
+  .card {
+    position: relative;
+    border-radius: var(--radius-tile);
+    overflow: hidden;
+    aspect-ratio: 3 / 4;
+    border: 1px solid var(--color-line);
+    cursor: pointer;
+    background: #0e1013;
+  }
+  .card .img {
+    position: absolute;
+    inset: 0;
+    transition: transform 0.6s var(--ease);
+  }
+  .card:hover .img { transform: scale(1.04); }
+
+  /* distinct dark gradient placeholders */
+  .g1 { background:
+      radial-gradient(120% 90% at 78% 12%, #26302f 0%, transparent 55%),
+      linear-gradient(155deg, #1a1f22 0%, #0c0e10 100%); }
+  .g2 { background:
+      radial-gradient(110% 80% at 20% 85%, #2a2723 0%, transparent 52%),
+      linear-gradient(200deg, #1d1a17 0%, #0b0c0d 100%); }
+  .g3 { background:
+      radial-gradient(130% 100% at 50% 0%, #222a34 0%, transparent 58%),
+      linear-gradient(180deg, #171a20 0%, #0a0b0d 100%); }
+  .g4 { background:
+      radial-gradient(100% 90% at 85% 90%, #2c2530 0%, transparent 50%),
+      linear-gradient(140deg, #1c1820 0%, #0b0b0e 100%); }
+  .g5 { background:
+      radial-gradient(120% 80% at 15% 15%, #202a26 0%, transparent 54%),
+      linear-gradient(210deg, #161c19 0%, #0a0c0b 100%); }
+  .g6 { background:
+      radial-gradient(110% 100% at 60% 100%, #302a22 0%, transparent 52%),
+      linear-gradient(165deg, #1f1b16 0%, #0c0b09 100%); }
+
+  .card .scrim {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 20px 20px 18px;
+    background: linear-gradient(to top, rgba(8,9,11,0.94) 0%, rgba(8,9,11,0.78) 42%, transparent 100%);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .card .meta .cat {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+    margin-bottom: 6px;
+  }
+  .card .meta .name {
+    font-family: var(--font-display);
+    font-size: 18px;
+    line-height: 1.05;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    margin-bottom: 8px;
+  }
+  .card .meta .price {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-ink);
+    letter-spacing: 0.02em;
+  }
+  .buy {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-el);
+    background: var(--color-accent);
+    color: var(--color-accent-ink);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-display);
+    font-size: 20px;
+    line-height: 1;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.18s var(--ease);
+  }
+  .card:hover .buy { transform: scale(1.08); }
+  .tag-new {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: var(--color-accent);
+    color: var(--color-accent-ink);
+    font-weight: 700;
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 9px;
+    border-radius: var(--radius-el);
+  }
+
+  /* ---------- DROP-ALERT BAND ---------- */
+  .band {
+    margin-top: 92px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-tile);
+    padding: 54px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .band::after {
+    content: "";
+    position: absolute;
+    right: -60px; top: -60px;
+    width: 280px; height: 280px;
+    background: var(--color-accent);
+    opacity: 0.06;
+    transform: skewX(-12deg);
+  }
+  .band-grid {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+  .band h3 {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 4vw, 42px);
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    line-height: 0.95;
+    margin: 0 0 12px;
+    max-width: 12ch;
+  }
+  .band p {
+    color: var(--color-ink-muted);
+    font-size: 14px;
+    max-width: 38ch;
+    margin: 0;
+  }
+  .signup {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .signup input {
+    background: var(--color-canvas);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-el);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 13px;
+    padding: 14px 16px;
+    min-width: 240px;
+    letter-spacing: 0.02em;
+  }
+  .signup input::placeholder { color: var(--color-ink-faint); text-transform: uppercase; letter-spacing: 0.08em; font-size: 12px; }
+  .signup input:focus { outline: none; border-color: var(--color-accent); }
+
+  /* ---------- FOOTER ---------- */
+  footer {
+    margin-top: 96px;
+    border-top: 1px solid var(--color-line);
+    padding: 56px 0 40px;
+  }
+  .foot-grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr 1fr;
+    gap: 40px;
+  }
+  .foot-brand .wordmark { font-size: 22px; letter-spacing: 0.05em; }
+  .foot-brand p {
+    color: var(--color-ink-faint);
+    font-size: 12.5px;
+    margin: 16px 0 0;
+    max-width: 30ch;
+    line-height: 1.7;
+  }
+  .foot-col h4 {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+    margin: 4px 0 18px;
+    font-weight: 400;
+  }
+  .foot-col a {
+    display: block;
+    font-size: 13px;
+    color: var(--color-ink);
+    margin-bottom: 12px;
+    transition: color 0.2s var(--ease);
+  }
+  .foot-col a:hover { color: var(--color-accent); }
+  .fine {
+    margin-top: 48px;
+    padding-top: 22px;
+    border-top: 1px solid var(--color-line);
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-ink-faint);
+  }
+
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: repeat(2, 1fr); }
+    .nav-links { display: none; }
+    .hero { padding: 48px 30px 44px; }
+    .foot-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+    .hero-mark { font-size: 220px; }
+  }
+  @media (max-width: 560px) {
+    .grid { grid-template-columns: 1fr; }
+    .foot-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#">
+        <span class="crest"><span>HG</span></span>
+        <span class="wordmark">Högspänning</span>
+      </a>
+      <div class="nav-links">
+        <a href="#">Nyheter</a>
+        <a href="#">Överdelar</a>
+        <a href="#">Accessoarer</a>
+        <a href="#">Arkiv</a>
+      </div>
+      <div class="nav-right">
+        <a class="cart-pill" href="#">Varukorg (<b>2</b>)</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="wrap">
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-mark">HG</div>
+      <div class="hero-content">
+        <span class="eyebrow"><span class="dot"></span> Ny kollektion</span>
+        <h1>Större<br>Ljud<br><span class="u">Råare</span></h1>
+        <p class="subline">Begränsade släpp för dem som vägrar smälta in. Sytt tungt, tryckt hårt, gjort för gatan efter mörkrets inbrott.</p>
+        <div class="cta-row">
+          <a class="btn btn-accent" href="#">Handla nu</a>
+          <a class="btn btn-ghost" href="#">Bläddra arkivet</a>
+        </div>
+        <div class="stat-row">
+          <span>500+ släpp</span><span class="sep">·</span>
+          <span>Fri retur</span><span class="sep">·</span>
+          <span>Skickas idag</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- NYHETER -->
+    <section class="section">
+      <div class="sec-head">
+        <h2>Nyheter</h2>
+        <a href="#">Se allt</a>
+      </div>
+      <div class="grid">
+
+        <a class="card" href="#">
+          <div class="img g1"></div>
+          <span class="tag-new">Nytt</span>
+          <div class="scrim">
+            <div class="meta">
+              <div class="cat">Överdel</div>
+              <div class="name">Statisk Hoodie</div>
+              <div class="price">1 299 kr</div>
+            </div>
+            <button class="buy" aria-label="Köp">+</button>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="img g2"></div>
+          <span class="tag-new">Nytt</span>
+          <div class="scrim">
+            <div class="meta">
+              <div class="cat">Jacka</div>
+              <div class="name">Voltbomber</div>
+              <div class="price">2 499 kr</div>
+            </div>
+            <button class="buy" aria-label="Köp">+</button>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="img g3"></div>
+          <div class="scrim">
+            <div class="meta">
+              <div class="cat">Överdel</div>
+              <div class="name">Krets Tee</div>
+              <div class="price">599 kr</div>
+            </div>
+            <button class="buy" aria-label="Köp">+</button>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="img g4"></div>
+          <div class="scrim">
+            <div class="meta">
+              <div class="cat">Byxa</div>
+              <div class="name">Jordkabel Byxa</div>
+              <div class="price">1 099 kr</div>
+            </div>
+            <button class="buy" aria-label="Köp">+</button>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="img g5"></div>
+          <div class="scrim">
+            <div class="meta">
+              <div class="cat">Accessoar</div>
+              <div class="name">Neon Beanie</div>
+              <div class="price">399 kr</div>
+            </div>
+            <button class="buy" aria-label="Köp">+</button>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="img g6"></div>
+          <span class="tag-new">Nytt</span>
+          <div class="scrim">
+            <div class="meta">
+              <div class="cat">Accessoar</div>
+              <div class="name">Säkring Cap</div>
+              <div class="price">449 kr</div>
+            </div>
+            <button class="buy" aria-label="Köp">+</button>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- DROP-ALERT BAND -->
+    <section class="band">
+      <div class="band-grid">
+        <div>
+          <h3>Missa inte nästa släpp</h3>
+          <p>Släppen är små och tar slut fort. Gå med i listan så får du larmet innan alla andra.</p>
+        </div>
+        <form class="signup" onsubmit="return false;">
+          <input type="email" placeholder="Din e-post" aria-label="Din e-post">
+          <button class="btn btn-accent" type="submit">Larma mig</button>
+        </form>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="wrap">
+      <div class="foot-grid">
+        <div class="foot-brand">
+          <div class="wordmark">Högspänning</div>
+          <p>Underjordisk streetwear i begränsad upplaga. Tryckt och sytt för natten.</p>
+        </div>
+        <div class="foot-col">
+          <h4>Kundtjänst</h4>
+          <a href="#">Frakt &amp; retur</a>
+          <a href="#">Storleksguide</a>
+          <a href="#">Spåra order</a>
+          <a href="#">Kontakt</a>
+        </div>
+        <div class="foot-col">
+          <h4>Företaget</h4>
+          <a href="#">Om oss</a>
+          <a href="#">Arkivet</a>
+          <a href="#">Butiker</a>
+          <a href="#">Jobb</a>
+        </div>
+        <div class="foot-col">
+          <h4>Följ oss</h4>
+          <a href="#">Instagram</a>
+          <a href="#">TikTok</a>
+          <a href="#">Discord</a>
+          <a href="#">Nyhetsbrev</a>
+        </div>
+      </div>
+      <div class="fine">
+        <span>© 2026 Högspänning AB</span>
+        <span>Villkor · Integritet · Cookies</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

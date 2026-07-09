@@ -89,8 +89,68 @@ export const SPORT_TEMPLATE = {
   fonts: ['Archivo:ital,wght@0,400;0,500;0,600;0,700;1,600', 'Archivo+Black'],
 };
 
+/**
+ * MOLTEN — "after-hours" template for streetwear / drop brands (hoodies, tees,
+ * caps, limited releases). Dark and loud: a near-black cool canvas, one molten-
+ * red accent reserved for actions, tall industrial condensed display (Oswald)
+ * over a quiet neutral body (Inter), soft-ish blocky tiles, an AIRY rhythm that
+ * lets the dark breathe, and `overlay` product cards — the image fills the card
+ * and name/price/CTA sit in a scrim over it (image-forward, magazine). Reads
+ * like a Berlin after-hours merch table under red exit-sign glow. Deliberately
+ * brand-NEUTRAL: no streetwear-specific copy lives in the template; it comes
+ * from each shop's config + catalog.
+ *
+ * Derived from design direction "C · Molten" (see
+ * src/dev/template-previews/streetwear-C.html).
+ */
+export const MOLTEN_TEMPLATE = {
+  id: 'molten',
+  name: 'Molten',
+  tagline: 'Mörk, hög och kompromisslös — för streetwear och släpp.',
+  thumb: '/template-thumbs/molten.png',
+  tokens: {
+    colors: {
+      accent: '#E01F26',     // molten red — AA (4.78:1) as button bg w/ white text
+      accentInk: '#FFFFFF',
+      // accentSoft omitted → resolveTheme derives it from accent + surface
+      canvas: '#0B0B0D',     // near-black, cool/neutral (NOT warm charcoal, NOT navy)
+      surface: '#17171B',    // raised module — a hair lighter than canvas
+      ink: '#F3F3F5',        // tier-1 text: near-white on dark
+      inkMuted: '#98999F',   // tier-2: mid gray, AA on both canvas & surface
+      inkFaint: '#5E5F66',   // tier-3: eyebrows/footer
+      line: '#FFFFFF12',     // hairline: white at ~7% for dark surfaces
+    },
+    fonts: {
+      // Oswald = tall industrial condensed display; Inter = quiet neutral body
+      // BEHIND the distinctive display (sanctioned use). Loaded on demand via
+      // ensureTemplateFonts() so default NORD shops don't pay for them.
+      display: "'Oswald', ui-sans-serif, system-ui, sans-serif",
+      body: "'Inter', -apple-system, ui-sans-serif, system-ui, sans-serif",
+    },
+    shape: {
+      rTile: '10px',  // softer than brutalist — premium-dark, not arena-blocky
+      rEl: '8px',
+    },
+    motion: {
+      ease: 'cubic-bezier(0.16, 0.84, 0.44, 1)',  // fast, momentum, no bounce
+    },
+    layout: {
+      gridCols: 4,
+      density: 'airy',        // roomy rhythm lets the dark canvas breathe
+      heroStyle: 'bento',     // dark image tile + red exit-sign glow scrim
+      cardStyle: 'overlay',   // image fills the card; name/price/CTA in a scrim
+    },
+  },
+  /**
+   * Google Fonts families this template needs, in the exact css2 `family=` form.
+   * ensureTemplateFonts() injects a <link> for these when the template is active.
+   * NORD's own fonts are always loaded in index.html and never listed here.
+   */
+  fonts: ['Oswald:wght@500;600;700', 'Inter:wght@400;500;600'],
+};
+
 /** All templates, in picker order. NORD first (the default). */
-export const TEMPLATES = [NORD_TEMPLATE, SPORT_TEMPLATE];
+export const TEMPLATES = [NORD_TEMPLATE, SPORT_TEMPLATE, MOLTEN_TEMPLATE];
 
 /** Look up a template by id; falls back to NORD for unknown/empty ids. */
 export function getTemplate(id) {

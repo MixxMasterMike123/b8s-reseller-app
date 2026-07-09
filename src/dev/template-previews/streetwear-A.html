@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>KLANGGATAN — Direction A · SIREN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --color-accent: #FF5B1E;        /* safety orange — hazard/workwear hi-vis */
+    --color-accent-ink: #0C0D0F;    /* near-BLACK on hi-vis orange (6.27:1 AA; white would fail) */
+    --color-canvas: #0C0D0F;        /* near-black, cool/neutral (NOT warm charcoal, NOT navy) */
+    --color-surface: #16181C;       /* raised module — a hair lighter than canvas */
+    --color-ink: #F4F5F6;           /* tier-1 text: near-white on dark */
+    --color-ink-muted: #9AA0A8;     /* tier-2: mid gray, must stay readable on dark surface */
+    --color-ink-faint: #62676E;     /* tier-3: eyebrows/footer */
+    --color-line: #FFFFFF14;        /* hairline: white at ~8% for dark surfaces */
+    --font-display: 'Anton', ui-sans-serif, system-ui, sans-serif;   /* heavy condensed grotesque */
+    --font-body: 'Archivo', -apple-system, ui-sans-serif, system-ui, sans-serif;
+    --radius-tile: 6px;   /* blocky, industrial */
+    --radius-el: 4px;
+    --nord-grid-cols: 4;
+    --ease: cubic-bezier(0.16, 0.84, 0.44, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .wrap {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: 0.92;
+    text-transform: uppercase;
+  }
+
+  /* ============ TOP NAV ============ */
+  .nav {
+    border-bottom: 1px solid var(--color-line);
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: rgba(12, 13, 15, 0.92);
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    height: 68px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .crest {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-el);
+    background: var(--color-accent);
+    color: var(--color-accent-ink);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-display);
+    font-size: 16px;
+    letter-spacing: 0.02em;
+  }
+  .wordmark {
+    font-family: var(--font-display);
+    font-size: 22px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+  }
+  .nav-links {
+    display: flex;
+    gap: 28px;
+    margin-left: 8px;
+  }
+  .nav-links a {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+    transition: color 0.2s var(--ease);
+  }
+  .nav-links a:hover { color: var(--color-ink); }
+  .nav-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .cart-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    color: var(--color-ink);
+    padding: 9px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    transition: border-color 0.2s var(--ease);
+  }
+  .cart-pill:hover { border-color: #FFFFFF2E; }
+  .cart-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--color-accent);
+  }
+
+  /* ============ HERO BENTO ============ */
+  .hero {
+    padding: 32px 0 8px;
+  }
+  .bento {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 16px;
+  }
+  .hero-tile {
+    position: relative;
+    grid-row: 1 / span 2;
+    min-height: 520px;
+    border-radius: var(--radius-tile);
+    overflow: hidden;
+    border: 1px solid var(--color-line);
+    /* dark editorial photo placeholder */
+    background:
+      radial-gradient(120% 90% at 78% 8%, rgba(255,91,30,0.30), rgba(255,91,30,0) 46%),
+      radial-gradient(90% 70% at 12% 96%, #202329, rgba(32,35,41,0) 60%),
+      linear-gradient(160deg, #202329 0%, #131519 52%, #0A0B0D 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 40px;
+  }
+  .hero-tile::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(12,13,15,0) 30%, rgba(12,13,15,0.72) 100%);
+    pointer-events: none;
+  }
+  .hero-content { position: relative; z-index: 2; max-width: 560px; }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+    margin-bottom: 22px;
+  }
+  .live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--color-accent);
+    box-shadow: 0 0 0 0 rgba(255,91,30,0.6);
+    animation: pulse 2s infinite var(--ease);
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255,91,30,0.55); }
+    70% { box-shadow: 0 0 0 10px rgba(255,91,30,0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,91,30,0); }
+  }
+  .hero-h1 {
+    font-family: var(--font-display);
+    font-size: clamp(52px, 6.4vw, 92px);
+    line-height: 0.9;
+    letter-spacing: 0.005em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+    margin-bottom: 18px;
+  }
+  .hero-sub {
+    font-size: 16px;
+    color: var(--color-ink-muted);
+    max-width: 440px;
+    margin-bottom: 30px;
+  }
+  .cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px;
+    padding: 0 26px;
+    border-radius: var(--radius-el);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform 0.18s var(--ease), background 0.2s var(--ease), border-color 0.2s var(--ease);
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-accent {
+    background: var(--color-accent);
+    color: var(--color-accent-ink);
+  }
+  .btn-accent:hover { background: #FF6B33; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-ink);
+    border-color: #FFFFFF33;
+  }
+  .btn-ghost:hover { border-color: var(--color-ink); }
+
+  /* supporting bento tiles */
+  .tile {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-tile);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+  }
+  .tile-best {
+    justify-content: space-between;
+    min-height: 0;
+    background:
+      radial-gradient(120% 100% at 90% 0%, rgba(255,91,30,0.10), rgba(255,91,30,0) 55%),
+      var(--color-surface);
+  }
+  .tile-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-faint);
+    margin-bottom: 16px;
+  }
+  .best-thumb {
+    height: 128px;
+    border-radius: var(--radius-el);
+    margin-bottom: 16px;
+    border: 1px solid var(--color-line);
+    background:
+      radial-gradient(80% 80% at 30% 20%, #34383F, rgba(52,56,63,0) 60%),
+      linear-gradient(150deg, #2A2D33, #141619);
+  }
+  .best-name { font-size: 16px; font-weight: 700; color: var(--color-ink); }
+  .best-meta { display: flex; align-items: baseline; justify-content: space-between; margin-top: 6px; }
+  .best-price { font-size: 15px; font-weight: 600; color: var(--color-ink); }
+  .best-tag { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--color-accent); }
+
+  .tile-stat {
+    justify-content: center;
+    align-items: flex-start;
+    gap: 6px;
+    min-height: 118px;
+  }
+  .stat-big {
+    font-family: var(--font-display);
+    font-size: 34px;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+    line-height: 1;
+  }
+  .stat-small { font-size: 13px; color: var(--color-ink-muted); }
+
+  /* ============ NYHETER GRID ============ */
+  .section { padding: 64px 0 8px; }
+  .section-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(34px, 4vw, 50px);
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+  }
+  .section-link {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+    border-bottom: 1px solid var(--color-line);
+    padding-bottom: 3px;
+    transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
+  }
+  .section-link:hover { color: var(--color-ink); border-color: var(--color-ink); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(var(--nord-grid-cols), 1fr);
+    gap: 16px;
+  }
+
+  /* OVERLAY product card */
+  .card {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    border-radius: var(--radius-tile);
+    overflow: hidden;
+    border: 1px solid var(--color-line);
+    display: flex;
+    align-items: flex-end;
+    transition: transform 0.22s var(--ease), border-color 0.22s var(--ease);
+  }
+  .card:hover { transform: translateY(-3px); border-color: #FFFFFF29; }
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(12,13,15,0) 42%, rgba(12,13,15,0.82) 100%);
+    z-index: 1;
+  }
+  .card-1 { background: linear-gradient(155deg, #2E3138 0%, #191B20 55%, #0D0E11 100%); }
+  .card-2 { background: radial-gradient(90% 80% at 70% 15%, #3A2A22, rgba(58,42,34,0) 60%), linear-gradient(160deg, #24211F, #121110); }
+  .card-3 { background: linear-gradient(200deg, #1E2A2C 0%, #16181C 50%, #0B0C0E 100%); }
+  .card-4 { background: radial-gradient(80% 70% at 25% 80%, #313640, rgba(49,54,64,0) 60%), linear-gradient(140deg, #22252B, #0F1012); }
+
+  .card-scrim {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    padding: 18px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .card-cat {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+    margin-bottom: 6px;
+  }
+  .card-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--color-ink);
+    line-height: 1.15;
+  }
+  .card-price {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-ink);
+    margin-top: 5px;
+  }
+  .card-buy {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-el);
+    background: var(--color-accent);
+    color: var(--color-accent-ink);
+    border: none;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-display);
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 0.2s var(--ease), transform 0.18s var(--ease);
+  }
+  .card-buy:hover { background: #FF6B33; transform: scale(1.06); }
+  .badge-drop {
+    position: absolute;
+    top: 12px; left: 12px;
+    z-index: 2;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+    background: rgba(12,13,15,0.7);
+    border: 1px solid var(--color-line);
+    padding: 5px 9px;
+    border-radius: var(--radius-el);
+  }
+  .badge-sold {
+    position: absolute;
+    top: 12px; left: 12px;
+    z-index: 2;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+    background: rgba(12,13,15,0.7);
+    border: 1px solid var(--color-line);
+    padding: 5px 9px;
+    border-radius: var(--radius-el);
+  }
+
+  /* ============ SÅ FUNKAR DROPS BAND ============ */
+  .band {
+    margin: 72px 0 8px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-tile);
+    padding: 40px;
+  }
+  .band-head {
+    font-family: var(--font-display);
+    font-size: 28px;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+    margin-bottom: 28px;
+  }
+  .band-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+  .band-item { border-top: 1px solid var(--color-line); padding-top: 18px; }
+  .band-item h4 {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+    margin-bottom: 8px;
+  }
+  .band-item p { font-size: 14px; color: var(--color-ink-muted); }
+
+  /* ============ FOOTER ============ */
+  footer {
+    margin-top: 80px;
+    border-top: 1px solid var(--color-line);
+    padding: 56px 0 40px;
+  }
+  .foot-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 32px;
+    margin-bottom: 44px;
+  }
+  .foot-brand .wordmark { display: block; margin-bottom: 14px; }
+  .foot-brand p { font-size: 14px; color: var(--color-ink-muted); max-width: 320px; }
+  .foot-col h5 {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-faint);
+    margin-bottom: 16px;
+  }
+  .foot-col a {
+    display: block;
+    font-size: 14px;
+    color: var(--color-ink-muted);
+    margin-bottom: 11px;
+    transition: color 0.2s var(--ease);
+  }
+  .foot-col a:hover { color: var(--color-ink); }
+  .fineprint {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    border-top: 1px solid var(--color-line);
+    padding-top: 24px;
+    font-size: 12px;
+    color: var(--color-ink-faint);
+  }
+
+  @media (max-width: 900px) {
+    .bento { grid-template-columns: 1fr; }
+    .hero-tile { grid-row: auto; min-height: 420px; }
+    .grid { grid-template-columns: repeat(2, 1fr); }
+    .band-grid { grid-template-columns: 1fr; gap: 20px; }
+    .foot-grid { grid-template-columns: 1fr 1fr; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ============ NAV ============ -->
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#">
+        <span class="crest">KG</span>
+        <span class="wordmark">KLANGGATAN</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#">Nyheter</a>
+        <a href="#">Huvtröjor</a>
+        <a href="#">Kepsar</a>
+        <a href="#">Drops</a>
+      </nav>
+      <div class="nav-right">
+        <a class="cart-pill" href="#"><span class="cart-dot"></span>Varukorg (2)</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ HERO BENTO ============ -->
+  <section class="hero">
+    <div class="wrap bento">
+      <div class="hero-tile">
+        <div class="hero-content">
+          <span class="eyebrow"><span class="live-dot"></span>Släpp fredag 20:00</span>
+          <h1 class="hero-h1">Vinter&shy;droppen<br>är här</h1>
+          <p class="hero-sub">Tungt bomullstyg, reflex på skiftet och begränsat antal. När det är slut är det slut. Inga påfyllningar.</p>
+          <div class="cta-row">
+            <a class="btn btn-accent" href="#">Handla släppet</a>
+            <a class="btn btn-ghost" href="#">Se lookbook</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="tile tile-best">
+        <div>
+          <div class="tile-label">Bästsäljare</div>
+          <div class="best-thumb"></div>
+        </div>
+        <div>
+          <div class="best-name">Betong Hoodie</div>
+          <div class="best-meta">
+            <span class="best-price">899 kr</span>
+            <span class="best-tag">Snart slut</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tile tile-stat">
+        <div class="stat-big">Fri frakt</div>
+        <div class="stat-small">Över 999 kr, levereras inom 1–3 dagar.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ NYHETER GRID ============ -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="section-title">Nyheter</h2>
+        <a class="section-link" href="#">Se allt</a>
+      </div>
+
+      <div class="grid">
+        <!-- card 1 -->
+        <a class="card card-1" href="#">
+          <span class="badge-drop">Nytt</span>
+          <div class="card-scrim">
+            <div>
+              <div class="card-cat">Huvtröja</div>
+              <div class="card-name">Betong Hoodie</div>
+              <div class="card-price">899 kr</div>
+            </div>
+            <button class="card-buy" aria-label="Köp">+</button>
+          </div>
+        </a>
+
+        <!-- card 2 -->
+        <a class="card card-2" href="#">
+          <span class="badge-drop">Drop 04</span>
+          <div class="card-scrim">
+            <div>
+              <div class="card-cat">Keps</div>
+              <div class="card-name">Sodium Cap</div>
+              <div class="card-price">499 kr</div>
+            </div>
+            <button class="card-buy" aria-label="Köp">+</button>
+          </div>
+        </a>
+
+        <!-- card 3 -->
+        <a class="card card-3" href="#">
+          <div class="card-scrim">
+            <div>
+              <div class="card-cat">Tee</div>
+              <div class="card-name">Nattskift Tee</div>
+              <div class="card-price">499 kr</div>
+            </div>
+            <button class="card-buy" aria-label="Köp">+</button>
+          </div>
+        </a>
+
+        <!-- card 4 -->
+        <a class="card card-4" href="#">
+          <span class="badge-sold">Fåtal kvar</span>
+          <div class="card-scrim">
+            <div>
+              <div class="card-cat">Byxa</div>
+              <div class="card-name">Frakt Cargo</div>
+              <div class="card-price">1299 kr</div>
+            </div>
+            <button class="card-buy" aria-label="Köp">+</button>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SÅ FUNKAR DROPS ============ -->
+  <section class="wrap">
+    <div class="band">
+      <h3 class="band-head">Så funkar drops</h3>
+      <div class="band-grid">
+        <div class="band-item">
+          <h4>Släpp på klockan</h4>
+          <p>Varje drop går live en bestämd tid. Lägg påminnelse och var redo — populära artiklar tar slut på minuter.</p>
+        </div>
+        <div class="band-item">
+          <h4>Begränsat antal</h4>
+          <p>Vi trycker ett fast antal per släpp. Inga efterbeställningar, ingen restock. Har du den så har du den.</p>
+        </div>
+        <div class="band-item">
+          <h4>Snabb leverans</h4>
+          <p>Skickas inom ett dygn från lagret i Sverige. Fri frakt över 999 kr och enkla returer inom 14 dagar.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer>
+    <div class="wrap">
+      <div class="foot-grid">
+        <div class="foot-brand">
+          <span class="wordmark">KLANGGATAN</span>
+          <p>Streetwear byggd som arbetskläder. Tungt tyg, ärlig passform, gjord för att slitas hårt.</p>
+        </div>
+        <div class="foot-col">
+          <h5>Kundtjänst</h5>
+          <a href="#">Spåra order</a>
+          <a href="#">Returer &amp; byten</a>
+          <a href="#">Storleksguide</a>
+          <a href="#">Kontakt</a>
+        </div>
+        <div class="foot-col">
+          <h5>Företaget</h5>
+          <a href="#">Om oss</a>
+          <a href="#">Hållbarhet</a>
+          <a href="#">Jobb</a>
+          <a href="#">Butiker</a>
+        </div>
+        <div class="foot-col">
+          <h5>Följ oss</h5>
+          <a href="#">Instagram</a>
+          <a href="#">TikTok</a>
+          <a href="#">Nyhetsbrev</a>
+        </div>
+      </div>
+      <div class="fineprint">
+        <span>© 2026 Klanggatan AB. Alla rättigheter förbehållna.</span>
+        <span>Villkor · Integritetspolicy · Cookies</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NATTVAKT — MOLTEN (Direction C)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --color-accent: #E01F26;        /* molten red — passes AA as button bg with white text */
+    --color-accent-ink: #FFFFFF;
+    --color-canvas: #0B0B0D;        /* near-black, cool/neutral */
+    --color-surface: #17171B;       /* raised module */
+    --color-ink: #F3F3F5;           /* near-white */
+    --color-ink-muted: #98999F;     /* mid gray, readable on dark */
+    --color-ink-faint: #5E5F66;     /* tier-3 */
+    --color-line: #FFFFFF12;        /* hairline white ~7% */
+    --font-display: 'Oswald', ui-sans-serif, system-ui, sans-serif;   /* tall industrial condensed grotesque */
+    --font-body: 'Inter', -apple-system, ui-sans-serif, system-ui, sans-serif;  /* clean neutral body */
+    --radius-tile: 10px;   /* slightly softer than A/B — premium-dark, not brutalist */
+    --radius-el: 8px;
+    --nord-grid-cols: 4;
+    --ease: cubic-bezier(0.16, 0.84, 0.44, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
+  }
+
+  .wrap {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* ============ TOP NAV ============ */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(11, 11, 13, 0.82);
+    backdrop-filter: saturate(140%) blur(8px);
+    border-bottom: 1px solid var(--color-line);
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    height: 72px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .crest {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-el);
+    background: var(--color-accent);
+    color: var(--color-accent-ink);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    box-shadow: 0 0 0 1px #FFFFFF14 inset;
+  }
+  .wordmark {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+  }
+  .nav-links {
+    display: flex;
+    gap: 30px;
+    margin-left: 8px;
+  }
+  .nav-links a {
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+    font-weight: 500;
+    transition: color 0.25s var(--ease);
+  }
+  .nav-links a:hover { color: var(--color-ink); }
+  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+  .cart-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 16px;
+    border-radius: 999px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--color-ink);
+    transition: border-color 0.25s var(--ease), transform 0.25s var(--ease);
+  }
+  .cart-pill:hover { border-color: #FFFFFF26; transform: translateY(-1px); }
+  .cart-dot {
+    width: 7px; height: 7px; border-radius: 999px;
+    background: var(--color-accent);
+    box-shadow: 0 0 8px 1px rgba(224,31,38,0.7);
+  }
+
+  /* ============ HERO (BENTO) ============ */
+  .hero {
+    padding-top: 68px;
+    padding-bottom: 40px;
+  }
+  .bento {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 200px;
+    gap: 16px;
+  }
+  .tile {
+    border-radius: var(--radius-tile);
+    border: 1px solid var(--color-line);
+    overflow: hidden;
+    position: relative;
+  }
+  /* main hero tile */
+  .tile-hero {
+    grid-column: span 3;
+    grid-row: span 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 44px;
+    background:
+      radial-gradient(120% 90% at 78% 8%, rgba(224,31,38,0.30) 0%, rgba(224,31,38,0.06) 34%, transparent 60%),
+      linear-gradient(180deg, rgba(11,11,13,0.15) 0%, rgba(11,11,13,0.72) 62%, rgba(11,11,13,0.94) 100%),
+      linear-gradient(135deg, #201216 0%, #14131a 44%, #0d0d12 100%);
+  }
+  /* faint exit-sign strip glow at top edge of hero */
+  .tile-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(224,31,38,0.0) 12%, rgba(224,31,38,0.75) 78%, rgba(224,31,38,0.15) 100%);
+  }
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+    font-weight: 500;
+    margin-bottom: 18px;
+  }
+  .hero-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    line-height: 0.9;
+    font-size: clamp(52px, 8vw, 104px);
+    color: var(--color-ink);
+    max-width: 12ch;
+  }
+  .hero-sub {
+    margin-top: 20px;
+    max-width: 46ch;
+    font-size: 16px;
+    color: var(--color-ink-muted);
+    line-height: 1.55;
+  }
+  .hero-ctas {
+    margin-top: 30px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 50px;
+    padding: 0 26px;
+    border-radius: var(--radius-el);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.25s var(--ease), background 0.25s var(--ease), border-color 0.25s var(--ease);
+  }
+  .btn-accent {
+    background: var(--color-accent);
+    color: var(--color-accent-ink);
+    border: 1px solid var(--color-accent);
+  }
+  .btn-accent:hover { transform: translateY(-2px); background: #EE2A31; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-ink);
+    border: 1px solid #FFFFFF2E;
+  }
+  .btn-ghost:hover { transform: translateY(-2px); border-color: #FFFFFF5C; }
+
+  /* supporting bento tiles */
+  .tile-mini {
+    grid-column: span 1;
+    grid-row: span 1;
+    background: var(--color-surface);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .tile-mini .mini-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-ink-faint);
+    font-weight: 600;
+  }
+  .mini-thumb {
+    flex: 1;
+    margin: 14px 0;
+    border-radius: var(--radius-el);
+    background:
+      radial-gradient(90% 80% at 30% 20%, rgba(224,31,38,0.18), transparent 55%),
+      linear-gradient(150deg, #26141a 0%, #191820 60%, #121218 100%);
+    border: 1px solid var(--color-line);
+  }
+  .mini-foot {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  .mini-name {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 16px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+  }
+  .mini-price { font-size: 13px; color: var(--color-ink-muted); }
+
+  .tile-trust {
+    grid-column: span 1;
+    grid-row: span 1;
+    background: var(--color-surface);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+  }
+  .trust-icon {
+    width: 30px; height: 30px;
+    border-radius: 999px;
+    display: grid; place-items: center;
+    border: 1px solid #FFFFFF24;
+    color: var(--color-accent);
+  }
+  .trust-head {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    line-height: 1.05;
+  }
+  .trust-sub { font-size: 12.5px; color: var(--color-ink-muted); }
+
+  /* ============ SECTION HEADS (airy) ============ */
+  .section { padding-top: 108px; }
+  .section-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    gap: 24px;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(34px, 5vw, 56px);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    line-height: 0.95;
+  }
+  .section-link {
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+    font-weight: 500;
+    white-space: nowrap;
+    transition: color 0.25s var(--ease);
+  }
+  .section-link:hover { color: var(--color-ink); }
+
+  /* ============ PRODUCT GRID (overlay cards) ============ */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(var(--nord-grid-cols), 1fr);
+    gap: 16px;
+  }
+  .card {
+    position: relative;
+    border-radius: var(--radius-tile);
+    overflow: hidden;
+    aspect-ratio: 3 / 4;
+    border: 1px solid var(--color-line);
+    cursor: pointer;
+    transition: transform 0.35s var(--ease), border-color 0.35s var(--ease);
+  }
+  .card:hover { transform: translateY(-4px); border-color: #FFFFFF26; }
+  .card-img { position: absolute; inset: 0; }
+  .card-1 .card-img { background: linear-gradient(155deg, #2a1519 0%, #181820 52%, #101016 100%); }
+  .card-2 .card-img { background: linear-gradient(150deg, #1a1a22 0%, #141922 55%, #0e0f14 100%); }
+  .card-3 .card-img { background: linear-gradient(160deg, #221419 0%, #1c1620 48%, #12121a 100%); }
+  .card-4 .card-img { background: linear-gradient(145deg, #191922 0%, #201319 58%, #101015 100%); }
+  .card-img::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(80% 60% at 68% 14%, rgba(224,31,38,0.14), transparent 55%);
+    opacity: 0.55;
+    transition: opacity 0.35s var(--ease);
+  }
+  .card:hover .card-img::after { opacity: 1; }
+  .card-scrim {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: 18px;
+    background: linear-gradient(180deg, transparent 0%, rgba(11,11,13,0.55) 42%, rgba(11,11,13,0.92) 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .card-cat {
+    font-size: 10.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-ink-faint);
+    font-weight: 600;
+  }
+  .card-name {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 21px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+    line-height: 1.02;
+  }
+  .card-foot {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-price { font-size: 14px; color: var(--color-ink); font-weight: 500; letter-spacing: 0.01em; }
+  .buy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: var(--color-accent);
+    color: var(--color-accent-ink);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.25s var(--ease), background 0.25s var(--ease);
+  }
+  .buy-btn:hover { transform: scale(1.04); background: #EE2A31; }
+
+  /* ============ SUPPORTING BAND — next drop ============ */
+  .band {
+    margin-top: 120px;
+    border-radius: var(--radius-tile);
+    border: 1px solid var(--color-line);
+    background:
+      radial-gradient(90% 130% at 88% 50%, rgba(224,31,38,0.16), transparent 52%),
+      var(--color-surface);
+    padding: 64px 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+  .band-eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    font-weight: 600;
+    margin-bottom: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .band-eyebrow .live {
+    width: 7px; height: 7px; border-radius: 999px;
+    background: var(--color-accent);
+    box-shadow: 0 0 8px 1px rgba(224,31,38,0.75);
+  }
+  .band-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(30px, 4.4vw, 46px);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    line-height: 0.98;
+  }
+  .band-sub { margin-top: 12px; color: var(--color-ink-muted); max-width: 40ch; font-size: 15px; }
+  .countdown { display: flex; gap: 14px; }
+  .count-cell {
+    min-width: 82px;
+    padding: 18px 14px;
+    border-radius: var(--radius-el);
+    background: rgba(11,11,13,0.55);
+    border: 1px solid var(--color-line);
+    text-align: center;
+  }
+  .count-num {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 40px;
+    line-height: 1;
+    color: var(--color-ink);
+    letter-spacing: 0.02em;
+  }
+  .count-label {
+    margin-top: 8px;
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-ink-faint);
+    font-weight: 600;
+  }
+
+  /* ============ FOOTER ============ */
+  .footer {
+    margin-top: 128px;
+    border-top: 1px solid var(--color-line);
+    padding-top: 64px;
+    padding-bottom: 56px;
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 40px;
+  }
+  .footer-brand .wordmark { font-size: 26px; margin-bottom: 16px; }
+  .footer-brand p { color: var(--color-ink-muted); font-size: 14px; max-width: 34ch; }
+  .footer-col h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+    margin-bottom: 18px;
+  }
+  .footer-col a {
+    display: block;
+    font-size: 14px;
+    color: var(--color-ink-muted);
+    margin-bottom: 11px;
+    transition: color 0.25s var(--ease);
+  }
+  .footer-col a:hover { color: var(--color-ink); }
+  .fine {
+    margin-top: 56px;
+    padding-top: 24px;
+    border-top: 1px solid var(--color-line);
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+    color: var(--color-ink-faint);
+  }
+
+  @media (max-width: 900px) {
+    .bento { grid-auto-rows: auto; }
+    .tile-hero { grid-column: span 4; grid-row: auto; min-height: 440px; }
+    .tile-mini, .tile-trust { grid-column: span 2; grid-row: auto; min-height: 180px; }
+    .grid { grid-template-columns: repeat(2, 1fr); }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    .nav-links { display: none; }
+  }
+  @media (max-width: 560px) {
+    .wrap { padding: 0 20px; }
+    .grid { grid-template-columns: 1fr; }
+    .tile-mini, .tile-trust { grid-column: span 4; }
+    .band { padding: 40px 28px; }
+    .footer-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#">
+        <span class="crest">NV</span>
+        <span class="wordmark">Nattvakt</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#">Nyheter</a>
+        <a href="#">Plagg</a>
+        <a href="#">Kepsar</a>
+        <a href="#">Släpp</a>
+      </nav>
+      <div class="nav-right">
+        <a class="cart-pill" href="#"><span class="cart-dot"></span>Varukorg (2)</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO — BENTO -->
+  <section class="hero">
+    <div class="wrap">
+      <div class="bento">
+        <div class="tile tile-hero">
+          <p class="eyebrow">Efter mörkrets inbrott</p>
+          <h1 class="hero-title">Natt&shy;kollektionen</h1>
+          <p class="hero-sub">Plagg byggda för de sena timmarna. Tunga tyger, dova toner och detaljer som lyser upp först i mörkret. Släppt i begränsad upplaga.</p>
+          <div class="hero-ctas">
+            <a class="btn btn-accent" href="#">Handla nu</a>
+            <a class="btn btn-ghost" href="#">Se allt</a>
+          </div>
+        </div>
+
+        <div class="tile tile-mini">
+          <span class="mini-label">Mest sålda</span>
+          <div class="mini-thumb"></div>
+          <div class="mini-foot">
+            <span class="mini-name">Sirenhoodie</span>
+            <span class="mini-price">999 kr</span>
+          </div>
+        </div>
+
+        <div class="tile tile-trust">
+          <span class="trust-icon" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg>
+          </span>
+          <span class="trust-head">Skickas inom 24h</span>
+          <span class="trust-sub">Fri frakt över 999 kr</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NYHETER -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="section-title">Nyheter</h2>
+        <a class="section-link" href="#">Visa alla plagg →</a>
+      </div>
+
+      <div class="grid">
+        <article class="card card-1">
+          <div class="card-img"></div>
+          <div class="card-scrim">
+            <span class="card-cat">Hoodie</span>
+            <span class="card-name">Sirenhoodie</span>
+            <div class="card-foot">
+              <span class="card-price">999 kr</span>
+              <button class="buy-btn">Köp</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card card-2">
+          <div class="card-img"></div>
+          <div class="card-scrim">
+            <span class="card-cat">T-shirt</span>
+            <span class="card-name">Utgång Tee</span>
+            <div class="card-foot">
+              <span class="card-price">449 kr</span>
+              <button class="buy-btn">Köp</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card card-3">
+          <div class="card-img"></div>
+          <div class="card-scrim">
+            <span class="card-cat">Byxor</span>
+            <span class="card-name">Skiftbyxa</span>
+            <div class="card-foot">
+              <span class="card-price">1399 kr</span>
+              <button class="buy-btn">Köp</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card card-4">
+          <div class="card-img"></div>
+          <div class="card-scrim">
+            <span class="card-cat">Keps</span>
+            <span class="card-name">Vaktkeps</span>
+            <div class="card-foot">
+              <span class="card-price">649 kr</span>
+              <button class="buy-btn">Köp</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- NÄSTA SLÄPP — countdown band -->
+  <section class="wrap">
+    <div class="band">
+      <div class="band-copy">
+        <span class="band-eyebrow"><span class="live"></span>Nästa släpp</span>
+        <h3 class="band-title">Skift 03 — fredag 22:00</h3>
+        <p class="band-sub">Reflexdetaljer, oljesvart denim och en keps som bara finns nu. När det är slut är det slut.</p>
+      </div>
+      <div class="countdown">
+        <div class="count-cell"><div class="count-num">02</div><div class="count-label">Dagar</div></div>
+        <div class="count-cell"><div class="count-num">11</div><div class="count-label">Timmar</div></div>
+        <div class="count-cell"><div class="count-num">46</div><div class="count-label">Minuter</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="wrap">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="wordmark">Nattvakt</div>
+          <p>Streetwear för de sena timmarna. Formgivet och släppt i begränsad upplaga från Stockholm.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Kundtjänst</h4>
+          <a href="#">Frakt &amp; retur</a>
+          <a href="#">Storleksguide</a>
+          <a href="#">Spåra order</a>
+          <a href="#">Kontakt</a>
+        </div>
+        <div class="footer-col">
+          <h4>Företaget</h4>
+          <a href="#">Om oss</a>
+          <a href="#">Släpp &amp; drops</a>
+          <a href="#">Hållbarhet</a>
+          <a href="#">Jobb</a>
+        </div>
+        <div class="footer-col">
+          <h4>Följ oss</h4>
+          <a href="#">Instagram</a>
+          <a href="#">TikTok</a>
+          <a href="#">Nyhetsbrev</a>
+        </div>
+      </div>
+      <div class="fine">
+        <span>© 2026 Nattvakt AB — Alla rättigheter förbehållna.</span>
+        <span>Villkor · Integritetspolicy · Cookies</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
