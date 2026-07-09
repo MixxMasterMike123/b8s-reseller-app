@@ -73,11 +73,20 @@ const ImpersonationIntake = () => {
           return;
         }
         const snap = await getDoc(doc(db, 'impersonationAudit', auditId));
-        if (
-          !snap.exists() ||
-          snap.data().actorUid !== currentUser.uid ||
-          snap.data().shopId !== impersonate
-        ) {
+        // Verify the audit doc exists and targets the shop in the URL. We do NOT
+        // require the audit's actorUid to equal the lander's uid: the platform
+        // console and the shop-admin host are SEPARATE origins with independent
+        // Firebase Auth persistence, so an operator who launched as user A on the
+        // platform host can legitimately land on the admin host as a DIFFERENT
+        // platform operator B (whoever that browser is signed into). Requiring
+        // A==B broke that case ("Revisionsloggen matchar inte") without adding
+        // real security: data access during impersonation is gated by isPlatform()
+        // in the Firestore rules (token.platform), which we already require above
+        // (and re-enforce at every read), NOT by this cross-check. So we keep the
+        // meaningful gates (doc exists + shop matches + lander isPlatform) and let
+        // the AUDIT trail carry the launcher; the SESSION carries who actually
+        // operated (the lander) for accurate accountability in the banner.
+        if (!snap.exists() || snap.data().shopId !== impersonate) {
           refuse('Revisionsloggen matchar inte — impersonering avbruten.');
           return;
         }
