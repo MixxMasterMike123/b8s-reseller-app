@@ -77,6 +77,7 @@ export const SPORT_TEMPLATE = {
       gridCols: 4,
       density: 'compact',
       heroStyle: 'editorial',
+      cardStyle: 'bordered',   // blocky 2px-border cards — athletic, not soft/floaty
     },
   },
   /**

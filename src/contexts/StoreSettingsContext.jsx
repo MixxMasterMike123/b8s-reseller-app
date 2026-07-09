@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { STORE } from '../config/store';
 import { loadShopConfig } from '../config/shopConfig';
 import { useShopId } from './ShopContext';
@@ -80,9 +80,12 @@ export function StoreSettingsProvider({ children }) {
   // before — the template layer is empty and every non-accent token stays at
   // its NORD default. The admin (--color-admin-*) is untouched: templating is
   // storefront-only, per the "full Shopify" admin decision.
-  useEffect(() => {
+  // Resolve the active template ONCE: NORD defaults ← template tokens ← shop
+  // inline `theme` ← shop `accent`. Exposes the CSS vars (applied to <html>
+  // below) plus the structural picks (heroStyle, cardStyle) that components read
+  // directly. Memoized so components that consume cardStyle don't re-resolve.
+  const resolved = useMemo(() => {
     const tpl = getTemplate(settings.templateId);
-    // Deep-merge template tokens under any per-shop inline `theme` overrides.
     const inline = settings.theme || {};
     const merged = {};
     for (const group of ['colors', 'fonts', 'shape', 'motion', 'layout']) {
@@ -95,14 +98,17 @@ export function StoreSettingsProvider({ children }) {
     if (settings.accent) {
       merged.colors = { ...(merged.colors || {}), accent: settings.accent };
     }
-    const { vars } = resolveTheme(merged);
+    return { ...resolveTheme(merged), fonts: tpl.fonts };
+  }, [settings.accent, settings.theme, settings.templateId]);
+
+  useEffect(() => {
     const root = document.documentElement.style;
-    for (const [cssVar, value] of Object.entries(vars)) {
+    for (const [cssVar, value] of Object.entries(resolved.vars)) {
       root.setProperty(cssVar, value);
     }
     // Load the template's webfonts on demand (no-op for NORD / no fonts).
-    ensureTemplateFonts(tpl.fonts);
-  }, [settings.accent, settings.theme, settings.templateId]);
+    ensureTemplateFonts(resolved.fonts);
+  }, [resolved]);
 
   // Per-shop browser-tab identity — runs on BOTH the storefront and the admin
   // (both mount this provider, keyed on the active/managed shopId), so each tab
@@ -140,8 +146,16 @@ export function StoreSettingsProvider({ children }) {
     }
   }, [settings.__loaded, settings.shopName, settings.faviconUrl]);
 
+  // Expose the resolved structural picks alongside the raw config so components
+  // (hero, product card) can read them without re-resolving the theme. Prefixed
+  // with __ so they can't collide with a saved config field.
+  const value = useMemo(
+    () => ({ ...settings, __heroStyle: resolved.heroStyle, __cardStyle: resolved.cardStyle }),
+    [settings, resolved]
+  );
+
   return (
-    <StoreSettingsContext.Provider value={settings}>
+    <StoreSettingsContext.Provider value={value}>
       {children}
     </StoreSettingsContext.Provider>
   );

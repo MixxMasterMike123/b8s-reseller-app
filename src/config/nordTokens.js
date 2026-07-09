@@ -84,6 +84,14 @@ export const NORD_TOKENS = {
     // Homepage hero treatment. 'bento' is the signature NORD layout; the
     // others are template variants (implemented incrementally on the hero).
     heroStyle: 'bento',         // 'bento' | 'full' | 'split' | 'editorial'
+    // Product-CARD design. This is what makes two templates genuinely differ —
+    // not just color/font but the card shape itself. 'elevated' is the NORD
+    // default (white module + soft shadow + hover lift). Others:
+    //   'flat'     — hairline border, no shadow; clean/editorial.
+    //   'bordered' — strong visible border, no shadow; blocky/athletic.
+    //   'overlay'  — name/price overlaid on the image; image-forward/magazine.
+    // NordProductCard reads this and renders the matching variant.
+    cardStyle: 'elevated',      // 'elevated' | 'flat' | 'bordered' | 'overlay'
   },
 };
 
@@ -98,6 +106,7 @@ export const TOKEN_ENUMS = {
   'layout.gridCols': [3, 4],
   'layout.density': ['compact', 'cozy', 'airy'],
   'layout.heroStyle': ['bento', 'full', 'split', 'editorial'],
+  'layout.cardStyle': ['elevated', 'flat', 'bordered', 'overlay'],
 };
 
 /**
@@ -229,5 +238,9 @@ export function resolveTheme(template) {
     ? merged.layout.heroStyle
     : NORD_TOKENS.layout.heroStyle;
 
-  return { vars, heroStyle };
+  const cardStyle = TOKEN_ENUMS['layout.cardStyle'].includes(merged.layout.cardStyle)
+    ? merged.layout.cardStyle
+    : NORD_TOKENS.layout.cardStyle;
+
+  return { vars, heroStyle, cardStyle };
 }

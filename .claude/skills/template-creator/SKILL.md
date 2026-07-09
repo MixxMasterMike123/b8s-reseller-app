@@ -39,6 +39,28 @@ Read `references/token-contract.md` before choosing any values. It is the
 exhaustive list of what a template may set and the allowed ranges. A value
 outside it will be dropped at runtime, so picking one is wasted work.
 
+## CORE RULE — vary structure, not just fonts and colors
+
+The failure mode of this skill is a template that changes only the accent color
+and the display font. If the product cards, the grid, and the hero are the same
+as every other template, then nothing meaningful changed — it's a recolor, not a
+template, and it defeats the entire point. A shop owner switching templates must
+SEE a different storefront, not the same layout in a new color.
+
+So every template you make MUST deliberately differ on the STRUCTURAL tokens,
+not just color/type:
+- `layout.cardStyle` — the single highest-impact choice. Cards fill most of the
+  storefront; a different card design (elevated / flat / bordered / overlay) is
+  what makes a template read as genuinely different. **Do not leave this at the
+  default `elevated` unless the brief truly is warm-premium-calm.** Pick the
+  variant that fits the register, and avoid reusing another template's cardStyle.
+- `layout.gridCols` and `layout.density` — vary the grid and rhythm too.
+- `layout.heroStyle` — bento vs editorial is a big structural difference; use it.
+
+When you present directions in step 4, if two of your directions differ only in
+color/font, that's a red flag — push them apart on cardStyle/grid/hero. A good
+set of directions looks structurally distinct at a glance, not just re-tinted.
+
 ## When reference images are provided
 
 The user may upload image(s) — an existing brand site, a competitor, a mood

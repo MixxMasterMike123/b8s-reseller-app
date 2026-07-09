@@ -44,7 +44,8 @@ So there is no point setting anything not listed here.
   layout: {
     gridCols:  4,           // desktop product-grid columns.  ENUM: 3 | 4
     density:   'cozy',      // section rhythm.  ENUM: 'compact' | 'cozy' | 'airy'
-    heroStyle: 'bento'      // homepage hero.   ENUM: 'bento' | 'full' | 'split' | 'editorial'
+    heroStyle: 'bento',     // homepage hero.   ENUM: 'bento' | 'full' | 'split' | 'editorial'
+    cardStyle: 'elevated'   // PRODUCT-CARD design. ENUM: 'elevated' | 'flat' | 'bordered' | 'overlay'
   }
 }
 ```
@@ -68,7 +69,27 @@ motion.ease       cubic-bezier(0.22, 1, 0.36, 1)
 layout.gridCols   4
 layout.density    cozy
 layout.heroStyle  bento
+layout.cardStyle  elevated
 ```
+
+## cardStyle notes (this is what makes templates actually differ)
+
+All four are IMPLEMENTED in `NordProductCard` and render distinctly — the card
+is the most-repeated element on the storefront, so its design does more than
+anything else to make two templates feel different. Vary it deliberately:
+
+- `elevated` — NORD default: surface module, soft shadow, hover lift, square
+  image, text below. Warm/premium/calm.
+- `flat` — hairline border, no shadow, taller 4:5 image, tighter padding.
+  Clean/editorial/minimal.
+- `bordered` — strong 2px ink border, small radius, no shadow. Blocky/athletic/
+  brutalist (the Sport template uses this).
+- `overlay` — image fills the whole card; name + price + CTA sit in a dark scrim
+  over the image, no separate text block. Image-forward/magazine/fashion. Best
+  when shops will have strong product photography.
+
+Pick the cardStyle that matches the brief's register, and make sure it's NOT the
+same as an existing template's unless the whole look genuinely calls for it.
 
 ## heroStyle notes
 
