@@ -23,6 +23,7 @@ import {
   ArrowUpTrayIcon,
   ArrowTopRightOnSquareIcon,
   PlusIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
 
 // Only the keys this page owns. We load the full config but save a merge of
@@ -384,7 +385,7 @@ const AdminStorefront = () => {
                     </div>
                     <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-3 py-1.5 text-[13px] font-medium text-admin-text shadow-[var(--shadow-admin)] hover:bg-admin-surface-2">
                       <ArrowUpTrayIcon className="h-4 w-4" />
-                      {uploading.logo ? 'Laddar upp…' : 'Ladda upp logotyp'}
+                      {uploading.logo ? 'Laddar upp…' : (form.logoUrl ? 'Byt logotyp' : 'Ladda upp logotyp')}
                       <input
                         type="file"
                         accept="image/*"
@@ -393,6 +394,16 @@ const AdminStorefront = () => {
                         onChange={(e) => handleImageUpload('logo', e.target.files?.[0])}
                       />
                     </label>
+                    {form.logoUrl && !uploading.logo && (
+                      <button
+                        type="button"
+                        onClick={() => setField('logoUrl', '')}
+                        className="inline-flex items-center gap-1.5 rounded-[var(--radius-admin-el)] px-3 py-1.5 text-[13px] font-medium text-admin-critical-text hover:bg-admin-surface-2"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                        Ta bort
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -409,7 +420,7 @@ const AdminStorefront = () => {
                     </div>
                     <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-3 py-1.5 text-[13px] font-medium text-admin-text shadow-[var(--shadow-admin)] hover:bg-admin-surface-2">
                       <ArrowUpTrayIcon className="h-4 w-4" />
-                      {uploading.favicon ? 'Laddar upp…' : 'Ladda upp favicon'}
+                      {uploading.favicon ? 'Laddar upp…' : (form.faviconUrl ? 'Byt favicon' : 'Ladda upp favicon')}
                       <input
                         type="file"
                         accept=".ico,.png,.svg,image/png,image/svg+xml,image/x-icon"
@@ -418,6 +429,16 @@ const AdminStorefront = () => {
                         onChange={(e) => handleImageUpload('favicon', e.target.files?.[0])}
                       />
                     </label>
+                    {form.faviconUrl && !uploading.favicon && (
+                      <button
+                        type="button"
+                        onClick={() => setField('faviconUrl', '')}
+                        className="inline-flex items-center gap-1.5 rounded-[var(--radius-admin-el)] px-3 py-1.5 text-[13px] font-medium text-admin-critical-text hover:bg-admin-surface-2"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                        Ta bort
+                      </button>
+                    )}
                   </div>
                   <p className={helpCls}>
                     Ikonen som visas i webbläsarfliken. Använd en kvadratisk .png, .svg eller .ico
@@ -438,7 +459,7 @@ const AdminStorefront = () => {
                     </div>
                     <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--radius-admin-el)] border border-admin-border bg-admin-surface px-3 py-1.5 text-[13px] font-medium text-admin-text shadow-[var(--shadow-admin)] hover:bg-admin-surface-2">
                       <ArrowUpTrayIcon className="h-4 w-4" />
-                      {uploading.hero ? 'Laddar upp…' : 'Ladda upp hero-bild'}
+                      {uploading.hero ? 'Laddar upp…' : (form.heroImageUrl ? 'Byt hero-bild' : 'Ladda upp hero-bild')}
                       <input
                         type="file"
                         accept="image/*"
@@ -447,6 +468,16 @@ const AdminStorefront = () => {
                         onChange={(e) => handleImageUpload('hero', e.target.files?.[0])}
                       />
                     </label>
+                    {form.heroImageUrl && !uploading.hero && (
+                      <button
+                        type="button"
+                        onClick={() => setField('heroImageUrl', '')}
+                        className="inline-flex items-center gap-1.5 rounded-[var(--radius-admin-el)] px-3 py-1.5 text-[13px] font-medium text-admin-critical-text hover:bg-admin-surface-2"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                        Ta bort
+                      </button>
+                    )}
                   </div>
                   <p className={helpCls}>
                     Lämna tom för att visa en stilren accentfärgad bakgrund istället.
