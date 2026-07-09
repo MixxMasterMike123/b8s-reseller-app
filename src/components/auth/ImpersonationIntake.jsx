@@ -31,24 +31,56 @@ const ImpersonationIntake = () => {
   const handledRef = useRef(false);
 
   useEffect(() => {
-    if (loading) return; // wait for auth to resolve before deciding
     const params = new URLSearchParams(location.search);
-    const impersonate = params.get('impersonate');
-    const auditId = params.get('audit');
+    const urlImpersonate = params.get('impersonate');
+    const urlAuditId = params.get('audit');
+
+    // STASH-FIRST (survives the login round-trip). When the operator lands here
+    // WITHOUT a session (incognito / fresh browser), AdminRoute redirects to
+    // /login and DISCARDS the URL — so the ?impersonate=&audit= params are gone
+    // by the time they log in and the effect re-runs. To survive that, we copy
+    // the params into sessionStorage the INSTANT we see them (before the auth
+    // wait below), and treat sessionStorage as the source of truth. It's the
+    // per-tab handshake: sessionStorage is scoped to this tab and cleared once
+    // consumed or refused, so it can't leak into a later unrelated session.
+    const PENDING_KEY = 'nord-impersonation-pending';
+    if (urlImpersonate) {
+      try {
+        sessionStorage.setItem(
+          PENDING_KEY,
+          JSON.stringify({ impersonate: urlImpersonate, auditId: urlAuditId || '' })
+        );
+      } catch { /* sessionStorage unavailable → fall back to URL params below */ }
+    }
+
+    // Resolve the handshake from the stash first, then the URL (covers both the
+    // already-logged-in case and the post-login case where the URL lost them).
+    let pending = null;
+    try {
+      const raw = sessionStorage.getItem(PENDING_KEY);
+      if (raw) pending = JSON.parse(raw);
+    } catch { /* ignore */ }
+    const impersonate = pending?.impersonate || urlImpersonate;
+    const auditId = pending?.auditId || urlAuditId;
     if (!impersonate) return; // nothing to intake
 
-    // NOT-YET-AUTHENTICATED is not a refusal — it's a wait. The operator may
-    // land here un-logged-in (AdminRoute will send them to /login). We must NOT
-    // latch/strip the params in that case, or the handshake is lost across the
-    // login redirect. currentUser is an effect dep, so once they log in this
-    // effect re-runs and proceeds. Only a logged-in NON-platform user is refused.
+    if (loading) return; // wait for auth to resolve before deciding
+
+    // NOT-YET-AUTHENTICATED is a WAIT, not a refusal — the operator is mid-login.
+    // The stash above already preserved the handshake, so once they log in this
+    // effect re-runs (currentUser is a dep) and proceeds from sessionStorage.
     if (!currentUser) return;
 
     if (handledRef.current) return;
     handledRef.current = true;
 
+    const clearPending = () => {
+      try { sessionStorage.removeItem(PENDING_KEY); } catch { /* ignore */ }
+    };
+
     const stripParams = () => {
-      // Drop ONLY our params; preserve any others + the current path.
+      clearPending();
+      // Drop ONLY our params if they're still in the URL; preserve any others.
       params.delete('impersonate');
       params.delete('audit');
       const qs = params.toString();
@@ -98,6 +130,7 @@ const ImpersonationIntake = () => {
         // pre-intake default. (A soft navigate would leave the already-mounted
         // banner with its initial null session.) The success toast would be lost
         // across the reload, so we skip it; the banner IS the confirmation.
+        clearPending(); // handshake consumed — don't let it re-fire after reload
         setImpersonation({
           shopId: impersonate,
           shopName: snap.data().shopName || impersonate,
