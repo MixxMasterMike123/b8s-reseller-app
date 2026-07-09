@@ -206,6 +206,11 @@ export function AuthProvider({ children }) {
       // login in this tab. Clearing on logout stops a stale impersonated shopId
       // from being honored if a different admin logs into the same tab.
       clearImpersonation();
+      // Also drop any PENDING impersonation handshake (ImpersonationIntake stashes
+      // ?impersonate=&audit= in sessionStorage to survive the login redirect). A
+      // queued-but-unconsumed handshake must not be picked up by the NEXT user who
+      // logs into this tab — belt-and-suspenders with the stash's own short TTL.
+      try { sessionStorage.removeItem('nord-impersonation-pending'); } catch { /* ignore */ }
       // P4.6: drop the published shop-admin shopId too (onAuthStateChanged also
       // nulls it, but clear eagerly so no stale tenant lingers between users).
       setActiveShopId(null);

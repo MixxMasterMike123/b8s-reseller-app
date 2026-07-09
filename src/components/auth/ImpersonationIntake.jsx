@@ -44,21 +44,36 @@ const ImpersonationIntake = () => {
     // per-tab handshake: sessionStorage is scoped to this tab and cleared once
     // consumed or refused, so it can't leak into a later unrelated session.
     const PENDING_KEY = 'nord-impersonation-pending';
+    // Short TTL: the stash only has to survive ONE login round-trip (seconds).
+    // Bounding it prevents a stale handshake from being silently consumed by a
+    // LATER, unrelated authentication in the same tab (an operator who queued a
+    // link, walked away, then logged in again for other work must NOT be dropped
+    // into that shop). Also cleared on logout (AuthContext). 2 min is generous
+    // for a login yet short enough that no later session picks it up.
+    const PENDING_TTL_MS = 2 * 60 * 1000;
     if (urlImpersonate) {
       try {
         sessionStorage.setItem(
           PENDING_KEY,
-          JSON.stringify({ impersonate: urlImpersonate, auditId: urlAuditId || '' })
+          JSON.stringify({ impersonate: urlImpersonate, auditId: urlAuditId || '', ts: Date.now() })
         );
       } catch { /* sessionStorage unavailable → fall back to URL params below */ }
     }
 
     // Resolve the handshake from the stash first, then the URL (covers both the
     // already-logged-in case and the post-login case where the URL lost them).
+    // A stash past its TTL is treated as absent AND purged, so it can't linger.
     let pending = null;
     try {
       const raw = sessionStorage.getItem(PENDING_KEY);
-      if (raw) pending = JSON.parse(raw);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed.ts === 'number' && Date.now() - parsed.ts <= PENDING_TTL_MS) {
+          pending = parsed;
+        } else {
+          sessionStorage.removeItem(PENDING_KEY); // expired or malformed → purge
+        }
+      }
     } catch { /* ignore */ }
     const impersonate = pending?.impersonate || urlImpersonate;
     const auditId = pending?.auditId || urlAuditId;
@@ -90,6 +105,11 @@ const ImpersonationIntake = () => {
     const refuse = (msg) => {
       toast.error(msg);
       stripParams();
+      // Un-latch so a subsequent valid launch in the SAME tab is processed (e.g.
+      // a first attempt refused because the audit doc hadn't propagated yet, then
+      // an immediate retry). Without this, the once-per-mount latch would swallow
+      // the retry until a full reload.
+      handledRef.current = false;
     };
 
     (async () => {
