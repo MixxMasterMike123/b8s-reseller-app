@@ -188,12 +188,25 @@ const PublicStorefront = () => {
     ...getTemplate(store.templateId).tokens,
     ...(store.theme || {}),
   }).heroStyle;
-  // Optional graphic mark for the editorial hero (a big faint glyph behind the
-  // headline). Shown ONLY when a shop explicitly sets `heroMark` (a short
-  // string, e.g. a club initial, number or wordmark) — we do NOT auto-derive it
-  // from the shop name, since an accidental initial reads as noise. Sport-
-  // neutral by design: no sport-specific default.
-  const heroMark = (store.heroMark || '').trim().slice(0, 3);
+  // Graphic mark for the editorial hero (a big faint glyph behind the headline,
+  // shown when there's no hero image). A shop can set `heroMark` explicitly
+  // (a short string — club initials, a number, a monogram); otherwise we derive
+  // it from the shop name's initial(s) so the hero has its backdrop out of the
+  // box. Sport-neutral: no sport-specific default.
+  const heroMark = (() => {
+    const explicit = (store.heroMark || '').trim();
+    if (explicit) return explicit.slice(0, 3);
+    const name = (store.shopName || '').trim();
+    if (!name) return '';
+    // Up to two initials from the first two words (e.g. "Klubb Shop" → "KS",
+    // "Klubbshop" → "K"), so single-word names stay a clean single letter.
+    return name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w.charAt(0))
+      .join('')
+      .toUpperCase();
+  })();
 
   // Homepage block visibility (config-driven; default visible so unconfigured
   // shops render all blocks by default). Every toggle the
@@ -302,11 +315,10 @@ const PublicStorefront = () => {
                 a giant faint graphic mark, an accent-underlined headline word and
                 a stat row. Any other value → the NORD bento hero (unchanged). */}
             {heroStyle === 'editorial' ? (
-            <div className="relative min-h-[440px] lg:min-h-[560px] rounded-tile overflow-hidden bg-surface border border-line shadow-tile flex items-center animate-rise">
-              {/* Optional faint graphic mark (shop-set heroMark only; hidden
-                  when empty). Contained on the right so it reads as a designed
-                  backdrop, not a bleeding accident. */}
-              {heroMark && (
+            <div className="relative min-h-[440px] lg:min-h-[560px] rounded-tile overflow-hidden bg-surface border border-line shadow-tile grid lg:grid-cols-[1.1fr_0.9fr] animate-rise">
+              {/* When there's no hero image, a big faint auto-derived mark fills
+                  the right side as a designed backdrop (behind everything). */}
+              {!store.heroImageUrl && heroMark && (
                 <div
                   aria-hidden="true"
                   className="pointer-events-none select-none absolute top-1/2 -translate-y-1/2 right-0 font-display leading-[0.72] tracking-tight text-accent/[0.08] hidden sm:block"
@@ -315,7 +327,8 @@ const PublicStorefront = () => {
                   {heroMark}
                 </div>
               )}
-              <div className="relative z-[1] w-full max-w-2xl p-7 lg:p-14">
+              {/* Text column (left) */}
+              <div className="relative z-[1] flex flex-col justify-center max-w-2xl p-7 lg:p-14">
                 {store.tagline && (
                   <div className="inline-flex items-center gap-2.5 text-[13px] font-bold text-ink-muted mb-5">
                     <span className="w-2 h-2 rounded-[2px] bg-accent" />
@@ -343,6 +356,19 @@ const PublicStorefront = () => {
                   </button>
                 </div>
               </div>
+              {/* Photo panel (right) — the shop's uploaded Butik hero banner.
+                  On mobile it stacks below the text as a shorter band; on desktop
+                  it fills the right column. Only rendered when a banner exists;
+                  otherwise the faint mark backdrop above carries the right side. */}
+              {store.heroImageUrl && (
+                <div className="relative order-first lg:order-none h-56 lg:h-auto lg:min-h-full overflow-hidden">
+                  <img
+                    src={store.heroImageUrl}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                </div>
+              )}
             </div>
             ) : (
             <div className="relative min-h-[440px] lg:min-h-[560px] rounded-tile overflow-hidden bg-ink shadow-tile flex items-end animate-rise">

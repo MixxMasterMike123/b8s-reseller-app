@@ -1,0 +1,45 @@
+<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;1,600&family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+  :root{--color-accent:#E8112D;--color-accent-ink:#FFFFFF;--color-canvas:#EEF0F3;--color-surface:#FFFFFF;--color-ink:#0D1013;--color-ink-muted:#4A5058;--color-ink-faint:#8A9099;--color-line:#D7DBE0;--font-display:'Archivo Black', ui-sans-serif, system-ui, sans-serif;--font-body:'Archivo', -apple-system, ui-sans-serif, system-ui, sans-serif;--radius-tile:8px;--radius-el:6px;--ease-nord:cubic-bezier(0.16, 0.84, 0.44, 1);--nord-grid-cols:4;--color-accent-soft:color-mix(in srgb, #E8112D 8%, #FFFFFF);--nord-section-y:3rem;--nord-gap:0.75rem;}
+  *{box-sizing:border-box;margin:0} body{background:var(--color-canvas);font-family:var(--font-body);color:var(--color-ink);padding:24px}
+  .label{font-family:var(--font-display);text-transform:uppercase;font-size:13px;color:var(--color-ink-muted);margin:8px 4px 10px}
+  /* mirrors editorial hero JSX: grid lg:grid-cols-[1.1fr_0.9fr] */
+  .tile{position:relative;overflow:hidden;min-height:440px;border-radius:var(--radius-tile);background:var(--color-surface);border:1px solid var(--color-line);box-shadow:0 8px 24px -12px #1A1C1E1F;display:grid;grid-template-columns:1.1fr .9fr;margin-bottom:26px}
+  @media(max-width:900px){.tile{grid-template-columns:1fr}}
+  .mark{position:absolute;top:50%;right:0;transform:translateY(-50%);font-family:var(--font-display);line-height:.72;letter-spacing:-.04em;color:color-mix(in srgb,var(--color-accent) 8%,transparent);font-size:clamp(180px,26vw,360px);pointer-events:none}
+  .text{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;max-width:640px;padding:56px}
+  @media(max-width:900px){.text{padding:32px}}
+  .kick{display:inline-flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:var(--color-ink-muted);margin-bottom:20px}.kick i{width:8px;height:8px;border-radius:2px;background:var(--color-accent)}
+  h1{font-family:var(--font-display);font-size:clamp(38px,6vw,60px);line-height:.94;letter-spacing:-.015em;text-transform:uppercase;text-wrap:balance;margin:0}
+  p{font-size:18px;color:var(--color-ink-muted);max-width:46ch;margin:16px 0 28px;line-height:1.55}
+  .cta{display:flex;flex-wrap:wrap;gap:12px}
+  .b1{background:var(--color-accent);color:#fff;font-weight:700;font-size:16px;padding:14px 24px;border:none;border-radius:var(--radius-el);cursor:pointer}
+  .b2{background:transparent;color:var(--color-ink);border:1px solid var(--color-line);font-weight:600;font-size:15px;padding:14px 20px;border-radius:var(--radius-el);cursor:pointer}
+  .photo{position:relative;overflow:hidden}@media(max-width:900px){.photo{order:-1;height:224px}}
+  .photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+</style></head><body>
+  <div class="label">Sport editorial hero — WITH uploaded banner (split)</div>
+  <div class="tile has-photo">
+    
+    <div class="text">
+      <div class="kick"><i></i> Officiell klubbshop · fri frakt över 699 kr</div>
+      <h1>Bär färgerna hela säsongen</h1>
+      <p>Matchställ, supporterprylar och träningskläder — redo att bäras på läktaren och på plan.</p>
+      <div class="cta"><button class="b1">Handla nu</button><button class="b2">Se sortimentet ↓</button></div>
+    </div>
+    <div class="photo"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='900'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23c0392b'/%3E%3Cstop offset='1' stop-color='%23922b21'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='800' height='900' fill='url(%23g)'/%3E%3Ctext x='400' y='460' font-family='sans-serif' font-size='48' fill='white' text-anchor='middle' opacity='.85'%3E[ uppladdad banner ]%3C/text%3E%3C/svg%3E"></div>
+  </div>
+  <div class="label">Sport editorial hero — WITHOUT banner (auto mark backdrop)</div>
+  <div class="tile ">
+    <div class="mark" aria-hidden="true">K</div>
+    <div class="text">
+      <div class="kick"><i></i> Officiell klubbshop · fri frakt över 699 kr</div>
+      <h1>Bär färgerna hela säsongen</h1>
+      <p>Matchställ, supporterprylar och träningskläder — redo att bäras på läktaren och på plan.</p>
+      <div class="cta"><button class="b1">Handla nu</button><button class="b2">Se sortimentet ↓</button></div>
+    </div>
+    
+  </div>
+</body></html>
