@@ -38,6 +38,20 @@ const AdminRoute = ({ children }) => {
     return <Navigate to="/login" />;
   }
 
+  // Impersonation still resolving: while ?impersonate= is in the URL, the intake
+  // (ImpersonationIntake) is verifying the audit doc and will setImpersonation +
+  // hard-reload to a CLEAN /admin (which strips this param) once the target shop
+  // is active. Rendering the admin children now would briefly show the DEFAULT
+  // shop before that reload — so show a spinner instead until the intake reloads.
+  if (location.search.includes('impersonate')) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <span className="ml-3 text-gray-600">Öppnar butik…</span>
+      </div>
+    );
+  }
+
   return children;
 };
 

@@ -14,6 +14,16 @@ const LoginPage = () => {
   const isPlatformHost = sub === 'platform' || sub.startsWith('platform-');
   const defaultDest = isPlatformHost ? '/' : '/admin';
   const from = location.state?.from?.pathname || defaultDest;
+  // An in-flight impersonation handshake (?impersonate=&audit=, possibly a
+  // #handoff token) must SURVIVE the manual login — AdminRoute forwards those
+  // params to /login, and ImpersonationIntake (mounted app-wide) consumes them
+  // only after currentUser resolves. Navigating to a bare `from` here would
+  // throw the handshake away at the exact moment it becomes consumable, landing
+  // the operator in their default admin instead of the impersonated shop. Only
+  // the handshake is carried; a normal login keeps the clean destination.
+  const handshake = location.search.includes('impersonate')
+    ? `${location.search}${location.hash || ''}`
+    : '';
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -55,7 +65,7 @@ const LoginPage = () => {
       setError('');
       setLoading(true);
       await login(email, password);
-      navigate(from, { replace: true });
+      navigate(`${from}${handshake}`, { replace: true });
     } catch (error) {
       setError(t('login.errors.invalid_credentials', 'Failed to log in. Please check your credentials.'));
     } finally {

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { collection, doc, onSnapshot, updateDoc, setDoc, deleteDoc, query, where, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
+import { getImpersonationShopId } from '../config/impersonation';
 
 const ACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes in milliseconds
 const HEARTBEAT_INTERVAL = 60 * 1000; // 1 minute heartbeat
@@ -132,6 +133,14 @@ export const useAdminPresence = () => {
   // The query MUST mirror the read rule — Firestore denies the whole snapshot if
   // any matched doc is unreadable, so a shop admin filters by shopId client-side
   // (matching the rule) rather than reading the collection unscoped.
+  //
+  // IMPERSONATION: a platform admin viewing a specific shop must be scoped to
+  // THAT shop — an unscoped subscription would list every tenant's admins in
+  // this shop's "who's online" panel (same leak class as the getAllUsers fix,
+  // 5da69af). Impersonation wins over the caller's own platform flag; only a
+  // platform admin NOT impersonating subscribes to everyone. The session is set
+  // before the intake's hard reload, so it is stable for this mount — same
+  // read-at-subscribe pattern as AuthContext.getAllUsers.
   const isPlatformAdmin = userData?.platform === true;
   const myShopId = userData?.shopId || null;
   useEffect(() => {
@@ -141,9 +150,10 @@ export const useAdminPresence = () => {
       return;
     }
 
-    const presenceQuery = isPlatformAdmin
+    const impersonatedShopId = getImpersonationShopId();
+    const presenceQuery = (isPlatformAdmin && !impersonatedShopId)
       ? query(collection(db, 'adminPresence'))
-      : query(collection(db, 'adminPresence'), where('shopId', '==', myShopId));
+      : query(collection(db, 'adminPresence'), where('shopId', '==', impersonatedShopId || myShopId));
 
     const unsubscribe = onSnapshot(presenceQuery, (snapshot) => {
       const presenceList = [];
