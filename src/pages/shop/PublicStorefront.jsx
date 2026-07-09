@@ -20,6 +20,8 @@ import AddedToCartModal from '../../components/shop/AddedToCartModal';
 import NordProductCard from '../../components/shop/NordProductCard';
 import { getCardPrice } from '../../utils/productPricing';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
+import { resolveTheme } from '../../config/nordTokens';
+import { getTemplate } from '../../config/templates';
 import { useShopId } from '../../contexts/ShopContext';
 import { isProductFeatured, sortProductsForDisplay, FRONTPAGE_FEATURED } from '../../utils/productSorting';
 import { resolveCollectionProducts } from '../../utils/collectionResolver';
@@ -177,6 +179,22 @@ const PublicStorefront = () => {
   const heroCtaLabel = store.heroCtaLabel || t('hero_shop_now_button', 'Handla nu');
   const heroSecondaryLabel = store.heroSecondaryLabel || t('hero_see_products', 'Se sortimentet ↓');
 
+  // Hero layout variant from the active template (see nordTokens.resolveTheme).
+  // Default NORD (and any template that doesn't set it) → 'bento', the current
+  // signature hero. 'editorial' → the Sport template's variant below. Resolved
+  // from the same template+inline+accent layering the context applies, so the
+  // component and the CSS vars never disagree.
+  const heroStyle = resolveTheme({
+    ...getTemplate(store.templateId).tokens,
+    ...(store.theme || {}),
+  }).heroStyle;
+  // Optional graphic mark for the editorial hero (a big faint glyph behind the
+  // headline). Shown ONLY when a shop explicitly sets `heroMark` (a short
+  // string, e.g. a club initial, number or wordmark) — we do NOT auto-derive it
+  // from the shop name, since an accidental initial reads as noise. Sport-
+  // neutral by design: no sport-specific default.
+  const heroMark = (store.heroMark || '').trim().slice(0, 3);
+
   // Homepage block visibility (config-driven; default visible so unconfigured
   // shops render all blocks by default). Every toggle the
   // admin Butik page exposes MUST be honored here.
@@ -279,7 +297,54 @@ const PublicStorefront = () => {
         {/* ===== Bento hero (NORD, DESIGN.md §4) ===== */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
           <div className={`grid gap-4 ${showSupporting ? 'lg:grid-cols-[1.55fr_1fr]' : 'lg:grid-cols-1'}`}>
-            {/* Hero tile — the one dominant element on the screen */}
+            {/* Hero tile — the one dominant element on the screen.
+                heroStyle 'editorial' (Sport template): a light surface card with
+                a giant faint graphic mark, an accent-underlined headline word and
+                a stat row. Any other value → the NORD bento hero (unchanged). */}
+            {heroStyle === 'editorial' ? (
+            <div className="relative min-h-[440px] lg:min-h-[560px] rounded-tile overflow-hidden bg-surface border border-line shadow-tile flex items-center animate-rise">
+              {/* Optional faint graphic mark (shop-set heroMark only; hidden
+                  when empty). Contained on the right so it reads as a designed
+                  backdrop, not a bleeding accident. */}
+              {heroMark && (
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none select-none absolute top-1/2 -translate-y-1/2 right-0 font-display leading-[0.72] tracking-tight text-accent/[0.08] hidden sm:block"
+                  style={{ fontSize: 'clamp(180px, 26vw, 360px)' }}
+                >
+                  {heroMark}
+                </div>
+              )}
+              <div className="relative z-[1] w-full max-w-2xl p-7 lg:p-14">
+                {store.tagline && (
+                  <div className="inline-flex items-center gap-2.5 text-[13px] font-bold text-ink-muted mb-5">
+                    <span className="w-2 h-2 rounded-[2px] bg-accent" />
+                    {store.tagline}
+                  </div>
+                )}
+                <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl leading-[0.94] tracking-tight uppercase text-ink text-balance">
+                  {heroHeadline}
+                </h1>
+                <p className="mt-4 text-base lg:text-lg text-ink-muted max-w-[46ch] leading-relaxed">
+                  {heroSubtitle}
+                </p>
+                <div className="mt-7 flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={scrollToProducts}
+                    className="bg-accent text-white font-bold text-base px-6 py-3.5 rounded-el transition-transform duration-150 ease-nord hover:-translate-y-0.5 active:translate-y-px"
+                  >
+                    {heroCtaLabel}
+                  </button>
+                  <button
+                    onClick={scrollToProducts}
+                    className="text-ink font-semibold text-sm px-4 py-3.5 rounded-el border border-line hover:border-ink transition-colors"
+                  >
+                    {heroSecondaryLabel}
+                  </button>
+                </div>
+              </div>
+            </div>
+            ) : (
             <div className="relative min-h-[440px] lg:min-h-[560px] rounded-tile overflow-hidden bg-ink shadow-tile flex items-end animate-rise">
               <div className="absolute inset-0">
                 {store.heroImageUrl ? (
@@ -331,6 +396,7 @@ const PublicStorefront = () => {
                 </div>
               </div>
             </div>
+            )}
 
             {/* Supporting tiles — only when bestseller and/or trust is on */}
             {showSupporting && (
@@ -619,7 +685,7 @@ const PublicStorefront = () => {
             <>
               {/* One product = one card (v2: variants are embedded on the
                   product; selection happens on the product page). */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
+              <div className="grid grid-cols-1 sm:grid-cols-2 nord-grid gap-4 items-stretch">
                 {displayCards.map((product) => {
                   // 🚨 CRITICAL: never render an object — prevent React Error #31
                   const productName = getContentValue(product.name);

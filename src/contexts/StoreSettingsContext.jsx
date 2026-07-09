@@ -2,7 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { STORE } from '../config/store';
 import { loadShopConfig } from '../config/shopConfig';
 import { useShopId } from './ShopContext';
-import { resolveTheme } from '../config/nordTokens';
+import { resolveTheme, ensureTemplateFonts } from '../config/nordTokens';
+import { getTemplate } from '../config/templates';
 
 /**
  * StoreSettingsContext — provides per-shop store identity to the app.
@@ -66,27 +67,42 @@ export function StoreSettingsProvider({ children }) {
 
   // Per-shop THEME tokens for the NORD STOREFRONT only. Historically this set
   // only --color-accent; it now applies the full NORD token set (colors, fonts,
-  // shape, motion, structural grid/density) so a shop can run a template — a
-  // partial override of the NORD defaults (see src/config/nordTokens.js).
+  // shape, motion, structural grid/density) so a shop can run a TEMPLATE — a
+  // named partial override of the NORD defaults (see src/config/templates.js +
+  // nordTokens.js).
   //
-  // Back-compat: a shop with only `accent` (no `theme`) behaves EXACTLY as
-  // before — accent flows into theme.colors.accent below and every other token
-  // stays at its NORD default (a no-op set). The admin (--color-admin-*) is
-  // untouched: templating is storefront-only, per the "full Shopify" admin
-  // decision (admin stays Polaris near-black for every shop).
+  // Layering (later wins): NORD defaults ← selected template's tokens ← the
+  // shop's own inline `theme` overrides ← the shop's top-level `accent`. So a
+  // shop on the Sport template still shows ITS club color, not the template's
+  // default red.
+  //
+  // Back-compat: a shop with no templateId and only `accent` behaves EXACTLY as
+  // before — the template layer is empty and every non-accent token stays at
+  // its NORD default. The admin (--color-admin-*) is untouched: templating is
+  // storefront-only, per the "full Shopify" admin decision.
   useEffect(() => {
-    // Merge the legacy top-level `accent` into the theme's accent so both the
-    // old single-color path and a new full `theme` object resolve correctly.
-    const template = { ...(settings.theme || {}) };
-    if (settings.accent) {
-      template.colors = { accent: settings.accent, ...(template.colors || {}) };
+    const tpl = getTemplate(settings.templateId);
+    // Deep-merge template tokens under any per-shop inline `theme` overrides.
+    const inline = settings.theme || {};
+    const merged = {};
+    for (const group of ['colors', 'fonts', 'shape', 'motion', 'layout']) {
+      const t = tpl.tokens?.[group];
+      const i = inline[group];
+      if (t || i) merged[group] = { ...(t || {}), ...(i || {}) };
     }
-    const { vars } = resolveTheme(template);
+    // Top-level `accent` is the shop's single-color override; it wins over the
+    // template's default accent (the common case: a club sets only its color).
+    if (settings.accent) {
+      merged.colors = { ...(merged.colors || {}), accent: settings.accent };
+    }
+    const { vars } = resolveTheme(merged);
     const root = document.documentElement.style;
     for (const [cssVar, value] of Object.entries(vars)) {
       root.setProperty(cssVar, value);
     }
-  }, [settings.accent, settings.theme]);
+    // Load the template's webfonts on demand (no-op for NORD / no fonts).
+    ensureTemplateFonts(tpl.fonts);
+  }, [settings.accent, settings.theme, settings.templateId]);
 
   // Per-shop browser-tab identity — runs on BOTH the storefront and the admin
   // (both mount this provider, keyed on the active/managed shopId), so each tab

@@ -29,6 +29,11 @@ export const STORE = {
   // Must pass WCAG AA as a button background with white text.
   accent: '#0E5E63',
 
+  // Selected storefront TEMPLATE (src/config/templates.js). '' or 'nord' = the
+  // default NORD look. 'sport' = the Gameday sport template, etc. The template
+  // supplies a base token set; `accent` and `theme` below override on top.
+  templateId: '',
+
   // NORD template — a PARTIAL override of the NORD token defaults
   // (src/config/nordTokens.js). Empty {} = pure NORD (only `accent` above
   // applies). A template we build/generate sets a subset of:

@@ -145,6 +145,38 @@ function getPath(obj, path) {
 }
 
 /**
+ * Ensure a template's webfonts are loaded, on demand. Default NORD shops load
+ * their fonts (Familjen Grotesk, Instrument Sans) statically in index.html and
+ * never call this; a template that swaps the font stack passes its Google Fonts
+ * families here so a <link> is injected once, keyed so switching templates or
+ * re-rendering never duplicates it.
+ *
+ * `families` is a string[] of css2 `family=` values (e.g.
+ * ['Archivo:wght@400;700', 'Archivo+Black']). No-op on the server / when empty.
+ */
+export function ensureTemplateFonts(families) {
+  if (typeof document === 'undefined') return;
+  if (!Array.isArray(families) || families.length === 0) return;
+  const id = 'nord-template-fonts';
+  const href =
+    'https://fonts.googleapis.com/css2?' +
+    families.map((f) => `family=${f}`).join('&') +
+    '&display=swap';
+  let link = document.getElementById(id);
+  if (link) {
+    // Same template active again → nothing to do; different template → repoint.
+    if (link.getAttribute('href') === href) return;
+    link.setAttribute('href', href);
+    return;
+  }
+  link = document.createElement('link');
+  link.id = id;
+  link.rel = 'stylesheet';
+  link.href = href;
+  document.head.appendChild(link);
+}
+
+/**
  * Merge a (possibly partial) template over the NORD defaults into a full,
  * flat { cssVar → value } map plus the special density/hero handling.
  *
