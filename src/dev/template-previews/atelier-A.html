@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Atelier Ceder, Direction A · Silversmed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&display=swap" rel="stylesheet" />
+<!--
+  ===========================================================================
+  TEMPLATE PARTIAL (for later transcription into templates.js / NORD_TOKENS)
+  Direction A, "Silversmed"  (Georg Jensen / Skultuna lane)
+  ---------------------------------------------------------------------------
+  {
+    colors: {
+      accent:     '#34506B',   // smoked steel blue, actions only
+      accentInk:  '#FFFFFF',
+      accentSoft: '',          // auto-derive: color-mix(accent 8%, surface)
+      canvas:     '#FAFAF9',   // cool near-white stone (OKLCH chroma ~0.001)
+      surface:    '#FFFFFF',
+      ink:        '#16181A',
+      inkMuted:   '#565B61',   // 6.56:1 on canvas, 6.85:1 on surface (AA pass)
+      inkFaint:   '#9AA0A5',   // tier-3 decorative only
+      line:       '#16181A14'  // alpha-on-ink hairline (~8%)
+    },
+    fonts: {
+      display: "'Marcellus', 'Times New Roman', serif",
+      body:    "'Instrument Sans', -apple-system, ui-sans-serif, system-ui, sans-serif"  // platform default, preserved
+    },
+    shape: { rTile: '2px', rEl: '6px' },          // square = gallery plinth
+    layout: {
+      heroStyle: 'editorial',
+      cardStyle: 'flat',
+      gridStyle: 'grid-5',
+      density:   'airy'
+    }
+    // fonts array for Google Fonts loader: ['Marcellus']
+  }
+  ===========================================================================
+-->
+<style>
+  :root {
+    --color-accent: #34506B;        /* smoked steel blue, actions & live signals ONLY */
+    --color-accent-ink: #FFFFFF;    /* white on accent (8.38:1 AA) */
+    --color-accent-soft: color-mix(in srgb, #34506B 8%, #FFFFFF);
+    --color-canvas: #FAFAF9;        /* cool pale stone, OKLCH chroma ~0.001, NOT cream */
+    --color-surface: #FFFFFF;
+    --color-ink: #16181A;           /* tier-1 text (titles, prices) */
+    --color-ink-muted: #565B61;     /* tier-2 (6.56:1 on canvas, verified AA) */
+    --color-ink-faint: #9AA0A5;     /* tier-3 (decorative marks only) */
+    --color-line: #16181A14;        /* hairline: ink at ~8% */
+    --color-block: #16181A;         /* footer slab (light theme → ink block) */
+    --color-block-ink: #FFFFFF;     /* text on the footer slab */
+
+    --font-display: 'Marcellus', 'Times New Roman', serif;
+    --font-body: 'Instrument Sans', -apple-system, ui-sans-serif, system-ui, sans-serif;
+
+    --radius-tile: 2px;             /* square gallery plinth */
+    --radius-el: 6px;
+
+    --nord-grid-cols: 5;            /* grid-5: five slim columns */
+    --nord-section-y: 6.5rem;       /* density: airy */
+    --nord-gap: 1.5rem;
+
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .wrap {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  img { max-width: 100%; display: block; }
+
+  .serif {
+    font-family: var(--font-display);
+    font-weight: 400;
+  }
+
+  /* ============ TOP NAV ============ */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: color-mix(in srgb, var(--color-canvas) 88%, transparent);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--color-line);
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    height: 78px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .brand-mark {
+    width: 30px; height: 30px;
+    flex-shrink: 0;
+  }
+  .brand-mark circle, .brand-mark line { stroke: var(--color-ink); }
+  .wordmark {
+    font-family: var(--font-display);
+    font-size: 22px;
+    letter-spacing: 0.14em;
+    color: var(--color-ink);
+    text-transform: uppercase;
+  }
+  .nav-links {
+    display: flex;
+    gap: 34px;
+    margin-left: 8px;
+  }
+  .nav-links a {
+    font-size: 14px;
+    color: var(--color-ink-muted);
+    transition: color 0.25s var(--ease);
+    position: relative;
+  }
+  .nav-links a::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -6px;
+    height: 1px;
+    background: var(--color-ink);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s var(--ease);
+  }
+  .nav-links a:hover { color: var(--color-ink); }
+  .nav-links a:hover::after { transform: scaleX(1); }
+  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 20px; }
+  .nav-cart {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 14px;
+    color: var(--color-ink);
+    padding: 9px 18px;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-el);
+    transition: border-color 0.25s var(--ease);
+  }
+  .nav-cart:hover { border-color: color-mix(in srgb, var(--color-ink) 26%, transparent); }
+
+  /* ============ EDITORIAL HERO ============ */
+  .hero {
+    padding: clamp(4rem, 9vw, 8.5rem) 0 clamp(3.5rem, 6vw, 6rem);
+  }
+  .hero-inner {
+    max-width: 940px;
+  }
+  .hero-mark {
+    width: 46px; height: 46px;
+    margin-bottom: 40px;
+    opacity: 0;
+    animation: rise 1s var(--ease) 0.05s forwards;
+  }
+  .hero-mark circle, .hero-mark line { stroke: var(--color-ink-muted); }
+  .hero-kicker {
+    font-family: var(--font-display);
+    font-size: 15px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+    margin-bottom: 26px;
+    opacity: 0;
+    animation: rise 1s var(--ease) 0.12s forwards;
+  }
+  .hero-h1 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(2.9rem, 6.4vw, 5.4rem);
+    line-height: 1.04;
+    letter-spacing: -0.01em;
+    color: var(--color-ink);
+    margin-bottom: 30px;
+  }
+  .hero-h1 .l {
+    display: block;
+    opacity: 0;
+    animation: rise 1.05s var(--ease) forwards;
+  }
+  .hero-h1 .l:nth-child(1) { animation-delay: 0.18s; }
+  .hero-h1 .l:nth-child(2) { animation-delay: 0.28s; }
+  .hero-h1 em {
+    font-style: italic;
+    color: var(--color-accent);
+  }
+  .hero-sub {
+    font-size: 18px;
+    line-height: 1.65;
+    color: var(--color-ink-muted);
+    max-width: 520px;
+    margin-bottom: 38px;
+    opacity: 0;
+    animation: rise 1s var(--ease) 0.42s forwards;
+  }
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    animation: rise 1s var(--ease) 0.52s forwards;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 52px;
+    padding: 0 30px;
+    border-radius: var(--radius-el);
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background 0.3s var(--ease), color 0.3s var(--ease), border-color 0.3s var(--ease);
+  }
+  .btn-accent {
+    background: var(--color-accent);
+    color: var(--color-accent-ink);
+  }
+  .btn-accent:hover { background: color-mix(in srgb, var(--color-accent) 88%, #000); }
+  .btn-quiet {
+    background: transparent;
+    color: var(--color-ink);
+    border-color: color-mix(in srgb, var(--color-ink) 22%, transparent);
+  }
+  .btn-quiet:hover { border-color: var(--color-ink); }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ============ SECTION HEADS ============ */
+  .section { padding-top: var(--nord-section-y); }
+  .section-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 44px;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(1.9rem, 3.2vw, 2.9rem);
+    letter-spacing: -0.005em;
+    color: var(--color-ink);
+  }
+  .section-note {
+    font-size: 15px;
+    color: var(--color-ink-muted);
+    max-width: 300px;
+    text-align: right;
+    line-height: 1.55;
+  }
+  .section-link {
+    font-size: 14px;
+    color: var(--color-ink);
+    border-bottom: 1px solid var(--color-line);
+    padding-bottom: 3px;
+    white-space: nowrap;
+    transition: border-color 0.25s var(--ease);
+  }
+  .section-link:hover { border-color: var(--color-ink); }
+
+  /* ============ PRODUCT GRID (grid-5, FLAT cards) ============ */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(var(--nord-grid-cols), 1fr);
+    gap: 22px;
+  }
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-tile);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.35s var(--ease);
+  }
+  .card:hover { border-color: color-mix(in srgb, var(--color-ink) 24%, transparent); }
+  .card-media {
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    background: var(--color-accent-soft);
+  }
+  .card-media img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.9s var(--ease);
+  }
+  .card:hover .card-media img { transform: scale(1.045); }
+  .card-body {
+    padding: 18px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+  }
+  .card-name {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 17px;
+    letter-spacing: 0.01em;
+    color: var(--color-ink);
+    line-height: 1.2;
+  }
+  .card-price {
+    font-size: 14px;
+    color: var(--color-ink-muted);
+  }
+  .card-select {
+    margin-top: 12px;
+    align-self: flex-start;
+    font-size: 13px;
+    color: var(--color-accent);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: gap 0.3s var(--ease);
+  }
+  .card-select svg { transition: transform 0.3s var(--ease); }
+  .card:hover .card-select { gap: 10px; }
+  .card:hover .card-select svg { transform: translateX(2px); }
+
+  /* ============ ATELIER BAND (single large photo, image-led) ============ */
+  .atelier {
+    margin-top: var(--nord-section-y);
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    align-items: stretch;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-tile);
+    overflow: hidden;
+    background: var(--color-surface);
+  }
+  .atelier-photo {
+    min-height: 460px;
+    background: var(--color-accent-soft);
+  }
+  .atelier-photo img { width: 100%; height: 100%; object-fit: cover; }
+  .atelier-text {
+    padding: clamp(2.5rem, 5vw, 4.5rem);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .atelier-mark {
+    width: 40px; height: 40px;
+    margin-bottom: 28px;
+  }
+  .atelier-mark circle, .atelier-mark line { stroke: var(--color-ink-muted); }
+  .atelier-text h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(1.7rem, 2.6vw, 2.4rem);
+    line-height: 1.15;
+    color: var(--color-ink);
+    margin-bottom: 20px;
+  }
+  .atelier-text p {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--color-ink-muted);
+    max-width: 400px;
+    margin-bottom: 30px;
+  }
+  .atelier-text .btn-quiet { align-self: flex-start; }
+
+  /* ============ FOOTER (dark ink slab) ============ */
+  footer {
+    margin-top: var(--nord-section-y);
+    background: var(--color-block);
+    color: var(--color-block-ink);
+    padding: 72px 0 40px;
+  }
+  .foot-top {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 40px;
+    padding-bottom: 52px;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-block-ink) 14%, transparent);
+  }
+  .foot-brand .wordmark { color: var(--color-block-ink); display: block; margin-bottom: 18px; }
+  .foot-brand p {
+    font-size: 15px;
+    line-height: 1.65;
+    color: color-mix(in srgb, var(--color-block-ink) 66%, transparent);
+    max-width: 340px;
+  }
+  .foot-col h5 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    color: var(--color-block-ink);
+    margin-bottom: 18px;
+  }
+  .foot-col a {
+    display: block;
+    font-size: 15px;
+    color: color-mix(in srgb, var(--color-block-ink) 66%, transparent);
+    margin-bottom: 12px;
+    transition: color 0.25s var(--ease);
+  }
+  .foot-col a:hover { color: var(--color-block-ink); }
+  .fineprint {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 28px;
+    font-size: 13px;
+    color: color-mix(in srgb, var(--color-block-ink) 52%, transparent);
+  }
+
+  @media (max-width: 1024px) {
+    .grid { grid-template-columns: repeat(3, 1fr); }
+    .atelier { grid-template-columns: 1fr; }
+    .atelier-photo { min-height: 320px; }
+    .foot-top { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 640px) {
+    .wrap { padding: 0 22px; }
+    .nav-links { display: none; }
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .section-head { flex-direction: column; align-items: flex-start; }
+    .section-note { text-align: left; }
+    .foot-top { grid-template-columns: 1fr; gap: 28px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-delay: 0ms !important;
+      transition-duration: 0.001ms !important;
+    }
+    .hero-mark, .hero-kicker, .hero-h1 .l, .hero-sub, .hero-cta { opacity: 1 !important; transform: none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ============ NAV ============ -->
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#">
+        <svg class="brand-mark" viewBox="0 0 30 30" fill="none" aria-hidden="true">
+          <circle cx="15" cy="15" r="10.5" stroke-width="1" />
+          <line x1="15" y1="4.5" x2="15" y2="25.5" stroke-width="1" />
+        </svg>
+        <span class="wordmark">Atelier Ceder</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#">Smycken</a>
+        <a href="#">Ringar</a>
+        <a href="#">Ateljén</a>
+        <a href="#">Beställning</a>
+      </nav>
+      <div class="nav-right">
+        <a class="nav-cart" href="#">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M2 4h12l-1 8H3L2 4Z" stroke="currentColor" stroke-width="1.1"/>
+            <path d="M5.5 4a2.5 2.5 0 0 1 5 0" stroke="currentColor" stroke-width="1.1"/>
+          </svg>
+          Väska (2)
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ EDITORIAL HERO (type-led, no photo) ============ -->
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-inner">
+        <svg class="hero-mark" viewBox="0 0 46 46" fill="none" aria-hidden="true">
+          <circle cx="23" cy="23" r="16" stroke-width="1" />
+          <circle cx="23" cy="23" r="9" stroke-width="1" />
+        </svg>
+        <p class="hero-kicker">Silversmedja sedan 1974</p>
+        <h1 class="hero-h1">
+          <span class="l">Tystnaden runt</span>
+          <span class="l">ett <em>enskilt</em> smycke.</span>
+        </h1>
+        <p class="hero-sub">Handsmitt i sterlingsilver och guld, ett stycke i taget vid bänken i Norrköping. Vi låter formen tala före priset.</p>
+        <div class="hero-cta">
+          <a class="btn btn-accent" href="#">Se kollektionen</a>
+          <a class="btn btn-quiet" href="#">Om ateljén</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PRODUCT GRID ============ -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="section-title">Utvalda stycken</h2>
+        <a class="section-link" href="#">Hela kollektionen</a>
+      </div>
+
+      <div class="grid">
+        <!-- 1 -->
+        <a class="card" href="#">
+          <div class="card-media">
+            <img src="https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=800&q=80" alt="Ring Norrsken i 18k guld med rosa safir" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="card-name">Ring Norrsken 18k</span>
+            <span class="card-price">4 800 kr</span>
+            <span class="card-select">Välj
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 6h8M6.5 2.5 10 6l-3.5 3.5" stroke="currentColor" stroke-width="1.2"/></svg>
+            </span>
+          </div>
+        </a>
+        <!-- 2 -->
+        <a class="card" href="#">
+          <div class="card-media">
+            <img src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=800&q=80" alt="Armband Flod i silver med infattade stenar" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="card-name">Armband Flod</span>
+            <span class="card-price">2 900 kr</span>
+            <span class="card-select">Välj
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 6h8M6.5 2.5 10 6l-3.5 3.5" stroke="currentColor" stroke-width="1.2"/></svg>
+            </span>
+          </div>
+        </a>
+        <!-- 3 -->
+        <a class="card" href="#">
+          <div class="card-media">
+            <img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80" alt="Örhängen Måne, halvmåne i silver" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="card-name">Örhängen Måne</span>
+            <span class="card-price">1 950 kr</span>
+            <span class="card-select">Välj
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 6h8M6.5 2.5 10 6l-3.5 3.5" stroke="currentColor" stroke-width="1.2"/></svg>
+            </span>
+          </div>
+        </a>
+        <!-- 4 -->
+        <a class="card" href="#">
+          <div class="card-media">
+            <img src="https://images.unsplash.com/photo-1611085583191-a3b181a88401?auto=format&fit=crop&w=800&q=80" alt="Halsband Sten med hängsmycke i guld" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="card-name">Halsband Sten</span>
+            <span class="card-price">3 400 kr</span>
+            <span class="card-select">Välj
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 6h8M6.5 2.5 10 6l-3.5 3.5" stroke="currentColor" stroke-width="1.2"/></svg>
+            </span>
+          </div>
+        </a>
+        <!-- 5 -->
+        <a class="card" href="#">
+          <div class="card-media">
+            <img src="https://images.unsplash.com/photo-1608042314453-ae338d80c427?auto=format&fit=crop&w=800&q=80" alt="Ring Is 14k, ring vilande på pale sten" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="card-name">Ring Is 14k</span>
+            <span class="card-price">3 600 kr</span>
+            <span class="card-select">Välj
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 6h8M6.5 2.5 10 6l-3.5 3.5" stroke="currentColor" stroke-width="1.2"/></svg>
+            </span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ATELIER BAND (single large photo, image-led) ============ -->
+  <section class="section" style="padding-top: 0;">
+    <div class="wrap">
+      <div class="atelier">
+        <div class="atelier-photo">
+          <img src="https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=1200&q=80" alt="Guldringar vilande på pale sten i ateljéns ljus" loading="lazy" />
+        </div>
+        <div class="atelier-text">
+          <svg class="atelier-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+            <circle cx="20" cy="20" r="14" stroke-width="1" />
+            <line x1="6" y1="20" x2="34" y2="20" stroke-width="1" />
+          </svg>
+          <h3>Vid bänken, i skymningen</h3>
+          <p>Varje stycke tar form under en enda lampa, filat, glödgat och polerat för hand. Inga två blir exakt lika, och det är själva poängen.</p>
+          <a class="btn btn-quiet" href="#">Läs om hantverket</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER (dark ink slab) ============ -->
+  <footer>
+    <div class="wrap">
+      <div class="foot-top">
+        <div class="foot-brand">
+          <span class="wordmark">Atelier Ceder</span>
+          <p>En liten silversmedja i Norrköping. Vi gör smycken avsedda att bäras länge och lämnas vidare.</p>
+        </div>
+        <div class="foot-col">
+          <h5>Butik</h5>
+          <a href="#">Ringar</a>
+          <a href="#">Halsband</a>
+          <a href="#">Örhängen</a>
+          <a href="#">Presentkort</a>
+        </div>
+        <div class="foot-col">
+          <h5>Ateljén</h5>
+          <a href="#">Om oss</a>
+          <a href="#">Beställningsarbete</a>
+          <a href="#">Skötselråd</a>
+          <a href="#">Besök oss</a>
+        </div>
+        <div class="foot-col">
+          <h5>Kontakt</h5>
+          <a href="#">Frakt &amp; retur</a>
+          <a href="#">Vanliga frågor</a>
+          <a href="#">Nyhetsbrev</a>
+          <a href="#">Instagram</a>
+        </div>
+      </div>
+      <div class="fineprint">
+        <span>© 2026 Atelier Ceder AB · Norrköping</span>
+        <span>Villkor · Integritetspolicy · Cookies</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

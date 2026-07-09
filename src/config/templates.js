@@ -149,8 +149,64 @@ export const MOLTEN_TEMPLATE = {
   fonts: ['Oswald:wght@500;600;700', 'Inter:wght@400;500;600'],
 };
 
+/**
+ * MODEHUS — high-fashion boutique (kläder, accessoarer, ateljéplagg) with
+ * strong photography. Poised and exact: a Vogue-masthead didone (Bodoni Moda)
+ * over the quiet NORD body, cool chroma-0 gray canvas with white pedestal
+ * cards, one oxblood accent, knife-sharp corners, and the RUNWAY product
+ * grid, a horizontal filmstrip that presents each garment like a look
+ * walking past. Photo-led bento hero: the merchant's photograph carries the
+ * front page. The components set display type at bold (700), which keeps the
+ * didone's hairlines sturdy against photographs; the wght range below must
+ * include 700 or the hero falls back to a faux-bold. Deliberately
+ * brand-NEUTRAL: no fashion copy lives in the template; it comes from each
+ * shop's config + catalog.
+ *
+ * Derived from design direction "B · Modehus" (see
+ * src/dev/template-previews/atelier-B.html).
+ */
+export const MODEHUS_TEMPLATE = {
+  id: 'modehus',
+  name: 'Modehus',
+  tagline: 'Fotografiskt och exakt, för mode och ateljéplagg.',
+  thumb: '/template-thumbs/modehus.png',
+  tokens: {
+    colors: {
+      accent: '#6A1B2A',     // oxblood; white text on it is 11.65:1
+      accentInk: '#FFFFFF',
+      // accentSoft omitted → resolveTheme derives it from accent + surface
+      canvas: '#F4F4F5',     // cool chroma-0 gray (deliberately NOT warm cream)
+      surface: '#FFFFFF',    // pedestal-white cards on the gray floor
+      ink: '#101014',
+      inkMuted: '#55565C',   // 6.65:1 on canvas, AA body text
+      inkFaint: '#97989E',
+      line: '#10101414',     // ink at ~8% hairlines
+    },
+    fonts: {
+      // Bodoni Moda = the fashion-masthead didone; body stays the NORD sans
+      // (omitted → inherits), the quiet counterpart the didone needs.
+      display: "'Bodoni Moda', Didot, 'Bodoni MT', serif",
+    },
+    shape: {
+      rTile: '0px',   // knife-sharp: garments are rectangles, so are the cards
+      rEl: '2px',
+    },
+    layout: {
+      // Runway = the structural signature: a no-wrap filmstrip row of wider
+      // cards. heroStyle/cardStyle/density stay at NORD defaults (bento /
+      // elevated / cozy), photo-led hero + pedestal cards are the point.
+      gridStyle: 'runway',
+    },
+  },
+  /**
+   * Google Fonts families this template needs, in the exact css2 `family=` form.
+   * opsz range keeps the optical sizing; wght MUST span to 700 (see above).
+   */
+  fonts: ['Bodoni+Moda:opsz,wght@6..96,400..700'],
+};
+
 /** All templates, in picker order. NORD first (the default). */
-export const TEMPLATES = [NORD_TEMPLATE, SPORT_TEMPLATE, MOLTEN_TEMPLATE];
+export const TEMPLATES = [NORD_TEMPLATE, SPORT_TEMPLATE, MOLTEN_TEMPLATE, MODEHUS_TEMPLATE];
 
 /** Look up a template by id; falls back to NORD for unknown/empty ids. */
 export function getTemplate(id) {
